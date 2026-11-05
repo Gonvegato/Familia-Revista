@@ -99,8 +99,10 @@ fun FiltrosRevista(opciones: List<String>, sel: Int, modifier: Modifier = Modifi
 @Composable
 fun FiltroRevista(texto: String, on: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Text(texto.uppercase(), color = if (on) ColGeneral else Charcoal, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1,
-        modifier = modifier.semantics { selected = on }.press(haptic = false, onClick = onClick).padding(top = 8.dp, bottom = 13.dp)
-            .drawBehind { if (on) drawRect(ColGeneral, topLeft = Offset(0f, size.height - 4.dp.toPx()), size = Size(size.width, 1.5.dp.toPx())) })
+        // (el subrayado, por debajo de la letra y con el aire incluido, como en el ordenador: dentro del texto cortaba las letras)
+        modifier = modifier.semantics { selected = on }.press(haptic = false, onClick = onClick)
+            .drawBehind { if (on) drawRect(ColGeneral, topLeft = Offset(0f, size.height - 9.dp.toPx()), size = Size(size.width, 1.5.dp.toPx())) }
+            .padding(top = 8.dp, bottom = 13.dp))
 }
 
 /**
@@ -135,6 +137,49 @@ fun BarraPlegada(nombre: String, visible: Boolean, fondo: androidx.compose.ui.gr
                 acciones()
             }
             androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
+        }
+    }
+}
+
+/** ¿Cuántas columnas caben en la página? Dos en la tableta en horizontal (la página de 1080 dp), una en el móvil y en vertical. */
+@Composable
+fun columnasDePagina(): Int = if (minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080) >= 960) 2 else 1
+
+/** Lo que crecen los titulares con sitio de sobra: en la tableta (en vertical y, más, en horizontal). */
+@Composable
+fun escalaTitular(): Float = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.let { if (it >= 960) 1.45f else if (it >= 700) 1.25f else 1f }
+
+/**
+ * Dos columnas, como una revista abierta sobre la mesa: lo de dentro (las filas de una ficha, los bloques de Cifras…) va en su orden,
+ * primero la columna de la izquierda y luego la de la derecha, partido donde las dos quedan más iguales, con un filete fino entre ellas.
+ * Con [columnas] = 1, uno debajo de otro. Cada pieza se mide una vez, con el ancho de su columna (sin tocar estado al medir).
+ */
+@Composable
+fun ColumnasRevista(columnas: Int, modifier: Modifier = Modifier, hueco: androidx.compose.ui.unit.Dp = 0.dp, content: @Composable () -> Unit) {
+    if (columnas <= 1) { Column(modifier.fillMaxWidth()) { content() }; return }
+    val filete = Line
+    androidx.compose.ui.layout.Layout(content, modifier.fillMaxWidth().drawBehind {
+        if (size.height > 0f) drawRect(filete, Offset(size.width / 2f - 0.5.dp.toPx(), 0f), Size(1.dp.toPx(), size.height))
+    }) { ms, c ->
+        val ancho = if (c.hasBoundedWidth) c.maxWidth else 0
+        // (las filas de la ficha ya llevan su margen; los bloques de Cifras, no: entre columnas, [hueco])
+        val g = hueco.roundToPx()
+        val w = ((ancho - g) / 2).coerceAtLeast(0)
+        val ps = ms.map { it.measure(androidx.compose.ui.unit.Constraints(minWidth = w, maxWidth = w)) }
+        val total = ps.sumOf { it.height }
+        // El corte que deja las dos columnas más iguales (sin cambiar el orden)
+        var corte = ps.size; var peor = Int.MAX_VALUE; var acc = 0
+        for (k in 0..ps.size) {
+            val alto = maxOf(acc, total - acc)
+            if (alto <= peor) { peor = alto; corte = k }
+            if (k < ps.size) acc += ps[k].height
+        }
+        layout(ancho, peor.coerceAtLeast(0)) {
+            var y = 0
+            ps.forEachIndexed { i, p ->
+                if (i == corte) y = 0
+                p.place(if (i < corte) 0 else w + g, y); y += p.height
+            }
         }
     }
 }

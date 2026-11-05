@@ -105,7 +105,7 @@ fun PlayDetailScreen(
             val defs = linkedMapOf<String, MagDef>()
             if (kind.isMovie || kind.isTv) defs["critica"] = MagDef("Crítica") { MagCritics(kind, p.id, p.name) }
             if (kind.isMovie || kind.isTv) defs["donde"] = MagDef("Dónde verla") { MagDonde(kind, p.id, p.name) }
-            if (kind.isBook) defs["lectura"] = MagDef("Lectura") { LecturaMarfil(p.id, p.name, p.pages, p.minutes) }
+            if (kind.isBook) defs["lectura"] = MagDef("Lectura") { LecturaMarfil(p.id, p.name, p.pages, p.minutes, enCurso = p.status == 1) }
             if (false) defs["capitulos"] = MagDef("Capítulos") {
                 if (p.status == 1) {
                     Text(if (p.chapter > 0) "${p.chapter}" else "—", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 56.sp, lineHeight = 56.sp)
@@ -156,7 +156,10 @@ fun PlayDetailScreen(
                     }
                 }
             }
-            if (kind.isGame) defs["horas"] = MagDef("Horas") { MagHours(p.minutes, p.ttbMain, p.ttbExtra, p.ttbFull, "") }
+            if (kind.isGame) defs["horas"] = MagDef("Horas") { MagHours(p.minutes, p.ttbMain, p.ttbExtra, p.ttbFull, "", enCurso = p.status == 1) }
+            // Cómo lo vas jugando o leyendo, día a día (solo si Hiedra o Marfil han contado algo)
+            val ses = if (Mode.viewP) null else rememberSesiones(kind, p.id, if (p.status == 2) p.end else 0L)
+            if (ses != null) defs["sesiones"] = MagDef("Sesiones") { MagSesiones(ses, kind, terminado = p.status == 2) }
             // Lo que has escrito de esto en tu diario (solo si hay algo)
             if (!Mode.viewP && DiarioHub.de(kind.id, p.id).isNotEmpty()) defs["diario"] = MagDef("En tu diario", "Escribir" to { DiarioHub.escribirSobre?.invoke(kind, p.id) }) { DiarioDeFicha(kind, p.id) }
             defs["enlaces"] = MagDef("Enlaces") {
@@ -168,9 +171,9 @@ fun PlayDetailScreen(
                 MagLink("Datos de la ficha") { editing = true }
             }
             val defaults = when {
-                kind.isGame -> magRows(listOf("estado", "portada"), listOf("jugar"), listOf("apuntes"), listOf("diario"), listOf("horas", "enlaces"))
+                kind.isGame -> magRows(listOf("estado", "portada"), listOf("jugar"), listOf("horas", "sesiones"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
                 kind.isMovie || kind.isTv -> magRows(listOf("critica", "estado"), listOf("donde"), listOf("progreso"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
-                kind.isBook -> magRows(listOf("estado", "portada"), listOf("lectura"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
+                kind.isBook -> magRows(listOf("estado", "portada"), listOf("lectura", "sesiones"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
                 else -> magRows(listOf("estado"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
             }
             MagPage("p:${kind.id}:${p.id}", "tpl:p:${kind.id}", kind.title, defaults, defs, kind, p.id, p.name, designing)

@@ -275,8 +275,10 @@ object LibPrefs {
 private fun TextLink(t: String, color: Color = Charcoal, onClick: () -> Unit) = EnlaceRevista(t, acento = color == ColGeneral, onClick = onClick)
 
 /** Revista: una lista de texto como un índice, con portadas pequeñas y la nota en cifras enormes. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RevistaLibrary(l: LibUi) {
+    val ancha = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700
     androidx.compose.foundation.lazy.LazyColumn(
         Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 40.dp)
@@ -293,11 +295,12 @@ private fun RevistaLibrary(l: LibUi) {
             val total = l.counts.take(4).sum()
             Text("SECCIÓN · $total ${if (total == 1) l.kind.unit else l.kind.unit + "s"}".uppercase(), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, modifier = Modifier.padding(top = 10.dp))
             if (l.titleSwitch != null) Box(Modifier.padding(top = 2.dp)) { l.titleSwitch.invoke() }
-            else FitTitle(l.kind.title, 52.sp, 54.sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
+            else FitTitle(l.kind.title, if (ancha) 76.sp else 52.sp, if (ancha) 78.sp else 54.sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
             Box(Modifier.padding(top = 4.dp, bottom = 6.dp).fillMaxWidth().height(3.dp).background(Charcoal))
             if (l.searching) SearchPill(l.query, "Buscar en ${l.kind.title.lowercase()}", Modifier.fillMaxWidth().padding(vertical = 8.dp)) { l.setQuery(it) }
             Segmented(l.labels, l.segment, counts = l.counts) { l.onSegment(it) }
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 4.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Todas a la vista (en una línea o en varias): en una fila que se desliza, la última salía cortada
+            FlowRow(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 if (l.onDiscover != null) TextLink("DESCUBRIR\u00A0→", ColGeneral, l.onDiscover)
                 // En el móvil la pestaña «Sagas» queda al final de la fila: aquí, a mano
                 if (l.labels.size > 4 && l.segment != 4) TextLink("SAGAS\u00A0→", onClick = { l.onSegment(4) })
@@ -317,11 +320,23 @@ private fun RevistaLibrary(l: LibUi) {
                 if (l.onAdd != null && !l.readOnly && l.segment != 3) TextLink("+ AÑADIR EL PRIMERO", ColGeneral) { l.onAdd.invoke(l.segment != 2) }
             }
         }
-        items(l.cells.size, key = { "${l.segment}-${l.cells[it].id}" }) { i ->
-            val c = l.cells[i]
-            // El título grande, la nota a la derecha y el estudio (o autor) debajo; con «Portadas en las listas», su
-            // portada a la izquierda, como en las sagas
-            Row(Modifier.fillMaxWidth().press(haptic = false) { l.open(c) }.padding(vertical = 14.dp).rise(i, i < 12), verticalAlignment = Alignment.CenterVertically) {
+        // En la tableta, a dos columnas (como el índice de una revista): a una sola, el título quedaba lejísimos de su nota
+        val filas = if (ancha) l.cells.chunked(2) else l.cells.map { listOf(it) }
+        items(filas.size, key = { "${l.segment}-${filas[it].first().id}" }) { f ->
+            // (las dos de una fila, igual de altas: los filetes de debajo quedan a la misma altura)
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+                filas[f].forEachIndexed { j, c -> Column(Modifier.weight(1f).fillMaxHeight()) { EntradaLista(l, c, if (ancha) f * 2 + j else f) } }
+                if (filas[f].size == 1 && ancha) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/** Una entrada de la lista: el título grande, la nota a la derecha y el estudio (o autor) debajo. */
+@Composable
+private fun ColumnScope.EntradaLista(l: LibUi, c: Cell, i: Int) {
+            // Con «Portadas en las listas», su portada a la izquierda, como en las sagas
+            Row(Modifier.fillMaxWidth().weight(1f).press(haptic = false) { l.open(c) }.padding(vertical = 14.dp).rise(i, i < 12), verticalAlignment = Alignment.CenterVertically) {
                 if (Skin.listCovers) { ListCover(c.cover, c.name, 44.dp, 62.dp); Spacer(Modifier.width(16.dp)) }
                 Column(Modifier.weight(1f)) {
                     FitTitle(c.name, 26.sp, 28.sp, letterSpacing = (-0.5).sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
@@ -339,8 +354,6 @@ private fun RevistaLibrary(l: LibUi) {
                 }
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(Line))
-        }
-    }
 }
 
 /** La portada de una entrada en las listas de la revista (con «Portadas en las listas»); sin imagen, su inicial. */

@@ -429,14 +429,17 @@ fun RevistaTopBar(onBack: () -> Unit, actions: @Composable RowScope.() -> Unit =
             Text("VOLVER", fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp)
         }
         Spacer(Modifier.weight(1f))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), content = actions)
+        // (centradas: la estrella y «EDITAR» quedaban a alturas distintas)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, content = actions)
     }
 }
 
 /** Titular de ficha: antetítulo rojo y el nombre enorme, a todo lo ancho, sin imágenes. */
 @Composable
 fun RevistaHeadline(title: String, overline: String?) {
-    val (fs, lh) = headlineSize(title)
+    // En la tableta, con sitio de sobra, el titular crece (si no cabe, FitTitle lo encoge)
+    val k = escalaTitular()
+    val (fs, lh) = headlineSize(title).let { (a, b) -> (a.value * k).sp to (b.value * k).sp }
     Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
         if (overline != null) Text(overline.uppercase(), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         FitTitle(title, fs, lh, letterSpacing = (-1.5).sp)

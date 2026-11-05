@@ -157,7 +157,8 @@ private fun RevistaHome(m: ShellModel) {
         val ancha = ancho >= 900
         // Cabecera de revista
         Column(Modifier.llega(0)) {
-            Cabecera(if (ancho >= 700) 132.sp else 92.sp, Modifier.padding(top = 8.dp), color = Ink2)
+            // (en horizontal, la cabecera llega de lado a lado, como en el quiosco)
+            Cabecera(if (ancho >= 960) 168.sp else if (ancho >= 700) 132.sp else 92.sp, Modifier.padding(top = 8.dp), color = Ink2)
             FileteCabecera(3.dp)
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                 Text("Nº ${today.dayOfYear}", color = Ink2, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)

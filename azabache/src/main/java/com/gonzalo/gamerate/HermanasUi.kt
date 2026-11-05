@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 
 /** «Lectura» en la ficha de un libro: lo que Marfil cuenta (páginas, tiempo) y el enlace para seguir leyendo allí. */
 @Composable
-fun LecturaMarfil(id: Long, nombre: String, paginas: Int, minutos: Int) {
+fun LecturaMarfil(id: Long, nombre: String, paginas: Int, minutos: Int, enCurso: Boolean = false) {
     val ctx = LocalContext.current
     val leido = remember(id, Hermanas.version) { Hermanas.leidoPorDia(ctx).values.sumOf { it[id] ?: 0L } }
     val min = maxOf(minutos.toLong(), leido / 60_000L)
@@ -29,7 +29,14 @@ fun LecturaMarfil(id: Long, nombre: String, paginas: Int, minutos: Int) {
         Text(readTime(min), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)
         Text("LEYENDO, SEGÚN MARFIL", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     } else Text("Marfil aún no ha contado tiempo de este libro.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
-    if (paginas > 0) Text("$paginas páginas", color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+    // Leyendo: por dónde vas (lo último que leíste, en cualquier dispositivo) y, con las páginas, en qué página
+    val avance = remember(id, Hermanas.version) { Hermanas.avanceMarfil(ctx, id) }
+    if (enCurso && avance != null && avance > 0f && avance < 1f) {
+        val pct = (avance * 100).toInt().coerceIn(1, 99)
+        BarraAvance(avance, Modifier.padding(top = 10.dp))
+        Text((if (paginas > 0) "VAS POR EL $pct % · PÁGINA ${(avance * paginas).toInt().coerceAtLeast(1)} DE $paginas" else "VAS POR EL $pct %"), color = Muted, fontSize = 10.sp,
+            fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp, modifier = Modifier.padding(top = 5.dp))
+    } else if (paginas > 0) Text("$paginas páginas", color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
     Spacer(Modifier.height(6.dp))
     if (Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL)) MagLink("Leer en Marfil", accent = true) { Hermanas.leerEnMarfil(ctx, id) }
     else Text("Se lee en Marfil (no está en este móvil).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp)

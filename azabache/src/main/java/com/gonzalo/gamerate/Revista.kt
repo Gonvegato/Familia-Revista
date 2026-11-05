@@ -153,8 +153,10 @@ fun MagChoice(options: List<String>, selected: Int, label: String? = null, onPic
                 val on = i == selected
                 Text(
                     o.uppercase(), color = if (on) ColGeneral else Charcoal, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
-                    modifier = Modifier.clickable(enabled = !on) { onPick(i) }.padding(vertical = 8.dp)
+                    // (el subrayado se pinta con el aire de abajo incluido: dentro del texto salía tachado)
+                    modifier = Modifier.clickable(enabled = !on) { onPick(i) }
                         .drawBehind { if (on) drawRect(ColGeneral, topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - 6.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 1.5.dp.toPx())) }
+                        .padding(vertical = 8.dp)
                 )
             }
         }
@@ -293,11 +295,17 @@ fun MagDonde(kind: Kind, id: Long, name: String) {
 
 /** Horas: las tuyas en grande y las habituales (historia, extras, completo) con puntos guía. */
 @Composable
-fun MagHours(mine: Int, main: Int, extra: Int, full: Int, msg: String = "") {
+fun MagHours(mine: Int, main: Int, extra: Int, full: Int, msg: String = "", enCurso: Boolean = false) {
     if (mine > 0) {
         val k = (LocalCellFraction.current / 0.5f).coerceIn(0.6f, 1f)
         Text(shortHours(mine), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (40 * k).sp, lineHeight = (42 * k).sp, maxLines = 1, softWrap = false)
         Text("TUS HORAS", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        // Jugando: lo que llevas frente a lo que suele durar la historia
+        if (enCurso && main > 0) {
+            val pct = mine * 100 / main
+            BarraAvance(mine.toFloat() / main, Modifier.padding(top = 10.dp))
+            Text(if (pct < 100) "VAS POR EL $pct % DE LA HISTORIA" else "YA MÁS DE LO QUE SUELE DURAR", color = if (pct < 100) Muted else ColGeneral, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp, modifier = Modifier.padding(top = 5.dp))
+        }
         Spacer(Modifier.height(8.dp))
     }
     if (main > 0) MagFact("Historia", shortHours(main))
@@ -362,6 +370,9 @@ fun RevistaGameRead(
         else Text("Aún no has escrito nada.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
     }
     if (kind.isGame) defs["horas"] = MagDef("Horas") { MagHours(g.minutes, g.ttbMain, g.ttbExtra, g.ttbFull, ttbMsg) }
+    // Cómo lo jugaste o lo leíste, día a día (solo si Hiedra o Marfil han contado algo)
+    val ses = if (Mode.viewP) null else rememberSesiones(kind, g.id, g.end)
+    if (ses != null) defs["sesiones"] = MagDef("Sesiones") { MagSesiones(ses, kind, terminado = true) }
     // Lo que has escrito de esto en tu diario (solo si hay algo)
     if (!Mode.viewP && DiarioHub.de(kind.id, g.id).isNotEmpty()) defs["diario"] = MagDef("En tu diario", "Escribir" to { DiarioHub.escribirSobre?.invoke(kind, g.id) }) { DiarioDeFicha(kind, g.id) }
     defs["enlaces"] = MagDef("Enlaces") {
@@ -377,9 +388,9 @@ fun RevistaGameRead(
     }
     defs["datos"] = MagDef("Datos") { GameFacts(g, kind) }
     val defaults = when {
-        kind.isGame -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("horas"), listOf("diario"), listOf("datos", "enlaces"))
+        kind.isGame -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("horas", "sesiones"), listOf("diario"), listOf("datos", "enlaces"))
         kind.isMovie || kind.isTv -> magRows(listOf("critica", "nota"), listOf("opinion"), listOf("diario"), listOf("datos", "enlaces"), listOf("donde"))
-        kind.isBook -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("lectura"), listOf("diario"), listOf("datos", "enlaces"))
+        kind.isBook -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("lectura", "sesiones"), listOf("diario"), listOf("datos", "enlaces"))
         else -> magRows(listOf("datos", "nota"), listOf("opinion"), listOf("diario"), listOf("enlaces"))
     }
     MagPage("v:${kind.id}:${g.id}", "tpl:v:${kind.id}", kind.title, defaults, defs, kind, g.id, g.name, designing)

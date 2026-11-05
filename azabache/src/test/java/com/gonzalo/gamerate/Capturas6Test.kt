@@ -110,6 +110,20 @@ open class Capturas6Test {
             Play(302, "Proyecto Hail Mary", cover("Hail", 0xFF0F2027.toInt(), 0xFF2C5364.toInt()), "", 0, emptyList(), creator = "Andy Weir"),
         ), 1)
         s.save(listOf(Game(401, "Dune", cover("Dune", 0xFFF2994A.toInt(), 0xFFF2C94C.toInt()), 89, creator = "Frank Herbert", end = d - 30)), 1)
+        // Lo jugado (Hiedra) y lo leído (Marfil) de cada día, como lo deja la cuenta: las «Sesiones» de las fichas, el avance del libro y el «Hoy»
+        fun dias(vararg l: Pair<Long, Int>) = org.json.JSONObject().also { o -> l.forEach { (n, min) -> o.put(LocalDate.ofEpochDay(d - n).toString(), min * 60_000L) } }
+        Hermanas.guardaPublico(ctx, "tiempo_hiedra", org.json.JSONObject()
+            .put("j_dead", org.json.JSONObject().put("movil", org.json.JSONObject().put("t", "Deadlock")
+                .put("days", dias(0L to 95, 1L to 40, 3L to 120, 4L to 30, 8L to 75, 10L to 50, 15L to 140, 22L to 60, 29L to 90, 36L to 45, 50L to 30))))
+            .put("j_hades", org.json.JSONObject().put("movil", org.json.JSONObject().put("t", "Hades II")
+                .put("days", dias(62L to 80, 63L to 150, 65L to 45, 70L to 200, 72L to 60, 80L to 95, 88L to 30, 95L to 120))))
+            .toString())
+        Hermanas.guardaEnlacesPublico(ctx, "hiedra", mapOf("j_dead" to 201L, "j_hades" to 102L))
+        val clave = "libro:el nombre del viento:patrick rothfuss"
+        Hermanas.guardaPublico(ctx, "tiempo_marfil", org.json.JSONObject().put(Hermanas.kidDe(clave), org.json.JSONObject().put("cuenta", org.json.JSONObject()
+            .put("dev", org.json.JSONObject().put("movil", org.json.JSONObject().put("days", dias(0L to 35, 1L to 50, 2L to 20, 4L to 65, 5L to 40, 7L to 25, 9L to 80, 11L to 30)))))).toString())
+        Hermanas.guardaEnlacesPublico(ctx, "marfil", mapOf(clave to 301L))
+        Hermanas.guardaPublico(ctx, "avance_marfil", org.json.JSONObject().put("301", 0.42).toString())
         return s
     }
 
@@ -147,11 +161,12 @@ open class Capturas6Test {
             return rule.onAllNodesWithText(t).fetchSemanticsNodes().any { it.boundsInRoot.center.x in marco.left..marco.right && it.boundsInRoot.center.y in marco.top..marco.bottom }
         }
         assertTrue("al principio no se ve la siguiente", !enMarco("Elden Ring Nightreign"))
-        rule.onRoot().performTouchInput { swipeLeft(startX = width * 0.8f, endX = width * 0.1f, durationMillis = 250) }
+        // (sobre la portada misma, por arriba: en la tableta en horizontal la cabecera ocupa media pantalla y el centro no cae en ella)
+        rule.onNodeWithTag("portada").performTouchInput { swipe(androidx.compose.ui.geometry.Offset(width * 0.8f, 60f), androidx.compose.ui.geometry.Offset(width * 0.1f, 60f), 250) }
         rule.waitForIdle()
         assertTrue("al deslizar, la portada pasa a la siguiente", enMarco("Elden Ring Nightreign"))
         shoot("r1b_portada_deslizada")
-        rule.onRoot().performTouchInput { swipeRight(startX = width * 0.1f, endX = width * 0.9f, durationMillis = 250) }
+        rule.onNodeWithTag("portada").performTouchInput { swipe(androidx.compose.ui.geometry.Offset(width * 0.1f, 60f), androidx.compose.ui.geometry.Offset(width * 0.9f, 60f), 250) }
         rule.waitForIdle()
         rule.onRoot().performTouchInput { swipeUp() }; rule.onRoot().performTouchInput { swipeUp() }; shoot("r2_portada_abajo")
         // Las secciones están arriba del todo, antes de la portada: se vuelve arriba como haría uno

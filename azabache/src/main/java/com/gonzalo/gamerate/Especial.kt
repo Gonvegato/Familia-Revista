@@ -415,7 +415,8 @@ fun RevistaHoy() {
         if (algo) {
             val tope = maxOf(semana.maxOf { it.second.peso }, 1L).toFloat()
             // Cada día, una barra (en el acento el de hoy); el día sin nada, una raya fina
-            Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // (en la tableta, como mucho media página: a todo lo ancho las barras eran ladrillos)
+            Row(Modifier.widthIn(max = 520.dp).fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 semana.forEach { (d, x) ->
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(Modifier.fillMaxWidth(0.62f).height(30.dp), contentAlignment = Alignment.BottomCenter) {

@@ -242,6 +242,8 @@ fun MagPage(
             if ("donde" in defs) r = MagLayouts.withNew(ctx, key, r, "donde", "critica")
             // (Atrio 6.64: «En tu diario», detrás de los apuntes o de la opinión, la primera vez que hay algo escrito)
             if ("diario" in defs) r = MagLayouts.withNew(ctx, key, r, "diario", if (r.any { row -> row.cells.any { it.type == "apuntes" } }) "apuntes" else "opinion")
+            // (Azabache 1.6: «Sesiones», detrás de las horas o de la lectura, la primera vez que Hiedra o Marfil cuentan algo de la ficha)
+            if ("sesiones" in defs) r = MagLayouts.withNew(ctx, key, r, "sesiones", if (r.any { row -> row.cells.any { it.type == "horas" } }) "horas" else "lectura")
             // La portada va pequeña, al lado de la nota o del estado (Azabache 1.2 la ponía como primera fila a todo lo ancho, enorme:
             // esa fila se quita de las maquetas guardadas y la portada pasa a la primera fila, junto a lo que ya hubiera)
             if ("portada" in defs) r = MagLayouts.portadaPequena(ctx, key, r)
@@ -300,6 +302,8 @@ fun MagPage(
         }
     }
 
+    // En la tableta en horizontal, la página a dos columnas (como una revista abierta); al editarla, una sola, para mover las filas
+    ColumnasRevista(if (designing) 1 else columnasDePagina()) {
     rows.forEachIndexed { i, r ->
         val cells = r.cells.withIndex().filter { visible(it.value) }
         if (cells.isEmpty() && !designing) return@forEachIndexed
@@ -395,6 +399,7 @@ fun MagPage(
                 }
             }
         }
+    }
     }
     if (designing) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
