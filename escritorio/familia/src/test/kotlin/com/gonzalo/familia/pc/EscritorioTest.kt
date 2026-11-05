@@ -212,4 +212,31 @@ class EscritorioTest {
         assertEquals("nueva", File(puesta, "Contents/que.txt").readText())
         assertFalse(File(apps, "Prueba.app.vieja").exists())
     }
+
+    @Test fun unaSolaCopiaDeCadaAppYLaSegundaTraeAlFrenteLaPrimera() {
+        val dir = File(tmp.root, "cobalto")
+        val llamada = java.util.concurrent.CountDownLatch(1)
+        assertTrue(Instancia.unica(dir))
+        Instancia.alFrente = { llamada.countDown() }
+        assertFalse("ya hay una abierta", Instancia.unica(dir))
+        assertTrue("la abierta sale al frente", llamada.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        Instancia.suelta()
+        assertTrue("al cerrarse, se puede abrir otra", Instancia.unica(dir))
+        Instancia.suelta()
+    }
+
+    @Test fun lasHermanasSeEncuentranAlLadoDeEstaApp() {
+        // Linux: instaladas juntas (familia-apps/<App>/bin/<App>)
+        val apps = File(tmp.root, "familia-apps")
+        fun linux(a: String) = File(apps, "$a/bin/$a").apply { parentFile.mkdirs(); writeText("#!/bin/sh\n"); setExecutable(true) }
+        val hiedra = File(apps, "Hiedra").also { linux("Hiedra") }
+        val cobalto = linux("Cobalto")
+        val casa = File(tmp.root, "casa").also { it.mkdirs() }
+        assertEquals(cobalto, HermanasPc.donde("cobalto", hiedra, Sitio.Sistema.LINUX, casa))
+        assertNull("Marfil no está", HermanasPc.donde("marfil", hiedra, Sitio.Sistema.LINUX, casa))
+        // Mac: <App>.app al lado
+        val aplicaciones = File(tmp.root, "Applications").also { File(it, "Hiedra.app/Contents").mkdirs(); File(it, "Marfil.app/Contents").mkdirs() }
+        assertEquals(File(aplicaciones, "Marfil.app"), HermanasPc.donde("marfil", File(aplicaciones, "Hiedra.app"), Sitio.Sistema.MAC, casa))
+        assertEquals(listOf("azabache", "cobalto", "hiedra", "marfil"), HermanasPc.todas.map { it.first })
+    }
 }

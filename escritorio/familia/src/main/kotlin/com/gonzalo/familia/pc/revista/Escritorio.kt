@@ -64,12 +64,15 @@ fun Lateral(nombre: String, entradas: List<Entrada>, sel: Int, modifier: Modifie
                 val elegida = i == sel
                 val hover = remember { MutableInteractionSource() }
                 val encima by hover.collectIsHoveredAsState()
+                // (el fondo y la marca cambian con una transición corta: la columna no da saltos)
+                val fondo by androidx.compose.animation.animateColorAsState(if (elegida) Sand else if (encima) lerp(Crudo, Sand, 0.5f) else Crudo.copy(alpha = 0f), androidx.compose.animation.core.tween(160))
+                val marca by androidx.compose.animation.animateColorAsState(if (elegida) Acento else Acento.copy(alpha = 0f), androidx.compose.animation.core.tween(200))
                 Row(
-                    Modifier.fillMaxWidth().clip(esquina(6.dp)).background(if (elegida) Sand else if (encima) lerp(Crudo, Sand, 0.5f) else Color.Transparent)
+                    Modifier.fillMaxWidth().clip(esquina(6.dp)).background(fondo)
                         .hoverable(hover).pointerHoverIcon(PointerIcon.Hand).clickable { onSel(i) }.padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(Modifier.width(3.dp).height(18.dp).background(if (elegida) Acento else Color.Transparent))
+                    Box(Modifier.width(3.dp).height(18.dp).background(marca))
                     Spacer(Modifier.width(10.dp))
                     Text(e.texto, Modifier.weight(1f), color = Charcoal, fontFamily = Display, fontSize = 17.sp,
                         fontWeight = if (elegida) FontWeight.SemiBold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -77,6 +80,8 @@ fun Lateral(nombre: String, entradas: List<Entrada>, sel: Int, modifier: Modifie
                 }
             }
         }
+        // Las hermanas de este ordenador: un clic y se abre (o sale al frente si ya estaba abierta)
+        Hermanas(LaFamilia.app)
         // Cómo va la cuenta
         LaFamilia.cambios
         val estado = LaFamilia.estado
@@ -85,6 +90,27 @@ fun Lateral(nombre: String, entradas: List<Entrada>, sel: Int, modifier: Modifie
             Spacer(Modifier.height(8.dp))
             Text(LaFamilia.usuario.ifBlank { "Sin cuenta" }, color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             Text(estado.ifBlank { "Conectando…" }, color = if (estado.startsWith("Sin conexión")) Acento else Muted, fontFamily = Body, fontSize = 11.sp, maxLines = 2)
+        }
+    }
+}
+
+/** Las cuatro apps de la familia (las instaladas en este ordenador), con la de ahora marcada: como el cambio entre hermanas del móvil. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun Hermanas(actual: String, modifier: Modifier = Modifier) {
+    val aqui = remember { com.gonzalo.familia.pc.HermanasPc.todas.filter { (a, _) -> a == actual || com.gonzalo.familia.pc.HermanasPc.esta(a) } }
+    if (aqui.size < 2) return
+    Column(modifier.padding(horizontal = 22.dp).padding(top = 6.dp)) {
+        Filete(1.dp, Line)
+        Spacer(Modifier.height(8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            aqui.forEach { (a, n) ->
+                val esta = a == actual
+                val hover = remember { MutableInteractionSource() }
+                val encima by hover.collectIsHoveredAsState()
+                Text(n.uppercase(), color = if (esta) Acento else if (encima) Charcoal else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
+                    modifier = if (esta) Modifier else Modifier.hoverable(hover).pointerHoverIcon(PointerIcon.Hand).clickable { com.gonzalo.familia.pc.HermanasPc.abre(a) })
+            }
         }
     }
 }

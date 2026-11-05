@@ -36,7 +36,13 @@ import java.io.File
  * La ventana de una app de la familia en el ordenador: arranca la cuenta, sigue a la ventana (escucha en directo mientras está abierta,
  * sube lo pendiente al cerrar), recuerda su tamaño y su sitio, y si aún no has entrado en la cuenta enseña cómo entrar.
  */
-fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alIniciar: () -> Unit = {}, alCerrar: () -> Unit = {}, contenido: @Composable () -> Unit) = application {
+fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alIniciar: () -> Unit = {}, alCerrar: () -> Unit = {}, contenido: @Composable () -> Unit) {
+    // Una sola copia de cada app: si ya estaba abierta, sale al frente aquella y esta no abre nada
+    if (!Instancia.unica(Sitio.de(app))) return
+    ventanaDeLaFamilia(app, titulo, icono, alIniciar, alCerrar, contenido)
+}
+
+private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alIniciar: () -> Unit, alCerrar: () -> Unit, contenido: @Composable () -> Unit) = application {
     remember { LaFamilia.inicia(app); Apariencia.inicia(app); runCatching { alIniciar() }; true }
     val guardada = remember { leeVentana(app) }
     val estado = rememberWindowState(
@@ -50,7 +56,11 @@ fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alInicia
         runCatching { alCerrar() }
         LaFamilia.alCerrar()
         val programa = runCatching { Actualizador.ponLaPreparada(app) }.getOrNull()
-        if (reiniciar) Actualizador.abreOtraVez(programa ?: Actualizador.instalada()?.let { lanzadorDe(app, it) } ?: return exitApplication())
+        if (reiniciar) {
+            // (la copia nueva no debe encontrar el cerrojo de esta, que ya se va: si no, creería que hay otra abierta y no se abriría)
+            Instancia.suelta()
+            Actualizador.abreOtraVez(programa ?: Actualizador.instalada()?.let { lanzadorDe(app, it) } ?: return exitApplication())
+        }
         exitApplication()
     }
     Window(
@@ -66,6 +76,13 @@ fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alInicia
             }
         }
         DisposableEffect(Unit) {
+            // Si otra copia de la app pide salir al frente (la abriste otra vez, o desde una hermana)
+            Instancia.alFrente = {
+                java.awt.EventQueue.invokeLater {
+                    if (window.extendedState and java.awt.Frame.ICONIFIED != 0) window.extendedState = window.extendedState and java.awt.Frame.ICONIFIED.inv()
+                    window.isVisible = true; window.toFront(); window.requestFocus()
+                }
+            }
             LaFamilia.alVerse()
             val oyente = object : java.awt.event.WindowAdapter() {
                 override fun windowGainedFocus(e: java.awt.event.WindowEvent?) { LaFamilia.alVerse() }
