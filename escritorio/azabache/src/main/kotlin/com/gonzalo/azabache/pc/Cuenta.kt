@@ -1,0 +1,321 @@
+package com.gonzalo.azabache.pc
+
+import com.gonzalo.familia.nucleo.Coleccion
+import com.gonzalo.familia.nucleo.Fechas
+import com.gonzalo.familia.nucleo.Json
+import com.gonzalo.familia.nucleo.Nodo
+import com.gonzalo.familia.nucleo.comoLista
+import com.gonzalo.familia.nucleo.comoLong
+import com.gonzalo.familia.nucleo.comoMapa
+import com.gonzalo.familia.nucleo.comoTexto
+import com.gonzalo.familia.pc.LaFamilia
+import com.gonzalo.familia.pc.Portadas
+import java.time.Instant
+import java.time.ZoneId
+
+/**
+ * Todo lo de Azabache, de la cuenta (como el Azabache del móvil desde la 1.4: sin copia).
+ *
+ *  - Los juegos y los libros SON los de la cuenta (`juegos/<id>`, `libros/<kid>`, los mismos nodos que Hiedra y Marfil): lo que se ve
+ *    sale de ahí, y lo que cambias va a ese nodo, campo a campo y solo lo que has cambiado tú (así nunca se pisa lo que Hiedra o Marfil
+ *    hayan cambiado mientras). La nota va en `nota` (sin el campo = sin valorar), los criterios en `crit`, la reseña en `resena`, lo
+ *    demás de Azabache en `az` y el número de la ficha en `azid`.
+ *  - Lo propio de Azabache (tus categorías y sus fichas, el diario, las sagas…) en `azabache/<lista>~<id>` con `o` = el elemento.
+ *
+ * Es la misma lógica que `Cosas.kt` y `Propias.kt` de Android (ver nube/ESQUEMA.md), con las pruebas cruzadas en `CuentaTest`.
+ */
+object Cuenta {
+    const val JUEGOS = 0
+    const val LIBROS = 1
+
+    private fun col(kind: Int): Coleccion = LaFamilia.coleccion(if (kind == JUEGOS) "juegos" else "libros")
+    private fun az(): Coleccion = LaFamilia.coleccion("azabache")
+    private fun tiempo(): Coleccion = LaFamilia.coleccion("tiempo")
+
+    // ================================================================ las vistas (se rehacen solas al cambiar la cuenta)
+
+    @Volatile private var oyendoDe: Any? = null
+    @Volatile private var version = 0L
+    private val cache = HashMap<String, Pair<Long, Any>>()
+
+    private fun prepara() {
+        val fam = LaFamilia.familia
+        if (oyendoDe === fam) return
+        synchronized(this) {
+            if (oyendoDe === fam) return
+            oyendoDe = fam
+            listOf(col(JUEGOS), col(LIBROS), tiempo(), az()).forEach { c -> c.alCambiar { synchronized(this) { version++ } } }
+            version++
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Any> cacheado(clave: String, hazlo: () -> T): T {
+        prepara()
+        synchronized(this) {
+            cache[clave]?.let { (v, x) -> if (v == version) return x as T }
+            val x = hazlo()
+            cache[clave] = version to x
+            return x
+        }
+    }
+
+    /** Las categorías: Videojuegos, Libros y las tuyas. */
+    fun kinds(): List<Kind> = listOf(GAMES, BOOKS) + propias()
+    fun propias(): List<Kind> = cacheado("kinds") { lista("kinds").mapNotNull { kindDeMapa(it) }.distinctBy { it.id } }
+    fun kind(id: Int): Kind = kinds().firstOrNull { it.id == id } ?: GAMES
+
+    /** Las fichas de una categoría: terminadas (valoradas) y las demás. */
+    fun fichas(kind: Int): List<Ficha> = cacheado("fichas_$kind") {
+        if (kind == JUEGOS || kind == LIBROS) construye(kind) else
+            lista("items_$kind").map { Ficha(kind, it, true) } + lista("iplays_$kind").map { Ficha(kind, it, false) }
+    }
+
+    fun ficha(kind: Int, id: Long): Ficha? = fichas(kind).firstOrNull { it.id == id }
+
+    fun notas(): List<Nota> = cacheado("diario") { lista("diario").mapNotNull { notaDeMapa(it) }.sortedWith(compareByDescending<Nota> { it.dia }.thenByDescending { it.id }) }
+    fun sagas(): List<Saga> = cacheado("sagas") { lista("sagas").mapNotNull { sagaDeMapa(it) } }
+
+    private fun dia(ms: Long): Long = if (ms > 0) Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay() else 0L
+
+    private fun construye(kind: Int): List<Ficha> {
+        val horas = tiempo().vivos().groupBy { it.texto("ref") }
+        val out = ArrayList<Ficha>()
+        val vistos = HashSet<Long>()
+        for (n in col(kind).vivos().filter { it.texto("t").isNotBlank() }.sortedBy { it.ref }) {
+            var id = idDe(n)
+            if (id in vistos) id = idDeRef(n.ref)
+            if (id in vistos) continue
+            vistos += id
+            out += aFicha(kind, n, id, horas[n.ref].orEmpty())
+        }
+        return out
+    }
+
+    /** El número de la ficha: el de la cuenta (`azid`) o, si aún no lo tiene, uno fijo de la cosa (el mismo que en el móvil). */
+    private fun idDe(n: Nodo): Long = n.entero("azid").takeIf { it > 0 } ?: idDeRef(n.ref)
+
+    fun idDeRef(ref: String): Long {
+        var h = -0x340d631b7bdddcdbL
+        for (ch in "familia:$ref") { h = h xor ch.code.toLong(); h *= 0x100000001b3L }
+        return (h and Long.MAX_VALUE) % 9_000_000_000_000L + 100_000_000_000L
+    }
+
+    private fun finDe(kind: Int, n: Nodo): Long {
+        val ms = if (kind == JUEGOS) Fechas.ms(n.entero("fin")) else n.lista("fin").mapNotNull { (it as? Number)?.toLong() }.map { Fechas.ms(it) }.maxOrNull() ?: 0L
+        return if (ms > 0) ms else if (n.texto("estado") == "terminado") (n.m["estado"] ?: 0L).takeIf { it > 946_684_800_000L } ?: 0L else 0L
+    }
+
+    private fun aFicha(kind: Int, n: Nodo, id: Long, horas: List<Nodo>): Ficha {
+        val o = LinkedHashMap(objDe(n.texto("az")))
+        o["id"] = id; o["name"] = n.texto("t"); o["fav"] = n.si("fav"); o["review"] = n.texto("resena")
+        o["cover"] = n.texto("pu")
+        val crit = n.lista("crit").map { it.comoLong() }
+        val conNota = n["nota"] != null
+        o["general"] = if (conNota) n.entero("nota").coerceIn(0, 100) else 0L
+        listOf("gfx", "story", "music", "gameplay").forEachIndexed { i, k -> o[k] = if (conNota) crit.getOrElse(i) { 0L } else 0L }
+        if (kind == JUEGOS) {
+            o["platform"] = n.texto("pl"); o["ttbMain"] = n.entero("dh"); o["ttbExtra"] = n.entero("de"); o["ttbFull"] = n.entero("dc")
+        } else {
+            o["creator"] = n.texto("a"); o["pages"] = n.entero("pg")
+        }
+        val ms = horas.sumOf { it.entero("total") }
+        o["minutes"] = maxOf(ms / 60_000L, o["minutes"].comoLong())
+        o["end"] = dia(finDe(kind, n))
+        if (o["start"].comoLong() <= 0L) o["start"] = dia(Fechas.ms(n.entero("an")))
+        o["updated"] = n.m.values.maxOrNull() ?: n.u
+        o["status"] = when (n.texto("estado")) { "en_curso" -> 1L; "abandonado" -> 2L; else -> 0L }
+        if (!o.containsKey("hero")) o["hero"] = ""
+        if (!o.containsKey("entries")) o["entries"] = emptyList<Any?>()
+        return Ficha(kind, o, n.texto("estado") == "terminado", n.ref, n.texto("portada"), n.texto("pu"), sinNota = !conNota)
+    }
+
+    /** La cosa de la cuenta de una ficha (para «tiempo», enlaces con Hiedra y Marfil…). */
+    fun nodo(kind: Int, f: Ficha): Nodo? = f.ref?.let { col(kind).nodo(it) }
+
+    // ================================================================ escribir
+
+    /**
+     * Guarda una ficha: [antes] es cómo estaba en tu pantalla (null si es nueva), [nueva] cómo queda y [valorada] si queda terminada.
+     * En los juegos y libros solo va a la cuenta lo que ha cambiado de verdad; en tus categorías, el elemento entero si ha cambiado.
+     */
+    fun guarda(kind: Int, antes: Ficha?, nueva: Obj, valorada: Boolean) {
+        synchronized(this) {
+            if (kind == JUEGOS || kind == LIBROS) {
+                val mismaLista = antes != null && antes.valorada == valorada
+                escribe(kind, antes?.ref, nueva, if (mismaLista) antes!!.o else null, valorada)
+            } else {
+                val (esta, otra) = if (valorada) "items_$kind" to "iplays_$kind" else "iplays_$kind" to "items_$kind"
+                val id = nueva["id"].comoLong()
+                escribeLista(esta, lista(esta).filter { it["id"].comoLong() != id } + nueva)
+                if (antes != null && antes.valorada != valorada) escribeLista(otra, lista(otra).filter { it["id"].comoLong() != id })
+            }
+        }
+    }
+
+    /** Quita una ficha (en los juegos y libros, la cosa entera de la cuenta: deja de estar en Hiedra o Marfil también). */
+    fun borra(f: Ficha) {
+        synchronized(this) {
+            if (f.kind == JUEGOS || f.kind == LIBROS) { f.ref?.let { col(f.kind).borra(it) }; return }
+            val l = if (f.valorada) "items_${f.kind}" else "iplays_${f.kind}"
+            escribeLista(l, lista(l).filter { it["id"].comoLong() != f.id })
+        }
+    }
+
+    private fun noAz(kind: Int) = setOf("id", "updated", "sv", "status", "name", "cover", "general", "gfx", "story", "music", "gameplay", "review", "fav", "end") +
+        if (kind == JUEGOS) setOf("platform", "ttbMain", "ttbExtra", "ttbFull") else setOf("creator", "pages")
+
+    private fun estadoDe(o: Obj, valorada: Boolean): String =
+        if (valorada) "terminado" else when (o["status"].comoLong().toInt()) { 1 -> "en_curso"; 2 -> "abandonado"; else -> "pendiente" }
+
+    private fun azDeFicha(kind: Int, o: Obj): Obj { val fuera = noAz(kind); return o.filterKeys { it !in fuera } }
+
+    private fun buscaPorAzid(c: Coleccion, id: Long): String? = c.todos().values.firstOrNull { it.entero("azid") == id }?.ref
+
+    private fun refNuevo(kind: Int, o: Obj): String =
+        if (kind == LIBROS) kidDe(claveLibro(o["name"].comoTexto(), o["creator"].comoTexto()))
+        else "j_" + java.util.UUID.randomUUID().toString().replace("-", "").take(12)
+
+    /** La clave de un libro, como la pone Marfil (`libro:<título>:<autor>`, en minúsculas, sin tildes y solo letras y números). */
+    fun claveLibro(titulo: String, autor: String): String = "libro:" + normLibro(titulo) + ":" + normLibro(autor)
+    private fun normLibro(s: String): String = java.text.Normalizer.normalize(s.lowercase(), java.text.Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}+"), "").replace(Regex("[^\\p{L}\\p{N}]+"), " ").trim()
+    /** El nodo de un libro: los 20 primeros hexadecimales del SHA-1 de su clave. */
+    fun kidDe(clave: String): String = java.security.MessageDigest.getInstance("SHA-1").digest(clave.toByteArray()).joinToString("") { "%02x".format(it) }.take(20)
+
+    private fun escribe(kind: Int, refAntes: String?, o: Obj, antes: Obj?, valorada: Boolean) {
+        val c = col(kind)
+        val id = o["id"].comoLong()
+        val ref = refAntes ?: buscaPorAzid(c, id) ?: refNuevo(kind, o)
+        val actual = c.todos()[ref]
+        val cambios = LinkedHashMap<String, Any?>()
+        fun cambiado(k: String) = antes == null || canon(antes[k]) != canon(o[k])
+        fun txt(k: String) = o[k].comoTexto()
+        fun num(k: String) = o[k].comoLong()
+        val nuevaAqui = actual == null || actual.borrado
+        val deLaOtraLista = antes == null && !nuevaAqui
+        if (nuevaAqui) {
+            cambios["t"] = txt("name"); cambios["azid"] = id
+            if (kind == LIBROS) cambios["clave"] = claveLibro(txt("name"), txt("creator"))
+            cambios["an"] = Fechas.ms(num("start")).takeIf { it > 1_000_000_000_000L } ?: System.currentTimeMillis()
+            if (actual?.borrado == true) cambios["b"] = 0L
+        } else if (actual!!.entero("azid") <= 0L) cambios["azid"] = id
+        if (!deLaOtraLista) {
+            if (cambiado("name")) cambios["t"] = txt("name")
+            if (cambiado("fav")) cambios["fav"] = o["fav"] == true
+            if (kind == JUEGOS) {
+                if (cambiado("platform")) cambios["pl"] = txt("platform")
+                if (cambiado("ttbMain")) cambios["dh"] = num("ttbMain")
+                if (cambiado("ttbExtra")) cambios["de"] = num("ttbExtra")
+                if (cambiado("ttbFull")) cambios["dc"] = num("ttbFull")
+            } else {
+                if (cambiado("creator")) cambios["a"] = txt("creator")
+                if (cambiado("pages")) cambios["pg"] = num("pages")
+            }
+        }
+        val estado = estadoDe(o, valorada)
+        val estadoAntes = if (antes == null) actual?.texto("estado") else estadoDe(antes, valorada)
+        if (nuevaAqui || estado != estadoAntes) cambios["estado"] = estado
+        if (valorada && (cambiado("end") || deLaOtraLista) && num("end") > 0) {
+            val ms = Fechas.ms(num("end"))
+            if (kind == JUEGOS) cambios["fin"] = ms
+            else {
+                val fin = actual?.lista("fin")?.mapNotNull { (it as? Number)?.toLong() }?.map { Fechas.ms(it) }.orEmpty()
+                if (fin.none { dia(it) == num("end") }) cambios["fin"] = (if (fin.isEmpty() || deLaOtraLista) fin else fin.dropLast(1)) + ms
+            }
+        }
+        if (valorada && (NOTAS.any { cambiado(it) } || nuevaAqui || deLaOtraLista)) {
+            val vs = NOTAS.map { num(it) }
+            if (!(nuevaAqui || deLaOtraLista) || vs.any { it != 0L } || actual?.get("nota") != null) { cambios["nota"] = vs[0]; cambios["crit"] = vs.drop(1) }
+        }
+        if (cambiado("review") && (txt("review").isNotBlank() || antes != null)) cambios["resena"] = txt("review")
+        val azN = azDeFicha(kind, o)
+        val azAntes = antes?.let { azDeFicha(kind, it) } ?: actual?.let { objDe(it.texto("az")) }
+        if (canon(azN) != canon(azAntes ?: emptyMap<String, Any?>())) cambios["az"] = Json.escribe(azN)
+        actual?.takeIf { !it.borrado }?.let { n -> cambios.keys.toList().forEach { k -> if (k != "estado" || !nuevaAqui) if (canon(n[k]) == canon(cambios[k])) cambios.remove(k) } }
+        if (cambios.isNotEmpty()) c.cambia(ref, cambios)
+    }
+
+    /**
+     * Pone la portada de un juego o un libro: la imagen va a la cuenta (reducida, por su hash) y la ven Hiedra, Marfil y tus otros
+     * dispositivos. [url]: de dónde salió, si fue de internet. Bloquea (puede haber que bajarla). Devuelve el hash, o null si no es una imagen.
+     */
+    fun ponPortada(f: Ficha, bytes: ByteArray, url: String = ""): String? {
+        val ref = f.ref ?: return null
+        val h = Portadas.guardar(bytes) ?: return null
+        col(f.kind).cambia(ref, if (url.startsWith("http")) mapOf("portada" to h, "pu" to url) else mapOf("portada" to h))
+        return h
+    }
+
+    /** En tus categorías la portada es una dirección de internet (la que ve también el móvil). */
+    fun ponPortadaWeb(f: Ficha, url: String) { guarda(f.kind, f, f.con(mapOf("cover" to url)), f.valorada) }
+
+    // ================================================================ lo propio de Azabache (azabache/<lista>~<id>)
+
+    /** Una lista de Azabache tal como está en la cuenta (elemento a elemento, por su número; o, de antes, entera en `v`). */
+    fun lista(key: String): List<Obj> {
+        val pre = "$key~"
+        val els = sortedMapOf<Long, Obj>()
+        for (n in az().vivos()) {
+            if (!n.ref.startsWith(pre)) continue
+            val id = n.ref.substring(pre.length).toLongOrNull() ?: continue
+            objDe(n.texto("o")).takeIf { it.isNotEmpty() }?.let { els[id] = it }
+        }
+        if (els.isNotEmpty()) return els.values.toList()
+        val v = az().nodo(key)?.takeIf { !it.borrado }?.texto("v")?.takeIf { it.startsWith("[") } ?: return emptyList()
+        return runCatching { Json.lee(v).comoLista().firstOrNull().comoLista().map { it.comoMapa() }.filter { it.isNotEmpty() } }.getOrDefault(emptyList())
+    }
+
+    /** Escribe una lista de Azabache: solo los elementos que han cambiado (lo que ya no está se borra), como en el móvil. */
+    fun escribeLista(key: String, nueva: List<Obj>) {
+        val c = az()
+        val pre = "$key~"
+        val antes = HashMap<Long, Obj>()
+        for (n in c.vivos()) if (n.ref.startsWith(pre)) n.ref.substring(pre.length).toLongOrNull()?.let { antes[it] = objDe(n.texto("o")) }
+        if (nueva.isEmpty()) {
+            antes.keys.forEach { c.borra("$key~$it") }
+            c.nodo(key)?.takeIf { !it.borrado }?.let { c.cambia(key, mapOf("v" to "[[]]")) }
+            return
+        }
+        val ids = HashSet<Long>()
+        for (e in nueva) {
+            val id = e["id"].comoLong(); ids += id
+            val a = antes[id]
+            if (a == null || canon(a) != canon(e)) c.cambia("$key~$id", mapOf("o" to Json.escribe(e), "b" to 0L))
+        }
+        (antes.keys - ids).forEach { c.borra("$key~$it") }
+    }
+
+    fun guardaNota(n: Nota) { synchronized(this) { escribeLista("diario", lista("diario").filter { it["id"].comoLong() != n.id } + notaAMapa(n.copy(updated = System.currentTimeMillis()))) } }
+    fun borraNota(n: Nota) { synchronized(this) { escribeLista("diario", lista("diario").filter { it["id"].comoLong() != n.id }) } }
+    fun guardaSaga(s: Saga) { synchronized(this) { escribeLista("sagas", lista("sagas").filter { it["id"].comoLong() != s.id } + sagaAMapa(s.copy(updated = System.currentTimeMillis()))) } }
+    fun borraSaga(s: Saga) { synchronized(this) { escribeLista("sagas", lista("sagas").filter { it["id"].comoLong() != s.id }) } }
+    fun guardaKind(k: Kind) { synchronized(this) { escribeLista("kinds", lista("kinds").filter { it["id"].comoLong().toInt() != k.id } + kindAMapa(k)) } }
+    fun siguienteKind(): Int = (kinds().maxOf { it.id } + 1).coerceAtLeast(2)
+
+    /** Las horas jugadas o leídas de una cosa, por día (`tiempo/<ref>~<fuente>`: se suman las fuentes). */
+    fun porDia(ref: String): Map<String, Long> {
+        val out = HashMap<String, Long>()
+        tiempo().vivos().filter { it.texto("ref") == ref }.forEach { n -> n.campos.forEach { (k, v) -> if (k.length == 11 && k.startsWith("d2")) out[k.substring(1)] = (out[k.substring(1)] ?: 0L) + v.comoLong() } }
+        return out
+    }
+
+    /** Todo lo jugado y leído por día y por cosa (para el diario): día → (ref → ms). */
+    fun tiempoPorDia(): Map<String, Map<String, Long>> = cacheado("tiempoPorDia") {
+        val out = HashMap<String, HashMap<String, Long>>()
+        tiempo().vivos().forEach { n ->
+            val ref = n.texto("ref").ifBlank { n.ref.substringBefore('~') }
+            n.campos.forEach { (k, v) -> if (k.length == 11 && k.startsWith("d2")) out.getOrPut(k.substring(1)) { HashMap() }.merge(ref, v.comoLong(), Long::plus) }
+        }
+        out
+    }
+
+    /** El objetivo de libros del año (lo fija Marfil: `ajustes/lectura`). */
+    fun objetivoLibros(): Pair<Int, Int> {
+        val n = LaFamilia.coleccion("ajustes").nodo("lectura") ?: return 0 to 0
+        return n.entero("ano").toInt() to n.entero("anio").toInt()
+    }
+
+    /** (Para las pruebas.) */
+    fun olvidaParaPruebas() { synchronized(this) { cache.clear(); oyendoDe = null } }
+}

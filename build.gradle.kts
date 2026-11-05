@@ -7,4 +7,6 @@ plugins {
     // Multiplatform 1.12, para compartir el núcleo con las versiones de escritorio (Linux y Mac)
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.20" apply false
     id("io.github.takahirom.roborazzi") version "1.20.0" apply false
+    // Las versiones de escritorio (Linux y Mac): Compose Multiplatform 1.12.2 (pide Kotlin 2.1 o más; recomienda 2.2.20)
+    id("org.jetbrains.compose") version "1.12.2" apply false
 }

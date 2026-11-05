@@ -87,6 +87,30 @@ class Sesion(private val cfg: Config, private val red: Red, private val seguro: 
         guarda()
     }
 
+    /**
+     * Lo que necesita otra app de la familia del mismo ordenador para entrar sin la contraseña (en el PC se guarda en el llavero
+     * del sistema). Nunca lleva la contraseña.
+     */
+    fun comparte(): Map<String, Any?> = if (!dentro) emptyMap() else mapOf("uid" to uid, "usuario" to usuario, "refresco" to refresco, "claveWeb" to claveWeb)
+
+    /**
+     * Entra con la sesión que comparte otra app de la familia ([comparte]): se comprueba con la cuenta pidiendo un pase nuevo.
+     * Bloquea (red). Si la cuenta no la acepta, no se entra.
+     */
+    @Synchronized
+    fun adopta(otra: Map<String, Any?>) {
+        val u = otra["uid"].comoTexto(); val r = otra["refresco"].comoTexto()
+        if (u.isBlank() || r.isBlank()) throw Error("No hay sesión que compartir.")
+        val antes = listOf(uid, usuario, refresco, pase, caduca)
+        uid = u; usuario = otra["usuario"].comoTexto(); refresco = r; pase = ""; caduca = 0L
+        if (claveWeb.isBlank()) claveWeb = otra["claveWeb"].comoTexto()
+        try { renueva() } catch (e: Error) {
+            if (e.sinRed) { uid = antes[0] as String; usuario = antes[1] as String; refresco = antes[2] as String; pase = antes[3] as String; caduca = antes[4] as Long }
+            else if (dentro) salir()
+            throw e
+        }
+    }
+
     fun salir() {
         uid = ""; usuario = ""; pase = ""; refresco = ""; caduca = 0L
         seguro.borra(ARCHIVO)
