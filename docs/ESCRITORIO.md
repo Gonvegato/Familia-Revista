@@ -1,93 +1,75 @@
 # Las versiones de escritorio (Linux y Mac)
 
-Para quien vaya a hacer **Hiedra, Marfil, Cobalto y Azabache para Linux y Mac**. Qué hay ya, qué se comparte, qué hay que hacer en
-escritorio y cómo trabajar a la vez que las versiones de Android sin pisarse.
+**Azabache, Cobalto, Hiedra y Marfil para Linux y Mac**, en `escritorio/`. Son ventanas a la misma cuenta que las del móvil: todo lo
+tuyo está en la cuenta (Firebase, el proyecto de siempre) y en el ordenador solo hay una caché para funcionar sin conexión y lo que es
+de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo ves al momento en las demás, en el ordenador y en el móvil.
 
-## La idea (lo que no se negocia)
+## Instalar
 
-- **La cuenta es la única verdad.** Firebase (Realtime Database + Authentication con usuario y contraseña), el proyecto de siempre,
-  plan gratuito. Todo lo de la familia está ahí; cada app, en el sistema que sea, es una ventana a la cuenta. En el dispositivo solo
-  hay una caché para funcionar sin conexión (y lo que es de ese dispositivo: dónde está un archivo, la apariencia…).
-- **El contrato** es lo que hace que todas vean lo mismo:
-  - `nube/ESQUEMA.md`: toda la cuenta (colecciones campo a campo, imágenes, claves, lo de cada app).
-  - `nube/ESCRITOS.md`: lo que escribes (Cobalto; su propio formato, con mezcla a tres bandas).
-  - `nube/reglas.json`: las reglas del servidor. **Comprueban el contrato**: lo que no lo cumple (una hora de campo vieja, una imagen
-    que ya existe, escribir en las claves de otro…) se rechaza. Se ponen a mano en la consola de Firebase.
-- **Sin copias entre apps.** Un juego es uno (`juegos/<id>`), un libro es uno (`libros/<kid>`): Hiedra lo cambia, Azabache lo valora,
-  en el mismo nodo, cada una sus campos. Una versión de escritorio que guarde «su» copia de algo de otra app rompe esto.
+- **Mac (Apple Silicon)**: `Azabache-1.0.0-mac.dmg` (y las otras tres). Abre el .dmg y arrastra la app a Aplicaciones. No está firmada con
+  Apple (eso es de pago): la primera vez, **clic derecho → Abrir** (o Ajustes del Sistema → Privacidad y seguridad → «Abrir igualmente»).
+- **Linux**: `Azabache-1.0.0-linux.deb` (Ubuntu, Debian, Mint…: doble clic, o `sudo apt install ./Azabache-1.0.0-linux.deb`) o, en
+  cualquier otro, `Azabache-1.0.0-linux.tar.gz` (se descomprime y se abre `Azabache/bin/Azabache`).
+- **Entrar una vez**: entras en cualquiera de las cuatro y las otras tres de ese ordenador entran solas. La contraseña no se guarda: queda
+  la sesión, en el llavero del sistema (el Llavero del Mac; en Linux, el Secret Service —GNOME Keyring, KWallet— si hay `secret-tool`, y si
+  no, un archivo que solo lee tu usuario).
+- **Actualizarse**: cada app mira tu kDrive («Mi carpeta/versiones»: `<App>-<versión>-mac.dmg` / `-linux.deb`) y en Ajustes → Versión
+  la baja y la abre. Los actualizadores de Android solo cogen `<App>-<versión>.apk`: no se confunden.
 
-## Tecnología: Kotlin y Compose Multiplatform
+Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas en Linux contra el emulador de Firebase, los `.deb` y
+`.tar.gz` en Linux y los `.dmg` en un Mac de GitHub (Apple Silicon). Los artefactos de cada ejecución son los paquetes; se suben a tu
+kDrive con `herramientas/escritorio/subir-escritorio.py`.
 
-- **Compose Multiplatform 1.12** (escritorio: macOS 13 o más en arm64; Linux tipo Ubuntu 20.04 o más, x86-64 y arm64). JDK 17 o más
-  para empaquetar (`jpackage`); 11 o más para ejecutar. Ver la [tabla de compatibilidad](https://kotlinlang.org/docs/multiplatform/compose-compatibility-and-versioning.html).
-- **Kotlin 2.2.20**: el repositorio ya está en esa versión (Compose Multiplatform 1.12 pide al menos la 2.1.0 y recomienda la 2.2.20
-  para las plataformas que más cambian), con el compilador de
-  Compose como plugin (`org.jetbrains.kotlin.plugin.compose`), Gradle 8.14.3 y el plugin de Android 8.13.2 (el primero cuyo lint
-  entiende Kotlin 2.2). Un mismo build de Gradle: los módulos de escritorio van aquí.
-- Las apps de Android ya están hechas con Compose: mucha interfaz se puede llevar casi tal cual.
+## Qué hace cada una
 
-## Lo que ya sirve en escritorio
+- **Azabache**: tus fichas de la cuenta (los juegos y los libros son los nodos de Hiedra y Marfil, sin copia; tus categorías —películas,
+  series…—, el diario y las sagas en `azabache/<lista>~<id>`), con la misma lógica que `Cosas.kt` y `Propias.kt` del móvil. Portada,
+  colección, ficha (estado, nota y criterios, reseña, fechas, tiempo jugado o leído), añadir (SteamGridDB, Open Library, TMDB, TVmaze),
+  portadas (de un archivo, una dirección o internet), diario, sagas, cifras del año y ajustes (las claves de servicios de la cuenta y tus
+  categorías). Sin valorar nunca sale con un 0.
+- **Cobalto**: el núcleo de los escritos (formato, sincronización, mezcla a tres bandas), la estructura, el texto (Markdown ligero,
+  tipografía automática, deshacer), exportar e importar son **los mismos archivos** que compila Cobalto de Android (se copian de
+  `cobalto/src` al compilar; las pruebas de la mezcla y de la estructura, también). Portada (palabras de hoy, racha, últimos días, seguir
+  escribiendo), la obra con su índice (partes, capítulos, escenas) y el editor, fichas, notas, papelera, exportar (Word como libro o como
+  manuscrito, EPUB, Markdown, texto), copias de seguridad completas en el ordenador (cada 15 min y al cerrar; las últimas 40) y lo que se
+  publica para Azabache y Marfil (`obras/`, `capitulos/`, `palabras/`).
+- **Marfil**: tus libros de la cuenta y leerlos por donde ibas en el móvil. EPUB (leído como XML, sin reordenar: la posición que guarda es
+  el mismo EPUB CFI que guarda foliate en el móvil, y la del móvil se abre aquí en el mismo párrafo), PDF (Apache PDFBox) y cómics (CBZ).
+  Lo leído (`lectura/<kid>`), «Leyendo» y «Leído» con su fecha (las reglas del móvil), el tiempo de este ordenador, el reto del año, los
+  archivos por tu kDrive (`Marfil/Libros/…`: se suben al añadirlos y se bajan al abrirlos) y los capítulos terminados de Cobalto.
+- **Hiedra**: tus juegos de la cuenta (los mismos de Hiedra del móvil), los de Steam instalados en el ordenador (se abren con Steam: sus
+  horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Hiedra cuenta el tiempo hasta que los cierras, en
+  `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Hiedra del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil
+  (el protocolo `suite/` de Atrio del PC). Su presencia dice `tiempo: true`, y Hiedra del móvil (0.5.3) no vuelve a contar ese tiempo.
 
-- **`nucleo/`** (Kotlin puro, sin nada de Android): la cuenta entera. `Sesion` (entrar, renovar el pase), `Coleccion` (campo a
-  campo con la hora de cada campo), `Familia` (cola en disco, subida en lote, bajada por `u`, escucha en directo de los sellos,
-  imágenes por hash, claves de `/claves/<uid>`), `Fechas`, `Json`, `Red`/`RedJava`, `Disco`/`DiscoArchivos`. Se usa igual que en
-  Android: `Familia(Config(), RedJava(), DiscoArchivos(dir), discoSeguro)`. `Config()` trae ya el proyecto de siempre.
-- Sus pruebas van contra el **emulador oficial de Firebase** con las reglas de verdad: `herramientas/emulador.sh` y
-  `testFixtures(project(":nucleo"))` (el `Emulador`: crear cuentas, simular otro dispositivo, leer y escribir en crudo). Las pruebas de
-  escritorio deberían ir igual.
-- **`cobalto/…/EscribirMezcla.kt`** (la mezcla a tres bandas de los escritos) no usa nada de Android: se puede pasar a un módulo
-  común y usarla en los dos. `EscribirTexto.kt` y `EscribirEstructura.kt` casi igual. Los casos compartidos de `herramientas/casos/`
-  (`mezcla.json`, `estructura.json`, `tipografia.json`, `sinonimos.json`, `guia.json`) los tiene que pasar cualquier versión.
-- **Azabache**: cómo se ve un juego o un libro de la cuenta como ficha de Azabache, y cómo se escribe solo lo que cambias, está en
-  `azabache/…/Cosas.kt`; lo propio de Azabache (categorías, diario, sagas…), en `Propias.kt`. Son el modelo a seguir (o a pasar a un
-  módulo común).
+## Lo que todavía no hacen (para no engañar)
 
-## Lo que hay que hacer en escritorio (lo que en Android hace `familia/`)
+- **Azabache**: la vista de tu pareja, las recomendaciones, «Descubrir», las maquetas y las estadísticas más finas de Android.
+- **Cobalto**: el árbol de fichas, la línea temporal, la guía de la novela, los sprints, los sinónimos, el historial de versiones a la
+  vista (se guarda igual) y compartir con tu pareja.
+- **Marfil**: subrayados y notas nuevos (los del móvil se conservan en la cuenta; aquí no se pintan), los diccionarios y los ajustes del
+  lector que viajan (`settings`). Otros formatos (MOBI, FB2, TXT): en el móvil.
+- **Hiedra**: emuladores y ROMs, capturas y streaming para el móvil (`shot`, `stream` responden que todavía no).
+- Las letras de Google Fonts que se eligen en el móvil: aquí van las de la app (Atrio y Vitrina) en su lugar.
 
-| En Android (`familia/`) | En escritorio |
-|---|---|
-| `LaFamilia`: una cuenta por app, escuchar en directo mientras se ve, avisar a la interfaz de cada cambio | Igual, sin Android: una `Familia` por app; `escucha()` con la ventana a la vista y `deja()` al ocultarla; `Coleccion.alCambiar` → estado de Compose |
-| `DiscoCifrado` (el pase de la cuenta y las claves, cifrados con el almacén de claves de Android) | El llavero del sistema: Llavero (Keychain) en el Mac; Secret Service (libsecret) en Linux |
-| `Acceso` (entrar una vez: la contraseña pasa de una app a otra, solo entre apps con la firma de la familia) | Un solo elemento «familia» en el llavero del sistema, que leen las cuatro apps del mismo usuario |
-| `SubidaFamilia` (WorkManager: lo pendiente sube aunque la app esté cerrada) | Subir lo pendiente al cerrar la ventana y al abrir; la cola está en disco, no se pierde |
-| `PortadasFamilia` (reducir a 600×900 en JPEG 85; el hash, 40 hexadecimales del SHA-256 de los bytes) | Lo mismo con ImageIO o Skia. **El mismo hash**: una portada es la misma imagen en todas |
-| `Actualizador` (baja `<App>-<versión>.apk` de «Mi carpeta/versiones» en kDrive y la instala) | Por sistema. Los nombres de escritorio no pueden acabar en `.apk` (los actualizadores de Android solo cogen `^<App>-<versión>\.apk$`): p. ej. `Cobalto-1.0.0-mac.dmg`, `Cobalto-1.0.0-linux.AppImage` |
+## Por dentro
 
-- **Firmar en el Mac**: una app sin firmar y sin notarizar sale con aviso de Gatekeeper (se puede abrir igualmente, a mano). Firmarla y
-  notarizarla pide el programa de desarrolladores de Apple, que es de pago: díselo al dueño antes de contar con ello.
-- **kDrive**: la misma API de Infomaniak (HTTP); el token y el número del kDrive están en `/claves/<uid>` (`kdrive_token`, `kdrive_id`).
-  Las demás claves de servicios, también ahí (ver `ESQUEMA.md`).
+- `escritorio/familia`: lo común. La cuenta por app sobre el núcleo (`LaFamilia`: escucha en directo mientras la app está abierta y sube lo
+  pendiente al cerrar), el llavero (`Llavero`), lo delicado cifrado con una clave del llavero (`DiscoSeguro`), entrar una vez
+  (`Sesion.comparte()` / `adopta()` del núcleo: se comparte la sesión, nunca la contraseña), portadas con el mismo hash que en Android
+  (Skia: 600×900, JPEG 85), kDrive, el actualizador, la ventana (tamaño y sitio recordados) y el aspecto de revista (las paletas, las
+  formas y los componentes de Android; la apariencia de `ajustes/<app>`, la misma que la de la app en el móvil).
+- `escritorio/json`: el `org.json` de Android (AOSP, Apache 2.0), para que el núcleo de Cobalto se comporte igual en los dos.
+- Carpetas: en el Mac `~/Library/Application Support/Familia/<App>`; en Linux `~/.local/share/familia/<app>`.
+- Compilar sin el SDK de Android: `./gradlew -PsoloEscritorio test`, `… :escritorio:<app>:run`, `… packageDeb` (Linux, necesita `fakeroot`)
+  o `… packageDmg` (solo en un Mac).
+- Pruebas: contra el emulador oficial de Firebase con las reglas del repositorio (`herramientas/emulador.sh`); «el móvil» es otro
+  dispositivo de la cuenta escribiendo con el formato de Android. Capturas: `-Dcapturas=<carpeta>` en las de cada app.
 
-## Lo propio de cada app
+## Las reglas (no se negocian)
 
-- **Hiedra** (el lanzador de juegos del PC): `juegos/<id>` con sus lanzadores (`ln`); las horas de cada fuente en `tiempo/<id>~<fuente>`
-  (`fuente` = el dispositivo, `steam`, `pc:<pc>`…; lo de un juego es la suma). Hoy, «Tu PC» de Hiedra Android lee lo que publica
-  **Atrio del PC** en `suite/` (el PC en directo, su biblioteca, sus capturas, las órdenes). Si Hiedra de escritorio lo sustituye, o
-  publica lo mismo en `suite/`, o se acuerda un formato nuevo y se cambia Hiedra Android a la vez.
-- **Marfil**: `libros/<kid>` (`kid` = 20 hex del SHA-1 de `libro:<título>:<autor>` normalizados; Azabache usa la misma clave, ver la
-  prueba `laClaveDeUnLibroEsLaQueUsaAzabache`), `lectura/<kid>` (por dónde vas), `marcas/<kid>~<id>` (subrayados y notas), `tiempo/…`.
-  El archivo del libro está en kDrive (el campo `nube` del libro: `{f, n, s}`); dónde está en ese ordenador es solo de ese ordenador.
-- **Cobalto**: los escritos según `ESCRITOS.md` (los mismos documentos que hoy usan Cobalto Android y Atrio del PC: lo que escribes en
-  uno está en los otros). Para las demás apps publica `obras/`, `capitulos/` y `palabras/` (ver `ESQUEMA.md`).
-- **Azabache**: valora en el nodo de cada cosa (`nota`, `crit`, `resena`, `az`, `azid`); lo suyo, en `azabache/<lista>~<id>`.
+- **La cuenta es la única verdad**; el contrato es `nube/ESQUEMA.md`, `nube/ESCRITOS.md` y `nube/reglas.json`.
+- **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
+  campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-## Trabajar a la vez que Android
-
-- **El mismo repositorio** (`Gonvegato/Familia-Revista`), **tu propia rama** y **carpetas nuevas** (por ejemplo `escritorio/hiedra`,
-  `escritorio/marfil`…, y `escritorio/familia` para lo común de escritorio). No toques `hiedra/`, `marfil/`, `cobalto/`, `azabache/` ni
-  `familia/`: son las de Android y las lleva otra instancia.
-- **Lo compartido** (`nucleo/`, `nube/ESQUEMA.md`, `nube/ESCRITOS.md`, `nube/reglas.json`, `herramientas/casos/`) no se cambia sin
-  acordarlo. Si hace falta algo nuevo en la cuenta: **se añade** un campo o una colección (nunca se cambia lo que significa uno que
-  existe), se apunta en `ESQUEMA.md` y, si hace falta, en las reglas. Nunca `null` (un campo vacío es `""`, `0` o `false`).
-- **Probar contra el emulador**, con las reglas del repositorio, antes de dar nada por bueno. Y entre apps: lo que escribe la versión
-  de escritorio lo tiene que leer la de Android (las pruebas de Android usan el `Emulador` para hacer de «otro dispositivo»).
-
-## Cómo está hoy la cuenta
-
-- En colecciones campo a campo: `juegos`, `libros`, `lectura`, `marcas`, `tiempo`, `obras`, `capitulos`, `palabras`, `sagas`, `ajustes`,
-  `azabache`. Imágenes en `familia_img`, claves en `/claves/<uid>`.
-- Los escritos, en `escritos` y `escritosIdx` (`ESCRITOS.md`).
-- De Atrio del PC, mientras siga: `suite/` (lo del PC en directo).
-- Los nodos de antes de la familia (`hiedra/dev`, `marfil/dev`, `dev`, `stamps`…) siguen ahí, sin usarse: no los leas para nada nuevo.
-
-Versiones de Android a día de hoy: Hiedra 0.5.2, Marfil 0.13.3, Cobalto 0.3.1, Azabache 1.5.0.
+Versiones de Android a día de hoy: Hiedra 0.5.3, Marfil 0.13.4, Cobalto 0.3.2, Azabache 1.5.1. De escritorio: las cuatro 1.0.0.
