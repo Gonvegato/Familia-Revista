@@ -44,7 +44,9 @@ data class LiveDev(
     /** Minutos jugados hoy en ese PC. */
     val today: Int = 0,
     /** Su Steam (para jugar en streaming con Steam Link). */
-    val st: StreamHost? = null
+    val st: StreamHost? = null,
+    /** Cuenta él mismo el tiempo de lo que se juega en él (Hiedra del ordenador): el móvil no lo vuelve a contar. */
+    val cuentaTiempo: Boolean = false
 )
 
 /** Lo que se está jugando en un PC. */
@@ -191,7 +193,7 @@ object Suite {
                 d, o.optString("app"), o.optString("dn").ifBlank { o.optString("name", "?") }, o.optString("os"),
                 o.optBoolean("on") && now - o.optLong("at") < ONLINE_MS, o.optLong("at"),
                 g?.takeUnless { Negra.vetado(it.optString("name")) }?.let { LiveGame(it.optString("key"), it.optString("name"), it.optLong("sg"), it.optLong("s"), it.optString("cover"), it.optString("hero"), it.optString("logo")) },
-                o.optBoolean("shot", true), o.optInt("today", 0), o.optJSONObject("st")?.let { StreamHost.from(it) }
+                o.optBoolean("shot", true), o.optInt("today", 0), o.optJSONObject("st")?.let { StreamHost.from(it) }, o.optBoolean("tiempo", false)
             )
         }.sortedByDescending { it.at }.toList()
         val lib = t?.optJSONObject("lib") ?: JSONObject()
@@ -427,9 +429,11 @@ object JuegosPc {
                 estado = if (previo.estado == Estado.PENDIENTE && g.lastPlayed > 0 && ahora - g.lastPlayed < RECIENTE) Estado.JUGANDO else previo.estado)
             else -> previo.copy(portadaUrl = previo.portadaUrl.ifBlank { g.cover }, ultima = maxOf(previo.ultima, g.lastPlayed))
         }
-        // Las horas del PC son una fuente externa (lo que Atrio del PC cuenta): nunca se suman dos veces
+        // Las horas del PC son una fuente externa (lo que Atrio del PC cuenta): nunca se suman dos veces. Un PC que cuenta él mismo su
+        // tiempo (Hiedra del ordenador) ya lo tiene en la cuenta: no se toca
         val f = Fuentes.pc(dev)
-        val fin = if (ms > 0) n.copy(externas = n.externas + (f to n.externa(f).copy(ms = ms))) else n
+        val propio = Suite.devices.any { it.dev == dev && it.cuentaTiempo }
+        val fin = if (ms > 0 && !propio) n.copy(externas = n.externas + (f to n.externa(f).copy(ms = ms))) else n
         if (fin != previo) Biblioteca.poner(fin)
         return fin
     }
@@ -464,7 +468,7 @@ object JuegosPc {
             val g = d.game
             val previo = antes.firstOrNull { it.dev == d.dev }?.game
             if (g != null && d.online) enMarcha(g, d.dev, ahora)
-            if (previo != null && (g == null || g.key != previo.key || g.start != previo.start)) partidaTerminada(previo, ahora)
+            if (previo != null && !d.cuentaTiempo && (g == null || g.key != previo.key || g.start != previo.start)) partidaTerminada(previo, ahora)
         }
     }
 }

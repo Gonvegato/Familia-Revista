@@ -67,7 +67,8 @@ demás de la valoración (ver Azabache). Solo Azabache escribe esos campos; las 
 | `portada`, `pu`, `ez`/`eox`/`eoy` | La portada (hash), de dónde salió si fue de internet, y su encuadre |
 | `dh`, `de`, `dc` | Lo que suele durar (minutos): historia, con extras, al completo |
 
-Las horas, en `tiempo/<id>~<fuente>` (`fuente` = el dispositivo, `steam`, `pc:<pc>` o `carmesi:<dispositivo>`): `total` (ms),
+Las horas, en `tiempo/<id>~<fuente>` (`fuente` = el dispositivo —en el ordenador, `hiedra-linux-…` o `hiedra-mac-…`—, `steam`,
+`pc:<pc>` o `carmesi:<dispositivo>`): `total` (ms),
 `veces`, `menu`, `t` y `d<AAAA-MM-DD>` = ms. Lo de un juego es la **suma** de sus fuentes.
 
 ### `libros/<kid>` (Marfil)
@@ -150,6 +151,9 @@ copiar) y `ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros 
 ## Lo que se queda como estaba
 
 - Atrio del PC sigue con sus nodos (`suite/`: el PC en directo, sus órdenes, sus capturas y su biblioteca): «Tu PC» de Hiedra no cambia.
+  Hiedra del ordenador (Linux y Mac) habla el mismo protocolo (`suite/live/<dispositivo>` con `app: "atrio"` y `cliente: "hiedra"`,
+  `suite/lib/<dispositivo>`, `suite/cmd/<dispositivo>`) y añade `tiempo: true` en su presencia: ese PC cuenta él mismo lo que se juega en
+  él (en `tiempo/<juego>~<dispositivo>`), y el móvil no lo vuelve a contar.
 - El índice de las ROMs, partidas y estados de Hiedra en kDrive (`hiedra/nube/…`): son archivos de kDrive y su índice no ha cambiado.
 - Los nodos de antes (`hiedra/dev`, `marfil/dev`, `cobalto/dev`, `dev`, `stamps`, `tiempo`…) no se tocan ni se borran: la migración
   los lee una vez en cada dispositivo y quedan como copia.

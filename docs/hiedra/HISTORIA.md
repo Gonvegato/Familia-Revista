@@ -15,6 +15,12 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.5.3
+
+- **Hiedra del ordenador (Linux y Mac) sale en «Tu PC»** como un PC más: su biblioteca (Steam y tus programas), a qué juegas y abrir
+  un juego desde el móvil. Ese PC cuenta él mismo su tiempo (lo dice en su presencia, `tiempo: true`): el móvil ya no lo vuelve a apuntar,
+  así sus horas no salen dobles.
+
 ## 0.5.2
 
 - **Las fechas que llegaron de Atrio estaban en 1970.** Atrio guarda el día de empezar y de terminar como número de día, y al

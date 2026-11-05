@@ -202,6 +202,39 @@ object LaFamilia {
     /** Una clave de servicios de la cuenta («kdrive_token», «steamgriddb»…). */
     fun clave(nombre: String): String = runCatching { familia.clave(nombre) }.getOrDefault("")
 
+    private val redDirecta = RedJava()
+
+    /**
+     * Una petición a la base de datos con tu sesión, para lo que no son colecciones (los escritos de Cobalto, «Tu PC» de Hiedra…).
+     * Devuelve el texto, o null si no hay nada. Lanza un error si no hay conexión o la cuenta no deja.
+     */
+    fun db(metodo: String, ruta: String, cuerpo: String? = null, consulta: String = ""): String? {
+        val s = familia.sesion
+        fun pide(): Red.Respuesta = try { redDirecta.pedir(metodo, s.url(ruta, consulta.removePrefix("&"), conPase = true), cuerpo) } catch (e: Red.SinRed) { throw java.io.IOException(e.message) }
+        var r = pide()
+        if (r.codigo == 401 && !r.cuerpo.contains("Permission denied", true)) { s.paseCaducado(); r = pide() }
+        if (r.codigo == 401 || r.codigo == 403) throw java.io.IOException("La cuenta no deja hacer eso (reglas de la base de datos).")
+        if (r.codigo !in 200..299) throw java.io.IOException("La cuenta respondió ${r.codigo}.")
+        val t = r.cuerpo.trim()
+        return if (t.isEmpty() || t == "null") null else t
+    }
+
+    /** Escucha en directo un sitio de la cuenta (mientras [seguir]): cada cambio llama a [alCambiar]. Bloquea; se reintenta solo. */
+    fun escuchaRuta(ruta: () -> String, seguir: () -> Boolean, alCambiar: (String, String) -> Unit) {
+        var espera = 2_000L
+        while (seguir()) {
+            try {
+                if (!dentro) { Thread.sleep(5_000); continue }
+                redDirecta.escuchar(familia.sesion.url(ruta(), conPase = true), seguir) { ev, datos ->
+                    when (ev) { "put", "patch" -> { espera = 2_000L; alCambiar(ev, datos) }; "auth_revoked", "cancel" -> { familia.sesion.paseCaducado(); throw Red.SinRed(ev) } }
+                }
+            } catch (e: InterruptedException) { return } catch (e: Exception) { }
+            if (!seguir()) return
+            try { Thread.sleep(espera) } catch (e: InterruptedException) { return }
+            espera = (espera * 2).coerceAtMost(60_000L)
+        }
+    }
+
     /** ¿Hay red con la cuenta? (Para enseñar «sin conexión».) */
     fun sinRed(e: Throwable): Boolean = e is Red.SinRed || (e is Sesion.Error && e.sinRed)
 
