@@ -401,29 +401,44 @@ object Suite {
 }
 
 /**
- * Los juegos del PC dentro de Hiedra. La biblioteca del PC entera se ve en «Tu PC»; en Hiedra entran solos los que has jugado (con horas en el PC,
- * o que el PC esté ejecutando ahora) y los que ya tenías (una ficha de Atrio con el mismo nombre pasa a ser el juego del PC, con la clave antigua
- * como alias); el resto, cuando los añadas a mano. Las horas del PC cuentan como de un dispositivo más («pc:<PC>»), así no se suman dos veces.
+ * Los juegos del PC dentro de Hiedra. La biblioteca del PC entera se ve en «Tu PC»; en tus secciones solo entra solo lo que juegas en el PC
+ * (lo que está ejecutando ahora o lo jugado en los últimos [RECIENTE]), y siempre en «Jugando», nunca en «Pendiente». Un juego que ya tenías
+ * con el mismo nombre (una ficha de Atrio…) gana el lanzador del PC, con la clave antigua como alias. Lo que borraste no vuelve solo: sigue
+ * en la cuenta como borrado, con su lanzador. El resto, cuando lo añadas a mano desde «Tu PC». Las horas del PC cuentan como de un
+ * dispositivo más («pc:<PC>»), así no se suman dos veces.
  */
 object JuegosPc {
     /** Un juego jugado hace menos de esto se considera «jugando». */
     const val RECIENTE = 14L * 86_400_000L
 
+    private fun reciente(g: PcGame, ahora: Long) = g.lastPlayed > 0 && ahora - g.lastPlayed < RECIENTE
+
     private fun deLista(g: PcGame, dev: String, ahora: Long): Juego = Juego(
         Biblioteca.nuevoId(), g.name, portadaUrl = g.cover, plataforma = "PC", favorito = g.fav,
-        anadido = ahora, ultima = g.lastPlayed, estado = if (g.lastPlayed > 0 && ahora - g.lastPlayed < RECIENTE) Estado.JUGANDO else Estado.PENDIENTE,
+        anadido = ahora, ultima = g.lastPlayed, estado = if (reciente(g, ahora)) Estado.JUGANDO else Estado.PENDIENTE,
         lanzadores = listOf(Lanzador.pc(g.key, dev))
     )
 
-    /** ¿Este de la biblioteca del PC entra solo en Hiedra? Con horas, o si ya tenías un juego que se llama igual. */
-    fun entraSolo(g: PcGame): Boolean = g.minutes > 0 || Biblioteca.porTitulo(g.name) != null
+    /** ¿Ya está en Hiedra (por su clave o porque tienes uno que se llama igual)? */
+    private fun loTienes(g: PcGame) = Biblioteca.porClave("pc:" + g.key) != null || Biblioteca.porTitulo(g.name) != null
 
-    /** Mete (o actualiza) en Hiedra un juego de la biblioteca de un PC. Devuelve el juego de Hiedra. */
-    fun meter(g: PcGame, dev: String, ahora: Long = System.currentTimeMillis()): Juego {
+    /**
+     * ¿Este de la biblioteca del PC entra solo en Hiedra? Si ya lo tienes (entonces solo se actualiza), o si lo has jugado hace poco y no lo
+     * borraste. Tener horas de hace tiempo no basta: esos están en «Tu PC» y entran cuando los añades.
+     */
+    fun entraSolo(g: PcGame, ahora: Long = System.currentTimeMillis()): Boolean =
+        loTienes(g) || (reciente(g, ahora) && !Biblioteca.loBorraste("pc:" + g.key, g.name))
+
+    /**
+     * Mete (o actualiza) en Hiedra un juego de la biblioteca de un PC. Devuelve el juego de Hiedra. [aMano]: lo has añadido tú desde «Tu PC»;
+     * si lo habías borrado, vuelve el de antes (con su estado, su nota y sus horas) en vez de uno nuevo.
+     */
+    fun meter(g: PcGame, dev: String, ahora: Long = System.currentTimeMillis(), aMano: Boolean = false): Juego {
         val previo = Biblioteca.porClave("pc:" + g.key) ?: Biblioteca.porTitulo(g.name)
+            ?: if (aMano) Biblioteca.borradoCon("pc:" + g.key, g.name) else null
         val ms = g.minutes * 60_000L
         val n = when {
-            previo == null -> deLista(g, dev, ahora)
+            previo == null -> deLista(g, dev, ahora).let { if (aMano) it else it.conEstado(Estado.JUGANDO) }
             // Un juego que ya tenías (una ficha de Atrio, su ROM, su app…) gana el lanzador del PC
             previo.pc == null -> previo.conLanzador(Lanzador.pc(g.key, dev)).copy(portadaUrl = previo.portadaUrl.ifBlank { g.cover }, favorito = previo.favorito || g.fav, ultima = maxOf(previo.ultima, g.lastPlayed),
                 estado = if (previo.estado == Estado.PENDIENTE && g.lastPlayed > 0 && ahora - g.lastPlayed < RECIENTE) Estado.JUGANDO else previo.estado)
@@ -434,14 +449,29 @@ object JuegosPc {
         val f = Fuentes.pc(dev)
         val propio = Suite.devices.any { it.dev == dev && it.cuentaTiempo }
         val fin = if (ms > 0 && !propio) n.copy(externas = n.externas + (f to n.externa(f).copy(ms = ms))) else n
-        if (fin != previo) Biblioteca.poner(fin)
+        if (fin != previo || Biblioteca.por(fin.id) == null) Biblioteca.poner(fin)
         return fin
+    }
+
+    /**
+     * Los juegos del PC que están en «Pendiente» tal como entraron, sin que los hayas tocado (lo que hacía Hiedra hasta la 0.5.3 con todo lo
+     * que tenía horas en el PC, o uno que añadiste y no has cambiado): solo con el lanzador del PC, sin horas de tus móviles, sin nota ni
+     * reseña y fuera de cualquier saga. Para quitarlos de una vez (siguen en «Tu PC»).
+     */
+    fun entraronSolos(): List<Juego> {
+        val enSagas = Sagas.lista.flatMap { it.juegos }.toSet()
+        return Biblioteca.juegos.filter { j ->
+            j.estado == Estado.PENDIENTE && j.lanzadores.size == 1 && j.pc != null && j.otrasClaves.isEmpty() && j.propias.vacias && j.ajenas.isEmpty() &&
+                j.id !in enSagas && Biblioteca.valoracion(j.id).let { (nota, resena) -> nota == 0 && resena.isBlank() } && Biblioteca.sinTocar(j.id)
+        }
     }
 
     /** Lo que el PC está ejecutando ahora: entra (si no estaba) y pasa a «Jugando». */
     fun enMarcha(g: LiveGame, dev: String, ahora: Long = System.currentTimeMillis()): Juego? {
         if (g.key.isBlank() || g.name.isBlank()) return null
         val lib = Suite.libs[dev]?.firstOrNull { it.key == g.key } ?: PcGame(g.key, g.name, g.cover, g.sg, false, ahora, "", 0)
+        // Lo que borraste no vuelve solo, ni aunque lo estés jugando (se añade a mano desde «Tu PC»)
+        if (!loTienes(lib) && Biblioteca.loBorraste("pc:" + g.key, g.name)) return null
         val j = meter(lib, dev, ahora)
         if (j.estado == Estado.PENDIENTE || j.estado == Estado.ABANDONADO) Biblioteca.poner(j.conEstado(Estado.JUGANDO).copy(ultima = ahora))
         return Biblioteca.por(j.id)
@@ -461,7 +491,7 @@ object JuegosPc {
     fun aplicar(c: Context, v: Suite.Vista, antes: List<LiveDev>, ahora: Long = System.currentTimeMillis()) {
         if (!Biblioteca.cargada) Biblioteca.cargar(c)
         for ((dev, lista) in v.libs) for (g in lista) {
-            if (Biblioteca.porClave("pc:" + g.key) != null || entraSolo(g)) meter(g, dev, ahora)
+            if (entraSolo(g, ahora)) meter(g, dev, ahora)
         }
         for (d in v.devices) {
             if (d.app != "atrio") continue

@@ -402,9 +402,45 @@ object Biblioteca {
 
     fun quitar(id: String) {
         por(id)?.let { j -> j.lanzadores.forEach { if (it.tipo == TipoLanzador.ROM) Archivos.quitar(it.clave) } }
-        if (congelada || col == null) { juegos.removeAll { it.id == id }; col?.borra(id); return }
+        if (congelada || col == null) { por(id)?.let { borradosSinCuenta += it }; juegos.removeAll { it.id == id }; col?.borra(id); return }
         col?.borra(id)
         refresca()
+    }
+
+    /** (Sin la cuenta debajo, en las pruebas: lo que se ha borrado.) */
+    private val borradosSinCuenta = mutableListOf<Juego>()
+    fun olvidaBorradosParaPruebas() { borradosSinCuenta.clear() }
+
+    private fun clavesDe(n: com.gonzalo.familia.nucleo.Nodo): List<String> =
+        n.lista("ln").mapNotNull { (it as? Map<*, *>)?.let { m -> Lanzador.deJson(JSONObject(m))?.clave } } + n.lista("k").map { it.toString() }
+
+    /**
+     * El último juego que borraste con esta clave (o con este nombre), tal como estaba: un juego borrado sigue en la cuenta como borrado,
+     * con sus datos. Sirve para que lo que entra solo (lo del PC) no vuelva después de borrarlo, y para recuperarlo si lo añades a mano.
+     */
+    fun borradoCon(clave: String, titulo: String = ""): Juego? {
+        val n = Catalogo.norm(titulo)
+        fun esEse(claves: List<String>, t: String) = clave in claves || (n.isNotEmpty() && Catalogo.norm(t) == n)
+        val cc = col ?: return borradosSinCuenta.lastOrNull { esEse(it.claves, it.titulo) }
+        val nodo = cc.todos().values.filter { it.borrado && it.texto("t").isNotBlank() && esEse(clavesDe(it), it.texto("t")) }
+            .maxByOrNull { it.entero(com.gonzalo.familia.nucleo.Nodo.B) } ?: return null
+        return deNodo(nodo, tiempo?.vivos()?.filter { it.texto("ref") == nodo.ref }.orEmpty())
+    }
+
+    /** ¿Borraste un juego con esta clave (o con este nombre)? */
+    fun loBorraste(clave: String, titulo: String = ""): Boolean = borradoCon(clave, titulo) != null
+
+    /**
+     * ¿Está este juego tal como entró, sin que nadie lo haya tocado? Ni su estado, ni su nombre, ni su portada, ni la nota o la reseña de
+     * Azabache, ni nada de lo que se elige a mano ha cambiado después de añadirlo (lo que se actualiza solo —las horas del PC, la última
+     * vez, la portada de internet— no cuenta).
+     */
+    fun sinTocar(id: String): Boolean {
+        val cc = col ?: return por(id) != null
+        val n = cc.nodo(id)?.takeIf { !it.borrado } ?: return false
+        val alta = n.m["an"] ?: return false
+        return listOf("estado", "fav", "t", "pl", "fin", "ez", "eox", "eoy", "dh", "de", "dc", "k", "portada", "nota", "resena")
+            .all { (n.m[it] ?: 0L) <= alta + 5_000L }
     }
     fun por(id: String): Juego? = juegos.firstOrNull { it.id == id }
 

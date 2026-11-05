@@ -253,7 +253,7 @@ fun HojaJuegoPc(dev: String, g: PcGame, alCerrar: () -> Unit, alAbrir: (Juego) -
                 Spacer(Modifier.height(14.dp))
                 Filete(1.dp, Line)
                 if (enHiedra != null) MagLink("Ver su ficha en Hiedra", "Está en ${enHiedra.estado.nombre}") { alCerrar(); alAbrir(enHiedra) }
-                else MagLink("Añadir a Hiedra", "Para llevar su estado y verlo en tus secciones") { alCerrar(); alAbrir(JuegosPc.meter(g, dev)) }
+                else MagLink("Añadir a Hiedra", "Para llevar su estado y verlo en tus secciones") { alCerrar(); alAbrir(JuegosPc.meter(g, dev, aMano = true)) }
             }
         },
         confirmButton = {}, dismissButton = { BotonDialogo("Cerrar") { alCerrar() } }
@@ -271,6 +271,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
     var confirmar by remember { mutableStateOf<Pair<String, String>?>(null) }
     var busca by rememberSaveable { mutableStateOf("") }
     var hoja by remember { mutableStateOf<Pair<String, PcGame>?>(null) }
+    var limpiar by remember { mutableStateOf(false) }
     val pc = Suite.target()
     val dev = pc?.dev ?: Suite.pcElegido.ifBlank { Suite.libs.keys.firstOrNull() }.orEmpty()
     fun act(op: String, args: JSONObject = JSONObject()) { scope.launch { val (_, m) = Suite.send(op, args, pc?.dev, if (op == "power") 25_000 else 45_000); Lanzar.aviso(ctx, m) } }
@@ -324,6 +325,12 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                         .sortedWith(compareByDescending<PcGame> { it.fav }.thenByDescending { it.lastPlayed }.thenBy { Catalogo.norm(it.name) })
                     Column(Modifier.fillMaxSize()) {
                         CampoBusquedaRevista(busca, "Buscar en la biblioteca del PC") { busca = it }
+                        // Los que entraron solos en «Pendiente» (hasta la 0.5.3) y no has tocado: se quitan de una vez
+                        val solos = JuegosPc.entraronSolos()
+                        if (solos.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("${solos.size} en Pendiente entraron solos y no los has tocado".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f))
+                            EnlaceRevista("Quitarlos →", acento = true) { limpiar = true }
+                        }
                         if (lib.isEmpty()) Text(if (Suite.libs.isEmpty()) "Abre Atrio en el PC con tu cuenta para ver aquí su biblioteca." else "Nada con ese nombre.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp))
                         LazyVerticalGrid(GridCells.Adaptive(96.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                             items(lib, key = { it.key }) { g ->
@@ -397,6 +404,24 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
         }
     }
     hoja?.let { (d, g) -> HojaJuegoPc(d, g, alCerrar = { hoja = null }, alAbrir = alAbrir) }
+    if (limpiar) {
+        val solos = JuegosPc.entraronSolos()
+        AlertDialog(
+            onDismissRequest = { limpiar = false }, containerColor = Paper, shape = esquina(4.dp),
+            title = { Text("¿Quitar ${solos.size} de Hiedra?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
+                    Cuerpo("Son juegos del PC que están en Pendiente tal como entraron: nadie les ha cambiado el estado, el nombre, la portada ni la nota. " +
+                        "Se quitan de Hiedra y de Azabache, en todos tus dispositivos. Siguen aquí, en la biblioteca del PC, y puedes volver a añadirlos cuando quieras. " +
+                        "Lo que quites ya no vuelve solo.")
+                    Spacer(Modifier.height(10.dp))
+                    solos.sortedBy { Catalogo.norm(it.titulo) }.forEach { Text("· " + it.titulo, color = Charcoal, fontFamily = Body, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                }
+            },
+            confirmButton = { BotonDialogo("Quitar", true) { limpiar = false; solos.forEach { Biblioteca.quitar(it.id) }; Lanzar.aviso(ctx, "Quitados de Hiedra: ${solos.size}") } },
+            dismissButton = { BotonDialogo("Cancelar") { limpiar = false } }
+        )
+    }
     confirmar?.let { c ->
         AlertDialog(
             onDismissRequest = { confirmar = null }, containerColor = Paper, shape = esquina(4.dp),

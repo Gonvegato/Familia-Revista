@@ -15,6 +15,18 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.5.4
+
+- **Los juegos del PC ya no se meten solos en «Pendiente».** Hasta ahora, todo lo que tenía horas en la biblioteca del PC entraba solo en
+  Hiedra (y en Azabache), y si no lo habías jugado en dos semanas iba a «Pendiente»; al borrarlo, el PC volvía a mandar su biblioteca y
+  se creaba otra vez, con otro id. Ahora en tus secciones solo entra solo lo que juegas en el PC (lo que está ejecutando o lo jugado en
+  los últimos 14 días), y en «Jugando». Lo demás está en «Tu PC» y entra cuando lo añades («Añadir a Hiedra»).
+- **Lo que borras no vuelve solo**: un juego borrado sigue en la cuenta como borrado, con su lanzador del PC, y Hiedra lo mira antes de
+  meter nada (ni aunque lo estés jugando). Si lo añades a mano desde «Tu PC», vuelve el de antes (el mismo juego, con su estado y su nota).
+- **«Tu PC» → Biblioteca → «Quitarlos»**: los que entraron solos en «Pendiente» y nadie ha tocado (ni estado, ni nombre, ni portada, ni
+  nota en Azabache; solo con el lanzador del PC y fuera de sagas) se quitan de una vez, con la lista delante antes de confirmar. Siguen
+  en la biblioteca del PC.
+
 ## 0.5.3
 
 - **Hiedra del ordenador (Linux y Mac) sale en «Tu PC»** como un PC más: su biblioteca (Steam y tus programas), a qué juegas y abrir

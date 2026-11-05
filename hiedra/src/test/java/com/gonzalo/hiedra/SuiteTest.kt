@@ -22,7 +22,7 @@ class SuiteTest {
         .put("lib", JSONObject().put("pc1", JSONObject().put("name", "torre").put("games", JSONArray().also { a -> lib.forEach { a.put(it) } })))
     private fun g(k: String, n: String, m: Int = 0, lp: Long = 0, c: String = "https://x/$k.jpg") = JSONObject().put("k", k).put("n", n).put("m", m).put("lp", lp).put("c", c)
     private fun live(k: String, n: String, s: Long) = JSONObject().put("key", k).put("name", n).put("s", s).put("sg", 7L)
-    private fun limpia() { Biblioteca.juegos.clear(); Biblioteca.borrados.clear(); Biblioteca.cargada = true; Archivos.limpiarParaPruebas() }
+    private fun limpia() { Biblioteca.juegos.clear(); Biblioteca.borrados.clear(); Biblioteca.olvidaBorradosParaPruebas(); Biblioteca.cargada = true; Archivos.limpiarParaPruebas() }
 
     @Test fun leeDispositivosBibliotecaYSteam() {
         val v = Suite.leer(arbol(game = live("steam:1", "Hades", 900_000L), lib = listOf(g("steam:1", "Hades", 1500, 950_000L), g("epic:2", "Alan Wake"))), "yo", now = 1_000_000L)
@@ -58,6 +58,47 @@ class SuiteTest {
         assertEquals(2, Biblioteca.juegos.size); assertNull(Biblioteca.porClave("pc:steam:3"))
         JuegosPc.aplicar(ctx, v, emptyList(), ahora)
         assertEquals("repetir no duplica ni suma dos veces", 2, Biblioteca.juegos.size); assertEquals(1500 * 60_000L, Biblioteca.porClave("pc:steam:1")!!.msJugados)
+        limpia()
+    }
+
+    /** Lo que pasaba hasta la 0.5.3: todo lo que tenía horas en el PC entraba solo en «Pendiente», y al borrarlo volvía. */
+    @Test fun loDeHaceTiempoNoEntraSoloYLoBorradoNoVuelve() {
+        limpia()
+        val ahora = 10_000_000_000L
+        val v = Suite.leer(arbol(lib = listOf(g("steam:5", "Elden Ring", 5000, ahora - 40 * 86_400_000L), g("steam:1", "Hades", 1500, ahora - 3600_000L))), "yo", now = ahora)
+        JuegosPc.aplicar(ctx, v, emptyList(), ahora)
+        assertNull("con horas de hace tiempo no entra solo (está en Tu PC)", Biblioteca.porClave("pc:steam:5"))
+        val hades = Biblioteca.porClave("pc:steam:1")!!
+        assertEquals("lo jugado hace poco entra, y en Jugando", Estado.JUGANDO, hades.estado)
+        assertTrue(Biblioteca.juegos.none { it.estado == Estado.PENDIENTE })
+        // Lo borras: no vuelve, ni cuando el PC vuelve a publicar su biblioteca ni aunque lo estés jugando
+        Biblioteca.quitar(hades.id)
+        JuegosPc.aplicar(ctx, v, emptyList(), ahora + 1000)
+        assertNull(Biblioteca.porClave("pc:steam:1"))
+        val jugando = Suite.leer(arbol(game = live("steam:1", "Hades", ahora), at = ahora, lib = listOf(g("steam:1", "Hades", 1500, ahora))), "yo", now = ahora + 2000)
+        JuegosPc.aplicar(ctx, jugando, emptyList(), ahora + 2000)
+        assertNull("ni aunque lo estés jugando", Biblioteca.porClave("pc:steam:1"))
+        assertTrue(Biblioteca.juegos.isEmpty())
+        // A mano desde Tu PC: vuelve el de antes (el mismo juego, no uno nuevo)
+        val otraVez = JuegosPc.meter(v.libs["pc1"]!!.first { it.key == "steam:1" }, "pc1", ahora + 3000, aMano = true)
+        assertEquals(hades.id, otraVez.id); assertEquals(hades.id, Biblioteca.porClave("pc:steam:1")?.id)
+        // Uno de hace tiempo añadido a mano va a Pendiente (lo eliges tú)
+        assertEquals(Estado.PENDIENTE, JuegosPc.meter(v.libs["pc1"]!!.first { it.key == "steam:5" }, "pc1", ahora, aMano = true).estado)
+        limpia()
+    }
+
+    @Test fun losQueEntraronSolosSeVenParaQuitarlosDeUnaVez() {
+        limpia()
+        fun pc(t: String, k: String, e: Estado = Estado.PENDIENTE, propias: Horas = Horas(), claves: List<String> = emptyList()) =
+            Juego(Biblioteca.nuevoId(), t, plataforma = "PC", estado = e, anadido = 1, lanzadores = listOf(Lanzador.pc(k, "pc1")), propias = propias, otrasClaves = claves)
+        Biblioteca.juegos.addAll(listOf(
+            pc("Elden Ring", "steam:5"),
+            pc("Hades", "steam:1", e = Estado.JUGANDO),
+            pc("Celeste", "steam:2", propias = Horas(60_000L, 1)),
+            pc("Hollow Knight", "steam:3", claves = listOf("juego:hollow knight")),
+            nuevoJuego("Tetris", "GB").copy(estado = Estado.PENDIENTE),
+        ))
+        assertEquals(listOf("Elden Ring"), JuegosPc.entraronSolos().map { it.titulo })
         limpia()
     }
 

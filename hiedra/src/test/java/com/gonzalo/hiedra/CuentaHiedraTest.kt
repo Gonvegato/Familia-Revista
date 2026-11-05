@@ -72,6 +72,40 @@ class CuentaHiedraTest {
         assertEquals(null, NotaAzabache.de(NotaAzabache.cargar(ctx), k))
     }
 
+    /**
+     * Lo del PC con la cuenta de verdad: los que entraron solos en Pendiente (Hiedra 0.5.3) y nadie ha tocado se distinguen de los que sí;
+     * al quitarlos quedan borrados en la cuenta y no vuelven solos (ni jugándolos), y añadido a mano vuelve el mismo juego.
+     */
+    @Test fun loDelPcBorradoNoVuelveYLosQueEntraronSolosSeDistinguen() {
+        val ahora = System.currentTimeMillis()
+        val antiguo = ahora - 40 * 86_400_000L
+        val elden = JuegosPc.meter(PcGame("steam:5", "Elden Ring", "", 0, false, antiguo, "", 5000), "pc1", ahora, aMano = true)
+        val celeste = JuegosPc.meter(PcGame("steam:6", "Celeste", "", 0, false, antiguo, "", 600), "pc1", ahora, aMano = true)
+        assertEquals(Estado.PENDIENTE, elden.estado)
+        sincroniza()
+        Thread.sleep(5_500)
+        // Celeste la tocas en otro dispositivo (la marcas como favorita): ya no es de los que entraron solos
+        otro.coleccion("juegos").cambia(celeste.id, mapOf("fav" to true))
+        sincroniza()
+        espera("llega el cambio de fuera") { Biblioteca.por(celeste.id)?.favorito == true }
+        assertEquals(listOf("Elden Ring"), JuegosPc.entraronSolos().map { it.titulo })
+        // Los quitas: quedan borrados en la cuenta (también para el otro dispositivo)
+        JuegosPc.entraronSolos().forEach { Biblioteca.quitar(it.id) }
+        sincroniza()
+        assertTrue(otro.coleccion("juegos").nodo(elden.id)!!.borrado)
+        assertTrue(Biblioteca.loBorraste("pc:steam:5"))
+        // No vuelve solo: ni jugado hace poco ni mientras el PC lo ejecuta
+        val reciente = PcGame("steam:5", "Elden Ring", "", 0, false, ahora - 3_600_000L, "", 5100)
+        assertTrue(!JuegosPc.entraSolo(reciente, ahora))
+        assertEquals(null, JuegosPc.enMarcha(LiveGame("steam:5", "Elden Ring", 0, ahora - 60_000L, "", "", ""), "pc1", ahora))
+        assertEquals(null, Biblioteca.porClave("pc:steam:5"))
+        // Añadido a mano desde Tu PC: vuelve el mismo juego (el mismo id en la cuenta), ya sin borrar
+        val otraVez = JuegosPc.meter(reciente, "pc1", ahora, aMano = true)
+        assertEquals(elden.id, otraVez.id)
+        sincroniza()
+        espera("el otro dispositivo lo ve otra vez") { otro.coleccion("juegos").nodo(elden.id)?.borrado == false }
+    }
+
     @Test fun lasHorasDeCadaMovilSeSuman() {
         val (j, _) = Biblioteca.anadirLanzador("Zelda", Lanzador.rom("gba", "Zelda"), "GBA")
         val hoy = java.time.LocalDate.now().toString()
