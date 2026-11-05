@@ -13,3 +13,6 @@ firma/*.keystore
 firma/*.jks
 firma/*.properties
 firma/*.lineage
+database-debug.log
+firebase-debug.log
+*-debug.log

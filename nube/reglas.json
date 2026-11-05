@@ -1,0 +1,44 @@
+{
+  "rules": {
+    "config": {
+      ".read": true,
+      "webKey": { ".write": "auth != null && !data.exists()" }
+    },
+    "usernames": {
+      "$name": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.val() === auth.uid"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || data.child('partner').val() === auth.uid)",
+        ".write": "auth != null && auth.uid === $uid",
+        "familia": {
+          "$col": {
+            ".indexOn": ["u"],
+            "$ref": {
+              "m": {
+                "$c": { ".validate": "newData.isNumber() && (!data.exists() || newData.val() >= data.val())" }
+              },
+              "u": { ".validate": "newData.isNumber()" },
+              "$campo": {
+                ".validate": "newData.parent().child('m').child($campo).isNumber() && (!data.parent().child('m').child($campo).exists() || newData.parent().child('m').child($campo).val() > data.parent().child('m').child($campo).val())"
+              }
+            }
+          }
+        },
+        "familia_img": {
+          "$h": { ".validate": "!data.exists() && newData.hasChildren(['d', 't'])" }
+        }
+      }
+    },
+    "claves": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "couples": { ".read": true, ".write": true }
+  }
+}

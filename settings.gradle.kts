@@ -8,4 +8,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Familia"
 // Las cuatro apps de la familia, cada una con su paquete de siempre (se instalan encima de las que ya tienes)
+include(":nucleo")
 include(":hiedra", ":marfil", ":cobalto", ":azabache")
