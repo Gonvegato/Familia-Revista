@@ -56,6 +56,9 @@ jobs:
           test -f /tmp/prueba/config/autostart/familia-hiedra.desktop
       - uses: actions/upload-artifact@v4
         with: { name: escritorio-linux, path: dist/, retention-days: 30 }
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: pruebas-linux, path: '**/build/test-results/test/*.xml', retention-days: 14 }
       - if: failure()
         uses: actions/upload-artifact@v4
         with: { name: informes-linux, path: '**/build/reports/tests/', retention-days: 7 }
@@ -122,6 +125,9 @@ jobs:
           ls -la dist
       - uses: actions/upload-artifact@v4
         with: { name: escritorio-mac, path: dist/, retention-days: 30 }
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: pruebas-mac, path: '**/build/test-results/test/*.xml', retention-days: 14 }
       - if: failure()
         uses: actions/upload-artifact@v4
         with: { name: informes-mac, path: '**/build/reports/tests/', retention-days: 7 }
