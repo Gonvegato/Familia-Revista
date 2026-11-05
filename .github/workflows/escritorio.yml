@@ -88,7 +88,9 @@ jobs:
           mkdir -p capturas-mac
           export FAMILIA_DIR="$RUNNER_TEMP/familia"
           for d in escritorio/*/; do
-            a=$(basename "$d"); [ "$a" = familia ] && continue
+            a=$(basename "$d")
+            # Solo las apps (familia y json son bibliotecas: no tienen paquete)
+            grep -q nativeDistributions "$d/build.gradle.kts" || continue
             A="$(echo ${a:0:1} | tr '[:lower:]' '[:upper:]')${a:1}"
             b="$d/build/compose/binaries/main/app/$A.app/Contents/MacOS/$A"
             [ -x "$b" ] || { echo "No está $b"; exit 1; }
