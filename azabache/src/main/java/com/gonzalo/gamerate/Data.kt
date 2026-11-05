@@ -428,7 +428,8 @@ class Store(ctx: Context) {
     private val app = ctx.applicationContext
     /** El de la app (para lo que se guarda fuera de estas preferencias). */
     val contexto: Context get() = app
-    private val p = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE)
+    /** Las preferencias de Azabache: lo que es de la cuenta (tus listas: categorías, diario, sagas…), de la cuenta ([PrefsCuenta]). */
+    private val p: android.content.SharedPreferences = PrefsCuenta(ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE), ctx.applicationContext)
 
     var key: String
         get() = p.getString("key", "") ?: ""
@@ -1026,6 +1027,8 @@ class Store(ctx: Context) {
 
     private fun mergeRemoteYa(data: String): Boolean {
         val r = JSONObject(data)
+        // Lo propio que ya está en la cuenta (categorías, diario, sagas…) no se mezcla: se lee de ella
+        val propiasEnCuenta = Propias.activa(app)
         val before = syncData()
         // Borrados de los dos lados.
         val t = tombs
@@ -1033,7 +1036,7 @@ class Store(ctx: Context) {
         rt.keys().forEach { k -> if (rt.optLong(k, 0L) > t.optLong(k, 0L)) t.put(k, rt.optLong(k)) }
         // Categorías: las de los dos; si hay la misma en ambos, la versión que cambió más tarde.
         val lk = kinds
-        val rk = kindsFromJson(r.optJSONArray("kinds") ?: JSONArray())
+        val rk = if (propiasEnCuenta) emptyList() else kindsFromJson(r.optJSONArray("kinds") ?: JSONArray())
         val remoteNewer = r.optLong("kindsAt", 0L) > kindsAt
         val ids = (lk.map { it.id } + rk.map { it.id }).distinct().filter { !t.has("kind:$it") }
         val mk = ids.mapNotNull { id ->
@@ -1046,6 +1049,7 @@ class Store(ctx: Context) {
         val deLaCuenta = Cosas.activa(app)
         for (n in names) {
             if (deLaCuenta && n in Cosas.LISTAS) continue
+            if (propiasEnCuenta && Propias.es(n)) continue
             val loc = try { JSONArray(p.getString(n, "[]") ?: "[]") } catch (e: Exception) { JSONArray() }
             val rem = r.optJSONArray(n) ?: JSONArray()
             val byId = LinkedHashMap<Long, JSONObject>()
@@ -1066,7 +1070,7 @@ class Store(ctx: Context) {
             }
             ed.putString(n, out.toString())
         }
-        ed.putString("kinds", JSONArray().apply { mk.forEach { put(kindToJson(it)) } }.toString())
+        if (!propiasEnCuenta) ed.putString("kinds", JSONArray().apply { mk.forEach { put(kindToJson(it)) } }.toString())
         ed.putLong("kindsat", maxOf(kindsAt, r.optLong("kindsAt", 0L)))
         ed.putString("tombs", t.toString())
         // Recomendaciones y reacciones: se juntan; nada se pierde.

@@ -22,7 +22,7 @@ cuatro llevan la misma firma y se actualizan solas.
 
 1. **Las reglas nuevas de Firebase**: copia `nube/reglas.json` (también en Azabache → Ajustes → Cuenta → «Reglas de Firebase») y
    pégalas en la consola de Firebase → Realtime Database → Reglas → Publicar. Sin ellas, las claves no se pueden guardar en la cuenta.
-2. **Instala las cuatro versiones nuevas a mano** (Hiedra 0.5.2, Marfil 0.13.3, Cobalto 0.3.1, Azabache 1.4.0), encima de las que
+2. **Instala las cuatro versiones nuevas a mano** (Hiedra 0.5.2, Marfil 0.13.3, Cobalto 0.3.1, Azabache 1.5.0), encima de las que
    tienes: no hace falta desinstalar nada. Están en tu kDrive, en «Mi carpeta/familia-a-mano» (siempre la última). El actualizador de
    antes no las acepta porque la firma es nueva; las que ya llevan la firma de la familia se actualizan solas desde «versiones». Un
    dispositivo que aún tenga las apps de antes (la tablet) las ve en «versiones», las baja y las rechaza cada 4 horas hasta que las
@@ -36,6 +36,8 @@ cuatro llevan la misma firma y se actualizan solas.
   con las reglas de verdad (`herramientas/emulador.sh`).
 - `familia/`: lo común de Android (la cuenta en cada app, entrar una vez, los trabajos de fondo, las portadas).
 - `hiedra/`, `marfil/`, `cobalto/`, `azabache/`: las apps.
-- `nube/`: las reglas (`reglas.json`) y el esquema de la cuenta (`ESQUEMA.md`).
-- `docs/<app>/`: el historial de cada app (`HISTORIA.md`) y sus capturas; `docs/RECONSTRUCCION.md`: cómo se hizo y qué falta.
+- `nube/`: las reglas (`reglas.json`), el esquema de la cuenta (`ESQUEMA.md`) y el de los escritos (`ESCRITOS.md`): el contrato que
+  cumple cualquier app de la familia, en el sistema que sea.
+- `docs/<app>/`: el historial de cada app (`HISTORIA.md`) y sus capturas; `docs/RECONSTRUCCION.md`: cómo se hizo y qué falta;
+  `docs/ESCRITORIO.md`: para hacer las versiones de Linux y Mac.
 - `firma/`: las claves de firma (no están en el repositorio); `herramientas/firmar.py` firma cada versión con la de la familia.

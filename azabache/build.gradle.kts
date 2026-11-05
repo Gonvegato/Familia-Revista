@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("io.github.takahirom.roborazzi")
 }
 val firmaProps = Properties().apply { rootProject.file("firma/claves.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) } }
@@ -15,8 +16,8 @@ android {
         applicationId = "com.gonzalo.gamerate"
         minSdk = 29
         targetSdk = 35
-        versionCode = 222
-        versionName = "1.4.0"
+        versionCode = 223
+        versionName = "1.5.0"
         // El traductor del lector trae código nativo por procesador: móviles de 64 bits (arm64) y el emulador de pruebas (x86_64)
         // (-Pabis=arm64-v8a genera la del móvil sola, más ligera)
         ndk { abiFilters += ((project.findProperty("abis") as String?)?.split(",") ?: listOf("arm64-v8a", "x86_64")) }
@@ -48,12 +49,10 @@ android {
         }
     }
     buildFeatures { compose = true }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -107,3 +106,5 @@ dependencies {
     testImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }

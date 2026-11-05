@@ -9,6 +9,13 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.5.0 — todo de la cuenta
+
+- **Lo tuyo de Azabache también es de la cuenta, sin copia**: tus categorías y sus fichas (películas, series, las tuyas), el diario,
+  las sagas, las maquetas, la lista negra, lo de tu nube y lo leído se leen y se escriben directamente en la cuenta, elemento a
+  elemento (como ya se subían). Ya no hay una copia en el móvil que se mezcle con la de la cuenta. En el móvil se queda solo lo que
+  es de este móvil (la apariencia, los avisos…).
+
 ## 1.4.0 — sin copias
 
 - **Tus juegos y tus libros son los de la cuenta, sin copia.** Azabache ya no guarda los suyos aparte ni los «refleja» de Hiedra y

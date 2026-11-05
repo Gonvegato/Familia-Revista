@@ -316,6 +316,7 @@ object AzabacheNube {
                     if (n == null || (!n.borrado && (n.m["o"] ?: 0L) < hora)) col().pon(ref, mapOf("b" to hora), hora)
                 } }
                 k in Cosas.LISTAS && Cosas.activa(c) -> {}
+                Propias.es(k) && Propias.activa(c) -> {}   // (ya se escribe en la cuenta, elemento a elemento)
                 v is JSONArray && esLista(v) -> for (i in 0 until v.length()) {
                     val e = v.getJSONObject(i)
                     if (CuentaHermanas.esReflejo(c, k, e.optLong("id"))) { CuentaHermanas.subeReflejo(c, k, e); continue }

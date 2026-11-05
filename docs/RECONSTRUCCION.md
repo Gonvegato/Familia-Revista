@@ -41,6 +41,10 @@ Azabache pequeña, y Hiedra/Azabache/Cobalto preparadas para pasar al PC más ad
 - [x] Firma con rotación (`herramientas/firmar.py`), comprobada con `apksigner verify` y `apksigner lineage`
 - [x] Versiones Hiedra 0.5.0, Marfil 0.13.1, Cobalto 0.3.0, Azabache 1.3.0 (la 0.13.0 de Marfil había perdido la subida sola de los
       libros a kDrive: la 0.13.1 la devuelve, con una prueba de extremo a extremo)
+- [x] Azabache 1.5.0: lo propio (categorías, diario, sagas, maquetas, lista negra…) también se lee y se escribe en la cuenta, sin
+      copia (`Propias.kt`). Los escritos de Cobalto ya estaban en la cuenta; su contrato, ahora en `nube/ESCRITOS.md`.
+- [x] Kotlin 2.2.20 en todo el repositorio (para compartir el núcleo con Compose Multiplatform) y el plugin de Android 8.13.2 (con el
+      8.5.2, el lint no entendía Kotlin 2.2). Traspaso: `docs/ESCRITORIO.md`.
 - [x] Azabache 1.4.0: sin copias. Sus juegos y libros son los nodos de la cuenta, leídos tal cual (`Cosas.kt`); escribe solo lo que
       cambias (la diferencia entre la lista que tenías y la nueva); lo que solo estaba en Azabache pasó a la cuenta común.
 - [x] Hiedra 0.5.2 y Marfil 0.13.3: las fechas traídas de Atrio (número de día tomado por milisegundos: 1970) se corrigen.

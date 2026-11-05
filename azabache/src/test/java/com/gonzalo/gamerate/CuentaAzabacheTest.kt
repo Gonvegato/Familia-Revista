@@ -34,6 +34,7 @@ class CuentaAzabacheTest {
         LaFamilia.reiniciaParaPruebas()
         LaFamilia.configPruebas = Emulador.cfg
         Cosas.olvidaParaPruebas(); Cosas.migrarEnElMomento = true
+        Propias.olvidaParaPruebas(); Propias.migrarEnElMomento = true
         LaFamilia.inicia(ctx)
         store = Store(ctx)
         runBlocking { Account.signIn(store, "gonzalo", "secreto1") }
@@ -157,6 +158,26 @@ class CuentaAzabacheTest {
         assertEquals("terminado", libro(kidX).texto("estado")); assertFalse("cambiar de lista no lo borra", libro(kidX).borrado); assertEquals(80L, libro(kidX).entero("nota"))
         assertTrue("quitarlo sí", otra.coleccion("libros").todos()[kidY]!!.borrado)
         assertTrue(store.load(BOOKS.id).any { it.name == "Dune" }); assertTrue(store.loadPlays(BOOKS.id).none { it.name == "Hyperion" })
+    }
+
+    @Test fun loPropioDeAzabacheEsDeLaCuentaSinCopia() {
+        sincroniza()
+        assertTrue(Propias.activa(ctx))
+        // Un apunte del diario: va a la cuenta, él solo (sin pasar por una copia de aquí)
+        store.saveDiario(listOf(Nota(11L, java.time.LocalDate.now().toEpochDay(), "Hoy, Dune")))
+        assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otra.sincroniza().ok)
+        assertTrue(otra.coleccion("azabache").nodo("diario~11")!!.texto("o").contains("Hoy, Dune"))
+        // Una saga que creas en tu otro Azabache: aquí se lee de la cuenta, sin mezclar nada
+        otra.coleccion("azabache").pon("sagas~99", mapOf("o" to sagaToJson(Saga(99L, "Dune", emptyList(), kind = BOOKS.id, updated = 5L)).toString(), "b" to 0L))
+        assertTrue(otra.sincroniza().ok); assertTrue(LaFamilia.sincronizaYa().ok)
+        assertTrue("llega sola", store.loadSagas().any { it.id == 99L && it.name == "Dune" })
+        // Borrar el apunte lo borra de la cuenta
+        store.saveDiario(emptyList())
+        assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otra.sincroniza().ok)
+        assertTrue(otra.coleccion("azabache").todos()["diario~11"]!!.borrado)
+        assertTrue(store.loadDiario().isEmpty())
+        // Lo de este móvil (la apariencia) no va a la cuenta por aquí
+        assertTrue(otra.coleccion("azabache").todos().keys.none { it.startsWith("skin") })
     }
 
     @Test fun laPortadaQuePonesEnHiedraLlegaSolaAAzabache() {

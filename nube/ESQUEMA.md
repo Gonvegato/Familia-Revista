@@ -108,7 +108,8 @@ dispositivo escribe solo los suyos: para saber lo de un día se **suman** los de
 ### `obras/<obra>`, `capitulos/<obra>~<capítulo>` y `palabras/<dispositivo>` (Cobalto)
 
 Lo que escribes vive en los documentos de Escribir (`/users/<uid>/escritos`, `escritosIdx`), los mismos que Atrio del PC, con su
-mezcla a tres bandas: no cambian. Para las demás apps, Cobalto publica:
+mezcla a tres bandas (para que un texto escrito a la vez en dos sitios no se pierda): su contrato está en **`ESCRITOS.md`**. Para las
+demás apps, Cobalto publica:
 
 - `obras/<obra>`: `t`, `a`, `estado` (`en_curso` / `pausa` / `terminado` / `archivada`), `palabras`, `ul`. Es la ficha que valora
   Azabache (nota y reseña en el mismo nodo).
