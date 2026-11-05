@@ -49,10 +49,14 @@ class HermanasTest {
         val zg = e2.games.first { it.name == "Zelda" }
         assertTrue(Hermanas.sinValorar(zg)); assertFalse(Hermanas.sinValorar(hades)); assertTrue(e2.plays.none { it.name == "Zelda" })
         assertEquals("la ficha conserva su id", customItemId("Zelda"), zg.id)
-        // Si la valoras y Hiedra dice que la rejuegas, la nota manda: no vuelve a en curso
+        // Si la valoras y Hiedra dice que la rejuegas, manda Hiedra: vuelve a estar en curso (la nota se queda en el juego de la cuenta)
         val valorada = e2.games.map { if (it.id == zg.id) it.copy(general = 80, gfx = 80, story = 80, music = 80, gameplay = 80) else it }
         val e3 = Hermanas.reflejarJuegos(Hermanas.juegosDe(mapOf("A" to blobH(juegoH("j1", "Zelda", "JUGANDO", mod = 400)))), valorada, e2.plays, enl, ahora = 4_000)
-        assertEquals(80, e3.games.first { it.name == "Zelda" }.general); assertTrue(e3.plays.none { it.name == "Zelda" })
+        assertTrue(e3.games.none { it.name == "Zelda" }); assertEquals(1, e3.plays.single { it.name == "Zelda" }.status)
+        // Y al pasarla otra vez, vuelve con la nota de la cuenta
+        val e4 = Hermanas.reflejarJuegos(Hermanas.juegosDe(mapOf("A" to blobH(juegoH("j1", "Zelda", "PASADO", mod = 500, fi = 1_700_200_000_000L)))), e3.games, e3.plays, enl, ahora = 5_000,
+            valores = mapOf("j1" to Hermanas.Valor(80, listOf(80, 80, 80, 80), "")))
+        assertEquals(80, e4.games.single { it.name == "Zelda" }.general)
     }
 
     @Test fun laPortadaDeLaHermanaNoPisaLaQueCambiasTu() {

@@ -186,7 +186,9 @@ fun EditScreen(
             },
             chips = {
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (!isNew) Row(Modifier.clip(pillShape()).background(ColGeneral).padding(horizontal = 12.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (!isNew && Hermanas.sinValorar(g)) Row(Modifier.clip(pillShape()).background(Muted).padding(horizontal = 12.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Sin valorar", color = Paper, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    } else if (!isNew) Row(Modifier.clip(pillShape()).background(ColGeneral).padding(horizontal = 12.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("${g.general}", color = Paper, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         Text(" / 100", color = Paper.copy(alpha = 0.75f), fontSize = 11.sp)
                     }

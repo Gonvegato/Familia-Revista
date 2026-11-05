@@ -270,7 +270,14 @@ fun InfoChip(text: String, icon: ImageVector? = null, onImage: Boolean = false, 
 
 /** Nota pequeña en una esquina de portada. */
 @Composable
-fun ScoreBadge(value: Int, color: Color = ColGeneral, modifier: Modifier = Modifier) {
+fun ScoreBadge(value: Int, color: Color = ColGeneral, modifier: Modifier = Modifier, sinValorar: Boolean = false) {
+    if (sinValorar) {
+        // Terminado pero aún sin nota: nunca un 0
+        Box(modifier.clip(pillShape()).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 8.dp, vertical = 4.dp), contentAlignment = Alignment.Center) {
+            Text("SIN VALORAR", color = Color.White, fontWeight = FontWeight.Black, fontSize = 9.sp, letterSpacing = 0.8.sp)
+        }
+        return
+    }
     Box(
         modifier.clip(pillShape()).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 8.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center

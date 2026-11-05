@@ -37,6 +37,8 @@ object SincroP {
             ajustes().alCambiar { refs -> if ("marfil" in refs) aplicaAjustes() }
             aplicaAjustes()
         }
+        // Los Escritos de Cobalto se rehacen solos al cambiar sus capítulos en la cuenta
+        runCatching { Escritos.escucha(c) }
         // La primera vez con la cuenta en este móvil: lo de antes pasa a la cuenta
         Migracion.siHaceFalta(c)
     }

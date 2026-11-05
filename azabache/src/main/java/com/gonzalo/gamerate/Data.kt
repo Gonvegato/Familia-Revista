@@ -771,7 +771,8 @@ class Store(ctx: Context) {
     }
 
     /** Hay sesión iniciada en tu cuenta de Ronrón: tus datos se guardan en la nube y se mezclan entre dispositivos. */
-    val paired: Boolean get() = dbUrl.isNotBlank() && accUid.isNotBlank()
+    /** Hay cuenta (la de la familia: si has entrado en cualquiera de las cuatro apps, aquí también). */
+    val paired: Boolean get() = accUid.isNotBlank() && runCatching { com.gonzalo.familia.LaFamilia.familia.sesion.dentro }.getOrDefault(false)
 
     // ---- Cuenta de Ronrón (usuario y contraseña, con Firebase Authentication) ----
     /** Clave web del proyecto de Firebase (es pública: identifica el proyecto, no da acceso por sí sola). */

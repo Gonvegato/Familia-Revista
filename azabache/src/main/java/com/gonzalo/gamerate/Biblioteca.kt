@@ -188,7 +188,7 @@ fun LibraryScreen(
                         progress = c.play?.percent()?.let { it / 100f },
                         dim = segment == 3,
                         badge = when {
-                            c.game != null -> ({ ScoreBadge(c.game.general, ColGeneral) })
+                            c.game != null -> ({ ScoreBadge(c.game.general, ColGeneral, sinValorar = Hermanas.sinValorar(c.game)) })
                             c.sagaScore != null -> ({ ScoreBadge(c.sagaScore, ColGeneral) })
                             else -> null
                         },
@@ -334,7 +334,8 @@ private fun RevistaLibrary(l: LibUi) {
                 }
                 if (c.game != null || c.sagaScore != null) {
                     Spacer(Modifier.width(12.dp))
-                    Text("${c.game?.general ?: c.sagaScore}", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
+                    if (c.game != null && Hermanas.sinValorar(c.game)) Text("Sin valorar", color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 16.sp)
+                    else Text("${c.game?.general ?: c.sagaScore}", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
                 }
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(Line))

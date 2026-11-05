@@ -48,7 +48,7 @@ class EscribirCasosTest {
     }
 
     @Test fun sinonimos() {
-        val n = Sinonimos.cargaTexto(String(File(raiz(), "app/src/main/assets/sinonimos/th_es_v2.dat").readBytes(), Charsets.ISO_8859_1))
+        val n = Sinonimos.cargaTexto(String(File("src/main/assets/sinonimos/th_es_v2.dat").readBytes(), Charsets.ISO_8859_1))
         assertTrue("el tesauro tiene más de 20.000 palabras ($n)", n > 20_000)
         val a = JSONObject(File(raiz(), "herramientas/casos/sinonimos.json").readText()).getJSONArray("casos")
         for (i in 0 until a.length()) {

@@ -61,8 +61,8 @@ class Familia(
     }
 
     private fun guardaCola() {
-        val texto = synchronized(cerrojoCola) { Json.escribe(cola.map { it.aMapa() }) }
-        disco.escribeTexto(COLA, texto)
+        // (bajo el mismo cerrojo: lo que queda en disco es siempre la cola de la última vez, nunca una más vieja)
+        synchronized(cerrojoCola) { disco.escribeTexto(COLA, Json.escribe(cola.map { it.aMapa() })) }
     }
 
     /** Lo que se está enviando ahora mismo (no se le puede juntar nada). */

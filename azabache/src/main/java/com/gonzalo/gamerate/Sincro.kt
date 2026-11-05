@@ -56,9 +56,15 @@ object Sincro {
         private set
 
     @Volatile private var observando = false
+    @Volatile private var oyendoFamilia = false
 
     fun init(ctx: Context) {
         val a = ctx.applicationContext
+        // La cuenta de la familia (una para las cuatro apps): si ya has entrado en otra, Azabache entra sola
+        com.gonzalo.familia.LaFamilia.inicia(a)
+        // Lo que llega a la cuenta (de otro dispositivo o de una hermana) se mezcla aquí al momento
+        if (!oyendoFamilia) { oyendoFamilia = true; listOf("azabache", "juegos", "libros", "tiempo", "marcas", "palabras", "capitulos", "ajustes", "obras").forEach { n -> com.gonzalo.familia.LaFamilia.coleccion(n).alCambiar { bajaPronto() } } }
+        runCatching { Store(a).let { st -> if (st.accUid != com.gonzalo.familia.LaFamilia.familia.sesion.uid) Account.adoptaSesion(st) } }
         if (app === a) return
         synchronized(this) {
             if (app === a) return
@@ -194,18 +200,9 @@ object Sincro {
         if (escuchas.isNotEmpty() && escuchaDe == de) return
         para()
         escuchaDe = de
-        val yo = st.accDevice
-        // Las horas de subida de tus dispositivos: en cuanto otro sube algo, se baja (lo mío propio no)
-        escuchas += FbStream("cuenta", { f -> url(st, "/users/$uid/stamps", f) }, { _, path ->
-            if (path.trim('/') != yo) bajaPronto()
-        })
-        // Las hermanas: en cuanto Hiedra, Marfil o Cobalto suben algo, se refleja aquí
-        for (app in listOf("hiedra", "marfil", "cobalto")) escuchas += FbStream("hermana-$app", { f -> url(st, "/users/$uid/$app/stamps", f) }, { _, _ -> Hermanas.pronto(c, ya = true, solo = app) })
-        // Marfil sella lo leído de cada libro aparte («lstamps»): así el Diario tiene los minutos de hoy en cuanto cierras el libro
-        escuchas += FbStream("hermana-marfil-lec", { f -> url(st, "/users/$uid/marfil/lstamps", f) }, { _, _ -> Hermanas.pronto(c, ya = true, solo = "marfil-lec") })
-        // Tu pareja: lo que valora, lee o escribe aparece al momento (si te deja verlo)
-        // (si aún no te deja verlo, Firebase dice «sin permiso»: no es cosa de tu sesión, así que no se renueva por eso)
-        if (pareja.isNotBlank()) escuchas += FbStream("pareja", { _ -> url(st, "/users/$pareja/stamps", false) }, { _, _ -> parejaPronto() })
+        // Lo tuyo (tus otros dispositivos y las hermanas) lo escucha la cuenta de la familia; aquí, lo de tu pareja: lo que valora,
+        // lee o escribe aparece al momento (si te deja verlo; si aún no, Firebase dice «sin permiso» y no es cosa de tu sesión)
+        if (pareja.isNotBlank()) escuchas += FbStream("pareja", { _ -> url(st, "/users/$pareja/familia_sello", false) }, { _, _ -> parejaPronto() })
         escuchas.forEach { it.start(scope) }
     }
 

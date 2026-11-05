@@ -167,6 +167,20 @@ object MagLayouts {
 
     /** Casillas nuevas de esta versión (p. ej. «subrayados»): a las maquetas ya guardadas se les añade una vez,
      *  en su propia fila detrás de [after]; si luego la quitas, no vuelve. */
+    /** La portada, pequeña y en la primera fila junto a otra casilla (nunca una fila entera para ella sola). */
+    fun portadaPequena(ctx: Context, key: String, rows: List<MagRowSpec>): List<MagRowSpec> {
+        if (rows.isEmpty()) return rows
+        var out = rows.toMutableList()
+        val sola = out.indexOfFirst { r -> r.cells.size == 1 && r.cells[0].type == "portada" }
+        if (sola >= 0) out.removeAt(sola)
+        if (out.none { r -> r.cells.any { it.type == "portada" } }) {
+            val i = out.indexOfFirst { it.cells.size == 1 }
+            if (i >= 0) out[i] = out[i].copy(cells = out[i].cells + MagCell("portada")) else out.add(0, MagRowSpec(listOf(MagCell("portada"))))
+        }
+        if (out != rows) save(ctx, key, out)
+        return out
+    }
+
     fun withNew(ctx: Context, key: String, rows: List<MagRowSpec>, mod: String, after: String, primera: Boolean = false): List<MagRowSpec> {
         val flag = "nuevo:$mod:$key"
         val p = prefs(ctx)
@@ -228,8 +242,9 @@ fun MagPage(
             if ("donde" in defs) r = MagLayouts.withNew(ctx, key, r, "donde", "critica")
             // (Atrio 6.64: «En tu diario», detrás de los apuntes o de la opinión, la primera vez que hay algo escrito)
             if ("diario" in defs) r = MagLayouts.withNew(ctx, key, r, "diario", if (r.any { row -> row.cells.any { it.type == "apuntes" } }) "apuntes" else "opinion")
-            // (Azabache 1.2: la portada, la misma que en Hiedra y Marfil, como primera fila; si ya la pusiste tú, no se repite)
-            if ("portada" in defs) r = MagLayouts.withNew(ctx, key, r, "portada", "", primera = true)
+            // La portada va pequeña, al lado de la nota o del estado (Azabache 1.2 la ponía como primera fila a todo lo ancho, enorme:
+            // esa fila se quita de las maquetas guardadas y la portada pasa a la primera fila, junto a lo que ya hubiera)
+            if ("portada" in defs) r = MagLayouts.portadaPequena(ctx, key, r)
             r
         } ?: defaults)
     }

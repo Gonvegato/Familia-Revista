@@ -150,10 +150,34 @@ object Escritos {
     fun obras(c: Context): List<Obra> = obrasDe(prefs(c).getString("lectura", null)?.let { runCatching { JSONObject(it) }.getOrNull() })
     fun ultimaVez(c: Context) = prefs(c).getLong("ultima", 0L)
 
-    /** Lee lo que Cobalto ha publicado en tu cuenta. Bloqueante (red). Devuelve si ha cambiado algo. */
+    /** Los capítulos que Cobalto ha puesto en la cuenta (`capitulos/<obra>~<capítulo>`), con la forma de siempre: obra → capítulo → datos. */
+    fun deCuenta(): JSONObject {
+        val o = JSONObject()
+        runCatching { com.gonzalo.familia.LaFamilia.coleccion("capitulos").vivos() }.getOrDefault(emptyList()).forEach { n ->
+            val obra = n.texto("ref").ifBlank { n.ref.substringBefore('~') }
+            val cap = n.ref.substringAfter('~')
+            val x = JSONObject().put("t", n.texto("t")).put("a", n.texto("a")).put("c", n.texto("c")).put("n", n.entero("n")).put("pa", n.texto("pa"))
+                .put("u", n.entero("u")).put("p", n.entero("p")).put("x", n.texto("x"))
+            (o.optJSONObject(obra) ?: JSONObject().also { o.put(obra, it) }).put(cap, x)
+        }
+        return o
+    }
+
+    @Volatile private var escuchando: Any? = null
+    /** Al cambiar los capítulos en la cuenta (Cobalto publica uno), los Escritos se rehacen solos. */
+    fun escucha(c: Context) {
+        val f = runCatching { com.gonzalo.familia.LaFamilia.familia }.getOrNull() ?: return
+        if (escuchando === f) return
+        escuchando = f
+        val app = c.applicationContext
+        com.gonzalo.familia.LaFamilia.coleccion("capitulos").alCambiar { kotlin.concurrent.thread { runCatching { refrescar(app) } } }
+    }
+
+    /** Lee lo que Cobalto ha publicado en tu cuenta. Devuelve si ha cambiado algo. */
     fun refrescar(c: Context): Boolean {
         if (!Cuenta.vinculada) return false
-        val raw = runCatching { Cuenta.db("GET", "/users/${Cuenta.uid}/cobalto/lectura", null) }.getOrNull() ?: "{}"
+        escucha(c)
+        val raw = deCuenta().toString()
         val antes = prefs(c).getString("lectura", "")
         prefs(c).edit().putString("lectura", raw).putLong("ultima", System.currentTimeMillis()).apply()
         val cambio = antes != raw

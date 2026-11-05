@@ -162,6 +162,18 @@ object Hermanas {
     /** Las fichas de una categoría tras reflejar lo de una hermana. */
     class Espejo(val games: List<Game>, val plays: List<Play>, val cambio: Boolean)
 
+    /**
+     * La valoración de una cosa tal como está en la cuenta, en su propio nodo (`juegos/<id>`, `libros/<kid>`): la pone Azabache y la
+     * leen todas. [nota] 0 = sin valorar. [crit]: los cuatro criterios.
+     */
+    class Valor(val nota: Int, val crit: List<Int>, val resena: String) {
+        fun en(g: Game): Game = g.copy(general = nota, gfx = crit.getOrElse(0) { g.gfx }, story = crit.getOrElse(1) { g.story }, music = crit.getOrElse(2) { g.music }, gameplay = crit.getOrElse(3) { g.gameplay }, review = resena)
+    }
+
+    /** De una ficha en curso a valorada (o al revés), conservando lo de Azabache. */
+    private fun aPlay(g: Game, status: Int): Play = Play(g.id, g.name, g.cover, g.hero, status, emptyList(), start = g.start, end = if (status == 2) g.end else 0L, creator = g.creator,
+        platform = g.platform, pages = g.pages, minutes = g.minutes, updated = g.updated, ttbMain = g.ttbMain, ttbExtra = g.ttbExtra, ttbFull = g.ttbFull, ttbSrc = g.ttbSrc, logo = g.logo)
+
     /** ¿Una ficha reflejada a la que aún no has puesto nota? */
     fun sinValorar(g: Game) = g.general == 0 && g.gfx == 0 && g.story == 0 && g.music == 0 && g.gameplay == 0
 
@@ -173,7 +185,7 @@ object Hermanas {
      * las casillas nunca se tocan; lo que Hiedra manda (nombre, plataforma, estado, horas, duraciones, fechas, favorito) sí. Una ficha ya
      * valorada no vuelve a «en curso» aunque Hiedra diga que estás jugando (la nota es tuya).
      */
-    fun reflejarJuegos(juegos: List<JuegoH>, games: List<Game>, plays: List<Play>, enlaces: MutableMap<String, Long>, portada: (JuegoH) -> String = { it.portadaUrl }, puestas: MutableMap<String, String> = HashMap(), ahora: Long = System.currentTimeMillis()): Espejo {
+    fun reflejarJuegos(juegos: List<JuegoH>, games: List<Game>, plays: List<Play>, enlaces: MutableMap<String, Long>, portada: (JuegoH) -> String = { it.portadaUrl }, puestas: MutableMap<String, String> = HashMap(), ahora: Long = System.currentTimeMillis(), valores: Map<String, Valor> = emptyMap()): Espejo {
         val gs = ArrayList(games); val ps = ArrayList(plays)
         var cambio = false
         fun busca(j: JuegoH): Long? {
@@ -196,6 +208,7 @@ object Hermanas {
                     val n = g.copy(name = j.titulo, platform = j.plataforma.ifBlank { g.platform }, fav = j.favorito || g.fav, minutes = maxOf(g.minutes, (j.ms / 60_000L).toInt()),
                         ttbMain = if (j.dh > 0) j.dh else g.ttbMain, ttbExtra = if (j.de > 0) j.de else g.ttbExtra, ttbFull = if (j.dc > 0) j.dc else g.ttbFull,
                         end = if (fin > 0) fin else g.end, start = if (g.start > 0) g.start else diaDe(j.anadido), cover = if (cover.isNotBlank() && (g.cover.isBlank() || g.cover == puestas[j.id])) cover else g.cover)
+                        .let { x -> valores[j.id]?.en(x) ?: x }
                     if (n != g) { gs[gi] = n.copy(updated = ahora); cambio = true }
                 } else {
                     // Estaba en curso (o no estaba): pasa a valorados; si tenía apuntes con nota, su media
@@ -204,11 +217,14 @@ object Hermanas {
                     gs += Game(id, j.titulo, cover, b?.general ?: 0, b?.gfx ?: 0, b?.story ?: 0, b?.music ?: 0, b?.gameplay ?: 0, "", hero = p?.hero.orEmpty(),
                         start = p?.start?.takeIf { it > 0 } ?: diaDe(j.anadido), end = fin, creator = p?.creator.orEmpty(), fav = j.favorito, platform = j.plataforma,
                         minutes = maxOf(p?.minutes ?: 0, (j.ms / 60_000L).toInt()), updated = ahora, ttbMain = j.dh, ttbExtra = j.de, ttbFull = j.dc, logo = p?.logo.orEmpty())
+                        .let { x -> valores[j.id]?.en(x) ?: x }
                     cambio = true
                 }
             } else {
-                if (gi >= 0) continue     // (valorada aquí: la nota manda)
                 val status = when (j.estado) { "JUGANDO" -> 1; "ABANDONADO" -> 2; else -> 0 }
+                // Lo que dice Hiedra manda: si vuelves a jugarlo (o lo dejas pendiente), está en curso; su nota se queda en el juego de la cuenta
+                if (gi >= 0) { val g = gs.removeAt(gi); if (pi < 0) ps += aPlay(g, status).copy(updated = ahora); cambio = true }
+                val pi = ps.indexOfFirst { it.id == id }
                 if (pi >= 0) {
                     val p = ps[pi]
                     val n = p.copy(name = j.titulo, status = status, platform = j.plataforma.ifBlank { p.platform }, minutes = maxOf(p.minutes, (j.ms / 60_000L).toInt()),
@@ -230,7 +246,7 @@ object Hermanas {
     }
 
     /** Refleja los libros de Marfil en las listas de libros (misma lógica que los juegos; «leído» = valorado, con la última fecha en que lo terminaste). */
-    fun reflejarLibros(libros: List<LibroM>, games: List<Game>, plays: List<Play>, enlaces: MutableMap<String, Long>, portada: (LibroM) -> String = { "" }, puestas: MutableMap<String, String> = HashMap(), ahora: Long = System.currentTimeMillis()): Espejo {
+    fun reflejarLibros(libros: List<LibroM>, games: List<Game>, plays: List<Play>, enlaces: MutableMap<String, Long>, portada: (LibroM) -> String = { "" }, puestas: MutableMap<String, String> = HashMap(), ahora: Long = System.currentTimeMillis(), valores: Map<String, Valor> = emptyMap()): Espejo {
         val gs = ArrayList(games); val ps = ArrayList(plays)
         var cambio = false
         for (l in libros) {
@@ -245,6 +261,7 @@ object Hermanas {
                     val g = gs[gi]
                     val x = g.copy(name = l.titulo, creator = l.autor.ifBlank { g.creator }, fav = l.favorito || g.fav, pages = if (l.paginas > 0) l.paginas else g.pages, minutes = maxOf(g.minutes, (l.ms / 60_000L).toInt()),
                         end = if (fin > 0) fin else g.end, start = if (g.start > 0) g.start else diaDe(l.anadido), cover = if (cover.isNotBlank() && (g.cover.isBlank() || g.cover == puestas[l.clave])) cover else g.cover)
+                        .let { y -> valores[l.clave]?.en(y) ?: y }
                     if (x != g) { gs[gi] = x.copy(updated = ahora); cambio = true }
                 } else {
                     val p = if (pi >= 0) ps.removeAt(pi) else null
@@ -252,11 +269,14 @@ object Hermanas {
                     gs += Game(id, l.titulo, cover.ifBlank { p?.cover.orEmpty() }, b?.general ?: 0, b?.gfx ?: 0, b?.story ?: 0, b?.music ?: 0, b?.gameplay ?: 0, "", hero = p?.hero.orEmpty(),
                         start = p?.start?.takeIf { it > 0 } ?: diaDe(l.anadido), end = fin, creator = l.autor.ifBlank { p?.creator.orEmpty() }, fav = l.favorito, pages = if (l.paginas > 0) l.paginas else (p?.pages ?: 0),
                         minutes = maxOf(p?.minutes ?: 0, (l.ms / 60_000L).toInt()), updated = ahora)
+                        .let { y -> valores[l.clave]?.en(y) ?: y }
                     cambio = true
                 }
             } else {
-                if (gi >= 0) continue
-                val status = if (l.estado == "LEYENDO") 1 else 0
+                val status = when (l.estado) { "LEYENDO" -> 1; "ABANDONADO" -> 2; else -> 0 }
+                // Lo que dice Marfil manda: si lo estás leyendo (o relees), está en curso; su nota se queda en el libro de la cuenta
+                if (gi >= 0) { val g = gs.removeAt(gi); if (pi < 0) ps += aPlay(g, status).copy(updated = ahora); cambio = true }
+                val pi = ps.indexOfFirst { it.id == id }
                 if (pi >= 0) {
                     val p = ps[pi]
                     val x = p.copy(name = l.titulo, status = status, creator = l.autor.ifBlank { p.creator }, pages = if (l.paginas > 0) l.paginas else p.pages, minutes = maxOf(p.minutes, (l.ms / 60_000L).toInt()),
@@ -348,6 +368,9 @@ object Hermanas {
     // ================================================================ lo guardado en este móvil
 
     private fun guarda(c: Context, k: String, v: String) = prefs(c).edit().putString(k, v).apply()
+    /** (Lo usa [CuentaHermanas] para dejar lo de las hermanas donde lo leen el Diario y los widgets.) */
+    fun guardaPublico(c: Context, k: String, v: String) { if (prefs(c).getString(k, null) != v) guarda(c, k, v) }
+    fun guardaEnlacesPublico(c: Context, app: String, m: Map<String, Long>) = guardaEnlaces(c, app, m)
     private fun lee(c: Context, k: String): JSONObject? = prefs(c).getString(k, null)?.let { runCatching { JSONObject(it) }.getOrNull() }
 
     /** id de Hiedra → id de la ficha de aquí (y clave de Marfil → id). */
@@ -472,64 +495,13 @@ object Hermanas {
      * Mira lo que han subido las hermanas y lo refleja (como mucho cada 5 minutos, o ya con [ya]). Bloqueante (red). Devuelve si ha cambiado algo.
      * Los errores de red se tragan: se vuelve a intentar la próxima vez.
      */
-    fun refrescar(c: Context, store: Store, ya: Boolean = false, solo: Set<String>? = null): Boolean {
+    /** Lo de las hermanas, de la cuenta de la familia (ver [CuentaHermanas]). Devuelve si ha cambiado algo. */
+    fun refrescar(c: Context, store: Store, @Suppress("UNUSED_PARAMETER") ya: Boolean = false, @Suppress("UNUSED_PARAMETER") solo: Set<String>? = null): Boolean {
         if (!store.paired) return false
-        val ahora = System.currentTimeMillis()
-        if (!ya && ahora - (mirado["x"] ?: 0L) < 5 * 60_000L) return false
-        if (solo == null) mirado["x"] = ahora
-        fun toca(app: String) = solo == null || app in solo
-        var cambio = false
-        val uid = store.accUid
-        fun nodo(path: String): JSONObject? = runCatching { Account.db(store, "GET", "/users/$uid/$path", null)?.let { JSONObject(it) } }.getOrNull()
-        // Hiedra
-        if (toca("hiedra")) runCatching {
-            val b = blobs(store, "hiedra")
-            if (b.isNotEmpty()) {
-                val juegos = juegosDe(b)
-                val nube = nodo("hiedra/nube/portadas")
-                val enl = enlaces(c, "hiedra"); val pu = puestas(c, "hiedra")
-                val e = reflejarJuegos(juegos, store.load(GAMES.id), store.loadPlays(GAMES.id), enl, { j -> portadaJuego(c, store, j, nube) }, pu, ahora)
-                if (e.cambio) { store.save(e.games, GAMES.id); store.savePlays(e.plays, GAMES.id); guardaEnlaces(c, "hiedra", enl); guardaPuestas(c, "hiedra", pu); cambio = true }
-                nodo("hiedra/tiempo")?.let { guarda(c, "tiempo_hiedra", it.toString()); cambio = true }
-            }
-        }
-        // Marfil: solo lo leído (el sello «lstamps» de un libro): los nodos ligeros, sin volver a bajar la biblioteca
-        if (!toca("marfil") && toca("marfil-lec")) runCatching {
-            nodo("marfil/tiempo")?.let { guarda(c, "tiempo_marfil", it.toString()); cambio = true }
-            val sub = nodo("marfil/subrayados")?.toString() ?: "{}"
-            if (sub != prefs(c).getString("subrayados_marfil", "")) { guarda(c, "subrayados_marfil", sub); cambio = true }
-        }
-        // Marfil
-        if (toca("marfil")) runCatching {
-            val b = blobs(store, "marfil")
-            if (b.isNotEmpty()) {
-                val libros = librosDe(b)
-                val portadas = nodo("marfil/portadas")
-                val enl = enlaces(c, "marfil"); val pu = puestas(c, "marfil")
-                val e = reflejarLibros(libros, store.load(BOOKS.id), store.loadPlays(BOOKS.id), enl, { l -> portadaLibro(c, l, portadas) }, pu, ahora)
-                if (e.cambio) { store.save(e.games, BOOKS.id); store.savePlays(e.plays, BOOKS.id); guardaEnlaces(c, "marfil", enl); guardaPuestas(c, "marfil", pu); cambio = true }
-                // Lo que llevas de cada libro (0–1), por ficha: el widget «Leyendo» y el aviso de lectura lo enseñan
-                val av = avancePorFicha(libros, enl).toString()
-                if (av != prefs(c).getString("avance_marfil", "")) { guarda(c, "avance_marfil", av); cambio = true }
-                nodo("marfil/tiempo")?.let { guarda(c, "tiempo_marfil", it.toString()); cambio = true }
-                // Los subrayados (ligeros): la cita de la portada, el Diario, el buscador y el widget
-                val sub = nodo("marfil/subrayados")?.toString() ?: "{}"
-                if (sub != prefs(c).getString("subrayados_marfil", "")) { guarda(c, "subrayados_marfil", sub); cambio = true }
-            }
-        }
-        // Los objetivos de lectura: los fija Marfil (aquí solo se enseñan)
-        if (toca("marfil")) runCatching {
-            val o = nodo("marfil/objetivos")?.toString()
-            if (o != null && o != prefs(c).getString("objetivos_marfil", "")) { guarda(c, "objetivos_marfil", o); cambio = true; LecturaAviso.programa(c) }
-        }
-        // Cobalto
-        if (toca("cobalto")) {
-            runCatching { nodo("cobalto/palabras")?.let { guarda(c, "palabras_cobalto", it.toString()); cambio = true } }
-            runCatching { nodo("cobalto/lectura")?.let { guarda(c, "lectura_cobalto", it.toString()); cambio = true } }
-        }
-        prefs(c).edit().putLong("ultima", ahora).apply()
-        // Lo que llega de las hermanas (horas, subrayados, portadas) también se ve en los widgets al momento
-        if (cambio) { enPantalla { version++ }; Widgets.pedir(c); AtajoLectura.pon(c) }
+        val cambio = runCatching { CuentaHermanas.refrescar(c, store) }.getOrDefault(false)
+        prefs(c).edit().putLong("ultima", System.currentTimeMillis()).apply()
+        enPantalla { version++ }; Widgets.pedir(c); AtajoLectura.pon(c)
+        if (cambio) LecturaAviso.programa(c)
         return cambio
     }
 }

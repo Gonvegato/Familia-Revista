@@ -21,12 +21,19 @@ class DiscoArchivos(private val dir: File) : Disco {
     private fun f(n: String) = File(dir, n)
     override fun lee(nombre: String): ByteArray? = f(nombre).takeIf { it.isFile }?.let { runCatching { it.readBytes() }.getOrNull() }
     override fun existe(nombre: String) = f(nombre).isFile
+    private val cerrojos = java.util.concurrent.ConcurrentHashMap<String, Any>()
+
     override fun escribe(nombre: String, datos: ByteArray) {
-        val destino = f(nombre)
-        destino.parentFile?.mkdirs()
-        val tmp = File(destino.parentFile, destino.name + ".tmp")
-        tmp.outputStream().use { o -> o.write(datos); o.fd.sync() }
-        if (!tmp.renameTo(destino)) { destino.delete(); if (!tmp.renameTo(destino)) throw java.io.IOException("No se pudo guardar $nombre") }
+        // Un archivo, una escritura a la vez (y cada una con su temporal: dos hilos nunca se pisan el renombrado)
+        synchronized(cerrojos.getOrPut(nombre) { Any() }) {
+            val destino = f(nombre)
+            destino.parentFile?.mkdirs()
+            val tmp = File(destino.parentFile, destino.name + "." + Thread.currentThread().id + "." + System.nanoTime() + ".tmp")
+            try {
+                tmp.outputStream().use { o -> o.write(datos); o.fd.sync() }
+                if (!tmp.renameTo(destino)) { destino.delete(); if (!tmp.renameTo(destino)) throw java.io.IOException("No se pudo guardar $nombre") }
+            } finally { tmp.delete() }
+        }
     }
     override fun borra(nombre: String) { f(nombre).delete() }
 }

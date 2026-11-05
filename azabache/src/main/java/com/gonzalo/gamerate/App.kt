@@ -1040,7 +1040,7 @@ private fun AppContenido(
                 val p = partner
                 val pendingRecs = if (pv) emptyList() else p?.recs?.filter { it.id !in recsDone }?.sortedByDescending { it.time } ?: emptyList()
                 val acts = if (p == null) emptyList() else p.allKinds.flatMap { k ->
-                    p.games(k).map { g -> Activity(k.id, g.id, g.name, g.cover, "Valorado · ${g.general}", g.activity) } +
+                    p.games(k).map { g -> Activity(k.id, g.id, g.name, g.cover, if (Hermanas.sinValorar(g)) "Terminado · sin valorar" else "Valorado · ${g.general}", g.activity) } +
                         p.plays(k).map { pl -> Activity(k.id, pl.id, pl.name, pl.cover, k.statuses[pl.status.coerceIn(0, 2)], pl.activity) }
                 }.sortedByDescending { it.time }.distinctBy { it.kind to it.id }.take(12)
                 val sectionKinds = if (pv) p!!.allKinds else myKinds

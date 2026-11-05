@@ -50,6 +50,29 @@ object Account {
     "users": {
       "${'$'}uid": {
         ".read": "auth != null && (auth.uid === ${'$'}uid || data.child('partner').val() === auth.uid)",
+        ".write": "auth != null && auth.uid === ${'$'}uid",
+        "familia": {
+          "${'$'}col": {
+            ".indexOn": ["u"],
+            "${'$'}ref": {
+              "m": {
+                "${'$'}c": { ".validate": "newData.isNumber() && (!data.exists() || newData.val() >= data.val())" }
+              },
+              "u": { ".validate": "newData.isNumber()" },
+              "${'$'}campo": {
+                ".validate": "newData.parent().child('m').child(${'$'}campo).isNumber() && (!data.parent().child('m').child(${'$'}campo).exists() || newData.parent().child('m').child(${'$'}campo).val() > data.parent().child('m').child(${'$'}campo).val())"
+              }
+            }
+          }
+        },
+        "familia_img": {
+          "${'$'}h": { ".validate": "!data.exists() && newData.hasChildren(['d', 't'])" }
+        }
+      }
+    },
+    "claves": {
+      "${'$'}uid": {
+        ".read": "auth != null && auth.uid === ${'$'}uid",
         ".write": "auth != null && auth.uid === ${'$'}uid"
       }
     },
@@ -147,13 +170,11 @@ object Account {
         store.accUid
     }
 
-    /** Entra en una cuenta que ya existe. Devuelve el uid. */
+    /** Entra en una cuenta que ya existe (la de la familia: las otras apps del móvil entran solas). Devuelve el uid. */
     suspend fun signIn(store: Store, user: String, pass: String): String = withContext(Dispatchers.IO) {
-        val body = JSONObject().put("email", email(user)).put("password", pass).put("returnSecureToken", true)
-        val r = http("POST", idUrl(store, "signInWithPassword"), body.toString())
-        if (r.code !in 200..299) throw Fail(authMsg(r.text))
+        try { com.gonzalo.familia.LaFamilia.entrar(user, pass) } catch (e: com.gonzalo.familia.nucleo.Sesion.Error) { throw Fail(e.message ?: "No se ha podido entrar.") }
         val prev = store.accUid
-        keep(store, user, JSONObject(r.text))
+        adoptaSesion(store)
         if (prev != store.accUid) store.devSeen = JSONObject()
         // Por si al crearla no se pudo reservar el nombre (p. ej. reglas sin poner todavía).
         try {
@@ -173,7 +194,19 @@ object Account {
         store.accUid
     }
 
+    /** La sesión de la familia (la de cualquiera de las cuatro apps) pasa a ser la de Azabache. Devuelve si hay sesión. */
+    fun adoptaSesion(store: Store): Boolean {
+        val f = com.gonzalo.familia.LaFamilia.familia
+        if (!f.sesion.dentro) return false
+        if (store.dbUrl.isBlank()) store.dbUrl = DEFAULT_DB
+        if (store.accUid != f.sesion.uid) store.devSeen = JSONObject()
+        store.accUser = f.sesion.usuario; store.accUid = f.sesion.uid
+        store.accRefresh = "familia"; store.accToken = ""; store.accExp = 0L
+        return true
+    }
+
     fun signOut(store: Store) {
+        runCatching { com.gonzalo.familia.LaFamilia.salir() }
         store.accUid = ""
         store.accToken = ""
         store.accRefresh = ""
@@ -187,18 +220,12 @@ object Account {
         Sincro.reinicia(store.contexto)
     }
 
-    /** Pase de acceso vigente (se renueva solo; dura una hora). */
+    /** Pase de acceso vigente (el de la sesión de la familia: se renueva solo). */
     fun token(store: Store, force: Boolean = false): String {
-        if (!force && store.accToken.isNotBlank() && System.currentTimeMillis() < store.accExp - 60_000L) return store.accToken
-        if (store.accRefresh.isBlank()) throw Fail("No has iniciado sesión.")
-        val body = "grant_type=refresh_token&refresh_token=" + URLEncoder.encode(store.accRefresh, "UTF-8")
-        val r = http("POST", tokenUrl(store), body, form = true)
-        if (r.code !in 200..299) throw Fail(authMsg(r.text))
-        val o = JSONObject(r.text)
-        store.accToken = o.getString("id_token")
-        store.accRefresh = o.optString("refresh_token", store.accRefresh)
-        store.accExp = System.currentTimeMillis() + (o.optString("expires_in", "3600").toLongOrNull() ?: 3600L) * 1000L
-        return store.accToken
+        val ses = com.gonzalo.familia.LaFamilia.familia.sesion
+        if (!ses.dentro) throw Fail("No has entrado en tu cuenta.")
+        if (force) ses.paseCaducado()
+        return try { ses.paseValido() } catch (e: com.gonzalo.familia.nucleo.Sesion.Error) { throw Fail(e.message ?: "La sesión ha caducado.") }
     }
 
     suspend fun changePassword(store: Store, pass: String) = withContext(Dispatchers.IO) {
@@ -248,46 +275,31 @@ object Account {
      * Sube tus datos a tu hueco y comprueba la hora que ha puesto el servidor.
      * Antes se mezcla lo que hayan subido tus otros dispositivos, para que tu hueco tenga siempre lo más completo.
      */
-    fun upload(store: Store, data: String): Long {
-        val dev = store.accDevice
-        val node = JSONObject()
-            .put("name", store.myName.ifBlank { store.accUser })
-            .put("user", store.accUser)
-            .put("device", "android")
-            .put("updated", JSONObject().put(".sv", "timestamp"))
-            .put("data", data)
-        db(store, "PUT", me(store) + "/dev/$dev", node.toString(), "print=silent", ok404 = false)
-        val ts = db(store, "GET", me(store) + "/dev/$dev/updated", null)?.toLongOrNull()
-            ?: throw Fail("Firebase no ha guardado la copia.")
-        val patch = JSONObject().put("stamps/$dev", ts).put("name", store.myName.ifBlank { store.accUser }).put("user", store.accUser)
-        db(store, "PATCH", me(store), patch.toString(), "print=silent", ok404 = false)
-        return ts
+    fun upload(store: Store, @Suppress("UNUSED_PARAMETER") data: String): Long {
+        AzabacheNube.sube(store.contexto, store)
+        val inf = com.gonzalo.familia.LaFamilia.sincronizaYa()
+        if (!inf.ok) throw Fail(inf.error ?: "Sin conexión")
+        return System.currentTimeMillis()
     }
 
-    /** Mezcla aquí lo nuevo de tus otros dispositivos. Devuelve true si han cambiado tus datos. */
+    /** Mezcla aquí lo nuevo de tus otros dispositivos y de las hermanas. Devuelve true si han cambiado tus datos. */
     fun mergeOwn(store: Store): Boolean {
-        val st = stamps(store, store.accUid) ?: return false
-        val seen = store.devSeen
-        val mine = store.accDevice
-        val now = System.currentTimeMillis()
-        var changed = false
-        for ((dev, ts) in st) {
-            if (dev == mine || ts <= seen.optLong(dev, 0L) || now - ts > STALE) continue
-            val raw = db(store, "GET", me(store) + "/dev/$dev/data", null) ?: continue
-            val data = JSONTokener(raw).nextValue() as? String ?: continue
-            if (store.mergeRemote(data)) changed = true
-            seen.put(dev, ts)
-        }
-        store.devSeen = seen
+        // (lo de la red lo lleva la cuenta: aquí se mezcla lo que ya ha llegado; y se pide una vuelta por si hay algo nuevo)
+        runCatching { com.gonzalo.familia.LaFamilia.familia.programa(0) }
+        var changed = AzabacheNube.baja(store)
+        if (runCatching { CuentaHermanas.refrescar(store.contexto, store) }.getOrDefault(false)) changed = true
         return changed
     }
 
     /** ¿Hay ya algo guardado en tu cuenta? (hora y fichas de lo más reciente, o null). */
     fun latest(store: Store, uid: String = store.accUid): JSONObject? {
-        val st = stamps(store, uid) ?: return null
-        val dev = st.maxByOrNull { it.value }?.key ?: return null
-        val t = db(store, "GET", "/users/$uid/dev/$dev", null) ?: return null
-        return JSONObject(t).put("_dev", dev)
+        if (uid == store.accUid) return JSONObject().put("data", AzabacheNube.datos().toString()).put("updated", System.currentTimeMillis()).put("_dev", "familia")
+        // Tu pareja: lo suyo de Azabache y sus juegos y libros (con sus notas), de su cuenta
+        runCatching { com.gonzalo.familia.LaFamilia.familia.sincroniza() }
+        val d = AzabacheNube.datos(uid)
+        val user = runCatching { db(store, "GET", "/users/$uid/user", null)?.let { JSONTokener(it).nextValue() as? String } }.getOrNull().orEmpty()
+        val name = runCatching { db(store, "GET", "/users/$uid/name", null)?.let { JSONTokener(it).nextValue() as? String } }.getOrNull().orEmpty()
+        return JSONObject().put("data", d.toString()).put("user", user).put("name", name).put("updated", System.currentTimeMillis()).put("_dev", "familia")
     }
 
     /** Sustituye lo de este dispositivo por lo de tu cuenta (al entrar en un dispositivo que ya tenía otras cosas). */

@@ -78,6 +78,7 @@ tasks.register<Copy>("copyRobolectricDeps") {
 
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
+    implementation(project(":familia"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")
@@ -96,6 +97,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     // Pruebas de la lógica en el ordenador (sin emulador): org.json de verdad en lugar del de Android
     testImplementation("junit:junit:4.13.2")
+    testImplementation(testFixtures(project(":nucleo")))
     testImplementation("org.json:json:20240303")
     // Capturas de pantalla en el ordenador (Robolectric + Roborazzi): para revisar el diseño sin emulador
     testImplementation("org.robolectric:robolectric:4.13")

@@ -5,12 +5,12 @@ import org.json.JSONObject
 import java.security.MessageDigest
 
 /**
- * Lo que Cobalto publica para Azabache (y quien venga), bajo `/users/<uid>/cobalto/` (ver docs/CONTRATO-DATOS.md):
- *  - `lectura/<obra>/<capítulo>`: una copia de SOLO LECTURA del texto de cada capítulo marcado como terminado («hecho» en el
- *    capítulo o en su parte). Al quitar la marca, se quita la copia. Es lo que lee Azabache: nunca los documentos de Escribir.
- *  - `palabras/<dispositivo>`: las palabras escritas cada día en este dispositivo (`"AAAA-MM-DD"` → palabras), ligero, para las
- *    barras y el Diario. Cada dispositivo escribe solo lo suyo.
- * Se publica tras cada sincronización de Escribir (con la app abierta o desde la tarea de fondo); solo lo que ha cambiado.
+ * Lo que Cobalto pone en la cuenta de la familia para Azabache y Marfil (ver nube/ESQUEMA.md), nunca los documentos de Escribir:
+ *  - `obras/<obra>`: cada obra (título, autor, estado, palabras, última edición): la misma ficha que valora Azabache;
+ *  - `capitulos/<obra>~<capítulo>`: una copia de SOLO LECTURA de cada capítulo terminado («hecho» en el capítulo o en su parte),
+ *    la que lee Marfil; al quitar la marca, se borra;
+ *  - `palabras/<dispositivo>`: las palabras escritas cada día en este dispositivo (`d<AAAA-MM-DD>` → palabras).
+ * Se publica tras cada sincronización de Escribir; solo lo que ha cambiado (campo a campo).
  */
 object Publicar {
     private fun prefs(c: Context) = c.getSharedPreferences("cobalto_publicar", Context.MODE_PRIVATE)
@@ -89,16 +89,40 @@ object Publicar {
         return Envio(cuerpo, nuevas, firmaDias, diferido)
     }
 
-    /** Publica lo que haya cambiado. Devuelve si quedó algo diferido (un capítulo aún en marcha: volver a llamar en un rato). Bloqueante (red). */
+    /** El estado de una obra en la cuenta. */
+    fun estadoEnCuenta(o: Doc): String = when (estadoDe(o)) { EstadoObra.ESCRIBIENDO -> "en_curso"; EstadoObra.PAUSA -> "pausa"; EstadoObra.TERMINADA -> "terminado"; EstadoObra.ARCHIVO -> "archivada" }
+
+    /** Publica lo que haya cambiado. Devuelve si quedó algo diferido (un capítulo aún en marcha: volver a llamar en un rato). */
     fun todo(c: Context): Boolean {
         if (!Cuenta.vinculada) return false
         val e = Escritos.get(c)
-        val p = prefs(c)
-        val firmas = runCatching { JSONObject(p.getString("lectura", "{}")!!) }.getOrDefault(JSONObject())
-        val env = envio(e, firmas, p.getString("palabras", "") ?: "", Cuenta.dispositivo)
-        if (env.cuerpo.length() > 0) Cuenta.db("PATCH", Cuenta.raiz, env.cuerpo.toString(), "print=silent")
-        p.edit().putString("lectura", env.firmasLectura.toString()).putString("palabras", env.firmaPalabras).apply()
-        return env.diferido
+        val ahora = System.currentTimeMillis()
+        var diferido = false
+        val f = com.gonzalo.familia.LaFamilia
+        // Las obras
+        val obras = f.coleccion("obras")
+        val vivas = e.obras().map { it.id }.toSet()
+        for (o in e.obras()) {
+            val palabras = e.palabrasObra(o.id)
+            obras.cambia(o.id, mapOf("t" to o.s("titulo"), "a" to o.s("autor"), "estado" to estadoEnCuenta(o), "palabras" to palabras.toLong(), "ul" to e.ultimaEdicion(o.id), "b" to 0L))
+        }
+        obras.vivos().filter { it.ref !in vivas }.forEach { obras.borra(it.ref) }
+        // Los capítulos terminados (uno que se sigue tocando espera a llevar un rato quieto)
+        val caps = f.coleccion("capitulos")
+        val quiero = HashSet<String>()
+        capitulosTerminados(e).forEach { (pid, cs) -> cs.forEach { (cid, doc) ->
+            val ref = "$pid~$cid"; quiero += ref
+            val actual = caps.nodo(ref)
+            if (actual != null && !actual.borrado && ahora - doc.optLong("u") < QUIETO && actual.texto("x") != doc.optString("x")) { diferido = true; return@forEach }
+            caps.cambia(ref, mapOf("ref" to pid, "t" to doc.optString("t"), "a" to doc.optString("a"), "c" to doc.optString("c"), "n" to doc.optInt("n").toLong(),
+                "pa" to doc.optString("pa"), "u" to doc.optLong("u"), "p" to doc.optInt("p").toLong(), "x" to doc.optString("x"), "b" to 0L))
+        } }
+        caps.vivos().filter { it.ref !in quiero }.forEach { caps.borra(it.ref) }
+        // Las palabras de cada día de este dispositivo (mientras escribes cambian a cada frase: se mandan cuando llevas un rato quieto)
+        val ultimoLog = e.todos().filter { it.t == Escritos.T_LOG }.maxOfOrNull { it.u } ?: 0L
+        if (ahora - ultimoLog < QUIETO && f.coleccion("palabras").nodo(Cuenta.dispositivo) != null) diferido = true
+        else f.coleccion("palabras").cambia(Cuenta.dispositivo, palabrasPorDia(e).mapKeys { "d${it.key}" }.mapValues { it.value.toLong() })
+        return diferido
     }
 
     /** Al salir de la cuenta: se olvida lo publicado (en la siguiente cuenta se publica todo). */

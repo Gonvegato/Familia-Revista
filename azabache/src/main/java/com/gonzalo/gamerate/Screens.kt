@@ -121,7 +121,7 @@ fun Home(games: List<Game>, kind: Kind, onMenu: () -> Unit, onAdd: (() -> Unit)?
                         enabled = partner != null, onClick = { onOpen(g) },
                         modifier = Modifier.appear(200 + i * 50, i < 12),
                         front = {
-                            FormTile(g.cover, g.name, g.creator, gauge = { d -> Ring(g.general, ColGeneral, d) }) {
+                            FormTile(g.cover, g.name, g.creator, gauge = { d -> if (!Hermanas.sinValorar(g)) Ring(g.general, ColGeneral, d) }) {
                                     if (g.fav) {
                                         Box(
                                             Modifier.align(Alignment.TopEnd).padding(6.dp).size(24.dp).background(Crudo, CircleShape),

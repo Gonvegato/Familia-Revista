@@ -168,9 +168,9 @@ fun PlayDetailScreen(
                 MagLink("Datos de la ficha") { editing = true }
             }
             val defaults = when {
-                kind.isGame -> magRows(listOf("portada", "estado"), listOf("jugar"), listOf("apuntes"), listOf("diario"), listOf("horas", "enlaces"))
+                kind.isGame -> magRows(listOf("estado", "portada"), listOf("jugar"), listOf("apuntes"), listOf("diario"), listOf("horas", "enlaces"))
                 kind.isMovie || kind.isTv -> magRows(listOf("critica", "estado"), listOf("donde"), listOf("progreso"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
-                kind.isBook -> magRows(listOf("portada", "estado"), listOf("lectura"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
+                kind.isBook -> magRows(listOf("estado", "portada"), listOf("lectura"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
                 else -> magRows(listOf("estado"), listOf("apuntes"), listOf("diario"), listOf("enlaces"))
             }
             MagPage("p:${kind.id}:${p.id}", "tpl:p:${kind.id}", kind.title, defaults, defs, kind, p.id, p.name, designing)
