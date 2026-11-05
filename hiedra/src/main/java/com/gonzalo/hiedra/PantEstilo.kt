@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.4.5"
+const val VERSION = "0.5.0"
 
 private fun aliasInicio(c: Context) = ComponentName(c, "com.gonzalo.hiedra.InicioAlias")
 private fun esInicio(c: Context) = c.packageManager.getComponentEnabledSetting(aliasInicio(c)) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -254,15 +254,15 @@ private fun SeccionActualizaciones() {
         }
     }
     if (!conectado) {
-        Text("Pega tu token de kDrive y el número de tu kDrive (los mismos que en Azabache). Se guardan solo en este móvil.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("El token de kDrive es de tu cuenta: se pone una vez en Azabache (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps. Si no lo has puesto aún, puedes pegarlo aquí: en cuanto funcione, pasa a tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Token", token, "token de kDrive", secreto = true) { token = it }
         CampoRevista("kDrive", unidad, "número o dirección") { unidad = it }
         MagLink(if (ocupado) "Comprobando…" else "Conectar", "Comprueba el token y busca tu «Mi carpeta»") {
             if (!ocupado) {
                 ocupado = true; aviso = null
                 ambito.launch {
-                    aviso = try { KDrive.save(ctx, token, unidad); KDrive.test(ctx); conectado = true; token = ""; SubirRomsWorker.programar(ctx); withContext(Dispatchers.IO) { runCatching { Actualizador.comprueba(ctx, manual = true) } }; null }
-                    catch (e: Exception) { KDrive.forget(ctx); e.message ?: "No se pudo conectar" }
+                    aviso = try { KDrive.save(ctx, token, unidad); KDrive.test(ctx); KDrive.confirma(ctx); conectado = true; token = ""; SubirRomsWorker.programar(ctx); withContext(Dispatchers.IO) { runCatching { Actualizador.comprueba(ctx, manual = true) } }; null }
+                    catch (e: Exception) { KDrive.descarta(ctx); e.message ?: "No se pudo conectar" }
                     ocupado = false
                 }
             }
@@ -283,7 +283,7 @@ private fun SeccionActualizaciones() {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
-        MagLink("Desconectar kDrive", "Se olvida el token de este móvil") { KDrive.forget(ctx); conectado = false }
+        Text("Para cambiar o quitar el token: Azabache → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }

@@ -149,7 +149,7 @@ object CuentaHermanas {
     /** Lo de Azabache que viaja en el nodo («az»: apuntes, capítulos, imagen de fondo…): se pone en las fichas reflejadas que no tienen cambios sin subir. */
     private fun conAz(c: Context, listaG: String, listaP: String, gs: List<Game>, ps: List<Play>, nodos: Map<String, Nodo>, enl: Map<String, Long>): Pair<List<Game>, List<Play>> {
         val porId = enl.entries.associate { it.value to it.key }
-        fun az(id: Long): Map<String, Any?>? = porId[id]?.let { nodos[it] }?.mapa("az")?.takeIf { it.isNotEmpty() }
+        fun az(id: Long): Map<String, Any?>? = porId[id]?.let { nodos[it] }?.texto("az")?.takeIf { it.startsWith("{") }?.let { runCatching { Json.lee(it).comoMapa() }.getOrNull() }?.takeIf { it.isNotEmpty() }
         val g2 = gs.map { g ->
             val a = az(g.id) ?: return@map g
             val o = gameToJson(g)
@@ -225,7 +225,7 @@ object CuentaHermanas {
         // Lo de Azabache (sin lo que manda la hermana)
         val az = JSONObject(); e.keys().forEach { k -> if (k !in DE_LA_HERMANA) az.put(k, e.get(k)) }
         val azAntes = antes?.let { a -> JSONObject().also { o -> a.keys().forEach { k -> if (k !in DE_LA_HERMANA) o.put(k, a.get(k)) } } }
-        if (az.length() > 0 && (azAntes == null || Store.canon(azAntes) != Store.canon(az)) && (antes != null || nodo?.get("az") == null)) cambios["az"] = Json.lee(az.toString())
+        if (az.length() > 0 && (azAntes == null || Store.canon(azAntes) != Store.canon(az)) && (antes != null || nodo?.get("az") == null)) cambios["az"] = az.toString()
         // La portada, si la has cambiado aquí: pasa a ser la de la cuenta (la misma en la hermana)
         val cover = e.optString("cover")
         if (antes != null && cover.isNotBlank() && cover != antes.optString("cover")) runCatching {
@@ -251,6 +251,23 @@ object AzabacheNube {
     /** Las claves de los servicios: cómo se llaman aquí y en la cuenta (`/claves`). */
     private val CLAVES = mapOf("sgdb" to "steamgriddb", "rawg" to "rawg", "igdbId" to "igdb_id", "igdbSecret" to "igdb_secreto", "steamKey" to "steam_key", "steamUser" to "steam_id", "tmdb" to "tmdb")
 
+    /** La última versión de cada clave que este Azabache vio en la cuenta (o puso él): así sabe cuáles has cambiado tú aquí. */
+    private fun vistas(c: Context) = c.getSharedPreferences("familia_claves", Context.MODE_PRIVATE)
+
+    /**
+     * Una clave que acabas de poner (o quitar) en Azabache: a la cuenta al momento, y la tienen todas las apps. Si es la misma que
+     * ya hay en la cuenta (porque viene de ella), no se sube nada.
+     */
+    fun claveCambiada(c: Context, aqui: String, valor: String) {
+        val alla = CLAVES[aqui] ?: return
+        val x = valor.trim()
+        runCatching {
+            if (!LaFamilia.familia.sesion.dentro) return
+            if (x != LaFamilia.familia.clave(alla)) LaFamilia.familia.ponClave(alla, x)
+            vistas(c).edit().putString(alla, x).apply()
+        }
+    }
+
     private fun itemUpdated(o: JSONObject): Long = maxOf(o.optLong("updated", 0L), o.optLong("sv", 0L))
     private fun esLista(a: JSONArray): Boolean = a.length() > 0 && (0 until a.length()).all { (a.opt(it) as? JSONObject)?.has("id") == true }
 
@@ -262,7 +279,13 @@ object AzabacheNube {
         for (k in data.keys()) {
             val v = data.get(k)
             when {
-                k == "keys" -> (v as? JSONObject)?.let { o -> CLAVES.forEach { (aqui, alla) -> val x = o.optString(aqui).trim(); if (x.isNotBlank() && x != LaFamilia.familia.clave(alla)) LaFamilia.familia.ponClave(alla, x) } }
+                // Las claves que había aquí de antes pasan a la cuenta; una que otra app ha cambiado en la cuenta y aquí no has tocado, no
+                // se pisa con la vieja (llega con la próxima bajada)
+                k == "keys" -> (v as? JSONObject)?.let { o -> val vis = vistas(c); CLAVES.forEach { (aqui, alla) ->
+                    val x = o.optString(aqui).trim(); val cuenta = LaFamilia.familia.clave(alla); val visto = vis.getString(alla, null)
+                    val tuya = if (visto != null) x != visto else cuenta.isBlank()
+                    if (x.isNotBlank() && x != cuenta && tuya) { LaFamilia.familia.ponClave(alla, x); vis.edit().putString(alla, x).apply() }
+                } }
                 k == "tombs" -> (v as? JSONObject)?.let { t -> t.keys().forEach { tk ->
                     val ref = tk.replaceFirst(':', '~'); val hora = t.optLong(tk).coerceAtLeast(1L)
                     val n = col().nodo(ref)
@@ -271,9 +294,10 @@ object AzabacheNube {
                 v is JSONArray && esLista(v) -> for (i in 0 until v.length()) {
                     val e = v.getJSONObject(i)
                     if (CuentaHermanas.esReflejo(c, k, e.optLong("id"))) { CuentaHermanas.subeReflejo(c, k, e); continue }
-                    col().cambia("$k~${e.optLong("id")}", mapOf("o" to Json.lee(e.toString()), "b" to 0L), itemUpdated(e).takeIf { it > 0 })
+                    // (como texto: dentro puede haber nombres que Firebase no admite como claves)
+                    col().cambia("$k~${e.optLong("id")}", mapOf("o" to e.toString(), "b" to 0L), itemUpdated(e).takeIf { it > 0 })
                 }
-                else -> col().cambia(k, mapOf("v" to Json.lee(JSONArray().put(v).toString()).let { (it as List<*>).firstOrNull() }))
+                else -> col().cambia(k, mapOf("v" to JSONArray().put(v).toString()))
             }
         }
         // La apariencia de Azabache, para que las hermanas la puedan copiar
@@ -288,9 +312,9 @@ object AzabacheNube {
             if (n.ref.contains('~')) {
                 val lista = n.ref.substringBefore('~')
                 if (n.borrado) { tombs.put("$lista:${n.ref.substringAfter('~')}", n.entero(Nodo.B)); continue }
-                val e = n.mapa("o"); if (e.isEmpty()) continue
-                (o.optJSONArray(lista) ?: JSONArray().also { o.put(lista, it) }).put(JSONObject(Json.escribe(e)))
-            } else if (!n.borrado && n["v"] != null) o.put(n.ref, JSONArray(Json.escribe(listOf(n["v"]))).get(0))
+                val e = n.texto("o").takeIf { it.startsWith("{") }?.let { runCatching { JSONObject(it) }.getOrNull() } ?: continue
+                (o.optJSONArray(lista) ?: JSONArray().also { o.put(lista, it) }).put(e)
+            } else if (!n.borrado) n.texto("v").takeIf { it.startsWith("[") }?.let { runCatching { JSONArray(it).get(0) }.getOrNull() }?.let { o.put(n.ref, it) }
         }
         o.put("tombs", tombs)
         if (uid == null) o.put("keys", JSONObject().also { k -> CLAVES.forEach { (aqui, alla) -> LaFamilia.familia.clave(alla).takeIf { it.isNotBlank() }?.let { k.put(aqui, it) } } })
@@ -302,6 +326,7 @@ object AzabacheNube {
         val d = datos()
         // Las claves de la cuenta mandan (se ponen una vez, en cualquier app de la familia)
         store.applyKeys(d.optJSONObject("keys"), onlyEmpty = false)
+        vistas(store.contexto).edit().also { e -> CLAVES.values.forEach { alla -> LaFamilia.familia.clave(alla).takeIf { it.isNotBlank() }?.let { e.putString(alla, it) } } }.apply()
         if (d.length() <= 2) return false
         return store.mergeRemote(d.toString())
     }

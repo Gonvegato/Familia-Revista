@@ -10,14 +10,14 @@ fun clave(n: String): String = firmaProps.getProperty("$n.pass").orEmpty()
 
 android {
     namespace = "com.gonzalo.marfil"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         // Convive con Atrio (com.gonzalo.gamerate) y Pórtico: otro paquete, otra app, misma familia visual.
         applicationId = "com.gonzalo.marfil"
         minSdk = 29
-        targetSdk = 34
-        versionCode = 38
-        versionName = "0.12.20"
+        targetSdk = 35
+        versionCode = 39
+        versionName = "0.13.0"
         // Solo los procesadores que se usan (el traductor del diccionario pesa ~16 MB por cada uno): móviles y tablets (arm64) y Waydroid en el PC (x86_64)
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
@@ -31,7 +31,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            // Sin firmar aquí: la firma de la familia (la clave nueva con su linaje desde la vieja) la pone herramientas/firmar.py
+            signingConfig = null
         }
     }
     buildFeatures { compose = true }

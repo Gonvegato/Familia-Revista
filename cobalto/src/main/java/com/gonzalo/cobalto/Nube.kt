@@ -14,8 +14,8 @@ import java.net.URLEncoder
 
 /**
  * Tu kDrive (API de Infomaniak), la misma que usa Atrio: por ahora para lo que hace falta aquí, que es leer la carpeta
- * «Mi carpeta/versiones» y bajar de ella las versiones nuevas de Cobalto. El token (y el número del kDrive) se guardan solo
- * en este móvil, como en Atrio: Atrio no los comparte con otras apps, así que hay que pegarlos aquí una vez.
+ * «Mi carpeta/versiones» y bajar de ella las versiones nuevas de Cobalto. El token (y el número del kDrive) son de la
+ * cuenta: se ponen una vez en Azabache y los usan todas las apps.
  */
 object KDrive {
     /** Se cambia en las pruebas por un kDrive simulado. */
@@ -29,17 +29,28 @@ object KDrive {
      * Si este móvil tenía uno guardado de antes y la cuenta aún no, se sube una vez ([migraALaCuenta]).
      */
     private fun clave(n: String) = runCatching { com.gonzalo.familia.LaFamilia.familia.clave(n) }.getOrDefault("")
-    fun token(ctx: Context) = clave("kdrive_token").ifBlank { prefs(ctx).getString("token", "").orEmpty() }
-    fun drive(ctx: Context) = clave("kdrive_id").ifBlank { prefs(ctx).getString("drive", "").orEmpty() }
+    /** Lo que acabas de pegar, mientras se comprueba: hasta que [confirma] no pasa a la cuenta (un token malo nunca pisa el bueno). */
+    private fun probando(ctx: Context) = prefs(ctx).getBoolean("probando", false)
+    fun token(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("token", "").orEmpty() else clave("kdrive_token").ifBlank { prefs(ctx).getString("token", "").orEmpty() }
+    fun drive(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("drive", "").orEmpty() else clave("kdrive_id").ifBlank { prefs(ctx).getString("drive", "").orEmpty() }
     fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
 
     fun save(ctx: Context, token: String, drive: String) {
         // El id del kDrive puede venir con la dirección entera («…/app/drive/123456/…»)
         val d = Regex("""drive/(\d+)""").find(drive)?.groupValues?.get(1) ?: drive.filter { it.isDigit() }
-        // (en el móvil también, por si aún no hay cuenta: en cuanto la haya, pasa a ella)
-        prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).remove("dirs").remove("home").remove("versDir").apply()
-        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", token.trim()); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
+        // Primero solo aquí: se comprueba ([test]) y, si vale, [confirma] lo pasa a la cuenta
+        prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).putBoolean("probando", true).remove("dirs").remove("home").remove("versDir").apply()
     }
+
+    /** El token pegado funciona: pasa a la cuenta y lo tienen todas las apps. */
+    fun confirma(ctx: Context) {
+        val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
+        prefs(ctx).edit().remove("probando").apply()
+        if (t.isNotBlank() && d.isNotBlank()) runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
+    }
+
+    /** El token pegado no vale: se olvida aquí y la cuenta se queda como estaba. */
+    fun descarta(ctx: Context) { prefs(ctx).edit().remove("probando").remove("token").remove("drive").remove("dirs").remove("home").remove("versDir").apply() }
 
     fun forget(ctx: Context) {
         prefs(ctx).edit().clear().apply()
@@ -49,7 +60,7 @@ object KDrive {
     /** El token de antes, guardado solo en este móvil, pasa a la cuenta (si la cuenta aún no tiene uno). */
     fun migraALaCuenta(ctx: Context) {
         val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
-        if (t.isBlank() || d.isBlank() || clave("kdrive_token").isNotBlank()) return
+        if (probando(ctx) || t.isBlank() || d.isBlank() || clave("kdrive_token").isNotBlank()) return
         runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
     }
 

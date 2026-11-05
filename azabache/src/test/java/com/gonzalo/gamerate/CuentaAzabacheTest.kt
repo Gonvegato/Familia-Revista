@@ -102,7 +102,36 @@ class CuentaAzabacheTest {
         AzabacheNube.sube(ctx, store)
         sincroniza()
         assertEquals("el estado de Hiedra no se pisa", "terminado", otra.coleccion("juegos").nodo(id)!!.texto("estado"))
-        assertTrue("el apunte de Azabache viaja en el propio juego", otra.coleccion("juegos").nodo(id)!!.mapa("az").toString().contains("durísimo"))
+        assertTrue("el apunte de Azabache viaja en el propio juego", otra.coleccion("juegos").nodo(id)!!.texto("az").contains("durísimo"))
+    }
+
+    @Test fun unTokenMaloQueSePegaNoPisaElBuenoDeLaCuenta() {
+        // El bueno está en la cuenta (puesto en otro móvil) y aquí aún no ha llegado
+        otra.ponClave("kdrive_token", "bueno"); otra.ponClave("kdrive_id", "123")
+        assertTrue(otra.sincroniza().ok)
+        KDrive.save(ctx, "malo", "777")
+        assertEquals("se comprueba el pegado", "malo", KDrive.token(ctx))
+        KDrive.descarta(ctx) // la comprobación ha fallado
+        sincroniza()
+        assertEquals("bueno", otra.clave("kdrive_token")); assertEquals("bueno", KDrive.token(ctx)); assertEquals("123", KDrive.drive(ctx))
+        // Uno que sí funciona pasa a la cuenta
+        KDrive.save(ctx, "nuevo", "https://ksuite.infomaniak.com/kdrive/app/drive/456/files"); KDrive.confirma(ctx)
+        sincroniza()
+        assertEquals("nuevo", otra.clave("kdrive_token")); assertEquals("456", otra.clave("kdrive_id"))
+    }
+
+    @Test fun unaClaveCambiadaEnOtraAppNoVuelveALaVieja() {
+        store.key = "sg1"
+        sincroniza()
+        assertEquals("la que pones en Azabache va a la cuenta al momento", "sg1", otra.clave("steamgriddb"))
+        // La cambias en Hiedra; este Azabache sube lo suyo antes de haberla bajado
+        otra.ponClave("steamgriddb", "sg2"); assertTrue(otra.sincroniza().ok)
+        assertTrue(LaFamilia.sincronizaYa().ok)
+        AzabacheNube.sube(ctx, store)
+        sincroniza()
+        assertEquals("sg2", otra.clave("steamgriddb"))
+        AzabacheNube.baja(store)
+        assertEquals("y aquí llega la nueva", "sg2", store.key)
     }
 
     @Test fun loPropioDeAzabacheLlegaATuOtroAzabache() {
@@ -112,7 +141,7 @@ class CuentaAzabacheTest {
         AzabacheNube.sube(ctx, store)
         assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otra.sincroniza().ok)
         val n = otra.coleccion("azabache").nodo("items_42~7")!!
-        assertEquals("Alien", n.mapa("o")["name"])
+        assertEquals("Alien", org.json.JSONObject(n.texto("o")).optString("name"))
         assertTrue("las categorías también", otra.coleccion("azabache").nodo("kinds") != null)
         // En otro Azabache (los datos de la cuenta, mezclados en un Store vacío)
         val d = AzabacheNube.datos()

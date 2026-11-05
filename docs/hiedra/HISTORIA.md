@@ -15,6 +15,25 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.5.0 — la familia
+
+- **La cuenta de la familia, de cero.** Cada cosa está una sola vez en la cuenta, campo a campo: dos apps o dos móviles que
+  tocan campos distintos nunca se pisan, y un móvil que vuelve a tener red después de días no pisa lo que cambiaste luego en otro
+  (las reglas del servidor lo comprueban). Funciona sin conexión: lo que cambias se ve al momento y se sube solo en cuanto hay red.
+  Ver `nube/ESQUEMA.md`.
+- **Entrar una vez.** Entras en Azabache (o en cualquiera de la familia) y las demás entran solas en ese móvil.
+- **Las claves, una vez.** El token de kDrive y las de los servicios se ponen una vez y las tienen todas las apps (si ya las tenías
+  en este móvil, se suben solas a la cuenta). Se gestionan en Azabache (Ajustes → Avanzado); un token mal pegado en
+  cualquier app nunca pisa el bueno de la cuenta.
+- **Actualizaciones sin preguntar** también en Android 17 (la app apunta a Android 15 y declara el permiso de actualizarse sola).
+- **Una sola firma para las cuatro.** Esta versión se instala encima de la anterior, sin desinstalar, pero **a mano esta vez**: el
+  actualizador de antes no acepta la firma nueva. A partir de aquí, se actualiza sola.
+- **La primera vez** (en cada móvil), lo de antes pasa a la cuenta nueva con la hora real de cada cambio. Lo de antes no se borra.
+- **Las portadas viajan con la cuenta** (no por kDrive): la que pones en un móvil sale igual en los demás y en Azabache, y quitarla la quita en todos.
+- **Las horas**, por fuente (este móvil, tus otros móviles, Steam, cada PC) y sumadas.
+- **Los juegos repetidos** (el mismo importado en dos móviles con dos ids, como el Baldur's Gate 3) quedan en uno, con sus horas.
+- La nota de Azabache se lee del propio juego.
+
 ## 0.4.5
 
 - **Juegos repetidos, juntados solos.** Al importar de Atrio o de Carmesí en dos móviles, cada uno creaba su copia del mismo juego (con

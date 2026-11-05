@@ -9,7 +9,8 @@ La autenticación la pone, o bien el entorno de la sesión (un secreto de red pa
 import hashlib, json, os, re, sys, urllib.parse, urllib.request, urllib.error
 
 API = "https://api.infomaniak.com"
-CARPETA = "versiones"
+# KDRIVE_CARPETA cambia la carpeta (p. ej. una versión que se instala a mano y que los actualizadores no deben ver)
+CARPETA = os.environ.get("KDRIVE_CARPETA") or "versiones"
 
 
 def llamar(metodo, url, cuerpo=None, tipo="application/json"):

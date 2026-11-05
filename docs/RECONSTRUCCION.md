@@ -13,7 +13,10 @@ Azabache pequeña, y Hiedra/Azabache/Cobalto preparadas para pasar al PC más ad
   solo para apps con el certificado de la familia, comprobado con `hasSigningCertificate`), trabajos de fondo.
 - **Firma**: clave nueva `firma/familia.keystore` (fuera del repositorio) y linajes de rotación desde cada clave vieja
   (`apksigner rotate`), firmando con `--rotation-min-sdk-version 28`: las versiones nuevas se instalan encima de las viejas.
-  El actualizador viejo rechaza otra firma: el primer salto se instala a mano.
+  El actualizador viejo rechaza otra firma (compara `apkContentsSigners`, que no incluye el linaje): el primer salto se instala a
+  mano, y esas cuatro versiones van a «Mi carpeta/familia-a-mano» del kDrive, no a «versiones» (si no, las apps viejas las bajarían
+  cada 4 horas para rechazarlas). El actualizador nuevo mira el historial de firmas (`signingCertificateHistory`): una rotación futura
+  ya no lo rompe.
 - **Portadas en la cuenta** (`familia_img/<hash>`), no en kDrive. kDrive solo para lo grande (libros, ROMs, partidas, versiones).
 - **Claves** en `/claves/<uid>`; si una app tenía el token de kDrive guardado en el móvil, lo sube una vez a la cuenta.
 - **Migración**: cada app, la primera vez en cada dispositivo, lee sus nodos viejos y los escribe en las colecciones con la hora
@@ -29,10 +32,18 @@ Azabache pequeña, y Hiedra/Azabache/Cobalto preparadas para pasar al PC más ad
 - [x] Reglas (`nube/reglas.json`) y esquema (`nube/ESQUEMA.md`), a completar con cada app
 - [x] Módulo `familia` (cuenta, acceso, trabajos de fondo)
 - [x] Clave común y linajes
-- [ ] Marfil sobre el núcleo (+ migración)
-- [ ] Hiedra sobre el núcleo (+ migración)
-- [ ] Cobalto: obras, capítulos y palabras en colecciones
-- [ ] Azabache: sin copias, valoración en el nodo de cada cosa, «Sin valorar», gestor de claves, portada pequeña en la ficha
-- [ ] Actualizador común (token de la cuenta, targetSdk alto para instalar en silencio en Android 17)
-- [ ] Firma con rotación en la compilación de release
-- [ ] Pruebas de extremo a extremo y versiones nuevas de las cuatro
+- [x] Marfil sobre el núcleo (+ migración) — 5 pruebas de extremo a extremo
+- [x] Hiedra sobre el núcleo (+ migración, repetidos unidos) — 4 pruebas de extremo a extremo
+- [x] Cobalto: obras, capítulos y palabras en colecciones
+- [x] Azabache: sin copias, valoración en el nodo de cada cosa, «Sin valorar», claves en la cuenta, portada pequeña en la ficha — 6 pruebas (también: un token mal pegado no pisa el bueno; una clave cambiada en otra app no vuelve a la vieja)
+- [x] Actualizaciones sin preguntar: targetSdk 35 (Android 17 lo exige) y el permiso UPDATE_PACKAGES_WITHOUT_USER_ACTION (faltaba en
+      Hiedra, Marfil y Cobalto); el token de kDrive sale de la cuenta
+- [x] Firma con rotación (`herramientas/firmar.py`), comprobada con `apksigner verify` y `apksigner lineage`
+- [x] Versiones Hiedra 0.5.0, Marfil 0.13.0, Cobalto 0.3.0, Azabache 1.3.0
+
+## Lo que no se ha podido probar aquí
+
+- En un móvil de verdad: instalar encima de la versión vieja (la rotación de firma solo se ha comprobado con apksigner), entrar una
+  vez y que las demás entren solas (necesita las cuatro instaladas con la firma nueva), la instalación sin preguntar, los widgets.
+- Contra tu Firebase de verdad: todo se ha probado contra el emulador oficial con las mismas reglas.
+- Lo de tu pareja en Azabache: se lee de su cuenta nueva (lo suyo de Azabache); sus juegos y libros reflejados aún no salen en su página.

@@ -10,14 +10,14 @@ fun clave(n: String): String = firmaProps.getProperty("$n.pass").orEmpty()
 
 android {
     namespace = "com.gonzalo.hiedra"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         // Convive con Atrio (com.gonzalo.gamerate), Marfil (com.gonzalo.marfil), Carmesí (com.gonzalo.portico) y Cobalto (com.gonzalo.cobalto): otro paquete, otra app, misma familia visual.
         applicationId = "com.gonzalo.hiedra"
         minSdk = 29
-        targetSdk = 34
-        versionCode = 25
-        versionName = "0.4.5"
+        targetSdk = 35
+        versionCode = 26
+        versionName = "0.5.0"
         // El jugador interno (LibretroDroid y los núcleos del buildbot de libretro) solo se usa en arm64: así el APK no lleva
         // las bibliotecas nativas de otras arquitecturas que ningún móvil actual necesita.
         ndk { abiFilters += "arm64-v8a" }
@@ -32,7 +32,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            // Sin firmar aquí: la firma de la familia (la clave nueva con su linaje desde la vieja) la pone herramientas/firmar.py
+            signingConfig = null
         }
     }
     buildFeatures { compose = true }

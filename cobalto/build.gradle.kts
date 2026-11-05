@@ -10,14 +10,14 @@ fun clave(n: String): String = firmaProps.getProperty("$n.pass").orEmpty()
 
 android {
     namespace = "com.gonzalo.cobalto"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         // Convive con Atrio (com.gonzalo.gamerate), Marfil (com.gonzalo.marfil) y Carmesí (com.gonzalo.portico): otro paquete, otra app, misma familia visual.
         applicationId = "com.gonzalo.cobalto"
         minSdk = 29
-        targetSdk = 34
-        versionCode = 18
-        versionName = "0.2.16"
+        targetSdk = 35
+        versionCode = 19
+        versionName = "0.3.0"
     }
     // Firma fija: cada versión nueva se instala encima de la anterior sin borrar tus obras.
     signingConfigs {
@@ -29,7 +29,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            // Sin firmar aquí: la firma de la familia (la clave nueva con su linaje desde la vieja) la pone herramientas/firmar.py
+            signingConfig = null
         }
     }
     buildFeatures { compose = true }

@@ -48,9 +48,9 @@ import java.net.URLEncoder
 
 /*
  * Tu nube (kDrive de Infomaniak): los libros, las fotos de portada y las capturas, en una carpeta «Atrio» de tu kDrive
- * que también ves y usas tú. El token se guarda solo en este dispositivo (nunca en la cuenta de Atrio: tu pareja puede
- * leer tus datos). Lo que sí viaja con la cuenta es la lista de lo subido ([NubeFile]): así tus otros dispositivos saben
- * qué bajar y tu pareja puede abrirlo con su enlace.
+ * que también ves y usas tú. El token está en tu cuenta, en `/claves` (que solo tú puedes leer; tu pareja, que lee tus datos,
+ * no): lo usan las cuatro apps. También viaja con la cuenta la lista de lo subido ([NubeFile]): así tus otros dispositivos
+ * saben qué bajar y tu pareja puede abrirlo con su enlace.
  */
 
 /** Algo tuyo en la nube. [k]: qué es («libro:123», «foto:foto_1.jpg», «shot:abc»); [f]: su id en kDrive; [l]: su enlace. */
@@ -91,17 +91,28 @@ object KDrive {
      * Si este móvil tenía uno guardado de antes y la cuenta aún no, se sube una vez ([migraALaCuenta]).
      */
     private fun clave(n: String) = runCatching { com.gonzalo.familia.LaFamilia.familia.clave(n) }.getOrDefault("")
-    fun token(ctx: Context) = clave("kdrive_token").ifBlank { prefs(ctx).getString("token", "").orEmpty() }
-    fun drive(ctx: Context) = clave("kdrive_id").ifBlank { prefs(ctx).getString("drive", "").orEmpty() }
+    /** Lo que acabas de pegar, mientras se comprueba: hasta que [confirma] no pasa a la cuenta (un token malo nunca pisa el bueno). */
+    private fun probando(ctx: Context) = prefs(ctx).getBoolean("probando", false)
+    fun token(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("token", "").orEmpty() else clave("kdrive_token").ifBlank { prefs(ctx).getString("token", "").orEmpty() }
+    fun drive(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("drive", "").orEmpty() else clave("kdrive_id").ifBlank { prefs(ctx).getString("drive", "").orEmpty() }
     fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
 
     fun save(ctx: Context, token: String, drive: String) {
         // El id del kDrive puede venir con la dirección entera («…/app/drive/123456/…»)
         val d = Regex("""drive/(\d+)""").find(drive)?.groupValues?.get(1) ?: drive.filter { it.isDigit() }
-        // (en el móvil también, por si aún no hay cuenta: en cuanto la haya, pasa a ella)
-        prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).remove("dirs").remove("home").remove("versDir").apply()
-        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", token.trim()); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
+        // Primero solo aquí: se comprueba ([test]) y, si vale, [confirma] lo pasa a la cuenta
+        prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).putBoolean("probando", true).remove("dirs").remove("home").remove("versDir").apply()
     }
+
+    /** El token pegado funciona: pasa a la cuenta y lo tienen todas las apps. */
+    fun confirma(ctx: Context) {
+        val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
+        prefs(ctx).edit().remove("probando").apply()
+        if (t.isNotBlank() && d.isNotBlank()) runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
+    }
+
+    /** El token pegado no vale: se olvida aquí y la cuenta se queda como estaba. */
+    fun descarta(ctx: Context) { prefs(ctx).edit().remove("probando").remove("token").remove("drive").remove("dirs").remove("home").remove("versDir").apply() }
 
     fun forget(ctx: Context) {
         prefs(ctx).edit().clear().apply()
@@ -111,7 +122,7 @@ object KDrive {
     /** El token de antes, guardado solo en este móvil, pasa a la cuenta (si la cuenta aún no tiene uno). */
     fun migraALaCuenta(ctx: Context) {
         val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
-        if (t.isBlank() || d.isBlank() || clave("kdrive_token").isNotBlank()) return
+        if (probando(ctx) || t.isBlank() || d.isBlank() || clave("kdrive_token").isNotBlank()) return
         runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
     }
 
@@ -832,7 +843,7 @@ fun NubeSettings(say: (String) -> Unit) {
         Plegado(
             "En el Manager de Infomaniak: Desarrollador → Tokens de API → Crear un token, con la aplicación «kDrive». " +
                 "El número de tu kDrive es el que sale en la dirección al abrirlo en el navegador, después de «/drive/». " +
-                "El token se guarda solo en este dispositivo: tu pareja no lo ve."
+                "El token se guarda en tu cuenta, en una parte que solo tú puedes leer (tu pareja no), y lo usan también Hiedra, Marfil y Cobalto."
         )
         OutlinedTextField(token, { token = it }, label = { Text("Token de API") }, singleLine = true, shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
@@ -841,8 +852,8 @@ fun NubeSettings(say: (String) -> Unit) {
         Button({
             KDrive.save(ctx, token, drive)
             scope.launch {
-                try { say(KDrive.test(ctx)); on = true; NubeSync.enqueue(ctx) }
-                catch (e: Exception) { KDrive.forget(ctx); say(e.message ?: "No se pudo conectar") }
+                try { say(KDrive.test(ctx)); KDrive.confirma(ctx); on = true; NubeSync.enqueue(ctx) }
+                catch (e: Exception) { KDrive.descarta(ctx); say(e.message ?: "No se pudo conectar") }
             }
         }, enabled = token.isNotBlank() && drive.isNotBlank(), shape = pillShape()) { Text("Conectar") }
     } else {
@@ -857,7 +868,7 @@ fun NubeSettings(say: (String) -> Unit) {
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // En segundo plano (con su aviso): no se corta aunque salgas de aquí o cierres la app
             Button({ NubeSync.enqueue(ctx, verify = true); say("Sincronizando con tu nube en segundo plano") }, enabled = !NubeSync.running, shape = pillShape()) { Text(if (NubeSync.running) "Sincronizando…" else "Sincronizar ahora") }
-            OutlinedButton({ KDrive.forget(ctx); on = false; token = ""; say("Nube desconectada (lo subido sigue en tu kDrive)") }, shape = pillShape()) { Text("Desconectar") }
+            OutlinedButton({ KDrive.forget(ctx); on = false; token = ""; say("kDrive desconectado en las cuatro apps (lo subido sigue en tu kDrive)") }, shape = pillShape()) { Text("Desconectar") }
         }
     }
 }

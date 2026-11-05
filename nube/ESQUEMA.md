@@ -44,12 +44,31 @@ guardan ya reducidas (unos 600×900, la proporción 2:3 de las cajas de SteamGri
 | `steam_key`, `steam_id` | Horas y biblioteca de Steam |
 | `igdb_id`, `igdb_secreto` | Datos de juegos |
 | `rawg` | Datos de juegos |
+| `tmdb` | Películas y series (Azabache) |
 
 ## Colecciones
 
 Los estados son los mismos en todas: `pendiente`, `en_curso`, `terminado`, `abandonado`.
 La valoración de Azabache va en el mismo nodo de la cosa: `nota` (0–100; sin el campo o 0 = **sin valorar**), `resena` y lo
 demás de la valoración (ver Azabache). Solo Azabache escribe esos campos; las demás apps los leen.
+
+### `juegos/<id>` (Hiedra)
+
+`id` = `j_` + 12 hexadecimales, el de siempre de Hiedra (se crea una vez y viaja).
+
+| Campo | Qué es |
+|---|---|
+| `t`, `pl` | Título y plataforma |
+| `estado` | `pendiente` / `en_curso` / `terminado` / `abandonado` |
+| `fav`, `fin`, `an`, `ul` | Favorito, cuándo lo pasaste, cuándo se añadió, última vez (ms) |
+| `menu` | `pc` / `emulacion` / `android` / `web` |
+| `k` | Las claves de antes (`juego:<título>`, lanzadores que ya no tiene) |
+| `ln` | Los lanzadores: `[{tp, s, a, em, pk, u, o, pck, pcd}]` (dónde está la ROM en cada móvil NO va aquí) |
+| `portada`, `pu`, `ez`/`eox`/`eoy` | La portada (hash), de dónde salió si fue de internet, y su encuadre |
+| `dh`, `de`, `dc` | Lo que suele durar (minutos): historia, con extras, al completo |
+
+Las horas, en `tiempo/<id>~<fuente>` (`fuente` = el dispositivo, `steam`, `pc:<pc>` o `carmesi:<dispositivo>`): `total` (ms),
+`veces`, `menu`, `t` y `d<AAAA-MM-DD>` = ms. Lo de un juego es la **suma** de sus fuentes.
 
 ### `libros/<kid>` (Marfil)
 
@@ -86,11 +105,42 @@ Un subrayado, una nota o un marcador: `ref` (el `kid`), `tipo` (`note` / `mark`)
 Lo leído o jugado en un dispositivo (o fuente): `ref`, `fuente`, `total` (ms) y un campo por día `d2026-11-05` = ms. Cada
 dispositivo escribe solo los suyos: para saber lo de un día se **suman** los de todos.
 
+### `obras/<obra>`, `capitulos/<obra>~<capítulo>` y `palabras/<dispositivo>` (Cobalto)
+
+Lo que escribes vive en los documentos de Escribir (`/users/<uid>/escritos`, `escritosIdx`), los mismos que Atrio del PC, con su
+mezcla a tres bandas: no cambian. Para las demás apps, Cobalto publica:
+
+- `obras/<obra>`: `t`, `a`, `estado` (`en_curso` / `pausa` / `terminado` / `archivada`), `palabras`, `ul`. Es la ficha que valora
+  Azabache (nota y reseña en el mismo nodo).
+- `capitulos/<obra>~<capítulo>`: la copia de solo lectura de cada capítulo terminado (`ref` = la obra, `t`, `a`, `c`, `n`, `pa`, `u`,
+  `p` palabras, `x` el texto). Al quitar la marca de terminado, `b`. Es lo que lee Marfil.
+- `palabras/<dispositivo>`: `d<AAAA-MM-DD>` = palabras escritas ese día en ese dispositivo (se suman los dispositivos).
+
+### La valoración (Azabache)
+
+En el nodo de la cosa (`juegos/<id>`, `libros/<kid>`, `obras/<obra>`): `nota` (0–100; sin el campo = **sin valorar**), `crit` (los
+cuatro criterios), `resena` y `az` (lo propio de Azabache de esa ficha: apuntes, capítulos marcados, imagen de fondo…). Azabache
+solo escribe lo que cambias en Azabache: el estado lo pone la app hermana (si relees un libro, está en curso; su nota se queda).
+
+### `azabache/<lista>~<id>` y `azabache/<nombre>` (Azabache)
+
+Lo que es solo de Azabache: cada elemento de cada lista (`items_<categoría>`, `iplays_<categoría>`, `diario`, `sagas`, `maquetas`…)
+es un nodo con `o` = el elemento tal cual; lo que no es una lista (`kinds`, `goals`, `ajustes`…) va en `azabache/<nombre>` con `v`.
+Un elemento borrado lleva `b`.
+
 ### `ajustes/<nombre>`
 
-`ajustes/marfil`, `ajustes/hiedra`… (la apariencia de cada app: campo `skin`), `ajustes/marfil_lector` (los ajustes del lector),
-`ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros del año, `anio` el año en que se fijó; los fija Marfil).
+`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
+del lector; Hiedra también `ini`, su portada), `ajustes/azabache` (`at` y `skin`: la apariencia de Azabache, que las demás pueden
+copiar) y `ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros del año, `anio` el año en que se fijó; los fija Marfil).
 
 ### `sagas/<id>`
 
 `n` nombre, `tipo` (`libros`, `juegos`), `refs` (lista ordenada de las cosas de la saga).
+
+## Lo que se queda como estaba
+
+- Atrio del PC sigue con sus nodos (`suite/`: el PC en directo, sus órdenes, sus capturas y su biblioteca): «Tu PC» de Hiedra no cambia.
+- El índice de las ROMs, partidas y estados de Hiedra en kDrive (`hiedra/nube/…`): son archivos de kDrive y su índice no ha cambiado.
+- Los nodos de antes (`hiedra/dev`, `marfil/dev`, `cobalto/dev`, `dev`, `stamps`, `tiempo`…) no se tocan ni se borran: la migración
+  los lee una vez en cada dispositivo y quedan como copia.

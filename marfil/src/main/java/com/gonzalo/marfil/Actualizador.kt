@@ -86,9 +86,10 @@ object Actualizador {
         val actual = instalada(ctx)
         if (nuevo.packageName != ctx.packageName || nuevo.longVersionCode <= actual.longVersionCode) return null
         val a = actual.signingInfo?.apkContentsSigners?.map { it.toCharsString() }?.toSet().orEmpty()
-        val n = nuevo.signingInfo?.apkContentsSigners?.map { it.toCharsString() }?.toSet().orEmpty()
+        // La firma de ahora tiene que estar en el historial de la nueva (si la nueva rota de clave, el historial lleva también la vieja)
+        val n = nuevo.signingInfo?.let { it.signingCertificateHistory ?: it.apkContentsSigners }?.map { it.toCharsString() }?.toSet().orEmpty()
         // Si Android no deja leer la firma del archivo, se da por buena: al instalar, rechaza una firma distinta
-        return if (n.isEmpty() || (a.isNotEmpty() && a == n)) nuevo.longVersionCode else null
+        return if (n.isEmpty() || (a.isNotEmpty() && n.containsAll(a))) nuevo.longVersionCode else null
     }
 
     /**

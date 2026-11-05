@@ -9,6 +9,29 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.3.0 — la familia
+
+- **La cuenta de la familia, de cero.** Cada cosa está una sola vez en la cuenta, campo a campo: dos apps o dos móviles que
+  tocan campos distintos nunca se pisan, y un móvil que vuelve a tener red después de días no pisa lo que cambiaste luego en otro
+  (las reglas del servidor lo comprueban). Funciona sin conexión: lo que cambias se ve al momento y se sube solo en cuanto hay red.
+  Ver `nube/ESQUEMA.md`.
+- **Entrar una vez.** Entras en Azabache (o en cualquiera de la familia) y las demás entran solas en ese móvil.
+- **Las claves, una vez.** El token de kDrive y las de los servicios se ponen una vez y las tienen todas las apps (si ya las tenías
+  en este móvil, se suben solas a la cuenta). Se gestionan en Azabache (Ajustes → Avanzado); un token mal pegado en
+  cualquier app nunca pisa el bueno de la cuenta.
+- **Actualizaciones sin preguntar** también en Android 17 (la app apunta a Android 15 y declara el permiso de actualizarse sola).
+- **Una sola firma para las cuatro.** Esta versión se instala encima de la anterior, sin desinstalar, pero **a mano esta vez**: el
+  actualizador de antes no acepta la firma nueva. A partir de aquí, se actualiza sola.
+- **La primera vez** (en cada móvil), lo de antes pasa a la cuenta nueva con la hora real de cada cambio. Lo de antes no se borra.
+- **Arreglado: libros «leyendo» que salían leídos con un 0.** Azabache ya no copia los juegos ni los libros: los lee de la cuenta y su
+  estado lo manda Hiedra o Marfil (si relees un libro, está en curso; su nota se queda y vuelve al terminarlo).
+- **«Sin valorar»** en vez de 0 en todo lo terminado que aún no has valorado.
+- **La valoración va en el propio juego o libro de la cuenta**: la ven Hiedra, Marfil y tus otros Azabache. Solo se escribe lo que cambias
+  aquí: nunca pisa el estado que pone la hermana.
+- **La portada de la ficha, pequeña**, junto a la nota o el estado (fuera la fila enorme del principio de la 1.2).
+- Lo propio de Azabache (películas, series, tus categorías, diario, sagas, maquetas…) va a la cuenta elemento a elemento.
+- Ajustes → Cuenta enseña las reglas nuevas de Firebase para copiarlas (`nube/reglas.json`).
+
 ## 1.2.12
 
 - **Fechas y cifras como en sus hermanas** (`Formato.kt`, con las mismas pruebas en las cuatro): «16 oct 2026» en fichas y textos, «16/10/2026» en las tablas de datos y siempre con punto de millar («4.010»). Los meses van escritos en la app (Android, según la versión, les ponía punto: «oct.»).

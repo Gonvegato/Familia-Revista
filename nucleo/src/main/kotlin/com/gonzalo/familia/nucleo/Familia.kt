@@ -182,6 +182,7 @@ class Familia(
                         continue
                     }
                     val p = lote.first()
+                    if (p is Pendiente.Directa && p.ruta.startsWith("/claves/")) { aparcadas += p.id; rechazados++; continue }
                     if (p is Pendiente.Campos && p.campos.size > 1 && r.codigo == 403) {
                         // Algún campo es más viejo que el del servidor: se separa para que el resto sí suba
                         synchronized(cerrojoCola) {
@@ -207,11 +208,12 @@ class Familia(
 
     /** Hasta 100 cambios de campos seguidos en un solo envío (o una escritura directa sola, o uno suelto si su lote falló). */
     private fun siguienteLote(): List<Pendiente> {
-        val primero = cola.firstOrNull() ?: return emptyList()
+        val primero = cola.firstOrNull { it.id !in aparcadas } ?: return emptyList()
         if (primero is Pendiente.Directa || primero.id in sueltos || primero.tamano() > 200_000) return listOf(primero)
         val lote = ArrayList<Pendiente>()
         var tam = 0
         for (p in cola) {
+            if (p.id in aparcadas) continue
             if (p !is Pendiente.Campos || p.id in sueltos || lote.size >= 100) break
             tam += p.tamano()
             if (lote.isNotEmpty() && tam > 400_000) break
@@ -224,6 +226,12 @@ class Familia(
         is Pendiente.Campos -> campos.values.sumOf { Json.escribe(it).length } + 64
         is Pendiente.Directa -> Json.escribe(cuerpo).length
     }
+
+    /**
+     * Escrituras directas que la cuenta no ha dejado hacer y no son un conflicto (las claves, si las reglas aún no están puestas):
+     * no se pierden; se quedan en la cola y se vuelven a intentar la próxima vez que se abra la app.
+     */
+    private val aparcadas = HashSet<Long>()
 
     /** Los que se mandan solos (su lote fue rechazado: así se sabe cuál tenía la culpa). */
     private val sueltos = HashSet<Long>()

@@ -432,7 +432,7 @@ class Store(ctx: Context) {
 
     var key: String
         get() = p.getString("key", "") ?: ""
-        set(v) { p.edit().putString("key", v.trim()).apply() }
+        set(v) { p.edit().putString("key", v.trim()).apply(); AzabacheNube.claveCambiada(app, "sgdb", v) }
 
     // ---- Aspecto ----
     var look: Look
@@ -475,11 +475,11 @@ class Store(ctx: Context) {
     /** IGDB (de Twitch): Client ID y secreto de tu aplicación de Twitch, para la duración de los juegos. */
     var igdbId: String
         get() = p.getString("igdbid", "") ?: ""
-        set(v) { p.edit().putString("igdbid", v.trim()).putString("igdbtok", "").apply() }
+        set(v) { p.edit().putString("igdbid", v.trim()).putString("igdbtok", "").apply(); AzabacheNube.claveCambiada(app, "igdbId", v) }
 
     var igdbSecret: String
         get() = p.getString("igdbsecret", "") ?: ""
-        set(v) { p.edit().putString("igdbsecret", v.trim()).putString("igdbtok", "").apply() }
+        set(v) { p.edit().putString("igdbsecret", v.trim()).putString("igdbtok", "").apply(); AzabacheNube.claveCambiada(app, "igdbSecret", v) }
 
     /** Pase temporal que da Twitch (dura semanas) y cuándo caduca. */
     var igdbToken: String
@@ -566,7 +566,7 @@ class Store(ctx: Context) {
     /** Clave de TMDB (películas: buscador, portadas, fondos y director). */
     var tmdbKey: String
         get() = p.getString("tmdb", "") ?: ""
-        set(v) { p.edit().putString("tmdb", v.trim()).apply() }
+        set(v) { p.edit().putString("tmdb", v.trim()).apply(); AzabacheNube.claveCambiada(app, "tmdb", v) }
 
     /**
      * Deja en orden las secciones: una sola de Películas y una sola de Series (si faltan, se crean; si ya tenías una
@@ -640,12 +640,12 @@ class Store(ctx: Context) {
     /** Clave de RAWG (estudios y recomendaciones de juegos). */
     var rawgKey: String
         get() = p.getString("rawg", "") ?: ""
-        set(v) { p.edit().putString("rawg", v.trim()).apply() }
+        set(v) { p.edit().putString("rawg", v.trim()).apply(); AzabacheNube.claveCambiada(app, "rawg", v) }
 
     /** Clave de la API web de Steam y tu cuenta (SteamID64 o nombre de perfil). */
     var steamKey: String
         get() = p.getString("steamkey", "") ?: ""
-        set(v) { p.edit().putString("steamkey", v.trim()).apply() }
+        set(v) { p.edit().putString("steamkey", v.trim()).apply(); AzabacheNube.claveCambiada(app, "steamKey", v) }
 
     /** Última vez que se trajeron las horas de Steam. */
     var steamLast: Long
@@ -654,7 +654,7 @@ class Store(ctx: Context) {
 
     var steamUser: String
         get() = p.getString("steamuser", "") ?: ""
-        set(v) { p.edit().putString("steamuser", v.trim()).apply() }
+        set(v) { p.edit().putString("steamuser", v.trim()).apply(); AzabacheNube.claveCambiada(app, "steamUser", v) }
 
     // ---- La suite (Atrio en el PC) ----
     /** Capturas del PC guardadas en este móvil (JSON: id, uri, juego, tamaño…). */

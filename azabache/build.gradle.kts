@@ -10,13 +10,13 @@ fun clave(n: String): String = firmaProps.getProperty("$n.pass").orEmpty()
 
 android {
     namespace = "com.gonzalo.gamerate"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         applicationId = "com.gonzalo.gamerate"
         minSdk = 29
-        targetSdk = 34
-        versionCode = 219
-        versionName = "1.2.12"
+        targetSdk = 35
+        versionCode = 220
+        versionName = "1.3.0"
         // El traductor del lector trae código nativo por procesador: móviles de 64 bits (arm64) y el emulador de pruebas (x86_64)
         // (-Pabis=arm64-v8a genera la del móvil sola, más ligera)
         ndk { abiFilters += ((project.findProperty("abis") as String?)?.split(",") ?: listOf("arm64-v8a", "x86_64")) }
@@ -43,7 +43,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            // Sin firmar aquí: la firma de la familia (la clave nueva con su linaje desde la vieja) la pone herramientas/firmar.py
+            signingConfig = null
         }
     }
     buildFeatures { compose = true }

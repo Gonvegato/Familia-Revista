@@ -123,9 +123,9 @@ object Steam {
 }
 
 /**
- * Las claves de los servicios: las de Ajustes mandan; si faltan, las que Atrio subió a tu cuenta («keys» en sus datos: SteamGridDB, Steam, RAWG
- * e IGDB). Se traen al vincular la cuenta y en cada sincronización a mano. El token de kDrive NO viene por aquí: lo que hay en tu cuenta lo puede
- * leer tu pareja (modo pareja), y el token da acceso a todos tus archivos; se pega en cada app, como en Atrio.
+ * Las claves de los servicios (SteamGridDB, Steam, RAWG e IGDB) son de la cuenta (`/claves`, que solo tú puedes leer; tu pareja no): se
+ * ponen una vez en Azabache y las usan todas las apps. Las que este móvil tenía guardadas de antes pasan a la cuenta una vez. El token de
+ * kDrive también está en `/claves`, pero lo lleva [KDrive].
  */
 object Servicios {
     class Claves(val sgdb: String = "", val steamKey: String = "", val steamUser: String = "", val rawg: String = "", val igdbId: String = "", val igdbSecret: String = "")

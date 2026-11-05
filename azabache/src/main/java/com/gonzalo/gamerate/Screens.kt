@@ -365,12 +365,12 @@ fun SettingsScreen(
         SettingsSection("Portadas de juegos (SteamGridDB)", 120) {
             OutlinedTextField(k, { k = it }, label = { Text("API key de SteamGridDB") }, singleLine = true,
                 shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Plegado("Se genera en tu perfil de steamgriddb.com, en Preferencias > API. Se guarda solo en este dispositivo.")
+            Plegado("Se genera en tu perfil de steamgriddb.com, en Preferencias > API. Se guarda en tu cuenta: la usan también las demás apps.")
             Button({ onSaveKey(k) }, shape = pillShape()) { Text("Guardar clave") }
         }
 
         SettingsSection("Servicios", 380) {
-            Text("Las claves de aquí (SteamGridDB, Steam, RAWG, IGDB) viajan con tu cuenta: Hiedra y Marfil las usan sin pegarlas otra vez.", color = UiSoft, fontSize = 13.sp)
+            Text("Las claves de aquí (SteamGridDB, Steam, RAWG, IGDB, TMDB y kDrive) son de tu cuenta, en una parte que solo tú puedes leer (tu pareja no): Hiedra, Marfil y Cobalto las usan sin pegarlas otra vez.", color = UiSoft, fontSize = 13.sp)
             Spacer(Modifier.height(10.dp))
             Text("RAWG (datos de los juegos, en Hiedra)", fontWeight = FontWeight.SemiBold)
             Plegado("Con una clave gratuita de rawg.io/apidocs, Hiedra saca de RAWG la fecha, el estudio y los géneros de los juegos de consola; aquí se detectan mejor los estudios.")
