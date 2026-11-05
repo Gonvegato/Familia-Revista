@@ -54,6 +54,27 @@ jobs:
           test -x /tmp/prueba/datos/familia-apps/Hiedra/bin/Hiedra
           cat /tmp/prueba/datos/applications/familia-hiedra.desktop
           test -f /tmp/prueba/config/autostart/familia-hiedra.desktop
+      - name: Cada app se abre en Linux, instalada con su instalar.sh (y una captura de cada una)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb imagemagick > /dev/null
+          mkdir -p capturas-linux /tmp/apps
+          export FAMILIA_DIR="$RUNNER_TEMP/familia"
+          for t in dist/*-linux.tar.gz; do
+            A=$(basename "$t" | cut -d- -f1)
+            rm -rf /tmp/apps/x && mkdir -p /tmp/apps/x && tar -C /tmp/apps/x -xzf "$t"
+            XDG_DATA_HOME=/tmp/apps/datos XDG_CONFIG_HOME=/tmp/apps/config sh /tmp/apps/x/instalar.sh --callada
+            b=/tmp/apps/datos/familia-apps/$A/bin/$A
+            xvfb-run -a -s "-screen 0 1280x800x24" bash -c "
+              '$b' > capturas-linux/$A.log 2>&1 & p=\$!
+              sleep 25
+              if ! kill -0 \$p 2>/dev/null; then echo '$A se ha cerrado sola:'; cat capturas-linux/$A.log; exit 1; fi
+              import -window root capturas-linux/$A.png || echo '(sin captura de $A)'
+              kill \$p; wait \$p 2>/dev/null || true"
+            echo "$A se abre bien"
+          done
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: capturas-linux, path: capturas-linux/, retention-days: 30 }
       - uses: actions/upload-artifact@v4
         with: { name: escritorio-linux, path: dist/, retention-days: 30 }
       - if: always()
