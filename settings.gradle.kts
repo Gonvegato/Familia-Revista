@@ -16,4 +16,4 @@ if (!soloEscritorio) {
     include(":hiedra", ":marfil", ":cobalto", ":azabache")
 }
 // Las versiones de escritorio (Linux y Mac), con Compose Multiplatform: lo común y las cuatro apps (ver docs/ESCRITORIO.md)
-include(":escritorio:familia", ":escritorio:azabache")
+include(":escritorio:json", ":escritorio:familia", ":escritorio:azabache", ":escritorio:cobalto")

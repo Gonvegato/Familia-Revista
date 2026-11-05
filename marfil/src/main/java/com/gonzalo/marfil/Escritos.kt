@@ -157,7 +157,7 @@ object Escritos {
             val obra = n.texto("ref").ifBlank { n.ref.substringBefore('~') }
             val cap = n.ref.substringAfter('~')
             val x = JSONObject().put("t", n.texto("t")).put("a", n.texto("a")).put("c", n.texto("c")).put("n", n.entero("n")).put("pa", n.texto("pa"))
-                .put("u", n.entero("u")).put("p", n.entero("p")).put("x", n.texto("x"))
+                .put("u", n.entero("ue").takeIf { it > 0 } ?: n.u).put("p", n.entero("p")).put("x", n.texto("x"))
             (o.optJSONObject(obra) ?: JSONObject().also { o.put(obra, it) }).put(cap, x)
         }
         return o

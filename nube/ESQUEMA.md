@@ -113,8 +113,9 @@ demás apps, Cobalto publica:
 
 - `obras/<obra>`: `t`, `a`, `estado` (`en_curso` / `pausa` / `terminado` / `archivada`), `palabras`, `ul`. Es la ficha que valora
   Azabache (nota y reseña en el mismo nodo).
-- `capitulos/<obra>~<capítulo>`: la copia de solo lectura de cada capítulo terminado (`ref` = la obra, `t`, `a`, `c`, `n`, `pa`, `u`,
-  `p` palabras, `x` el texto). Al quitar la marca de terminado, `b`. Es lo que lee Marfil.
+- `capitulos/<obra>~<capítulo>`: la copia de solo lectura de cada capítulo terminado (`ref` = la obra, `t`, `a`, `c`, `n`, `pa`, `ue` la
+  última edición del capítulo en ms, `p` palabras, `x` el texto). Al quitar la marca de terminado, `b`. Es lo que lee Marfil. (Hasta Cobalto 0.3.1
+  se mandaba como `u`, que es la hora del servidor y el núcleo no deja escribir: no llegaba nada. Quien lee usa `ue` o, si falta, la `u` del nodo.)
 - `palabras/<dispositivo>`: `d<AAAA-MM-DD>` = palabras escritas ese día en ese dispositivo (se suman los dispositivos).
 
 ### La valoración (Azabache)

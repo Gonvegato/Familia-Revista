@@ -1,16 +1,9 @@
 package com.gonzalo.cobalto
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -40,6 +33,23 @@ class Doc(val o: JSONObject) {
     override fun toString() = o.toString()
 }
 
+/**
+ * Dónde están los escritos en la cuenta (`/users/<uid>/escritos` y `escritosIdx`): la sesión y las peticiones a la base de datos.
+ * En Android es la cuenta de la familia (`EscritosApp.kt`); en el ordenador, la del escritorio. Sin cuenta ([Ninguna]), no se sube nada.
+ */
+interface NubeEscritos {
+    val vinculada: Boolean
+    val uid: String
+    /** Una petición a la base de datos con tu sesión. Devuelve el texto, o null si no hay nada. Lanza un error si no hay conexión. */
+    fun db(metodo: String, ruta: String, cuerpo: String?, consulta: String = ""): String?
+
+    object Ninguna : NubeEscritos {
+        override val vinculada = false
+        override val uid = ""
+        override fun db(metodo: String, ruta: String, cuerpo: String?, consulta: String): String? = null
+    }
+}
+
 /** Una instantánea del texto de una escena (el historial de versiones; no viaja con la cuenta). */
 class Version(val u: Long, val palabras: Int, val texto: String)
 
@@ -51,7 +61,7 @@ class Hallazgo(val doc: Doc, val donde: String, val extracto: String, val desde:
  * archivo, así una novela larga no es un solo bloque), se puede escribir sin conexión y, con tu cuenta, cada cambio sube
  * en cuanto hay red y llega al momento a tus otros dispositivos (ver docs/escribir.md).
  */
-class Escritos(private val dir: File, private val dev: () -> String = { "local" }) {
+class Escritos(private val dir: File, private val nube: NubeEscritos = NubeEscritos.Ninguna, private val dev: () -> String = { "local" }) {
     companion object {
         const val T_OBRA = "p"; const val T_CAP = "c"; const val T_ESCENA = "e"; const val T_FICHA = "f"
         const val T_NOTA = "n"; const val T_BORRADOR = "b"; const val T_HITO = "h"; const val T_LOG = "l"
@@ -68,24 +78,6 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
         /** Una marca de borrado sin nada dentro (lo que queda al vaciar la papelera, o lo que dejaban las versiones antiguas). */
         fun lapida(o: JSONObject): Boolean = o.optInt("d") == 1 && o.keys().asSequence().all { it in LAPIDA }
         const val ESPERA = 700L
-
-        @Volatile private var inst: Escritos? = null
-        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        private var programada: Job? = null
-        private var fallos = 0
-        @Volatile private var ordenada = 0L
-        private val escuchando = java.util.concurrent.atomic.AtomicBoolean(false)
-
-        /** Los escritos de esta app. */
-        fun get(ctx: Context): Escritos {
-            val a = ctx.applicationContext
-            return inst ?: synchronized(this) {
-                inst ?: Escritos(File(a.filesDir, "escritos")) { Cuenta.dispositivo.ifBlank { "movil" } }.also { it.alCambiar = { pronto(a) }; inst = it }
-            }
-        }
-
-        /** Solo para las pruebas: empezar de cero. */
-        fun reiniciaParaPruebas() { synchronized(this) { inst?.parar(); inst = null; programada?.cancel(); programada = null; fallos = 0; ordenada = 0L } }
 
         fun nuevoId(t: String): String = t + "_" + java.util.UUID.randomUUID().toString().replace("-", "").take(12)
 
@@ -105,55 +97,6 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
             else -> (antes + despues) / 2
         }
 
-        /**
-         * Programa subir lo pendiente (y bajar lo nuevo) dentro de [ms]. Sin conexión se reintenta solo (5 s, 15 s, 45 s…
-         * hasta 5 min) y, por si se cierra la app, queda una tarea para cuando haya red.
-         */
-        fun pronto(ctx: Context, ms: Long = ESPERA) {
-            val c = ctx.applicationContext
-            if (!Cuenta.vinculada) return
-            synchronized(this) {
-                programada?.cancel()
-                programada = scope.launch {
-                    delay(ms)
-                    withContext(NonCancellable) { sincroniza(c) }
-                }
-            }
-        }
-
-        /** Sube y baja ahora. Devuelve false si no ha podido (se reintenta solo). */
-        suspend fun sincroniza(ctx: Context): Boolean {
-            val c = ctx.applicationContext
-            if (!Cuenta.vinculada) return true
-            val e = get(c)
-            return try {
-                // Lo que llega de otro dispositivo (el PC, tu pareja) también se ve en los widgets al momento
-                if (e.sincroniza()) Widgets.pedir(c)
-                fallos = 0
-                // Y lo que leen las hermanas (los capítulos terminados y las palabras del día), sin esperar al trabajo de fondo ni a «Sincronizar ahora»
-                val diferido = runCatching { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Publicar.todo(c) } }.getOrDefault(false)
-                if (System.currentTimeMillis() - ordenada > 6 * 3_600_000L) { ordenada = System.currentTimeMillis(); e.purga(); runCatching { e.limpia() } }
-                if (e.pendientes().isNotEmpty()) pronto(c) else if (diferido) pronto(c, Publicar.QUIETO)
-                true
-            } catch (ex: Exception) {
-                fallos++
-                e.error = ex.message ?: "sin conexión"
-                if (fallos <= 8) pronto(c, minOf(300_000L, 5_000L * Math.pow(3.0, (fallos - 1).toDouble()).toLong()))
-                NubeTarea.encolar(c)
-                false
-            }
-        }
-
-        /** Baja lo nuevo de tus otros dispositivos (varias peticiones seguidas se juntan en una). */
-        fun bajaPronto(ctx: Context) {
-            val c = ctx.applicationContext
-            if (!Cuenta.vinculada || !escuchando.compareAndSet(false, true)) return
-            scope.launch {
-                delay(150)
-                escuchando.set(false)
-                runCatching { sincroniza(c) }
-            }
-        }
     }
 
     private val docs = ConcurrentHashMap<String, Doc>()
@@ -585,7 +528,7 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
     /** Sube lo pendiente y baja lo nuevo. Una a la vez. Lanza un error si no hay conexión. Devuelve si ha llegado algo de fuera. */
     suspend fun sincroniza(): Boolean = mutex.withLock {
         withContext(Dispatchers.IO) {
-            if (!Cuenta.vinculada) return@withContext false
+            if (!nube.vinculada) return@withContext false
             val llego = bajaYa()
             subeYa()
             error = ""
@@ -595,7 +538,7 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
         }
     }
 
-    private fun base() = "/users/${Cuenta.uid}"
+    private fun base() = "/users/${nube.uid}"
 
     private fun subeYa() {
         var quedan = pendientes().sortedBy { it.u }
@@ -604,7 +547,7 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
             for (d in quedan) { val len = d.o.toString().length; if (lote.isNotEmpty() && (peso + len > 600_000 || lote.size >= 40)) break; lote.add(d); peso += len }
             val body = JSONObject()
             lote.forEach { body.put("escritos/${it.id}", it.o); body.put("escritosIdx/${it.id}", it.u); intentos.getOrPut(it.id) { ConcurrentHashMap.newKeySet() }.add(it.u) }
-            Cuenta.db("PATCH", base(), body.toString(), "print=silent")
+            nube.db("PATCH", base(), body.toString(), "print=silent")
             synchronized(lock) {
                 lote.forEach { s ->
                     acked[s.id] = s.u
@@ -624,7 +567,7 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
 
     /** Baja lo que cambió en otros dispositivos. Devuelve si algo de lo que se ve aquí ha cambiado. */
     private fun bajaYa(): Boolean {
-        val txt = Cuenta.db("GET", base() + "/escritosIdx", null) ?: "{}"
+        val txt = nube.db("GET", base() + "/escritosIdx", null) ?: "{}"
         val idx = JSONObject(txt)
         val faltan = ArrayList<String>()
         idx.keys().forEach { id ->
@@ -634,8 +577,8 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
             faltan += id
         }
         if (faltan.isEmpty()) { guardaIndice(); return false }
-        val remotos: JSONObject = if (faltan.size > 15) JSONObject(Cuenta.db("GET", base() + "/escritos", null) ?: "{}")
-            else JSONObject().also { r -> faltan.forEach { id -> Cuenta.db("GET", base() + "/escritos/$id", null)?.let { r.put(id, JSONObject(it)) } } }
+        val remotos: JSONObject = if (faltan.size > 15) JSONObject(nube.db("GET", base() + "/escritos", null) ?: "{}")
+            else JSONObject().also { r -> faltan.forEach { id -> nube.db("GET", base() + "/escritos/$id", null)?.let { r.put(id, JSONObject(it)) } } }
         var cambio = false
         faltan.forEach { id -> remotos.optJSONObject(id)?.let { if (aplica(id, it)) cambio = true } }
         guardaIndice()
@@ -784,10 +727,10 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
         val hace = System.currentTimeMillis() - LIMPIEZA
         val viejos = docs.values.filter { it.borrado && it.u < hace && acked[it.id] == it.u }
         if (viejos.isEmpty()) return
-        if (Cuenta.vinculada) {
+        if (nube.vinculada) {
             val body = JSONObject()
             viejos.forEach { body.put("escritos/${it.id}", JSONObject.NULL); body.put("escritosIdx/${it.id}", JSONObject.NULL) }
-            runCatching { Cuenta.db("PATCH", base(), body.toString(), "print=silent") }.onFailure { return }
+            runCatching { nube.db("PATCH", base(), body.toString(), "print=silent") }.onFailure { return }
         }
         synchronized(lock) { viejos.forEach { docs.remove(it.id); acked.remove(it.id); runCatching { archivo(it.id).delete() }; runCatching { archivoBase(it.id).delete() } } }
         guardaIndice()

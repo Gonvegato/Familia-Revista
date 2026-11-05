@@ -79,6 +79,11 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.13.4
+
+- Los capítulos de Cobalto llegan con su hora de edición (`ue`; antes llegaba vacía y «capítulos nuevos desde la última vez» no
+  contaba ninguno).
+
 ## 0.13.3
 
 - **Las fechas que llegaron de Atrio estaban en 1970.** Atrio guarda el día de empezar y de terminar como número de día, y al

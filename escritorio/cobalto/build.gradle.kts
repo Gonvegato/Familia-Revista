@@ -1,0 +1,65 @@
+// Cobalto para Linux y Mac: lo que escribes, en la cuenta (nube/ESCRITOS.md). El núcleo de los escritos (formato, sincronización y
+// mezcla a tres bandas), el texto, exportar e importar son LOS MISMOS archivos que compila Cobalto de Android: se copian de
+// cobalto/src/main al compilar (no hay dos versiones que puedan separarse). Las pruebas de la mezcla y de la estructura, también.
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+val version = "1.0.0"
+val android = rootProject.file("cobalto/src")
+
+java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+
+// Lo que es igual en el móvil y en el ordenador (Kotlin sin nada de Android: org.json y Compose, que existen en los dos)
+val compartido = tasks.register<Sync>("compartidoDeAndroid") {
+    from(File(android, "main/java/com/gonzalo/cobalto")) {
+        include("Escritos.kt", "EscribirMezcla.kt", "EscribirEstructura.kt", "EscribirTexto.kt", "EscribirExport.kt", "EscribirDiff.kt", "Racha.kt", "Formato.kt", "Obras.kt")
+    }
+    into(layout.buildDirectory.dir("compartido/main/com/gonzalo/cobalto"))
+}
+val pruebasCompartidas = tasks.register<Sync>("pruebasDeAndroid") {
+    from(File(android, "test/java/com/gonzalo/cobalto")) { include("EscribirMezclaTest.kt", "EscribirEstructuraTest.kt") }
+    into(layout.buildDirectory.dir("compartido/test/com/gonzalo/cobalto"))
+}
+sourceSets["main"].kotlin.srcDir(layout.buildDirectory.dir("compartido/main"))
+sourceSets["test"].kotlin.srcDir(layout.buildDirectory.dir("compartido/test"))
+tasks.named("compileKotlin") { dependsOn(compartido) }
+tasks.named("compileTestKotlin") { dependsOn(pruebasCompartidas) }
+
+dependencies {
+    implementation(project(":escritorio:familia"))
+    // El org.json de Android (el mismo comportamiento que en el móvil), para el núcleo de los escritos
+    implementation(project(":escritorio:json"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(testFixtures(project(":nucleo")))
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.gonzalo.cobalto.pc.MainKt"
+        jvmArgs += listOf("-Dfamilia.version=$version")
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Deb)
+            packageName = "Cobalto"
+            packageVersion = version
+            description = "Lo que escribes, en la cuenta de la familia"
+            vendor = "Gonzalo"
+            modules("java.net.http", "jdk.crypto.ec")
+            linux { packageName = "cobalto"; menuGroup = "Office"; shortcut = true; iconFile.set(project.file("icono/cobalto.png")) }
+            macOS { bundleID = "com.gonzalo.cobalto"; iconFile.set(project.file("icono/cobalto.icns")) }
+        }
+    }
+}
+
+tasks.test {
+    systemProperty("familia.emulador", System.getProperty("familia.emulador") ?: "http://127.0.0.1")
+    systemProperty("familia.reglas", rootProject.file("nube/reglas.json").absolutePath)
+    System.getProperty("capturas")?.let { systemProperty("capturas", it); outputs.upToDateWhen { false } }
+    testLogging { events("failed"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}

@@ -9,6 +9,10 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.5.1
+
+- Los capítulos de Cobalto llegan con su hora de edición (`ue`, ver `nube/ESQUEMA.md`).
+
 ## 1.5.0 — todo de la cuenta
 
 - **Lo tuyo de Azabache también es de la cuenta, sin copia**: tus categorías y sus fichas (películas, series, las tuyas), el diario,

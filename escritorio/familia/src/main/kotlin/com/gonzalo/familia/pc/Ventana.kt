@@ -36,8 +36,8 @@ import java.io.File
  * La ventana de una app de la familia en el ordenador: arranca la cuenta, sigue a la ventana (escucha en directo mientras está abierta,
  * sube lo pendiente al cerrar), recuerda su tamaño y su sitio, y si aún no has entrado en la cuenta enseña cómo entrar.
  */
-fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, contenido: @Composable () -> Unit) = application {
-    remember { LaFamilia.inicia(app); Apariencia.inicia(app); true }
+fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alIniciar: () -> Unit = {}, alCerrar: () -> Unit = {}, contenido: @Composable () -> Unit) = application {
+    remember { LaFamilia.inicia(app); Apariencia.inicia(app); runCatching { alIniciar() }; true }
     val guardada = remember { leeVentana(app) }
     val estado = rememberWindowState(
         placement = if (guardada["max"] == true) WindowPlacement.Maximized else WindowPlacement.Floating,
@@ -47,6 +47,7 @@ fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, contenid
     Window(
         onCloseRequest = {
             guardaVentana(app, estado.placement == WindowPlacement.Maximized, estado.position, estado.size)
+            runCatching { alCerrar() }
             LaFamilia.alCerrar()
             exitApplication()
         },

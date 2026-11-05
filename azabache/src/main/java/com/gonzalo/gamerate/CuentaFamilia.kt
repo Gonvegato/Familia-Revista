@@ -161,7 +161,7 @@ object CuentaHermanas {
         LaFamilia.coleccion("capitulos").vivos().forEach { n ->
             val obra = n.texto("ref"); val cap = n.ref.substringAfter('~')
             (lec.optJSONObject(obra) ?: JSONObject().also { lec.put(obra, it) }).put(cap, JSONObject().put("t", n.texto("t")).put("a", n.texto("a")).put("c", n.texto("c")).put("n", n.entero("n"))
-                .put("pa", n.texto("pa")).put("p", n.entero("p")).put("x", n.texto("x")).put("u", n.entero("u")))
+                .put("pa", n.texto("pa")).put("p", n.entero("p")).put("x", n.texto("x")).put("u", n.entero("ue").takeIf { it > 0 } ?: n.u))
         }
         Hermanas.guardaPublico(c, "lectura_cobalto", lec.toString())
 

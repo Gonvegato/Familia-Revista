@@ -10,6 +10,14 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.3.2
+
+- **Los capítulos terminados vuelven a llegar a Marfil y a Azabache, y las palabras del día también.** Al publicar un capítulo
+  terminado se mandaba su hora de edición en el campo `u`, que en la cuenta es la hora del servidor y no se puede escribir: la
+  publicación fallaba sin avisar en el primer capítulo terminado, y detrás de él se quedaban sin publicar las palabras de cada día.
+  Ahora va en `ue` (ver `nube/ESQUEMA.md`), con una prueba contra la cuenta de verdad.
+- El núcleo de los escritos (`Escritos.kt`) ya no tiene nada de Android: es el mismo archivo que compila **Cobalto para Linux y Mac**.
+
 ## 0.3.1
 
 - **Las pestañas de arriba se dejan deslizar** (antes volvían solas a la elegida mientras las arrastrabas) y **las opciones de

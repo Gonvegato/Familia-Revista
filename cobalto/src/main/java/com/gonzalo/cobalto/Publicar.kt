@@ -115,7 +115,7 @@ object Publicar {
             val actual = caps.nodo(ref)
             if (actual != null && !actual.borrado && ahora - doc.optLong("u") < QUIETO && actual.texto("x") != doc.optString("x")) { diferido = true; return@forEach }
             caps.cambia(ref, mapOf("ref" to pid, "t" to doc.optString("t"), "a" to doc.optString("a"), "c" to doc.optString("c"), "n" to doc.optInt("n").toLong(),
-                "pa" to doc.optString("pa"), "u" to doc.optLong("u"), "p" to doc.optInt("p").toLong(), "x" to doc.optString("x"), "b" to 0L))
+                "pa" to doc.optString("pa"), "ue" to doc.optLong("u"), "p" to doc.optInt("p").toLong(), "x" to doc.optString("x"), "b" to 0L))
         } }
         caps.vivos().filter { it.ref !in quiero }.forEach { caps.borra(it.ref) }
         // Las palabras de cada día de este dispositivo (mientras escribes cambian a cada frase: se mandan cuando llevas un rato quieto)

@@ -16,3 +16,4 @@ firma/*.lineage
 database-debug.log
 firebase-debug.log
 *-debug.log
+.kotlin/
