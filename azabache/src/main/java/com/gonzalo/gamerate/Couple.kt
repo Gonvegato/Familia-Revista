@@ -239,7 +239,10 @@ object Couple {
             append("Dentro como ${fam.sesion.usuario}. ")
             append(if (inf.ok) "Sincronizado. " else "La cuenta no responde (${inf.error ?: "sin conexión"}). ")
             if (fam.pendientes > 0) append("Quedan ${fam.pendientes} cambios por subir. ")
-            append("En la cuenta: ${d.juegos} juegos de Hiedra y ${d.libros} libros de Marfil; aquí, $aquiJ y $aquiL. ")
+            if (Cosas.activa(store.contexto)) {
+                val j = store.load(GAMES.id).size + store.loadPlays(GAMES.id).size; val l = store.load(BOOKS.id).size + store.loadPlays(BOOKS.id).size
+                append("Azabache lee de la cuenta (sin copia): $j juegos y $l libros, los mismos que Hiedra y Marfil. ")
+            } else append("En la cuenta: ${d.juegos} juegos de Hiedra y ${d.libros} libros de Marfil; aquí, $aquiJ y $aquiL. ")
             append(if (d.error.isBlank()) "Último reflejo: ${if (d.hora > 0) f.format(Date(d.hora)) else "nunca"}, bien." else "El último reflejo falló: ${d.error}")
         }
     }

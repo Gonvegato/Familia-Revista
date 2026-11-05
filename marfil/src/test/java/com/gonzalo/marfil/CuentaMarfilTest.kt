@@ -90,6 +90,13 @@ class CuentaMarfilTest {
         } finally { kd.stop(); KDrive.api = "https://api.infomaniak.com" }
     }
 
+    @Test fun laClaveDeUnLibroEsLaQueUsaAzabache() {
+        // (el mismo contrato que comprueba CuentaAzabacheTest: así un libro de Azabache y el de Marfil son el mismo nodo)
+        assertEquals("libro:solaris:stanisław lem", claveDe("Solaris", "Stanisław Lem"))
+        assertEquals("libro:el nombre del viento:patrick rothfuss", claveDe("El nombre del viento", "Patrick Rothfuss"))
+        assertEquals("libro:cien anos de soledad:gabriel garcia marquez", claveDe("Cien años de soledad", "Gabriel García Márquez"))
+    }
+
     @Test fun unLibroLeidoSinFechaCuentaParaElRetoDelAno() {
         // Leído hace unos meses en otro sitio (Atrio, otro dispositivo…), sin fecha de terminado: cuenta desde que pasó a «terminado»
         val marzo = java.time.LocalDate.of(2026, 3, 14).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()

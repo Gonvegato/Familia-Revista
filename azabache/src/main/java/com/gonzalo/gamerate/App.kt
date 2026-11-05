@@ -179,16 +179,19 @@ private fun AppContenido(
 
     fun setGames(k: Kind, l0: List<Game>) {
         if (k.custom && kinds.none { it.id == k.id }) return // categoría ya borrada
-        val l = alDia(gamesOf(k), l0, { store.load(k.id) }) { it.id }
+        val antes = gamesOf(k)
+        val l = alDia(antes, l0, { store.load(k.id) }) { it.id }
         when (k.id) { 0 -> games = l; 1 -> books = l; else -> extra = extra + (k.id to l) }
-        store.save(l, k.id)
+        // (los juegos y libros son de la cuenta: solo se escribe lo que acabas de cambiar)
+        store.save(l, k.id, antes)
     }
 
     fun setPlays(k: Kind, l0: List<Play>) {
         if (k.custom && kinds.none { it.id == k.id }) return // categoría ya borrada
-        val l = alDia(playsOf(k), l0, { store.loadPlays(k.id) }) { it.id }
+        val antes = playsOf(k)
+        val l = alDia(antes, l0, { store.loadPlays(k.id) }) { it.id }
         when (k.id) { 0 -> plays = l; 1 -> bplays = l; else -> extraPlays = extraPlays + (k.id to l) }
-        store.savePlays(l, k.id)
+        store.savePlays(l, k.id, antes)
     }
 
     fun setNotas(l0: List<Nota>) { val l = alDia(notas, l0, { store.loadDiario() }) { it.id }; notas = l; store.saveDiario(l) }

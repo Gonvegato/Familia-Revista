@@ -77,7 +77,10 @@ object CuentaHermanas {
 
     private fun refrescarYa(c: Context, store: Store): Boolean {
         if (!LaFamilia.familia.sesion.dentro) return false
-        migraValoraciones(c, store)
+        // Con los juegos y libros ya en la cuenta ([Cosas]) no hay nada que reflejar: Azabache los lee de ella. Aquí solo queda lo que
+        // usan el Diario y los widgets (lo de cada día, los subrayados…) y qué ficha es cada cosa.
+        val enCuenta = Cosas.activa(c)
+        if (!enCuenta) migraValoraciones(c, store)
         var cambio = false
         val faltan = ArrayList<String>()
         val tiempo = LaFamilia.coleccion("tiempo").vivos()
@@ -91,7 +94,8 @@ object CuentaHermanas {
                 porRef[n.ref].orEmpty().sumOf { it.entero("total") }, n.m.values.maxOrNull() ?: 0L)
         }
         val valJ = nodosJ.mapNotNull { n -> valorDe(n)?.let { n.ref to it } }.toMap()
-        val enlJ = Hermanas.enlaces(c, "hiedra")
+        val enlJ = if (enCuenta) Cosas.vista(c, Cosas.JUEGOS).refPorId.entries.associateTo(HashMap()) { it.value to it.key } else Hermanas.enlaces(c, "hiedra")
+        if (!enCuenta) {
         // (la portada la manda la cuenta: se pone siempre la de la cosa; cambiarla aquí la cambia allí)
         val puestasJ = HashMap<String, String>().also { m -> val ls = store.load(GAMES.id).associate { it.id to it.cover } + store.loadPlays(GAMES.id).associate { it.id to it.cover }; enlJ.forEach { (k, v) -> ls[v]?.let { m[k] = it } } }
         val eJ = Hermanas.reflejarJuegos(juegos, store.load(GAMES.id), store.loadPlays(GAMES.id), enlJ, { it.portadaUrl }, puestasJ, System.currentTimeMillis(), valJ)
@@ -99,6 +103,7 @@ object CuentaHermanas {
         if (eJ.cambio || gsJ != eJ.games || psJ != eJ.plays) { store.save(gsJ, GAMES.id); store.savePlays(psJ, GAMES.id); cambio = true }
         Hermanas.guardaEnlacesPublico(c, "hiedra", enlJ)
         recuerda(c, "games", gsJ.map { gameToJson(it) }); recuerda(c, "plays", psJ.map { playToJson(it) })
+        } else Hermanas.guardaEnlacesPublico(c, "hiedra", enlJ)
         // Lo jugado cada día (con la forma de siempre: id → fuente → {t, total, days})
         val tj = JSONObject()
         for (n in tiempo) {
@@ -116,13 +121,15 @@ object CuentaHermanas {
                 n.m.values.maxOrNull() ?: 0L, portada(c, n, faltan))
         }.filter { it.clave.isNotBlank() }
         val valL = nodosL.mapNotNull { n -> valorDe(n)?.let { n.texto("clave") to it } }.toMap()
-        val enlL = Hermanas.enlaces(c, "marfil")
+        val enlL = if (enCuenta) Cosas.vista(c, Cosas.LIBROS).nodoPorId.entries.associateTo(HashMap()) { it.value.texto("clave") to it.key } else Hermanas.enlaces(c, "marfil")
+        if (!enCuenta) {
         val puestasL = HashMap<String, String>().also { m -> val ls = store.load(BOOKS.id).associate { it.id to it.cover } + store.loadPlays(BOOKS.id).associate { it.id to it.cover }; enlL.forEach { (k, v) -> ls[v]?.let { m[k] = it } } }
         val eL = Hermanas.reflejarLibros(libros, store.load(BOOKS.id), store.loadPlays(BOOKS.id), enlL, { it.portadaUrl }, puestasL, System.currentTimeMillis(), valL)
         val (gsL, psL) = conAz(c, "books", "bplays", eL.games, eL.plays, nodosL.associateBy { it.texto("clave") }, enlL)
         if (eL.cambio || gsL != eL.games || psL != eL.plays) { store.save(gsL, BOOKS.id); store.savePlays(psL, BOOKS.id); cambio = true }
         Hermanas.guardaEnlacesPublico(c, "marfil", enlL)
         recuerda(c, "books", gsL.map { gameToJson(it) }); recuerda(c, "bplays", psL.map { playToJson(it) })
+        } else Hermanas.guardaEnlacesPublico(c, "marfil", enlL)
         Hermanas.guardaPublico(c, "avance_marfil", Hermanas.avancePorFicha(libros, enlL).toString())
         // Lo leído cada día (kid → «cuenta» → {t, a, dev: {fuente: {total, days}}}) y los subrayados (kid → «cuenta» → {t, a, n: […]})
         val tl = JSONObject()
@@ -308,6 +315,7 @@ object AzabacheNube {
                     val n = col().nodo(ref)
                     if (n == null || (!n.borrado && (n.m["o"] ?: 0L) < hora)) col().pon(ref, mapOf("b" to hora), hora)
                 } }
+                k in Cosas.LISTAS && Cosas.activa(c) -> {}
                 v is JSONArray && esLista(v) -> for (i in 0 until v.length()) {
                     val e = v.getJSONObject(i)
                     if (CuentaHermanas.esReflejo(c, k, e.optLong("id"))) { CuentaHermanas.subeReflejo(c, k, e); continue }
@@ -328,6 +336,7 @@ object AzabacheNube {
         for (n in c.todos().values) {
             if (n.ref.contains('~')) {
                 val lista = n.ref.substringBefore('~')
+                if (lista in Cosas.LISTAS && (uid != null || Cosas.activa(LaFamilia.contexto))) continue
                 if (n.borrado) { tombs.put("$lista:${n.ref.substringAfter('~')}", n.entero(Nodo.B)); continue }
                 val e = n.texto("o").takeIf { it.startsWith("{") }?.let { runCatching { JSONObject(it) }.getOrNull() } ?: continue
                 (o.optJSONArray(lista) ?: JSONArray().also { o.put(lista, it) }).put(e)

@@ -160,7 +160,7 @@ object BookFiles {
         if (p.status == 1) return false
         store.savePlays(todos.map {
             if (it.id == id) it.copy(status = 1, start = if (it.start == 0L) hoy.toEpochDay() else it.start, end = 0L, updated = System.currentTimeMillis()) else it
-        }, BOOKS.id)
+        }, BOOKS.id, antes = todos)
         // (la app vuelve a leer sus listas; hasta entonces, lo que guarde se aplica sobre esto)
         Store.otraGeneracion()
         SyncBus.changed()

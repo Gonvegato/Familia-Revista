@@ -31,6 +31,8 @@ object LaFamilia {
 
     @Volatile private var f: Familia? = null
     private lateinit var appCtx: Context
+    /** El contexto de la app (desde que se llamó a [inicia]). */
+    val contexto: Context get() = appCtx
     private val principal = Handler(Looper.getMainLooper())
 
     /** Cambia con cada cambio de la cuenta (leído desde Compose, repinta). */

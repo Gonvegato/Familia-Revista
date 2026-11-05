@@ -119,14 +119,21 @@ mezcla a tres bandas: no cambian. Para las demás apps, Cobalto publica:
 ### La valoración (Azabache)
 
 En el nodo de la cosa (`juegos/<id>`, `libros/<kid>`, `obras/<obra>`): `nota` (0–100; sin el campo = **sin valorar**), `crit` (los
-cuatro criterios), `resena` y `az` (lo propio de Azabache de esa ficha: apuntes, capítulos marcados, imagen de fondo…). Azabache
-solo escribe lo que cambias en Azabache: el estado lo pone la app hermana (si relees un libro, está en curso; su nota se queda).
+cuatro criterios), `resena`, `az` (lo propio de Azabache de esa ficha, como texto JSON: apuntes, capítulos marcados, imagen de fondo,
+cuándo empezaste…) y `azid` (el número de la ficha en Azabache, el mismo en todos tus dispositivos: lo usan tus sagas, tu diario y
+tus maquetas).
+
+**Azabache no guarda copia de los juegos ni de los libros**: sus fichas son estos nodos, leídos tal cual (Azabache 1.4.0). Lo que
+cambias en Azabache va al nodo, y solo lo que has cambiado tú (si cambias el estado en Azabache, cambia en Hiedra o Marfil; si no
+lo tocas, no se escribe). Lo que solo estaba en Azabache (lo valorado en Atrio que nunca pasó por Hiedra ni Marfil) pasó, la
+primera vez, a ser juegos y libros de la cuenta como los demás.
 
 ### `azabache/<lista>~<id>` y `azabache/<nombre>` (Azabache)
 
 Lo que es solo de Azabache: cada elemento de cada lista (`items_<categoría>`, `iplays_<categoría>`, `diario`, `sagas`, `maquetas`…)
-es un nodo con `o` = el elemento tal cual; lo que no es una lista (`kinds`, `goals`, `ajustes`…) va en `azabache/<nombre>` con `v`.
-Un elemento borrado lleva `b`.
+es un nodo con `o` = el elemento tal cual (como texto JSON); lo que no es una lista (`goals`, `ajustes`…) va en `azabache/<nombre>`
+con `v`. Un elemento borrado lleva `b`. Los juegos y los libros no van aquí (`games`, `plays`, `books`, `bplays`: son `juegos` y
+`libros`); si quedó alguno de la 1.3, no se lee.
 
 ### `ajustes/<nombre>`
 

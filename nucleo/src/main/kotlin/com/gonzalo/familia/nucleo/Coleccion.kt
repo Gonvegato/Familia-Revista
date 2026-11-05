@@ -42,6 +42,8 @@ class Coleccion internal constructor(val nombre: String, internal val archivo: S
     /** La hora del servidor (`u`) más alta que se ha bajado: la próxima vez se pide solo lo que cambió desde ahí. */
     @Volatile internal var ultimaU = 0L
     @Volatile internal var cargadaEntera = false
+    /** ¿Se ha bajado ya entera de la cuenta (al menos una vez)? Antes de eso, que algo no esté aquí no quiere decir que no exista. */
+    val completa: Boolean get() = cargadaEntera
     private val oyentes = java.util.concurrent.CopyOnWriteArrayList<(Set<String>) -> Unit>()
     private val cerrojo = Any()
     @Volatile private var vista: Map<String, Nodo>? = null

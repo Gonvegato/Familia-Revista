@@ -2,6 +2,7 @@ package com.gonzalo.gamerate
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.net.HttpURLConnection
@@ -295,8 +296,17 @@ object Account {
     fun latest(store: Store, uid: String = store.accUid): JSONObject? {
         if (uid == store.accUid) return JSONObject().put("data", AzabacheNube.datos().toString()).put("updated", System.currentTimeMillis()).put("_dev", "familia")
         // Tu pareja: lo suyo de Azabache y sus juegos y libros (con sus notas), de su cuenta
+        val ctx = store.contexto
+        runCatching { listOf(Cosas.JUEGOS, Cosas.LIBROS).forEach { Cosas.vistaDe(ctx, uid, it) } }   // (se piden a la cuenta)
         runCatching { com.gonzalo.familia.LaFamilia.familia.sincroniza() }
         val d = AzabacheNube.datos(uid)
+        runCatching {
+            for (kind in listOf(Cosas.JUEGOS, Cosas.LIBROS)) {
+                val v = Cosas.vistaDe(ctx, uid, kind)
+                d.put(if (kind == Cosas.JUEGOS) "games" else "books", JSONArray().also { a -> v.games.forEach { a.put(gameToJson(it)) } })
+                d.put(if (kind == Cosas.JUEGOS) "plays" else "bplays", JSONArray().also { a -> v.plays.forEach { a.put(playToJson(it)) } })
+            }
+        }
         val user = runCatching { db(store, "GET", "/users/$uid/user", null)?.let { JSONTokener(it).nextValue() as? String } }.getOrNull().orEmpty()
         val name = runCatching { db(store, "GET", "/users/$uid/name", null)?.let { JSONTokener(it).nextValue() as? String } }.getOrNull().orEmpty()
         return JSONObject().put("data", d.toString()).put("user", user).put("name", name).put("updated", System.currentTimeMillis()).put("_dev", "familia")

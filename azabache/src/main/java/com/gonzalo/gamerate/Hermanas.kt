@@ -36,6 +36,8 @@ object Hermanas {
     /** Sube cuando llega algo nuevo (la app vuelve a leer sus listas). */
     var version by mutableIntStateOf(0)
         private set
+    /** Algo de las hermanas (o de la cuenta) ha cambiado: la app vuelve a leer sus listas. */
+    fun repinta() { enPantalla { version++ } }
     private val mirado = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val pidiendo = java.util.concurrent.atomic.AtomicBoolean(false)
     /** Lo que hay pendiente de mirar: nombres de hermanas, o «*» = todas. */
@@ -385,7 +387,11 @@ object Hermanas {
     /** Lo que llevas leído de un libro de Marfil (0–1), por ficha de aquí; null si no se sabe. */
     fun avanceMarfil(c: Context, id: Long): Float? = lee(c, "avance_marfil")?.optDouble(id.toString(), -1.0)?.takeIf { it >= 0.0 }?.toFloat()
     /** Al revés: la ficha de aquí → el id del juego en Hiedra (o la clave del libro en Marfil), si la ficha vino de allí. */
-    fun enHermana(c: Context, app: String, id: Long): String? = enlaces(c, app).entries.firstOrNull { it.value == id }?.key
+    fun enHermana(c: Context, app: String, id: Long): String? {
+        // Con los juegos y libros en la cuenta: la cosa misma (el juego de Hiedra, o la clave del libro de Marfil)
+        if (Cosas.activa(c)) return if (app == "hiedra") Cosas.refDe(c, Cosas.JUEGOS, id) else Cosas.nodoDe(c, Cosas.LIBROS, id)?.texto("clave")
+        return enlaces(c, app).entries.firstOrNull { it.value == id }?.key
+    }
     /** «Jugar»: Hiedra, en la ficha de ese juego si es suyo. */
     fun jugarEnHiedra(c: Context, id: Long): Boolean {
         val i = c.packageManager.getLaunchIntentForPackage(PAQ_HIEDRA) ?: return false

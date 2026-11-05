@@ -901,7 +901,7 @@ class Store(ctx: Context) {
     fun syncData(): String {
         val o = JSONObject()
         for (n in dataNames) {
-            o.put(n, JSONArray(p.getString(n, "[]")))
+            o.put(n, JSONArray(cruda(n)))
         }
         val ks = kinds
         o.put("kinds", JSONArray().apply { ks.forEach { put(kindToJson(it)) } })
@@ -920,6 +920,9 @@ class Store(ctx: Context) {
         o.put("ajustes", ajustesJson())
         return o.toString()
     }
+
+    /** Una lista guardada, como texto JSON. Las de juegos y libros, de la cuenta de la familia ([Cosas]). */
+    private fun cruda(n: String): String = if (n in Cosas.LISTAS && Cosas.activa(app)) Cosas.listaJson(app, n).toString() else p.getString(n, "[]") ?: "[]"
 
     private fun gk(kind: Int) = when (kind) { 0 -> "games"; 1 -> "books"; else -> "items_$kind" }
     private fun pk(kind: Int) = when (kind) { 0 -> "plays"; 1 -> "bplays"; else -> "iplays_$kind" }
@@ -974,6 +977,8 @@ class Store(ctx: Context) {
      * (deshacer), le pone la hora de ahora para que gane a ese borrado en los otros dispositivos.
      */
     private fun writeList(name: String, arr: JSONArray, ed: android.content.SharedPreferences.Editor, espera: Long = Sincro.ESPERA) = synchronized(cerrojo) {
+        // Los juegos y libros son de la cuenta: lo de una copia, de antes o de otro sitio se pone en ella (lo nuevo y lo cambiado, sin borrar)
+        if (name in Cosas.LISTAS && Cosas.activa(app)) { Cosas.importa(app, name, (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }); return@synchronized }
         val old = try { JSONArray(p.getString(name, "[]") ?: "[]") } catch (e: Exception) { JSONArray() }
         val oldById = HashMap<Long, JSONObject>()
         for (i in 0 until old.length()) old.optJSONObject(i)?.let { oldById[it.optLong("id")] = it }
@@ -1038,7 +1043,9 @@ class Store(ctx: Context) {
         }
         val ed = p.edit()
         val names = dataNames + customNames(mk)
+        val deLaCuenta = Cosas.activa(app)
         for (n in names) {
+            if (deLaCuenta && n in Cosas.LISTAS) continue
             val loc = try { JSONArray(p.getString(n, "[]") ?: "[]") } catch (e: Exception) { JSONArray() }
             val rem = r.optJSONArray(n) ?: JSONArray()
             val byId = LinkedHashMap<Long, JSONObject>()
@@ -1135,9 +1142,12 @@ class Store(ctx: Context) {
 
     private fun customNames(ks: List<Kind>) = ks.flatMap { listOf(gk(it.id), pk(it.id)) }
 
-    fun load(kind: Int = 0): List<Game> = gamesFromJson(JSONArray(p.getString(gk(kind), "[]")))
+    fun load(kind: Int = 0): List<Game> =
+        if ((kind == 0 || kind == 1) && Cosas.activa(app)) Cosas.vista(app, kind).games else gamesFromJson(JSONArray(p.getString(gk(kind), "[]")))
 
-    fun save(list: List<Game>, kind: Int = 0) {
+    /** Guarda una lista. [antes]: cómo la tenías antes de cambiarla (los juegos y libros de la cuenta solo escriben lo que has cambiado). */
+    fun save(list: List<Game>, kind: Int = 0, antes: List<Game>? = null) {
+        if ((kind == 0 || kind == 1) && Cosas.activa(app)) { Cosas.guarda(app, gk(kind), list.map { gameToJson(it) }, antes?.map { gameToJson(it) }); Widgets.pedir(app); return }
         val a = JSONArray()
         list.forEach { a.put(gameToJson(it)) }
         synchronized(cerrojo) {
@@ -1148,9 +1158,11 @@ class Store(ctx: Context) {
         Widgets.pedir(app)
     }
 
-    fun loadPlays(kind: Int = 0): List<Play> = playsFromJson(JSONArray(p.getString(pk(kind), "[]")))
+    fun loadPlays(kind: Int = 0): List<Play> =
+        if ((kind == 0 || kind == 1) && Cosas.activa(app)) Cosas.vista(app, kind).plays else playsFromJson(JSONArray(p.getString(pk(kind), "[]")))
 
-    fun savePlays(list: List<Play>, kind: Int = 0) {
+    fun savePlays(list: List<Play>, kind: Int = 0, antes: List<Play>? = null) {
+        if ((kind == 0 || kind == 1) && Cosas.activa(app)) { Cosas.guarda(app, pk(kind), list.map { playToJson(it) }, antes?.map { playToJson(it) }); Widgets.pedir(app); return }
         val a = JSONArray()
         list.forEach { a.put(playToJson(it)) }
         synchronized(cerrojo) {
@@ -1354,7 +1366,7 @@ class Store(ctx: Context) {
         val o = JSONObject()
         o.put("app", "valorin").put("version", 2).put("key", key).put("keys", keysJson())
         for (n in dataNames) {
-            o.put(n, JSONArray(p.getString(n, "[]")))
+            o.put(n, JSONArray(cruda(n)))
         }
         val ks = kinds
         o.put("kinds", JSONArray().apply { ks.forEach { put(kindToJson(it)) } })
@@ -1369,7 +1381,7 @@ class Store(ctx: Context) {
     fun keepUndo() {
         val names = dataNames + customNames(kinds)
         val backup = JSONObject()
-        names.forEach { backup.put(it, JSONArray(p.getString(it, "[]") ?: "[]")) }
+        names.forEach { backup.put(it, JSONArray(cruda(it))) }
         backup.put("kinds", JSONArray(p.getString("kinds", "[]") ?: "[]"))
         p.edit().putString("undoimport", backup.toString()).commit()
     }
@@ -1382,7 +1394,7 @@ class Store(ctx: Context) {
         val curKinds = kinds
         val names = dataNames + (if (withKinds) customNames(curKinds) + customNames(newKinds) else emptyList()).distinct()
         val oldKindsTxt = p.getString("kinds", "[]") ?: "[]"
-        val old = names.map { p.getString(it, "[]") ?: "[]" }
+        val old = names.map { cruda(it) }
         val backup = JSONObject()
         names.forEachIndexed { i, n -> backup.put(n, JSONArray(old[i])) }
         backup.put("kinds", JSONArray(oldKindsTxt))

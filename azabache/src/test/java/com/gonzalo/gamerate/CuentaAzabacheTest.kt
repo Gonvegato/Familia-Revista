@@ -33,6 +33,7 @@ class CuentaAzabacheTest {
         Emulador.cuenta("gonzalo")
         LaFamilia.reiniciaParaPruebas()
         LaFamilia.configPruebas = Emulador.cfg
+        Cosas.olvidaParaPruebas(); Cosas.migrarEnElMomento = true
         LaFamilia.inicia(ctx)
         store = Store(ctx)
         runBlocking { Account.signIn(store, "gonzalo", "secreto1") }
@@ -90,6 +91,72 @@ class CuentaAzabacheTest {
         kotlin.concurrent.thread { LaFamilia.entrar("gonzalo", "secreto1") }.join()
         espera("Azabache dentro") { Store(ctx).paired }
         espera("y con lo de Marfil") { Store(ctx).loadPlays(BOOKS.id).any { it.name == "Dune" && it.status == 1 } }
+    }
+
+    @Test fun unaListaViejaEnPantallaNoDeshaceLoQueCambioMarfil() {
+        val kidA = Hermanas.kidDe("libro:dune:frank herbert"); val kidB = Hermanas.kidDe("libro:hyperion:dan simmons")
+        otra.coleccion("libros").pon(kidA, mapOf("clave" to "libro:dune:frank herbert", "t" to "Dune", "a" to "Frank Herbert", "estado" to "en_curso"))
+        otra.coleccion("libros").pon(kidB, mapOf("clave" to "libro:hyperion:dan simmons", "t" to "Hyperion", "a" to "Dan Simmons", "estado" to "en_curso"))
+        sincroniza()
+        assertTrue(Cosas.activa(ctx))
+        val antes = store.loadPlays(BOOKS.id)                       // lo que tiene la pantalla
+        assertEquals(2, antes.size)
+        // Mientras, en Marfil terminas Hyperion
+        otra.coleccion("libros").pon(kidB, mapOf("estado" to "terminado"))
+        assertTrue(otra.sincroniza().ok); assertTrue(LaFamilia.sincronizaYa().ok)
+        // Y en Azabache apuntas algo en Dune, sobre la lista que tenías (con Hyperion aún «leyendo»)
+        store.savePlays(antes.map { if (it.name == "Dune") it.copy(memos = it.memos + Memo(1L, "Arrakis")) else it }, BOOKS.id, antes)
+        sincroniza()
+        assertEquals("lo que hizo Marfil se queda", "terminado", libro(kidB).texto("estado"))
+        assertTrue("y lo tuyo llega", libro(kidA).texto("az").contains("Arrakis"))
+        assertEquals("en_curso", libro(kidA).texto("estado"))
+        assertTrue(store.load(BOOKS.id).any { it.name == "Hyperion" })
+    }
+
+    @Test fun loQueSoloEstabaEnAzabachePasaALaCuentaComunConSuNumeroDeSiempre() {
+        // El Azabache de antes: un juego y un libro que nunca pasaron por Hiedra ni Marfil
+        val g = ctx.getSharedPreferences("gamerate", android.content.Context.MODE_PRIVATE)
+        val marzo = java.time.LocalDate.of(2025, 3, 1).toEpochDay(); val junio = java.time.LocalDate.of(2024, 6, 1).toEpochDay()
+        g.edit().putString("games", org.json.JSONArray().put(gameToJson(Game(501L, "Outer Wilds", "", 97, 95, 99, 98, 96, "Inolvidable", end = marzo, platform = "PC"))).toString())
+            .putString("books", org.json.JSONArray().put(gameToJson(Game(502L, "Solaris", "", 90, 85, 92, 80, 88, "", creator = "Stanisław Lem", end = junio))).toString()).commit()
+        ctx.getSharedPreferences("cosas_cuenta", android.content.Context.MODE_PRIVATE).edit().clear().commit(); Cosas.olvidaParaPruebas()
+        // Como en el móvil: en segundo plano (mientras, Azabache sigue con sus listas de siempre)
+        Cosas.migrarEnElMomento = false
+        sincroniza()
+        espera("lo de antes pasa a la cuenta") { Cosas.activa(ctx) }
+        sincroniza()
+        val j = otra.coleccion("juegos").vivos().single { it.texto("t") == "Outer Wilds" }
+        assertEquals(97L, j.entero("nota")); assertEquals("terminado", j.texto("estado")); assertEquals(501L, j.entero("azid")); assertEquals("PC", j.texto("pl"))
+        assertEquals(java.time.LocalDate.of(2025, 3, 1), java.time.Instant.ofEpochMilli(j.entero("fin")).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
+        val l = otra.coleccion("libros").nodo(Hermanas.kidDe(Cosas.claveLibro("Solaris", "Stanisław Lem")))!!
+        assertEquals("Stanisław Lem", l.texto("a")); assertEquals(90L, l.entero("nota")); assertEquals("terminado", l.texto("estado"))
+        assertEquals("la clave, como la de Marfil (la ł no es una tilde: se queda)", "libro:solaris:stanisław lem", l.texto("clave"))
+        // Y en Azabache es la misma ficha, con su número de siempre (el que usan tus sagas y tu diario)
+        assertEquals("libro:cien anos de soledad:gabriel garcia marquez", Cosas.claveLibro("Cien años de soledad", "Gabriel García Márquez"))
+        assertEquals(97, store.load(GAMES.id).single { it.id == 501L }.general)
+        assertEquals(90, store.load(BOOKS.id).single { it.id == 502L }.general)
+    }
+
+    @Test fun pasarALeidosEnAzabacheLoTerminaEnMarfilYBorrarLoBorra() {
+        val kidX = Hermanas.kidDe("libro:dune:frank herbert"); val kidY = Hermanas.kidDe("libro:hyperion:dan simmons")
+        otra.coleccion("libros").pon(kidX, mapOf("clave" to "libro:dune:frank herbert", "t" to "Dune", "a" to "Frank Herbert", "estado" to "en_curso"))
+        otra.coleccion("libros").pon(kidY, mapOf("clave" to "libro:hyperion:dan simmons", "t" to "Hyperion", "a" to "Dan Simmons", "estado" to "en_curso"))
+        sincroniza()
+        assertTrue(Cosas.activa(ctx))
+        // Dune: «Terminar y valorar» (la app lo quita de en curso y lo pone en valorados, en dos guardados)
+        val p0 = store.loadPlays(BOOKS.id); val x = p0.single { it.name == "Dune" }
+        store.savePlays(p0.filter { it.id != x.id }, BOOKS.id, p0)
+        val g0 = store.load(BOOKS.id)
+        store.save(g0 + Game(x.id, x.name, x.cover, 80, 80, 80, 80, 80, "", end = java.time.LocalDate.now().toEpochDay(), creator = x.creator), BOOKS.id, g0)
+        // Hyperion: lo quitas
+        val p1 = store.loadPlays(BOOKS.id)
+        assertEquals(listOf("Hyperion"), p1.map { it.name })
+        store.savePlays(p1.filter { it.name != "Hyperion" }, BOOKS.id, p1)
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(3))
+        sincroniza()
+        assertEquals("terminado", libro(kidX).texto("estado")); assertFalse("cambiar de lista no lo borra", libro(kidX).borrado); assertEquals(80L, libro(kidX).entero("nota"))
+        assertTrue("quitarlo sí", otra.coleccion("libros").todos()[kidY]!!.borrado)
+        assertTrue(store.load(BOOKS.id).any { it.name == "Dune" }); assertTrue(store.loadPlays(BOOKS.id).none { it.name == "Hyperion" })
     }
 
     @Test fun laPortadaQuePonesEnHiedraLlegaSolaAAzabache() {
@@ -192,7 +259,8 @@ class CuentaAzabacheTest {
         assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otra.sincroniza().ok)
         val n = otra.coleccion("azabache").nodo("items_42~7")!!
         assertEquals("Alien", org.json.JSONObject(n.texto("o")).optString("name"))
-        assertTrue("las categorías también", otra.coleccion("azabache").nodo("kinds") != null)
+        // Las categorías también (una a una, o todas juntas si ninguna tiene número)
+        assertTrue("las categorías también", otra.coleccion("azabache").todos().keys.any { it == "kinds" || it.startsWith("kinds~") })
         // En otro Azabache (los datos de la cuenta, mezclados en un Store vacío)
         val d = AzabacheNube.datos()
         assertTrue(d.toString(), d.optJSONArray("items_42")?.toString()?.contains("Alien") == true)

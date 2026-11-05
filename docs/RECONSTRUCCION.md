@@ -41,6 +41,9 @@ Azabache pequeña, y Hiedra/Azabache/Cobalto preparadas para pasar al PC más ad
 - [x] Firma con rotación (`herramientas/firmar.py`), comprobada con `apksigner verify` y `apksigner lineage`
 - [x] Versiones Hiedra 0.5.0, Marfil 0.13.1, Cobalto 0.3.0, Azabache 1.3.0 (la 0.13.0 de Marfil había perdido la subida sola de los
       libros a kDrive: la 0.13.1 la devuelve, con una prueba de extremo a extremo)
+- [x] Azabache 1.4.0: sin copias. Sus juegos y libros son los nodos de la cuenta, leídos tal cual (`Cosas.kt`); escribe solo lo que
+      cambias (la diferencia entre la lista que tenías y la nueva); lo que solo estaba en Azabache pasó a la cuenta común.
+- [x] Hiedra 0.5.2 y Marfil 0.13.3: las fechas traídas de Atrio (número de día tomado por milisegundos: 1970) se corrigen.
 - [x] Hiedra 0.5.1, Marfil 0.13.2, Cobalto 0.3.1, Azabache 1.3.1, tras probarlas en el móvil: Azabache se quedaba sin la cuenta si
       entrabas en otra app con ella abierta (y enseñaba lo de la 1.2); salir de la cuenta dejaba las apps oyendo colecciones muertas;
       el reto de Marfil no contaba los leídos sin fecha; las pestañas volvían solas y la fila de orden no se dejaba mover; los
@@ -51,4 +54,4 @@ Azabache pequeña, y Hiedra/Azabache/Cobalto preparadas para pasar al PC más ad
 - En un móvil de verdad: instalar encima de la versión vieja (la rotación de firma solo se ha comprobado con apksigner), entrar una
   vez y que las demás entren solas (necesita las cuatro instaladas con la firma nueva), la instalación sin preguntar, los widgets.
 - Contra tu Firebase de verdad: todo se ha probado contra el emulador oficial con las mismas reglas.
-- Lo de tu pareja en Azabache: se lee de su cuenta nueva (lo suyo de Azabache); sus juegos y libros reflejados aún no salen en su página.
+- Lo de tu pareja en Azabache: desde la 1.4.0 sus juegos y libros salen de su cuenta (con sus notas); probado contra el emulador solo con una cuenta.

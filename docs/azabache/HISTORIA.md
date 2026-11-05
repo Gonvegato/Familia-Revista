@@ -9,6 +9,19 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.4.0 — sin copias
+
+- **Tus juegos y tus libros son los de la cuenta, sin copia.** Azabache ya no guarda los suyos aparte ni los «refleja» de Hiedra y
+  Marfil: los lee de la cuenta, cada vez, como ellas. No hay nada que se quede atrás: lo que terminas en Marfil está terminado aquí
+  en cuanto llega a la cuenta, y lo que valoras aquí está en el libro de la cuenta. Sin conexión funciona igual.
+- **Solo se escribe lo que cambias tú.** Si tienes una lista en pantalla de hace un rato y Marfil cambia un libro mientras, lo que
+  hagas aquí no deshace lo de Marfil.
+- **Lo que solo estaba en Azabache** (lo valorado en Atrio que nunca pasó por Hiedra ni Marfil) pasa a la cuenta común, con su nota,
+  su fecha y su número de siempre (tus sagas, tu diario y tus maquetas lo siguen encontrando): Marfil lo enseña en Leídos y Hiedra
+  como una ficha sin lanzador.
+- **Lo de tu pareja**: sus juegos y libros salen de su cuenta (con sus notas), también los de Hiedra y Marfil.
+- Pasar un libro a leídos (o al revés) cambia su estado en Marfil; quitar una ficha la quita de la cuenta.
+
 ## 1.3.1
 
 - **Azabache se queda al día con Hiedra y Marfil aunque hayas entrado en otra app.** Al pasar de la 1.2, Azabache necesita la
