@@ -1,43 +1,18 @@
 package com.gonzalo.hiedra
 
 import androidx.test.core.app.ApplicationProvider
-import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
-import org.junit.AfterClass
 import org.junit.Assert.*
-import org.junit.Assume
-import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
 
 /** Copiar la apariencia que Atrio ha subido a la cuenta, contra el Firebase de mentira de Atrio. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class CopiaAtrioTest {
-    companion object {
-        private var proc: Process? = null
-        private val puerto = 9800 + (System.nanoTime() % 150).toInt().let { if (it < 0) -it else it }
-        private val js = File("/home/user/Atrio-Suite-2.0/herramientas/fakefirebase.js")
-        @BeforeClass @JvmStatic fun arranca() {
-            Assume.assumeTrue("falta fakefirebase.js", js.exists())
-            proc = ProcessBuilder("node", js.path, puerto.toString()).redirectErrorStream(true).start()
-            repeat(60) { try { URL("http://127.0.0.1:$puerto/__dump").openConnection().apply { connectTimeout = 300 }.getInputStream().close(); return } catch (e: java.io.IOException) { if (e.message?.contains("Server returned") == true) return; Thread.sleep(100) } }
-            fail("no arranca")
-        }
-        @AfterClass @JvmStatic fun para() { proc?.destroy() }
-        fun http(m: String, p: String, body: String? = null): String {
-            val c = URL("http://127.0.0.1:$puerto$p").openConnection() as HttpURLConnection
-            if (m == "PUT") { c.requestMethod = "POST"; c.setRequestProperty("X-HTTP-Method-Override", m) } else c.requestMethod = m
-            if (body != null) { c.doOutput = true; c.outputStream.use { it.write(body.toByteArray()) } }
-            return (if (c.responseCode in 200..299) c.inputStream else c.errorStream).bufferedReader().readText()
-        }
-    }
-
     private val ctx get() = ApplicationProvider.getApplicationContext<android.content.Context>()
 
     @org.junit.After fun limpia() {   // (el tema es un objeto global: que no se lo lleven los demás tests)
@@ -45,24 +20,13 @@ class CopiaAtrioTest {
         Skin.display = "Atrio"; Skin.body = "Atrio"; Modo.eleccion = 0; Skin.origenAtrio = true; Skin.invertido = true; Skin.ajustesAt = 0L
     }
 
-    private fun nodoAtrio(at: Long, skin: JSONObject) = JSONObject().put("name", "Tablet").put("device", "android").put("updated", JSONObject().put(".sv", "timestamp"))
-        .put("data", JSONObject().put("ajustes", JSONObject().put("at", at).put("skin", skin)).toString()).toString()
-
-    @Test fun leeYCopiaLoQueAtrioTiene() {
+    @Test fun leeYCopiaLoQueAzabacheTiene() {
         Skin.cargar(ctx)   // (la primera carga marca las preferencias como ya estrenadas)
-        Cuenta.dbUrl = "http://127.0.0.1:$puerto"; Cuenta.authBase = Cuenta.dbUrl
-        val sign = JSONObject(http("POST", "/v1/accounts:signUp?key=K", """{"email":"gon@ronron.example.com","password":"secreto1","returnSecureToken":true}"""))
-        val uid = sign.getString("localId"); val tok = sign.getString("idToken")
-        http("PUT", "/config/webKey.json?auth=$tok", "\"K\"")
-        // Dos dispositivos de Atrio: el más reciente (por la hora de sus ajustes) manda
-        val viejo = JSONObject().put("theme31", 1).put("skin_fondo", "").put("skin_accent_id", "azul")
+        Cuenta.cargar(ctx)
         val nuevo = JSONObject().put("theme31", 2).put("skin_fondo", "granate").put("skin_accent_id", "verde").put("skin_fondo_propio", 0xFF101820L)
             .put("skin_tinta_propia", 0).put("skin_acento_propio", 0xFF06D6A0L).put("skin_letra_titulos", "Playfair Display").put("skin_letra_texto", "").put("skin_escala", 112)
-        http("PUT", "/users/$uid/dev/viejo.json?auth=$tok", nodoAtrio(10, viejo))
-        http("PUT", "/users/$uid/dev/nuevo.json?auth=$tok", nodoAtrio(20, nuevo))
-        http("PUT", "/users/$uid/stamps.json?auth=$tok", """{"viejo":1000,"nuevo":900}""")   // (el sello más nuevo es del otro: manda la hora de los ajustes)
-        ctx.getSharedPreferences("hiedra_cuenta", 0).edit().clear().apply(); Cuenta.cargar(ctx)
-        runBlocking { Cuenta.entrar(ctx, "gon", "secreto1") }
+        // Lo que Azabache tiene en la cuenta (ajustes/azabache)
+        com.gonzalo.familia.LaFamilia.coleccion("ajustes").pon("azabache", mapOf("at" to 20L, "skin" to com.gonzalo.familia.nucleo.Json.lee(nuevo.toString())))
 
         val a = CopiaAtrio.leer()!!
         assertEquals(20L, a.at)
@@ -82,6 +46,5 @@ class CopiaAtrioTest {
         assertFalse("ya no sigue a Atrio en directo: tiene sus propios colores, iguales", Skin.origenAtrio)
         // Se guarda de verdad
         Skin.fondoId = ""; Skin.cargar(ctx); assertEquals("granate", Skin.fondoId)
-        Cuenta.salir()
     }
 }

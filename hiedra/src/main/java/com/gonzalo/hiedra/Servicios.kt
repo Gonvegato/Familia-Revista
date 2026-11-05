@@ -137,14 +137,38 @@ object Servicios {
         return Claves(v("sgdb"), v("steamKey"), v("steamUser"), v("rawg"), v("igdbId"), v("igdbSecret"))
     }
 
-    /** Las que se usan: las tuyas y, donde falten, las de Atrio. */
+    /** Cómo se llama cada clave en la cuenta (`/claves`, ver nube/ESQUEMA.md). */
+    private val EN_CUENTA = mapOf("sgdb" to "steamgriddb", "steamKey" to "steam_key", "steamUser" to "steam_id", "rawg" to "rawg", "igdbId" to "igdb_id", "igdbSecret" to "igdb_secreto")
+    private fun deCuenta(): Claves {
+        val m = runCatching { com.gonzalo.familia.LaFamilia.familia.claves() }.getOrDefault(emptyMap())
+        fun v(k: String) = m[EN_CUENTA[k]]?.toString().orEmpty()
+        return Claves(v("sgdb"), v("steamKey"), v("steamUser"), v("rawg"), v("igdbId"), v("igdbSecret"))
+    }
+
+    /** Las que se usan: las de la cuenta (se ponen una vez en Azabache); si falta alguna, las de antes de este móvil. */
     fun claves(c: Context): Claves {
-        val m = propias(c); val a = deAtrio(c)
-        return Claves(m.sgdb.ifBlank { a.sgdb }, m.steamKey.ifBlank { a.steamKey }, m.steamUser.ifBlank { a.steamUser }, m.rawg.ifBlank { a.rawg }, m.igdbId.ifBlank { a.igdbId }, m.igdbSecret.ifBlank { a.igdbSecret })
+        val n = deCuenta(); val m = propias(c); val a = deAtrio(c)
+        fun f(x: String, y: String, z: String) = x.ifBlank { y.ifBlank { z } }
+        return Claves(f(n.sgdb, m.sgdb, a.sgdb), f(n.steamKey, m.steamKey, a.steamKey), f(n.steamUser, m.steamUser, a.steamUser), f(n.rawg, m.rawg, a.rawg), f(n.igdbId, m.igdbId, a.igdbId), f(n.igdbSecret, m.igdbSecret, a.igdbSecret))
     }
     fun propias(c: Context): Claves = lee(c, "")
     fun deAtrio(c: Context): Claves = lee(c, "a_")
-    fun poner(c: Context, k: Claves) { prefs(c).edit().putString("sgdb", k.sgdb.trim()).putString("steamKey", k.steamKey.trim()).putString("steamUser", k.steamUser.trim()).putString("rawg", k.rawg.trim()).putString("igdbId", k.igdbId.trim()).putString("igdbSecret", k.igdbSecret.trim()).apply() }
+    /** Ponerlas aquí es ponerlas en la cuenta: las tienen todas las apps de la familia. */
+    fun poner(c: Context, k: Claves) {
+        prefs(c).edit().putString("sgdb", k.sgdb.trim()).putString("steamKey", k.steamKey.trim()).putString("steamUser", k.steamUser.trim()).putString("rawg", k.rawg.trim()).putString("igdbId", k.igdbId.trim()).putString("igdbSecret", k.igdbSecret.trim()).apply()
+        val f = runCatching { com.gonzalo.familia.LaFamilia.familia }.getOrNull() ?: return
+        listOf("sgdb" to k.sgdb, "steamKey" to k.steamKey, "steamUser" to k.steamUser, "rawg" to k.rawg, "igdbId" to k.igdbId, "igdbSecret" to k.igdbSecret)
+            .forEach { (n, v) -> if (v.trim() != f.clave(EN_CUENTA[n]!!)) f.ponClave(EN_CUENTA[n]!!, v.trim()) }
+    }
+    /** Las claves de antes (las de este móvil y las que traía Atrio) pasan a la cuenta, si la cuenta aún no las tiene. */
+    fun migraALaCuenta(c: Context) {
+        val f = runCatching { com.gonzalo.familia.LaFamilia.familia }.getOrNull() ?: return
+        val viejas = Claves(
+            propias(c).sgdb.ifBlank { deAtrio(c).sgdb }, propias(c).steamKey.ifBlank { deAtrio(c).steamKey }, propias(c).steamUser.ifBlank { deAtrio(c).steamUser },
+            propias(c).rawg.ifBlank { deAtrio(c).rawg }, propias(c).igdbId.ifBlank { deAtrio(c).igdbId }, propias(c).igdbSecret.ifBlank { deAtrio(c).igdbSecret })
+        listOf("sgdb" to viejas.sgdb, "steamKey" to viejas.steamKey, "steamUser" to viejas.steamUser, "rawg" to viejas.rawg, "igdbId" to viejas.igdbId, "igdbSecret" to viejas.igdbSecret)
+            .forEach { (n, v) -> if (v.isNotBlank() && f.clave(EN_CUENTA[n]!!).isBlank()) f.ponClave(EN_CUENTA[n]!!, v) }
+    }
     /** Cuándo se miraron por última vez las de Atrio (0 = nunca). */
     fun ultimaAtrio(c: Context) = prefs(c).getLong("atrio_at", 0L)
 

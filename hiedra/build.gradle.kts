@@ -58,6 +58,7 @@ tasks.register<Copy>("copyRobolectricDeps") { from(robolectricDeps); into(layout
 
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
+    implementation(project(":familia"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")
@@ -74,6 +75,7 @@ dependencies {
     implementation("com.github.swordfish90:libretrodroid:0.14.0")
     implementation("com.github.swordfish90:radialgamepad:2.0.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation(testFixtures(project(":nucleo")))
     testImplementation("org.json:json:20240303")
     testImplementation("org.robolectric:robolectric:4.13")
     testImplementation("io.github.takahirom.roborazzi:roborazzi:1.20.0")

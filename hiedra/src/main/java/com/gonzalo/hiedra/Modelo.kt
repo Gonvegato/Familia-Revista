@@ -240,77 +240,169 @@ object Archivos {
     fun claves(): Set<String> = sitios.filterValues { it.uri.isNotBlank() }.keys
 }
 
-/** La biblioteca: se guarda en un solo archivo JSON dentro de la app (y se puede copiar a mano desde Ajustes). */
+/** El estado en la cuenta (el mismo en toda la familia: ver nube/ESQUEMA.md). */
+val Estado.enCuenta: String get() = when (this) { Estado.PENDIENTE -> "pendiente"; Estado.JUGANDO -> "en_curso"; Estado.PASADO -> "terminado"; Estado.ABANDONADO -> "abandonado" }
+fun estadoDeCuenta(s: String): Estado = when (s) { "en_curso" -> Estado.JUGANDO; "terminado" -> Estado.PASADO; "abandonado" -> Estado.ABANDONADO; else -> Estado.PENDIENTE }
+
+/**
+ * Tu biblioteca de juegos: la colección `juegos` de la cuenta (la misma en todos tus dispositivos y en Azabache), con las horas de la
+ * colección `tiempo` (un nodo por juego y fuente: este dispositivo, tus otros móviles, Steam, cada PC) y lo que es solo de este
+ * móvil: dónde está cada ROM ([Archivos]) y las carpetas de ROMs.
+ */
 object Biblioteca {
     val juegos = mutableStateListOf<Juego>()
     val carpetas = mutableStateListOf<Carpeta>()
     var cargada by mutableStateOf(false)
-    private var archivo: File? = null
     private var appCtx: Context? = null
-    /** Los juegos que quitaste (su id y cuándo): así los demás dispositivos también los quitan al sincronizar. */
+    private var col: com.gonzalo.familia.nucleo.Coleccion? = null
+    private var tiempo: com.gonzalo.familia.nucleo.Coleccion? = null
+    /** Solo para leer lo de antes (la migración y las pruebas de la mezcla vieja). */
     val borrados = HashMap<String, Long>()
+    private val principal by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
+    /** En las pruebas de pantallas: una lista fija (sin la cuenta debajo). */
+    @Volatile private var congelada = false
+    fun fijaParaPruebas(l: List<Juego>) { congelada = true; juegos.clear(); juegos.addAll(l) }
 
     fun cargar(c: Context) {
         if (cargada) return
-        archivo = File(c.filesDir, "biblioteca.json"); appCtx = c.applicationContext
+        appCtx = c.applicationContext
+        Cuenta.cargar(c)
         Archivos.cargar(c)
-        val f = archivo!!
-        if (f.exists()) runCatching { leer(f.readText()) }
+        leeLocal(c)
+        col = com.gonzalo.familia.LaFamilia.coleccion("juegos").also { it.alCambiar { principal.post { refresca() } } }
+        tiempo = com.gonzalo.familia.LaFamilia.coleccion("tiempo").also { it.alCambiar { principal.post { refresca() } } }
+        refresca()
         cargada = true
         runCatching { unirRepetidos() }
     }
 
-    fun leer(txt: String, reemplazar: Boolean = true) {
-        val o = JSONObject(txt)
-        val js = o.optJSONArray("juegos") ?: JSONArray()
-        val nuevos = (0 until js.length()).mapNotNull { runCatching { aJuego(js.getJSONObject(it)) }.getOrNull() }
+    private fun archivoLocal(c: Context) = File(c.filesDir, "biblioteca_local.json")
+    private fun leeLocal(c: Context) {
+        val o = runCatching { JSONObject(archivoLocal(c).readText()) }.getOrNull() ?: return
         val cs = o.optJSONArray("carpetas") ?: JSONArray()
-        val carp = (0 until cs.length()).map { cs.getJSONObject(it).let { x -> Carpeta(x.getString("uri"), x.optString("nombre")) } }
-        if (reemplazar) { juegos.clear(); carpetas.clear(); borrados.clear() }
-        o.optJSONObject("borrados")?.let { b -> b.keys().forEach { k -> borrados[k] = maxOf(borrados[k] ?: 0L, b.optLong(k)) } }
-        val ids = juegos.map { it.id }.toSet()
-        juegos.addAll(nuevos.filter { it.id !in ids })
-        val us = carpetas.map { it.uri }.toSet()
-        carpetas.addAll(carp.filter { it.uri !in us })
+        carpetas.clear()
+        for (i in 0 until cs.length()) cs.optJSONObject(i)?.let { x -> carpetas.add(Carpeta(x.optString("uri"), x.optString("nombre"))) }
+    }
+    private fun guardaLocal() {
+        val c = appCtx ?: return
+        val o = JSONObject().put("carpetas", JSONArray().apply { carpetas.forEach { put(JSONObject().put("uri", it.uri).put("nombre", it.nombre)) } })
+        runCatching { val f = archivoLocal(c); val t = File(f.path + ".tmp"); t.writeText(o.toString()); t.renameTo(f) }
     }
 
-    fun aTexto(): String = JSONObject().apply {
-        put("version", 1)
-        put("juegos", JSONArray().apply { juegos.forEach { put(aJson(it)) } })
-        put("carpetas", JSONArray().apply { carpetas.forEach { put(JSONObject().put("uri", it.uri).put("nombre", it.nombre)) } })
-        put("borrados", JSONObject().also { b -> borrados.forEach { (k, v) -> b.put(k, v) } })
-    }.toString()
+    /** ¿Es esta fuente un dispositivo (las horas de un móvil con Hiedra) o una fuente externa (Steam, un PC, lo de Carmesí)? */
+    private fun esExterna(f: String) = f == Fuentes.STEAM || Fuentes.esPc(f) || Fuentes.esCarmesi(f)
 
-    fun guardar() {
-        val f = archivo ?: return
-        runCatching { val t = File(f.path + ".tmp"); t.writeText(aTexto()); t.renameTo(f) }
-        appCtx?.let { c -> Widgets.pedir(c); SincroP.cambio(c) }
+    private fun horasDe(n: com.gonzalo.familia.nucleo.Nodo): Horas {
+        val dias = HashMap<String, Long>()
+        n.campos.forEach { (k, v) -> if (k.length == 11 && k[0] == 'd' && k[5] == '-') dias[k.substring(1)] = (v as? Number)?.toLong() ?: 0L }
+        return Horas(n.entero("total"), n.entero("veces").toInt(), dias)
     }
 
-    /** Guarda un juego (apuntando que se ha cambiado ahora si cambió lo editable: al sincronizar, gana el cambio más reciente). Jugar no cuenta como cambio. */
+    private fun camposHoras(j: Juego, f: String, h: Horas): Map<String, Any?> {
+        val m = LinkedHashMap<String, Any?>()
+        m["ref"] = j.id; m["fuente"] = f; m["total"] = h.ms; m["veces"] = h.veces.toLong(); m["t"] = j.titulo; m["menu"] = j.menu.name.lowercase()
+        h.dias.forEach { (d, ms) -> m["d$d"] = ms }
+        return m
+    }
+
+    /** Un juego tal como está en la cuenta (con sus horas). */
+    fun deNodo(n: com.gonzalo.familia.nucleo.Nodo, horas: List<com.gonzalo.familia.nucleo.Nodo>): Juego {
+        val c = appCtx
+        val propias = horas.firstOrNull { it.texto("fuente") == Cuenta.dispositivo }?.let { horasDe(it) } ?: Horas()
+        val ajenas = horas.filter { val f = it.texto("fuente"); f.isNotBlank() && f != Cuenta.dispositivo && !esExterna(f) }.associate { it.texto("fuente") to horasDe(it) }
+        val externas = horas.filter { esExterna(it.texto("fuente")) }.associate { it.texto("fuente") to horasDe(it) }
+        return Juego(
+            id = n.ref, titulo = n.texto("t"), plataforma = n.texto("pl"), estado = estadoDeCuenta(n.texto("estado")), favorito = n.si("fav"),
+            finalizado = n.entero("fin"), anadido = n.entero("an"), ultima = n.entero("ul"), mod = n.m.values.maxOrNull() ?: 0L,
+            portada = c?.let { com.gonzalo.familia.PortadasFamilia.archivo(it, n.texto("portada")) }.orEmpty(), portadaUrl = n.texto("pu"),
+            zoom = n.decimal("ez").toFloat().takeIf { n["ez"] != null } ?: 1f, ox = n.decimal("eox").toFloat(), oy = n.decimal("eoy").toFloat(),
+            durHistoria = n.entero("dh").toInt(), durExtras = n.entero("de").toInt(), durCompleto = n.entero("dc").toInt(),
+            otrasClaves = n.lista("k").map { it.toString() }.filter { it.isNotBlank() },
+            lanzadores = n.lista("ln").mapNotNull { (it as? Map<*, *>)?.let { m -> Lanzador.deJson(JSONObject(m)) } },
+            propias = propias, ajenas = ajenas, externas = externas,
+        )
+    }
+
+    /** El hash de la portada de un juego en la cuenta ("" si no tiene). */
+    fun hashPortada(id: String): String = col?.nodo(id)?.texto("portada").orEmpty()
+
+    /** Lo que Azabache dice de este juego: su nota (0–100; 0 = sin valorar) y su reseña. */
+    fun valoracion(id: String): Pair<Int, String> = col?.nodo(id)?.let { it.entero("nota").toInt() to it.texto("resena") } ?: (0 to "")
+
+    /** Vuelve a montar la lista con lo que hay en la cuenta (se llama sola cuando cambia algo, venga de donde venga). */
+    fun refresca() {
+        if (congelada) return
+        val cc = col ?: return
+        val porJuego = tiempo?.vivos()?.groupBy { it.texto("ref") } ?: emptyMap()
+        val nueva = cc.vivos().filter { it.texto("t").isNotBlank() }.map { deNodo(it, porJuego[it.ref].orEmpty()) }.sortedByDescending { it.anadido }
+        if (nueva != juegos.toList()) { juegos.clear(); juegos.addAll(nueva) }
+        appCtx?.let { c ->
+            Widgets.pedir(c)
+            com.gonzalo.familia.PortadasFamilia.baja(cc.vivos().filter { com.gonzalo.familia.PortadasFamilia.archivo(c, it.texto("portada")).isBlank() }.map { it.texto("portada") }) { refresca() }
+        }
+    }
+
+    /** Lo que se guarda de un juego en la cuenta (campo → valor). La portada va aparte (es una imagen de la cuenta). */
+    fun campos(j: Juego): Map<String, Any?> = mapOf(
+        "t" to j.titulo, "pl" to j.plataforma, "estado" to j.estado.enCuenta, "fav" to j.favorito, "fin" to j.finalizado, "an" to j.anadido, "ul" to j.ultima,
+        "pu" to j.portadaUrl, "ez" to j.zoom.toDouble(), "eox" to j.ox.toDouble(), "eoy" to j.oy.toDouble(),
+        "dh" to j.durHistoria.toLong(), "de" to j.durExtras.toLong(), "dc" to j.durCompleto.toLong(),
+        "k" to j.otrasClaves, "ln" to j.lanzadores.map { com.gonzalo.familia.nucleo.Json.lee(it.aJson().toString()) }, "menu" to j.menu.name.lowercase(),
+    )
+
+    fun guardar() { guardaLocal(); refresca() }
+
+    /** Guarda un juego: solo sube a la cuenta lo que ha cambiado de verdad (campo a campo), y sus horas por fuente. */
     fun poner(j: Juego) {
-        val i = juegos.indexOfFirst { it.id == j.id }
-        val nuevo = if (i >= 0 && compartidos(juegos[i]) == compartidos(j)) j.copy(mod = juegos[i].mod) else j.copy(mod = System.currentTimeMillis())
-        if (i >= 0) juegos[i] = nuevo else { juegos.add(0, nuevo); borrados.remove(nuevo.id) }
-        guardar()
+        val cc = col
+        if (congelada || cc == null) {
+            val i = juegos.indexOfFirst { it.id == j.id }
+            if (i >= 0) juegos[i] = j else juegos.add(0, j)
+            cc?.cambia(j.id, campos(j))
+            return
+        }
+        val previo = por(j.id)
+        val cambios = campos(j).toMutableMap()
+        if (cc.nodo(j.id)?.borrado == true) cambios["b"] = 0L
+        // La portada: un archivo de este móvil que no es la imagen de la cuenta es una portada nueva (de la galería, de internet…)
+        val c = appCtx
+        if (c != null && j.portada != previo?.portada) {
+            if (j.portada.isBlank()) cambios["portada"] = ""
+            else if (!j.portada.contains("/familia/img/")) runCatching { File(j.portada).takeIf { it.isFile }?.readBytes()?.let { com.gonzalo.familia.PortadasFamilia.guardar(it) } }.getOrNull()?.let { cambios["portada"] = it }
+        }
+        cc.cambia(j.id, cambios)
+        // Las horas: las de este dispositivo y las externas que se conozcan aquí (Steam, el PC)
+        val t = tiempo
+        if (t != null) {
+            if (!j.propias.vacias) t.cambia("${j.id}~${Cuenta.dispositivo}", camposHoras(j, Cuenta.dispositivo, j.propias))
+            j.externas.forEach { (f, h) -> if (!h.vacias) t.cambia("${j.id}~$f", camposHoras(j, f, h)) }
+        }
+        refresca()
     }
 
-    /** Pone en la biblioteca lo que ha salido de mezclar con tus otros dispositivos (sin tocar la hora de cambio de nadie). */
-    fun aplicarMezcla(nuevos: List<Juego>, borr: Map<String, Long>) {
-        // La mezcla se hizo con una copia de hace un momento: la portada (que es de este móvil) se toma de como está AHORA, por si
-        // mientras tanto pusiste una o se bajó de tu kDrive (si no, se perdía al aplicar la mezcla)
-        val ahora = juegos.associateBy { it.id }
-        val unidos = nuevos.map { n -> ahora[n.id]?.let { cur -> if (cur.portada != n.portada) n.copy(portada = cur.portada, zoom = cur.zoom, ox = cur.ox, oy = cur.oy) else n } ?: n }
-        juegos.clear(); juegos.addAll(unidos)
-        borrados.clear(); borrados.putAll(borr)
-        guardar()
+    /** Las horas de otras fuentes que eran de otro juego pasan a este (al unir dos juegos que eran el mismo). */
+    private fun pasaHoras(destino: String, origen: String) {
+        val t = tiempo ?: return
+        for (n in t.vivos().filter { it.texto("ref") == origen }) {
+            val f = n.texto("fuente")
+            if (f == Cuenta.dispositivo || t.nodo("$destino~$f") != null) continue
+            t.pon("$destino~$f", n.campos.filterKeys { it != "b" } + ("ref" to destino))
+        }
     }
 
     /** Cambia un juego a partir de su versión más reciente (así dos cambios seguidos no se pisan). */
     fun cambiar(id: String, f: (Juego) -> Juego) { por(id)?.let { poner(f(it)) } }
 
-    fun quitar(id: String) { por(id)?.let { j -> borrados[j.id] = System.currentTimeMillis(); j.lanzadores.forEach { if (it.tipo == TipoLanzador.ROM) Archivos.quitar(it.clave) } }; juegos.removeAll { it.id == id }; guardar() }
+    fun quitar(id: String) {
+        por(id)?.let { j -> j.lanzadores.forEach { if (it.tipo == TipoLanzador.ROM) Archivos.quitar(it.clave) } }
+        if (congelada || col == null) { juegos.removeAll { it.id == id }; col?.borra(id); return }
+        col?.borra(id)
+        refresca()
+    }
     fun por(id: String): Juego? = juegos.firstOrNull { it.id == id }
+
+    /** Añade una carpeta de ROMs (de este móvil). */
+    fun ponerCarpeta(cp: Carpeta) { if (carpetas.none { it.uri == cp.uri }) { carpetas.add(cp); guardaLocal() } }
 
     /** El juego al que corresponde una clave (la de uno de sus lanzadores, o una de antes). */
     fun porClave(k: String): Juego? = juegos.firstOrNull { it.lanzadores.any { l -> l.clave == k } } ?: juegos.firstOrNull { k in it.otrasClaves }
@@ -336,8 +428,8 @@ object Biblioteca {
     /**
      * Juegos repetidos: dos fichas con una clave en común (la misma ROM, la misma app, el mismo juego del PC o de Steam, el mismo título) y la
      * misma plataforma (o una sin plataforma) son el mismo juego. Pasaba al importar de Atrio o de Carmesí en dos móviles: cada uno creaba su
-     * copia, con su propio id, y al quitar una volvía la del otro. Se juntan en la de id más bajo (la misma en todos tus móviles, así no se
-     * pisan) y las demás se quitan (y se quitan también en tus otros móviles). Devuelve cuántas ha juntado.
+     * copia, con su propio id. Se juntan en la de id más bajo (la misma en todos tus móviles, así no se pisan) y las demás se quitan (también
+     * en tus otros móviles). Devuelve cuántas ha juntado.
      */
     fun unirRepetidos(): Int {
         val grupos = gruposRepetidos(juegos.toList())
@@ -354,9 +446,27 @@ object Biblioteca {
         val d = por(destinoId) ?: return null; val o = por(origenId) ?: return null
         if (d.id == o.id) return d
         val u = unirJuegos(d, o)
-        juegos.removeAll { it.id == o.id }; borrados[o.id] = System.currentTimeMillis()
-        poner(u)
-        return u
+        pasaHoras(destinoId, origenId)
+        quitar(o.id)
+        poner(u.copy(ajenas = d.ajenas, externas = u.externas))
+        return por(destinoId) ?: u
+    }
+
+    /** La copia de seguridad (Ajustes → Copia): tus juegos tal cual. */
+    fun aTexto(): String = JSONObject().apply {
+        put("version", 1)
+        put("juegos", JSONArray().apply { juegos.forEach { put(aJson(it)) } })
+        put("carpetas", JSONArray().apply { carpetas.forEach { put(JSONObject().put("uri", it.uri).put("nombre", it.nombre)) } })
+    }.toString()
+
+    /** Importa una copia de seguridad: los juegos que no tengas se añaden. */
+    fun leer(txt: String, reemplazar: Boolean = true) {
+        val o = JSONObject(txt)
+        val js = o.optJSONArray("juegos") ?: JSONArray()
+        val ids = juegos.map { it.id }.toSet()
+        for (i in 0 until js.length()) runCatching { aJuego(js.getJSONObject(i)) }.getOrNull()?.takeIf { reemplazar || it.id !in ids }?.let { poner(it) }
+        val cs = o.optJSONArray("carpetas") ?: JSONArray()
+        for (i in 0 until cs.length()) cs.optJSONObject(i)?.let { x -> ponerCarpeta(Carpeta(x.getString("uri"), x.optString("nombre"))) }
     }
 
     fun aJson(j: Juego) = JSONObject().apply {
@@ -384,6 +494,24 @@ object Biblioteca {
     )
 
     fun nuevoId(): String = "j_" + java.util.UUID.randomUUID().toString().replace("-", "").take(12)
+
+    /** (La migración: los juegos de antes con la hora en que se cambiaron de verdad; sus horas, con la de ahora.) */
+    fun migra(j: Juego, hora: Long) {
+        val cc = col ?: return
+        cc.pon(j.id, campos(j), hora.coerceAtLeast(1L))
+        val t = tiempo ?: return
+        if (!j.propias.vacias && t.nodo("${j.id}~${Cuenta.dispositivo}") == null) t.pon("${j.id}~${Cuenta.dispositivo}", camposHoras(j, Cuenta.dispositivo, j.propias))
+        (j.ajenas + j.externas).forEach { (f, h) -> if (!h.vacias && t.nodo("${j.id}~$f") == null) t.pon("${j.id}~$f", camposHoras(j, f, h), 1L) }
+    }
+
+    /** (La migración: una portada de antes —un archivo de este móvil— pasa a la cuenta.) */
+    fun migraPortada(id: String, bytes: ByteArray, hora: Long) {
+        val h = com.gonzalo.familia.PortadasFamilia.guardar(bytes) ?: return
+        col?.pon(id, mapOf("portada" to h), hora.coerceAtLeast(1L))
+    }
+
+    /** (La migración: un juego borrado antes.) */
+    fun migraBorrado(id: String, hora: Long) { col?.pon(id, mapOf("b" to hora), hora.coerceAtLeast(1L)) }
 }
 
 /** Ajustes de Hiedra que no son del tema. De este dispositivo. */

@@ -76,19 +76,6 @@ class SuiteTest {
         limpia()
     }
 
-    @Test fun laNotaDeAzabacheSeEncuentraPorClaveAntigua() {
-        val blob = JSONObject().put("games", JSONArray().put(JSONObject().put("id", 5L).put("name", "Hades").put("general", 86).put("review", "Brutal").put("updated", 1L)))
-        val notas = NotaAzabache.deBlobs(listOf(blob))
-        assertEquals(86, notas["juego:hades"]?.general)
-        val pc = Juego("a", "Hades II", lanzadores = listOf(Lanzador.pc("steam:1", "pc1")), otrasClaves = listOf("juego:hades"))
-        assertEquals(5L, NotaAzabache.de(notas, pc)?.atrioId)
-        assertEquals("Brutal", NotaAzabache.de(notas, Juego("b", "Hades", lanzadores = listOf(Lanzador.rom("gba", "Hades"))))?.resena)
-        assertNull(NotaAzabache.de(notas, Juego("c", "Celeste")))
-        // Una ficha que Azabache refleja de Hiedra y aún no ha valorado (todo a 0) no cuenta como nota
-        val sin = JSONObject().put("games", JSONArray().put(JSONObject().put("id", 6L).put("name", "Celeste").put("general", 0).put("gfx", 0).put("story", 0).put("music", 0).put("gameplay", 0).put("review", "").put("updated", 1L)))
-        assertNull(NotaAzabache.de(NotaAzabache.deBlobs(listOf(sin)), Juego("c", "Celeste")))
-    }
-
     @Test fun elRecorteDelEncuadreSigueElHueco() {
         val b = android.graphics.Bitmap.createBitmap(300, 400, android.graphics.Bitmap.Config.ARGB_8888)
         assertSame("sin encuadre, la misma imagen", b, recortarEncuadre(b, 1f, 0f, 0f))

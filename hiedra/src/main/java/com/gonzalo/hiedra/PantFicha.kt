@@ -202,7 +202,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                 // Una línea: lo que hay y qué hacer (antes eran dos que decían lo mismo)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
-                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Azabache →", acento = true) { NotaAzabache.abrir(ctx, null) }
+                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Azabache →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(j.id, 0, "")) }
                 }
             } else {
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -275,7 +275,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                 Filete(1.dp, Line)
                 MagLink("Elegir de la galería") { eligePortada = false; cambiarPortada.launch("image/*") }
                 if (j.portada.isNotBlank() && File(j.portada).exists()) { Filete(1.dp, Line); MagLink("Encuadrar", "Mueve y amplía la imagen entera dentro del hueco") { eligePortada = false; encuadre = true } }
-                if (j.portada.isNotBlank()) { Filete(1.dp, Line); MagLink("Usar la portada automática") { eligePortada = false; Biblioteca.poner(j.copy(portada = "", zoom = 1f, ox = 0f, oy = 0f)); NubeP.portadaQuitada(ctx, j) } }
+                if (j.portada.isNotBlank()) { Filete(1.dp, Line); MagLink("Usar la portada automática") { eligePortada = false; Biblioteca.poner(j.copy(portada = "", zoom = 1f, ox = 0f, oy = 0f)) } }
             }
         },
         confirmButton = {}, dismissButton = { TextButton({ eligePortada = false }) { Text("CERRAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }

@@ -1,8 +1,6 @@
 package com.gonzalo.hiedra
 
 import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import org.json.JSONObject
 
 /**
@@ -11,7 +9,8 @@ import org.json.JSONObject
  */
 object NotaAzabache {
     /** [general]: de 0 a 100. [atrioId]: para abrir esa ficha en Azabache. */
-    class Nota(val atrioId: Long, val general: Int, val resena: String)
+    /** [ref]: el juego en la cuenta (su id), para abrirlo en Azabache. */
+    class Nota(val ref: String, val general: Int, val resena: String)
 
     /** Una ficha reflejada por Azabache a la que aún no has puesto nota (todas a 0 y sin reseña). */
     fun sinValorar(o: JSONObject) = o.optInt("general", 0) == 0 && o.optInt("gfx", 0) == 0 && o.optInt("story", 0) == 0 && o.optInt("music", 0) == 0 && o.optInt("gameplay", 0) == 0 && o.optString("review").isBlank()
@@ -37,55 +36,36 @@ object NotaAzabache {
             val nombre = o.optString("name").trim(); if (nombre.isBlank()) continue
             // Una ficha que Azabache refleja de Hiedra sin nota aún (todo a 0) no es una valoración
             if (sinValorar(o)) continue
-            out["juego:" + Catalogo.norm(nombre)] = Nota(id, o.optInt("general", 0).coerceIn(0, 100), o.optString("review").trim())
+            out["juego:" + Catalogo.norm(nombre)] = Nota(id.toString(), o.optInt("general", 0).coerceIn(0, 100), o.optString("review").trim())
         }
         return out
     }
 
-    /** La nota de un juego de Hiedra: por cualquiera de sus claves o por su título. */
-    fun de(notas: Map<String, Nota>, j: Juego): Nota? = j.claves.firstNotNullOfOrNull { notas[it] } ?: notas["juego:" + Catalogo.norm(j.titulo)]
+    /**
+     * Las valoraciones: Azabache las pone en el propio juego de la cuenta (`nota`, 0–100, y `resena`), así que se ven aquí al momento.
+     * Un juego sin nota ni reseña no sale (es «sin valorar»). Por id de juego.
+     */
+    fun cargar(c: Context): Map<String, Nota> = Biblioteca.juegos.toList().mapNotNull { j ->
+        val (g, r) = Biblioteca.valoracion(j.id)
+        if (g > 0 || r.isNotBlank()) j.id to Nota(j.id, g.coerceIn(0, 100), r.trim()) else null
+    }.toMap()
 
-    private fun prefs(c: Context) = c.getSharedPreferences("hiedra_azabache", Context.MODE_PRIVATE)
+    /** La nota de un juego. */
+    fun de(notas: Map<String, Nota>, j: Juego): Nota? = notas[j.id]
 
-    /** Sube cuando llegan notas nuevas (las fichas abiertas vuelven a leer). */
-    var version by androidx.compose.runtime.mutableIntStateOf(0)
-        private set
-    private val mirando = java.util.concurrent.atomic.AtomicBoolean(false)
-    /** Al oír el sello de Azabache: se bajan las notas dentro de poco (varios avisos seguidos, una sola bajada). */
-    fun pronto(c: Context) {
-        if (!Cuenta.vinculada || !mirando.compareAndSet(false, true)) return
-        val app = c.applicationContext
-        kotlin.concurrent.thread {
-            try { Thread.sleep(600); if (refrescar(app)) android.os.Handler(android.os.Looper.getMainLooper()).post { version++ } } finally { mirando.set(false) }
-        }
-    }
+    /** Cambia cuando cambia algo de la cuenta (las fichas abiertas vuelven a leer). */
+    val version: Int get() = com.gonzalo.familia.LaFamilia.cambios
 
-    /** Lo último que se bajó (guardado en el móvil, para verlo al momento y sin red). */
-    fun cargar(c: Context): Map<String, Nota> {
-        val o = runCatching { JSONObject(prefs(c).getString("notas", "{}")!!) }.getOrDefault(JSONObject())
-        return o.keys().asSequence().mapNotNull { k -> o.optJSONObject(k)?.let { x -> k to Nota(x.optLong("i"), x.optInt("g"), x.optString("r")) } }.toMap()
-    }
-
-    fun guardar(c: Context, m: Map<String, Nota>, ahora: Long = System.currentTimeMillis()) {
-        val o = JSONObject(); m.forEach { (k, n) -> o.put(k, JSONObject().put("i", n.atrioId).put("g", n.general).put("r", n.resena)) }
-        prefs(c).edit().putString("notas", o.toString()).putLong("en", ahora).apply()
-    }
-
-    /** ¿Hace más de 15 minutos que no se baja? */
-    fun vieja(c: Context, ahora: Long = System.currentTimeMillis()) = ahora - prefs(c).getLong("en", 0L) > 15 * 60_000L
-
-    /** Baja las valoraciones y las guarda. Devuelve false si no ha podido. Bloqueante (red). */
-    fun refrescar(c: Context): Boolean {
-        val b = runCatching { ImportarAtrio.blobs() }.getOrNull() ?: return false
-        guardar(c, deBlobs(b)); return true
-    }
+    fun vieja(c: Context, ahora: Long = System.currentTimeMillis()) = false
+    fun refrescar(c: Context): Boolean = true
+    fun pronto(c: Context) {}
 
     fun instalado(c: Context): Boolean = runCatching { c.packageManager.getLaunchIntentForPackage(ATRIO) != null }.getOrDefault(false)
 
-    /** Abre la ficha de ese juego en Azabache (o Azabache a secas). Atrio entiende `go = item:<categoría>:<id>`; los juegos son la categoría 0. */
+    /** Abre ese juego en Azabache (`ref` = «juegos/<id>»: la misma ficha, valorada o por valorar). */
     fun abrir(c: Context, n: Nota?) {
         val i = c.packageManager.getLaunchIntentForPackage(ATRIO) ?: return
-        if (n != null && n.atrioId != 0L) i.putExtra("go", "item:0:${n.atrioId}")
+        if (n != null && n.ref.isNotBlank()) i.putExtra("ref", "juegos/${n.ref}")
         c.startActivity(i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 }

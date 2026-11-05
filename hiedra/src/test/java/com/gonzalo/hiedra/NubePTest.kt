@@ -66,9 +66,10 @@ class NubePTest {
     private fun tmp(n: String) = File(ctx.cacheDir, "nubep-" + System.nanoTime() + "-" + n).apply { mkdirs() }
 
     @Test fun guardadosRomsYPortadas() {
-        Cuenta.dbUrl = "http://127.0.0.1:$pf"; Cuenta.authBase = "http://127.0.0.1:$pf"; KDrive.api = "http://127.0.0.1:$pk"
-        val sign = JSONObject(http("POST", "/v1/accounts:signUp?key=K", """{"email":"gon@ronron.example.com","password":"secreto1","returnSecureToken":true}"""))
-        http("PUT", "/config/webKey.json?auth=${sign.getString("idToken")}", "\"K\"")
+        // La cuenta: el emulador de Firebase con las reglas de verdad; el kDrive: el de mentira
+        com.gonzalo.familia.nucleo.Emulador.limpia(); com.gonzalo.familia.nucleo.Emulador.cuenta("gon")
+        com.gonzalo.familia.LaFamilia.reiniciaParaPruebas(); com.gonzalo.familia.LaFamilia.configPruebas = com.gonzalo.familia.nucleo.Emulador.cfg
+        KDrive.api = "http://127.0.0.1:$pk"
         Biblioteca.cargada = true; Archivos.limpiarParaPruebas()
         val lz = Lanzador.rom("gba", "Zelda (E)")
         val z = Juego("a1", "Zelda", lanzadores = listOf(lz), mod = 1)
@@ -122,19 +123,6 @@ class NubePTest {
         val bajada = NubeP.bajarRom(ctx, z, f, FCarpeta(tmp("romsB")))
         assertEquals(NubeP.hashDe(rom.inputStream()), NubeP.hashDe(bajada.leer()))
 
-        // Portada elegida en A → aparece en B (el mismo juego, por su id)
-        movil("A"); Biblioteca.juegos.clear(); Biblioteca.borrados.clear()
-        val pdir = File(ctx.filesDir, "portadas").apply { mkdirs() }
-        val pa = File(pdir, "a1-1.jpg").apply { writeBytes(ByteArray(900) { 9 }) }
-        Biblioteca.juegos.add(z.copy(portada = pa.absolutePath))
-        assertFalse(NubeP.portadas(ctx))
-        movil("B"); Biblioteca.juegos.clear(); Biblioteca.borrados.clear(); pdir.listFiles()?.forEach { it.delete() }
-        Biblioteca.juegos.add(z.copy(portada = ""))
-        assertTrue(NubeP.portadas(ctx))
-        val pb = Biblioteca.por("a1")!!.portada
-        assertTrue(pb, pb.isNotBlank()); assertArrayEquals(ByteArray(900) { 9 }, File(pb).readBytes())
-        assertFalse("no se vuelve a bajar", NubeP.portadas(ctx))
-
         // Subida automática de las ROMs que faltan: sube solo las que están aquí y no en la nube, una vez
         movil("A"); Biblioteca.juegos.clear(); Biblioteca.borrados.clear()
         val lm = Lanzador.rom("gba", "Metroid"); Archivos.poner(lm.clave, "content://m", "")
@@ -149,8 +137,9 @@ class NubePTest {
         assertEquals("con el interruptor apagado no sube", 0, NubeP.subirRoms(ctx) { FArch(mf) }); NubeP.ponRomsSolas(ctx, true)
 
         // El índice en la cuenta no lleva rutas ni nombres de tu móvil, solo hash, id de kDrive y nombres de archivo
-        val raw = http("GET", "/__dump")
+        val raw = com.gonzalo.familia.nucleo.Json.escribe(com.gonzalo.familia.nucleo.Emulador.lee("/users/${Cuenta.uid}"))
         assertFalse(raw.contains("/storage/")); Cuenta.salir()
+        com.gonzalo.familia.LaFamilia.reiniciaParaPruebas(); com.gonzalo.familia.LaFamilia.configPruebas = null
         Biblioteca.juegos.clear(); Archivos.limpiarParaPruebas()
     }
 

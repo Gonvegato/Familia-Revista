@@ -2,7 +2,6 @@ package com.gonzalo.hiedra
 
 import android.content.Context
 import org.json.JSONObject
-import org.json.JSONTokener
 
 /**
  * Copiar la apariencia de Atrio. Atrio guarda su apariencia (tema, fondo, acento, colores a mano, letras y tamaño del texto) y la sube a tu
@@ -13,21 +12,11 @@ object CopiaAtrio {
     class Ajustes(val at: Long, val skin: JSONObject)
     class Fila(val id: String, val titulo: String, val valor: String)
 
-    /** Lo último que Atrio subió a tu cuenta (null si no hay nada de Atrio). Bloqueante (red). */
+    /** La apariencia de Azabache, tal como la tiene en la cuenta (`ajustes/azabache`: `at` y `skin`), o null si no hay. */
     fun leer(): Ajustes? {
-        val st = Cuenta.db("GET", "/users/${Cuenta.uid}/stamps", null)?.let { JSONObject(it) } ?: return null
-        val devs = st.keys().asSequence().map { it to st.optLong(it) }.sortedByDescending { it.second }.take(4).toList()
-        var mejor: Ajustes? = null
-        for ((dev, _) in devs) {
-            val raw = Cuenta.db("GET", "/users/${Cuenta.uid}/dev/$dev/data", null) ?: continue
-            val datos = (JSONTokener(raw).nextValue() as? String) ?: continue
-            val aj = runCatching { JSONObject(datos).optJSONObject("ajustes") }.getOrNull() ?: continue
-            val skin = aj.optJSONObject("skin") ?: continue
-            if (skin.length() == 0) continue
-            val a = Ajustes(aj.optLong("at"), skin)
-            if (mejor == null || a.at > mejor.at) mejor = a
-        }
-        return mejor
+        val n = runCatching { com.gonzalo.familia.LaFamilia.coleccion("ajustes").nodo("azabache") }.getOrNull() ?: return null
+        val skin = n.mapa("skin").takeIf { it.isNotEmpty() } ?: return null
+        return Ajustes(n.entero("at"), JSONObject(skin))
     }
 
     private fun largo(o: JSONObject, k: String): Long = if (o.has(k)) (o.opt(k) as? Number)?.toLong() ?: 0L else 0L

@@ -36,7 +36,8 @@ object KDrive {
     fun save(ctx: Context, token: String, drive: String) {
         // El id del kDrive puede venir con la dirección entera («…/app/drive/123456/…»)
         val d = Regex("""drive/(\d+)""").find(drive)?.groupValues?.get(1) ?: drive.filter { it.isDigit() }
-        prefs(ctx).edit().remove("dirs").remove("home").remove("versDir").apply()
+        // (en el móvil también, por si aún no hay cuenta: en cuanto la haya, pasa a ella)
+        prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).remove("dirs").remove("home").remove("versDir").apply()
         runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", token.trim()); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
     }
 

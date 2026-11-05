@@ -87,7 +87,7 @@ class ModeloTest {
         assertTrue(nuevo3); assertNotEquals(ficha.id, otro.id); assertEquals(2, Biblioteca.juegos.size)
         // Unir dos juegos: el absorbido queda como borrado para los demás dispositivos
         val u = Biblioteca.unir(ficha.id, otro.id)!!
-        assertEquals(1, Biblioteca.juegos.size); assertEquals(2, u.lanzadores.size); assertTrue(Biblioteca.borrados.containsKey(otro.id))
+        assertEquals(1, Biblioteca.juegos.size); assertEquals(2, u.lanzadores.size); assertEquals(null, Biblioteca.por(otro.id))
         // Quitar un lanzador deja su clave entre las de antes (para Azabache y para no duplicar)
         val sin = u.sinLanzador("rom:switch:hades")
         assertEquals(1, sin.lanzadores.size); assertTrue("rom:switch:hades" in sin.otrasClaves)
