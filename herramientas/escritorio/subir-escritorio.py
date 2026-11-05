@@ -4,9 +4,9 @@
 Uso:  python3 herramientas/escritorio/subir-escritorio.py Azabache-1.0.0-mac.dmg Azabache-1.0.0-linux.deb …
 La autenticación la pone, o bien el entorno de la sesión (un secreto de red para api.infomaniak.com que añade
 «Authorization: Bearer …» solo), o bien la variable KDRIVE_TOKEN si la tienes. El kDrive se elige con KDRIVE_ID
-(por defecto, el único de la cuenta). El nombre en kDrive es el del archivo: debe ser «Cobalto-<versión>.apk».
+(por defecto, el único de la cuenta). El nombre en kDrive es el del archivo: «<App>-<versión>-mac.dmg», «-linux.deb» o «-linux.tar.gz».
 """
-import hashlib, json, os, re, sys, urllib.parse, urllib.request, urllib.error
+import json, os, re, sys, urllib.parse, urllib.request, urllib.error
 
 API = "https://api.infomaniak.com"
 # KDRIVE_CARPETA cambia la carpeta (p. ej. una versión que se instala a mano y que los actualizadores no deben ver)
@@ -53,7 +53,6 @@ def subir(ruta):
     datos = open(ruta, "rb").read()
     d = kdrive()
     home = carpeta_privada(d)
-    q = lambda v: urllib.parse.quote(str(v), safe="")
     tam = len(datos)
     trozo = max(1 << 20, (tam + 199) // 200)
     total = (tam + trozo - 1) // trozo
