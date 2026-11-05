@@ -30,6 +30,8 @@ object SincroP {
             f.alSincronizar = { inf ->
                 previo?.invoke(inf)
                 if (inf.ok) app?.getSharedPreferences("marfil_sync", Context.MODE_PRIVATE)?.edit()?.putLong("ultima", System.currentTimeMillis())?.apply()
+                // Los libros por tu kDrive: subir los nuevos y bajar (si lo tienes activo) los de tus otros dispositivos
+                if (inf.ok) app?.let { runCatching { NubeLibros.siHaceFalta(it) } }
             }
         }
         if (de !== LaFamilia.familia) {
@@ -41,6 +43,8 @@ object SincroP {
         runCatching { Escritos.escucha(c) }
         // La primera vez con la cuenta en este móvil: lo de antes pasa a la cuenta
         Migracion.siHaceFalta(c)
+        // Lo que quedara por subir a tu kDrive (o por bajar)
+        runCatching { NubeLibros.siHaceFalta(c) }
     }
 
     /** La apariencia y los ajustes del lector que llegan de otro de tus Marfil (si son más nuevos que los de aquí). */

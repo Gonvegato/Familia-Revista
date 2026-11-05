@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.13.0"
+const val VERSION = "0.13.1"
 
 /** «Ajustes» en pestañas, como Atrio: Apariencia · Lectura · Cuenta (Atrio y libros en la nube) · Avanzado (actualizaciones y copias). */
 @OptIn(ExperimentalLayoutApi::class)
@@ -253,7 +253,7 @@ fun AvisoActualizacion() {
 }
 
 
-/** «Libros»: traer los de Atrio y tenerlos en tu kDrive (se suben solos con Wi-Fi; aquí, a mano). */
+/** «Libros»: traer los de Atrio y tenerlos en tu kDrive (se suben solos al añadirlos; aquí, a mano). */
 @Composable
 fun SeccionLibros() {
     val ctx = LocalContext.current
@@ -283,7 +283,7 @@ fun SeccionLibros() {
         }
     }
     Filete(1.dp, Line)
-    MagLink(if (ocupado) "Un momento…" else "Subir mis libros a kDrive ahora", "Normalmente se suben solos con Wi-Fi") {
+    MagLink(if (ocupado) "Un momento…" else "Subir mis libros a kDrive ahora", "Normalmente se suben solos en cuanto los añades") {
         if (ocupado) return@MagLink
         if (!KDrive.on(ctx)) { estado = "Conecta antes tu kDrive (Ajustes → Avanzado)."; return@MagLink }
         ocupado = true; estado = "Subiendo…"

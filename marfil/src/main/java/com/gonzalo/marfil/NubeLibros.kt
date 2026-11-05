@@ -1,7 +1,6 @@
 package com.gonzalo.marfil
 
 import android.content.Context
-import android.net.ConnectivityManager
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
@@ -19,9 +18,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 class NubeLibro(val f: Long, val n: String, val s: Long)
 
 /**
- * Los archivos de los libros por tu kDrive. Cada libro que añades se sube solo (con Wi-Fi) a «Mi carpeta/Marfil/Libros/<título>/»;
- * en tu cuenta queda el índice (/marfil/nube/<libro>: id de kDrive, nombre y tamaño; nunca rutas de tu móvil) y así tus otros dispositivos
- * saben qué hay y lo bajan cuando abres el libro. Los libros que vienen de Atrio apuntan a su archivo de «Atrio/Libros/…»: no se duplican.
+ * Los archivos de los libros por tu kDrive. Cada libro que añades se sube solo, en cuanto hay conexión (como en Atrio), a
+ * «Mi carpeta/Marfil/Libros/<título>/»; en el libro de la cuenta queda dónde está (campo `nube`: id de kDrive, nombre y tamaño; nunca
+ * rutas de tu móvil) y así tus otros dispositivos lo bajan al abrirlo o, con «Tener todos mis libros aquí», solos con Wi-Fi. Los libros
+ * que vienen de Atrio apuntan a su archivo de «Atrio/Libros/…»: no se duplican.
  */
 object NubeLibros {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -44,27 +44,40 @@ object NubeLibros {
 
     private fun seguro(s: String) = s.replace(Regex("""[\\/:*?"<>|\u0000-\u001f]+"""), " ").replace(Regex("\\s+"), " ").trim().trimEnd('.').take(80).trim().ifBlank { "Sin nombre" }
 
-    private fun sinMedir(c: Context): Boolean = runCatching { !(c.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).isActiveNetworkMetered }.getOrDefault(true)
+    /** Si una subida o una bajada falla, no se vuelve a intentar sola hasta pasado este rato (a mano, siempre). */
+    private const val ESPERA_FALLO = 30 * 60_000L
+    private fun falloReciente(c: Context, que: String, id: String) = System.currentTimeMillis() - prefs(c).getLong("fallo-$que:$id", 0L) < ESPERA_FALLO
+    private fun apuntaFallo(c: Context, que: String, id: String) = prefs(c).edit().putLong("fallo-$que:$id", System.currentTimeMillis()).apply()
+    private fun quitaFallo(c: Context, que: String, id: String) = prefs(c).edit().remove("fallo-$que:$id").apply()
 
-    /** Sube los libros que están aquí y aún no están en tu kDrive. Solo con Wi-Fi (o datos sin límite) salvo que se pida a mano. Devuelve cuántos ha subido. */
+    /** El archivo de un libro en este dispositivo, si está (y no está vacío). */
+    private fun archivo(l: Libro): File? = runCatching { File(android.net.Uri.parse(l.uri).path ?: return@runCatching null) }.getOrNull()?.takeIf { it.exists() && it.length() > 0 }
+
+    /** Los libros que tienen aquí su archivo y aún no están en tu kDrive. */
+    fun porSubir(c: Context, aMano: Boolean = false): List<Libro> =
+        Biblioteca.propios().filter { l -> l.uri.isNotBlank() && de(c, l) == null && (aMano || !falloReciente(c, "s", l.id)) && archivo(l) != null }
+
+    /** Los libros que están en tu kDrive y no aquí. */
+    fun porBajar(c: Context): List<Libro> = Biblioteca.propios().filter { l -> l.enOtroDispositivo && de(c, l) != null && !falloReciente(c, "b", l.id) }
+
+    /** Sube los libros que están aquí y aún no están en tu kDrive, con la conexión que haya (como en Atrio). Devuelve cuántos ha subido. */
     fun subirPendientes(c: Context, aMano: Boolean = false, aviso: (String) -> Unit = {}): Int {
         if (!KDrive.on(c) || !Cuenta.vinculada) return 0
-        if (!aMano && !sinMedir(c)) return 0
         if (!subiendo.compareAndSet(false, true)) return 0
         var n = 0
         try {
             runCatching { leerIndice(c) }
-            for (l in Biblioteca.propios()) {
-                if (l.uri.isBlank() || de(c, l) != null) continue
-                val f = runCatching { File(android.net.Uri.parse(l.uri).path ?: return@runCatching null) }.getOrNull()?.takeIf { it.exists() && it.length() > 0 } ?: continue
+            for (l in porSubir(c, aMano)) {
+                val f = archivo(l) ?: continue
                 val ext = (l.archivo.substringAfterLast('.', "").ifBlank { f.extension }).lowercase().take(5).ifBlank { "epub" }
                 val nombre = "${seguro(l.titulo)}.$ext"
                 try {
                     aviso("Subiendo $nombre…")
                     val id = KDrive.upload(c, "Marfil/Libros/${seguro(l.titulo)}", nombre, f.length()) { f.inputStream() }
                     registrar(c, l, NubeLibro(id, nombre, f.length()))
+                    quitaFallo(c, "s", l.id)
                     n++
-                } catch (e: Exception) { aviso("No he podido subir ${l.titulo}: ${e.message}") }
+                } catch (e: Exception) { apuntaFallo(c, "s", l.id); aviso("No he podido subir ${l.titulo}: ${e.message}") }
             }
         } finally { subiendo.set(false) }
         return n
@@ -80,32 +93,45 @@ object NubeLibros {
     fun bajarTodos(c: Context, aviso: (String) -> Unit = {}): Int {
         if (!KDrive.on(c)) return 0
         var n = 0
-        for (l in Biblioteca.propios()) {
-            if (!l.enOtroDispositivo || de(c, l) == null) continue
+        for (l in porBajar(c)) {
             if (c.filesDir.usableSpace < 300L * 1024 * 1024) { aviso("Queda poco sitio en el móvil: dejo de bajar libros."); break }
-            runCatching { aviso("Bajando ${l.titulo}…"); bajar(c, l); n++ }
+            try { aviso("Bajando ${l.titulo}…"); bajar(c, l); quitaFallo(c, "b", l.id); n++ } catch (e: Exception) { apuntaFallo(c, "b", l.id) }
         }
         return n
     }
 
     /** Todo lo de kDrive que toca hacer ahora: subir los libros que faltan y (si lo has dejado activo) bajar los de tus otros dispositivos. Bloqueante (red). */
     fun todo(c: Context) {
-        runCatching { subirPendientes(c, aMano = true) }
+        runCatching { subirPendientes(c) }
         if (autoBajar(c)) runCatching { bajarTodos(c) }
     }
 
-    /** Pide que se haga en segundo plano (aunque cierres la app) cuando haya Wi-Fi. Varias peticiones seguidas se juntan en una. */
-    fun programar(c: Context) {
+    /**
+     * Lo que haga falta, en segundo plano (aunque cierres la app): subir los libros nuevos en cuanto haya conexión y, si está activo
+     * «Tener todos mis libros aquí», bajar con Wi-Fi los que falten. Se llama al añadir un libro, al abrir la app y tras cada
+     * sincronización: si no hay nada que hacer, no hace nada (ni red).
+     */
+    fun siHaceFalta(c: Context) {
         if (!KDrive.on(c) || !Cuenta.vinculada) return
-        val req = OneTimeWorkRequestBuilder<SincroLibrosWorker>()
-            .setInitialDelay(15, TimeUnit.SECONDS)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.UNMETERED).build())
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES).build()
-        WorkManager.getInstance(c.applicationContext).enqueueUniqueWork("marfil-libros", ExistingWorkPolicy.KEEP, req)
+        runCatching { if (porSubir(c).isNotEmpty()) programa(c, "subir", NetworkType.CONNECTED, 3) }
+        runCatching { if (autoBajar(c) && porBajar(c).isNotEmpty()) programa(c, "bajar", NetworkType.UNMETERED, 15) }
     }
 
+    private fun programa(c: Context, que: String, red: NetworkType, espera: Long) {
+        val req = OneTimeWorkRequestBuilder<SincroLibrosWorker>()
+            .setInputData(workDataOf("que" to que))
+            .setInitialDelay(espera, TimeUnit.SECONDS)
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(red).build())
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES).build()
+        // KEEP: si ya está subiendo (o bajando), que siga; lo que llegue mientras se recoge en la siguiente sincronización
+        WorkManager.getInstance(c.applicationContext).enqueueUniqueWork("marfil-libros-$que", ExistingWorkPolicy.KEEP, req)
+    }
+
+    /** (Lo de siempre: subir y bajar lo que falte.) */
+    fun programar(c: Context) = siHaceFalta(c)
+
     /** En segundo plano, sin molestar (lo llama la sincronización). */
-    fun subirEnSegundoPlano(c: Context) = programar(c)
+    fun subirEnSegundoPlano(c: Context) = siHaceFalta(c)
 
     /** Baja el archivo de un libro de tu kDrive y lo deja aquí. Bloqueante (red). Devuelve el libro ya con su archivo, o lanza el error. */
     fun bajar(c: Context, l: Libro): Libro {
@@ -125,7 +151,7 @@ object NubeLibros {
         if (!KDrive.on(c)) { dice("Este libro está en otro dispositivo. Conecta tu kDrive (Ajustes → Avanzado) para bajarlo."); return }
         scope.launch {
             runCatching { leerIndice(c) }
-            if (de(c, l) == null) { dice("Este libro aún no está en tu kDrive: se sube solo, con Wi-Fi, desde el dispositivo donde lo añadiste."); return@launch }
+            if (de(c, l) == null) { dice("Este libro aún no está en tu kDrive: se sube solo desde el dispositivo donde lo añadiste, en cuanto tiene conexión."); return@launch }
             dice("Bajando «${l.titulo}»…")
             try { val n = bajar(c, l); hilo.post { LectorActivity.abrir(c, n.id, goto) } }
             catch (e: Exception) { dice("No he podido bajarlo: ${e.message}") }
@@ -133,7 +159,16 @@ object NubeLibros {
     }
 }
 
-/** El trabajo en segundo plano de los libros: subir y bajar, con Wi-Fi. */
+/** El trabajo en segundo plano de los libros: subir (con cualquier conexión) o bajar (con Wi-Fi). */
 class SincroLibrosWorker(ctx: Context, p: WorkerParameters) : CoroutineWorker(ctx, p) {
-    override suspend fun doWork(): Result = try { NubeLibros.todo(applicationContext); Result.success() } catch (e: Exception) { if (runAttemptCount < 4) Result.retry() else Result.failure() }
+    override suspend fun doWork(): Result = try {
+        val c = applicationContext
+        Biblioteca.cargar(c)
+        when (inputData.getString("que")) {
+            "subir" -> NubeLibros.subirPendientes(c)
+            "bajar" -> NubeLibros.bajarTodos(c)
+            else -> NubeLibros.todo(c)
+        }
+        Result.success()
+    } catch (e: Exception) { if (runAttemptCount < 4) Result.retry() else Result.failure() }
 }

@@ -39,7 +39,8 @@ Azabache pequeña, y Hiedra/Azabache/Cobalto preparadas para pasar al PC más ad
 - [x] Actualizaciones sin preguntar: targetSdk 35 (Android 17 lo exige) y el permiso UPDATE_PACKAGES_WITHOUT_USER_ACTION (faltaba en
       Hiedra, Marfil y Cobalto); el token de kDrive sale de la cuenta
 - [x] Firma con rotación (`herramientas/firmar.py`), comprobada con `apksigner verify` y `apksigner lineage`
-- [x] Versiones Hiedra 0.5.0, Marfil 0.13.0, Cobalto 0.3.0, Azabache 1.3.0
+- [x] Versiones Hiedra 0.5.0, Marfil 0.13.1, Cobalto 0.3.0, Azabache 1.3.0 (la 0.13.0 de Marfil había perdido la subida sola de los
+      libros a kDrive: la 0.13.1 la devuelve, con una prueba de extremo a extremo)
 
 ## Lo que no se ha podido probar aquí
 

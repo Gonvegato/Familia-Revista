@@ -55,6 +55,41 @@ class CuentaMarfilTest {
 
     private fun sincroniza() { assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otro.sincroniza().ok); assertTrue(LaFamilia.sincronizaYa().ok); shadowOf(Looper.getMainLooper()).idle() }
 
+    @Test fun unLibroQueAnadesSeSubeSoloATuKDriveYElOtroMovilLoBaja() {
+        val kd = FakeKDrive()
+        try {
+            KDrive.api = kd.url
+            androidx.work.testing.WorkManagerTestInitHelper.initializeTestWorkManager(ctx,
+                androidx.work.Configuration.Builder().setExecutor(androidx.work.testing.SynchronousExecutor()).build())
+            KDrive.save(ctx, "tok", "777"); KDrive.confirma(ctx)
+            // Añades un libro con su archivo: se programa solo su subida, con cualquier conexión (como en Atrio)
+            val f = java.io.File(ctx.filesDir, "libros/solaris.epub").apply { parentFile!!.mkdirs(); writeBytes("EPUB de Solaris".toByteArray()) }
+            Biblioteca.poner(Libro("x", "Solaris", "Stanisław Lem", archivo = "solaris.epub", uri = android.net.Uri.fromFile(f).toString(), anadido = 5L))
+            val kid = Biblioteca.kid(claveDe("Solaris", "Stanisław Lem"))
+            val wm = androidx.work.WorkManager.getInstance(ctx)
+            val w = wm.getWorkInfosForUniqueWork("marfil-libros-subir").get().single()
+            assertEquals(androidx.work.WorkInfo.State.ENQUEUED, w.state)
+            assertEquals("sin esperar al Wi-Fi", androidx.work.NetworkType.CONNECTED, w.constraints.requiredNetworkType)
+            // Hay conexión: se sube
+            androidx.work.testing.WorkManagerTestInitHelper.getTestDriver(ctx)!!.run { setAllConstraintsMet(w.id); setInitialDelayMet(w.id) }
+            espera("subido a tu kDrive") { kd.byPath("Marfil/Libros/Solaris/Solaris.epub") != null }
+            assertEquals("EPUB de Solaris", String(kd.byPath("Marfil/Libros/Solaris/Solaris.epub")!!.bytes))
+            espera("apuntado en el libro de la cuenta") { Biblioteca.nube(kid) != null }
+            assertTrue("no queda nada por subir", NubeLibros.porSubir(ctx).isEmpty())
+            sincroniza()
+            val n = otro.coleccion("libros").nodo(kid)!!.mapa("nube")
+            assertEquals("Solaris.epub", n["n"])
+            // En tu otro móvil (aquí, el mismo Marfil sin el archivo): se baja de tu kDrive
+            Biblioteca.ponUri(kid, "")
+            Biblioteca.poner(Biblioteca.por(kid)!!.copy(uri = ""))
+            espera("sin archivo aquí") { Biblioteca.por(kid)?.enOtroDispositivo == true }
+            assertEquals("está para bajar", listOf(kid), NubeLibros.porBajar(ctx).map { it.id })
+            assertEquals(1, NubeLibros.bajarTodos(ctx))
+            espera("bajado") { Biblioteca.por(kid)?.enOtroDispositivo == false }
+            assertEquals("EPUB de Solaris", java.io.File(android.net.Uri.parse(Biblioteca.por(kid)!!.uri).path!!).readText())
+        } finally { kd.stop(); KDrive.api = "https://api.infomaniak.com" }
+    }
+
     @Test fun unLibroDeMarfilEsElMismoEnLaCuentaYEnAzabache() {
         Biblioteca.poner(Libro("x", "Dune", "Frank Herbert", estado = Estado.LEYENDO, archivo = "dune.epub", anadido = 5L))
         val kid = Biblioteca.kid(claveDe("Dune", "Frank Herbert"))

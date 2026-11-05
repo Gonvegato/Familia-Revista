@@ -16,8 +16,8 @@ android {
         applicationId = "com.gonzalo.marfil"
         minSdk = 29
         targetSdk = 35
-        versionCode = 39
-        versionName = "0.13.0"
+        versionCode = 40
+        versionName = "0.13.1"
         // Solo los procesadores que se usan (el traductor del diccionario pesa ~16 MB por cada uno): móviles y tablets (arm64) y Waydroid en el PC (x86_64)
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
@@ -77,6 +77,7 @@ dependencies {
     testImplementation(testFixtures(project(":nucleo")))
     testImplementation("org.json:json:20240303")
     testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("androidx.work:work-testing:2.9.1")
     testImplementation("io.github.takahirom.roborazzi:roborazzi:1.20.0")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.20.0")
     testImplementation("androidx.compose.ui:ui-test-junit4")

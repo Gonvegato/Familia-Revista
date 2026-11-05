@@ -57,7 +57,7 @@ Lo que lee Azabache está en `docs/CONTRATO-DATOS.md`. Probado en el ordenador c
 Cada versión se sube a **«Mi carpeta/versiones»** de tu kDrive como `Marfil-<versión>.apk` (`python3 herramientas/subir-version.py`). Marfil mira
 al abrir, cada minuto mientras se ve y, cerrada, cada 4 horas (WorkManager); si hay una más nueva se baja, se comprueba que es Marfil con la misma
 firma y se instala sin preguntar cuando no la usas (Android 12+, con el permiso de instalar apps); si Android no lo deja, te pregunta. El token
-de kDrive se pega una vez en Ajustes → Avanzado y se guarda solo en este móvil (no viaja por la cuenta: la pareja la lee).
+de kDrive es de tu cuenta (se pone una vez en Azabache → Ajustes → Avanzado → Tu nube) y lo usan las cuatro apps; tu pareja no lo ve.
 
 ## Compilar
 
@@ -78,6 +78,14 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
   Los archivos de los libros y las portadas tuyas van a tu kDrive. Sin vincular, nada sale del móvil.
 
 ## Versiones
+
+## 0.13.1
+
+- **Los libros vuelven a subirse solos a tu kDrive, como en Atrio.** En la 0.13.0 se había perdido: solo se subían con «Subir a tu
+  kDrive ahora». Ahora, en cuanto añades un libro (o le cambias el archivo), se sube solo a «Mi carpeta/Marfil/Libros/<título>/» con la
+  conexión que haya, aunque cierres Marfil, y tus otros dispositivos lo bajan al abrirlo. «Tener todos mis libros aquí» vuelve a
+  bajarlos solos, con Wi-Fi. También se mira al abrir Marfil y tras cada sincronización. Si una subida falla, se reintenta sola a la
+  media hora (a mano, cuando quieras).
 
 ## 0.13.0 — la familia
 

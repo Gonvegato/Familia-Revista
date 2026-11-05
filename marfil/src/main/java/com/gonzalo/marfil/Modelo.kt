@@ -204,7 +204,8 @@ object Biblioteca {
         val ahora = System.currentTimeMillis()
         val l = (if (previo != null && previo.estado != Estado.LEIDO && l0.estado == Estado.LEIDO && (l0.terminado == 0L || l0.terminado < ahora - REPETIDA_MS)) l0.copy(terminados = l0.terminados + ahora) else l0)
             .copy(id = id, anadido = l0.anadido.takeIf { it > 0 } ?: previo?.anadido?.takeIf { it > 0 } ?: ahora)
-        if (l.uri.isNotBlank() && uris[id] != l.uri) { uris[id] = l.uri; guardaLocal() }
+        val archivoNuevo = l.uri.isNotBlank() && uris[id] != l.uri
+        if (archivoNuevo) { uris[id] = l.uri; guardaLocal() }
         val cc = col ?: return
         val cambios = campos(l).toMutableMap()
         // La portada se pone con [Portadas] (es una imagen de la cuenta); aquí solo se quita si se ha quitado
@@ -212,10 +213,12 @@ object Biblioteca {
         if (cc.nodo(id)?.borrado == true) cambios["b"] = 0L
         cc.cambia(id, cambios)
         refresca()
+        // Un libro con su archivo aquí (recién añadido o con archivo nuevo): a tu kDrive, en cuanto haya conexión
+        if (archivoNuevo) appCtx?.let { NubeLibros.siHaceFalta(it) }
     }
 
     /** Dónde está el archivo de un libro en este móvil. */
-    fun ponUri(id: String, uri: String) { if (uris[id] != uri) { uris[id] = uri; guardaLocal() } }
+    fun ponUri(id: String, uri: String) { if (uris[id] != uri) { uris[id] = uri; guardaLocal(); appCtx?.let { NubeLibros.siHaceFalta(it) } } }
 
     /** La portada de un libro (el hash de una imagen ya guardada en la cuenta) y de dónde salió. */
     fun ponerPortada(id: String, hash: String, url: String) {
