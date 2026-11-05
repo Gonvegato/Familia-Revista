@@ -8,7 +8,7 @@ import java.io.File
  * cogen `^<App>-<versión>\.apk$`, así que nunca se confunden.
  *
  * En el Mac se baja el .dmg a Descargas y se abre (arrastras la app a Aplicaciones, encima de la vieja). En Linux, el .deb se abre con
- * el instalador del sistema. No hay firma de Apple (es de pago): la primera vez, clic derecho → Abrir.
+ * el instalador del sistema. No hay firma de Apple (es de pago): la primera vez, Ajustes del Sistema → Privacidad y seguridad → «Abrir igualmente».
  */
 object Actualizador {
     class Nueva(val version: String, val archivo: KDrive.Archivo)

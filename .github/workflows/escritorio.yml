@@ -94,6 +94,8 @@ jobs:
             A="$(echo ${a:0:1} | tr '[:lower:]' '[:upper:]')${a:1}"
             b="$d/build/compose/binaries/main/app/$A.app/Contents/MacOS/$A"
             [ -x "$b" ] || { echo "No está $b"; exit 1; }
+            # Sin firma de Apple, pero la de la propia app (ad hoc) tiene que ser válida: si no, el Mac dice que «está dañada»
+            codesign --verify --deep --strict --verbose=2 "$d/build/compose/binaries/main/app/$A.app" || { echo "La firma de $A no es válida"; exit 1; }
             "$b" > "capturas-mac/$A.log" 2>&1 &
             p=$!
             sleep 25
