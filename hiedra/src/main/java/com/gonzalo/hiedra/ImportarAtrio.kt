@@ -68,8 +68,9 @@ object ImportarAtrio {
             if (titulo.isBlank()) return@mapNotNull null
             val pst = p?.optInt("status", 0) ?: -1
             val estado = when { pst == 1 -> Estado.JUGANDO; g != null -> Estado.PASADO; pst == 2 -> Estado.ABANDONADO; else -> Estado.PENDIENTE }
-            val inicio = listOfNotNull(g?.optLong("start"), p?.optLong("start")).filter { it > 0 }.minOrNull() ?: 0L
-            val fin = g?.optLong("end") ?: 0L
+            // (Atrio guarda los días de empezar y terminar como número de día: aquí van en milisegundos)
+            val inicio = com.gonzalo.familia.nucleo.Fechas.ms(listOfNotNull(g?.optLong("start"), p?.optLong("start")).filter { it > 0 }.minOrNull() ?: 0L)
+            val fin = com.gonzalo.familia.nucleo.Fechas.ms(g?.optLong("end") ?: 0L)
             val minutos = maxOf(g?.optInt("minutes") ?: 0, p?.optInt("minutes") ?: 0)
             val plataforma = (g?.optString("platform").orEmpty().ifBlank { p?.optString("platform").orEmpty() }).trim()
             val cover = g?.optString("cover").orEmpty().ifBlank { p?.optString("cover").orEmpty() }

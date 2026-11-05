@@ -26,3 +26,14 @@ class JsonTest {
 
     @Test(expected = Json.Error::class) fun rotoFalla() { Json.lee("{\"a\":1,}") }
 }
+
+class FechasTest {
+    @org.junit.Test fun unNumeroDeDiaDeAtrioPasaASuFecha() {
+        val zona = java.time.ZoneId.of("Europe/Madrid")
+        val dia = java.time.LocalDate.of(2026, 5, 20).toEpochDay()
+        val ms = Fechas.ms(dia, zona)
+        org.junit.Assert.assertEquals(java.time.LocalDate.of(2026, 5, 20), java.time.Instant.ofEpochMilli(ms).atZone(zona).toLocalDate())
+        org.junit.Assert.assertEquals("una fecha de verdad no se toca", 1_780_000_000_000L, Fechas.ms(1_780_000_000_000L, zona))
+        org.junit.Assert.assertEquals(0L, Fechas.ms(0L, zona))
+    }
+}

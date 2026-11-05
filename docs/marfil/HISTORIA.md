@@ -79,6 +79,13 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.13.3
+
+- **Las fechas que llegaron de Atrio estaban en 1970.** Atrio guarda el día de empezar y de terminar como número de día, y al
+  traerlo se tomó por milisegundos: los libros terminados en Atrio quedaron terminados el 1 de enero de 1970, y por eso el reto del año
+  no los contaba. Ahora se leen
+  bien, se corrigen una vez en tu cuenta (así las ven igual Azabache y tus otros dispositivos) y lo que se traiga de Atrio llega bien.
+
 ## 0.13.2
 
 - **El reto del año cuenta todos tus leídos.** Un libro leído sin fecha de terminado (llegado de Atrio, de otro dispositivo o de

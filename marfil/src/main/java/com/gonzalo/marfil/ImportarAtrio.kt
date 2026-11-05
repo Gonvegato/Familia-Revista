@@ -57,8 +57,9 @@ object ImportarAtrio {
             val st = lecturas[id]?.optJSONObject("s")
             val pst = p?.optInt("status", 0) ?: -1
             val estado = when { pst == 1 -> Estado.LEYENDO; g != null -> Estado.LEIDO; pst == 2 -> Estado.ABANDONADO; else -> Estado.PENDIENTE }
-            val inicio = maxOf(g?.optLong("start") ?: 0L, p?.optLong("start") ?: 0L)
-            val fin = g?.optLong("end") ?: 0L
+            // (Atrio guarda los días de empezar y terminar como número de día: aquí van en milisegundos)
+            val inicio = com.gonzalo.familia.nucleo.Fechas.ms(maxOf(g?.optLong("start") ?: 0L, p?.optLong("start") ?: 0L))
+            val fin = com.gonzalo.familia.nucleo.Fechas.ms(g?.optLong("end") ?: 0L)
             val fr = (st?.let { maxOf(it.optDouble("fraction", 0.0), it.optDouble("bestFrac", 0.0)) } ?: 0.0).toFloat().coerceIn(0f, 1f)
             val portada = (g?.optString("cover").orEmpty().ifBlank { p?.optString("cover").orEmpty() }).takeIf { it.startsWith("http") }.orEmpty()
             val nube = nubes["libro:$id"]?.let { NubeLibro(it.optLong("f"), it.optString("n"), it.optLong("s")) }?.takeIf { it.f > 0 }

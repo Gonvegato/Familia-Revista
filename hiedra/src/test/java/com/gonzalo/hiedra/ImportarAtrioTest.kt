@@ -22,7 +22,9 @@ class ImportarAtrioTest {
         val c = ImportarAtrio.candidatos(listOf(blob)).associateBy { it.juego.titulo }
         assertEquals(5, c.size)
         val h = c["Hades"]!!.juego
-        assertEquals(Estado.PASADO, h.estado); assertEquals(2000L, h.finalizado); assertTrue(h.favorito)
+        assertEquals(Estado.PASADO, h.estado); assertTrue(h.favorito)
+        // Atrio guarda el día de terminar como número de día: aquí, en milisegundos (ese día, no enero de 1970)
+        assertEquals(java.time.LocalDate.ofEpochDay(2000L), java.time.Instant.ofEpochMilli(h.finalizado).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
         assertEquals("las horas de Atrio cuentan como de este dispositivo", 1500 * 60_000L, h.propias.ms); assertEquals("PC", h.plataforma); assertEquals(Menu.PC, h.menu)
         assertEquals("sin lanzador, con la clave de Atrio", true, h.sinLanzador); assertEquals(listOf("juego:hades"), h.otrasClaves); assertEquals(600, h.durHistoria)
         assertEquals("https://x/c1.jpg", c["Hades"]!!.portadaUrl)

@@ -313,7 +313,7 @@ object Biblioteca {
         val externas = horas.filter { esExterna(it.texto("fuente")) }.associate { it.texto("fuente") to horasDe(it) }
         return Juego(
             id = n.ref, titulo = n.texto("t"), plataforma = n.texto("pl"), estado = estadoDeCuenta(n.texto("estado")), favorito = n.si("fav"),
-            finalizado = n.entero("fin"), anadido = n.entero("an"), ultima = n.entero("ul"), mod = n.m.values.maxOrNull() ?: 0L,
+            finalizado = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("fin")), anadido = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("an")), ultima = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("ul")), mod = n.m.values.maxOrNull() ?: 0L,
             portada = c?.let { com.gonzalo.familia.PortadasFamilia.archivo(it, n.texto("portada")) }.orEmpty(), portadaUrl = n.texto("pu"),
             zoom = n.decimal("ez").toFloat().takeIf { n["ez"] != null } ?: 1f, ox = n.decimal("eox").toFloat(), oy = n.decimal("eoy").toFloat(),
             durHistoria = n.entero("dh").toInt(), durExtras = n.entero("de").toInt(), durCompleto = n.entero("dc").toInt(),
@@ -334,7 +334,14 @@ object Biblioteca {
         if (congelada) return
         val cc = col ?: return
         val porJuego = tiempo?.vivos()?.groupBy { it.texto("ref") } ?: emptyMap()
-        val nueva = cc.vivos().filter { it.texto("t").isNotBlank() }.map { deNodo(it, porJuego[it.ref].orEmpty()) }.sortedByDescending { it.anadido }
+        val vivos = cc.vivos()
+        // Las fechas que llegaron de Atrio como número de día (y quedaron en 1970): se corrigen en la cuenta, una vez
+        for (n in vivos) {
+            val c = LinkedHashMap<String, Any?>()
+            for (k in listOf("fin", "an", "ul")) n.entero(k).let { if (com.gonzalo.familia.nucleo.Fechas.esDia(it)) c[k] = com.gonzalo.familia.nucleo.Fechas.ms(it) }
+            if (c.isNotEmpty()) runCatching { cc.cambia(n.ref, c) }
+        }
+        val nueva = vivos.filter { it.texto("t").isNotBlank() }.map { deNodo(it, porJuego[it.ref].orEmpty()) }.sortedByDescending { it.anadido }
         if (nueva != juegos.toList()) { juegos.clear(); juegos.addAll(nueva) }
         appCtx?.let { c ->
             Widgets.pedir(c)

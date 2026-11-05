@@ -157,7 +157,7 @@ object Biblioteca {
         return Libro(
             id = n.ref, titulo = n.texto("t"), autor = n.texto("a"), clave = n.texto("clave").ifBlank { claveDe(n.texto("t"), n.texto("a")) },
             portada = c?.let { archivoPortada(it, hash) }.orEmpty(), portadaUrl = n.texto("pu"), uri = uris[n.ref].orEmpty(), archivo = n.texto("archivo"),
-            favorito = n.si("fav"), estado = estadoDeCuenta(n.texto("estado")), anadido = n.entero("an"), ultima = n.entero("ul"),
+            favorito = n.si("fav"), estado = estadoDeCuenta(n.texto("estado")), anadido = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("an")), ultima = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("ul")),
             fraccion = n.decimal("fr").toFloat().coerceIn(0f, 1f), fraccionFijada = n.entero("ff"), mod = n.m.values.maxOrNull() ?: 0L,
             paginas = n.entero("pg").toInt(), paginasOrigen = n.texto("po"), terminados = terminadosDe(n),
             msPropios = tiempos[n.ref]?.get(Cuenta.dispositivo) ?: 0L, ajenosMs = tiempos[n.ref]?.filterKeys { it != Cuenta.dispositivo } ?: emptyMap(),
@@ -170,7 +170,7 @@ object Biblioteca {
      * abriste. Así cuenta para el reto del año. (Solo se deduce aquí: en la cuenta no se escribe nada hasta que cambies el libro.)
      */
     private fun terminadosDe(n: com.gonzalo.familia.nucleo.Nodo): List<Long> {
-        val fin = n.lista("fin").map { it.comoLongSeguro() }.filter { it > 0 }
+        val fin = n.lista("fin").map { com.gonzalo.familia.nucleo.Fechas.ms(it.comoLongSeguro()) }.filter { it > 0 }
         if (fin.isNotEmpty() || estadoDeCuenta(n.texto("estado")) != Estado.LEIDO) return fin
         return listOfNotNull((n.m["estado"] ?: 0L).takeIf { it > FECHA_MINIMA } ?: n.entero("ul").takeIf { it > FECHA_MINIMA })
     }
@@ -186,11 +186,27 @@ object Biblioteca {
     fun fijaParaPruebas(l: List<Libro>) { congelada = true; libros.clear(); libros.addAll(l) }
 
     /** Vuelve a montar la lista con lo que hay en la cuenta (se llama sola cuando cambia algo, venga de donde venga). */
+    /**
+     * Las fechas que llegaron de Atrio como número de día (y quedaron en 1970) se corrigen en la cuenta, una vez (al quedar bien ya no
+     * hay nada que corregir): así las ven igual Azabache y tus otros dispositivos.
+     */
+    private fun reparaFechas(cc: com.gonzalo.familia.nucleo.Coleccion, vivos: List<com.gonzalo.familia.nucleo.Nodo>) {
+        for (n in vivos) {
+            val c = LinkedHashMap<String, Any?>()
+            val fin = n.lista("fin").map { it.comoLongSeguro() }
+            if (fin.any { com.gonzalo.familia.nucleo.Fechas.esDia(it) }) c["fin"] = fin.map { com.gonzalo.familia.nucleo.Fechas.ms(it) }
+            for (k in listOf("an", "ul")) n.entero(k).let { if (com.gonzalo.familia.nucleo.Fechas.esDia(it)) c[k] = com.gonzalo.familia.nucleo.Fechas.ms(it) }
+            if (c.isNotEmpty()) runCatching { cc.cambia(n.ref, c) }
+        }
+    }
+
     fun refresca() {
         if (congelada) return
         val cc = col ?: return
         tiempos = runCatching { LecturaNube.tiempos() }.getOrDefault(emptyMap())
-        val deCuenta = cc.vivos().filter { it.texto("t").isNotBlank() }.map { deNodo(it) }
+        val vivos = cc.vivos()
+        reparaFechas(cc, vivos)
+        val deCuenta = vivos.filter { it.texto("t").isNotBlank() }.map { deNodo(it) }
         val nueva = (deCuenta + escritos.values).sortedByDescending { maxOf(it.anadido, 0L) }
         if (nueva != libros.toList()) { libros.clear(); libros.addAll(nueva) }
         appCtx?.let { c -> Widgets.pedir(c); Portadas.bajarQueFalten(c) }

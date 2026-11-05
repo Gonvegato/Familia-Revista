@@ -105,6 +105,23 @@ class CuentaMarfilTest {
         assertEquals(0, terminadosEn(Biblioteca.propios(), 2025))
     }
 
+    @Test fun lasFechasDeAtrioQuedaronEn1970YSeCorrigenEnLaCuenta() {
+        // Lo que dejó la importación de Atrio: el día de terminar como número de día (20 de mayo de 2026), tomado por milisegundos
+        val dia = java.time.LocalDate.of(2026, 5, 20).toEpochDay()
+        val kid = Biblioteca.kid(claveDe("Coiling Dragon 9", "I Eat Tomatoes"))
+        otro.coleccion("libros").pon(kid, mapOf("clave" to claveDe("Coiling Dragon 9", "I Eat Tomatoes"), "t" to "Coiling Dragon 9", "a" to "I Eat Tomatoes", "estado" to "terminado", "fin" to listOf(dia), "an" to dia - 30))
+        sincroniza()
+        espera("llega") { Biblioteca.por(kid) != null }
+        val l = Biblioteca.por(kid)!!
+        assertEquals(java.time.LocalDate.of(2026, 5, 20), java.time.Instant.ofEpochMilli(l.terminado).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
+        assertEquals("cuenta para el reto de 2026", 1, terminadosEn(Biblioteca.propios(), 2026))
+        // Y queda corregido en la cuenta (para Azabache y tus otros dispositivos)
+        sincroniza()
+        val fin = otro.coleccion("libros").nodo(kid)!!.lista("fin").map { (it as Number).toLong() }
+        assertEquals(listOf(l.terminado), fin)
+        assertTrue(otro.coleccion("libros").nodo(kid)!!.entero("an") > 1_000_000_000_000L)
+    }
+
     @Test fun unLibroDeMarfilEsElMismoEnLaCuentaYEnAzabache() {
         Biblioteca.poner(Libro("x", "Dune", "Frank Herbert", estado = Estado.LEYENDO, archivo = "dune.epub", anadido = 5L))
         val kid = Biblioteca.kid(claveDe("Dune", "Frank Herbert"))

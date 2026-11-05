@@ -15,6 +15,12 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.5.2
+
+- **Las fechas que llegaron de Atrio estaban en 1970.** Atrio guarda el día de empezar y de terminar como número de día, y al
+  traerlo se tomó por milisegundos: los juegos terminados en Atrio quedaron terminados el 1 de enero de 1970. Ahora se leen
+  bien, se corrigen una vez en tu cuenta (así las ven igual Azabache y tus otros dispositivos) y lo que se traiga de Atrio llega bien.
+
 ## 0.5.1
 
 - **Los estantes ya no saltan.** Cada portada reserva siempre dos líneas para el nombre: al deslizar un estante, lo de debajo
