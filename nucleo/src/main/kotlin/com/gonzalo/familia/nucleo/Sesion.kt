@@ -29,7 +29,10 @@ class Sesion(private val cfg: Config, private val red: Red, private val seguro: 
     @Volatile private var caduca = 0L
     @Volatile private var claveWeb = cfg.claveWeb
 
-    val dentro: Boolean get() = uid.isNotBlank() && refresco.isNotBlank()
+    /** Mientras se comprueba con la cuenta una sesión que llega de otra app ([adopta]), no se está dentro todavía. */
+    @Volatile private var adoptando = false
+
+    val dentro: Boolean get() = !adoptando && uid.isNotBlank() && refresco.isNotBlank()
 
     init { carga() }
 
@@ -102,13 +105,16 @@ class Sesion(private val cfg: Config, private val red: Red, private val seguro: 
         val u = otra["uid"].comoTexto(); val r = otra["refresco"].comoTexto()
         if (u.isBlank() || r.isBlank()) throw Error("No hay sesión que compartir.")
         val antes = listOf(uid, usuario, refresco, pase, caduca)
-        uid = u; usuario = otra["usuario"].comoTexto(); refresco = r; pase = ""; caduca = 0L
-        if (claveWeb.isBlank()) claveWeb = otra["claveWeb"].comoTexto()
-        try { renueva() } catch (e: Error) {
-            if (e.sinRed) { uid = antes[0] as String; usuario = antes[1] as String; refresco = antes[2] as String; pase = antes[3] as String; caduca = antes[4] as Long }
-            else if (dentro) salir()
-            throw e
-        }
+        adoptando = true
+        try {
+            uid = u; usuario = otra["usuario"].comoTexto(); refresco = r; pase = ""; caduca = 0L
+            if (claveWeb.isBlank()) claveWeb = otra["claveWeb"].comoTexto()
+            try { renueva() } catch (e: Error) {
+                if (e.sinRed) { uid = antes[0] as String; usuario = antes[1] as String; refresco = antes[2] as String; pase = antes[3] as String; caduca = antes[4] as Long }
+                else salir()
+                throw e
+            }
+        } finally { adoptando = false }
     }
 
     fun salir() {
