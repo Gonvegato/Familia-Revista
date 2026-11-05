@@ -58,7 +58,24 @@ object CuentaHermanas {
      * Lee lo de las hermanas de la cuenta y lo refleja en las listas de Azabache (y deja lo de cada día —jugado, leído, escrito—, los
      * subrayados, los capítulos de Cobalto y los objetivos donde lo leen el Diario y los widgets). Devuelve si ha cambiado algo.
      */
-    fun refrescar(c: Context, store: Store): Boolean {
+    fun refrescar(c: Context, store: Store): Boolean = synchronized(cerrojo) {
+        // (de uno en uno: lo piden la sincronización, la vuelta a la app y la llegada de portadas, y nunca deben mezclarse)
+        try { refrescarYa(c, store).also { diag(c, null) } }
+        catch (e: Exception) { diag(c, e); throw e }
+    }
+
+    private val cerrojo = Any()
+
+    /** Cómo fue el último reflejo (para «Cuenta de la familia» en Ajustes → Cuenta): hora, y el error si lo hubo. */
+    class Diagnostico(val hora: Long, val error: String, val juegos: Int, val libros: Int)
+    fun diagnostico(c: Context): Diagnostico = prefs(c).let { Diagnostico(it.getLong("diag_t", 0L), it.getString("diag_e", "").orEmpty(), it.getInt("diag_j", 0), it.getInt("diag_l", 0)) }
+    private fun diag(c: Context, e: Exception?) {
+        val j = runCatching { LaFamilia.coleccion("juegos").vivos().size }.getOrDefault(0); val l = runCatching { LaFamilia.coleccion("libros").vivos().size }.getOrDefault(0)
+        val err = e?.let { x -> (x.javaClass.simpleName + ": " + x.message.orEmpty() + x.stackTrace.take(3).joinToString("") { " · ${it.fileName}:${it.lineNumber}" }).take(400) }.orEmpty()
+        prefs(c).edit().putLong("diag_t", System.currentTimeMillis()).putString("diag_e", err).putInt("diag_j", j).putInt("diag_l", l).apply()
+    }
+
+    private fun refrescarYa(c: Context, store: Store): Boolean {
         if (!LaFamilia.familia.sesion.dentro) return false
         migraValoraciones(c, store)
         var cambio = false

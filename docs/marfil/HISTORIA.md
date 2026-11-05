@@ -79,6 +79,19 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.13.2
+
+- **El reto del año cuenta todos tus leídos.** Un libro leído sin fecha de terminado (llegado de Atrio, de otro dispositivo o de
+  antes) no contaba: ahora cuenta desde que pasó a «terminado» en la cuenta (que guarda la hora de cada cambio), o desde la última
+  vez que lo abriste si eso no se sabe.
+- **Las pestañas de arriba se dejan deslizar** (antes volvían solas a la elegida mientras las arrastrabas) y **las opciones de
+  orden se ven todas** (si no caben en una línea, siguen en la siguiente; antes la última salía cortada y, al intentar deslizarla,
+  pasabas de página).
+- **Entrar una vez, de verdad.** Si entras en otra app de la familia mientras esta sigue abierta, esta entra sola en cuanto
+  vuelves a ella (antes solo lo miraba al arrancar, y podía quedarse sin cuenta hasta que Android la cerrara).
+- **Salir y volver a entrar ya no deja la app sorda.** Al salir de la cuenta se tiraban las colecciones y lo que las escuchaba se
+  quedaba oyendo unas que ya no cambiaban: ahora son las mismas, vacías, y se siguen oyendo.
+
 ## 0.13.1
 
 - **Los libros vuelven a subirse solos a tu kDrive, como en Atrio.** En la 0.13.0 se había perdido: solo se subían con «Subir a tu

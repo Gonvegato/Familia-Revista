@@ -55,7 +55,7 @@ fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifi
     val desplazamiento = rememberScrollState()
     val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
     var anchoFila by remember { mutableIntStateOf(0) }
-    LaunchedEffect(sel, sitios[sel], anchoFila) {
+    LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
         val (x, w) = sitios[sel] ?: return@LaunchedEffect
         if (anchoFila <= 0) return@LaunchedEffect
         if (x < desplazamiento.value || x + w > desplazamiento.value + anchoFila) desplazamiento.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, desplazamiento.maxValue))
@@ -70,7 +70,7 @@ fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifi
             }.horizontalScroll(desplazamiento), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Bottom) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x + desplazamiento.value).roundToInt() to c.size.width }
+                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }
                     .semantics { selected = on; role = Role.Tab }.press(haptic = false) { onSel(i) }
                     .drawBehind { if (on) drawRect(ColGeneral, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
                     .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
@@ -84,17 +84,13 @@ fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifi
     }
 }
 
-/** Filtros u opciones de una sola elección, en una fila que se desliza: versalitas; el elegido en acento y subrayado. */
+/** Filtros u opciones de una sola elección, todas a la vista (en una línea o en varias): versalitas; el elegido en acento y subrayado. */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun FiltrosRevista(opciones: List<String>, sel: Int, modifier: Modifier = Modifier, onSel: (Int) -> Unit) {
-    val desplazamiento = rememberScrollState()
-    Row(modifier.fillMaxWidth().drawWithContent {
-            // Un degradado en los bordes cuando hay más opciones por un lado o por otro (para que no parezcan cortadas)
-            drawContent()
-            val f = 28.dp.toPx()
-            if (desplazamiento.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
-            if (desplazamiento.value < desplazamiento.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-        }.horizontalScroll(desplazamiento), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    // Todas a la vista: si no caben en una línea, siguen en la siguiente (una fila que se desliza dentro de una página que también
+    // se desliza no se dejaba mover: el gesto se lo llevaba la página, y la última opción se veía cortada)
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         opciones.forEachIndexed { i, o -> FiltroRevista(o, i == sel) { onSel(i) } }
     }
 }

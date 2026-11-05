@@ -112,6 +112,17 @@ class Coleccion internal constructor(val nombre: String, internal val archivo: S
         return { oyentes -= oyente }
     }
 
+    /**
+     * Olvida lo de la cuenta (al salir o al cambiar de cuenta) sin dejar de ser la misma colección: quien la escuchaba sigue
+     * enterándose de lo que llegue después (antes se tiraba y se creaba otra, y las apps se quedaban oyendo una que ya no cambiaba).
+     */
+    internal fun vacia() {
+        val habia: Set<String>
+        synchronized(cerrojo) { habia = servidor.keys.toSet(); servidor.clear(); ultimaU = 0L; cargadaEntera = false }
+        disco.borra(archivo)
+        invalida(habia)
+    }
+
     internal fun invalida(refs: Set<String>) {
         vista = null
         if (refs.isNotEmpty()) oyentes.forEach { runCatching { it(refs) } }

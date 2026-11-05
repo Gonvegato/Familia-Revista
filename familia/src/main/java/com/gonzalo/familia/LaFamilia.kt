@@ -71,7 +71,7 @@ object LaFamilia {
         principal.post { vigilaVida() }
         SubidaFamilia.periodica(appCtx)
         // Sin sesión: si una hermana ya la tiene, se entra solo
-        if (!nueva.sesion.dentro) Thread { runCatching { Acceso.pideAHermanas(appCtx) } }.start()
+        pideSesion()
         return nueva
     }
 
@@ -95,6 +95,18 @@ object LaFamilia {
     /** Para lo que no es Compose (los widgets): se llama en el hilo principal tras cada cambio. */
     fun alCambiar(o: () -> Unit) { oyentes += o }
 
+    private val alEntrarOyentes = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+    /** Se llama (en el hilo principal) cada vez que esta app entra en la cuenta, la pidas aquí o llegue de una hermana. */
+    fun alEntrar(o: () -> Unit) { alEntrarOyentes += o }
+
+    /** Sin sesión aquí: se pide a las hermanas (en segundo plano). Se mira al arrancar y cada vez que vuelves a la app. */
+    private val pidiendo = java.util.concurrent.atomic.AtomicBoolean(false)
+    fun pideSesion() {
+        val fam = f ?: return
+        if (fam.sesion.dentro || !pidiendo.compareAndSet(false, true)) return
+        Thread { try { runCatching { Acceso.pideAHermanas(appCtx) } } finally { pidiendo.set(false) } }.start()
+    }
+
     @Volatile private var avisoPendiente = false
     private fun avisa() {
         if (avisoPendiente) return
@@ -108,7 +120,11 @@ object LaFamilia {
         if (vigilando) return
         vigilando = true
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) { f?.escucha() }
+            override fun onStart(owner: LifecycleOwner) {
+                // Si entraste en otra app mientras esta seguía abierta, entra ahora sola
+                pideSesion()
+                f?.escucha()
+            }
             override fun onStop(owner: LifecycleOwner) {
                 f?.deja()
                 if ((f?.pendientes ?: 0) > 0) SubidaFamilia.encola(appCtx)
@@ -124,7 +140,7 @@ object LaFamilia {
         if (antes.isNotBlank() && antes != fam.sesion.uid) fam.olvidaTodo()
         Acceso.guarda(appCtx, fam.sesion.usuario, contrasena)
         fam.programa(0)
-        principal.post { cambios++ }
+        principal.post { cambios++; alEntrarOyentes.forEach { runCatching { it() } } }
     }
 
     /** Sale de la cuenta en esta app (las demás siguen dentro) y olvida lo de la cuenta en este dispositivo. */
@@ -144,6 +160,6 @@ object LaFamilia {
     fun reiniciaParaPruebas() {
         f?.deja()
         f = null
-        vigiladas.clear(); oyentes.clear()
+        vigiladas.clear(); oyentes.clear(); alEntrarOyentes.clear()
     }
 }

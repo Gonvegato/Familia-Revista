@@ -50,6 +50,56 @@ class CuentaAzabacheTest {
 
     private fun libro(kid: String) = otra.coleccion("libros").nodo(kid)!!
 
+    private fun espera(que: String, cond: () -> Boolean) {
+        val hasta = System.currentTimeMillis() + 15_000
+        while (System.currentTimeMillis() < hasta) { shadowOf(Looper.getMainLooper()).idle(); if (runCatching(cond).getOrDefault(false)) return; Thread.sleep(50) }
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(que, cond())
+    }
+
+    /** Como en el móvil: la hermana sube y Azabache sincroniza; lo demás lo hace la propia app (sin llamar a nada a mano). */
+    private fun llega() { assertTrue(otra.sincroniza().ok); assertTrue(LaFamilia.sincronizaYa().ok) }
+
+    @Test fun loQueCambiasEnMarfilLlegaSoloAAzabache() {
+        // Azabache 1.2 ya tenía este libro de Marfil, como pendiente y dentro de una saga
+        val clave = "libro:la comunidad del anillo:j r r tolkien"
+        val kid = Hermanas.kidDe(clave)
+        store.savePlays(listOf(Play(77L, "La comunidad del anillo", "", "", 0, emptyList(), creator = "J. R. R. Tolkien")), BOOKS.id)
+        Hermanas.guardaEnlacesPublico(ctx, "marfil", mapOf(clave to 77L))
+        store.saveSagas(listOf(Saga(5L, "El Señor de los Anillos", listOf(77L), kind = BOOKS.id)))
+        Sincro.init(ctx)
+        // En Marfil lo empiezas a leer
+        otra.coleccion("libros").pon(kid, mapOf("clave" to clave, "t" to "La comunidad del anillo", "a" to "J. R. R. Tolkien", "estado" to "en_curso", "fr" to 0.2))
+        llega()
+        espera("sale en leyendo") { store.loadPlays(BOOKS.id).any { it.id == 77L && it.status == 1 } }
+        // Lo terminas hoy
+        otra.coleccion("libros").pon(kid, mapOf("estado" to "terminado", "fin" to listOf(System.currentTimeMillis())))
+        llega()
+        espera("pasa a leídos") { store.load(BOOKS.id).any { it.id == 77L } && store.loadPlays(BOOKS.id).none { it.id == 77L } }
+        assertTrue("sin valorar", Hermanas.sinValorar(store.load(BOOKS.id).single { it.id == 77L }))
+    }
+
+    @Test fun siEntrasEnOtraAppAzabacheEntraSolaYTraeLoDeLaCuenta() {
+        Sincro.init(ctx)
+        // Azabache sin cuenta (como al pasar de la 1.2: entraste después en Marfil)
+        Account.signOut(store)
+        assertFalse(store.paired)
+        otra.coleccion("libros").pon(Hermanas.kidDe("libro:dune:frank herbert"), mapOf("clave" to "libro:dune:frank herbert", "t" to "Dune", "a" to "Frank Herbert", "estado" to "en_curso"))
+        assertTrue(otra.sincroniza().ok)
+        // Entra la hermana (lo que hace Acceso.pideAHermanas con la cuenta de Marfil): Azabache la adopta y trae lo de la cuenta sin tocar nada
+        kotlin.concurrent.thread { LaFamilia.entrar("gonzalo", "secreto1") }.join()
+        espera("Azabache dentro") { Store(ctx).paired }
+        espera("y con lo de Marfil") { Store(ctx).loadPlays(BOOKS.id).any { it.name == "Dune" && it.status == 1 } }
+    }
+
+    @Test fun laPortadaQuePonesEnHiedraLlegaSolaAAzabache() {
+        Sincro.init(ctx)
+        val h = otra.imagenes.guarda(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), "image/jpeg")
+        otra.coleccion("juegos").pon("j_cccccccccccc", mapOf("t" to "Hades", "pl" to "PC", "estado" to "en_curso", "portada" to h))
+        llega()
+        espera("con la portada de Hiedra") { store.loadPlays(GAMES.id).singleOrNull { it.name == "Hades" }?.cover?.let { it.isNotBlank() && java.io.File(it).isFile } == true }
+    }
+
     @Test fun unLibroQueEstasLeyendoNuncaSaleLeidoConUnCero() {
         val kid = Hermanas.kidDe("libro:dune:frank herbert")
         otra.coleccion("libros").pon(kid, mapOf("clave" to "libro:dune:frank herbert", "t" to "Dune", "a" to "Frank Herbert", "estado" to "en_curso", "fr" to 0.3))

@@ -90,6 +90,21 @@ class CuentaMarfilTest {
         } finally { kd.stop(); KDrive.api = "https://api.infomaniak.com" }
     }
 
+    @Test fun unLibroLeidoSinFechaCuentaParaElRetoDelAno() {
+        // Leído hace unos meses en otro sitio (Atrio, otro dispositivo…), sin fecha de terminado: cuenta desde que pasó a «terminado»
+        val marzo = java.time.LocalDate.of(2026, 3, 14).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val kid = Biblioteca.kid(claveDe("Solo Leveling", "Sung Jin Woo"))
+        otro.coleccion("libros").pon(kid, mapOf("clave" to claveDe("Solo Leveling", "Sung Jin Woo"), "t" to "Solo Leveling", "a" to "Sung Jin Woo", "estado" to "terminado"), marzo)
+        // Y otro con su fecha, como siempre
+        val kid2 = Biblioteca.kid(claveDe("Dune", "Frank Herbert"))
+        otro.coleccion("libros").pon(kid2, mapOf("clave" to claveDe("Dune", "Frank Herbert"), "t" to "Dune", "a" to "Frank Herbert", "estado" to "terminado", "fin" to listOf(marzo + 86_400_000L)))
+        sincroniza()
+        espera("llegan los dos") { Biblioteca.por(kid) != null && Biblioteca.por(kid2) != null }
+        assertEquals(listOf(marzo), Biblioteca.por(kid)!!.terminados)
+        assertEquals("cuentan los dos", 2, terminadosEn(Biblioteca.propios(), 2026))
+        assertEquals(0, terminadosEn(Biblioteca.propios(), 2025))
+    }
+
     @Test fun unLibroDeMarfilEsElMismoEnLaCuentaYEnAzabache() {
         Biblioteca.poner(Libro("x", "Dune", "Frank Herbert", estado = Estado.LEYENDO, archivo = "dune.epub", anadido = 5L))
         val kid = Biblioteca.kid(claveDe("Dune", "Frank Herbert"))

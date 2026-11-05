@@ -9,6 +9,25 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.3.1
+
+- **Azabache se queda al día con Hiedra y Marfil aunque hayas entrado en otra app.** Al pasar de la 1.2, Azabache necesita la
+  cuenta de la familia; si entrabas después en Marfil o Hiedra, Azabache no se enteraba hasta que Android la cerraba, y mientras
+  tanto enseñaba lo de antes (libros terminados aún «leyendo», los que empezaste escondidos en su saga de pendientes, sin las
+  portadas nuevas de Hiedra). Ahora entra sola al volver a ella, adopta la sesión al momento y trae lo de la cuenta.
+- **«Comprobar la cuenta»** (Ajustes → Cuenta) dice lo que pasa de verdad: con qué usuario está dentro, si la cuenta responde,
+  cuántos juegos y libros hay en la cuenta y cuántos han llegado aquí, y si el último reflejo falló, por qué (antes miraba el nodo
+  de antes de la familia, que ya no se usa).
+- El reflejo de lo de las hermanas va de uno en uno (lo pedían a la vez la sincronización, la vuelta a la app y la llegada de
+  portadas).
+- **Las pestañas de arriba se dejan deslizar** (antes volvían solas a la elegida mientras las arrastrabas) y **las opciones de
+  orden se ven todas** (si no caben en una línea, siguen en la siguiente; antes la última salía cortada y, al intentar deslizarla,
+  pasabas de página).
+- **Entrar una vez, de verdad.** Si entras en otra app de la familia mientras esta sigue abierta, esta entra sola en cuanto
+  vuelves a ella (antes solo lo miraba al arrancar, y podía quedarse sin cuenta hasta que Android la cerrara).
+- **Salir y volver a entrar ya no deja la app sorda.** Al salir de la cuenta se tiraban las colecciones y lo que las escuchaba se
+  quedaba oyendo unas que ya no cambiaban: ahora son las mismas, vacías, y se siguen oyendo.
+
 ## 1.3.0 — la familia
 
 - **La cuenta de la familia, de cero.** Cada cosa está una sola vez en la cuenta, campo a campo: dos apps o dos móviles que

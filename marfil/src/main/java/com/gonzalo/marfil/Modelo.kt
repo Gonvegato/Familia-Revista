@@ -159,10 +159,22 @@ object Biblioteca {
             portada = c?.let { archivoPortada(it, hash) }.orEmpty(), portadaUrl = n.texto("pu"), uri = uris[n.ref].orEmpty(), archivo = n.texto("archivo"),
             favorito = n.si("fav"), estado = estadoDeCuenta(n.texto("estado")), anadido = n.entero("an"), ultima = n.entero("ul"),
             fraccion = n.decimal("fr").toFloat().coerceIn(0f, 1f), fraccionFijada = n.entero("ff"), mod = n.m.values.maxOrNull() ?: 0L,
-            paginas = n.entero("pg").toInt(), paginasOrigen = n.texto("po"), terminados = n.lista("fin").map { it.comoLongSeguro() }.filter { it > 0 },
+            paginas = n.entero("pg").toInt(), paginasOrigen = n.texto("po"), terminados = terminadosDe(n),
             msPropios = tiempos[n.ref]?.get(Cuenta.dispositivo) ?: 0L, ajenosMs = tiempos[n.ref]?.filterKeys { it != Cuenta.dispositivo } ?: emptyMap(),
         )
     }
+
+    /**
+     * Cuándo lo terminaste. Un libro leído sin fecha (llegó así de Atrio, de otro dispositivo o de antes de la familia) cuenta desde
+     * que pasó a «terminado» en la cuenta (la cuenta guarda la hora de cada campo); si eso no se sabe, desde la última vez que lo
+     * abriste. Así cuenta para el reto del año. (Solo se deduce aquí: en la cuenta no se escribe nada hasta que cambies el libro.)
+     */
+    private fun terminadosDe(n: com.gonzalo.familia.nucleo.Nodo): List<Long> {
+        val fin = n.lista("fin").map { it.comoLongSeguro() }.filter { it > 0 }
+        if (fin.isNotEmpty() || estadoDeCuenta(n.texto("estado")) != Estado.LEIDO) return fin
+        return listOfNotNull((n.m["estado"] ?: 0L).takeIf { it > FECHA_MINIMA } ?: n.entero("ul").takeIf { it > FECHA_MINIMA })
+    }
+    private const val FECHA_MINIMA = 946_684_800_000L   // 2000-01-01: lo de antes es una hora de mentira (o ninguna)
 
     private fun Any?.comoLongSeguro(): Long = (this as? Number)?.toLong() ?: this?.toString()?.toDoubleOrNull()?.toLong() ?: 0L
 

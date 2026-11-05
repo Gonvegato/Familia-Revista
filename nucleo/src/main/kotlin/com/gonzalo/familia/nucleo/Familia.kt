@@ -470,10 +470,11 @@ class Familia(
     fun olvidaTodo() {
         synchronized(cerrojoCola) { cola.clear() }
         disco.borra(COLA)
-        colecciones.values.forEach { disco.borra(it.archivo) }
+        // Las mismas colecciones, vacías (quien las escucha sigue oyéndolas); las de tu pareja se olvidan
+        colecciones.values.forEach { it.vacia() }
         ajenas.values.forEach { disco.borra(it.archivo) }
-        colecciones.clear(); ajenas.clear()
-        disco.borra(ABIERTAS)
+        ajenas.clear()
+        guardaAbiertas()
         clavesCache = emptyMap(); clavesVistas = 0L
         seguroDisco.borra(CLAVES_ARCHIVO)
     }

@@ -6,6 +6,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
@@ -33,6 +34,26 @@ class SincroTest {
         assertEquals("El nombre del viento", l.texto("t"))
         assertEquals("en_curso", l.texto("estado"))
         assertEquals(0, a.pendientes)
+    }
+
+    @Test fun quienEscuchaUnaColeccionLaSigueOyendoTrasSalirYVolverAEntrar() {
+        val a = Emulador.dispositivo("gonzalo")
+        val b = Emulador.dispositivo("gonzalo")
+        val libros = a.coleccion("libros")
+        var oidos = 0
+        libros.alCambiar { oidos++ }
+        b.coleccion("libros").pon("l1", "t" to "Dune")
+        assertTrue(b.sincroniza().ok); assertTrue(a.sincroniza().ok)
+        assertEquals("Dune", libros.nodo("l1")?.texto("t"))
+        // Sales de la cuenta (y vuelves a entrar): lo de antes se olvida, pero es la misma colección y quien la escuchaba la sigue oyendo
+        a.olvidaTodo()
+        assertNull("olvidado", libros.nodo("l1"))
+        assertSame(libros, a.coleccion("libros"))
+        oidos = 0
+        b.coleccion("libros").pon("l2", "t" to "Hyperion")
+        assertTrue(b.sincroniza().ok); assertTrue(a.sincroniza().ok)
+        assertTrue("se oye lo que llega después", oidos > 0)
+        assertEquals("Hyperion", libros.nodo("l2")?.texto("t")); assertEquals("y lo de antes vuelve de la cuenta", "Dune", libros.nodo("l1")?.texto("t"))
     }
 
     @Test fun camposDistintosDeLaMismaCosaNoSePisan() {

@@ -56,14 +56,23 @@ object Sincro {
         private set
 
     @Volatile private var observando = false
-    @Volatile private var oyendoFamilia = false
+    /** La cuenta de la familia cuyos cambios se escuchan (si cambia, se vuelve a escuchar la nueva). */
+    @Volatile private var oyendoDe: Any? = null
 
     fun init(ctx: Context) {
         val a = ctx.applicationContext
         // La cuenta de la familia (una para las cuatro apps): si ya has entrado en otra, Azabache entra sola
         com.gonzalo.familia.LaFamilia.inicia(a)
         // Lo que llega a la cuenta (de otro dispositivo o de una hermana) se mezcla aquí al momento
-        if (!oyendoFamilia) { oyendoFamilia = true; listOf("azabache", "juegos", "libros", "tiempo", "marcas", "palabras", "capitulos", "ajustes", "obras").forEach { n -> com.gonzalo.familia.LaFamilia.coleccion(n).alCambiar { bajaPronto() } } }
+        val fam = com.gonzalo.familia.LaFamilia.familia
+        if (oyendoDe !== fam) synchronized(this) {
+            if (oyendoDe !== fam) {
+                oyendoDe = fam
+                listOf("azabache", "juegos", "libros", "tiempo", "marcas", "palabras", "capitulos", "ajustes", "obras").forEach { n -> com.gonzalo.familia.LaFamilia.coleccion(n).alCambiar { bajaPronto() } }
+                // Entras (aquí o en una hermana): Azabache adopta la sesión y trae lo de la cuenta al momento
+                com.gonzalo.familia.LaFamilia.alEntrar { runCatching { Account.adoptaSesion(Store(a)); reinicia(a); bajaPronto() } }
+            }
+        }
         runCatching { Store(a).let { st -> if (st.accUid != com.gonzalo.familia.LaFamilia.familia.sesion.uid) Account.adoptaSesion(st) } }
         if (app === a) return
         synchronized(this) {

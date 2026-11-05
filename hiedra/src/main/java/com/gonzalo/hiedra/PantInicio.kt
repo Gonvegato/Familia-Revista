@@ -88,7 +88,10 @@ private fun Modifier.enfocado(src: MutableInteractionSource): Modifier {
         .drawBehind { if (foco) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
 }
 
-/** La portada de un juego en un estante: la imagen con el marco de la revista y, debajo, el nombre y de dónde es. Toque = jugar; mantener = ficha. */
+/**
+ * La portada de un juego en un estante: la imagen con el marco de la revista y, debajo, el nombre y de dónde es. Toque = jugar; mantener = ficha.
+ * Siempre mide lo mismo (el nombre ocupa dos líneas aunque quepa en una): así el estante no crece ni encoge al deslizarlo y lo de debajo no se mueve.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Loseta(j: Juego, ancho: Dp, alJugar: () -> Unit, alAbrir: () -> Unit, modifier: Modifier = Modifier, kicker: String = "") {
@@ -101,7 +104,7 @@ fun Loseta(j: Juego, ancho: Dp, alJugar: () -> Unit, alAbrir: () -> Unit, modifi
             PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = if (ancho >= 140.dp) 44 else 30)
         }
         if (kicker.isNotBlank()) Text(kicker.uppercase(), color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.padding(top = 6.dp))
-        Text(j.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = if (ancho >= 140.dp) 15.sp else 13.sp, lineHeight = if (ancho >= 140.dp) 17.sp else 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = if (kicker.isBlank()) 6.dp else 1.dp))
+        Text(j.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = if (ancho >= 140.dp) 15.sp else 13.sp, lineHeight = if (ancho >= 140.dp) 17.sp else 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = if (kicker.isBlank()) 6.dp else 1.dp))
         Text(metaCorta(j).uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -121,7 +124,7 @@ private fun LosetaSaga(s: Saga, juegos: List<Juego>, ancho: Dp, alAbrir: () -> U
             }
         }
         Text("Saga".uppercase(), color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
-        Text(s.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp))
+        Text(s.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp))
         Text(resumenSaga(juegos).uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

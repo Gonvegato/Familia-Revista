@@ -310,7 +310,7 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int>,
     val scroll = rememberScrollState()
     val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
     var anchoFila by remember { mutableIntStateOf(0) }
-    LaunchedEffect(sel, sitios[sel], anchoFila) {
+    LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
         val (x, w) = sitios[sel] ?: return@LaunchedEffect
         if (anchoFila <= 0) return@LaunchedEffect
         if (x < scroll.value || x + w > scroll.value + anchoFila) scroll.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, scroll.maxValue))
@@ -325,7 +325,7 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int>,
             }.horizontalScroll(scroll), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.Bottom) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x + scroll.value).roundToInt() to c.size.width }.clickable { onSel(i) }
+                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }.clickable { onSel(i) }
                     .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
                     .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
                     Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1)

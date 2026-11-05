@@ -220,6 +220,30 @@ object Couple {
             .sumOf { (d.optJSONArray(it) ?: JSONArray()).length() }
     } catch (e: Exception) { 0 }
 
+    /**
+     * «Comprobar la cuenta»: sincroniza ya con la cuenta de la familia, vuelve a reflejar lo de Hiedra y Marfil y cuenta lo que hay
+     * allí y aquí, con el último error si lo hubo. Para saber de verdad qué pasa (no «qué debería pasar»).
+     */
+    suspend fun compruebaFamilia(store: Store): String = withContext(Dispatchers.IO) {
+        val fam = com.gonzalo.familia.LaFamilia.familia
+        if (!fam.sesion.dentro) { com.gonzalo.familia.LaFamilia.pideSesion(); return@withContext "Azabache no ha entrado en la cuenta de la familia: lo que ves es lo de antes. Entra aquí arriba (o en Hiedra o Marfil y vuelve)." }
+        if (!store.paired) Account.adoptaSesion(store)
+        val inf = com.gonzalo.familia.LaFamilia.sincronizaYa()
+        runCatching { Account.mergeOwn(store) }
+        val d = CuentaHermanas.diagnostico(store.contexto)
+        val f = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+        val enlJ = Hermanas.enlaces(store.contexto, "hiedra").values.toSet(); val enlL = Hermanas.enlaces(store.contexto, "marfil").values.toSet()
+        val aquiJ = (store.load(GAMES.id).map { it.id } + store.loadPlays(GAMES.id).map { it.id }).count { it in enlJ }
+        val aquiL = (store.load(BOOKS.id).map { it.id } + store.loadPlays(BOOKS.id).map { it.id }).count { it in enlL }
+        buildString {
+            append("Dentro como ${fam.sesion.usuario}. ")
+            append(if (inf.ok) "Sincronizado. " else "La cuenta no responde (${inf.error ?: "sin conexión"}). ")
+            if (fam.pendientes > 0) append("Quedan ${fam.pendientes} cambios por subir. ")
+            append("En la cuenta: ${d.juegos} juegos de Hiedra y ${d.libros} libros de Marfil; aquí, $aquiJ y $aquiL. ")
+            append(if (d.error.isBlank()) "Último reflejo: ${if (d.hora > 0) f.format(Date(d.hora)) else "nunca"}, bien." else "El último reflejo falló: ${d.error}")
+        }
+    }
+
     /** Lee de Firebase lo que hay guardado de este dispositivo: (hora del servidor, fichas), o null si no hay nada. */
     suspend fun check(store: Store): Pair<Long, Int>? = withContext(Dispatchers.IO) {
         val t = Account.db(store, "GET", "/users/${store.accUid}/dev/${store.accDevice}", null) ?: return@withContext null
@@ -650,16 +674,9 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
                     store.myName = name
                     launchOp { syncNow() }
                 }
-                MagLink("Comprobar la nube") {
+                MagLink("Comprobar la cuenta", "Qué hay en la cuenta de la familia y qué ha llegado aquí") {
                     if (busy) return@MagLink
-                    launchOp {
-                        val r = Couple.check(store)
-                        val here = store.itemCount()
-                        if (r == null) "En la nube no hay nada de este dispositivo todavía. Pulsa «Sincronizar ahora»."
-                        else "Comprobado en Firebase: ${r.second} fichas de este dispositivo, guardadas el " +
-                            DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(r.first)) +
-                            ". Aquí tienes $here." + if (r.second != here) " No coinciden: pulsa «Sincronizar ahora»." else " Todo al día."
-                    }
+                    launchOp { Couple.compruebaFamilia(store) }
                 }
             }
 
