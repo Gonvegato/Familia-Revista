@@ -14,7 +14,7 @@ class NotaAzabacheContratoTest {
         val blobs = c.getJSONObject("dev").let { d -> d.keys().asSequence().map { JSONObject(d.getJSONObject(it).getString("data")) }.toList() }
         val notas = NotaAzabache.deBlobs(blobs)
         val n = notas[claveDe("Dune", "Frank Herbert")]!!
-        assertEquals(89, n.general); assertEquals("La especia.", n.resena); assertEquals(c.getLong("idDune"), n.atrioId)
+        assertEquals(89, n.general); assertEquals("La especia.", n.resena); assertEquals(c.getLong("idDune").toString(), n.ref)
         assertEquals("solo los libros", 1, notas.size)
     }
 }

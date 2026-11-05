@@ -24,17 +24,33 @@ object KDrive {
     class Fail(msg: String) : IOException(msg)
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("nube", Context.MODE_PRIVATE)
-    fun token(ctx: Context) = prefs(ctx).getString("token", "").orEmpty()
-    fun drive(ctx: Context) = prefs(ctx).getString("drive", "").orEmpty()
+    /**
+     * El token y el número de tu kDrive son de la cuenta (`/claves`, se ponen una vez en Azabache y los usan todas las apps).
+     * Si este móvil tenía uno guardado de antes y la cuenta aún no, se sube una vez ([migraALaCuenta]).
+     */
+    private fun clave(n: String) = runCatching { com.gonzalo.familia.LaFamilia.familia.clave(n) }.getOrDefault("")
+    fun token(ctx: Context) = clave("kdrive_token").ifBlank { prefs(ctx).getString("token", "").orEmpty() }
+    fun drive(ctx: Context) = clave("kdrive_id").ifBlank { prefs(ctx).getString("drive", "").orEmpty() }
     fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
 
     fun save(ctx: Context, token: String, drive: String) {
         // El id del kDrive puede venir con la dirección entera («…/app/drive/123456/…»)
         val d = Regex("""drive/(\d+)""").find(drive)?.groupValues?.get(1) ?: drive.filter { it.isDigit() }
-        prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).remove("dirs").remove("home").remove("versDir").apply()
+        prefs(ctx).edit().remove("dirs").remove("home").remove("versDir").apply()
+        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", token.trim()); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
     }
 
-    fun forget(ctx: Context) = prefs(ctx).edit().clear().apply()
+    fun forget(ctx: Context) {
+        prefs(ctx).edit().clear().apply()
+        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", ""); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", "") }
+    }
+
+    /** El token de antes, guardado solo en este móvil, pasa a la cuenta (si la cuenta aún no tiene uno). */
+    fun migraALaCuenta(ctx: Context) {
+        val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
+        if (t.isBlank() || d.isBlank() || clave("kdrive_token").isNotBlank()) return
+        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
+    }
 
     private fun call(ctx: Context, method: String, path: String, body: String? = null): JSONObject {
         val c = URL(api + path).openConnection() as HttpURLConnection

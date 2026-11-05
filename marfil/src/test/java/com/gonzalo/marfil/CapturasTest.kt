@@ -55,7 +55,7 @@ class CapturasTest {
         val ahora = System.currentTimeMillis(); val dia = 86_400_000L
         fun l(id: String, t: String, a: String, e: Estado, fr: Float = 0f, pag: Int = 0, ult: Long = 0, ms: Long = 0, anad: Long = 0, img: String = "") =
             Libro(id, t, a, portada = img, uri = "file:///x", archivo = "$id.epub", estado = e, fraccion = fr, paginas = pag, paginasOrigen = if (pag > 0) "openlibrary" else "", ultima = ult, msPropios = ms, anadido = ahora - anad)
-        Biblioteca.libros.addAll(listOf(
+        Biblioteca.fijaParaPruebas(listOf(
             l("1", "El nombre de la rosa", "Umberto Eco", Estado.LEYENDO, 0.37f, 540, ahora, 5 * 3600_000L + 20 * 60_000L, 9, portada("Rosa", 0xFF8C2A22.toInt(), 0xFF2B1410.toInt())),
             l("2", "Dune", "Frank Herbert", Estado.LEYENDO, 0.8f, 608, ahora - dia, 9 * 3600_000L, 8, portada("Dune", 0xFFD9A53A.toInt(), 0xFF5A3A0A.toInt())),
             l("11", "Ubik", "Philip K. Dick", Estado.LEYENDO, 0.1f, 224, ahora - 2 * dia, 30 * 60_000L, 7),

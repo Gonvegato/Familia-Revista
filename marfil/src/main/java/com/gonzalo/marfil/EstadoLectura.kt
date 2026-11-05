@@ -8,9 +8,9 @@ fun readTime(min: Long): String = if (min < 60) "$min min" else "${min / 60} h${
 
 /** Los ajustes que no son de un libro (el objetivo diario de lectura). */
 object Ajustes {
-    fun metaLectura(c: Context): Int = c.getSharedPreferences("marfil_ajustes", Context.MODE_PRIVATE).getInt("meta_lectura", 0)
+    fun metaLectura(c: Context): Int = Objetivos.local(c).dia
     /** El reto del año: cuántos libros quieres terminar (0 = sin reto). */
-    fun metaAnual(c: Context): Int = c.getSharedPreferences("marfil_ajustes", Context.MODE_PRIVATE).getInt("meta_anual", 0)
+    fun metaAnual(c: Context): Int = Objetivos.local(c).ano
     /** Cambiar un objetivo lo apunta y lo sube a tu cuenta (ver [Objetivos]: lo leen tus otros Marfil y Azabache). */
     fun ponMetaAnual(c: Context, n: Int) = Objetivos.cambiado(c, metaLectura(c), n)
     fun ponMetaLectura(c: Context, min: Int) = Objetivos.cambiado(c, min, metaAnual(c))
@@ -32,12 +32,12 @@ object EstadoLectura {
         o.put("syncAt", System.currentTimeMillis())
         prefs(ctx).edit().putString(id, o.toString()).apply()
         alDia(ctx, id, o)
-        SincroP.cambioLectura(ctx, id)
+        LecturaNube.cambio(ctx, id)
     }
 
     /** Lo que llega de otro dispositivo: se guarda sin volver a subirlo. */
     /** Al cerrar el libro: la ficha, exactamente como queda (lo leído al día aunque no haya pasado el 2 %). */
-    fun alCerrar(ctx: Context, id: String) { alDia(ctx, id, estado(ctx, id), forzar = true) }
+    fun alCerrar(ctx: Context, id: String) { alDia(ctx, id, estado(ctx, id), forzar = true); LecturaNube.yaMismo(ctx, id) }
 
     fun ponerSinAvisar(ctx: Context, id: String, o: JSONObject) { prefs(ctx).edit().putString(id, o.toString()).apply(); alDia(ctx, id, o, forzar = true) }
 

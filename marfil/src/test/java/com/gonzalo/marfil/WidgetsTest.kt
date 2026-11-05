@@ -41,7 +41,7 @@ class WidgetsTest {
     private fun siembra() {
         Skin.cargar(ctx); Cuenta.cargar(ctx); Biblioteca.cargar(ctx); Biblioteca.libros.clear(); Biblioteca.borrados.clear()
         val ahora = System.currentTimeMillis()
-        Biblioteca.libros.addAll(listOf(
+        Biblioteca.fijaParaPruebas(listOf(
             Libro("1", "El nombre de la rosa", "Umberto Eco", portada = imagen("Rosa", 0xFF8C2A22.toInt(), 0xFF2B1410.toInt()), uri = "file:///x", archivo = "rosa.epub", estado = Estado.LEYENDO, fraccion = 0.37f, ultima = ahora, msPropios = 5 * 3600_000L + 20 * 60_000L, anadido = ahora - 9),
             Libro("2", "Dune", "Frank Herbert", portada = imagen("Dune", 0xFFD9A53A.toInt(), 0xFF5A3A0A.toInt()), uri = "file:///x", archivo = "dune.epub", estado = Estado.LEYENDO, fraccion = 0.8f, ultima = ahora - 86_400_000L, msPropios = 9 * 3600_000L, anadido = ahora - 8),
             Libro("3", "Cien años de soledad", "Gabriel García Márquez", portada = imagen("Cien", 0xFF2F5D8A.toInt(), 0xFF0B1B2E.toInt()), uri = "file:///x", archivo = "cien.epub", anadido = ahora - 7),

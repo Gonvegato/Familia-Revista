@@ -26,7 +26,7 @@ class PortadasTest {
     private fun inicio(): Libro {
         Skin.cargar(ctx); Cuenta.cargar(ctx); Biblioteca.cargar(ctx); Biblioteca.libros.clear(); Biblioteca.borrados.clear()
         File(ctx.filesDir, "portadas").deleteRecursively(); File(ctx.filesDir, "libros").deleteRecursively()
-        return Libro("abc", "Dune", "Frank Herbert", archivo = "dune.epub", anadido = 1L).also { Biblioteca.libros.add(it) }
+        return Libro("abc", "Dune", "Frank Herbert", archivo = "dune.epub", anadido = 1L).also { Biblioteca.fijaParaPruebas(listOf(it)) }
     }
 
     @Test fun iTunesSeLeeComoResponde() {
@@ -49,16 +49,17 @@ class PortadasTest {
         assertTrue(Portadas.deItunes("no es json").isEmpty()); assertTrue(Portadas.deOpenLibrary("{}").isEmpty()); assertTrue(Portadas.deItunes("""{"results":[null,1]}""").isEmpty())
     }
 
-    @Test fun ponerCambiaLaPortadaYBorraLaAnterior() {
+    @Test fun ponerCambiaLaPortadaYQuitarLaQuita() {
         val l = inicio()
         val a = Portadas.poner(ctx, l, png(0xFFAA0000.toInt()))!!
         assertTrue(File(a.portada).exists()); assertEquals(a.portada, Biblioteca.por("abc")!!.portada)
         Thread.sleep(5)
         val b = Portadas.poner(ctx, a, png(0xFF0000AA.toInt()))!!
         assertNotEquals("nombre nuevo para que se vea al momento", a.portada, b.portada)
-        assertFalse("la anterior se borra", File(a.portada).exists()); assertTrue(File(b.portada).exists())
+        assertTrue(File(b.portada).exists())
+        assertNotEquals("la cuenta apunta a la nueva", Biblioteca.hashPortada("abc"), "")
         val q = Portadas.quitar(ctx, b)
-        assertEquals("", q.portada); assertFalse(File(b.portada).exists())
+        assertEquals("", q.portada); assertEquals("quitada también en la cuenta", "", Biblioteca.hashPortada("abc"))
     }
 
     @Test fun unaImagenRotaNoSirve() {
@@ -112,32 +113,23 @@ class PortadasTest {
         assertNull(Metadatos.leer(f, "x.pdf").portada)
     }
 
-    @Test fun lasPortadasQueNoPusoNadieNoSeBajan() {
-        val E = NubeLibros::EntradaPortada
-        fun a(r: NubeLibros.EntradaPortada?, hay: Boolean = false, v: Long = 0, pend: Boolean = false, q: Boolean = false) = NubeLibros.accionPortada(r, hay, v, pend, q)
-        assertEquals("nada", a(E(5, 10, false, false)))
-        assertEquals("bajar", a(E(5, 10, true, false)))
-        assertEquals("nada", a(E(5, 10, true, false), hay = true, v = 10))
-        assertEquals("bajar", a(E(5, 11, true, false), hay = true, v = 10))
-        assertEquals("subir", a(null, hay = true, pend = true))
-        assertEquals("subir-quitada", a(null, q = true))
-        assertEquals("borrar-local", a(E(0, 11, true, true), hay = true, v = 10))
-        assertEquals("nada", a(E(0, 9, true, true), hay = true, v = 10))
+    @Test fun laPortadaVaALaCuentaYSeVeAlMomento() {
+        val l = inicio()
+        val puesta = Portadas.poner(ctx, l, png(0xFF222222.toInt()), url = "https://x/portada.jpg")!!
+        val h = Biblioteca.hashPortada(puesta.id)
+        assertTrue("la portada es una imagen de la cuenta", h.isNotBlank())
+        assertTrue(File(Biblioteca.por(puesta.id)!!.portada).exists())
+        assertEquals("https://x/portada.jpg", Biblioteca.por(puesta.id)!!.portadaUrl)
+        Portadas.quitar(ctx, Biblioteca.por(puesta.id)!!)
+        assertTrue(Biblioteca.hashPortada(puesta.id).isBlank()); assertTrue(Biblioteca.por(puesta.id)!!.portada.isBlank())
     }
 
-    @Test fun laLimpiezaQuitaLasAutomaticasYDejaLasTuyas() {
-        ctx.getSharedPreferences("marfil_nube", android.content.Context.MODE_PRIVATE).edit().clear().commit()
-        val l = inicio()
-        val dir = File(ctx.filesDir, "portadas").apply { mkdirs() }
-        val auto = File(dir, "abc.jpg").apply { writeBytes(png(0xFF111111.toInt())) }
-        Biblioteca.poner(l.copy(portada = auto.path))
-        assertEquals(1, NubeLibros.limpiarPortadasAutomaticas(ctx))
-        assertFalse(auto.exists()); assertTrue(Biblioteca.por("abc")!!.portada.isBlank())
-        assertEquals("solo se hace una vez", 0, NubeLibros.limpiarPortadasAutomaticas(ctx))
-        // Una puesta por ti sobrevive
-        ctx.getSharedPreferences("marfil_nube", android.content.Context.MODE_PRIVATE).edit().clear().commit()
-        val mia = Portadas.poner(ctx, Biblioteca.por("abc")!!, png(0xFF222222.toInt()))!!
-        assertEquals(0, NubeLibros.limpiarPortadasAutomaticas(ctx))
-        assertTrue(File(Biblioteca.por("abc")!!.portada).exists())
+    @Test fun unaPortadaGrandeSeReduce() {
+        val grande = android.graphics.Bitmap.createBitmap(1800, 2700, android.graphics.Bitmap.Config.ARGB_8888)
+        val bytes = java.io.ByteArrayOutputStream().also { grande.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        val r = Portadas.reducir(bytes)!!
+        val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(r, 0, r.size, o)
+        assertTrue("${o.outWidth}×${o.outHeight}", o.outWidth <= 600 && o.outHeight <= 900)
     }
 }

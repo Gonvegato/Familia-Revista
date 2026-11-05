@@ -44,7 +44,7 @@ object Emulador {
     /** Todo de cero: reglas de verdad, base de datos vacía (con la clave web) y sin cuentas. */
     fun limpia() {
         exige()
-        val reglas = File(System.getProperty("familia.reglas") ?: "../nube/reglas.json").readText()
+        val reglas = (System.getProperty("familia.reglas")?.let { File(it) } ?: generateSequence(File("").absoluteFile) { it.parentFile }.map { File(it, "nube/reglas.json") }.first { it.exists() }).readText()
         check(pide("PUT", "$db/.settings/rules.json?$ns", reglas, admin = true).first == 200) { "No se pudieron poner las reglas" }
         pide("PUT", "$db/.json?$ns", """{"config":{"webKey":"clave-de-prueba"}}""", admin = true)
         pide("DELETE", "$auth/emulator/v1/projects/$PROYECTO/accounts")

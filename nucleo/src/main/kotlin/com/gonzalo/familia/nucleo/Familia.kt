@@ -65,9 +65,18 @@ class Familia(
         disco.escribeTexto(COLA, texto)
     }
 
+    /** Lo que se está enviando ahora mismo (no se le puede juntar nada). */
+    @Volatile private var enVuelo: Set<Long> = emptySet()
+
     internal fun encola(p: Pendiente) {
         synchronized(cerrojoCola) {
-            cola += when (p) { is Pendiente.Campos -> p.con(siguienteId++); is Pendiente.Directa -> p.con(siguienteId++) }
+            val ultimo = cola.lastOrNull()
+            // Cambios seguidos de la misma cosa (leer página a página, escribir…) se juntan en uno mientras no se haya enviado
+            if (p is Pendiente.Campos && ultimo is Pendiente.Campos && ultimo.coleccion == p.coleccion && ultimo.ref == p.ref && ultimo.id !in enVuelo && p.m >= ultimo.m) {
+                cola[cola.size - 1] = Pendiente.Campos(p.coleccion, p.ref, ultimo.campos + p.campos, p.m, ultimo.id)
+            } else {
+                cola += when (p) { is Pendiente.Campos -> p.con(siguienteId++); is Pendiente.Directa -> p.con(siguienteId++) }
+            }
         }
         guardaCola()
         alEncolar?.invoke()
@@ -149,9 +158,9 @@ class Familia(
         val refrescar = HashSet<Pair<String, String>>()
         var reintentosPase = 0
         while (true) {
-            val lote = synchronized(cerrojoCola) { siguienteLote() }
+            val lote = synchronized(cerrojoCola) { siguienteLote().also { l -> enVuelo = l.map { it.id }.toSet() } }
             if (lote.isEmpty()) break
-            val r = envia(lote).let { if (it.codigo == 401 && esRechazo(it.cuerpo)) Red.Respuesta(403, it.cuerpo, it.fecha) else it }
+            val r = try { envia(lote) } finally { enVuelo = emptySet() }.let { if (it.codigo == 401 && esRechazo(it.cuerpo)) Red.Respuesta(403, it.cuerpo, it.fecha) else it }
             when {
                 r.ok -> {
                     val u = uDe(r.cuerpo)

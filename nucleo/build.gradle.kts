@@ -1,11 +1,13 @@
 // El núcleo de la familia: Kotlin puro, sin Android (el mismo código servirá en el PC). Cuenta, sincronización, imágenes y claves.
-plugins { id("org.jetbrains.kotlin.jvm") }
+plugins { id("org.jetbrains.kotlin.jvm"); `java-test-fixtures` }
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach { kotlinOptions.jvmTarget = "17" }
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    // El emulador de Firebase para las pruebas (también lo usan las de las apps)
+    testFixturesImplementation("junit:junit:4.13.2")
 }
 
 tasks.test {

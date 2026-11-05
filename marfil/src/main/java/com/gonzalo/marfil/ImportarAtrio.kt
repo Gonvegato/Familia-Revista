@@ -131,7 +131,7 @@ object ImportarAtrio {
         cands.forEachIndexed { i, c ->
             avance(i, cands.size)
             val previo = Biblioteca.existente(c.libro.titulo, c.libro.autor)
-            val libro = previo ?: c.libro.copy(id = Biblioteca.nuevoId()).also { Biblioteca.poner(it) }
+            val libro = previo ?: c.libro.copy(id = Biblioteca.kid(c.libro.clave)).let { n -> Biblioteca.poner(n); Biblioteca.existente(n.titulo, n.autor) ?: n }
             if (previo == null) nuevos++ else {
                 ya++
                 // Lo que antes no se traía bien: los abandonados (entraban como pendientes) y las páginas
@@ -144,11 +144,14 @@ object ImportarAtrio {
             c.estado?.let { atrio ->
                 val local = EstadoLectura.estado(ctx, libro.id)
                 val unido = MezclaLectura.mezclar(local, JSONObject(atrio.toString()).apply { remove("uri"); remove("name") }, Cuenta.dispositivo)
-                if (!MezclaLectura.igual(unido, local)) EstadoLectura.poner(ctx, libro.id, unido)
+                if (!MezclaLectura.igual(unido, local)) { EstadoLectura.poner(ctx, libro.id, unido); LecturaNube.sube(ctx, libro.id, unido) }
             }
-            // La foto de portada de Atrio no se baja aquí: se apunta en el índice de portadas y la sincronización la baja a todos tus dispositivos
-            if (c.foto != null && libro.portada.isBlank() && Cuenta.vinculada) runCatching {
-                Cuenta.db("PUT", "${Cuenta.raiz}/portadas/${MezclaLectura.kid(libro.clave)}", JSONObject().put("f", c.foto.f).put("u", System.currentTimeMillis()).put("p", 1).toString(), "print=silent")
+            // La foto de portada de Atrio (en tu kDrive): se baja una vez y pasa a ser la portada del libro en la cuenta
+            if (c.foto != null && libro.portada.isBlank() && KDrive.on(ctx)) runCatching {
+                val tmp = java.io.File(ctx.cacheDir, "atrio-${libro.id}.jpg")
+                KDrive.download(ctx, c.foto.f, tmp)
+                Portadas.poner(ctx, libro, tmp.readBytes())
+                tmp.delete()
                 fotos++
             }
             if (c.nube != null && NubeLibros.de(ctx, libro) == null) { runCatching { NubeLibros.registrar(ctx, libro, c.nube) }; conArchivo++ }
@@ -165,6 +168,7 @@ object ImportarAtrio {
         }
         avance(cands.size, cands.size)
         if (fotos > 0) NubeLibros.programar(ctx)
+        Biblioteca.refresca()
         return Resultado(nuevos, ya, conArchivo, nSagas)
     }
 }

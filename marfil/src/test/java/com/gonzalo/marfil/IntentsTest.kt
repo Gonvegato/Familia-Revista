@@ -18,7 +18,7 @@ class IntentsTest {
     @Test fun laClaveDelLibroAbreSuFicha() {
         Skin.cargar(ctx); Cuenta.cargar(ctx); Biblioteca.cargar(ctx); Biblioteca.libros.clear(); Biblioteca.borrados.clear()
         val l = Libro("abc", "Dune", "Frank Herbert", archivo = "dune.epub", anadido = 1L)
-        Biblioteca.libros.add(l)
+        Biblioteca.fijaParaPruebas(Biblioteca.libros + l)
         assertEquals("abc", fichaPedidaDe(Intent().putExtra("clave", l.clave)))
         assertEquals("por id, como los widgets", "abc", fichaPedidaDe(Intent().putExtra("ficha", "abc")))
         assertNull("una clave que no está no pide nada", fichaPedidaDe(Intent().putExtra("clave", "libro:nada:nadie")))

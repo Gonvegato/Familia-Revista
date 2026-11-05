@@ -72,28 +72,52 @@ object Portadas {
             (u(0) == 'G'.code && u(1) == 'I'.code && u(2) == 'F'.code) || (u(0) == 'R'.code && u(1) == 'I'.code && u(2) == 'F'.code && u(3) == 'F'.code && u(8) == 'W'.code && u(9) == 'E'.code)
     }
 
-    /** Guarda una imagen como portada de un libro (reducida) con un nombre nuevo y borra las anteriores. Devuelve el libro con su portada, o null si la imagen no vale. */
-    fun poner(ctx: Context, l: Libro, bytes: ByteArray, url: String = ""): Libro? {
+    /**
+     * Una imagen lista para la cuenta: reducida a 600×900 como mucho (la proporción de una tapa; unos 60–120 KB en JPEG), para
+     * que pese poco y se vea igual en todas partes. null si no es una imagen.
+     */
+    fun reducir(bytes: ByteArray): ByteArray? {
         if (!esImagen(bytes)) return null
         val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
         if (o.outWidth <= 0 || o.outHeight <= 0) return null
-        var s = 1; while (o.outWidth / s > 1000 || o.outHeight / s > 1500) s *= 2
-        val b = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = s }) ?: return null
-        val dir = Metadatos.dirPortadas(ctx)
-        val f = File(dir, "${l.id}-${System.currentTimeMillis()}.jpg")
-        f.outputStream().use { b.compress(Bitmap.CompressFormat.JPEG, 92, it) }
-        dir.listFiles { x -> x.name.startsWith(l.id) && x != f }?.forEach { it.delete() }
-        NubeLibros.portadaCambiada(ctx, l)
-        return (Biblioteca.por(l.id) ?: l).copy(portada = f.absolutePath, portadaUrl = url).also { Biblioteca.poner(it) }
+        var s = 1; while (o.outWidth / (s * 2) >= 600 && o.outHeight / (s * 2) >= 900) s *= 2
+        val b0 = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = s }) ?: return null
+        val k = minOf(1f, 600f / b0.width, 900f / b0.height)
+        val b = if (k < 1f) Bitmap.createScaledBitmap(b0, (b0.width * k).toInt().coerceAtLeast(1), (b0.height * k).toInt().coerceAtLeast(1), true) else b0
+        return java.io.ByteArrayOutputStream().use { out -> b.compress(Bitmap.CompressFormat.JPEG, 85, out); out.toByteArray() }
     }
 
-    /** Quita la portada elegida: el libro vuelve a su tapa de color con la letra (y se quita también en tus otros dispositivos). */
+    /**
+     * Pone una imagen como portada de un libro: se guarda en la cuenta (por su contenido) y el libro apunta a ella, así que sale igual
+     * en tus otros dispositivos y en Azabache. Devuelve el libro con su portada, o null si la imagen no vale.
+     */
+    fun poner(ctx: Context, l: Libro, bytes: ByteArray, url: String = ""): Libro? {
+        val r = reducir(bytes) ?: return null
+        val hash = com.gonzalo.familia.LaFamilia.familia.imagenes.guarda(r, "image/jpeg")
+        Biblioteca.ponerPortada(l.id, hash, url)
+        return Biblioteca.por(l.id) ?: l.copy(portada = Biblioteca.archivoPortada(ctx, hash), portadaUrl = url)
+    }
+
+    /** Quita la portada elegida: el libro vuelve a su tapa de color con la letra (también en tus otros dispositivos y en Azabache). */
     fun quitar(ctx: Context, l: Libro): Libro {
-        val dir = Metadatos.dirPortadas(ctx)
-        dir.listFiles { x -> x.name.startsWith(l.id) }?.forEach { it.delete() }
-        NubeLibros.portadaQuitada(ctx, l)
-        return (Biblioteca.por(l.id) ?: l).copy(portada = "", portadaUrl = "").also { Biblioteca.poner(it) }
+        Biblioteca.ponerPortada(l.id, "", "")
+        return Biblioteca.por(l.id) ?: l.copy(portada = "", portadaUrl = "")
+    }
+
+    private val bajando = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /** Las portadas de la cuenta que aún no están en este móvil se bajan (en segundo plano) y el libro las enseña en cuanto llegan. */
+    fun bajarQueFalten(ctx: Context) {
+        val faltan = Biblioteca.propios().filter { it.portada.isBlank() }.mapNotNull { l -> Biblioteca.hashPortada(l.id).takeIf { it.isNotBlank() } }
+        if (faltan.isEmpty() || !bajando.compareAndSet(false, true)) return
+        val app = ctx.applicationContext
+        kotlin.concurrent.thread(name = "marfil-portadas") {
+            var alguna = false
+            try { for (h in faltan) if (com.gonzalo.familia.LaFamilia.familia.imagenes.baja(h) != null) alguna = true }
+            finally { bajando.set(false) }
+            if (alguna) android.os.Handler(android.os.Looper.getMainLooper()).post { Biblioteca.refresca() }
+        }
     }
 
     /** Pone la portada que lleva el propio archivo del libro, si la lleva (solo los EPUB; solo si lo pides tú desde «Portada»). */
@@ -102,28 +126,6 @@ object Portadas {
         val bytes = Metadatos.leer(f, l.archivo.ifBlank { f.name }).portada ?: return null
         return poner(ctx, l, bytes)
     }
-
-    /**
-     * Las portadas que están en el móvil pero el libro ya no apunta a ellas (pasaba al mezclar con tus otros dispositivos mientras se
-     * bajaba una): se vuelven a poner, sin bajar nada. Devuelve cuántas.
-     */
-    fun reenlazar(ctx: Context): Int {
-        val archivos = Metadatos.dirPortadas(ctx).listFiles()?.filter { it.isFile && it.length() > 0 }.orEmpty()
-        if (archivos.isEmpty()) return 0
-        var n = 0
-        for (l0 in Biblioteca.propios()) {
-            val l = Biblioteca.por(l0.id) ?: continue
-            if (l.portada.startsWith("http") || (l.portada.isNotBlank() && File(l.portada).exists())) continue
-            val f = archivoDe(l.id, archivos) ?: continue
-            Biblioteca.poner(l.copy(portada = f.absolutePath)); n++
-        }
-        return n
-    }
-
-    /** La portada guardada de un libro: `<id>-<versión>.jpg` (la más nueva) o `<id>.jpg`. Pura (se prueba). */
-    fun archivoDe(id: String, archivos: List<File>): File? =
-        archivos.filter { it.name == "$id.jpg" || (it.name.startsWith("$id-") && it.name.endsWith(".jpg")) }
-            .maxByOrNull { it.name.removePrefix("$id-").removeSuffix(".jpg").toLongOrNull() ?: 0L }
 
     /** Las portadas con una dirección de internet (las que trajo Atrio) se guardan en el móvil para que no dependan de la red ni de que esa web siga ahí. */
     fun cachear(ctx: Context, l: Libro): Libro? {

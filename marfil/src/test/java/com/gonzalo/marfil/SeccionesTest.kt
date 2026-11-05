@@ -27,8 +27,8 @@ class SeccionesTest {
     private fun toca(t: String) { val n = rule.onAllNodesWithText(t); n[n.fetchSemanticsNodes().indexOfFirst { it.boundsInRoot.left >= 0f && it.boundsInRoot.right <= 1080f }].performClick(); rule.waitForIdle() }
     @Test fun elOrdenEnLeidos() {
         Skin.cargar(ctx); Cuenta.cargar(ctx); Biblioteca.cargar(ctx); Biblioteca.libros.clear(); Sagas.cargar(ctx)
-        Biblioteca.libros.add(Libro("a", "Dune", "Frank Herbert", estado = Estado.LEIDO, anadido = 1))
-        Biblioteca.libros.add(Libro("b", "Ubik", "Philip K. Dick", estado = Estado.LEIDO, anadido = 2))
+        Biblioteca.fijaParaPruebas(Biblioteca.libros + Libro("a", "Dune", "Frank Herbert", estado = Estado.LEIDO, anadido = 1))
+        Biblioteca.fijaParaPruebas(Biblioteca.libros + Libro("b", "Ubik", "Philip K. Dick", estado = Estado.LEIDO, anadido = 2))
         rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { PantSecciones(Destino.Leidos, {}, {}, {}, {}) } } }
         toca("AUTOR")
         assertEquals(OrdenLibros.AUTOR, OrdenGuardado.de(ctx, Estado.LEIDO))

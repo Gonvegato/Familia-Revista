@@ -77,15 +77,26 @@ class Coleccion internal constructor(val nombre: String, internal val archivo: S
         return r.mapValues { (k, v) -> Nodo(k, v) }
     }
 
-    /** Cambia campos de una cosa (la crea si no existe). Se ve al momento aquí y se sube en cuanto se pueda. */
-    fun pon(ref: String, campos: Map<String, Any?>) {
+    /**
+     * Cambia campos de una cosa (la crea si no existe). Se ve al momento aquí y se sube en cuanto se pueda. [hora]: la del cambio
+     * (por defecto, ahora; la migración pone la hora en que se hizo de verdad, para que gane lo más reciente venga de donde venga).
+     */
+    fun pon(ref: String, campos: Map<String, Any?>, hora: Long? = null) {
         check(!soloLectura) { "La colección $nombre es de solo lectura" }
         require(refValida(ref)) { "Referencia no válida: «$ref»" }
         val limpios = campos.mapValues { (_, v) -> v ?: "" }
         require(limpios.keys.all { campoValido(it) }) { "Campo no válido en ${limpios.keys}" }
         if (limpios.isEmpty()) return
-        motor!!.encola(Pendiente.Campos(nombre, ref, limpios, motor.reloj.ahora()))
+        val m = (hora ?: motor!!.reloj.ahora()).coerceAtLeast(1L)
+        motor!!.encola(Pendiente.Campos(nombre, ref, limpios, m))
         invalida(setOf(ref))
+    }
+
+    /** Solo los campos que de verdad cambian (comparando con lo que hay): si no cambia nada, no se sube nada. */
+    fun cambia(ref: String, campos: Map<String, Any?>, hora: Long? = null) {
+        val actual = nodo(ref)
+        val distintos = campos.filter { (c, v) -> actual == null || !igual(actual[c], v ?: "") }
+        if (distintos.isNotEmpty()) pon(ref, distintos, hora)
     }
 
     fun pon(ref: String, vararg campos: Pair<String, Any?>) = pon(ref, campos.toMap())
@@ -138,6 +149,16 @@ class Coleccion internal constructor(val nombre: String, internal val archivo: S
         /** Lo que Firebase no admite en una clave: . $ # [ ] / y caracteres de control. */
         fun refValida(r: String) = r.isNotBlank() && r.length <= 700 && r.none { it in ".$#[]/" || it.code < 32 || it.code == 127 }
         fun campoValido(c: String) = refValida(c) && c != Nodo.M && c != Nodo.U
+
+        /** ¿Dicen lo mismo dos valores de JSON? (un 3 es un 3.0; un campo que no existe es "" / 0 / false.) */
+        fun igual(a: Any?, b: Any?): Boolean {
+            if (a == null || b == null) return vacio(a) && vacio(b)
+            if (a is Number && b is Number) return a.toDouble() == b.toDouble()
+            if (a is Map<*, *> && b is Map<*, *>) return a.keys == b.keys && a.keys.all { igual(a[it], b[it]) }
+            if (a is List<*> && b is List<*>) return a.size == b.size && a.indices.all { igual(a[it], b[it]) }
+            return a == b
+        }
+        private fun vacio(x: Any?) = x == null || x == "" || x == false || (x is Number && x.toDouble() == 0.0) || (x is Map<*, *> && x.isEmpty()) || (x is List<*> && x.isEmpty())
 
         /** Pone unos campos encima de un nodo, solo los que sean más nuevos que lo que ya hay. */
         internal fun superpone(actual: Map<String, Any?>, campos: Map<String, Any?>, m: Long): Map<String, Any?> {

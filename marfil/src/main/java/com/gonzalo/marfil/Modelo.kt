@@ -86,75 +86,183 @@ fun juntarFechas(vararg listas: List<Long>): List<Long> {
     return out
 }
 
+/** El estado en la cuenta (el mismo en toda la familia: ver nube/ESQUEMA.md). */
+val Estado.enCuenta: String get() = when (this) { Estado.PENDIENTE -> "pendiente"; Estado.LEYENDO -> "en_curso"; Estado.LEIDO -> "terminado"; Estado.ABANDONADO -> "abandonado" }
+fun estadoDeCuenta(s: String): Estado = when (s) { "en_curso" -> Estado.LEYENDO; "terminado" -> Estado.LEIDO; "abandonado" -> Estado.ABANDONADO; else -> Estado.PENDIENTE }
+
+/**
+ * Tu biblioteca: los libros de la cuenta (la colección `libros`, la misma en todos tus dispositivos y en Azabache) más lo que es
+ * solo de este móvil (dónde está el archivo de cada libro). Cada libro se llama por su `kid` (sale de su clave: el mismo en todas
+ * partes). Las obras de Cobalto que se leen aquí ([esEscrito]) no son de la biblioteca: se quedan en este móvil.
+ */
 object Biblioteca {
     val libros = mutableStateListOf<Libro>()
     /** Tus libros de verdad: sin las obras de Cobalto (que se leen aquí pero no son de la biblioteca). */
     fun propios(): List<Libro> = libros.filter { !it.esEscrito }
     var cargada by mutableStateOf(false)
-    private var archivo: File? = null
     private var appCtx: Context? = null
-    /** Los libros que quitaste (su clave y cuándo): así los demás dispositivos también los quitan al sincronizar. */
+    private var col: com.gonzalo.familia.nucleo.Coleccion? = null
+    /** Solo para leer lo de antes (la migración y las pruebas de la mezcla vieja). */
     val borrados = HashMap<String, Long>()
+    /** Lo de este móvil: dónde está el archivo de cada libro (por kid). */
+    private val uris = HashMap<String, String>()
+    /** Las obras de Cobalto que se leen aquí (solo en este móvil). */
+    private val escritos = LinkedHashMap<String, Libro>()
+    private val principal by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
 
     fun cargar(c: Context) {
         if (cargada) return
         appCtx = c.applicationContext
-        val f = File(c.filesDir, "biblioteca.json").also { archivo = it }
-        if (f.exists()) runCatching { leer(f.readText(), reemplazar = true) }
+        Cuenta.cargar(c)
+        leeLocal(c)
+        val cc = com.gonzalo.familia.LaFamilia.coleccion("libros")
+        col = cc
+        cc.alCambiar { principal.post { refresca() } }
+        com.gonzalo.familia.LaFamilia.coleccion("tiempo").alCambiar { principal.post { refresca() } }
+        refresca()
         cargada = true
+        LecturaNube.inicia(c)
     }
+
+    private fun archivoLocal(c: Context) = File(c.filesDir, "biblioteca_local.json")
+
+    private fun leeLocal(c: Context) {
+        val o = runCatching { JSONObject(archivoLocal(c).readText()) }.getOrNull() ?: return
+        o.optJSONObject("uris")?.let { u -> u.keys().forEach { k -> uris[k] = u.optString(k) } }
+        o.optJSONArray("escritos")?.let { a -> for (i in 0 until a.length()) aLibro(a.getJSONObject(i)).let { escritos[it.id] = it } }
+    }
+
+    private fun guardaLocal() {
+        val c = appCtx ?: return
+        val o = JSONObject().put("uris", JSONObject().also { u -> uris.forEach { (k, v) -> u.put(k, v) } })
+            .put("escritos", JSONArray().also { a -> escritos.values.forEach { a.put(aJson(it)) } })
+        runCatching { val f = archivoLocal(c); val t = File(f.path + ".tmp"); t.writeText(o.toString()); t.renameTo(f) }
+    }
+
+    /** El nombre de un libro en la cuenta (sale de su clave). */
+    fun kid(clave: String) = MezclaLectura.kid(clave)
 
     fun nuevoId() = UUID.randomUUID().toString().replace("-", "").take(12)
 
-    fun leer(texto: String, reemplazar: Boolean) {
-        val o = JSONObject(texto)
-        val js = o.optJSONArray("libros") ?: JSONArray()
-        val nuevos = (0 until js.length()).map { aLibro(js.getJSONObject(it)) }
-        if (reemplazar) { libros.clear(); borrados.clear() }
-        o.optJSONObject("borrados")?.let { b -> b.keys().forEach { k -> borrados[k] = maxOf(borrados[k] ?: 0L, b.optLong(k)) } }
-        val claves = libros.map { it.clave }.toSet()
-        libros.addAll(nuevos.filter { it.clave !in claves })
+    /** El archivo de la portada guardada en el móvil (la imagen de la cuenta, por su hash), o "" si aún no está. */
+    fun archivoPortada(c: Context, hash: String): String = if (hash.isBlank()) "" else File(File(c.filesDir, "familia"), "img/$hash").takeIf { it.isFile }?.absolutePath.orEmpty()
+
+    /** El tiempo leído de cada libro (kid → dispositivo → ms), del último [refresca]. */
+    private var tiempos: Map<String, Map<String, Long>> = emptyMap()
+
+    /** Un libro tal como está en la cuenta (con lo de este móvil). */
+    fun deNodo(n: com.gonzalo.familia.nucleo.Nodo): Libro {
+        val c = appCtx
+        val hash = n.texto("portada")
+        return Libro(
+            id = n.ref, titulo = n.texto("t"), autor = n.texto("a"), clave = n.texto("clave").ifBlank { claveDe(n.texto("t"), n.texto("a")) },
+            portada = c?.let { archivoPortada(it, hash) }.orEmpty(), portadaUrl = n.texto("pu"), uri = uris[n.ref].orEmpty(), archivo = n.texto("archivo"),
+            favorito = n.si("fav"), estado = estadoDeCuenta(n.texto("estado")), anadido = n.entero("an"), ultima = n.entero("ul"),
+            fraccion = n.decimal("fr").toFloat().coerceIn(0f, 1f), fraccionFijada = n.entero("ff"), mod = n.m.values.maxOrNull() ?: 0L,
+            paginas = n.entero("pg").toInt(), paginasOrigen = n.texto("po"), terminados = n.lista("fin").map { it.comoLongSeguro() }.filter { it > 0 },
+            msPropios = tiempos[n.ref]?.get(Cuenta.dispositivo) ?: 0L, ajenosMs = tiempos[n.ref]?.filterKeys { it != Cuenta.dispositivo } ?: emptyMap(),
+        )
     }
 
-    fun aTexto(): String = JSONObject().apply {
-        put("version", 1)
-        put("libros", JSONArray().apply { libros.forEach { put(aJson(it)) } })
-        put("borrados", JSONObject().also { b -> borrados.forEach { (k, v) -> b.put(k, v) } })
-    }.toString()
+    private fun Any?.comoLongSeguro(): Long = (this as? Number)?.toLong() ?: this?.toString()?.toDoubleOrNull()?.toLong() ?: 0L
 
-    fun guardar() {
-        val f = archivo ?: return
-        runCatching { val t = File(f.path + ".tmp"); t.writeText(aTexto()); t.renameTo(f) }
-        appCtx?.let { c -> Widgets.pedir(c); SincroP.cambio(c) }
+    /** El hash de la portada de un libro en la cuenta ("" si no tiene). */
+    fun hashPortada(id: String): String = col?.nodo(id)?.texto("portada").orEmpty()
+
+    /** En las pruebas de pantallas: una lista fija (sin la cuenta debajo). */
+    @Volatile private var congelada = false
+    fun fijaParaPruebas(l: List<Libro>) { congelada = true; libros.clear(); libros.addAll(l) }
+
+    /** Vuelve a montar la lista con lo que hay en la cuenta (se llama sola cuando cambia algo, venga de donde venga). */
+    fun refresca() {
+        if (congelada) return
+        val cc = col ?: return
+        tiempos = runCatching { LecturaNube.tiempos() }.getOrDefault(emptyMap())
+        val deCuenta = cc.vivos().filter { it.texto("t").isNotBlank() }.map { deNodo(it) }
+        val nueva = (deCuenta + escritos.values).sortedByDescending { maxOf(it.anadido, 0L) }
+        if (nueva != libros.toList()) { libros.clear(); libros.addAll(nueva) }
+        appCtx?.let { c -> Widgets.pedir(c); Portadas.bajarQueFalten(c) }
     }
 
-    /** Guarda un libro. Solo cambiar la ficha (título, autor, favorito, estante) cuenta como «cambio»: leer no, para que un dispositivo que solo lee no pise lo editado en otro. */
+    /** Lo que se guarda de un libro en la cuenta (campo → valor). */
+    fun campos(l: Libro): Map<String, Any?> = mapOf(
+        "clave" to l.clave, "t" to l.titulo, "a" to l.autor, "estado" to l.estado.enCuenta, "fav" to l.favorito,
+        "an" to l.anadido, "ul" to l.ultima, "fr" to Math.round(l.fraccion * 10000.0) / 10000.0, "ff" to l.fraccionFijada,
+        "pg" to l.paginas.toLong(), "po" to l.paginasOrigen, "fin" to l.terminados, "pu" to l.portadaUrl, "archivo" to l.archivo,
+    )
+
+    /** Guarda un libro: solo sube a la cuenta lo que ha cambiado de verdad (campo a campo). */
     fun poner(l0: Libro) {
-        val i = libros.indexOfFirst { it.id == l0.id }
+        if (l0.esEscrito) {
+            escritos[l0.id] = l0; guardaLocal(); refresca(); return
+        }
+        if (congelada || col == null) { val i = libros.indexOfFirst { it.id == l0.id }; if (i >= 0) libros[i] = l0 else libros.add(0, l0); col?.cambia(l0.id, campos(l0)); return }
+        // Un libro se llama siempre por su kid (sale de su clave): así es el mismo en todos tus dispositivos
+        val id = kid(l0.clave)
+        val previo = por(id) ?: por(l0.id)
         // Una sola regla para «terminado»: si pasa a Leído (desde la ficha, desde el lector…), se apunta la fecha (salvo que ya se apuntara hace poco)
         val ahora = System.currentTimeMillis()
-        val l = if (i >= 0 && libros[i].estado != Estado.LEIDO && l0.estado == Estado.LEIDO && (l0.terminado == 0L || l0.terminado < ahora - REPETIDA_MS)) l0.copy(terminados = l0.terminados + ahora) else l0
-        val nuevo = if (i >= 0 && compartidos(libros[i]) == compartidos(l)) l.copy(mod = libros[i].mod) else l.copy(mod = System.currentTimeMillis())
-        if (i >= 0) libros[i] = nuevo else { libros.add(0, nuevo); borrados.remove(nuevo.clave) }
-        guardar()
+        val l = (if (previo != null && previo.estado != Estado.LEIDO && l0.estado == Estado.LEIDO && (l0.terminado == 0L || l0.terminado < ahora - REPETIDA_MS)) l0.copy(terminados = l0.terminados + ahora) else l0)
+            .copy(id = id, anadido = l0.anadido.takeIf { it > 0 } ?: previo?.anadido?.takeIf { it > 0 } ?: ahora)
+        if (l.uri.isNotBlank() && uris[id] != l.uri) { uris[id] = l.uri; guardaLocal() }
+        val cc = col ?: return
+        val cambios = campos(l).toMutableMap()
+        // La portada se pone con [Portadas] (es una imagen de la cuenta); aquí solo se quita si se ha quitado
+        if (l.portada.isBlank() && previo != null && previo.portada.isNotBlank()) cambios["portada"] = ""
+        if (cc.nodo(id)?.borrado == true) cambios["b"] = 0L
+        cc.cambia(id, cambios)
+        refresca()
     }
+
+    /** Dónde está el archivo de un libro en este móvil. */
+    fun ponUri(id: String, uri: String) { if (uris[id] != uri) { uris[id] = uri; guardaLocal() } }
+
+    /** La portada de un libro (el hash de una imagen ya guardada en la cuenta) y de dónde salió. */
+    fun ponerPortada(id: String, hash: String, url: String) {
+        col?.cambia(id, mapOf("portada" to hash, "pu" to url))
+        if (congelada || col == null) { val i = libros.indexOfFirst { it.id == id }; val c = appCtx; if (i >= 0 && c != null) libros[i] = libros[i].copy(portada = archivoPortada(c, hash), portadaUrl = url) }
+        refresca()
+    }
+
+    /** Dónde está el libro en tu kDrive (para bajarlo en tus otros dispositivos). */
+    fun ponerNube(id: String, nube: NubeLibro) {
+        col?.cambia(id, mapOf("nube" to mapOf("f" to nube.f, "n" to nube.n, "s" to nube.s)))
+    }
+
+    fun nube(id: String): NubeLibro? = col?.nodo(id)?.mapa("nube")?.let { m -> NubeLibros.deJson(JSONObject(m)) }
+
+    /** Lo que Azabache dice de este libro: su nota (0–100; 0 = sin valorar) y su reseña. */
+    fun valoracion(id: String): Pair<Int, String> = col?.nodo(id)?.let { it.entero("nota").toInt() to it.texto("resena") } ?: (0 to "")
 
     fun cambiar(id: String, f: (Libro) -> Libro) { por(id)?.let { poner(f(it)) } }
 
-    fun quitar(id: String) { por(id)?.takeIf { !it.esEscrito }?.let { borrados[it.clave] = System.currentTimeMillis() }; libros.removeAll { it.id == id }; guardar() }
+    fun quitar(id: String) {
+        val l = por(id) ?: return
+        if (congelada || col == null) { libros.removeAll { it.id == id }; col?.borra(id); return }
+        if (l.esEscrito) { escritos.remove(id); guardaLocal(); refresca(); return }
+        col?.borra(id)
+        uris.remove(id); guardaLocal()
+        refresca()
+    }
+
     fun por(id: String): Libro? = libros.firstOrNull { it.id == id }
     fun existente(titulo: String, autor: String): Libro? = claveDe(titulo, autor).let { k -> libros.firstOrNull { it.clave == k } }
 
-    /** Pone en la biblioteca lo que ha salido de mezclar con tus otros dispositivos (sin tocar la hora de cambio de nadie). */
-    fun aplicarMezcla(nuevos: List<Libro>, borr: Map<String, Long>) {
-        // La mezcla se hizo con una copia de la biblioteca de hace un momento: lo que es solo de este móvil (la portada y el archivo) se
-        // toma de como está AHORA, por si mientras tanto se bajó una portada o un libro (si no, se perdían al aplicar la mezcla)
-        val ahora = libros.associateBy { it.id }
-        val unidos = nuevos.map { n -> ahora[n.id]?.let { cur -> n.copy(portada = cur.portada, uri = cur.uri.ifBlank { n.uri }) } ?: n }
-        libros.clear(); libros.addAll(unidos)
-        borrados.clear(); borrados.putAll(borr)
-        guardar()
+    /** La copia de seguridad (Ajustes → Copia): tus libros tal cual. */
+    fun aTexto(): String = JSONObject().apply {
+        put("version", 1)
+        put("libros", JSONArray().apply { propios().forEach { put(aJson(it)) } })
+    }.toString()
+
+    /** Importa una copia de seguridad: los libros que no tengas se añaden. */
+    fun leer(texto: String, reemplazar: Boolean) {
+        val js = JSONObject(texto).optJSONArray("libros") ?: JSONArray()
+        val claves = libros.map { it.clave }.toSet()
+        for (i in 0 until js.length()) aLibro(js.getJSONObject(i)).takeIf { reemplazar || it.clave !in claves }?.let { poner(it) }
     }
+
+    /** (Ya no hace falta: todo se guarda al cambiar.) */
+    fun guardar() { refresca() }
 
     fun aJson(l: Libro) = JSONObject().apply {
         put("id", l.id); put("clave", l.clave); put("titulo", l.titulo); put("autor", l.autor); put("portada", l.portada); put("pu", l.portadaUrl); put("uri", l.uri); put("archivo", l.archivo)

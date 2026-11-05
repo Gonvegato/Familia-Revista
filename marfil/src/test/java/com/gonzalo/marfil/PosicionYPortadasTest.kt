@@ -46,24 +46,4 @@ class PosicionYPortadasTest {
         assertEquals("b", MezclaLectura.mezclar(a, b, "A").optString("bestCfi"))
     }
 
-    @Test fun mezclarNoQuitaLaPortadaQueLlegoMientras() {
-        Biblioteca.libros.clear()
-        val sin = Libro("l1", "Nada", "Carmen Laforet", mod = 1)
-        Biblioteca.libros.add(sin)
-        val mezcla = listOf(Biblioteca.libros.single().copy(titulo = "Nada", mod = 2))   // la mezcla, hecha con la copia de antes
-        // Mientras se mezclaba, se bajó su portada (y su archivo)
-        Biblioteca.libros[0] = sin.copy(portada = "/files/portadas/l1-5.jpg", uri = "file:///libros/l1.epub")
-        Biblioteca.aplicarMezcla(mezcla, emptyMap())
-        val l = Biblioteca.por("l1")!!
-        assertEquals("/files/portadas/l1-5.jpg", l.portada); assertEquals("file:///libros/l1.epub", l.uri); assertEquals(2L, l.mod)
-        Biblioteca.libros.clear()
-    }
-
-    @Test fun laPortadaGuardadaDeUnLibro() {
-        val fs = listOf("l1-100.jpg", "l1-300.jpg", "l10-999.jpg", "l1.jpg", "otro.jpg").map { File("/p", it) }
-        assertEquals("l1-300.jpg", Portadas.archivoDe("l1", fs)?.name)
-        assertEquals("l10-999.jpg", Portadas.archivoDe("l10", fs)?.name)
-        assertNull(Portadas.archivoDe("l2", fs))
-        assertEquals("l3.jpg", Portadas.archivoDe("l3", listOf(File("/p", "l3.jpg")))?.name)
-    }
 }

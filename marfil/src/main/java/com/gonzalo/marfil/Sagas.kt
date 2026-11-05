@@ -32,57 +32,54 @@ sealed class FilaLista {
 }
 
 object Sagas {
+    /** Las sagas de libros de la cuenta (la colección `sagas`, con `tipo` = «libros»): las mismas en todos tus dispositivos. */
     val lista = mutableStateListOf<Saga>()
-    /** Las que borraste (su id y cuándo): así los demás dispositivos también las quitan. */
+    /** (Solo para leer lo de antes en la migración.) */
     val borradas = HashMap<String, Long>()
     var cargada by mutableStateOf(false)
-    private var archivo: File? = null
     private var appCtx: Context? = null
+    private val principal by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
+    private fun col() = com.gonzalo.familia.LaFamilia.coleccion("sagas")
 
     fun cargar(c: Context) {
         if (cargada) return
         appCtx = c.applicationContext
-        val f = File(c.filesDir, "sagas.json").also { archivo = it }
-        if (f.exists()) runCatching {
-            val o = JSONObject(f.readText())
-            o.optJSONArray("sagas")?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it)?.let(Saga::deJson) }.forEach { lista.add(it) } }
-            o.optJSONObject("borradas")?.let { b -> b.keys().forEach { k -> borradas[k] = b.optLong(k) } }
-        }
+        Cuenta.cargar(c)
+        col().alCambiar { principal.post { refresca() } }
+        refresca()
         cargada = true
     }
 
-    private fun guardar() {
-        val f = archivo ?: return
-        runCatching {
-            val o = JSONObject().put("sagas", JSONArray().also { a -> lista.forEach { a.put(it.aJson()) } }).put("borradas", JSONObject().also { b -> borradas.forEach { (k, v) -> b.put(k, v) } })
-            val t = File(f.path + ".tmp"); t.writeText(o.toString()); t.renameTo(f)
-        }
-        appCtx?.let { c -> Widgets.pedir(c); SincroP.cambio(c) }
+    fun refresca() {
+        val nuevas = col().vivos().filter { it.texto("tipo") == "libros" }
+            .map { Saga(it.ref, it.texto("n"), it.lista("claves").map { k -> k.toString() }, it.m.values.maxOrNull() ?: 0L) }
+            .sortedBy { it.nombre.lowercase() }
+        if (nuevas != lista.toList()) { lista.clear(); lista.addAll(nuevas) }
+        appCtx?.let { Widgets.pedir(it) }
     }
+
+    private fun guarda(s: Saga) { col().cambia(s.id, mapOf("n" to s.nombre, "tipo" to "libros", "claves" to s.claves, "b" to 0L)) }
 
     fun por(id: String): Saga? = lista.firstOrNull { it.id == id }
 
     /** La saga a la que pertenece un libro (por su clave), si tiene. */
     fun de(clave: String): Saga? = lista.firstOrNull { clave in it.claves }
 
-    /** Guarda una saga (con la hora de ahora). Un libro solo está en una: se quita de las demás. */
+    /** Guarda una saga. Un libro solo está en una: se quita de las demás. */
     fun poner(s: Saga) {
-        val ahora = System.currentTimeMillis()
-        val nueva = s.copy(claves = s.claves.distinct(), mod = ahora)
+        val nueva = s.copy(claves = s.claves.distinct())
         // Los libros de esta saga salen de las otras
         lista.toList().forEach { o -> if (o.id != nueva.id && o.claves.any { it in nueva.claves }) {
-            val i = lista.indexOfFirst { it.id == o.id }
             val resto = o.claves.filter { it !in nueva.claves }
-            if (resto.isEmpty()) { lista.removeAt(i); borradas[o.id] = ahora } else lista[i] = o.copy(claves = resto, mod = ahora)
+            if (resto.isEmpty()) col().borra(o.id) else guarda(o.copy(claves = resto))
         } }
-        val i = lista.indexOfFirst { it.id == nueva.id }
-        if (i >= 0) lista[i] = nueva else { lista.add(nueva); borradas.remove(nueva.id) }
-        guardar()
+        guarda(nueva)
+        refresca()
     }
 
     fun crear(nombre: String, claves: List<String> = emptyList()): Saga = Saga(UUID.randomUUID().toString().replace("-", "").take(10), nombre.trim(), claves).also { poner(it) }
 
-    fun quitar(id: String) { if (lista.removeAll { it.id == id }) { borradas[id] = System.currentTimeMillis(); guardar() } }
+    fun quitar(id: String) { col().borra(id); refresca() }
 
     /** Pone un libro en una saga (al final) o, con [saga] null, lo saca de la que estuviera. */
     fun asignar(clave: String, saga: Saga?) {
@@ -92,15 +89,11 @@ object Sagas {
         if (saga != null) por(saga.id)?.let { poner(it.copy(claves = it.claves + clave)) }
     }
 
-    /** Pone en la biblioteca lo que ha salido de mezclar con tus otros dispositivos (sin cambiar la hora de nadie). */
-    fun aplicarMezcla(nuevas: List<Saga>, borr: Map<String, Long>) {
-        lista.clear(); lista.addAll(nuevas); borradas.clear(); borradas.putAll(borr)
-        val f = archivo ?: return
-        runCatching {
-            val o = JSONObject().put("sagas", JSONArray().also { a -> lista.forEach { a.put(it.aJson()) } }).put("borradas", JSONObject().also { b -> borradas.forEach { (k, v) -> b.put(k, v) } })
-            File(f.path + ".tmp").also { it.writeText(o.toString()) }.renameTo(f)
-        }
-        appCtx?.let { Widgets.pedir(it) }
+    /** (La migración: pone las sagas de antes con su hora.) */
+    fun migra(sagas: List<Saga>, borr: Map<String, Long>) {
+        sagas.forEach { s -> col().pon(s.id, mapOf("n" to s.nombre, "tipo" to "libros", "claves" to s.claves.distinct()), s.mod.coerceAtLeast(1L)) }
+        borr.forEach { (id, t) -> col().pon(id, mapOf("b" to t, "tipo" to "libros"), t.coerceAtLeast(1L)) }
+        refresca()
     }
 
     /** Los libros de una saga, en su orden (los que ya no están en la biblioteca se saltan). */

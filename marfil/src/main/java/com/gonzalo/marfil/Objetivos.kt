@@ -37,41 +37,32 @@ object Objetivos {
 
     private fun p(c: Context) = c.getSharedPreferences("marfil_ajustes", Context.MODE_PRIVATE)
 
-    fun local(c: Context): Valor = p(c).let { Valor(it.getInt("meta_lectura", 0), it.getInt("meta_anual", 0), it.getInt("objetivos_anio", LocalDate.now().year), it.getLong("objetivos_mod", 0L)) }
+    private fun nodo() = runCatching { com.gonzalo.familia.LaFamilia.coleccion("ajustes").nodo("lectura") }.getOrNull()
+
+    /** Los objetivos: los de la cuenta (`ajustes/lectura`, los mismos en toda la familia) o, sin cuenta, los de este móvil. */
+    fun local(c: Context): Valor = nodo()?.takeIf { !it.borrado && it.campos.isNotEmpty() }?.let { n ->
+        Valor(n.entero("dia").toInt().coerceIn(0, 600), n.entero("ano").toInt().coerceIn(0, 999), n.entero("anio").toInt().takeIf { it > 0 } ?: LocalDate.now().year, n.m.values.maxOrNull() ?: 0L)
+    } ?: p(c).let { Valor(it.getInt("meta_lectura", 0), it.getInt("meta_anual", 0), it.getInt("objetivos_anio", LocalDate.now().year), it.getLong("objetivos_mod", 0L)) }
 
     private fun escribir(c: Context, v: Valor) {
         p(c).edit().putInt("meta_lectura", v.dia).putInt("meta_anual", v.ano).putInt("objetivos_anio", v.anio).putLong("objetivos_mod", v.mod).apply()
     }
 
-    /** Has cambiado un objetivo aquí: se apunta la hora y se sube. */
+    /** Has cambiado un objetivo aquí: va a la cuenta (lo ven tus otros Marfil y Azabache al momento). */
     fun cambiado(c: Context, dia: Int, ano: Int) {
-        escribir(c, Valor(dia.coerceIn(0, 600), ano.coerceIn(0, 999), LocalDate.now().year, System.currentTimeMillis()))
-        val app = c.applicationContext
-        // Se sube y se sella «stamps» de este dispositivo: tus otros Marfil y Azabache lo oyen y lo leen
-        if (Cuenta.vinculada) kotlin.concurrent.thread {
-            runCatching { sincronizar(app); Cuenta.db("PUT", "${Cuenta.raiz}/stamps/${Cuenta.dispositivo}", "{\".sv\":\"timestamp\"}", "print=silent") }
-        }
+        val v = Valor(dia.coerceIn(0, 600), ano.coerceIn(0, 999), LocalDate.now().year, System.currentTimeMillis())
+        escribir(c, v)
+        runCatching { com.gonzalo.familia.LaFamilia.coleccion("ajustes").cambia("lectura", mapOf("dia" to v.dia.toLong(), "ano" to v.ano.toLong(), "anio" to v.anio.toLong())) }
     }
 
-    /** Compara con la cuenta y deja los dos iguales. Bloqueante (red). Devuelve true si ha cambiado algo aquí. */
-    fun sincronizar(c: Context): Boolean {
-        if (!Cuenta.vinculada) return false
-        val raw = Cuenta.db("GET", "${Cuenta.raiz}/objetivos", null)
-        val nube = raw?.takeIf { it != "null" }?.let { runCatching { Valor.deJson(JSONObject(it)) }.getOrNull() }
-        val local = local(c)
-        return when (decidir(local, nube, p(c).getBoolean("objetivos_importados", false))) {
-            Paso.NADA -> false
-            Paso.SUBIR -> { Cuenta.db("PUT", "${Cuenta.raiz}/objetivos", local.aJson().toString(), "print=silent"); false }
-            Paso.ADOPTAR -> { escribir(c, nube!!); true }
-            Paso.IMPORTAR -> {
-                p(c).edit().putBoolean("objetivos_importados", true).apply()
-                val az = deAzabache() ?: return false
-                if (az.vacio) return false
-                escribir(c, az)
-                Cuenta.db("PUT", "${Cuenta.raiz}/objetivos", az.aJson().toString(), "print=silent")
-                true
-            }
-        }
+    /** La migración: los objetivos de antes (de la cuenta vieja, de este móvil o, si no había, de Azabache) pasan a la cuenta. Bloqueante. */
+    fun migra(c: Context) {
+        if (nodo()?.campos?.isNotEmpty() == true) return
+        val viejo = runCatching { Cuenta.db("GET", "${Cuenta.raiz}/objetivos", null) }.getOrNull()?.takeIf { it != "null" }?.let { runCatching { Valor.deJson(JSONObject(it)) }.getOrNull() }
+        val aqui = p(c).let { Valor(it.getInt("meta_lectura", 0), it.getInt("meta_anual", 0), it.getInt("objetivos_anio", LocalDate.now().year), it.getLong("objetivos_mod", 0L)) }
+        val v = listOfNotNull(viejo, aqui.takeIf { it.mod > 0 }).maxByOrNull { it.mod } ?: runCatching { deAzabache() }.getOrNull() ?: return
+        if (v.vacio) return
+        com.gonzalo.familia.LaFamilia.coleccion("ajustes").pon("lectura", mapOf("dia" to v.dia.toLong(), "ano" to v.ano.toLong(), "anio" to v.anio.toLong()), v.mod.coerceAtLeast(1L))
     }
 
     /**

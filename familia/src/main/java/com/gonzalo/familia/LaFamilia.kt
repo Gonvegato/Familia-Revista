@@ -139,4 +139,11 @@ object LaFamilia {
 
     /** Sincroniza ya (bloquea). */
     fun sincronizaYa() = familia.sincroniza()
+
+    /** Solo para las pruebas: olvida la cuenta de este proceso (la siguiente [inicia] empieza de cero). */
+    fun reiniciaParaPruebas() {
+        f?.deja()
+        f = null
+        vigiladas.clear(); oyentes.clear()
+    }
 }
