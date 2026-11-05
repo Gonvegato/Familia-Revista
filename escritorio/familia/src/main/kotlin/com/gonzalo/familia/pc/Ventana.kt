@@ -44,15 +44,27 @@ fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alInicia
         position = guardada["x"]?.let { WindowPosition(it.comoLong().toInt().dp, guardada["y"].comoLong().toInt().dp) } ?: WindowPosition.PlatformDefault,
         size = DpSize((guardada["w"]?.comoLong()?.toInt() ?: 1280).dp, (guardada["h"]?.comoLong()?.toInt() ?: 840).dp)
     )
+    // Cerrar (y, si había una versión nueva preparada, ponerla; con [reiniciar], volver a abrir la app ya nueva)
+    fun cierra(reiniciar: Boolean = false) {
+        guardaVentana(app, estado.placement == WindowPlacement.Maximized, estado.position, estado.size)
+        runCatching { alCerrar() }
+        LaFamilia.alCerrar()
+        val programa = runCatching { Actualizador.ponLaPreparada(app) }.getOrNull()
+        if (reiniciar) Actualizador.abreOtraVez(programa ?: Actualizador.instalada()?.let { lanzadorDe(app, it) } ?: return exitApplication())
+        exitApplication()
+    }
     Window(
-        onCloseRequest = {
-            guardaVentana(app, estado.placement == WindowPlacement.Maximized, estado.position, estado.size)
-            runCatching { alCerrar() }
-            LaFamilia.alCerrar()
-            exitApplication()
-        },
+        onCloseRequest = { cierra() },
         title = titulo, state = estado, icon = icono
     ) {
+        // Actualizarse sola: al poco de abrir y luego cada 6 horas mira tu kDrive; lo nuevo se baja y se pone al cerrar
+        LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(20_000)
+            while (true) {
+                withContext(Dispatchers.IO) { runCatching { Actualizador.automatico(app) } }
+                kotlinx.coroutines.delay(6 * 3_600_000L)
+            }
+        }
         DisposableEffect(Unit) {
             LaFamilia.alVerse()
             val oyente = object : java.awt.event.WindowAdapter() {
@@ -63,10 +75,29 @@ fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alInicia
         }
         TemaFamilia {
             TextoAireado {
-                Box(Modifier.fillMaxSize().background(Paper)) {
-                    if (!LaFamilia.dentro) PantallaEntrar(titulo) else contenido()
+                Column(Modifier.fillMaxSize().background(Paper)) {
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                        if (!LaFamilia.dentro) PantallaEntrar(titulo) else contenido()
+                    }
+                    Actualizador.preparada?.let { p -> BandaVersionNueva(titulo, p.version) { cierra(reiniciar = true) } }
                 }
             }
+        }
+    }
+}
+
+/** El programa de una app instalada: `<App>/bin/<App>` en Linux; el `<App>.app` en el Mac. */
+private fun lanzadorDe(app: String, sitio: File): File =
+    if (Sitio.sistema == Sitio.Sistema.MAC) sitio else File(sitio, "bin/" + app.replaceFirstChar { it.uppercase() })
+
+/** Abajo, fina: hay una versión nueva ya bajada; se pone sola al cerrar, o ahora mismo reiniciando. */
+@Composable
+private fun BandaVersionNueva(titulo: String, version: String, reiniciar: () -> Unit) {
+    Column(Modifier.fillMaxWidth().background(Sand)) {
+        Filete(1.dp, Line)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("$titulo $version está lista: se pone sola al cerrar.", Modifier.weight(1f), color = Charcoal, fontFamily = Body, fontSize = 13.sp)
+            EnlaceRevista("Reiniciar ahora", acento = true) { reiniciar() }
         }
     }
 }
@@ -161,33 +192,54 @@ fun AjustesVersion(app: String, nombre: String) {
     var aviso by remember { mutableStateOf("") }
     var nueva by remember { mutableStateOf<Actualizador.Nueva?>(null) }
     var trabajando by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { nueva = withContext(Dispatchers.IO) { runCatching { Actualizador.busca(app) }.getOrNull() } }
+    val sola = remember { Actualizador.sePoneSola() }
+    LaunchedEffect(Unit) { if (!sola) nueva = withContext(Dispatchers.IO) { runCatching { Actualizador.busca(app) }.getOrNull() } }
     Column {
         Antetitulo("Versión")
         Spacer(Modifier.height(8.dp))
         MagFact(nombre, Actualizador.version)
         MagFact("Sistema", if (Sitio.sistema == Sitio.Sistema.MAC) "macOS" else "Linux")
+        Actualizador.instalada()?.let { MagFact("Instalada en", it.absolutePath) }
         Spacer(Modifier.height(12.dp))
-        val n = nueva
-        if (n != null) {
-            Cuerpo("Hay una versión nueva en tu kDrive: la ${n.version}.", tam = 14)
-            Spacer(Modifier.height(8.dp))
-            BotonAcento(if (trabajando) "Bajando…" else "Bajar e instalar la ${n.version}") {
+        val lista = Actualizador.preparada
+        if (sola) {
+            Cuerpo("Se actualiza sola: al abrirla y cada 6 horas mira tu kDrive («Mi carpeta/versiones»); si hay una versión nueva, la baja y se pone sola al cerrar la app (o al pulsar «Reiniciar ahora» en la banda de abajo).", tam = 14)
+            Spacer(Modifier.height(10.dp))
+            if (lista != null) Cuerpo("La $nombre ${lista.version} ya está bajada: se pone al cerrar.", tam = 14)
+            else BotonSuave(if (trabajando) "Buscando…" else "Buscar ahora") {
                 if (!trabajando) { trabajando = true; scope.launch {
-                    val r = withContext(Dispatchers.IO) { runCatching { Actualizador.instala(n) } }
+                    val r = withContext(Dispatchers.IO) { runCatching { Actualizador.automatico(app) } }
                     trabajando = false
-                    aviso = r.fold({ "Está en ${it.parent}. " + if (Sitio.sistema == Sitio.Sistema.MAC) "Arrastra $nombre a Aplicaciones (encima de la que tienes)." else "Instálala con el instalador que se ha abierto." }, { it.message ?: "No se ha podido bajar." })
+                    aviso = r.fold({ when {
+                        it != null -> "La ${it.version} está lista: se pone sola al cerrar."
+                        !KDrive().activo -> "Pon tu kDrive en Azabache (Ajustes → Servicios) para que se actualice sola."
+                        else -> Actualizador.estado.ifBlank { "Tienes la última." }
+                    } }, { it.message ?: "No se ha podido mirar." })
                 } }
             }
         } else {
-            BotonSuave(if (trabajando) "Buscando…" else "Buscar versión nueva") {
-                if (!trabajando) { trabajando = true; scope.launch {
-                    val r = withContext(Dispatchers.IO) { runCatching { Actualizador.busca(app) } }
-                    trabajando = false
-                    nueva = r.getOrNull()
-                    aviso = r.fold({ if (it == null) (if (KDrive().activo) "Tienes la última." else "Pon tu kDrive en Azabache (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
-                } }
+            val n = nueva
+            if (n != null) {
+                Cuerpo("Hay una versión nueva en tu kDrive: la ${n.version}.", tam = 14)
+                Spacer(Modifier.height(8.dp))
+                BotonAcento(if (trabajando) "Bajando…" else "Bajar e instalar la ${n.version}") {
+                    if (!trabajando) { trabajando = true; scope.launch {
+                        val r = withContext(Dispatchers.IO) { runCatching { Actualizador.instala(n) } }
+                        trabajando = false
+                        aviso = r.fold({ "Está en ${it.parent}. " + if (Sitio.sistema == Sitio.Sistema.MAC) "Arrastra $nombre a Aplicaciones (encima de la que tienes)." else "Instálala con el instalador que se ha abierto." }, { it.message ?: "No se ha podido bajar." })
+                    } }
+                }
+            } else {
+                BotonSuave(if (trabajando) "Buscando…" else "Buscar versión nueva") {
+                    if (!trabajando) { trabajando = true; scope.launch {
+                        val r = withContext(Dispatchers.IO) { runCatching { Actualizador.busca(app) } }
+                        trabajando = false
+                        nueva = r.getOrNull()
+                        aviso = r.fold({ if (it == null) (if (KDrive().activo) "Tienes la última." else "Pon tu kDrive en Azabache (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
+                    } }
+                }
             }
+            if (Actualizador.conDeb()) { Spacer(Modifier.height(8.dp)); Cuerpo("Instalada con el .deb (del sistema): las versiones nuevas se instalan con su instalador. Con el .tar.gz (y su instalar.sh) se actualiza sola.", tam = 12) }
         }
         if (aviso.isNotBlank()) { Spacer(Modifier.height(8.dp)); Cuerpo(aviso, tam = 13) }
     }

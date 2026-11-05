@@ -40,17 +40,20 @@ jobs:
         run: python3 herramientas/escritorio/resumen-pruebas.py
       - name: Paquetes de Linux (.deb y .tar.gz)
         run: ./gradlew -PsoloEscritorio packageDeb createDistributable --console=plain
-      - name: Con su nombre de versión (App-x.y.z-linux.deb)
+      - name: Con su nombre de versión (App-x.y.z-linux.tar.gz con su instalar.sh, y App-x.y.z-linux.deb)
         run: |
-          mkdir -p dist
           for d in escritorio/*/; do
-            a=$(basename "$d"); [ "$a" = familia ] && continue
-            [ -d "$d/build/compose/binaries/main/deb" ] || continue
-            v=$(grep -m1 '^val version' "$d/build.gradle.kts" | cut -d'"' -f2); A="$(tr '[:lower:]' '[:upper:]' <<< ${a:0:1})${a:1}"
-            cp "$d"/build/compose/binaries/main/deb/*.deb "dist/$A-$v-linux.deb"
-            tar -C "$d/build/compose/binaries/main/app" -czf "dist/$A-$v-linux.tar.gz" "$A"
+            grep -q nativeDistributions "$d/build.gradle.kts" || continue
+            herramientas/escritorio/empaqueta-linux.sh "$d" dist
           done
           ls -la dist
+      - name: El instalar.sh de verdad (instala Hiedra en una carpeta de prueba y mira el menú)
+        run: |
+          mkdir -p /tmp/prueba && tar -C /tmp/prueba -xzf dist/Hiedra-*-linux.tar.gz
+          XDG_DATA_HOME=/tmp/prueba/datos XDG_CONFIG_HOME=/tmp/prueba/config sh /tmp/prueba/instalar.sh --al-iniciar
+          test -x /tmp/prueba/datos/familia-apps/Hiedra/bin/Hiedra
+          cat /tmp/prueba/datos/applications/familia-hiedra.desktop
+          test -f /tmp/prueba/config/autostart/familia-hiedra.desktop
       - uses: actions/upload-artifact@v4
         with: { name: escritorio-linux, path: dist/, retention-days: 30 }
       - if: failure()

@@ -17,3 +17,6 @@ database-debug.log
 firebase-debug.log
 *-debug.log
 .kotlin/
+
+# Las copias de trabajo de los asistentes (git worktree)
+.claude/

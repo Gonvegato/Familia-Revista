@@ -10,13 +10,22 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
   Apple (esa firma es de pago), así que la primera vez macOS la bloquea: ábrela una vez (avisa y no la abre), ve a **Ajustes del Sistema →
   Privacidad y seguridad → Seguridad**, pulsa **«Abrir igualmente»** (sale durante una hora después del aviso) y pon tu contraseña. Desde
   entonces se abre con doble clic. En los macOS de ahora (Sequoia y los siguientes) el truco de clic derecho → Abrir ya no vale.
-- **Linux** (ordenadores x86-64, los de siempre; no ARM): `Azabache-1.0.1-linux.deb` (Ubuntu, Debian, Mint…: doble clic, o `sudo apt install ./Azabache-1.0.1-linux.deb`) o, en
-  cualquier otro, `Azabache-1.0.1-linux.tar.gz` (se descomprime y se abre `Azabache/bin/Azabache`).
+- **Linux** (ordenadores x86-64, los de siempre; no ARM):
+  - **CachyOS, Arch y cualquier otro**: `Azabache-1.0.1-linux.tar.gz`. Se descomprime y se ejecuta su `instalar.sh` (sin sudo):
+    `tar xzf Azabache-1.0.1-linux.tar.gz && ./instalar.sh`. Queda en `~/.local/share/familia-apps/Azabache`, con su icono en el menú
+    de aplicaciones. Con `./instalar.sh --al-iniciar` se abre sola al entrar en tu sesión (para Hiedra como launcher del PC);
+    `./instalar.sh --quitar` la desinstala (lo tuyo está en la cuenta: no se toca).
+  - **Ubuntu, Debian, Mint…**: también vale el `Azabache-1.0.1-linux.deb` (`sudo apt install ./Azabache-1.0.1-linux.deb`), pero así no
+    se actualiza sola (la del .deb es del sistema): mejor el .tar.gz.
 - **Entrar una vez**: entras en cualquiera de las cuatro y las otras tres de ese ordenador entran solas. La contraseña no se guarda: queda
   la sesión, en el llavero del sistema (el Llavero del Mac; en Linux, el Secret Service —GNOME Keyring, KWallet— si hay `secret-tool`, y si
   no, un archivo que solo lee tu usuario).
-- **Actualizarse**: cada app mira tu kDrive («Mi carpeta/versiones»: `<App>-<versión>-mac.dmg` / `-linux.deb`) y en Ajustes → Versión
-  la baja y la abre. Los actualizadores de Android solo cogen `<App>-<versión>.apk`: no se confunden.
+- **Se actualizan solas**: al abrirse y cada 6 horas, cada app mira tu kDrive («Mi carpeta/versiones»: `<App>-<versión>-mac.dmg` /
+  `-linux.tar.gz`); si hay una versión nueva, la baja sin molestar, avisa con una banda abajo («lista: se pone sola al cerrar ·
+  Reiniciar ahora») y se pone sola al cerrar la app. En el Mac el .dmg se monta sin enseñarlo y la app nueva se copia encima, sin la marca de
+  cuarentena (es la misma app que ya abriste: no vuelve a pedir «Abrir igualmente»); en Linux la pone su `instalar.sh`.
+  Hace falta tu kDrive puesto en Azabache (Ajustes → Servicios). Los actualizadores de Android solo cogen `<App>-<versión>.apk`: no se
+  confunden.
 
 Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas en Linux contra el emulador de Firebase, los `.deb` y
 `.tar.gz` en Linux y los `.dmg` en un Mac de GitHub (Apple Silicon). Los artefactos de cada ejecución son los paquetes; se suben a tu

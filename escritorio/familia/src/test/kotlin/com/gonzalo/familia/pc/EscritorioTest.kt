@@ -145,15 +145,71 @@ class EscritorioTest {
 
     @Test fun elActualizadorSoloCogeLaVersionDeSuAppYDeSuSistema() {
         val mac = Actualizador.patron("azabache", Sitio.Sistema.MAC)
-        val linux = Actualizador.patron("azabache", Sitio.Sistema.LINUX)
+        val linux = Actualizador.patron("azabache", Sitio.Sistema.LINUX, deb = false)
+        val conDeb = Actualizador.patron("azabache", Sitio.Sistema.LINUX, deb = true)
         assertEquals("1.2.0", mac.find("Azabache-1.2.0-mac.dmg")?.groupValues?.get(1))
         assertNull(mac.find("Azabache-1.2.0-linux.deb"))
         assertNull(mac.find("Azabache-1.2.0.apk"))
         assertNull(mac.find("Marfil-1.2.0-mac.dmg"))
-        assertEquals("1.10.3", linux.find("Azabache-1.10.3-linux.deb")?.groupValues?.get(1))
+        // En Linux, el .tar.gz (se pone solo con su instalar.sh); el .deb solo si se instaló con él
+        assertEquals("1.10.3", linux.find("Azabache-1.10.3-linux.tar.gz")?.groupValues?.get(1))
+        assertNull(linux.find("Azabache-1.10.3-linux.deb"))
+        assertEquals("1.10.3", conDeb.find("Azabache-1.10.3-linux.deb")?.groupValues?.get(1))
+        assertNull(conDeb.find("Azabache-1.10.3-linux.tar.gz"))
         // Y los de Android nunca cogen los de escritorio
         val android = Regex("^Azabache-(\\d+(?:\\.\\d+)*)\\.apk$")
         assertFalse(android.matches("Azabache-1.2.0-mac.dmg")); assertFalse(android.matches("Azabache-1.2.0-linux.deb"))
         assertTrue(Actualizador.mayor("1.10.0", "1.9.9")); assertFalse(Actualizador.mayor("1.0", "1.0.0")); assertTrue(Actualizador.mayor("2", "1.99"))
+    }
+
+    @Test fun laAppSabeDondeEstaInstaladaYSiSeActualizaSola() {
+        assertEquals(File("/home/yo/.local/share/familia-apps/Hiedra"), Actualizador.instalada("/home/yo/.local/share/familia-apps/Hiedra/lib/app/resources"))
+        assertEquals(File("/Applications/Hiedra.app"), Actualizador.instalada("/Applications/Hiedra.app/Contents/app/resources"))
+        assertNull("en desarrollo no hay instalación", Actualizador.instalada(null))
+        assertTrue(Actualizador.conDeb(File("/opt/hiedra"), Sitio.Sistema.LINUX))
+        assertFalse(Actualizador.conDeb(File("/home/yo/.local/share/familia-apps/Hiedra"), Sitio.Sistema.LINUX))
+        val mia = File(tmp.root, "apps/Hiedra").also { it.mkdirs() }
+        assertTrue(Actualizador.sePoneSola(mia))
+        assertFalse(Actualizador.sePoneSola(File(tmp.root, "no-existe")))
+    }
+
+    /** Linux de verdad: la versión nueva (un .tar.gz con su instalar.sh, como el de GitHub) se pone encima de la vieja, y el menú queda al día. */
+    @Test fun enLinuxLaVersionNuevaSePoneEncimaConSuInstalar() {
+        org.junit.Assume.assumeTrue("Solo en Linux", Sitio.sistema == Sitio.Sistema.LINUX)
+        fun app(dir: File, que: String) { val b = File(dir, "Hiedra/bin").also { it.mkdirs() }; File(b, "Hiedra").apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "Hiedra/lib").mkdirs(); File(dir, "Hiedra/lib/Hiedra.png").writeText("png") }
+        val donde = File(tmp.root, "datos/familia-apps/Hiedra")
+        app(donde.parentFile, "vieja")
+        // El paquete nuevo: la app y su instalar.sh hecho con la plantilla, como hace herramientas/escritorio/empaqueta-linux.sh
+        val paquete = File(tmp.root, "paquete").also { it.mkdirs() }
+        app(paquete, "nueva")
+        val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
+        File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
+            .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt"))
+        val targz = File(tmp.root, "Hiedra-9.9.9-linux.tar.gz")
+        assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Hiedra", "instalar.sh").start().waitFor())
+        val carpeta = Actualizador.descomprime(targz, File(tmp.root, "v9.9.9"))
+        val entorno = mapOf("XDG_DATA_HOME" to File(tmp.root, "datos").absolutePath, "XDG_CONFIG_HOME" to File(tmp.root, "config").absolutePath)
+        val programa = Actualizador.ponLinux(carpeta, "hiedra", donde, entorno)
+        assertEquals(File(donde, "bin/Hiedra"), programa)
+        assertTrue(File(donde, "bin/Hiedra").readText().contains("nueva"))
+        assertFalse("sin restos", File(donde.parentFile, "Hiedra.vieja").exists() || File(donde.parentFile, "Hiedra.nueva").exists())
+        val menu = File(tmp.root, "datos/applications/familia-hiedra.desktop").readText()
+        assertTrue(menu.contains("Exec=\"${donde.absolutePath}/bin/Hiedra\"")); assertTrue(menu.contains("Icon=${donde.absolutePath}/lib/Hiedra.png"))
+        assertTrue(menu.contains("StartupWMClass=com-gonzalo-hiedra-pc-MainKt"))
+    }
+
+    /** El Mac de verdad (en GitHub): la app nueva sale de un .dmg montado sin enseñarlo y queda encima de la de ahora. */
+    @Test fun enElMacLaVersionNuevaSaleDelDmgYSePoneEncima() {
+        org.junit.Assume.assumeTrue("Solo en el Mac", Sitio.sistema == Sitio.Sistema.MAC)
+        fun app(dir: File, que: String) { val c = File(dir, "Prueba.app/Contents").also { it.mkdirs() }; File(c, "que.txt").writeText(que) }
+        val apps = File(tmp.root, "Applications").also { it.mkdirs() }
+        app(apps, "vieja")
+        val fuente = File(tmp.root, "dmg").also { it.mkdirs() }
+        app(fuente, "nueva")
+        val dmg = File(tmp.root, "actualizacion/Prueba-9.9.9-mac.dmg").also { it.parentFile.mkdirs() }
+        assertEquals(0, ProcessBuilder("hdiutil", "create", "-quiet", "-volname", "Prueba", "-srcfolder", fuente.absolutePath, "-ov", "-format", "UDZO", dmg.absolutePath).inheritIO().start().waitFor())
+        val puesta = Actualizador.ponMac(dmg, File(apps, "Prueba.app"))
+        assertEquals("nueva", File(puesta, "Contents/que.txt").readText())
+        assertFalse(File(apps, "Prueba.app.vieja").exists())
     }
 }
