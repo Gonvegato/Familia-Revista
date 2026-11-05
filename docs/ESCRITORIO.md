@@ -6,12 +6,12 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
 
 ## Instalar
 
-- **Mac (Apple Silicon)**: `Azabache-1.0.0-mac.dmg` (y las otras tres). Abre el .dmg y arrastra la app a Aplicaciones. No está firmada por
+- **Mac (Apple Silicon)**: `Azabache-1.0.1-mac.dmg` (y las otras tres). Abre el .dmg y arrastra la app a Aplicaciones. No está firmada por
   Apple (esa firma es de pago), así que la primera vez macOS la bloquea: ábrela una vez (avisa y no la abre), ve a **Ajustes del Sistema →
   Privacidad y seguridad → Seguridad**, pulsa **«Abrir igualmente»** (sale durante una hora después del aviso) y pon tu contraseña. Desde
   entonces se abre con doble clic. En los macOS de ahora (Sequoia y los siguientes) el truco de clic derecho → Abrir ya no vale.
-- **Linux** (ordenadores x86-64, los de siempre; no ARM): `Azabache-1.0.0-linux.deb` (Ubuntu, Debian, Mint…: doble clic, o `sudo apt install ./Azabache-1.0.0-linux.deb`) o, en
-  cualquier otro, `Azabache-1.0.0-linux.tar.gz` (se descomprime y se abre `Azabache/bin/Azabache`).
+- **Linux** (ordenadores x86-64, los de siempre; no ARM): `Azabache-1.0.1-linux.deb` (Ubuntu, Debian, Mint…: doble clic, o `sudo apt install ./Azabache-1.0.1-linux.deb`) o, en
+  cualquier otro, `Azabache-1.0.1-linux.tar.gz` (se descomprime y se abre `Azabache/bin/Azabache`).
 - **Entrar una vez**: entras en cualquiera de las cuatro y las otras tres de ese ordenador entran solas. La contraseña no se guarda: queda
   la sesión, en el llavero del sistema (el Llavero del Mac; en Linux, el Secret Service —GNOME Keyring, KWallet— si hay `secret-tool`, y si
   no, un archivo que solo lee tu usuario).
@@ -74,4 +74,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.5.3, Marfil 0.13.4, Cobalto 0.3.2, Azabache 1.5.1. De escritorio: las cuatro 1.0.0.
+Versiones de Android a día de hoy: Hiedra 0.5.4, Marfil 0.13.5, Cobalto 0.3.3, Azabache 1.5.2. De escritorio: las cuatro 1.0.1.

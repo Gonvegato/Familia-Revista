@@ -14,6 +14,11 @@ aquí tal cual (con su «Añadir»).
 - **La portada de la ficha ocupa su casilla** (como mucho 200 dp de ancho, en 2:3). Antes era una miniatura de 96 dp y la fila se medía
   como si la portada llenara la casilla: en la tablet quedaba una portada pequeña con un hueco enorme debajo.
 
+- **Una pantalla que no dejaba de redibujarse**: los títulos que se encogen para caber (FitTitle) apuntaban su ancho desde dentro de la
+  medida; en una fila de dos casillas Compose mide dos veces (para saber el alto y para pintar) y, si los dos anchos diferían en un píxel
+  por redondeo, se pisaban en cada fotograma: la pantalla se recomponía sin parar (CPU y batería) mientras estaba abierta. Pasaba en la
+  tablet en la ficha de un juego «Jugando» de Azabache; la misma pieza está en las cuatro apps y en las de escritorio, y se arregla en todas.
+
 ## 1.5.1
 
 - Los capítulos de Cobalto llegan con su hora de edición (`ue`, ver `nube/ESQUEMA.md`).

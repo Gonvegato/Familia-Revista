@@ -301,15 +301,29 @@ fun FitTitle(
     Text(
         text, color = color, fontFamily = family, fontWeight = fontWeight, fontStyle = fontStyle, fontSize = size.sp,
         lineHeight = alto(size), letterSpacing = letterSpacing, maxLines = maxLines, overflow = overflow, textAlign = align,
-        modifier = modifier.layout { measurable, constraints ->
-            val w = constraints.maxWidth
+        modifier = modifier.then(AnchoDelTitulo { w ->
             if (w != maxPx) { maxPx = w; if (w > 0 && w != Constraints.Infinity) anchosFit[claveAncho] = w }
-            val pl = measurable.measure(constraints)
-            layout(pl.width, pl.height) { pl.place(0, 0) }
-        }
+        })
     )
 }
 private val anchosFit = ConcurrentHashMap<String, Int>()
+
+/**
+ * Apunta el ancho que tiene el título (FitTitle) solo cuando se mide de verdad. Las preguntas de alto de una fila de alto intrínseco
+ * (IntrinsicSize.Min, las casillas de la ficha) pasan de largo sin tocar el estado: si lo escribieran, el ancho de la pregunta y el de la
+ * medida (que pueden diferir en un píxel por redondeo) se pisarían en cada fotograma y la pantalla no dejaría de recomponerse.
+ */
+private class AnchoDelTitulo(private val alMedir: (Int) -> Unit) : androidx.compose.ui.layout.LayoutModifier {
+    override fun androidx.compose.ui.layout.MeasureScope.measure(measurable: androidx.compose.ui.layout.Measurable, constraints: Constraints): androidx.compose.ui.layout.MeasureResult {
+        alMedir(constraints.maxWidth)
+        val pl = measurable.measure(constraints)
+        return layout(pl.width, pl.height) { pl.place(0, 0) }
+    }
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.minIntrinsicHeight(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, width: Int) = measurable.minIntrinsicHeight(width)
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.maxIntrinsicHeight(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, width: Int) = measurable.maxIntrinsicHeight(width)
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.minIntrinsicWidth(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, height: Int) = measurable.minIntrinsicWidth(height)
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.maxIntrinsicWidth(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, height: Int) = measurable.maxIntrinsicWidth(height)
+}
 
 /**
  * La cabecera plegada de la portada: al bajar, el nombre y las acciones de arriba (buscar, añadir) se quedan fijos en una barra fina, y el

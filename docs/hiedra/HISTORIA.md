@@ -27,6 +27,11 @@ Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está c
   nota en Azabache; solo con el lanzador del PC y fuera de sagas) se quitan de una vez, con la lista delante antes de confirmar. Siguen
   en la biblioteca del PC.
 
+- **Una pantalla que no dejaba de redibujarse**: los títulos que se encogen para caber (FitTitle) apuntaban su ancho desde dentro de la
+  medida; en una fila de dos casillas Compose mide dos veces (para saber el alto y para pintar) y, si los dos anchos diferían en un píxel
+  por redondeo, se pisaban en cada fotograma: la pantalla se recomponía sin parar (CPU y batería) mientras estaba abierta. Pasaba en la
+  tablet en la ficha de un juego «Jugando» de Azabache; la misma pieza está en las cuatro apps y en las de escritorio, y se arregla en todas.
+
 ## 0.5.3
 
 - **Hiedra del ordenador (Linux y Mac) sale en «Tu PC»** como un PC más: su biblioteca (Steam y tus programas), a qué juegas y abrir

@@ -10,6 +10,13 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.3.3
+
+- **Una pantalla que no dejaba de redibujarse**: los títulos que se encogen para caber (FitTitle) apuntaban su ancho desde dentro de la
+  medida; en una fila de dos casillas Compose mide dos veces (para saber el alto y para pintar) y, si los dos anchos diferían en un píxel
+  por redondeo, se pisaban en cada fotograma: la pantalla se recomponía sin parar (CPU y batería) mientras estaba abierta. Pasaba en la
+  tablet en la ficha de un juego «Jugando» de Azabache; la misma pieza está en las cuatro apps y en las de escritorio, y se arregla en todas.
+
 ## 0.3.2
 
 - **Los capítulos terminados vuelven a llegar a Marfil y a Azabache, y las palabras del día también.** Al publicar un capítulo
