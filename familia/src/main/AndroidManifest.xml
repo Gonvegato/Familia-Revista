@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Verse entre hermanas (Android 11+): para pedirse la sesión y abrirse unas a otras -->
+    <queries>
+        <package android:name="com.gonzalo.hiedra" />
+        <package android:name="com.gonzalo.marfil" />
+        <package android:name="com.gonzalo.cobalto" />
+        <package android:name="com.gonzalo.gamerate" />
+    </queries>
+    <application>
+        <!-- Entrar una vez: la app que ya tiene la cuenta se la da a sus hermanas (solo a las que llevan la firma de la familia) -->
+        <provider
+            android:name="com.gonzalo.familia.AccesoProvider"
+            android:authorities="${applicationId}.familia.acceso"
+            android:exported="true" />
+    </application>
+</manifest>

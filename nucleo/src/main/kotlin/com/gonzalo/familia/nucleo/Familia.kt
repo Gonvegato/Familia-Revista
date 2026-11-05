@@ -37,7 +37,19 @@ class Familia(
     private var siguienteId = 1L
     private val cerrojoCola = Any()
 
-    init { cargaCola() }
+    init {
+        cargaCola()
+        // Las colecciones que ya usaba esta app se abren solas: un trabajo de fondo, con la app cerrada, también las baja
+        disco.leeTexto(ABIERTAS)?.let { runCatching { Json.lee(it) }.getOrNull() }.comoLista().forEach { n ->
+            val t = n.comoTexto()
+            if (t.contains('/')) { val (u, c) = t.split('/', limit = 2); if (Coleccion.refValida(u) && Coleccion.refValida(c)) ajenas[t] = Coleccion(c, "ajena_${u}_$c.json", disco, true, null) }
+            else if (Coleccion.refValida(t)) colecciones[t] = Coleccion(t, "col_$t.json", disco, false, this)
+        }
+    }
+
+    private fun guardaAbiertas() {
+        disco.escribeTexto(ABIERTAS, Json.escribe((colecciones.keys + ajenas.keys).sorted()))
+    }
 
     private fun cargaCola() {
         val l = disco.leeTexto(COLA)?.let { runCatching { Json.lee(it) }.getOrNull() }.comoLista()
@@ -79,6 +91,7 @@ class Familia(
         require(Coleccion.refValida(nombre))
         colecciones[nombre]?.let { return it }
         val c = colecciones.getOrPut(nombre) { Coleccion(nombre, "col_$nombre.json", disco, false, this) }
+        guardaAbiertas()
         if (!c.cargadaEntera && sesion.dentro) programa(0)
         return c
     }
@@ -88,6 +101,7 @@ class Familia(
         require(Coleccion.refValida(uid) && Coleccion.refValida(nombre))
         ajenas["$uid/$nombre"]?.let { return it }
         val c = ajenas.getOrPut("$uid/$nombre") { Coleccion(nombre, "ajena_${uid}_$nombre.json", disco, true, null) }
+        guardaAbiertas()
         if (!c.cargadaEntera && sesion.dentro) programa(0)
         return c
     }
@@ -442,12 +456,14 @@ class Familia(
         colecciones.values.forEach { disco.borra(it.archivo) }
         ajenas.values.forEach { disco.borra(it.archivo) }
         colecciones.clear(); ajenas.clear()
+        disco.borra(ABIERTAS)
         clavesCache = emptyMap(); clavesVistas = 0L
         seguroDisco.borra(CLAVES_ARCHIVO)
     }
 
     companion object {
         const val COLA = "pendiente.json"
+        const val ABIERTAS = "abiertas.json"
         const val CLAVES = "claves"
         const val CLAVES_ARCHIVO = "claves.json"
         /** Margen al pedir «lo que cambió desde»: se repiten unos segundos por si dos cambios llevaban casi la misma hora. */
