@@ -54,6 +54,12 @@ class HiedraTest {
         assertTrue(otro.matches(Regex("j_[0-9a-f]{12}")))
         sincroniza()
         assertEquals("pendiente", otra.coleccion("juegos").nodo(otro)!!.texto("estado"))
+        // Lo que abres para jugar (de Steam: su tiempo lo cuenta Steam) va a «Jugando», no a «Pendiente»
+        val jugado = Juegos.mete("steam:9", "Elden Ring", jugando = true)
+        Juegos.mete("local:abc", "Celeste", jugando = true)
+        sincroniza()
+        assertEquals("en_curso", otra.coleccion("juegos").nodo(jugado)!!.texto("estado"))
+        assertEquals("el que estaba en Pendiente pasa a Jugando", "en_curso", otra.coleccion("juegos").nodo(otro)!!.texto("estado"))
     }
 
     @Test fun loJugadoAquiVaALasHorasDeEsteOrdenador() {

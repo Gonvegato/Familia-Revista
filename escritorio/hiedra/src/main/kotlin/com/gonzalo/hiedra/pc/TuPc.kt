@@ -48,7 +48,7 @@ object TuPc {
             val key = c["a"].comoMapa()["key"].comoTexto()
             val j = Pc.por(key)
             if (j == null) mapOf("ok" to false, "msg" to "Ese juego no está en ${Sitio.nombreEquipo}.")
-            else { val jid = Juegos.mete(j.clave, j.nombre, j.portada); mapOf("ok" to true, "msg" to Pc.juega(j, jid)) }
+            else { val jid = Juegos.mete(j.clave, j.nombre, j.portada, jugando = true); mapOf("ok" to true, "msg" to Pc.juega(j, jid)) }
         }
         else -> mapOf("ok" to false, "msg" to "Hiedra del ordenador no hace eso todavía (${c["op"].comoTexto()}).")
     }

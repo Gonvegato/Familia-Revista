@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -73,8 +74,16 @@ fun Interruptor(activo: Boolean, alCambiar: (Boolean) -> Unit) {
 /** La casilla «Portada» de la ficha: la misma imagen que tiene en Hiedra o en Marfil (o la que pusiste aquí); sin ninguna, la inicial sobre arena. */
 @Composable
 fun MagPortada(cover: String, name: String) {
-    // Pequeña, como una miniatura junto a los datos: la página es de lo que escribes y valoras, no de la imagen
-    Box(Modifier.width(96.dp).aspectRatio(2f / 3f).then(if (cover.isBlank()) Modifier.background(fondoTela(name)) else Modifier.background(Sand)), contentAlignment = Alignment.Center) {
+    // Ocupa el ancho de su casilla (como mucho 200 dp) en proporción 2:3. Mide lo mismo cuando la fila de dos casillas pregunta cuánto
+    // ocupa (IntrinsicSize.Min) que cuando se pinta: con width + aspectRatio la fila se medía como si la portada llenara la casilla y
+    // la portada salía pequeña con un hueco enorme debajo (en la tablet, sobre todo)
+    val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { 200.dp.roundToPx() }
+    Box(Modifier.layout { m, c ->
+            val w = if (c.hasBoundedWidth) minOf(c.maxWidth, maxPx) else maxPx
+            val h = w * 3 / 2
+            val p = m.measure(androidx.compose.ui.unit.Constraints.fixed(w, h))
+            layout(w, h) { p.place(0, 0) }
+        }.then(if (cover.isBlank()) Modifier.background(fondoTela(name)) else Modifier.background(Sand)), contentAlignment = Alignment.Center) {
         if (cover.isNotBlank()) coil.compose.AsyncImage(cover, name, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop, colorFilter = Ediciones.filtro)
         else Text(name.take(1).uppercase(), fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, color = PAPEL_TELA.copy(alpha = 0.88f))
     }

@@ -9,6 +9,11 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.5.2
+
+- **La portada de la ficha ocupa su casilla** (como mucho 200 dp de ancho, en 2:3). Antes era una miniatura de 96 dp y la fila se medía
+  como si la portada llenara la casilla: en la tablet quedaba una portada pequeña con un hueco enorme debajo.
+
 ## 1.5.1
 
 - Los capítulos de Cobalto llegan con su hora de edición (`ue`, ver `nube/ESQUEMA.md`).

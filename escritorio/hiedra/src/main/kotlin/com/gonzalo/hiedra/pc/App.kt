@@ -193,7 +193,7 @@ fun PantOrdenador(nav: Nav) {
                         Spacer(Modifier.height(8.dp))
                         Text(j.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            EnlaceRevista("Jugar", acento = true) { scope.launch { val m = withContext(Dispatchers.IO) { val id = Juegos.mete(j.clave, j.nombre, j.portada); Pc.juega(j, id) }; nav.aviso(m) } }
+                            EnlaceRevista("Jugar", acento = true) { scope.launch { val m = withContext(Dispatchers.IO) { val id = Juegos.mete(j.clave, j.nombre, j.portada, jugando = true); Pc.juega(j, id) }; nav.aviso(m) } }
                             if (enHiedra != null) EnlaceRevista("Ficha") { nav.ir(Pantalla.Ficha(enHiedra.id, Pantalla.EsteOrdenador)) }
                             else EnlaceRevista("A Hiedra") { scope.launch { val id = withContext(Dispatchers.IO) { Juegos.mete(j.clave, j.nombre, j.portada).also { id -> portadaDe(j, id) } }; nav.aviso("En tu biblioteca"); nav.ir(Pantalla.Ficha(id, Pantalla.EsteOrdenador)) } }
                         }

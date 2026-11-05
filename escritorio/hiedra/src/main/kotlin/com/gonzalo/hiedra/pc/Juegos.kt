@@ -84,7 +84,7 @@ object Juegos {
      * Un juego de este ordenador en Hiedra: si ya hay uno con ese lanzador (o con ese nombre: una ficha de Atrio, su ROM…), gana el lanzador
      * de aquí; si no, uno nuevo (`j_` + 12 hexadecimales, como en el móvil). Devuelve su id.
      */
-    fun mete(clavePc: String, titulo: String, portadaUrl: String = ""): String {
+    fun mete(clavePc: String, titulo: String, portadaUrl: String = "", jugando: Boolean = false): String {
         val dev = dispositivo()
         val previo = porClave("pc:$clavePc") ?: porTitulo(titulo)
         val ln = Lanzador.pc(clavePc, dev)
@@ -93,11 +93,13 @@ object Juegos {
             val c = LinkedHashMap<String, Any?>()
             if (!ya) c["ln"] = previo.lanzadores.filterNot { it.tipo == "PC" && it.pcKey == clavePc }.map { it.m } + ln.m
             if (previo.portadaUrl.isBlank() && portadaUrl.isNotBlank()) c["pu"] = portadaUrl
+            // Lo que juegas pasa a «Jugando» (los de Steam no pasan por sumaPartida: su tiempo lo cuenta Steam)
+            if (jugando && (previo.estado == Estado.PENDIENTE || previo.estado == Estado.ABANDONADO)) c["estado"] = Estado.JUGANDO.cuenta
             if (c.isNotEmpty()) cambia(previo.id, c)
             return previo.id
         }
         val id = "j_" + java.util.UUID.randomUUID().toString().replace("-", "").take(12)
-        col().cambia(id, linkedMapOf("t" to titulo, "pl" to "PC", "estado" to "pendiente", "an" to System.currentTimeMillis(), "menu" to "pc", "ln" to listOf(ln.m), "pu" to portadaUrl))
+        col().cambia(id, linkedMapOf("t" to titulo, "pl" to "PC", "estado" to if (jugando) Estado.JUGANDO.cuenta else Estado.PENDIENTE.cuenta, "an" to System.currentTimeMillis(), "menu" to "pc", "ln" to listOf(ln.m), "pu" to portadaUrl))
         return id
     }
 
