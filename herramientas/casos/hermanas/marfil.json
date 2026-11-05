@@ -1,0 +1,44 @@
+{
+  "app": "marfil",
+  "claveDune": "libro:dune:frank herbert",
+  "dev": {"marfil-A": {"data": "{\"libros\":[{\"a\":\"Frank Herbert\",\"mod\":100,\"e\":\"LEYENDO\",\"pu\":\"https://covers.openlibrary.org/b/id/1-L.jpg\",\"f\":true,\"k\":\"libro:dune:frank herbert\",\"msp\":7200000,\"fr\":0.800000011920929,\"an\":50,\"ar\":\"dune.epub\",\"t\":\"Dune\",\"ul\":1700000000000,\"pg\":608,\"tm\":[],\"po\":\"openlibrary\"},{\"a\":\"Carmen Laforet\",\"mod\":100,\"e\":\"LEIDO\",\"pu\":\"\",\"f\":false,\"k\":\"libro:nada:carmen laforet\",\"msp\":3600000,\"fr\":1,\"an\":60,\"ar\":\"nada.epub\",\"t\":\"Nada\",\"ul\":0,\"pg\":0,\"tm\":[1700000000000],\"po\":\"\"}],\"dev\":\"marfil-A\",\"v\":1,\"borrados\":{\"libro:viejo:nadie\":10}}"}},
+  "tiempo": {"d02b9975c5e9c3903b1d": {"marfil-A": {
+    "a": "Frank Herbert",
+    "t": "Dune",
+    "dev": {"marfil-A": {
+      "total": 7200000,
+      "days": {
+        "2026-01-02": 3600000,
+        "2026-01-01": 1000
+      }
+    }}
+  }}},
+  "objetivos": {
+    "ano": 24,
+    "mod": 1700000000000,
+    "dia": 30,
+    "anio": 2026
+  },
+  "kidDune": "d02b9975c5e9c3903b1d",
+  "subrayados": {"d02b9975c5e9c3903b1d": {"marfil-A": {
+    "a": "Frank Herbert",
+    "t": "Dune",
+    "n": [
+      {
+        "c": 100,
+        "x": "El miedo mata la mente.",
+        "k": "epubcfi(/6/4!/4/2)",
+        "l": "Capítulo 1",
+        "o": "Letanía"
+      },
+      {
+        "c": 200,
+        "x": "Quien controla la especia controla el universo.",
+        "k": "epubcfi(/6/8!/4/2)",
+        "l": "Capítulo 11",
+        "o": ""
+      }
+    ]
+  }}},
+  "version": "0.12.15"
+}

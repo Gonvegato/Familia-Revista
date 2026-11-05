@@ -1,0 +1,15 @@
+*.iml
+.gradle/
+build/
+local.properties
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+!docs/**
+# Las claves de firma y sus contraseñas NO van al repositorio (es público): viven en firma/ solo en local
+firma/*.keystore
+firma/*.jks
+firma/*.properties
+firma/*.lineage

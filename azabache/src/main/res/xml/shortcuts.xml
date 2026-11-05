@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="stats_game" android:enabled="true" android:icon="@drawable/sc_stats"
+        android:shortcutShortLabel="@string/sc_stats" android:shortcutLongLabel="@string/sc_stats_long">
+        <intent android:action="android.intent.action.VIEW"
+            android:targetPackage="com.gonzalo.gamerate"
+            android:targetClass="com.gonzalo.gamerate.MainActivity">
+            <extra android:name="go" android:value="stats_game" />
+        </intent>
+    </shortcut>
+</shortcuts>

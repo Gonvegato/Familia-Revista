@@ -1,0 +1,82 @@
+package com.gonzalo.marfil
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
+class MainActivity : ComponentActivity() {
+    /** El libro que pide abrir un widget (se consume al abrirlo). */
+    private var fichaPedida by androidx.compose.runtime.mutableStateOf<String?>(null)
+    /** Una sección pedida desde fuera (Azabache: «escritos»). */
+    private var irPedido by androidx.compose.runtime.mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent); fichaPedida = fichaDe(intent); irPedido = irDe(intent)
+        seguirLeyendoPedido(intent)
+    }
+
+    private fun fichaDe(i: android.content.Intent?) = fichaPedidaDe(i)
+    private fun irDe(i: android.content.Intent?) = irPedidoDe(i)
+
+    /** El atajo del icono «Seguir leyendo»: directo al lector, en tu página (una sola vez por intent). */
+    private fun seguirLeyendoPedido(i: android.content.Intent?) {
+        val id = i?.getStringExtra("leer") ?: return
+        i.removeExtra("leer")
+        Biblioteca.por(id)?.let { Lector.abrir(this, it) }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        iniciar(this)
+        Actualizador.init(this)
+        fichaPedida = fichaDe(intent); irPedido = irDe(intent)
+        seguirLeyendoPedido(intent)
+        setContent {
+            MarfilTheme {
+                // Iconos de la barra de estado claros u oscuros según el fondo
+                SideEffect {
+                    val oscuro = Skin.tones.darkBg
+                    enableEdgeToEdge(
+                        statusBarStyle = if (oscuro) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
+                        navigationBarStyle = if (oscuro) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+                    )
+                }
+                MarfilApp(fichaPedida, { fichaPedida = null }, irPedido) { irPedido = null }
+            }
+        }
+    }
+
+    /** Al volver a la app: colores de Atrio al día y la cuenta en directo. */
+    override fun onStart() {
+        super.onStart()
+        // Los colores de Atrio pueden haber cambiado mientras estabas en ella: se vuelven a leer
+        val c = applicationContext
+        kotlin.concurrent.thread { TemaAtrio.refrescar(c) }
+        AtajoLectura.pon(c)
+        // Tu cuenta de Atrio, en directo mientras Marfil se ve
+        SincroP.escuchar(c)
+    }
+
+    override fun onStop() {
+        super.onStop(); SincroP.parar()
+        // Android congela la app al poco de dejar de verse: si quedaba algo por subir, lo sube un trabajo de fondo (que corre igual)
+        if (Cuenta.vinculada && SincroP.hayPendiente()) SubidaWorker.encolar(applicationContext)
+    }
+}
+
+/** La ficha que pide abrir un widget («ficha», por id) o Azabache («clave», la del libro: la misma en todos tus Marfiles). */
+internal fun fichaPedidaDe(i: android.content.Intent?): String? = i?.getStringExtra("ficha") ?: i?.getStringExtra("clave")?.let { k -> Biblioteca.libros.firstOrNull { it.clave == k }?.id }
+
+/** La sección pedida desde fuera (Azabache, Cobalto): `go=escritos`, y con `obra=<id de Escribir>` se abre esa obra en el lector («escritos:<id>»). */
+internal fun irPedidoDe(i: android.content.Intent?): String? {
+    val go = i?.getStringExtra("go") ?: return null
+    val obra = i.getStringExtra("obra").orEmpty()
+    return if (go.equals("escritos", true) && obra.isNotBlank()) "escritos:$obra" else go
+}

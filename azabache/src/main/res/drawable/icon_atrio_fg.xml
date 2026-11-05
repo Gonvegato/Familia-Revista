@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono de Azabache: una piedra de azabache tallada (una gema negra con sus facetas y un brillo), dentro de la zona segura -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- La sombra de la piedra sobre el fondo -->
+    <path android:fillColor="#000000" android:fillAlpha="0.45" android:pathData="M54,33 L77,46 L77,66 L54,81 L31,66 L31,46 Z" />
+    <!-- Las facetas de fuera (la corona), de oscuro a más oscuro -->
+    <path android:fillColor="#2A2A31" android:pathData="M54,31 L76,44 L62,46 L54,40 Z" />
+    <path android:fillColor="#1C1C22" android:pathData="M76,44 L76,64 L68,56 L62,46 Z" />
+    <path android:fillColor="#131317" android:pathData="M76,64 L54,79 L58,68 L68,56 Z" />
+    <path android:fillColor="#0D0D10" android:pathData="M54,79 L32,64 L46,68 L58,68 Z" />
+    <path android:fillColor="#17171C" android:pathData="M32,64 L32,44 L40,56 L46,68 Z" />
+    <path android:fillColor="#34343C" android:pathData="M32,44 L54,31 L54,40 L40,56 Z" />
+    <!-- La tabla (la cara de arriba), casi negra, con un reflejo -->
+    <path android:pathData="M54,40 L62,46 L68,56 L58,68 L46,68 L40,56 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="44" android:startY="42" android:endX="64" android:endY="66"
+                android:startColor="#3A3A43" android:endColor="#0A0A0C" />
+        </aapt:attr>
+    </path>
+    <!-- Las aristas, en plata muy fina -->
+    <path android:strokeColor="#C9C9D2" android:strokeWidth="1.1" android:strokeLineJoin="round" android:pathData="M54,31 L76,44 L76,64 L54,79 L32,64 L32,44 Z" />
+    <path android:strokeColor="#C9C9D2" android:strokeWidth="0.8" android:strokeAlpha="0.75" android:strokeLineJoin="round" android:pathData="M54,40 L62,46 L68,56 L58,68 L46,68 L40,56 Z M54,31 L54,40 M76,44 L62,46 M76,64 L68,56 M54,79 L58,68 M32,64 L46,68 M32,44 L40,56" />
+    <!-- El brillo -->
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.85" android:pathData="M45,46 L50,43 L48,49 Z" />
+</vector>

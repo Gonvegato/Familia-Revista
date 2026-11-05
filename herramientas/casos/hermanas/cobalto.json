@@ -1,0 +1,33 @@
+{
+  "app": "cobalto",
+  "version": "0.2.4",
+  "obra": "p_c84ac87dd93b",
+  "capitulo": "c_d02e152aa9df",
+  "cuenta": {
+    "lectura": {
+      "p_c84ac87dd93b": {
+        "c_d02e152aa9df": {
+          "t": "La casa",
+          "a": "Gonzalo",
+          "c": "El regreso",
+          "n": 1,
+          "pa": "Primera parte",
+          "u": 1793843838391,
+          "p": 6,
+          "x": "Volvió **tarde**.\n\n***\n\nY *nadie* lo vio."
+        }
+      }
+    },
+    "palabras": {
+      "cobalto-A": {
+        "2026-01-03": 100,
+        "2026-01-01": 500
+      }
+    },
+    "stamps": {
+      "cobalto-A": {
+        ".sv": "timestamp"
+      }
+    }
+  }
+}

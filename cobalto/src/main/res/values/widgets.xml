@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Con el tema «como el sistema», el widget lleva los dos dibujos y se ve el que toca (0 visible, 2 oculto: el orden del atributo visibility) -->
+    <integer name="w_dia">0</integer>
+    <integer name="w_noche">2</integer>
+    <string name="w_hoy">Palabras de hoy</string>
+    <string name="w_hoy_d">Lo que has escrito hoy, tus días seguidos y las dos últimas semanas en barras, con tu objetivo diario.</string>
+    <string name="w_obra">Sigue escribiendo</string>
+    <string name="w_obra_d">La obra en la que estás y la escena que tocaste la última vez. Un toque y sigues escribiendo.</string>
+    <string name="w_cita">Una frase tuya</string>
+    <string name="w_cita_d">Un párrafo de tu manuscrito, uno distinto cada día. Un toque y abres esa escena.</string>
+    <string name="w_marca">COBALTO</string>
+    <string name="w_marca_d">La cabecera de Cobalto, sola sobre tu fondo. Un toque y estás en la portada.</string>
+    <string name="w_marcapapel">COBALTO en papel</string>
+    <string name="w_marcapapel_d">La cabecera de Cobalto en su papel: el número del día y la fecha. Un toque y estás en la portada.</string>
+</resources>

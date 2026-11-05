@@ -1,0 +1,62 @@
+{
+  "app": "hiedra",
+  "version": "0.3.4",
+  "claves": {
+    "j1": [
+      "rom:gba:zeldagba"
+    ],
+    "j2": [
+      "rom:gba:metroidfusiongba"
+    ]
+  },
+  "dev": {
+    "hiedra-A": {
+      "data": "{\"v\":1,\"dev\":\"hiedra-A\",\"borrados\":{\"j9\":10},\"juegos\":[{\"id\":\"j1\",\"t\":\"The Legend of Zelda\",\"pl\":\"GBA\",\"es\":\"PASADO\",\"f\":true,\"fi\":1700000000000,\"an\":50,\"ul\":1700000000000,\"mod\":100,\"pu\":\"https:\\\/\\\/x\\\/zelda.jpg\",\"ez\":1,\"eox\":0,\"eoy\":0,\"dh\":1200,\"de\":2000,\"dc\":3000,\"k\":[],\"ln\":[{\"tp\":\"ROM\",\"s\":\"gba\",\"a\":\"Zelda.gba\"}],\"pa\":\"\",\"msp\":900000,\"vp\":7,\"dd\":{\"2026-01-02\":60000,\"2026-01-01\":600000},\"ex\":{\"steam\":{\"ms\":120000,\"v\":1,\"dd\":{\"2026-01-01\":120000}}}},{\"id\":\"j2\",\"t\":\"Metroid Fusion\",\"pl\":\"\",\"es\":\"JUGANDO\",\"f\":false,\"fi\":0,\"an\":60,\"ul\":0,\"mod\":100,\"pu\":\"\",\"ez\":1,\"eox\":0,\"eoy\":0,\"dh\":0,\"de\":0,\"dc\":0,\"k\":[],\"ln\":[{\"tp\":\"ROM\",\"s\":\"gba\",\"a\":\"Metroid Fusion.gba\"}],\"pa\":\"https:\\\/\\\/thumbnails.libretro.com\\\/Nintendo%20-%20Game%20Boy%20Advance\\\/Named_Boxarts\\\/Metroid%20Fusion.gba.png\",\"msp\":300000,\"vp\":2,\"dd\":{\"2026-01-03\":300000},\"ex\":{}}]}"
+    }
+  },
+  "tiempo": {
+    "j1": {
+      "hiedra-A": {
+        "t": "The Legend of Zelda",
+        "k": [
+          "rom:gba:zeldagba"
+        ],
+        "m": "emulacion",
+        "total": 900000,
+        "fin": 1700000000000,
+        "days": {
+          "2026-01-02": 60000,
+          "2026-01-01": 600000
+        },
+        "p": "GBA"
+      },
+      "steam": {
+        "t": "The Legend of Zelda",
+        "k": [
+          "rom:gba:zeldagba"
+        ],
+        "m": "emulacion",
+        "total": 120000,
+        "fin": 1700000000000,
+        "days": {
+          "2026-01-01": 120000
+        },
+        "p": "GBA"
+      }
+    },
+    "j2": {
+      "hiedra-A": {
+        "t": "Metroid Fusion",
+        "k": [
+          "rom:gba:metroidfusiongba"
+        ],
+        "m": "emulacion",
+        "total": 300000,
+        "fin": 0,
+        "days": {
+          "2026-01-03": 300000
+        }
+      }
+    }
+  }
+}

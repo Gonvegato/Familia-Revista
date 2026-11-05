@@ -1,0 +1,1756 @@
+@file:OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+
+package com.gonzalo.gamerate
+
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoStories
+import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.SportsEsports
+import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.Tv
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Style
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.lifecycle.repeatOnLifecycle
+import java.time.LocalDate
+
+private fun now() = System.currentTimeMillis()
+
+@OptIn(ExperimentalFoundationApi::class)
+/**
+ * Toda la app. Los textos van algo más aireados: interlineado de 1,45 veces su tamaño (relativo, así vale para cualquier
+ * letra). Se pone en el estilo por defecto de los textos y no en el tema, porque Material mezcla los estilos del tema al
+ * animar (las etiquetas de los campos) y no puede mezclar un interlineado relativo con uno fijo.
+ */
+@Composable
+fun App(
+    store: Store, openId: Long, openPartner: Boolean, openGo: String,
+    shareUrl: String = "", shareTitle: String = "", onShareHandled: () -> Unit = {}, onOpenHandled: () -> Unit
+) = TextoAireado { AppContenido(store, openId, openPartner, openGo, shareUrl, shareTitle, onShareHandled, onOpenHandled) }
+
+/** El estilo por defecto de los textos, con el interlineado aireado. */
+@Composable
+fun TextoAireado(content: @Composable () -> Unit) =
+    androidx.compose.runtime.CompositionLocalProvider(
+        androidx.compose.material3.LocalTextStyle provides androidx.compose.material3.LocalTextStyle.current.copy(
+            lineHeight = androidx.compose.ui.unit.TextUnit(1.45f, androidx.compose.ui.unit.TextUnitType.Em)),
+        content = content)
+
+@Composable
+private fun AppContenido(
+    store: Store, openId: Long, openPartner: Boolean, openGo: String,
+    shareUrl: String, shareTitle: String, onShareHandled: () -> Unit, onOpenHandled: () -> Unit
+) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snack = remember { SnackbarHostState() }
+    var games by remember { mutableStateOf(store.load(0)) }
+    var plays by remember { mutableStateOf(store.loadPlays(0)) }
+    var books by remember { mutableStateOf(store.load(1)) }
+    var bplays by remember { mutableStateOf(store.loadPlays(1)) }
+    var sagas by remember { mutableStateOf(store.loadSagas().also { SagaHub.list = it }) }
+    // Lo que escribes en el diario (varias entradas por día)
+    var notas by remember { mutableStateOf(store.loadDiario().also { DiarioHub.notas = it }) }
+    /** Al abrir un libro desde su saga, «volver» lleva a la saga. */
+    var volverSaga by remember { mutableStateOf<Long?>(null) }
+    /** «Añadir a una saga» desde la ficha de esa ficha: (id, categoría). */
+    var sagaAdd by remember { mutableStateOf<Pair<Long, Int>?>(null) }
+    // Categorías propias y lo que hay en cada una.
+    var kinds by remember { mutableStateOf(store.run { ensureMediaKinds(); kinds }.also { Mode.kinds = it }) }
+    var extra by remember { mutableStateOf(kinds.associate { it.id to store.load(it.id) }) }
+    var extraPlays by remember { mutableStateOf(kinds.associate { it.id to store.loadPlays(it.id) }) }
+    var kindEdit by remember { mutableStateOf<Kind?>(null) }
+    var kindNew by remember { mutableStateOf(false) }
+    var key by remember { mutableStateOf(store.key) }
+    var section by remember { mutableStateOf(-1) }
+    var tab by remember { mutableStateOf(0) }
+    // Atrio 6: destino del dock (0 Inicio, 1 Juegos, 2 Libros, 3 Cine, 4 Diario) y apartado de la biblioteca
+    var dest by remember { mutableStateOf(0) }
+    /** En la interfaz Revista: la biblioteca se ha abierto a propósito. */
+    var shellLib by remember { mutableStateOf(false) }
+    var segment by remember { mutableStateOf(0) }
+    var cineTv by remember { mutableStateOf(false) }
+    var diaryKind by remember { mutableStateOf(0) }
+    // El Diario con todas las categorías juntas («Todo») o solo una
+    var diaryAll by remember { mutableStateOf(ctx.getSharedPreferences("gamerate", android.content.Context.MODE_PRIVATE).getBoolean("diario_todo", true)) }
+    fun ponDiarioTodo(on: Boolean) { diaryAll = on; ctx.getSharedPreferences("gamerate", android.content.Context.MODE_PRIVATE).edit().putBoolean("diario_todo", on).apply() }
+    var wheelOpen by remember { mutableStateOf(false) }
+    var partner by remember { mutableStateOf(Couple.cached(store)) }
+    var screen by remember { mutableStateOf<Screen>(Screen.Home) }
+    // Desde Apariencia, las otras pestañas de Ajustes
+    LaunchedEffect(AjustesNav.ir) { AjustesNav.ir?.let { screen = it; AjustesNav.ir = null } }
+    // El número especial abierto desde Estadísticas (el año), encima de todo
+    var especialYear by remember { mutableStateOf<Int?>(null) }
+    var syncTick by remember { mutableStateOf(0) }
+    var reacts by remember { mutableStateOf(store.reacts) }
+    var recsDone by remember { mutableStateOf(store.recsDone) }
+    var undoImport by remember { mutableStateOf(store.hasUndoImport) }
+    val year = LocalDate.now().year
+    var goalG by remember { mutableStateOf(store.goal(0, year)) }
+    var goalB by remember { mutableStateOf(store.goal(1, year)) }
+    val perm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    remember { Mode.look = store.look; true }
+    LaunchedEffect(Unit) {
+        if (store.paired && store.notifyPartner) PartnerWatch.schedule(ctx)
+        runCatching { LecturaAviso.programa(ctx) }
+        runCatching { DiarioAviso.programa(ctx) }
+        AtajoLectura.pon(ctx)
+    }
+    // Actualizarse sola desde el kDrive: lo lleva Actualizador (empieza en MainActivity). Tras actualizarse, se dice una vez
+    LaunchedEffect(Unit) {
+        val v = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
+        val sp = ctx.getSharedPreferences("actualizador", android.content.Context.MODE_PRIVATE)
+        val antes = sp.getString("vista", "").orEmpty()
+        if (v.isNotEmpty() && v != antes) { sp.edit().putString("vista", v).apply(); if (antes.isNotEmpty()) snack.showSnackbar("Azabache se ha actualizado a la $v", withDismissAction = true) }
+    }
+
+    // Viendo la app de tu pareja (solo lectura).
+    val pv = Mode.viewP && partner != null
+    val myKinds = listOf(GAMES, BOOKS) + kinds
+
+    fun gamesOf(k: Kind): List<Game> = when (k.id) { 0 -> games; 1 -> books; else -> extra[k.id] ?: emptyList() }
+    fun playsOf(k: Kind): List<Play> = when (k.id) { 0 -> plays; 1 -> bplays; else -> extraPlays[k.id] ?: emptyList() }
+
+    val kind: Kind = if (pv) partner!!.kindById(section) else myKinds.find { it.id == section } ?: GAMES
+    val myGames = if (pv) partner!!.games(kind) else gamesOf(kind)
+    val myPlays = if (pv) partner!!.plays(kind) else playsOf(kind)
+
+    // Si acaba de llegar algo de otro dispositivo y las listas de aquí aún no se han vuelto a leer, un cambio se aplica
+    // sobre lo guardado (solo lo que has tocado tú): así no se pierde lo que acaba de llegar
+    var leidoEn by remember { mutableStateOf(Store.generacion) }
+    fun <T> alDia(antes: List<T>, l: List<T>, guardado: () -> List<T>, id: (T) -> Long): List<T> =
+        if (Store.generacion == leidoEn) l else rebase(antes, l, guardado(), id)
+
+    fun setGames(k: Kind, l0: List<Game>) {
+        if (k.custom && kinds.none { it.id == k.id }) return // categoría ya borrada
+        val l = alDia(gamesOf(k), l0, { store.load(k.id) }) { it.id }
+        when (k.id) { 0 -> games = l; 1 -> books = l; else -> extra = extra + (k.id to l) }
+        store.save(l, k.id)
+    }
+
+    fun setPlays(k: Kind, l0: List<Play>) {
+        if (k.custom && kinds.none { it.id == k.id }) return // categoría ya borrada
+        val l = alDia(playsOf(k), l0, { store.loadPlays(k.id) }) { it.id }
+        when (k.id) { 0 -> plays = l; 1 -> bplays = l; else -> extraPlays = extraPlays + (k.id to l) }
+        store.savePlays(l, k.id)
+    }
+
+    fun setNotas(l0: List<Nota>) { val l = alDia(notas, l0, { store.loadDiario() }) { it.id }; notas = l; store.saveDiario(l) }
+    fun setSagas(l0: List<Saga>) { val l = alDia(sagas, l0, { store.loadSagas() }) { it.id }; sagas = l; SagaHub.list = l; store.saveSagas(l) }
+    fun saveSaga(s: Saga) = setSagas(sagas.map { if (it.id == s.id) s.copy(updated = now()) else it })
+    fun newSaga(name: String, ids: List<Long>, kind: Int): Saga {
+        val s = Saga(now(), name, ids, kind = kind, updated = now())
+        setSagas(sagas + s)
+        return s
+    }
+
+    fun setKinds(l: List<Kind>) {
+        kinds = l
+        Mode.kinds = l
+        store.kinds = l
+    }
+
+    fun say(m: String) { scope.launch { snack.showSnackbar(m, withDismissAction = true) } }
+
+    fun undoable(m: String, undo: () -> Unit) {
+        scope.launch {
+            val r = snack.showSnackbar(m, actionLabel = "Deshacer", withDismissAction = true, duration = SnackbarDuration.Long)
+            if (r == SnackbarResult.ActionPerformed) undo()
+        }
+    }
+
+    fun reloadAll() {
+        leidoEn = Store.generacion
+        // Si al juntar tus dispositivos quedaron categorías repetidas (o falta Películas), se arregla aquí
+        store.ensureMediaKinds()
+        games = store.load(0)
+        plays = store.loadPlays(0)
+        books = store.load(1)
+        bplays = store.loadPlays(1)
+        kinds = store.kinds
+        Mode.kinds = kinds
+        extra = kinds.associate { it.id to store.load(it.id) }
+        extraPlays = kinds.associate { it.id to store.loadPlays(it.id) }
+        sagas = store.loadSagas(); SagaHub.list = sagas
+        notas = store.loadDiario(); DiarioHub.notas = notas
+    }
+
+    // Al salir de la app se programa una subida a la nube (y a Drive) que termina aunque la cierres.
+    var cloudWarned by remember { mutableStateOf(false) }
+    val life = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(life) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, ev ->
+            if (ev == androidx.lifecycle.Lifecycle.Event.ON_STOP && (store.paired || store.driveUri.isNotBlank())) CloudSave.enqueue(ctx)
+            // Y lo nuevo (libros adjuntos, fotos, capturas) a tu nube; de paso se baja lo que falte aquí
+            if (ev == androidx.lifecycle.Lifecycle.Event.ON_STOP || ev == androidx.lifecycle.Lifecycle.Event.ON_START) NubeSync.enqueue(ctx)
+        }
+        life.lifecycle.addObserver(obs)
+        onDispose { life.lifecycle.removeObserver(obs) }
+    }
+
+    // ---- Las hermanas (Hiedra, Marfil, Cobalto): al volver a la app se mira lo que han subido, y lo nuevo se refleja aquí ----
+    DisposableEffect(life) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, ev ->
+            if (ev == androidx.lifecycle.Lifecycle.Event.ON_START) Hermanas.pronto(ctx)
+        }
+        life.lifecycle.addObserver(obs)
+        onDispose { life.lifecycle.removeObserver(obs) }
+    }
+    LaunchedEffect(store.paired) { if (store.paired) Hermanas.pronto(ctx, ya = true) }
+    LaunchedEffect(Hermanas.version) { if (Hermanas.version > 0) { reloadAll(); goalB = store.goal(1, year) } }
+
+    // ---- Tu misma cuenta en otro dispositivo: lo que llegue de allí se vuelve a leer aquí ----
+    LaunchedEffect(SyncBus.version) {
+        if (SyncBus.version > 0) {
+            reloadAll()
+            // Lo que llega de tu otro dispositivo puede traer fotos tuyas nuevas (una portada): se bajan ya
+            withContext(Dispatchers.IO) { runCatching { NubeSync.bajarFotos(ctx) } }
+        }
+    }
+    // Ajustes de otro dispositivo tuyo (apariencia, portadas en las listas…): se aplican sin reiniciar
+    LaunchedEffect(AjustesHub.version) { if (AjustesHub.version > 0) { Skin.load(ctx); Mode.themeMode = store.themeMode } }
+    // ---- Tu cuenta, al momento (Sincro): cada cambio sube enseguida y lo de tus otros dispositivos y tu pareja llega solo ----
+    LaunchedEffect(Unit) { Sincro.init(ctx) }
+    // Lo de tu pareja que acaba de llegar
+    LaunchedEffect(PartnerHub.version) {
+        if (PartnerHub.version > 0) Couple.cached(store)?.let { p -> if (p.updated != partner?.updated) partner = p; Couple.markSeen(store, p) }
+    }
+    // Si no se puede subir, se avisa una vez (se reintenta solo, y al salir de la app queda pendiente para cuando haya red)
+    LaunchedEffect(Sincro.error) {
+        if (Sincro.error.isBlank()) cloudWarned = false
+        else if (!cloudWarned) { cloudWarned = true; say("No se ha podido guardar en la nube: ${Sincro.error}. Se reintenta solo.") }
+    }
+
+    // En categorías propias solo se compara si tu pareja tiene la misma con los mismos criterios.
+    val side: PartnerSide? = if (pv) null else partner?.let { p ->
+        if (kind.custom && p.match(kind)?.labels?.drop(1) != kind.labels.drop(1)) null else p.side(kind)
+    }
+
+    // El interruptor del calendario y las estadísticas de tu pareja solo vale en esas dos pestañas.
+    LaunchedEffect(tab, section, screen) {
+        if (section == -1 || screen !is Screen.Home || (tab != 2 && tab != 3)) Mode.calP = false
+    }
+    LaunchedEffect(partner) { if (partner == null) { Mode.calP = false; Mode.viewP = false } }
+    // Una ficha de tu pareja abierta desde lo tuyo también va con su tema.
+    LaunchedEffect(screen, pv) { Mode.itemP = !pv && screen is Screen.PartnerItem }
+
+    /**
+     * Clave de tu reacción a una ficha de tu pareja. En categorías propias va con el id que esa
+     * categoría tiene en SU móvil (puede no ser el mismo que en el tuyo), para que la vea.
+     */
+    fun reactKey(k: Kind, id: Long) = itemKey(if (k.custom) partner?.match(k)?.id ?: k.id else k.id, id)
+
+    fun react(k: Kind, id: Long, e: String?) {
+        val m = reacts.toMutableMap()
+        val kk = reactKey(k, id)
+        if (e == null) m.remove(kk) else m[kk] = e
+        reacts = m
+        store.reacts = m
+        syncTick++
+    }
+
+    fun recommend(k: Kind, id: Long, name: String, cover: String, creator: String, note: String) {
+        val r = Rec(now(), k.id, id, name, if (Photos.isLocal(cover)) "" else cover, creator, note, now())
+        store.recs = (store.recs.filter { it.itemId != id || it.kind != k.id } + r).takeLast(40)
+        syncTick++
+        say("Recomendado a ${partner?.name ?: "tu pareja"}")
+    }
+
+    fun recDone(r: Rec) {
+        recsDone = recsDone + r.id
+        store.recsDone = recsDone
+    }
+
+    fun recAdd(r: Rec) {
+        val k = kindOf(r.kind)
+        if (gamesOf(k).none { it.id == r.itemId } && playsOf(k).none { it.id == r.itemId }) {
+            setPlays(k, playsOf(k) + Play(r.itemId, r.name, r.cover, "", 0, emptyList(), creator = r.creator, updated = now()))
+            say("${r.name} añadido a tu lista de ${k.title.lowercase()}")
+        } else {
+            say("Ya tenías ${r.name}")
+        }
+        recDone(r)
+    }
+
+    val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            try {
+                ctx.contentResolver.openOutputStream(uri)?.use { it.write(store.exportAll().toByteArray(Charsets.UTF_8)) }
+                say("Datos exportados")
+            } catch (e: Exception) { say("Error al exportar: ${e.message}") }
+        }
+    }
+
+    // ---- Google Drive: copia automática en un archivo ----
+    var driveName by remember { mutableStateOf(DriveBackup.name(ctx, store) ?: if (store.driveUri.isNotBlank()) "tu archivo" else null) }
+    var driveTick by remember { mutableStateOf(0) }
+    var pendingRestore by remember { mutableStateOf<android.net.Uri?>(null) }
+    fun driveInfo(): String {
+        val e = store.driveErr
+        val t = store.driveLast
+        return when {
+            e.isNotBlank() -> "Último intento falló: $e"
+            t > 0L -> "Última copia comprobada: " + java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(t)) +
+                ". La app comprueba el archivo; la subida a Google la hace la app de Drive (lo ves en drive.google.com)."
+            else -> "Aún no se ha guardado ninguna copia."
+        }
+    }
+    val driveCreate = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            DriveBackup.link(ctx, store, uri)
+            driveName = DriveBackup.name(ctx, store) ?: "tu archivo"
+            scope.launch {
+                val ok = DriveBackup.save(ctx, store)
+                driveTick++
+                say(if (ok) "Vinculado: cada cambio se guardará en Drive" else "No se pudo escribir en ese archivo")
+            }
+        }
+    }
+    val driveOpen = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) pendingRestore = uri
+    }
+    LaunchedEffect(games, plays, books, bplays, extra, extraPlays, kinds, syncTick) {
+        if (store.driveUri.isNotBlank()) {
+            delay(2500)
+            DriveBackup.save(ctx, store)
+            driveTick++
+        }
+    }
+
+    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            try {
+                val txt = ctx.contentResolver.openInputStream(uri)?.use { String(it.readBytes(), Charsets.UTF_8) } ?: ""
+                store.importAll(txt)
+                reloadAll()
+                key = store.key
+                undoImport = store.hasUndoImport
+                say("Datos importados")
+            } catch (e: Exception) { say("No se pudo importar: ${e.message}") }
+        }
+    }
+
+    // ---- Traer de otras apps: Goodreads y Steam ----
+    var importMsg by remember { mutableStateOf("") }
+    var importing by remember { mutableStateOf(false) }
+    val goodreads = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null && !importing) scope.launch {
+            importing = true
+            try {
+                val txt = withContext(Dispatchers.IO) {
+                    ctx.contentResolver.openInputStream(uri)?.use { String(it.readBytes(), Charsets.UTF_8) } ?: ""
+                }
+                val list = Goodreads.parse(txt)
+                var added = 0
+                var skipped = 0
+                // Por tandas: lo importado se va guardando, y cada tanda se compara con lo que tengas en ese momento.
+                list.chunked(15).forEachIndexed { ci, chunk ->
+                    val r = Goodreads.import(chunk, books, bplays) { i, _, t -> importMsg = "Buscando ${ci * 15 + i} de ${list.size}: $t" }
+                    val have = (books.map { it.id } + bplays.map { it.id }).toSet()
+                    val ng = r.games.filter { it.id !in have }
+                    val np = r.plays.filter { it.id !in have && ng.none { g -> g.id == it.id } }
+                    if (ng.isNotEmpty()) setGames(BOOKS, books + ng)
+                    if (np.isNotEmpty()) setPlays(BOOKS, bplays + np)
+                    added += ng.size + np.size
+                    skipped += r.skipped + (r.added - ng.size - np.size)
+                }
+                importMsg = "Listo: $added añadidos" + if (skipped > 0) " ($skipped ya los tenías)." else "."
+                say("Goodreads: $added libros añadidos")
+            } catch (e: Exception) {
+                importMsg = "No se pudo importar: ${e.message}"
+            } finally {
+                importing = false
+            }
+        }
+    }
+
+    /** Bookmory: un .zip con un .txt por libro. Lo nuevo se añade y lo que ya tenías se completa. */
+    val bookmory = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null && !importing) scope.launch {
+            importing = true
+            try {
+                importMsg = "Leyendo el archivo de Bookmory…"
+                val list = withContext(Dispatchers.IO) {
+                    ctx.contentResolver.openInputStream(uri)?.use { Bookmory.read(it) } ?: emptyList()
+                }
+                if (list.isEmpty()) throw IllegalArgumentException("el archivo está vacío")
+                // Copia de cómo estaba todo, para el botón "Deshacer la última importación".
+                withContext(Dispatchers.IO) { store.keepUndo() }
+                undoImport = true
+                var added = 0
+                var updated = 0
+                var same = 0
+                val taken = HashSet<Long>() // obras ya usadas en esta importación: dos libros no pueden ser la misma
+                list.chunked(8).forEachIndexed { ci, chunk ->
+                    var g = books
+                    var p = bplays
+                    chunk.forEachIndexed { i, b ->
+                        importMsg = "Bookmory: ${ci * 8 + i + 1} de ${list.size} · ${b.title}"
+                        // Solo se busca en internet lo que no tienes ya.
+                        var hit = if (Bookmory.existing(b, 0L, g, p) == null) BookFind.find(b.title, b.author, b.isbn) else null
+                        if (hit != null && hit.id > 0 && hit.id in taken) hit = null
+                        val r = Bookmory.apply(b, hit, g, p, now())
+                        hit?.id?.takeIf { it > 0 }?.let { taken.add(it) }
+                        g = r.games
+                        p = r.plays
+                        when (r.outcome) {
+                            Bookmory.Outcome.ADDED -> added++
+                            Bookmory.Outcome.UPDATED -> updated++
+                            Bookmory.Outcome.SAME -> same++
+                        }
+                    }
+                    if (g !== books) setGames(BOOKS, g)
+                    if (p !== bplays) setPlays(BOOKS, p)
+                }
+                importMsg = "Bookmory: $added libros nuevos" +
+                    (if (updated > 0) ", $updated completados" else "") +
+                    (if (same > 0) " y $same que ya estaban igual" else "") + "."
+                say("Bookmory: $added nuevos" + if (updated > 0) ", $updated completados" else "")
+            } catch (e: Exception) {
+                importMsg = "Bookmory: no se pudo importar (${e.message})"
+            } finally {
+                importing = false
+            }
+        }
+    }
+
+    /** Copia las horas de Steam en tus juegos (valorados, en curso, en lista y dropeados), solo si Steam tiene más. */
+    fun steamHours(k: String, u: String, quiet: Boolean = false) {
+        store.steamKey = k
+        store.steamUser = u
+        scope.launch {
+            if (!quiet) importMsg = "Leyendo tu biblioteca de Steam…"
+            try {
+                val owned = Steam.owned(u, k).associateBy { Steam.key(it.name) }
+                var nv = 0
+                var np = 0
+                val ng = games.map { g ->
+                    val o = owned[Steam.key(g.name)]
+                    if (o != null && o.minutes > g.minutes) { nv++; g.copy(minutes = o.minutes, updated = now()) } else g
+                }
+                val npl = plays.map { p ->
+                    val o = owned[Steam.key(p.name)]
+                    if (o != null && o.minutes > p.minutes) { np++; p.copy(minutes = o.minutes, updated = now()) } else p
+                }
+                if (nv > 0) setGames(GAMES, ng)
+                if (np > 0) setPlays(GAMES, npl)
+                store.steamLast = now()
+                importMsg = "Steam: ${owned.size} juegos en tu biblioteca. Horas actualizadas en $nv valorados y $np de tu lista."
+                if (quiet && nv + np > 0) say("Horas de Steam actualizadas en ${nv + np} juegos")
+            } catch (e: Exception) { if (!quiet) importMsg = "Steam: ${e.message}" }
+        }
+    }
+    // Se actualizan solas al abrir la app (como mucho cada 6 horas) si tienes Steam configurado.
+    LaunchedEffect(Unit) {
+        if (store.steamKey.isNotBlank() && store.steamUser.isNotBlank() && now() - store.steamLast > 6 * 3_600_000L) {
+            steamHours(store.steamKey, store.steamUser, quiet = true)
+        }
+    }
+
+    // ---- Estudios: se buscan solos en internet si no los has puesto ----
+    val studioTried = remember { HashSet<Long>() }
+    var studioMsg by remember { mutableStateOf("") }
+
+    fun autoStudio(k: Kind, id: Long, name: String) {
+        // Películas y series: director o creadores, desde su web (solo si se añadieron desde el buscador).
+        if ((k.isMovie || k.isTv) && isWebId(id)) {
+            val tag = id * 31 + k.id
+            if (tag in studioTried) return
+            studioTried.add(tag)
+            scope.launch {
+                val who = try {
+                    if (k.isMovie) Tmdb.director(id, store.tmdbKey) else TvMaze.creators(id)
+                } catch (e: Exception) { null } ?: return@launch
+                if (gamesOf(k).any { it.id == id && it.creator.isBlank() })
+                    setGames(k, gamesOf(k).map { if (it.id == id && it.creator.isBlank()) it.copy(creator = who) else it })
+                if (playsOf(k).any { it.id == id && it.creator.isBlank() })
+                    setPlays(k, playsOf(k).map { if (it.id == id && it.creator.isBlank()) it.copy(creator = who) else it })
+            }
+            return
+        }
+        if (!k.isGame || id in studioTried) return
+        studioTried.add(id)
+        scope.launch {
+            val st = Studio.detect(name, store.rawgKey) ?: return@launch
+            if (games.any { it.id == id && it.creator.isBlank() }) setGames(GAMES, games.map { if (it.id == id && it.creator.isBlank()) it.copy(creator = st) else it })
+            if (plays.any { it.id == id && it.creator.isBlank() }) setPlays(GAMES, plays.map { if (it.id == id && it.creator.isBlank()) it.copy(creator = st) else it })
+        }
+    }
+
+    fun fillStudios() {
+        val todo = (games.filter { it.creator.isBlank() }.map { it.id to it.name } + plays.filter { it.creator.isBlank() }.map { it.id to it.name })
+            .distinctBy { it.first }
+        if (todo.isEmpty()) { studioMsg = "Todos tus juegos tienen estudio."; return }
+        scope.launch {
+            var ok = 0
+            todo.forEachIndexed { i, (id, name) ->
+                studioMsg = "Buscando ${i + 1} de ${todo.size}: $name"
+                val st = Studio.detect(name, store.rawgKey)
+                if (st != null) {
+                    ok++
+                    setGames(GAMES, games.map { if (it.id == id && it.creator.isBlank()) it.copy(creator = st) else it })
+                    setPlays(GAMES, plays.map { if (it.id == id && it.creator.isBlank()) it.copy(creator = st) else it })
+                }
+            }
+            studioMsg = "Listo: $ok de ${todo.size} encontrados."
+        }
+    }
+
+    fun savePlay(p: Play) {
+        val k = kind
+        val np = p.copy(updated = now())
+        setPlays(k, playsOf(k).filter { it.id != p.id } + np)
+        if (!k.isBook && p.creator.isBlank()) autoStudio(k, p.id, p.name)
+    }
+
+    fun saveGame(g: Game) {
+        val k = kind
+        setGames(k, gamesOf(k).filter { it.id != g.id } + g.copy(updated = now()))
+        if (!k.isBook && g.creator.isBlank()) autoStudio(k, g.id, g.name)
+    }
+
+    /** Añade a tu lista una carta de "Siguiente". */
+    fun addCard(c: Card) {
+        val k = kindOf(c.kind)
+        scope.launch {
+            if (playsOf(k).any { normName(it.name) == normName(c.title) } || gamesOf(k).any { normName(it.name) == normName(c.title) }) {
+                say("Ya tenías ${c.title}")
+                return@launch
+            }
+            var id = if (k.isBook) c.itemId else -c.itemId
+            var cover = c.image
+            var name = c.title
+            if (!k.isBook && key.isNotBlank()) {
+                try {
+                    val hits = Sgdb.search(c.title, key)
+                    val h = hits.firstOrNull { normName(it.name) == normName(c.title) } ?: hits.firstOrNull()
+                    if (h != null) {
+                        id = h.id
+                        name = h.name
+                        cover = try { Sgdb.covers(h.id, key).firstOrNull()?.second } catch (e: Exception) { null } ?: c.image
+                    }
+                } catch (e: Exception) { /* se queda con la imagen de RAWG */ }
+            }
+            if (playsOf(k).any { it.id == id } || gamesOf(k).any { it.id == id }) { say("Ya tenías ${c.title}"); return@launch }
+            setPlays(k, playsOf(k) + Play(id, name, cover, "", 0, emptyList(), creator = c.creator, updated = now()))
+            if (!k.isBook) autoStudio(k, id, name)
+            say("$name añadido a tu lista")
+        }
+    }
+
+    fun deleteGame(g: Game) {
+        val k = kind
+        val old = gamesOf(k).find { it.id == g.id } ?: g
+        setGames(k, gamesOf(k).filter { it.id != g.id })
+        undoable("${g.name} eliminado") { setGames(k, gamesOf(k).filter { it.id != old.id } + old) }
+    }
+
+    fun deletePlay(p: Play) {
+        val k = kind
+        val old = playsOf(k).find { it.id == p.id } ?: p
+        setPlays(k, playsOf(k).filter { it.id != p.id })
+        undoable("${p.name} eliminado") { setPlays(k, playsOf(k).filter { it.id != old.id } + old) }
+    }
+
+    fun export(g: Game, mode: ExportMode) {
+        val k = kind
+        scope.launch {
+            say("Generando…")
+            try {
+                val bm = Export.render(ctx, g, k)
+                val name = g.name.replace(Regex("[^A-Za-z0-9 _-]"), "").trim().ifEmpty { "ficha" }
+                when (mode) {
+                    ExportMode.Share -> {
+                        val uri = withContext(Dispatchers.IO) { Export.saveJpgUri(ctx, bm, name) }
+                        if (uri != null) Export.share(ctx, uri, g.name) else say("No se pudo preparar la imagen")
+                    }
+                    ExportMode.Pdf -> {
+                        val ok = withContext(Dispatchers.IO) { Export.savePdf(ctx, bm, name) }
+                        say(if (ok) "PDF guardado en Descargas/GameRate" else "No se pudo guardar")
+                    }
+                    ExportMode.Jpg -> {
+                        val ok = withContext(Dispatchers.IO) { Export.saveJpg(ctx, bm, name) }
+                        say(if (ok) "JPG guardado en Imágenes/GameRate" else "No se pudo guardar")
+                    }
+                }
+            } catch (e: Exception) { say("Error: ${e.message}") }
+        }
+    }
+
+    fun shareYear(k: Kind, list: List<Game>, y: Int) {
+        scope.launch {
+            say("Preparando tu resumen…")
+            try {
+                val bm = Export.renderYear(ctx, k, list, y, store.myName)
+                val uri = withContext(Dispatchers.IO) { Export.saveJpgUri(ctx, bm, "ronron-$y-${normName(k.title)}") }
+                if (uri != null) Export.share(ctx, uri, "Mi $y en Azabache") else say("No se pudo preparar la imagen")
+            } catch (e: Exception) { say("Error: ${e.message}") }
+        }
+    }
+
+    // ---- La suite: apuntes rápidos y capturas ----
+    var shooting by remember { mutableStateOf(false) }
+    var memoFor by remember { mutableStateOf<Pair<Play, Shot?>?>(null) }
+    /** El editor del diario abierto: el día, la entrada que se cambia (null: nueva) y las fichas ya elegidas. */
+    var escribiendo by remember { mutableStateOf<Triple<Long, Nota?, List<String>>?>(null) }
+    var avisoDiario by remember { mutableStateOf(false) }
+    DiarioHub.escribirSobre = { k, id -> escribiendo = Triple(today(), null, listOf(refDe(k.id, id))) }
+    DiarioHub.editar = { n -> escribiendo = Triple(n.dia, n, emptyList()) }
+    Negra.alAnadir = { n -> store.addNegra(n); reloadAll(); screen = Screen.Home; say("«$n» a la lista negra: ya no saldrá en ningún sitio") }
+    // Imágenes para las casillas de las fichas de revista
+    SideEffect {
+        MagImages.categories = { k ->
+            when {
+                k.isGame -> listOf("Portada", "Fondo", "Logo")
+                k.isMovie -> listOf("Póster", "Fondo")
+                k.isTv -> listOf("Póster", "Fondo")
+                k.isBook -> listOf("Portada")
+                else -> emptyList()
+            }
+        }
+        MagImages.load = { k, id, name, cat ->
+            when {
+                !isWebId(id) -> emptyList()
+                k.isGame -> when (cat) { "Fondo" -> Sgdb.heroes(id, key); "Logo" -> Sgdb.logos(id, key); else -> Sgdb.covers(id, key) }
+                k.isMovie && isWebId(id) -> Tmdb.images(id, store.tmdbKey, cat == "Fondo")
+                k.isTv && isWebId(id) -> TvMaze.images(id, cat == "Fondo")
+                k.isBook -> OpenLib.covers(id).ifEmpty { OpenLib.coversByTitle(name) }
+                else -> emptyList()
+            }
+        }
+    }
+
+    /** La ficha en curso de un juego que se está jugando en el PC (si no la tienes, se crea en «Jugando»). */
+    fun playFor(g: LiveGame): Play? {
+        if (g.sg <= 0L) { say("Atrio no sabe qué juego es en SteamGridDB: corrígelo en el PC (Opciones → Corregir juego)"); return null }
+        plays.find { it.id == g.sg }?.let { return it }
+        games.find { it.id == g.sg }?.let { v ->
+            val np = Play(v.id, v.name, v.cover, v.hero, 1, emptyList(), start = today(), creator = v.creator, platform = "PC", updated = now(), logo = v.logo)
+            setPlays(GAMES, plays + np)
+            say("${v.name} vuelve a «Jugando» (lo rejuegas)")
+            return np
+        }
+        val np = Play(g.sg, g.name, g.cover, g.hero, 1, emptyList(), start = today(), platform = "PC", updated = now(), logo = g.logo)
+        setPlays(GAMES, plays + np)
+        say("${g.name} añadido a «Jugando»")
+        return np
+    }
+
+    fun addMemo(p: Play, text: String, shotId: String) {
+        val k = kindOf(plays.find { it.id == p.id }?.let { 0 } ?: section.coerceAtLeast(0))
+        val cur = playsOf(k).find { it.id == p.id } ?: p
+        val m = Memo(now(), text, shotId, u = now())
+        setPlays(k, playsOf(k).filter { it.id != p.id } + cur.copy(memos = cur.memos + m, updated = now()))
+        say(if (shotId.isNotEmpty()) "Apunte guardado con su captura" else "Apunte guardado")
+    }
+
+    fun deleteMemo(p: Play, m: Memo) {
+        val k = kind
+        val cur = playsOf(k).find { it.id == p.id } ?: return
+        setPlays(k, playsOf(k).filter { it.id != p.id } + cur.copy(memos = cur.memos.map { if (it.t == m.t) it.copy(del = true, u = now()) else it }, updated = now()))
+    }
+
+    fun shoot(onDone: (Shot?) -> Unit = {}) {
+        if (shooting) return
+        shooting = true
+        scope.launch {
+            val (id, msg) = Suite.shoot()
+            if (id == null) { say(msg); shooting = false; onDone(null); return@launch }
+            val s = Suite.awaitLocal(id)
+            shooting = false
+            onDone(s)
+            if (s == null) say("La captura se está bajando; aparecerá en Capturas")
+        }
+    }
+
+    fun saveMemo(p: Play, text: String, withShot: Boolean, preset: Shot?) {
+        when {
+            preset != null -> addMemo(p, text, preset.id)
+            withShot -> shoot { s -> addMemo(p, text, s?.id ?: "") }
+            else -> addMemo(p, text, "")
+        }
+    }
+
+    // Una captura recién llegada se puede abrir desde el aviso
+    LaunchedEffect(Suite.arrived) {
+        val a = Suite.arrived ?: return@LaunchedEffect
+        Suite.arrived = null
+        if (screen is Screen.ShotView || memoFor != null) return@LaunchedEffect
+        val r = snack.showSnackbar("Captura de ${a.game.ifBlank { a.pc }} · ${a.w}×${a.h}", actionLabel = "Ver", withDismissAction = true)
+        if (r == SnackbarResult.ActionPerformed) screen = Screen.ShotView(a, screen)
+    }
+
+    fun toEdit(s: Screen.Art, g: Game) {
+        val p = s.play
+        if (p != null) {
+            val np = p.copy(cover = g.cover, hero = g.hero)
+            savePlay(np)
+            // Imagen de «En portada»: se vuelve a Inicio. En la revista, a la página de la ficha (ya guardada)
+            screen = if (s.home) Screen.Home else Screen.PlayDetail(np, editing = !Skin.revista)
+        } else if (Skin.revista && !s.isNew && gamesOf(kind).any { it.id == g.id }) {
+            // Revista (desde «Editar» de la página): se guarda al momento y se vuelve a la página
+            setGames(kind, gamesOf(kind).map { if (it.id == g.id) g else it })
+            screen = Screen.Edit(g, false, editing = false)
+        } else {
+            screen = Screen.Edit(g, s.isNew, editing = true)
+        }
+    }
+
+    // ---- Fotos de la galería como portada o fondo ----
+    var galleryCb by remember { mutableStateOf<((String) -> Unit)?>(null) }
+    val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        val cb = galleryCb
+        galleryCb = null
+        if (uri != null && cb != null) scope.launch {
+            try { cb(Photos.import(ctx, uri)) } catch (e: Exception) { say("No se pudo usar esa foto: ${e.message}") }
+        }
+    }
+    fun pickPhoto(cb: (String) -> Unit) {
+        galleryCb = cb
+        gallery.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+    // De tus archivos (Descargas, Drive, la tarjeta…): el selector de archivos de Android, solo imágenes
+    val imageFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val cb = galleryCb
+        galleryCb = null
+        if (uri != null && cb != null) scope.launch {
+            try { cb(Photos.import(ctx, uri)) } catch (e: Exception) { say("No se pudo usar esa imagen: ${e.message}") }
+        }
+    }
+    fun pickImage(files: Boolean, cb: (String) -> Unit) {
+        if (!files) { pickPhoto(cb); return }
+        galleryCb = cb
+        try { imageFile.launch(arrayOf("image/*")) } catch (e: Exception) { galleryCb = null; say("No hay un selector de archivos en este móvil") }
+    }
+    // La pestaña «Archivo» de las imágenes de las casillas de la revista
+    SideEffect { MagImages.pick = { files, cb -> pickImage(files, cb) } }
+    // De tu nube: el explorador de tu kDrive (con la nube conectada)
+    var nubePick by remember { mutableStateOf<Pair<String, (String) -> Unit>?>(null) }
+    SideEffect { NubeHub.pickFromCloud = if (KDrive.on(ctx) && !pv) ({ n, cb -> nubePick = n to cb }) else null }
+    // De internet: Google Imágenes dentro de la app
+    var webPick by remember { mutableStateOf<Pair<String, (String) -> Unit>?>(null) }
+    SideEffect { Internet.pick = if (!pv) ({ q, cb -> webPick = q to cb }) else null }
+
+    // ---- Cambiar entre tu app y la de tu pareja ----
+    fun togglePartner() {
+        if (partner == null) {
+            say(if (store.paired) "Aún no hay datos de tu pareja: espera a que se sincronice" else "Entra en tu cuenta y pon el usuario de tu pareja en Ajustes → Cuenta y pareja")
+            return
+        }
+        store.knowsDoubleTap = true
+        withReveal {
+            Mode.calP = false
+            Mode.viewP = !Mode.viewP
+            section = -1
+            tab = 0
+            screen = Screen.Home
+        }
+    }
+
+    // ---- El botón principal de cada tarjeta de «En portada»: jugar (Hiedra) o leer (Marfil) si están, y si no, apuntar ----
+    fun primaryLabel(o: Ongoing): Pair<String, androidx.compose.ui.graphics.vector.ImageVector> = when {
+        o.kind.isGame && Hermanas.instalada(ctx, Hermanas.PAQ_HIEDRA) -> "Jugar" to Icons.Rounded.SportsEsports
+        o.kind.isBook && Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL) -> "Leer" to Icons.Rounded.AutoStories
+        else -> "Apuntar" to Icons.Rounded.EditNote
+    }
+    fun primaryAction(o: Ongoing, nav: (Screen) -> Unit) {
+        when {
+            o.kind.isGame && Hermanas.jugarEnHiedra(ctx, o.play.id) -> {}
+            o.kind.isBook && Hermanas.leerEnMarfil(ctx, o.play.id) -> {}
+            else -> nav(Screen.Note(o.play, null))
+        }
+    }
+
+    /** Añade a tu lista algo descubierto con las preguntas. */
+    fun quizAdd(it: QuizItem) {
+        // Juegos: como lo que se añade desde RAWG (se busca en SteamGridDB para la portada y el id de siempre)
+        if (it.domain == 0) { addCard(Card("rawg:${it.id}", GAMES.id, it.title, it.cover, it.year, it.creator, "", it.id, (it.rating * 10).toInt())); return }
+        val k = when {
+            it.domain == 1 -> BOOKS
+            it.tv -> kinds.firstOrNull { k -> k.isTv }
+            else -> kinds.firstOrNull { k -> k.isMovie }
+        } ?: run { say("No tienes la categoría para esto"); return }
+        scope.launch {
+            if (playsOf(k).any { p -> normName(p.name) == normName(it.title) } || gamesOf(k).any { g -> normName(g.name) == normName(it.title) }) {
+                say("Ya tenías ${it.title}"); return@launch
+            }
+            var id = it.id
+            var cover = it.cover
+            // Las series de Atrio van con TVmaze (episodios, creadores): se busca la misma serie allí
+            if (it.tv) {
+                try {
+                    val hits = TvMaze.search(it.original.ifBlank { it.title })
+                    val h = hits.firstOrNull { h -> normName(h.name) == normName(it.original) && (it.year.isBlank() || h.sub.startsWith(it.year)) }
+                        ?: hits.firstOrNull { h -> normName(h.name) == normName(it.title) } ?: hits.firstOrNull()
+                    if (h != null) { id = h.id; if (cover.isBlank()) cover = h.cover }
+                } catch (e: Exception) { }
+            }
+            if (playsOf(k).any { p -> p.id == id } || gamesOf(k).any { g -> g.id == id }) { say("Ya tenías ${it.title}"); return@launch }
+            setPlays(k, playsOf(k) + Play(id, it.title, cover, "", 0, emptyList(), creator = it.creator, updated = now()))
+            say("${it.title} añadido a tu lista")
+        }
+    }
+
+    fun startFromWheel(p: Play) {
+        savePlay(p.copy(status = 1, start = if (p.start == 0L) today() else p.start, end = 0L))
+        say("¡A por ${p.name}!")
+    }
+
+    LaunchedEffect(openId, openPartner, openGo) {
+        // Los de los widgets (una ficha, el Diario) van más abajo, donde ya se sabe abrir cada cosa
+        if (openGo.startsWith("item:") || openGo.startsWith("diario:") || openGo.startsWith("empezar:") || openGo == "home") return@LaunchedEffect
+        // Atajos y avisos abren siempre lo tuyo (nunca se edita nada desde la vista de tu pareja).
+        if ((openGo.isNotEmpty() || openId != 0L) && Mode.viewP) { Mode.viewP = false; Mode.calP = false }
+        if (openGo.isNotEmpty()) {
+            // Accesos directos del icono: "add_game", "next_book", "stats_game"…
+            val sec = if (openGo.endsWith("book")) 1 else 0
+            section = sec
+            when {
+                openGo.startsWith("add") -> { if (sec == 0) Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) else Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL) }
+                openGo.startsWith("next") -> { tab = 4; screen = Screen.Home }
+                openGo.startsWith("stats") -> { tab = 3; screen = Screen.Home }
+                else -> screen = Screen.Home
+            }
+            onOpenHandled()
+        } else if (openId != 0L) {
+            plays.find { it.id == openId }?.let { screen = Screen.Note(it, null); tab = 0; section = 0 }
+            onOpenHandled()
+        } else if (openPartner) {
+            section = -1
+            screen = Screen.Home
+            onOpenHandled()
+        }
+    }
+
+    // ---- Atrio 6: destinos del dock ----
+    fun cineKindId(): Int {
+        val ks = if (pv) partner!!.allKinds else myKinds
+        return (ks.firstOrNull { if (cineTv) it.isTv else it.isMovie } ?: ks.firstOrNull { it.isMovie || it.isTv })?.id ?: -1
+    }
+    fun go(d: Int) {
+        volverSaga = null
+        dest = d
+        segment = 0
+        section = when (d) { 1 -> 0; 2 -> 1; 3 -> cineKindId(); 4 -> diaryKind; else -> -1 }
+        screen = Screen.Home
+    }
+
+    /** Volver desde una ficha: a su saga si se abrió desde ella; si no, a donde estabas. */
+    fun atras() {
+        val v = volverSaga
+        val cur = screen
+        if (v != null && (cur is Screen.PlayDetail || cur is Screen.Edit) && sagas.any { it.id == v }) { volverSaga = null; screen = Screen.Saga(v) }
+        else { volverSaga = null; screen = Screen.Home }
+    }
+    // Las fichas abren su saga (o la crean) sin saber nada de la app
+    SideEffect {
+        SagaHub.open = { id -> volverSaga = null; screen = Screen.Saga(id) }
+        SagaHub.on = !pv
+        NubeHub.partner = partner?.nube.orEmpty()
+        // Copiar a tu Atrio un libro de tu pareja: la ficha (si no la tienes, a tu lista) y su archivo
+        NubeHub.copyBook = { id ->
+            val x = partner?.nube?.find { it.k == "libro:$id" }
+            val pside = partner?.side(BOOKS)
+            if (x != null && pside != null) {
+                NubeHub.copying = id
+                if (books.none { it.id == id } && bplays.none { it.id == id }) {
+                    val g = pside.games.find { it.id == id }
+                    val pl = pside.plays.find { it.id == id }
+                    val nm = g?.name ?: pl?.name ?: x.n.substringBeforeLast('.')
+                    val cv = (g?.cover ?: pl?.cover).orEmpty().takeIf { !Photos.isLocal(it) }.orEmpty()
+                    setPlays(BOOKS, bplays + Play(id, nm, cv, "", 0, emptyList(), creator = g?.creator ?: pl?.creator.orEmpty(), pages = g?.pages ?: pl?.pages ?: 0, updated = now()))
+                }
+                scope.launch {
+                    val ok = runCatching { NubeSync.copyFromPartner(ctx, x, id) }
+                    NubeHub.copying = 0L
+                    if (ok.isSuccess) { NubeSync.enqueue(ctx); say("Copiado a tus libros, con su archivo") }
+                    else say("No se pudo copiar: ${ok.exceptionOrNull()?.message}")
+                }
+            }
+        }
+        SagaHub.addTo = if (pv) null else ({ id, k -> sagaAdd = id to k })
+        SagaHub.exists = { id, kid -> myKinds.find { it.id == kid }?.let { k -> gamesOf(k).any { it.id == id } || playsOf(k).any { it.id == id } } == true }
+    }
+
+    BackHandler(enabled = dest != 0 || section != -1 || screen !is Screen.Home || pv) {
+        val cur = screen
+        when {
+            cur is Screen.ShotView -> screen = cur.back
+            cur is Screen.MassScore -> screen = cur.back
+            cur is Screen.Duelos -> screen = cur.back
+            screen !is Screen.Home -> atras()
+            dest != 0 -> go(0)
+            section != -1 -> section = -1
+            else -> togglePartner()
+        }
+    }
+
+    val look = Mode.look
+    val target = Color(
+        when {
+            section == 0 -> look.games
+            section == 1 -> look.books
+            section > 1 && kind.color != 0 -> kind.color
+            else -> look.menu
+        }
+    )
+    val bgColor by animateColorAsState(target, tween(500), label = "fondo")
+    // La revista es siempre papel liso (los fondos con dibujo eran de los estilos que ya no existen)
+    val bgMod = if (Skin.revista) Modifier.background(Paper) else Modifier.pattern(look.pattern, bgColor, look.intensity)
+    // (En el Diario, y entre Películas y Series, cambiar de categoría no rehace la pantalla entera: eso la hacía
+    // parpadear con un fundido de toda la página; lo que cambia se funde dentro)
+    val sectionKey = when { dest == 4 -> "diario"; dest == 5 -> "escribir"; kind.isMovie || kind.isTv -> "cine"; else -> "$section" }
+    // (la clave lleva también si se ve la portada o la biblioteca: cada capa de la transición pinta su página, no la nueva
+    // las dos; antes la que salía se volvía la nueva al instante y luego se fundía consigo misma: un parpadeo)
+    val shown: Any = if (screen is Screen.Home) "top:$dest:$sectionKey:$pv:${if (shellLib && section >= 0) "lib" else "portada"}:${kind.id}" else screen
+    val topLevel = screen is Screen.Home
+    // Al volver de una ficha abierta desde Feed, Revista o Escritorio, se vuelve a esa pantalla (no a la biblioteca)
+    LaunchedEffect(screen is Screen.Home) {
+        if (screen is Screen.Home && !shellLib && dest == 0) section = -1
+    }
+
+    val touchWatcher = Modifier.pointerInput(Unit) {
+        awaitPointerEventScope {
+            while (true) {
+                val ev = awaitPointerEvent(PointerEventPass.Initial)
+                if (ev.type == PointerEventType.Press) ev.changes.firstOrNull()?.let { Mode.touch = it.position }
+            }
+        }
+    }
+    fun openPlay(k: Kind, p: Play) {
+        if (k.id != section) section = k.id
+        screen = if (pv) Screen.PartnerItem(k.id, p.id) else Screen.PlayDetail(p)
+    }
+    // Desde un widget: una ficha ("item:<categoría>:<id>") o el Diario de una categoría ("diario:<categoría>")
+    LaunchedEffect(openGo) {
+        val a = openGo.split(':')
+        if (a[0] != "item" && a[0] != "diario" && a[0] != "empezar" && a[0] != "home" && a[0] != "escribir") return@LaunchedEffect
+        if (Mode.viewP) { Mode.viewP = false; Mode.calP = false }
+        val k = myKinds.find { it.id == a.getOrNull(1)?.toIntOrNull() } ?: GAMES
+        if (a[0] == "home") go(0)
+        else if (a[0] == "diario") { diaryKind = k.id; go(4) }
+        // El aviso del diario: a escribir lo de hoy
+        else if (a[0] == "escribir") { go(4); escribiendo = Triple(today(), null, emptyList()) }
+        else if (a[0] == "empezar") {
+            // «¿Y ahora qué?»: se empieza y se abre su ficha
+            val id = a.getOrNull(2)?.toLongOrNull() ?: 0L
+            playsOf(k).find { it.id == id }?.let { p0 ->
+                val p = p0.copy(status = 1, start = if (p0.start == 0L) today() else p0.start, end = 0L, updated = now())
+                setPlays(k, playsOf(k).map { if (it.id == id) p else it })
+                section = k.id; screen = Screen.PlayDetail(p)
+                say("¡A por ${p.name}!")
+            }
+        }
+        else {
+            val id = a.getOrNull(2)?.toLongOrNull() ?: 0L
+            val p = playsOf(k).find { it.id == id }
+            val g = gamesOf(k).find { it.id == id }
+            if (p != null) { section = k.id; screen = Screen.PlayDetail(p) }
+            else if (g != null) { section = k.id; screen = Screen.Edit(g, false) }
+        }
+        onOpenHandled()
+    }
+    CompositionLocalProvider(LocalContentColor provides Charcoal) {
+    Box(Modifier.fillMaxSize().then(bgMod).then(touchWatcher)) {
+    // Revista en tableta (OPPO Pad Mini en horizontal…): la página, centrada y con un ancho de lectura,
+    // como una revista abierta sobre la mesa; en el móvil y en vertical, a todo lo ancho
+    Box(if (Skin.revista) Modifier.fillMaxSize().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = 1080.dp) else Modifier.fillMaxSize()) {
+        androidx.compose.animation.SharedTransitionLayout {
+        val sharedScope = this
+        AnimatedContent(
+            targetState = shown,
+            transitionSpec = {
+                val a = initialState; val b = targetState
+                if (a is String && b is String) {
+                    // Entre destinos del dock: fundido rápido con un leve desplazamiento
+                    (fadeIn(tween(Motion.ms(200))) + scaleIn(tween(Motion.ms(240)), initialScale = 0.985f)) togetherWith fadeOut(tween(Motion.ms(120)))
+                } else if (a is String) {
+                    // Abrir una ficha: entra desde abajo mientras la portada vuela
+                    (fadeIn(tween(Motion.ms(260))) + slideInVertically(tween(Motion.ms(320))) { it / 14 }) togetherWith fadeOut(tween(Motion.ms(200)))
+                } else {
+                    fadeIn(tween(Motion.ms(220))) togetherWith fadeOut(tween(Motion.ms(160)))
+                }
+            },
+            label = "pantallas"
+        ) { s ->
+            // Lo que pinta ESTA capa (portada o biblioteca, y de qué categoría), sacado de su clave y no del estado de ahora
+            val capa = (s as? String)?.split(':')
+            val capaLib = capa?.getOrNull(4) == "lib"
+            val capaKind = capa?.getOrNull(5)?.toIntOrNull()?.let { id -> (if (pv) partner!!.allKinds else myKinds).find { it.id == id } } ?: kind
+            CompositionLocalProvider(LocalShared provides sharedScope, LocalAnim provides this) {
+            // Cuando llegan fotos tuyas de otro dispositivo, las imágenes se vuelven a pintar (antes salía el hueco)
+            androidx.compose.runtime.key(Photos.version) {
+            if (s is String) {
+                val p = partner
+                val pendingRecs = if (pv) emptyList() else p?.recs?.filter { it.id !in recsDone }?.sortedByDescending { it.time } ?: emptyList()
+                val acts = if (p == null) emptyList() else p.allKinds.flatMap { k ->
+                    p.games(k).map { g -> Activity(k.id, g.id, g.name, g.cover, "Valorado · ${g.general}", g.activity) } +
+                        p.plays(k).map { pl -> Activity(k.id, pl.id, pl.name, pl.cover, k.statuses[pl.status.coerceIn(0, 2)], pl.activity) }
+                }.sortedByDescending { it.time }.distinctBy { it.kind to it.id }.take(12)
+                val sectionKinds = if (pv) p!!.allKinds else myKinds
+                fun gs(k: Kind) = if (pv) p!!.games(k) else gamesOf(k)
+                fun ps(k: Kind) = if (pv) p!!.plays(k) else playsOf(k)
+
+                @Composable
+                fun Library(k: Kind, onBack: (() -> Unit)?) {
+                    val cine = k.isMovie || k.isTv
+                    // (las fichas de ESTA categoría, no las de la elegida ahora: en la transición, la capa que sale sigue con la suya)
+                    LibraryScreen(
+                        k, if (pv) partner!!.games(k) else gamesOf(k), if (pv) partner!!.plays(k) else playsOf(k), side, pv, segment, { segment = it },
+                        onOpenPlay = { openPlay(k, it) },
+                        onOpenGame = { screen = if (pv) Screen.PartnerItem(k.id, it.id) else Screen.Edit(it, false) },
+                        // (los juegos se añaden en Hiedra y los libros en Marfil: aquí solo se valoran)
+                        onAdd = if (pv || k.isGame || k.isBook) null else ({ forPlay -> screen = Screen.Search(forPlay) }),
+                        onStats = { screen = Screen.Stats },
+                        onDiscover = null,
+                        onWheel = if (pv) null else ({ wheelOpen = true }),
+                        sagas = if (!pv) sagas.filter { it.kind == k.id } else null,
+                        onOpenSaga = { screen = Screen.Saga(it.id) },
+                        onCreateSaga = { n, ids -> screen = Screen.Saga(newSaga(n, ids, k.id).id) },
+                        titleSwitch = if (cine) ({
+                            TitleTabs(listOf("Películas", "Series"), if (k.isTv) 1 else 0) { i -> cineTv = i == 1; section = cineKindId(); segment = 0 }
+                        }) else null,
+                        badgeFor = if (cine) ({ id, name -> RtBadgeFor(k, id, name) }) else null,
+                        onBack = onBack
+                    )
+                }
+
+                when {
+                    // Escritos: los capítulos que diste por terminados en Cobalto, para leerlos aquí
+                    dest == 5 -> LecturaCobaltoScreen(onBack = { go(0) })
+                    dest == 4 -> {
+                        // El Diario: lo de cada día (todo o una categoría); con tu pareja, también lo suyo
+                        val dk = if (pv) p!!.kindById(diaryKind) else myKinds.find { it.id == diaryKind } ?: GAMES
+                        val dks = if (diaryAll) sectionKinds else listOf(dk)
+                        val dePareja = p != null && (pv || Mode.calP)
+                        val vuelve = rememberResumeTick()
+                        var dias by remember { mutableStateOf<List<Dia>?>(null) }
+                        val shots = emptyList<Shot>()
+                        // Al abrirlo, lo último que han subido las hermanas (lo jugado en Hiedra, lo leído en Marfil, lo escrito en Cobalto)
+                        LaunchedEffect(dePareja, vuelve) { if (!dePareja) Hermanas.pronto(ctx, ya = true) }
+                        LaunchedEffect(dks, games, plays, books, bplays, extra, extraPlays, notas, p, dePareja, syncTick, vuelve, diaryAll, Hermanas.version) {
+                            val fichas = dks.map { k -> Triple(k, if (dePareja) p!!.games(k) else gamesOf(k), if (dePareja) p!!.plays(k) else playsOf(k)) }
+                            val conLibros = dks.any { it.isBook }
+                            val conJuegos = dks.any { it.isGame }
+                            val solo = if (diaryAll) null else setOf(dk.id)
+                            dias = withContext(Dispatchers.Default) {
+                                val f = if (dePareja) FuentesDiario(
+                                    fichas, p!!.diario, if (conLibros) p.leido else emptyMap(),
+                                    if (conJuegos) HorasPc.porDia(ctx, store.partnerUid) else emptyMap(), soloDe = solo
+                                ) else FuentesDiario(
+                                    fichas, notas,
+                                    if (conLibros) Hermanas.leidoPorDia(ctx) else emptyMap(),
+                                    if (conJuegos) Hermanas.jugadoPorDia(ctx) else emptyMap(),
+                                    if (conLibros) Hermanas.subrayados(ctx) else emptyMap(), emptyList(), solo,
+                                    palabras = Hermanas.palabras(ctx)
+                                )
+                                diasDelDiario(f)
+                            }
+                        }
+                        val enCurso = if (dePareja) emptyList() else dks.flatMap { k -> playsOf(k).filter { it.status == 1 }.map { k to it } }.sortedByDescending { it.second.activity }.take(12)
+                        fun refKind(r: String): Pair<Kind, Long>? {
+                            val kid = r.substringBefore(':').toIntOrNull() ?: return null
+                            val id = r.substringAfter(':').toLongOrNull() ?: return null
+                            val k = if (dePareja) p!!.allKinds.find { it.id == kid } else myKinds.find { it.id == kid }
+                            return k?.let { it to id }
+                        }
+                        fun abrirFicha(k: Kind, id: Long) {
+                            when {
+                                pv -> { section = k.id; screen = Screen.PartnerItem(k.id, id) }
+                                dePareja -> screen = Screen.PartnerItem(p!!.match(k)?.id ?: k.id, id)
+                                else -> {
+                                    section = k.id
+                                    playsOf(k).find { it.id == id }?.let { screen = Screen.PlayDetail(it) } ?: gamesOf(k).find { it.id == id }?.let { screen = Screen.Edit(it, false) }
+                                }
+                            }
+                        }
+                        DiarioScreen(
+                            dias, enCurso, sectionKinds, if (diaryAll) null else dk.id,
+                            onFiltro = { id -> if (id == null) ponDiarioTodo(true) else { ponDiarioTodo(false); diaryKind = id } },
+                            pareja = p?.name, viendoPareja = dePareja,
+                            onPareja = if (p != null && !pv) ({ withReveal { Mode.calP = !Mode.calP } }) else null,
+                            nombreDe = { r ->
+                                refKind(r)?.let { (k, id) ->
+                                    if (dePareja) (p!!.plays(k).find { it.id == id }?.name ?: p.games(k).find { it.id == id }?.name)
+                                    else (playsOf(k).find { it.id == id }?.name ?: gamesOf(k).find { it.id == id }?.name)
+                                }
+                            },
+                            acc = DiarioAcciones(
+                                abrir = { t -> if (t.id != 0L) abrirFicha(t.kind, t.id) },
+                                cita = { _, _ -> Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL) },
+                                captura = { s -> screen = Screen.ShotView(s, screen) },
+                                escribir = { d, n -> escribiendo = Triple(d, n, emptyList()) },
+                                apuntar = { k, pl -> section = k.id; memoFor = pl to null },
+                                abrirRef = { r -> refKind(r)?.let { (k, id) -> abrirFicha(k, id) } },
+                                aviso = { avisoDiario = true }
+                            ),
+                            onBack = { go(0) }
+                        )
+                    }
+                    dest in 1..3 && section >= 0 -> Library(kind, null)
+                    dest == 3 -> Box(Modifier.fillMaxSize().statusBarsPadding().padding(20.dp)) { Text("Aún no hay categoría de películas o series.", color = Muted) }
+                    capaLib -> Library(capaKind) { section = -1; shellLib = false }
+                    else -> {
+                        val ongoing = sectionKinds.flatMap { k -> ps(k).filter { it.status == 1 }.map { Ongoing(k, it) } }
+                            .sortedByDescending { it.play.activity }
+                            .let { l -> if (pv) l.filter { !Photos.isLocal(it.play.cover) } else l }
+                        run {
+                            ShellHome(ShellModel(
+                                name = if (pv) p!!.name else store.myName.ifBlank { "Azabache" },
+                                readOnly = pv,
+                                kinds = sectionKinds,
+                                entries = { k -> (gs(k).map { ShellEntry(k, null, it) } + ps(k).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
+                                ongoing = ongoing,
+                                paired = !pv && store.paired,
+                                partnerName = p?.name,
+                                open = { e ->
+                                    shellLib = false
+                                    if (e.play != null) openPlay(e.kind, e.play)
+                                    else { section = e.kind.id; screen = if (pv) Screen.PartnerItem(e.kind.id, e.id) else Screen.Edit(e.game!!, false) }
+                                },
+                                primary = { o -> primaryAction(o) { sc -> section = o.kind.id; screen = sc } },
+                                primaryLabel = { o -> primaryLabel(o) },
+                                library = { k -> if (k.isMovie || k.isTv) cineTv = k.isTv; section = k.id; segment = 0; shellLib = true },
+                                diary = { go(4) },
+                                write = if (pv) null else ({ go(5) }),
+                                discover = null,
+                                profile = if (pv) null else ({ screen = Screen.Profile }),
+                                add = if (pv) null else ({ k -> if (k.isGame) Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) else if (k.isBook) Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL) else { section = k.id; screen = Screen.Search(true) } }),
+                                partner = if (p != null) ({ togglePartner() }) else null,
+                                // (desde la portada, al salir de Estadísticas se vuelve a la portada, no a la biblioteca)
+                                stats = { k -> section = k.id; shellLib = false; screen = Screen.Stats },
+                                pc = null,
+                                pickImage = if (pv) null else ({ o ->
+                                    val pl = o.play
+                                    section = o.kind.id
+                                    screen = Screen.Art(Game(pl.id, pl.name, pl.cover, hero = pl.hero, creator = pl.creator), o.kind.admiteFondo, false, false, pl, home = true)
+                                }),
+                                recs = pendingRecs, onRecAdd = { recAdd(it) }, onRecDismiss = { recDone(it) },
+                                acts = acts, onAct = { a -> withReveal { screen = Screen.PartnerItem(a.kind, a.id) } }
+                            ))
+                        }
+                    }
+                }
+            } else {
+            when (s) {
+                Screen.Stats -> StatsScreen(
+                    kind, myGames.filter { !Hermanas.sinValorar(it) }, myPlays, side,
+                    when {
+                        kind.custom -> 0
+                        pv -> if (kind.isBook) (partner?.goalBooks ?: 0) else (partner?.goalGames ?: 0)
+                        else -> if (kind.isBook) goalB else goalG
+                    },
+                    if (kind.isBook) (partner?.goalBooks ?: 0) else (partner?.goalGames ?: 0),
+                    onShareYear = if (pv) null else ({ y -> shareYear(kind, myGames, y) }),
+                    terminados = myGames,
+                    kinds = if (shellLib) emptyList() else if (pv) partner!!.allKinds else myKinds,
+                    onKind = { k -> if (k.isMovie || k.isTv) cineTv = k.isTv; section = k.id },
+                    onSpecial = { y -> especialYear = y }
+                ) { screen = Screen.Home }
+
+                is Screen.MassScore -> MassScoreScreen(
+                    myKinds, { k -> gamesOf(k) },
+                    onSave = { k, g -> setGames(k, gamesOf(k).map { if (it.id == g.id) g else it }) }
+                ) { screen = s.back }
+
+                is Screen.Duelos -> DuelosScreen(
+                    books = books,
+                    onSave = { cambiados -> val m = cambiados.associateBy { it.id }; setGames(BOOKS, books.map { m[it.id] ?: it }) },
+                    onBack = { screen = s.back }
+                )
+
+                is Screen.Quiz -> key(s.domain) { QuizScreen(
+                    s.domain, store, mine = (when (s.domain) { 0 -> listOf(GAMES); 1 -> listOf(BOOKS); else -> myKinds.filter { it.isMovie || it.isTv } })
+                        .flatMap { k -> gamesOf(k).map { it.name } + playsOf(k).map { it.name } }.toSet(),
+                    partner = partner,
+                    onAdd = { item -> quizAdd(item) },
+                    // Cada categoría tiene su Descubrir (en su página): sin pestañas para saltar a las de otras
+                    onBack = { screen = Screen.Home }
+                ) }
+
+                Screen.Profile -> ProfileScreen(
+                    store, partner,
+                    onStyle = { Skin.open = true },
+                    onSettings = { screen = Screen.Settings },
+                    onSuite = {},
+                    onMassScores = { screen = Screen.MassScore(Screen.Profile) },
+                    onDuelos = {},
+                    onNegraAnadir = { n -> store.addNegra(n); reloadAll(); say("«$n» a la lista negra: ya no saldrá en ningún sitio") },
+                    onNegraQuitar = { v -> store.removeNegra(v); say("«${v.nombre}» ya puede volver a salir") },
+                    onPedirAvisos = {
+                        if (android.os.Build.VERSION.SDK_INT >= 33 && ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                            perm.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    },
+                    goalGames = goalG, goalBooks = goalB,
+                    onGoal = { k, v ->
+                        val nv = v.coerceIn(0, 999)
+                        store.setGoal(k, year, nv)
+                        if (k == 1) goalB = nv else goalG = nv
+                        syncTick++
+                    },
+                    couple = {
+                        CoupleSettings(store, { partner = it }) {
+                            reloadAll()
+                            undoImport = store.hasUndoImport
+                        }
+                    },
+                    pestanas = { PestanasAjustes(1) { screen = it } },
+                    categorias = {
+                        Text("Tus categorías", fontWeight = FontWeight.Bold, fontSize = 24.sp, fontFamily = Display)
+                        Text("Además de juegos, libros, pelis y series: discos, viajes, restaurantes… Salen en el menú de la portada.", color = Muted, fontSize = 13.sp)
+                        myKinds.filter { it.custom }.forEach { k ->
+                            Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(k.title, fontFamily = Display, fontSize = 20.sp, modifier = Modifier.weight(1f))
+                                EnlaceRevista("Editar") { kindEdit = k }
+                            }
+                        }
+                        EnlaceRevista("+ Nueva categoría", acento = true) { kindNew = true }
+                    },
+                    onBack = { screen = Screen.Home }
+                )
+
+                Screen.Settings -> SettingsScreen(
+                    key = key,
+                    onSaveKey = { store.key = it; key = store.key; say("Clave guardada") },
+                    rawgKey = store.rawgKey, igdbId = store.igdbId, igdbSecret = store.igdbSecret,
+                    onSaveServices = { r, id, sec -> store.rawgKey = r; store.igdbId = id; store.igdbSecret = sec; say("Claves guardadas") },
+                    tmdbKey = store.tmdbKey,
+                    onSaveTmdb = { k ->
+                        store.tmdbKey = k
+                        if (k.isBlank()) say("Clave de TMDB quitada")
+                        else scope.launch {
+                            // Se comprueba al momento con una búsqueda de prueba.
+                            val ok = try { Tmdb.search("Matrix", k); true } catch (e: Exception) { say("TMDB: ${e.message}"); false }
+                            if (ok) say("Clave de TMDB guardada y comprobada")
+                        }
+                    },
+                    studioMsg = studioMsg, onFillStudios = { fillStudios() },
+                    driveName = driveName, driveInfo = remember(driveTick, driveName) { driveInfo() },
+                    onDriveLink = { driveCreate.launch("ronron-copia.json") },
+                    onDriveRestore = { driveOpen.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*")) },
+                    onDriveNow = { scope.launch { val ok = DriveBackup.save(ctx, store); driveTick++; say(if (ok) "Copia guardada en Drive" else "No se pudo guardar en Drive") } },
+                    onDriveUnlink = { DriveBackup.unlink(ctx, store); driveName = null; say("Drive desvinculado") },
+                    nube = { NubeSettings { say(it) } },
+                    onExport = { exporter.launch("valorin-datos.json") },
+                    onImport = { importer.launch(arrayOf("*/*")) },
+                    onUndoImport = if (undoImport) ({
+                        store.undoImport()
+                        reloadAll()
+                        undoImport = false
+                        say("Importación deshecha")
+                    }) else null,
+                    importMsg = importMsg,
+                    onMassScores = { screen = Screen.MassScore(Screen.Settings) },
+                    steamKey = store.steamKey, steamUser = store.steamUser,
+                    onSteam = { k, u -> steamHours(k, u) },
+                    pestanas = { PestanasAjustes(2) { screen = it } }
+                ) { screen = Screen.Home }
+
+                is Screen.Search -> if (s.manual || (kind.custom && !kind.online)) CustomAddScreen(
+                    kind, s.forPlay, initialName = s.name, onPhoto = { files, cb -> pickImage(files, cb) },
+                    onCreate = { name, creator, cover, hero ->
+                        val id = customItemId(name)
+                        val had = myGames.find { it.id == id }
+                        if (myGames.any { it.id == id } || myPlays.any { it.id == id }) {
+                            say("Ya tenías $name")
+                            screen = myPlays.find { it.id == id }?.let { Screen.PlayDetail(it) } ?: had?.let { Screen.Edit(it, false) } ?: Screen.Home
+                        } else if (s.forPlay) {
+                            val np = Play(id, name, cover, hero, 0, emptyList(), creator = creator, updated = now())
+                            setPlays(kind, playsOf(kind) + np)
+                            screen = Screen.PlayDetail(np, editing = true)
+                        } else {
+                            screen = Screen.Edit(Game(id, name, cover, hero = hero, creator = creator), true)
+                        }
+                    },
+                    onBack = { screen = if (s.manual) Screen.Search(s.forPlay) else Screen.Home }
+                ) else SearchScreen(
+                    needsKey = kind.isGame || kind.isMovie, key = if (kind.isMovie) store.tmdbKey else key,
+                    title = kind.title,
+                    hint = when { kind.isGame -> "Título del juego"; kind.isBook -> "Título, autor o ISBN"; kind.isMovie -> "Título de la película"; else -> "Título de la serie" },
+                    keyMsg = if (kind.isMovie) "Para buscar películas, añade tu clave gratuita de TMDB en Ajustes → Avanzado → Servicios." else "Antes de buscar, añade tu API key en Ajustes.",
+                    escanear = kind.isBook,
+                    // Si no aparece en la búsqueda, a mano (con fotos de tus archivos), en cualquier categoría
+                    onManual = { name -> screen = Screen.Search(s.forPlay, true, name) },
+                    manualText = if (kind.isMovie || kind.isTv) "¿No aparece? Añádela a mano con una foto" else "¿No aparece? Añádelo a mano con una foto",
+                    owned = { id ->
+                        when {
+                            myGames.any { it.id == id } -> "Valorado"
+                            myPlays.any { it.id == id } -> kind.statuses[myPlays.first { it.id == id }.status.coerceIn(0, 2)]
+                            else -> null
+                        }
+                    },
+                    search = { q ->
+                        when {
+                            kind.isBook -> Isbn.limpia(q)?.let { OpenLib.porIsbn(it) } ?: OpenLib.search(q)
+                            kind.isMovie -> Tmdb.search(q, store.tmdbKey)
+                            kind.isTv -> TvMaze.search(q)
+                            else -> Sgdb.search(q, key)
+                        }
+                    },
+                    onPick = { h ->
+                        val valued = myGames.find { it.id == h.id }
+                        if (!s.forPlay && valued != null) {
+                            say("Ya lo tenías valorado")
+                            screen = Screen.Edit(valued, false)
+                        } else {
+                            val ex = if (s.forPlay) myPlays.find { it.id == h.id } else null
+                            val cr = h.creator
+                            val play = if (s.forPlay) (ex ?: Play(h.id, h.name, h.cover, "", 0, emptyList(), creator = cr, pages = h.pages)) else null
+                            val g = Game(
+                                h.id, h.name, ex?.cover ?: h.cover, hero = ex?.hero ?: "", creator = ex?.creator ?: cr,
+                                pages = ex?.pages ?: h.pages
+                            )
+                            screen = Screen.Art(g, false, true, true, play)
+                        }
+                    },
+                    onBack = { screen = Screen.Home }
+                )
+
+                is Screen.Art -> ArtScreen(
+                    game = s.game, hero = s.hero,
+                    load = {
+                        // Lo creado a mano no está en ninguna web: sus imágenes, de «Archivo»
+                        if (!isWebId(s.game.id)) emptyList()
+                        else if (kind.isMovie) Tmdb.images(s.game.id, store.tmdbKey, s.hero)
+                        else if (kind.isTv) TvMaze.images(s.game.id, s.hero)
+                        else if (kind.custom) emptyList()
+                        // Libros importados que Open Library no reconoció: portadas de lo que sale al buscar su título.
+                        else if (s.hero && kind.isBook) emptyList()
+                        else if (kind.isBook) OpenLib.covers(s.game.id).ifEmpty { OpenLib.coversByTitle(s.game.name) }
+                        else if (s.hero) Sgdb.heroes(s.game.id, key)
+                        else Sgdb.covers(s.game.id, key)
+                    },
+                    onPick = { url ->
+                        if (!s.hero) {
+                            val g = s.game.copy(cover = url)
+                            if (s.chain && kind.hasHero) {
+                                screen = Screen.Art(g, true, s.isNew, true, s.play)
+                            } else {
+                                toEdit(s, g)
+                            }
+                        } else {
+                            toEdit(s, s.game.copy(hero = url))
+                        }
+                    },
+                    onSkip = { toEdit(s, s.game) },
+                    onBack = {
+                        val p = s.play
+                        // Sin cambiar nada: de vuelta a donde estabas (en la revista, a la página de la ficha)
+                        screen = if (s.chain || s.home) Screen.Home else if (p != null) Screen.PlayDetail(p, editing = !Skin.revista) else Screen.Edit(s.game, s.isNew, editing = s.isNew || !Skin.revista)
+                    },
+                    search = if (kind.isBook && !s.hero) ({ q -> OpenLib.coversFor(q) }) else null,
+                    translate = if (kind.isBook && !s.hero) ({ q -> TitleEn.translate(q)?.let { it.title to it.source } }) else null,
+                    hasHero = kind.admiteFondo,
+                    fondosWeb = kind.hasHero,
+                    startLocal = kind.custom || !isWebId(s.game.id) || (s.hero && !kind.hasHero),
+                    onTab = { h -> screen = Screen.Art(s.game, h, s.isNew, s.chain, s.play, s.home) },
+                    onLocal = { h, files ->
+                        pickImage(files) { url ->
+                            if (!h) {
+                                val g = s.game.copy(cover = url)
+                                if (s.chain && kind.hasHero) screen = Screen.Art(g, true, s.isNew, true, s.play) else toEdit(s, g)
+                            } else toEdit(s, s.game.copy(hero = url))
+                        }
+                    },
+                    // Descargada de otro dispositivo: misma dirección, ahora con la foto aquí
+                    onArrived = { h, url -> toEdit(s, if (h) s.game.copy(hero = url) else s.game.copy(cover = url)) }
+                )
+
+                is Screen.Edit -> { ChameleonEffect(s.game.cover); EditScreen(
+                    s.game, s.isNew, kind, side,
+                    myReact = reacts[reactKey(kind, s.game.id)],
+                    onReact = { e -> react(kind, s.game.id, e) },
+                    onSave = { saveGame(it); screen = Screen.Home },
+                    onDelete = { deleteGame(s.game); screen = Screen.Home },
+                    onArt = { g, hero -> screen = Screen.Art(g, hero, s.isNew, false, null) },
+                    onExport = { g, m -> export(g, m) },
+                    onRecommend = if (side != null && !kind.custom) ({ g, note -> recommend(kind, g.id, g.name, g.cover, g.creator, note) }) else null,
+                    editing = s.editing,
+                    findTtb = null,
+                    onQuiet = { g -> if (gamesOf(kind).any { it.id == g.id }) setGames(kind, gamesOf(kind).map { if (it.id == g.id) g else it }) }
+                ) { atras() } }
+
+                is Screen.PlayDetail -> {
+                    val live = myPlays.find { it.id == s.play.id } ?: s.play
+                    ChameleonEffect(live.cover)
+                    PlayDetailScreen(
+                        kind = kind, partner = side, p0 = live, startEditing = s.editing,
+                        myReact = reacts[reactKey(kind, s.play.id)],
+                        onReact = { e -> react(kind, s.play.id, e) },
+                        onChange = { savePlay(it) },
+                        onNote = { p, e -> screen = Screen.Note(p, e) },
+                        onArt = { p, hero ->
+                            screen = Screen.Art(Game(p.id, p.name, p.cover, hero = p.hero, creator = p.creator), hero, false, false, p)
+                        },
+                        onFinish = { p ->
+                            val b = p.baremo()
+                            val notes = p.entries.filter { it.note.isNotBlank() }.joinToString("\n\n") { it.note }
+                            val g = Game(
+                                p.id, p.name, p.cover,
+                                b?.general ?: 50, b?.gfx ?: 50, b?.story ?: 50, b?.music ?: 50, b?.gameplay ?: 50,
+                                notes, p.hero, p.start, if (p.end > 0L) p.end else today(), p.creator,
+                                platform = p.platform, pages = p.pages, minutes = p.minutes, updated = now(),
+                                ttbMain = p.ttbMain, ttbExtra = p.ttbExtra, ttbFull = p.ttbFull, ttbSrc = p.ttbSrc,
+                                logo = p.logo
+                            )
+                            val withMins = if (!kind.isBook) (plays.find { it.id == p.id }?.minutes ?: p.minutes) else p.minutes
+                            // Si ya lo tenías valorado (lo has rejugado o releído), se conserva lo anterior y se suma lo nuevo.
+                            val prev = gamesOf(kind).find { it.id == p.id }
+                            val fin = if (prev == null) g.copy(minutes = withMins) else g.copy(
+                                review = listOf(prev.review, notes).filter { it.isNotBlank() }.joinToString("\n\n"),
+                                minutes = prev.minutes + withMins, fav = prev.fav,
+                                hero = g.hero.ifBlank { prev.hero }, creator = g.creator.ifBlank { prev.creator },
+                                platform = g.platform.ifBlank { prev.platform }, pages = if (g.pages > 0) g.pages else prev.pages,
+                                start = if (g.start > 0L) g.start else prev.start,
+                                ttbMain = if (g.ttbMain > 0) g.ttbMain else prev.ttbMain,
+                                ttbExtra = if (g.ttbExtra > 0) g.ttbExtra else prev.ttbExtra,
+                                ttbFull = if (g.ttbFull > 0) g.ttbFull else prev.ttbFull,
+                                ttbSrc = g.ttbSrc.ifBlank { prev.ttbSrc },
+                                logo = g.logo.ifBlank { prev.logo }
+                            )
+                            setGames(kind, gamesOf(kind).filter { it.id != p.id } + fin)
+                            setPlays(kind, playsOf(kind).filter { it.id != p.id })
+                            if (prev != null) say("Ya lo tenías valorado: he juntado tu opinión y tus horas")
+                            tab = 1
+                            screen = Screen.Edit(fin, false, editing = true)
+                        },
+                        onRecommend = if (side != null && !kind.custom) ({ p, note -> recommend(kind, p.id, p.name, p.cover, p.creator, note) }) else null,
+                        onDelete = { p -> deletePlay(p); screen = Screen.Home },
+                        findTtb = null,
+                        findEpisodes = if (kind.isTv) ({ id, name -> TvMaze.episodes(id, name) }) else null,
+                        onMemo = { p -> memoFor = p to null },
+                        onDeleteMemo = { p, m -> deleteMemo(p, m) },
+                        onOpenShot = { sh -> screen = Screen.ShotView(sh, Screen.PlayDetail(live)) },
+                        onBack = { atras() }
+                    )
+                }
+
+                is Screen.Saga -> {
+                    val sg = sagas.find { it.id == s.id }
+                    // De su categoría (si borraste la categoría, la saga se queda sin nada que enseñar)
+                    val sk = sg?.let { g -> myKinds.find { it.id == g.kind } }
+                    if (sg == null || sk == null) LaunchedEffect(Unit) { screen = Screen.Home }
+                    else SagaScreen(
+                        sg, playsOf(sk), gamesOf(sk), sk,
+                        sgdbKey = key, tmdbKey = store.tmdbKey,
+                        onBack = { section = sk.id; screen = Screen.Home },
+                        onOpenBook = { b ->
+                            volverSaga = sg.id; section = sk.id
+                            val p = b.play; val g = b.game
+                            screen = if (p != null && (p.status == 1 || g == null)) Screen.PlayDetail(p) else if (g != null) Screen.Edit(g, false) else Screen.Home
+                        },
+                        onStart = { p0 ->
+                            val p = p0.copy(status = 1, start = if (p0.start == 0L) today() else p0.start, end = 0L, updated = now())
+                            setPlays(sk, playsOf(sk).map { if (it.id == p.id) p else it })
+                            say("¡A por ${p.name}!")
+                        },
+                        onSave = { saveSaga(it) },
+                        onDelete = { setSagas(sagas.filter { it.id != sg.id }); screen = Screen.Home; say("Saga borrada (sus libros siguen ahí)") }
+                    )
+                }
+
+                is Screen.Note -> NoteScreen(
+                    play = s.play, entry = s.entry, kind = kind,
+                    onSave = { e ->
+                        // Sobre la versión más reciente (puede haber llegado algo de Atrio mientras escribías)
+                        val base = myPlays.find { it.id == s.play.id } ?: s.play
+                        val old = s.entry
+                        val es = if (old == null) base.entries + e
+                        else base.entries.map { x -> if (x.time == old.time) e else x }
+                        val np = base.copy(entries = es)
+                        savePlay(np)
+                        screen = Screen.PlayDetail(np)
+                    },
+                    onDelete = {
+                        val base = myPlays.find { it.id == s.play.id } ?: s.play
+                        val old = s.entry
+                        val np = base.copy(entries = base.entries.filter { x -> x.time != old?.time })
+                        savePlay(np)
+                        screen = Screen.PlayDetail(np)
+                    },
+                    onBack = { screen = Screen.PlayDetail(myPlays.find { it.id == s.play.id } ?: s.play) }
+                )
+
+                Screen.Suite -> SuiteScreen(
+                    plays, store, onBack = { screen = Screen.Home },
+                    onOpenShot = { sh -> screen = Screen.ShotView(sh, Screen.Suite) },
+                    onMemo = { g -> playFor(g)?.let { memoFor = it to null } },
+                    onOpenPlay = { p -> section = 0; screen = Screen.PlayDetail(p) },
+                    say = { say(it) }
+                )
+
+                is Screen.ShotView -> ShotViewer(
+                    s.shot, onBack = { screen = s.back },
+                    onDelete = { Suite.deleteLocal(s.shot); screen = s.back },
+                    onMemo = (plays.find { it.id == s.shot.sg })?.let { p -> { memoFor = p to s.shot } },
+                    onUncloud = if (KDrive.on(ctx) && store.loadNube().any { it.k == "shot:${s.shot.id}" }) ({
+                        scope.launch { NubeSync.removeShot(ctx, s.shot.id); say("Quitada de tu nube (en este móvil sigue)"); screen = s.back }
+                    }) else null
+                )
+
+                is Screen.PartnerItem -> {
+                    val p = partner
+                    if (p == null) {
+                        LaunchedEffect(Unit) { screen = Screen.Home }
+                    } else {
+                        val k = p.kindById(s.kind)
+                        val ps = p.side(k)
+                        val g = ps.games.find { it.id == s.id }
+                        val pl = ps.plays.find { it.id == s.id }
+                        PartnerPage(
+                            ps, s.id, k, g?.name ?: pl?.name ?: "", g?.cover ?: pl?.cover ?: "", g?.hero ?: pl?.hero ?: "",
+                            onBack = { screen = Screen.Home }, onFlip = null,
+                            myReact = reacts[reactKey(k, s.id)],
+                            onReact = { e -> react(k, s.id, e) }
+                        )
+                    }
+                }
+                else -> Unit
+            }
+            }
+            }
+            }
+        }
+        }
+    } // ancho de la revista
+        especialYear?.let { y ->
+            val p = partner
+            val ks = if (pv && p != null) p.allKinds else myKinds
+            NumeroEspecial(
+                if (pv && p != null) p.name else store.myName.ifBlank { "Azabache" }, ks,
+                { k -> ((if (pv && p != null) p.games(k) else gamesOf(k)).map { ShellEntry(k, null, it) } +
+                    (if (pv && p != null) p.plays(k) else playsOf(k)).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
+                onOpen = { e ->
+                    especialYear = null
+                    section = e.kind.id
+                    screen = when {
+                        pv -> Screen.PartnerItem(e.kind.id, e.id)
+                        e.play != null -> Screen.PlayDetail(e.play)
+                        else -> Screen.Edit(e.game!!, false)
+                    }
+                },
+                startYear = y
+            ) { especialYear = null }
+        }
+        if (wheelOpen) {
+            val pool = myPlays.filter { it.status == 0 }
+            val ps0 = side
+            val shared = if (ps0 == null) emptyList() else pool.filter { mine -> ps0.plays.any { it.id == mine.id && it.status == 0 } }
+            WheelDialog(pool, shared, partner?.name, kind, { p -> wheelOpen = false; startFromWheel(p) }, { p -> wheelOpen = false; screen = Screen.PlayDetail(p) }) { wheelOpen = false }
+        }
+
+        val pr = pendingRestore
+        if (pr != null) {
+            AlertDialog(
+                onDismissRequest = { pendingRestore = null },
+                title = { Text("¿Recuperar desde Drive?", fontFamily = Display) },
+                text = { Text("Se sustituirán los datos de este dispositivo por los del archivo, y ese archivo quedará vinculado para las próximas copias. Podrás deshacerlo en Copia de seguridad.") },
+                confirmButton = {
+                    TextButton({
+                        pendingRestore = null
+                        scope.launch {
+                            try {
+                                store.importAll(DriveBackup.read(ctx, pr))
+                                reloadAll()
+                                key = store.key
+                                undoImport = store.hasUndoImport
+                                DriveBackup.link(ctx, store, pr)
+                                driveName = DriveBackup.name(ctx, store) ?: "tu archivo"
+                                say("Datos recuperados de Drive")
+                            } catch (e: Exception) { say("No se pudo recuperar: ${e.message}") }
+                        }
+                    }) { Text("Recuperar") }
+                },
+                dismissButton = { TextButton({ pendingRestore = null }) { Text("Cancelar") } },
+                shape = shp(24.dp)
+            )
+        }
+
+        if (shareUrl.isNotEmpty()) LaunchedEffect(shareUrl) { onShareHandled() }
+        webPick?.let { (q, cb) ->
+            InternetPicker(q, onPick = { url -> webPick = null; cb(url); NubeSync.enqueue(ctx) }, onDismiss = { webPick = null })
+        }
+        nubePick?.let { (n, cb) ->
+            NubePicker(n, onPick = { url -> nubePick = null; cb(url); NubeSync.enqueue(ctx) }, onDismiss = { nubePick = null })
+        }
+        sagaAdd?.let { (id, kid) ->
+            val ak = myKinds.find { it.id == kid } ?: GAMES
+            val nm = (gamesOf(ak).find { it.id == id }?.name ?: playsOf(ak).find { it.id == id }?.name).orEmpty()
+            AddToSagaDialog(nm, sagas.filter { it.kind == kid },
+                onPick = { sg -> sagaAdd = null; saveSaga(sg.copy(items = sg.items + id)); say("En la saga ${sg.name}") },
+                onNew = { n -> sagaAdd = null; val sg = newSaga(n, listOf(id), kid); volverSaga = null; screen = Screen.Saga(sg.id) },
+                onDismiss = { sagaAdd = null }, kind = ak)
+        }
+        escribiendo?.let { (dia, nota, sobre0) ->
+            val todas = remember(games, plays, books, bplays, extra, extraPlays) {
+                myKinds.flatMap { k -> playsOf(k).map { RefFicha(refDe(k.id, it.id), k, it.name, it.cover) } + gamesOf(k).map { RefFicha(refDe(k.id, it.id), k, it.name, it.cover) } }.distinctBy { it.ref }
+            }
+            // Primero lo de ese día (lo que terminaste, empezaste, apuntaste o leíste) y lo que llevas entre manos
+            val propuestas = remember(dia, todas) {
+                val leidoEse = Hermanas.leidoPorDia(ctx)[dia].orEmpty().filterValues { it >= 60_000L }.keys
+                val ese = myKinds.flatMap { k ->
+                    playsOf(k).filter { pl -> pl.start == dia || pl.end == dia || pl.liveMemos.any { diaDe(it.t) == dia } || pl.entries.any { diaDe(it.time) == dia } || (k.isBook && pl.id in leidoEse) }.map { refDe(k.id, it.id) } +
+                        gamesOf(k).filter { g -> g.end == dia || g.start == dia || (k.isBook && g.id in leidoEse) }.map { refDe(k.id, it.id) }
+                }
+                val curso = myKinds.flatMap { k -> playsOf(k).filter { it.status == 1 }.map { k to it } }.sortedByDescending { it.second.activity }.map { refDe(it.first.id, it.second.id) }
+                (ese + curso).distinct().mapNotNull { r -> todas.find { it.ref == r } }
+            }
+            EscribirDiario(
+                dia, nota, sobre0, propuestas, todas, partner?.name?.takeIf { store.paired && store.partnerUid.isNotBlank() },
+                elegirFoto = { cb -> pickPhoto(cb) },
+                onGuardar = { n ->
+                    setNotas(notas.filter { it.id != n.id } + n)
+                    if (Photos.isLocal(n.foto)) NubeSync.enqueue(ctx)
+                    if (nota == null) say("Guardado en tu diario")
+                },
+                onBorrar = { n ->
+                    val antes = notas
+                    setNotas(notas.filter { it.id != n.id })
+                    undoable("Entrada borrada") { setNotas(antes) }
+                },
+                onCerrar = { escribiendo = null }
+            )
+        }
+        if (avisoDiario) AvisoDiarioDialogo(store.avisoDiario, onElegir = { h ->
+            store.avisoDiario = h
+            DiarioAviso.programa(ctx)
+            if (h >= 0 && android.os.Build.VERSION.SDK_INT >= 33 && ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                perm.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            say(if (h >= 0) "Te lo recordaré a las $h:00 si ese día no has escrito" else "Sin recordatorio")
+            avisoDiario = false
+        }) { avisoDiario = false }
+        // Una versión nueva descargada que no puede instalarse sola: se pregunta (Android pedirá su confirmación)
+        var luego by remember(Actualizador.nueva?.nombre) { mutableStateOf(false) }
+        Actualizador.nueva?.takeIf { !it.silenciosa && !luego }?.let { n ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { luego = true },
+                title = { Text("Azabache ${n.nombre.removePrefix("Azabache-").removeSuffix(".apk")}", fontFamily = Display) },
+                text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Azabache instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.") },
+                confirmButton = { androidx.compose.material3.TextButton({
+                    luego = true
+                    if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
+                    else runCatching { Actualizador.instala(ctx, n) }.onFailure { say("No se pudo instalar: ${it.message}") }
+                }) { Text(if (Actualizador.faltaPermiso) "Permitir" else "Actualizar ahora") } },
+                dismissButton = { androidx.compose.material3.TextButton({ luego = true }) { Text("Luego") } },
+                containerColor = Paper, shape = shp(if (Skin.revista) 4.dp else 24.dp)
+            )
+        }
+        val mf = memoFor
+        if (mf != null) {
+            MemoDialog(
+                "Apunte · ${mf.first.name}", canShot = false, presetShot = mf.second,
+                onSave = { t, w -> memoFor = null; saveMemo(mf.first, t, w, mf.second) },
+                onDismiss = { memoFor = null }
+            )
+        }
+
+        if (kindNew || kindEdit != null) {
+            val ke = kindEdit
+            KindDialog(
+                ke, if (ke == null) 0 else gamesOf(ke).size + playsOf(ke).size,
+                onSave = { t, cr, slots, pr, col, src ->
+                    if (ke == null) {
+                        val nk = customKind(store.nextKindId(), t, cr, pr, col, src)
+                        setKinds(kinds + nk)
+                        extra = extra + (nk.id to emptyList())
+                        extraPlays = extraPlays + (nk.id to emptyList())
+                        say("Categoría «${nk.title}» creada")
+                    } else {
+                        val nk = customKind(ke.id, t, cr, pr, col, src)
+                        // Las notas siguen a su criterio aunque se borren o se añadan otros.
+                        if (slots != (0 until ke.crit).toList()) {
+                            setGames(nk, gamesOf(ke).map { it.withScores(remapScores(it.scores(), slots)) })
+                            setPlays(nk, playsOf(ke).map { p -> p.copy(entries = p.entries.map { e -> e.withScores(remapScores(e.scores(), slots)) }) })
+                        }
+                        setKinds(kinds.map { if (it.id == ke.id) nk else it })
+                    }
+                    syncTick++
+                    kindNew = false; kindEdit = null
+                },
+                onDelete = if (ke == null) null else ({
+                    store.deleteKind(ke.id)
+                    kinds = store.kinds
+                    Mode.kinds = kinds
+                    extra = extra - ke.id
+                    extraPlays = extraPlays - ke.id
+                    if (section == ke.id) section = -1
+                    syncTick++
+                    kindNew = false; kindEdit = null
+                    say("Categoría borrada")
+                }),
+                onDismiss = { kindNew = false; kindEdit = null }
+            )
+        }
+
+        // Revista: una franja de papel bajo la hora y la batería, para que lo que se desplaza no pase por debajo
+        if (Skin.revista) Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).then(Modifier.drawBehind { drawRect(Paper) }))
+        // Con el dock a la vista, los avisos salen por encima de él (no lo tapan)
+        val snackPad = 12.dp
+        SnackbarHost(
+            snack,
+            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = snackPad)
+        ) { data ->
+            Snackbar(
+                data, shape = shp(18.dp),
+                containerColor = Charcoal, contentColor = Paper, actionColor = GoldOnInk, dismissActionContentColor = Crudo
+            )
+        }
+    }
+    }
+}

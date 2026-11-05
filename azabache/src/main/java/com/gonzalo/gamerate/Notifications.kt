@@ -1,0 +1,251 @@
+package com.gonzalo.gamerate
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import java.util.concurrent.TimeUnit
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+
+
+/** Comprueba cada media hora (aprox.) si tu pareja tiene novedades. */
+object PartnerWatch {
+    fun schedule(ctx: Context) {
+        val req = PeriodicWorkRequestBuilder<PartnerWorker>(30, TimeUnit.MINUTES)
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("partner", ExistingPeriodicWorkPolicy.KEEP, req)
+    }
+
+    fun cancel(ctx: Context) {
+        WorkManager.getInstance(ctx).cancelUniqueWork("partner")
+    }
+}
+
+class PartnerWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
+    override suspend fun doWork(): Result {
+        val app = applicationContext
+        val store = Store(app)
+        if (!store.paired || !store.notifyPartner) return Result.success()
+        val p = try { Couple.pull(store) } catch (e: Exception) { return Result.retry() } ?: return Result.success()
+        val news = Couple.news(store, p)
+        Couple.markSeen(store, p)
+        if (news.isEmpty()) return Result.success()
+
+        val nm = app.getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(
+            NotificationChannel("partner", "Novedades de tu pareja", NotificationManager.IMPORTANCE_DEFAULT)
+        )
+        val intent = Intent(app, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("partner", true)
+        }
+        val pi = PendingIntent.getActivity(app, 2002, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val title = if (news.size == 1) "♥ ${p.name}" else "♥ ${p.name} · ${news.size} novedades"
+        val style = Notification.InboxStyle()
+        news.take(6).forEach { style.addLine(it) }
+        val n = Notification.Builder(app, "partner")
+            .setSmallIcon(android.R.drawable.star_on)
+            .setContentTitle(title)
+            .setContentText(news.first())
+            .setStyle(style)
+            .setContentIntent(pi)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(2002, n)
+        return Result.success()
+    }
+}
+
+/**
+ * Subida a la nube en segundo plano: se programa al salir de la app para que lo último quede guardado
+ * aunque la cierres al momento o no tengas conexión (Android la hace en cuanto haya internet).
+ */
+object CloudSave {
+    fun enqueue(ctx: Context) {
+        val req = androidx.work.OneTimeWorkRequestBuilder<CloudWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+        WorkManager.getInstance(ctx).enqueueUniqueWork("nube", androidx.work.ExistingWorkPolicy.REPLACE, req)
+    }
+}
+
+class CloudWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
+    override suspend fun doWork(): Result {
+        val store = Store(applicationContext)
+        var retry = false
+        if (store.paired && store.pendiente) {
+            try { Couple.push(store) } catch (e: Exception) { retry = true }
+        }
+        if (store.driveUri.isNotBlank()) DriveBackup.save(applicationContext, store)
+        return if (retry && runAttemptCount < 5) Result.retry() else Result.success()
+    }
+}
+
+/**
+ * Lo que quedó de versiones antiguas (el aviso de las sesiones y el de las partidas para valorar, ya quitados):
+ * sus tareas programadas y sus canales de notificación se borran del móvil.
+ */
+object Limpieza {
+    fun antiguas(ctx: Context) {
+        val wm = WorkManager.getInstance(ctx)
+        wm.cancelUniqueWork("session")
+        wm.cancelUniqueWork("suite")
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        nm.deleteNotificationChannel("session")
+        nm.deleteNotificationChannel("partes")
+    }
+}
+
+/**
+ * El objetivo de lectura del día: a la hora que elijas, si aún no has leído los minutos que te propusiste, un aviso
+ * con lo que llevas y el libro por el que vas (tocarlo lo abre en el lector, en tu página).
+ */
+object LecturaAviso {
+    fun programa(ctx: Context) { runCatching { programaYa(ctx) } }
+
+    private fun programaYa(ctx: Context) {
+        val st = Store(ctx)
+        val h = st.avisoLectura
+        val wm = WorkManager.getInstance(ctx)
+        if (h !in 0..23 || st.metaLectura <= 0) { wm.cancelUniqueWork("lectura"); return }
+        val ahora = LocalDateTime.now()
+        var sig = ahora.toLocalDate().atTime(h, 0)
+        if (!sig.isAfter(ahora)) sig = sig.plusDays(1)
+        val req = PeriodicWorkRequestBuilder<LecturaWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(Duration.between(ahora, sig).toMinutes().coerceAtLeast(1), TimeUnit.MINUTES)
+            .addTag("h$h")
+            .build()
+        wm.enqueueUniquePeriodicWork("lectura", ExistingPeriodicWorkPolicy.UPDATE, req)
+    }
+
+    /** Lo leído hoy (ms, todos tus libros). */
+    fun hoy(ctx: Context): Long = Hermanas.leidoPorDia(ctx)[LocalDate.now().toEpochDay()]?.values?.sum() ?: 0L
+
+    /**
+     * El libro que leíste por última vez según lo que Marfil sube (el día más reciente con lectura; si hubo varios, el que más rato):
+     * id de su ficha aquí y lo que llevas (0–1, lo que Marfil subió con su biblioteca; 0 si no se sabe). Un libro que aquí ya consta
+     * como terminado no se propone.
+     */
+    fun ultimo(ctx: Context): Pair<Long, Double>? = ultimoDe(Hermanas.leidoPorDia(ctx), Store(ctx).load(BOOKS.id).map { it.id }.toSet())?.let { it to (Hermanas.avanceMarfil(ctx, it)?.toDouble() ?: 0.0) }
+
+    /** [dias]: día → (ficha → ms leídos); [terminados]: fichas ya valoradas (no se proponen). Sin móvil: se prueba. */
+    fun ultimoDe(dias: Map<Long, Map<Long, Long>>, terminados: Set<Long>): Long? {
+        for (dia in dias.keys.sortedDescending()) {
+            val id = dias[dia]!!.filter { (id, ms) -> ms > 0 && id !in terminados }.maxByOrNull { it.value }?.key ?: continue
+            return id
+        }
+        return null
+    }
+
+    /** El aviso, si aún no has cumplido el objetivo de hoy (si ya lo cumpliste, nada). */
+    fun avisa(ctx: Context): Boolean {
+        val st = Store(ctx)
+        val meta = st.metaLectura
+        if (meta <= 0) return false
+        val min = hoy(ctx) / 60_000L
+        if (min >= meta) return false
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(NotificationChannel("lectura", "Objetivo de lectura", NotificationManager.IMPORTANCE_DEFAULT))
+        val u = ultimo(ctx)
+        val nombre = u?.let { (id, _) -> st.loadPlays(BOOKS.id).find { it.id == id }?.name ?: st.load(BOOKS.id).find { it.id == id }?.name }
+        // Tocar el aviso abre Marfil en la ficha de ese libro (si está en el móvil); si no, Azabache
+        val intent = ctx.packageManager.getLaunchIntentForPackage(Hermanas.PAQ_MARFIL)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            ?.also { i -> u?.first?.let { id -> Hermanas.enHermana(ctx, "marfil", id)?.let { i.putExtra("clave", it) } } }
+            ?: Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val pi = PendingIntent.getActivity(ctx, 2003, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val titulo = if (min < 1) "Hoy aún no has leído" else "Hoy llevas $min de $meta min de lectura"
+        val texto = if (nombre != null) "Sigue con «$nombre»" + (u.second.takeIf { it > 0.005 }?.let { " · vas por el ${(it * 100).toInt()} %" } ?: "")
+            else "Tu objetivo: $meta min al día"
+        val n = Notification.Builder(ctx, "lectura")
+            .setSmallIcon(android.R.drawable.ic_menu_agenda)
+            .setContentTitle(titulo)
+            .setContentText(texto)
+            .setContentIntent(pi)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(2003, n)
+        return true
+    }
+}
+
+class LecturaWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
+    override suspend fun doWork(): Result {
+        runCatching { LecturaAviso.avisa(applicationContext) }
+        return Result.success()
+    }
+}
+
+/**
+ * El recordatorio del diario: a la hora que elijas, si ese día aún no has escrito nada, un aviso con lo que has hecho
+ * (lo leído y lo jugado en el PC) que abre el editor de hoy.
+ */
+object DiarioAviso {
+    fun programa(ctx: Context) { runCatching { programaYa(ctx) } }
+
+    private fun programaYa(ctx: Context) {
+        val h = Store(ctx).avisoDiario
+        val wm = WorkManager.getInstance(ctx)
+        if (h !in 0..23) { wm.cancelUniqueWork("diario"); return }
+        val ahora = LocalDateTime.now()
+        var sig = ahora.toLocalDate().atTime(h, 0)
+        if (!sig.isAfter(ahora)) sig = sig.plusDays(1)
+        val req = PeriodicWorkRequestBuilder<DiarioWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(Duration.between(ahora, sig).toMinutes().coerceAtLeast(1), TimeUnit.MINUTES)
+            .addTag("h$h")
+            .build()
+        wm.enqueueUniquePeriodicWork("diario", ExistingPeriodicWorkPolicy.UPDATE, req)
+    }
+
+    /** «Hoy: 40 min leyendo · 2 h jugando» (vacío si hoy no hay nada). */
+    fun loDeHoy(ctx: Context, st: Store = Store(ctx)): String {
+        val hoy = LocalDate.now().toEpochDay()
+        val leido = LecturaAviso.hoy(ctx)
+        val jugado = runCatching { Hermanas.jugadoPorDia(ctx)[hoy]?.values?.sum() ?: 0L }.getOrDefault(0L)
+        val p = ArrayList<String>()
+        if (leido >= 60_000L) p += "${readTime((leido + 30_000L) / 60_000L)} leyendo"
+        if (jugado >= 60_000L) p += "${readTime((jugado + 30_000L) / 60_000L)} jugando"
+        return p.joinToString(" · ")
+    }
+
+    /** El aviso, si hoy aún no has escrito en el diario. */
+    fun avisa(ctx: Context): Boolean {
+        val st = Store(ctx)
+        if (st.avisoDiario !in 0..23) return false
+        val hoy = LocalDate.now().toEpochDay()
+        if (st.loadDiario().any { it.dia == hoy }) return false
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(NotificationChannel("diario", "Recordatorio del diario", NotificationManager.IMPORTANCE_DEFAULT))
+        val intent = Intent(ctx, MainActivity::class.java).putExtra("go", "escribir").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val pi = PendingIntent.getActivity(ctx, 2004, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val hecho = loDeHoy(ctx, st)
+        val n = Notification.Builder(ctx, "diario")
+            .setSmallIcon(android.R.drawable.ic_menu_edit)
+            .setContentTitle("¿Qué tal hoy?")
+            .setContentText(if (hecho.isNotBlank()) "Hoy: $hecho. Escríbelo en tu diario." else "Escribe un par de líneas en tu diario.")
+            .setContentIntent(pi)
+            .setAutoCancel(true)
+            .build()
+        nm.notify(2004, n)
+        return true
+    }
+}
+
+class DiarioWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
+    override suspend fun doWork(): Result {
+        runCatching { DiarioAviso.avisa(applicationContext) }
+        return Result.success()
+    }
+}
