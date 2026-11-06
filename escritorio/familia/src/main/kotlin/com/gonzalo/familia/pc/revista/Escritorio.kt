@@ -94,7 +94,7 @@ fun Lateral(nombre: String, entradas: List<Entrada>, sel: Int, modifier: Modifie
     }
 }
 
-/** Las cuatro apps de la familia (las instaladas en este ordenador), con la de ahora marcada: como el cambio entre hermanas del móvil. */
+/** Las apps de la familia (las instaladas en este ordenador), con la de ahora marcada: como el cambio entre hermanas del móvil. */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun Hermanas(actual: String, modifier: Modifier = Modifier) {

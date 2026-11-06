@@ -12,7 +12,7 @@ import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
 
 /**
- * Lo común de las versiones de escritorio: el llavero, lo cifrado, entrar una vez para las cuatro apps (con la cuenta de verdad: el
+ * Lo común de las versiones de escritorio: el llavero, lo cifrado, entrar una vez para todas las apps (con la cuenta de verdad: el
  * emulador de Firebase con las reglas del repositorio), las portadas con el mismo hash y el actualizador.
  */
 class EscritorioTest {
@@ -243,7 +243,7 @@ class EscritorioTest {
         // Mac: <App>.app al lado
         val aplicaciones = File(tmp.root, "Applications").also { File(it, "Hiedra.app/Contents").mkdirs(); File(it, "Marfil.app/Contents").mkdirs() }
         assertEquals(File(aplicaciones, "Marfil.app"), HermanasPc.donde("marfil", File(aplicaciones, "Hiedra.app"), Sitio.Sistema.MAC, casa))
-        assertEquals(listOf("azabache", "cobalto", "hiedra", "marfil"), HermanasPc.todas.map { it.first })
+        assertEquals(listOf("azabache", "cobalto", "hiedra", "marfil", "mostaza"), HermanasPc.todas.map { it.first })
     }
 
     /**

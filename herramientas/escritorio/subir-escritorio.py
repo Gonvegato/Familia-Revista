@@ -48,7 +48,7 @@ def carpeta_privada(d):
 def subir(ruta):
     nombre = os.path.basename(ruta)
     # Los de escritorio llevan su sistema en el nombre: los actualizadores de Android (solo «<App>-<versión>.apk») no los ven nunca
-    if not re.fullmatch(r"(Azabache|Cobalto|Hiedra|Marfil)-\d+(\.\d+)*-(mac\.dmg|linux\.deb|linux\.tar\.gz)", nombre):
+    if not re.fullmatch(r"(Azabache|Cobalto|Hiedra|Marfil|Mostaza)-\d+(\.\d+)*-(mac\.dmg|linux\.deb|linux\.tar\.gz)", nombre):
         raise SystemExit("El archivo debe llamarse <App>-<versión>-mac.dmg, -linux.deb o -linux.tar.gz")
     datos = open(ruta, "rb").read()
     d = kdrive()

@@ -127,7 +127,7 @@ private fun ventanaDeLaFamilia(
             window.addWindowFocusListener(oyente)
             onDispose { window.removeWindowFocusListener(oyente) }
         }
-        // (el menú del botón derecho de los textos, en español en las cuatro)
+        // (el menú del botón derecho de los textos, en español en todas)
         CompositionLocalProvider(androidx.compose.ui.platform.LocalLocalization provides MenuEnEspanol) { TemaFamilia {
             TextoAireado {
                 Column(Modifier.fillMaxSize().background(Paper)) {
@@ -187,7 +187,7 @@ private fun guardaVentana(app: String, max: Boolean, p: WindowPosition, s: DpSiz
     runCatching { archivoVentana(app).writeText(Json.escribe(m)) }
 }
 
-/** Entrar en la cuenta de la familia (la misma de las apps del móvil). Una vez: las otras tres de este ordenador entran solas. */
+/** Entrar en la cuenta de la familia (la misma de las apps del móvil). Una vez: las demás de este ordenador entran solas. */
 @Composable
 fun PantallaEntrar(titulo: String) {
     var usuario by remember { mutableStateOf("") }
@@ -212,7 +212,7 @@ fun PantallaEntrar(titulo: String) {
             Antetitulo("La cuenta de la familia")
             Spacer(Modifier.height(10.dp))
             Cuerpo("La misma que en el móvil. Todo lo tuyo está en la cuenta: lo que hagas aquí lo verás en tus otros dispositivos y en tus otras apps. " +
-                "Entra una vez: Azabache, Cobalto, Hiedra y Marfil de este ordenador entran solas.", tam = 15)
+                "Entra una vez: Azabache, Cobalto, Hiedra, Marfil y Mostaza de este ordenador entran solas.", tam = 15)
             Spacer(Modifier.height(22.dp))
             OutlinedTextField(usuario, { usuario = it }, label = { Text("Usuario") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next))
@@ -229,7 +229,7 @@ fun PantallaEntrar(titulo: String) {
     }
 }
 
-/** Ajustes → Cuenta: quién eres, cómo va la sincronización y salir. Lo mismo en las cuatro apps. */
+/** Ajustes → Cuenta: quién eres, cómo va la sincronización y salir. Lo mismo en las cinco apps. */
 @Composable
 fun AjustesCuenta(app: String) {
     LaFamilia.cambios

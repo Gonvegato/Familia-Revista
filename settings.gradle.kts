@@ -17,5 +17,7 @@ if (!soloEscritorio) {
     // El motor de torrents de Mostaza (libtorrent4j): ver un torrent mientras se baja
     include(":torrent")
 }
-// Las versiones de escritorio (Linux y Mac), con Compose Multiplatform: lo común y las cuatro apps (ver docs/ESCRITORIO.md)
-include(":escritorio:json", ":escritorio:familia", ":escritorio:azabache", ":escritorio:cobalto", ":escritorio:marfil", ":escritorio:hiedra")
+// Las versiones de escritorio (Linux y Mac), con Compose Multiplatform: lo común y las cinco apps (ver docs/ESCRITORIO.md); y el motor
+// de torrents de Mostaza para el ordenador (los mismos archivos que el del móvil)
+include(":escritorio:json", ":escritorio:familia", ":escritorio:azabache", ":escritorio:cobalto", ":escritorio:marfil", ":escritorio:hiedra", ":escritorio:mostaza")
+include(":escritorio:torrent")

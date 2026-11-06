@@ -22,13 +22,13 @@ import javax.swing.SwingUtilities
  *
  *  - Mientras la app está abierta se escucha la cuenta en directo (solo los sellos: unos bytes) y lo que cambies sube al momento.
  *  - Al cerrar la ventana se sube lo que falte (la cola está en disco: si no hay red, sube la próxima vez que abras cualquier día).
- *  - Entrar una vez: la sesión (nunca la contraseña) se guarda en el llavero del sistema y la leen las otras tres apps de este
+ *  - Entrar una vez: la sesión (nunca la contraseña) se guarda en el llavero del sistema y la leen las otras apps de este
  *    usuario, que entran solas.
  *  - [cambios] cambia con cada cambio de la cuenta: leerlo desde Compose repinta.
  */
 object LaFamilia {
-    /** Las cuatro apps de la familia en el ordenador. */
-    val APPS = listOf("azabache", "cobalto", "hiedra", "marfil")
+    /** Las cinco apps de la familia en el ordenador. */
+    val APPS = listOf("azabache", "cobalto", "hiedra", "marfil", "mostaza")
     private const val SESION_COMUN = "sesion"
 
     @Volatile private var f: Familia? = null
@@ -153,7 +153,7 @@ object LaFamilia {
         return true
     }
 
-    /** Entra con usuario y contraseña (bloquea: llámalo fuera del hilo de la pantalla). Las otras tres apps entran solas. */
+    /** Entra con usuario y contraseña (bloquea: llámalo fuera del hilo de la pantalla). Las otras apps de la familia entran solas. */
     fun entrar(usuario: String, contrasena: String) {
         val fam = familia
         val antes = fam.sesion.uid
