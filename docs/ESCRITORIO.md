@@ -58,7 +58,10 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   (arrastrar, unir con Mayús, la rueda acerca), **Línea**, **Cifras**, **Guía** (los 11 pasos), **Leer** (la obra entera como un libro),
   los **sprints** y el manuscrito en **cuadros** (como un corcho). Atajos: ⌘ en el Mac y Ctrl en Linux (⌘1–⌘8 cambian de pestaña; «?»
   en la barra los enseña todos). Lo que es solo de este ordenador (el tamaño de letra y la letra del editor, y el historial de sprints) se
-  guarda en `editor.json` y `sprints.json` de la carpeta de la app; las obras, fichas y notas, en la cuenta como siempre.
+  guarda en `editor.json` de la carpeta de la app; las obras, fichas y notas, en la cuenta como siempre.
+  Desde la 1.1.1, **los sprints van en la cuenta** (también el que está en marcha: lo empiezas en el móvil y aquí se ve y se para), y
+  Ajustes → Copias **saca una obra de cualquier copia como obra nueva** («… (copia)», sin tocar nada de lo que hay). Las copias de cada
+  15 minutos se hacen solo si algo ha cambiado (las de al cerrar y las de a mano, siempre).
 - **Marfil**: tus libros de la cuenta y leerlos por donde ibas en el móvil. EPUB (leído como XML, sin reordenar: la posición que guarda es
   el mismo EPUB CFI que guarda foliate en el móvil, y la del móvil se abre aquí en el mismo párrafo), PDF (Apache PDFBox) y cómics (CBZ).
   Lo leído (`lectura/<kid>`), «Leyendo» y «Leído» con su fecha (las reglas del móvil), el tiempo de este ordenador, el reto del año, los
@@ -82,17 +85,21 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   cada juego con JUGAR, buscar con teclado en pantalla, y un menú para suspender o apagar. Al abrir un juego, Hiedra se aparta y vuelve
   sola al cerrarlo. Nada entra en tu cuenta solo por estar instalado: entra al jugarlo o al añadirlo (y si lo habías quitado, vuelve el
   mismo, con lo suyo). El tiempo de Heroic, Lutris, emuladores y programas se cuenta mientras el juego está abierto; el de Steam, Steam.
+  Desde la 1.1.1, como «Tu PC», **hace capturas para el móvil** (de la pantalla entera, a su tamaño: con Spectacle en KDE, grim, GNOME o
+  `import` en X11; en el Mac, `screencapture`), guarda una copia en Imágenes/Hiedra/<juego> y el móvil la recibe tal cual; y **prepara
+  el streaming con Steam Link** (abre Steam si no lo está y el juego que pidas). Ajustes → Este PC dice si se permite cada cosa.
 
 ## Lo que todavía no hacen (para no engañar)
 
 - **Azabache**: las casillas de películas y series «Crítica», «Dónde verla» y «Progreso» (se colocan, pero se dibujan solo en el móvil), las
   imágenes de tus archivos en una maqueta, las reacciones de tu pareja y «Lo último de tu pareja», y los próximos episodios. («Descubrir»
   no está a propósito: se quitó de Azabache.)
-- **Cobalto**: compartir con tu pareja. El historial de sprints no viaja por la cuenta (tampoco en el móvil: cada dispositivo guarda el suyo).
+- **Cobalto**: compartir con tu pareja (la pareja ya está en la cuenta, pero en el ordenador aún no hay pantallas para ello).
 - **Marfil**: los subrayados de los PDF (el móvil los guarda sobre la capa de texto de pdf.js), leer en voz alta y traducir. Los ajustes
   que cambies en otro dispositivo se aplican aquí la próxima vez que abras el libro, no al momento. Otros formatos (MOBI, FB2, TXT): en
   el móvil.
-- **Hiedra**: capturas y streaming para el móvil (`shot`, `stream` responden que todavía no). En el Mac no se sabe con seguridad cuándo
+- **Hiedra**: las órdenes de equipo del móvil (traer Hiedra delante, volver a buscar, un aviso en pantalla, apagar) responden que todavía
+  no. En el Mac, sin el permiso de «Grabación de pantalla», la captura sale solo con el fondo (y no hay forma de notarlo). En el Mac no se sabe con seguridad cuándo
   se cierra un juego de Steam (Hiedra no vuelve sola). Sin carpeta de instalación de Heroic o Lutris, ese juego no cuenta tiempo. Los
   emuladores de Flatpak necesitan permiso para leer tus carpetas de ROMs (Flatseal). El mando se ha probado sin un mando de verdad.
 - Las letras de Google Fonts que se eligen en el móvil: aquí van las de la app (Atrio y Vitrina) en su lugar.
@@ -117,4 +124,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.1, Marfil 0.14.1, Cobalto 0.4.1, Azabache 1.6.1. De escritorio: Azabache 1.2.0; Cobalto, Hiedra y Marfil 1.1.0.
+Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.2. De escritorio: Azabache 1.2.0; Cobalto y Hiedra 1.1.1; Marfil 1.1.0.
