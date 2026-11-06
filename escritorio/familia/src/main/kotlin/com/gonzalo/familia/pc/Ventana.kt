@@ -39,14 +39,23 @@ import java.io.File
 /**
  * La ventana de una app de la familia en el ordenador: arranca la cuenta, sigue a la ventana (escucha en directo mientras está abierta,
  * sube lo pendiente al cerrar), recuerda su tamaño y su sitio, y si aún no has entrado en la cuenta enseña cómo entrar.
+ *
+ * [args]: lo que se le pasó al abrirla. Si ya había otra copia abierta, esa sale al frente y recibe [args] en [alPedirOtraVez] (así
+ * `Hiedra --sala` pone en la sala la que ya estaba abierta).
  */
-fun appDeLaFamilia(app: String, titulo: String, icono: Painter? = null, alIniciar: () -> Unit = {}, alCerrar: () -> Unit = {}, contenido: @Composable () -> Unit) {
+fun appDeLaFamilia(
+    app: String, titulo: String, icono: Painter? = null, alIniciar: () -> Unit = {}, alCerrar: () -> Unit = {},
+    args: Array<String> = emptyArray(), alPedirOtraVez: (List<String>) -> Unit = {}, contenido: @Composable () -> Unit
+) {
     // Una sola copia de cada app: si ya estaba abierta, sale al frente aquella y esta no abre nada
-    if (!Instancia.unica(Sitio.de(app))) return
-    ventanaDeLaFamilia(app, titulo, icono, alIniciar, alCerrar, contenido)
+    if (!Instancia.unica(Sitio.de(app), args.toList())) return
+    ventanaDeLaFamilia(app, titulo, icono, alIniciar, alCerrar, alPedirOtraVez, contenido)
 }
 
-private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alIniciar: () -> Unit, alCerrar: () -> Unit, contenido: @Composable () -> Unit) = application {
+private fun ventanaDeLaFamilia(
+    app: String, titulo: String, icono: Painter?, alIniciar: () -> Unit, alCerrar: () -> Unit,
+    alPedirOtraVez: (List<String>) -> Unit, contenido: @Composable () -> Unit
+) = application {
     remember { LaFamilia.inicia(app); Apariencia.inicia(app); runCatching { alIniciar() }; true }
     val guardada = remember { leeVentana(app) }
     val estado = rememberWindowState(
@@ -54,9 +63,13 @@ private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alI
         position = guardada["x"]?.let { WindowPosition(it.comoLong().toInt().dp, guardada["y"].comoLong().toInt().dp) } ?: WindowPosition.PlatformDefault,
         size = DpSize((guardada["w"]?.comoLong()?.toInt() ?: 1280).dp, (guardada["h"]?.comoLong()?.toInt() ?: 840).dp)
     )
+    // Lo que se guarda al cerrar: la ventana normal. A pantalla completa, la de antes de ponerla (si no, la próxima vez se abriría del
+    // tamaño de la pantalla, ya sin estar a pantalla completa)
+    var normal by remember { mutableStateOf(Triple(estado.placement == WindowPlacement.Maximized, estado.position, estado.size)) }
     // Cerrar (y, si había una versión nueva preparada, ponerla; con [reiniciar], volver a abrir la app ya nueva)
     fun cierra(reiniciar: Boolean = false) {
-        guardaVentana(app, estado.placement == WindowPlacement.Maximized, estado.position, estado.size)
+        val (max, sitio, tam) = if (estado.placement == WindowPlacement.Fullscreen) normal else Triple(estado.placement == WindowPlacement.Maximized, estado.position, estado.size)
+        guardaVentana(app, max, sitio, tam)
         runCatching { alCerrar() }
         LaFamilia.alCerrar()
         val programa = runCatching { Actualizador.ponLaPreparada(app) }.getOrNull()
@@ -79,6 +92,11 @@ private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alI
             } else false
         }
     ) {
+        LaunchedEffect(estado) {
+            snapshotFlow { Triple(estado.placement, estado.position, estado.size) }.collect { (pl, p, t) ->
+                if (pl != WindowPlacement.Fullscreen) normal = Triple(pl == WindowPlacement.Maximized, p, t)
+            }
+        }
         // (lo pide el atajo o una app: el modo concentración de Cobalto, el lector de Marfil, la sala de Hiedra…)
         LaunchedEffect(VentanaFamilia.pantallaCompleta) {
             val quiere = VentanaFamilia.pantallaCompleta
@@ -95,10 +113,11 @@ private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alI
         }
         DisposableEffect(Unit) {
             // Si otra copia de la app pide salir al frente (la abriste otra vez, o desde una hermana)
-            Instancia.alFrente = {
+            Instancia.alFrente = { pedido ->
                 java.awt.EventQueue.invokeLater {
                     if (window.extendedState and java.awt.Frame.ICONIFIED != 0) window.extendedState = window.extendedState and java.awt.Frame.ICONIFIED.inv()
                     window.isVisible = true; window.toFront(); window.requestFocus()
+                    runCatching { alPedirOtraVez(pedido) }
                 }
             }
             LaFamilia.alVerse()
@@ -108,7 +127,8 @@ private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alI
             window.addWindowFocusListener(oyente)
             onDispose { window.removeWindowFocusListener(oyente) }
         }
-        TemaFamilia {
+        // (el menú del botón derecho de los textos, en español en las cuatro)
+        CompositionLocalProvider(androidx.compose.ui.platform.LocalLocalization provides MenuEnEspanol) { TemaFamilia {
             TextoAireado {
                 Column(Modifier.fillMaxSize().background(Paper)) {
                     Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -117,8 +137,16 @@ private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alI
                     Actualizador.preparada?.let { p -> BandaVersionNueva(titulo, p.version) { cierra(reiniciar = true) } }
                 }
             }
-        }
+        } }
     }
+}
+
+/** Cortar, copiar, pegar y seleccionar todo, en el menú del botón derecho de los textos (si no, salen en inglés). */
+private object MenuEnEspanol : androidx.compose.ui.platform.PlatformLocalization {
+    override val copy = "Copiar"
+    override val cut = "Cortar"
+    override val paste = "Pegar"
+    override val selectAll = "Seleccionar todo"
 }
 
 /** La ventana de la app, para lo que las pantallas necesiten de ella (de momento, la pantalla completa). */

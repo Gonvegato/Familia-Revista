@@ -12,7 +12,8 @@ import com.gonzalo.familia.pc.Sitio
  *
  *  - `suite/live/<dispositivo>`: que está encendido y a qué se juega (cada minuto). Lleva `tiempo: true`: este PC cuenta él mismo su
  *    tiempo (en `tiempo/<juego>~<dispositivo>`), así el móvil no lo vuelve a contar.
- *  - `suite/lib/<dispositivo>`: su biblioteca (Steam y tus programas).
+ *  - `suite/lib/<dispositivo>`: su biblioteca (Steam, Heroic, Lutris, tus ROMs y tus programas; `s` dice de dónde, como en Atrio del PC:
+ *    `steam`, `heroic`, `lutris`, `emulators` o `local`).
  *  - `suite/cmd/<dispositivo>/<id>`: órdenes del móvil (`launch`: jugar a uno; `ping`); la respuesta, en `res`.
  */
 object TuPc {
@@ -34,7 +35,7 @@ object TuPc {
 
     /** La biblioteca de este PC tal como la lee el móvil (`k`, `n`, `c`, `lp`, `m`, `f`, `s`). Los minutos van a 0: las horas ya están en la cuenta. */
     fun biblioteca(): Map<String, Any?> = mapOf("name" to "Hiedra · ${Sitio.nombreEquipo}",
-        "games" to Pc.todos().map { j -> mapOf("k" to j.clave, "n" to j.nombre, "c" to j.portada, "lp" to 0L, "m" to 0L, "f" to 0L, "s" to if (j.steamId != null) "steam" else "local", "sg" to 0L) })
+        "games" to Pc.lista().map { j -> mapOf("k" to j.clave, "n" to j.nombre, "c" to j.portada.takeIf { it.startsWith("http") }.orEmpty(), "lp" to 0L, "m" to 0L, "f" to 0L, "s" to j.fuente.id, "sg" to 0L) })
 
     fun publica(on: Boolean = true) {
         runCatching { LaFamilia.db("PUT", "${base()}/live/${dev()}", Json.escribe(presencia(on)), "print=silent") }
@@ -48,7 +49,7 @@ object TuPc {
             val key = c["a"].comoMapa()["key"].comoTexto()
             val j = Pc.por(key)
             if (j == null) mapOf("ok" to false, "msg" to "Ese juego no está en ${Sitio.nombreEquipo}.")
-            else { val jid = Juegos.mete(j.clave, j.nombre, j.portada, jugando = true); mapOf("ok" to true, "msg" to Pc.juega(j, jid)) }
+            else { val jid = Juegos.mete(j, jugando = true); mapOf("ok" to true, "msg" to Pc.juega(j, jid)) }
         }
         else -> mapOf("ok" to false, "msg" to "Hiedra del ordenador no hace eso todavía (${c["op"].comoTexto()}).")
     }
@@ -72,6 +73,8 @@ object TuPc {
         Pc.alCambiarPartida = { Thread { publica() }.start() }
         Thread({ while (activo) { if (LaFamilia.dentro) { publica(); runCatching { mira() } }; try { Thread.sleep(60_000) } catch (_: InterruptedException) { break } } }, "hiedra-presencia").apply { isDaemon = true; start() }
         Thread({ try { Thread.sleep(5_000) } catch (_: Exception) {}; if (LaFamilia.dentro) publicaBiblioteca() }, "hiedra-biblioteca").apply { isDaemon = true; start() }
+        // Y otra vez cada vez que se vuelve a mirar lo de este ordenador (una ROM nueva, un juego instalado)
+        Pc.alMirar = { Thread { if (LaFamilia.dentro) publicaBiblioteca() }.start() }
         Thread({ LaFamilia.escuchaRuta({ "${base()}/cmd/${dev()}" }, { activo }) { _, _ -> runCatching { mira() } } }, "hiedra-ordenes").apply { isDaemon = true; start() }
     }
 

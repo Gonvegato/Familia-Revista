@@ -51,7 +51,7 @@ Type=Application
 Name=$APP
 GenericName=__GENERICO__
 Comment=__DESCRIPCION__
-Exec="$DESTINO/bin/$APP"
+Exec="$DESTINO/bin/$APP"${1:-}
 Icon=$DESTINO/lib/$APP.png
 Terminal=false
 Categories=__CATEGORIAS__
@@ -60,9 +60,12 @@ FIN
 }
 entrada > "$MENU"
 chmod 644 "$MENU"
+# Si ya se abría al entrar en la sesión, eso también se pone al día (al actualizarse sola, por ejemplo)
+if [ -f "$INICIO" ]; then AL_INICIAR=1; fi
 if [ "$AL_INICIAR" = 1 ]; then
   mkdir -p "$(dirname "$INICIO")"
-  entrada > "$INICIO"
+  # (al entrar en la sesión, con lo suyo de esta app: Hiedra se abre ya en la sala, para la tele y el mando)
+  entrada "__AL_INICIAR__" > "$INICIO"
   echo "X-GNOME-Autostart-enabled=true" >> "$INICIO"
 fi
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$DATOS/applications" >/dev/null 2>&1 || true
