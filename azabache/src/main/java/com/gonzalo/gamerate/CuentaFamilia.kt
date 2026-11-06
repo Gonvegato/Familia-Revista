@@ -292,6 +292,18 @@ object AzabacheNube {
         }
     }
 
+    /**
+     * Tu nombre, el que ve tu pareja: donde lo lee (`/users/<uid>/name`; antes se quedaba en el móvil). A tus otros dispositivos va con
+     * [AjustesEnLaCuenta.GENERAL]. Bloqueante (red).
+     */
+    fun subeNombre(c: Context, store: Store) {
+        val nombre = store.myName.trim(); val l = vistas(c)
+        val ses = LaFamilia.familia.sesion
+        if (nombre.isBlank() || !ses.dentro || nombre == l.getString("@nombre", null)) return
+        val r = com.gonzalo.familia.nucleo.RedJava().pedir("PUT", ses.url("/users/${ses.uid}/name", conPase = true), JSONObject.quote(nombre))
+        if (r.ok) l.edit().putString("@nombre", nombre).apply()
+    }
+
     private fun itemUpdated(o: JSONObject): Long = maxOf(o.optLong("updated", 0L), o.optLong("sv", 0L))
     private fun esLista(a: JSONArray): Boolean = a.length() > 0 && (0 until a.length()).all { (a.opt(it) as? JSONObject)?.has("id") == true }
 
@@ -299,6 +311,7 @@ object AzabacheNube {
     fun sube(c: Context, store: Store) {
         // El token de kDrive de este móvil (de antes) pasa una vez a la cuenta: así lo tienen las cuatro apps
         runCatching { KDrive.migraALaCuenta(c) }
+        runCatching { subeNombre(c, store) }
         val data = JSONObject(store.syncData())
         for (k in data.keys()) {
             val v = data.get(k)

@@ -293,7 +293,7 @@ fun InternetPicker(initialQuery: String, onPick: (String) -> Unit, onDismiss: ()
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf(initialQuery) }
-    val prefs = remember { ctx.getSharedPreferences("internet", Context.MODE_PRIVATE) }
+    val prefs = remember { EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.INTERNET) }
     var fuente by remember { mutableStateOf(Internet.fuente(prefs.getString("fuente", null))) }
     var web by remember { mutableStateOf<WebView?>(null) }
     var msg by remember { mutableStateOf("") }

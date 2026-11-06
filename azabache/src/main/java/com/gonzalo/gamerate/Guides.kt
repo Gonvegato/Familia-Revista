@@ -81,8 +81,8 @@ object Guides {
         return all.firstOrNull { it.sg > 0 && it.sg == id } ?: all.firstOrNull { normName(it.name) == normName(name) }
     }
 
-    // ---- Guías guardadas solo en el móvil (juegos que no están en ningún PC) ----
-    private fun prefs(ctx: Context) = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE)
+    // ---- Guías que guardas tú (juegos que no están en ningún PC): aquí y en tu cuenta ([AjustesEnLaCuenta.GENERAL], `guides_<id>`) ----
+    private fun prefs(ctx: Context) = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.GENERAL)
     fun local(ctx: Context, id: Long): List<Guide> = try {
         val a = JSONArray(prefs(ctx).getString("guides_$id", "[]"))
         (0 until a.length()).mapNotNull { a.optJSONObject(it) }.map { Guide(it.optString("n"), it.optString("u"), "movil") }

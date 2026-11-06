@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Tus ajustes viajan con la cuenta; la maqueta de cada ficha y el brillo del lector se quedan en cada dispositivo. */
+/** Tus ajustes viajan con la cuenta (también la letra del lector, como en Marfil); el brillo del lector se queda en cada dispositivo. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class AjustesSyncTest {
@@ -29,7 +29,7 @@ class AjustesSyncTest {
         val data = s.syncData()
         assertTrue("una maqueta que no se ha guardado desde la pantalla no viaja sola", !data.contains("\"j\""))
         assertTrue("el brillo no viaja", !data.contains("\"brightness\""))
-        assertTrue("la letra no viaja", !data.contains("\"size\":120"))
+        assertTrue("la letra sí viaja (como en Marfil)", data.contains("\"size\":120"))
 
         // La tablet: otra cosa, con su brillo y su maqueta; llega lo del móvil (más nuevo)
         val g = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE)
@@ -41,10 +41,10 @@ class AjustesSyncTest {
         assertEquals(true, g.getBoolean("skin_listcovers", false))
         assertEquals(2, g.getInt("theme31", 0))
         val l = JSONObject(ctx.getSharedPreferences("lector", Context.MODE_PRIVATE).getString("ajustes", "{}")!!)
-        assertEquals("negro", l.getString("theme")); assertEquals("la letra de la tablet se queda", 90, l.getInt("size"))
+        assertEquals("negro", l.getString("theme")); assertEquals("la letra del móvil llega a la tablet", 120, l.getInt("size"))
         assertEquals("el brillo de la tablet se queda", 0.8, l.getDouble("brightness"), 0.0)
         assertEquals("y en el libro, también", 0.8, BookFiles.state(ctx, 7).getJSONObject("settings").getDouble("brightness"), 0.0)
-        assertEquals("y su letra", 90, BookFiles.state(ctx, 7).getJSONObject("settings").getInt("size"))
+        assertEquals("y en el libro, la letra del móvil", 120, BookFiles.state(ctx, 7).getJSONObject("settings").getInt("size"))
         assertEquals("lo demás del libro sí viaja (este, hacia abajo)", "strip", BookFiles.state(ctx, 7).getJSONObject("settings").getString("pdfFlow"))
         assertEquals("la maqueta local de la tablet se queda", "TABLETA", ctx.getSharedPreferences("maqueta", Context.MODE_PRIVATE).getString("v:0:1", ""))
         // Un dispositivo nuevo que entra con tu cuenta (se queda con lo de la cuenta): también por dónde vas y los ajustes

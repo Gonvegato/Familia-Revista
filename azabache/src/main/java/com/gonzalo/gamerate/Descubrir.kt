@@ -146,7 +146,7 @@ object Quiz {
 
     /** Elige [n] preguntas variadas (un eje distinto cada vez, mientras se pueda) evitando las de las últimas rondas. */
     fun pick(ctx: Context, domain: Int, n: Int): List<QuizQ> {
-        val prefs = ctx.getSharedPreferences("descubrir", Context.MODE_PRIVATE)
+        val prefs = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.DESCUBRIR)
         val recentKey = "recent_$domain"
         val recent = prefs.getString(recentKey, "")!!.split(',').filter { it.isNotBlank() }
         val all = bank(ctx, domain).shuffled()
@@ -305,7 +305,7 @@ object Quiz {
 
     /** Ids de las «plataformas padre» de RAWG (PC, PlayStation…): se piden una vez y se guardan, no se dan por supuestos. */
     private fun parentPlatforms(ctx: Context, key: String): Map<String, Int> {
-        val prefs = ctx.getSharedPreferences("descubrir", Context.MODE_PRIVATE)
+        val prefs = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.DESCUBRIR)
         prefs.getString("rawg_parents", null)?.let { s ->
             runCatching { JSONObject(s).let { o -> o.keys().asSequence().associateWith { o.getInt(it) } } }.getOrNull()?.let { if (it.isNotEmpty()) return it }
         }
@@ -582,10 +582,10 @@ fun QuizScreen(domain: Int, store: Store, mine: Set<String>, partner: Partner?, 
     // El último test de tu pareja de este mismo tipo (si lo ha hecho)
     val theirRun = partner?.quizzes?.get(domain)
 
-    // Filtros de juegos (año y plataforma): se recuerdan para la próxima vez
-    val fprefs = remember { ctx.getSharedPreferences("descubrir", Context.MODE_PRIVATE) }
-    var fYears by remember { mutableStateOf(fprefs.getString("f_years", "")!!.split('-').mapNotNull { it.toIntOrNull() }.takeIf { it.size == 2 }?.let { it[0]..it[1] }) }
-    var fPlats by remember { mutableStateOf(fprefs.getString("f_plats", "")!!.split(',').filter { it.isNotBlank() }.toSet()) }
+    // Filtros de juegos (año y plataforma): se recuerdan para la próxima vez (y en tus otros dispositivos)
+    val fprefs = remember { EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.DESCUBRIR) }
+    var fYears by remember(EspejoCuenta.version) { mutableStateOf(fprefs.getString("f_years", "")!!.split('-').mapNotNull { it.toIntOrNull() }.takeIf { it.size == 2 }?.let { it[0]..it[1] }) }
+    var fPlats by remember(EspejoCuenta.version) { mutableStateOf(fprefs.getString("f_plats", "")!!.split(',').filter { it.isNotBlank() }.toSet()) }
     var searchN by remember { mutableStateOf(0) }
     fun search(t: Taste) {
         error = ""
