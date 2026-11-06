@@ -335,7 +335,7 @@ fun PantInicio(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: (Ti
     }
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre y lo de siempre (Buscar · + Añadir…)
     // (derivedStateOf: la portada entera no se vuelve a componer a cada píxel que se desliza, solo cuando la barra aparece o se va)
-    val plegada by remember { derivedStateOf { desplazado.value > umbral } }
+    val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
     BarraPlegada("Hiedra", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), acento = true) { alAnadir(null) } }
     }
 }
