@@ -224,3 +224,15 @@ fun NotaCasilla(t: String) = Text(t, color = Muted, fontFamily = Body, fontSize 
 @Composable
 fun AccionCasilla(t: String, onClick: () -> Unit) =
     Text("$t →", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, modifier = Modifier.clickable(onClick = onClick).padding(vertical = 4.dp))
+
+/**
+ * Una portada pequeña (en las listas): la imagen si la tiene; si no, su inicial en grande sobre arena, como en las listas del móvil
+ * (el título entero no cabe en 44 dp y salía «Ha d…»).
+ */
+@Composable
+fun MiniPortada(f: Ficha, modifier: Modifier = Modifier, deUid: String? = null) {
+    if (f.portada.isNotBlank() || f.portadaWeb.isNotBlank()) { PortadaCosa(f.portada, f.portadaWeb, f.nombre, modifier, deUid = deUid); return }
+    Box(modifier.aspectRatio(2f / 3f).background(Sand), contentAlignment = Alignment.Center) {
+        Text(f.nombre.trim().take(1).uppercase(), color = Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+    }
+}

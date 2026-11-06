@@ -68,7 +68,7 @@ fun Tarjeta(f: Ficha, k: Kind, modifier: Modifier = Modifier, deUid: String? = n
 @Composable
 fun FilaFicha(f: Ficha, k: Kind, sub: String, modifier: Modifier = Modifier, derecha: @Composable RowScope.() -> Unit = {}, onClick: () -> Unit) {
     Row(modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.width(44.dp), pie = "")
+        MiniPortada(f, Modifier.width(44.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(f.nombre, color = Charcoal, fontFamily = Display, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)

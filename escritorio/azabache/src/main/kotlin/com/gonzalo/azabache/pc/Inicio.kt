@@ -123,7 +123,7 @@ fun PantInicio(nav: Nav) {
                     ahora.take(8).forEachIndexed { i, (k, f) ->
                         Row(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("%02d".format(i + 1), color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.width(60.dp))
-                            PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.width(44.dp))
+                            MiniPortada(f, Modifier.width(44.dp))
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(f.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -138,7 +138,7 @@ fun PantInicio(nav: Nav) {
                     mejores.forEach { (k, f) ->
                         Row(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("${f.general}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 58.sp, lineHeight = 58.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(120.dp))
-                            PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.width(44.dp))
+                            MiniPortada(f, Modifier.width(44.dp))
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(f.nombre, color = Charcoal, fontFamily = Display, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)

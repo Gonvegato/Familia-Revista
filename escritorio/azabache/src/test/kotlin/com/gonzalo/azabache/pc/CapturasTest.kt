@@ -101,6 +101,7 @@ class CapturasTest {
         captura("azabache-portada", Pantalla.Inicio)
         captura("azabache-juegos", Pantalla.Lista(GAMES.id))
         captura("azabache-libros-oscuro", Pantalla.Lista(BOOKS.id), oscuro = true)
+        ListaPrefs.indice = true; captura("azabache-juegos-indice", Pantalla.Lista(GAMES.id)); ListaPrefs.indice = false
         captura("azabache-ficha", Pantalla.Detalle(GAMES.id, 1L, Pantalla.Lista(GAMES.id)))
         captura("azabache-ficha-sin-valorar", Pantalla.Detalle(BOOKS.id, 12L, Pantalla.Lista(BOOKS.id)))
         captura("azabache-ficha-jugando", Pantalla.Detalle(GAMES.id, 2L, Pantalla.Lista(GAMES.id)))

@@ -27,7 +27,7 @@ fun PantLista(k: Kind, nav: Nav) {
     var orden by remember(k.id) { mutableStateOf(0) }
     var anadir by remember(k.id) { mutableStateOf(false) }
     // Portadas (la cuadrícula) o índice (como la biblioteca del móvil: el título y la nota en cifras grandes, a dos columnas)
-    var indice by remember { mutableStateOf(false) }
+    val indice = ListaPrefs.indice
     val fichas = Cuenta.fichas(k.id)
     val grupos = listOf(fichas.filter { it.valorada }, fichas.filter { !it.valorada && it.estado == 1 }, fichas.filter { !it.valorada && it.estado == 0 }, fichas.filter { !it.valorada && it.estado == 2 })
     val nombres = listOf(k.doneWord, k.statuses[1], k.statuses[0] + "s", k.statuses[2] + "s")
@@ -62,7 +62,7 @@ fun PantLista(k: Kind, nav: Nav) {
                         OutlinedTextField(buscar, { buscar = it }, Modifier.width(360.dp), placeholder = { Text("Buscar en ${k.title.lowercase()}") }, singleLine = true)
                         Spacer(Modifier.width(24.dp))
                         Box(Modifier.weight(1f)) { FiltrosRevista(listOf("Recientes", "Nota", "Nombre"), orden) { orden = it } }
-                        FiltrosRevista(listOf("Portadas", "Índice"), if (indice) 1 else 0, Modifier.width(220.dp)) { indice = it == 1 }
+                        FiltrosRevista(listOf("Portadas", "Índice"), if (indice) 1 else 0, Modifier.width(220.dp)) { ListaPrefs.indice = it == 1 }
                     }
                     Spacer(Modifier.height(6.dp))
                     if (vistas.isEmpty()) Vacio(if (q.isNotEmpty()) "Nada con «$buscar»" else "Aún no hay nada aquí", if (q.isEmpty()) "Añade uno con «+ Añadir» o desde Hiedra y Marfil." else "")
@@ -81,12 +81,15 @@ fun PantLista(k: Kind, nav: Nav) {
     if (anadir) DialogoAnadir(k, pestana, nav) { anadir = false }
 }
 
+/** Lo que recuerda la biblioteca mientras la app está abierta: si se ve en portadas o en índice (se elige una vez para todas). */
+object ListaPrefs { var indice by mutableStateOf(false) }
+
 /** Una entrada del índice: la portada pequeña, el título en grande, quién lo hizo y la nota en cifras enormes (o «Sin valorar»). */
 @Composable
 fun EntradaIndice(f: Ficha, k: Kind, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(modifier) {
         Row(Modifier.fillMaxWidth().weight(1f).clickable(onClick = onClick).padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.width(48.dp))
+            MiniPortada(f, Modifier.width(48.dp))
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 FitTitle(f.nombre, 26.sp, 28.sp, letterSpacing = (-0.5).sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
