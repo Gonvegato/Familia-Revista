@@ -64,10 +64,10 @@ class CapturasTest {
         e.nuevo(Escritos.T_REL, obra.id) { put("a", lucas.id); put("b", llave.id); put("titulo", "la esconde"); put("flecha", 1); put("color", "#B0102F") }
         e.nuevo(Escritos.T_NOTA, obra.id) { put("tipo", "idea"); put("titulo", "El olor dulce"); put("color", "#C9A227"); put("fija", 1); put("texto", "Es el perfume de la abuela: lo descubre en el capítulo 9.\n\nTiene que salir **tres veces** antes, sin que se note.") }
         e.nuevo(Escritos.T_NOTA, obra.id) { put("tipo", "investigacion"); put("titulo", "Cerraduras de los años 80"); put("texto", "Las de cilindro europeo llegan a España a finales de los 80. Una cerradura nueva brilla: latón sin oxidar.") }
-        val h1 = e.nuevo(Escritos.T_HITO, obra.id) { put("titulo", "Marta se va de casa"); put("cuando", "Verano de 1998"); put("nota", "Sin despedirse.") }
-        e.nuevo(Escritos.T_HITO, obra.id) { put("titulo", "Muere la abuela"); put("cuando", "Marzo de 2018"); put("eid", s1.id) }
-        val rama = e.nuevo(Escritos.T_RAMA, obra.id) { put("titulo", "Lo que hizo Lucas"); put("color", "#7B5EA7"); put("desde", h1.orden) }
-        e.nuevo(Escritos.T_HITO, obra.id) { put("titulo", "Lucas cambia la cerradura"); put("cuando", "Otoño de 2018"); put("rama", rama.id); put("orden", h1.orden + 500) }
+        e.nuevo(Escritos.T_HITO, obra.id) { put("titulo", "Marta se va de casa"); put("cuando", "Verano de 1998"); put("nota", "Sin despedirse.") }
+        val h2 = e.nuevo(Escritos.T_HITO, obra.id) { put("titulo", "Muere la abuela"); put("cuando", "Marzo de 2018"); put("eid", s1.id) }
+        val rama = e.nuevo(Escritos.T_RAMA, obra.id) { put("titulo", "Lo que hizo Lucas"); put("color", "#7B5EA7"); put("desde", h2.orden); put("texto", "Mientras Marta no estaba.") }
+        e.nuevo(Escritos.T_HITO, obra.id) { put("titulo", "Lucas cambia la cerradura"); put("cuando", "Otoño de 2018"); put("rama", rama.id); put("orden", h2.orden + 500); put("nota", "Nadie lo sabe.") }
         e.nuevo(Escritos.T_HITO, obra.id) { put("titulo", "Marta vuelve"); put("cuando", "Día 1"); put("eid", s2.id) }
         val hoy = Escritos.hoy()
         listOf(420, 0, 960, 1210, 640, 300, 880, 1500, 0, 720, 1020, 560, 830, 760).forEachIndexed { i, n ->
@@ -92,12 +92,26 @@ class CapturasTest {
             escena.close()
             Editor.guardaYa(); PrefsEditor.reiniciaParaPruebas(); Estudio.reiniciaParaPruebas()
         }
-        fun ImageComposeScene.clic(x: Float, y: Float) {
+        var reloj = 10_000_000_000L
+        fun ImageComposeScene.espera(n: Int = 3) { repeat(n) { Thread.sleep(150); reloj += 200_000_000L; render(reloj) } }
+        fun ImageComposeScene.clic(x: Float, y: Float, derecho: Boolean = false) {
             sendPointerEvent(PointerEventType.Move, Offset(x, y))
-            sendPointerEvent(PointerEventType.Press, Offset(x, y), buttons = PointerButtons(isPrimaryPressed = true), button = PointerButton.Primary)
-            sendPointerEvent(PointerEventType.Release, Offset(x, y), button = PointerButton.Primary)
-            repeat(3) { Thread.sleep(100); render(System.nanoTime()) }
+            val b = if (derecho) PointerButtons(isSecondaryPressed = true) else PointerButtons(isPrimaryPressed = true)
+            val boton = if (derecho) PointerButton.Secondary else PointerButton.Primary
+            sendPointerEvent(PointerEventType.Press, Offset(x, y), buttons = b, button = boton)
+            sendPointerEvent(PointerEventType.Release, Offset(x, y), button = boton)
+            espera()
         }
+        fun ImageComposeScene.doble(x: Float, y: Float) {
+            sendPointerEvent(PointerEventType.Move, Offset(x, y))
+            repeat(2) {
+                sendPointerEvent(PointerEventType.Press, Offset(x, y), buttons = PointerButtons(isPrimaryPressed = true), button = PointerButton.Primary)
+                sendPointerEvent(PointerEventType.Release, Offset(x, y), button = PointerButton.Primary)
+                Thread.sleep(60)
+            }
+            espera(4)
+        }
+        fun ImageComposeScene.encima(x: Float, y: Float) { sendPointerEvent(PointerEventType.Move, Offset(x - 4, y)); espera(1); sendPointerEvent(PointerEventType.Move, Offset(x, y)); espera(5) }
         captura("cobalto-portada", Pantalla.Portada)
         captura("cobalto-obra", Pantalla.Obra(obra.id, s2.id))
         captura("cobalto-obra-oscuro", Pantalla.Obra(obra.id, s2.id), oscuro = true)
@@ -106,8 +120,21 @@ class CapturasTest {
         captura("cobalto-editor-buscar", Pantalla.Obra(obra.id, s2.id), antes = { Estudio.buscarAlAbrir = s2.id to "Marta" })
         captura("cobalto-concentracion", Pantalla.Obra(obra.id, s1.id), antes = { Estudio.concentracion = true })
         captura("cobalto-concentracion-oscuro", Pantalla.Obra(obra.id, s1.id), oscuro = true, antes = { Estudio.concentracion = true; PrefsEditor.asegura(); PrefsEditor.tam = 23f })
-        captura("cobalto-fichas", Pantalla.Obra(obra.id, pestana = 1))
-        captura("cobalto-fichas-edicion", Pantalla.Obra(obra.id, pestana = 1), gestos = { it.clic(900f, 520f) })
+        // (en la lista: Marta es la cuarta)
+        captura("cobalto-fichas", Pantalla.Obra(obra.id, pestana = 1), gestos = { it.clic(420f, 548f) })
+        captura("cobalto-fichas-oscuro", Pantalla.Obra(obra.id, pestana = 1), oscuro = true, gestos = { it.clic(420f, 548f) })
+        captura("cobalto-fichas-edicion", Pantalla.Obra(obra.id, pestana = 1), gestos = { it.clic(420f, 548f); it.clic(1000f, 480f) })
+        // El ratón encima de «Marta» en el texto: su ficha en pequeño; el botón derecho en «puerta»: los sinónimos en el menú
+        captura("cobalto-editor-previa", Pantalla.Obra(obra.id, s2.id), gestos = { it.encima(700f, 518f) })
+        captura("cobalto-editor-menu", Pantalla.Obra(obra.id, s2.id), gestos = { it.clic(1010f, 653f, derecho = true) })
+        // Doble clic en «Marta»: su ficha encima del editor; el botón derecho y «Sinónimos»: el globo de los sinónimos
+        captura("cobalto-editor-ficha", Pantalla.Obra(obra.id, s2.id), gestos = { it.doble(700f, 518f) })
+        captura("cobalto-editor-sinonimos", Pantalla.Obra(obra.id, s2.id), gestos = { it.clic(1010f, 653f, derecho = true); it.clic(1100f, 800f) })
+        captura("cobalto-sprint", Pantalla.Obra(obra.id, s2.id), gestos = { it.clic(973f, 348f) })
+        captura("cobalto-sprint-en-marcha", Pantalla.Obra(obra.id, s2.id), antes = { SprintEscribir.empieza(e, obra.id, 25, 500) })
+        // (se acaba al momento: de menos de un minuto, no queda en el historial)
+        SprintEscribir.termina(e, ya = true); SprintEscribir.terminado = null
+        captura("cobalto-indice-menu", Pantalla.Obra(obra.id, s2.id), gestos = { it.clic(420f, 594f, derecho = true) })
         captura("cobalto-arbol", Pantalla.Obra(obra.id, pestana = 2))
         captura("cobalto-arbol-oscuro", Pantalla.Obra(obra.id, pestana = 2), oscuro = true)
         captura("cobalto-notas", Pantalla.Obra(obra.id, pestana = 3))

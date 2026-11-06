@@ -1,5 +1,7 @@
 package com.gonzalo.cobalto.pc
 
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -127,7 +129,7 @@ private fun Manuscrito(obra: Doc, eid: String?, abre: (String?) -> Unit, nav: Na
     Row(Modifier.fillMaxSize().padding(top = if (conc) 0.dp else 8.dp)) {
         // ---- El índice
         if (!conc) {
-            IndiceManuscrito(e, obra, est, esc, abre, guia, verGuia) { renombrar = it }
+            IndiceManuscrito(e, obra, est, esc, abre, guia, verGuia, borrar = { borrar = it }) { renombrar = it }
             Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
         }
         // ---- La escena
@@ -168,9 +170,11 @@ private fun Manuscrito(obra: Doc, eid: String?, abre: (String?) -> Unit, nav: Na
 
 /** El índice del manuscrito: el paso de la guía, las partes, los capítulos y sus escenas (con el color de su estado). */
 @Composable
-private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Estructura, esc: Doc?, abre: (String?) -> Unit, guia: AccionesGuia, verGuia: () -> Unit, renombrar: (Doc) -> Unit) {
+private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Estructura, esc: Doc?, abre: (String?) -> Unit, guia: AccionesGuia, verGuia: () -> Unit, borrar: (Doc) -> Unit, renombrar: (Doc) -> Unit) {
     val pid = obra.id
     val scrollIndice = rememberScrollState()
+    var mover by remember { mutableStateOf<Doc?>(null) }
+    val caps = est.libro
     Box(Modifier.width(300.dp).fillMaxHeight()) {
         Column(Modifier.fillMaxSize().verticalScroll(scrollIndice).padding(end = 14.dp, bottom = 40.dp)) {
             Spacer(Modifier.height(6.dp))
@@ -194,12 +198,22 @@ private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Est
                 }
                 e.escenas(c.id).forEach { s ->
                     val sel = s.id == esc?.id
+                    // (el botón derecho: subir, bajar, mover a otro capítulo, duplicar o borrar, como el «⋯» del móvil)
+                    ContextMenuArea(items = { listOf(
+                        ContextMenuItem("Abrir") { abre(s.id) },
+                        ContextMenuItem("Subir") { subeEscena(e, s, caps) },
+                        ContextMenuItem("Bajar") { bajaEscena(e, s, caps) },
+                        ContextMenuItem("Mover a otro capítulo…") { mover = s },
+                        ContextMenuItem("Duplicar") { e.duplicaEscena(s.id)?.let { abre(it.id) } },
+                        ContextMenuItem("A la papelera…") { borrar(s) },
+                    ) }) {
                     Row(Modifier.fillMaxWidth().padding(start = (sangria + 12).dp).background(if (sel) Sand else androidx.compose.ui.graphics.Color.Transparent).pointerHoverIcon(PointerIcon.Hand).clickable { abre(s.id) }.padding(horizontal = 8.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.width(3.dp).height(14.dp).background(if (sel) Acento else colorEstado(s.i("estado")).copy(alpha = 0.7f)))
                         Spacer(Modifier.width(8.dp))
                         Text(s.s("titulo").ifBlank { "Escena" }, Modifier.weight(1f), color = if (sel) Charcoal else Muted, fontFamily = Body, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(Formato.cifra(s.i("palabras")), color = Muted, fontFamily = Body, fontSize = 10.sp)
+                    }
                     }
                 }
                 Text("+ escena", Modifier.padding(start = (sangria + 22).dp, top = 2.dp).pointerHoverIcon(PointerIcon.Hand).clickable { abre(e.nuevo(Escritos.T_ESCENA, pid) { put("cid", c.id); put("titulo", "") }.id) }, color = Muted, fontFamily = Body, fontSize = 11.sp)
@@ -226,6 +240,37 @@ private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Est
         }
         VerticalScrollbar(rememberScrollbarAdapter(scrollIndice), Modifier.align(Alignment.CenterEnd).fillMaxHeight())
     }
+    mover?.let { s ->
+        Dialogo("Mover «${s.s("titulo").ifBlank { "la escena" }}»", { mover = null }, botones = { BotonSuave("Cancelar") { mover = null } }) {
+            Cuerpo("Al final de qué capítulo:", tam = 13)
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                caps.forEachIndexed { i, c ->
+                    val aqui = c.id == s.s("cid")
+                    Text("${i + 1}. " + c.s("titulo").ifBlank { "Sin título" }, Modifier.fillMaxWidth().pointerHoverIcon(if (aqui) PointerIcon.Default else PointerIcon.Hand)
+                        .clickable(enabled = !aqui) { e.mueveEscena(s.id, c.id, e.escenas(c.id).lastOrNull { it.id != s.id }?.id, null); mover = null }.padding(vertical = 9.dp),
+                        color = if (aqui) Muted else Charcoal, fontFamily = Display, fontSize = 19.sp)
+                }
+            }
+        }
+    }
+}
+
+/** Una escena un puesto arriba (la primera de un capítulo pasa al final del anterior). Como en el móvil. */
+private fun subeEscena(e: Escritos, s: Doc, caps: List<Doc>) {
+    val cid = s.s("cid")
+    val hermanas = e.escenas(cid)
+    val i = hermanas.indexOfFirst { it.id == s.id }
+    if (i > 0) e.mueveEscena(s.id, cid, hermanas.getOrNull(i - 2)?.id, hermanas[i - 1].id)
+    else caps.indexOfFirst { it.id == cid }.takeIf { it > 0 }?.let { ci -> val ant = caps[ci - 1].id; e.mueveEscena(s.id, ant, e.escenas(ant).lastOrNull()?.id, null) }
+}
+
+/** Una escena un puesto abajo (la última de un capítulo pasa al principio del siguiente). */
+private fun bajaEscena(e: Escritos, s: Doc, caps: List<Doc>) {
+    val cid = s.s("cid")
+    val hermanas = e.escenas(cid)
+    val i = hermanas.indexOfFirst { it.id == s.id }
+    if (i < hermanas.size - 1) e.mueveEscena(s.id, cid, hermanas[i + 1].id, hermanas.getOrNull(i + 2)?.id)
+    else caps.indexOfFirst { it.id == cid }.takeIf { it in 0 until caps.size - 1 }?.let { ci -> val sig = caps[ci + 1].id; e.mueveEscena(s.id, sig, null, e.escenas(sig).firstOrNull()?.id) }
 }
 
 /** Cambiar el título de una parte o un capítulo (y lo demás que se hace con ellos). */

@@ -167,7 +167,7 @@ private fun PaginaLectura(acc: AccionesLectura, cabecera: @Composable ColumnScop
     val hover = remember { MutableInteractionSource() }
     val encima by hover.collectIsHoveredAsState()
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val ancha = maxWidth >= 760.dp && lado != null
+        val ancha = maxWidth >= 700.dp && lado != null
         Column(Modifier.fillMaxWidth().hoverable(hover).pointerHoverIcon(PointerIcon.Text).clickable(interactionSource = hover, indication = null) { acc.editar() }) {
             cabecera()
             Spacer(Modifier.height(22.dp))

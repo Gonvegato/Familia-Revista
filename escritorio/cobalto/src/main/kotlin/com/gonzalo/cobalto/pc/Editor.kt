@@ -188,7 +188,9 @@ fun EditorEscena(esc: Doc, obra: Doc, nav: Nav, abre: AbreDoc, abrirEscena: (Str
     var consulta by remember { mutableStateOf("") }
     var reemplazo by remember { mutableStateOf("") }
     var mayus by remember { mutableStateOf(false) }
-    var actual by remember(consulta, mayus, eid) { mutableStateOf(-1) }
+    var actual by remember(eid) { mutableStateOf(-1) }
+    // (otra búsqueda: aún ninguna elegida. El estado es siempre el mismo: lo que se pone desde una corrutina no se pierde)
+    LaunchedEffect(consulta, mayus) { actual = -1 }
     var enLaObra by remember { mutableStateOf(false) }
     val coinc = remember(v.text, consulta, mayus, buscar) { if (buscar) Busqueda.coincidencias(v.text, consulta, mayus) else emptyList() }
     val rxBusca = remember(consulta, mayus, buscar) { if (buscar) Busqueda.rx(consulta, mayus) else null }
@@ -282,7 +284,8 @@ fun EditorEscena(esc: Doc, obra: Doc, nav: Nav, abre: AbreDoc, abrirEscena: (Str
     LaunchedEffect(buscar) { if (buscar) runCatching { fBuscar.requestFocus() } }
 
     // ---- Máquina de escribir (la línea donde escribes, a un 40 % del alto) y, sin ella, que el cursor siempre se vea
-    LaunchedEffect(v.selection, diseno, PrefsEditor.maquina, alto, conc) {
+    // (también con el máximo del desplazamiento: al abrir, el hueco de abajo llega después y la línea no subía hasta su sitio)
+    LaunchedEffect(v.selection, diseno, PrefsEditor.maquina, alto, conc, scroll.maxValue) {
         val l = diseno ?: return@LaunchedEffect
         if (alto == 0 || buscar) return@LaunchedEffect
         val r = l.getCursorRect(v.selection.end.coerceIn(0, l.layoutInput.text.length))
@@ -551,29 +554,32 @@ private fun BarraEditor(
     }
 }
 
-/** Buscar y reemplazar: en la escena (con las coincidencias resaltadas) y en toda la obra. */
+/** Buscar y reemplazar: en la escena (con las coincidencias resaltadas) y en toda la obra. Dos filas: buscar y cambiar. */
 @Composable
 private fun BarraBuscar(
     consulta: String, onConsulta: (String) -> Unit, reemplazo: String, onReemplazo: (String) -> Unit, mayus: Boolean, onMayus: (Boolean) -> Unit,
     total: Int, actual: Int, foco: FocusRequester, onSig: () -> Unit, onAnt: () -> Unit, onEsta: () -> Unit, onEscena: () -> Unit, onObra: () -> Unit, onVerObra: () -> Unit, onCierra: () -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth().background(Crudo).drawBehind { drawRect(Line, Offset(0f, size.height - 1f), Size(size.width, 1f)) }.padding(horizontal = 10.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        CampoRevista(consulta, onConsulta, "Buscar", Modifier.width(220.dp), foco = foco, alTeclear = { k ->
-            if (k.type == KeyEventType.KeyDown && (k.key == Key.Enter || k.key == Key.NumPadEnter)) { if (k.isShiftPressed) onAnt() else onSig(); true } else false
-        })
-        Tecla("▲", Atajo.texto("Anterior (Ctrl+Mayús+G)")) { onAnt() }
-        Tecla("▼", Atajo.texto("Siguiente (Intro o Ctrl+G)")) { onSig() }
-        Text(when { consulta.isEmpty() -> ""; total == 0 -> "Ninguna"; actual < 0 -> "$total"; else -> "${actual + 1} de $total" }, color = if (consulta.isNotEmpty() && total == 0) Acento else Muted,
-            fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.widthIn(min = 54.dp))
-        CampoRevista(reemplazo, onReemplazo, "Cambiar por", Modifier.width(200.dp))
-        Tecla("Aa", "Distinguir mayúsculas", activa = mayus) { onMayus(!mayus) }
-        AccionPeque("Este", apagada = actual < 0) { onEsta() }
-        AccionPeque("Todos aquí") { onEscena() }
-        AccionPeque("Todos en la obra", acento = true) { onObra() }
-        Spacer(Modifier.weight(1f))
-        AccionPeque("Ver en la obra →") { onVerObra() }
-        Tecla("✕", "Cerrar (Esc)") { onCierra() }
+    val linea = Line
+    Column(Modifier.fillMaxWidth().background(Crudo).drawBehind { drawRect(linea, Offset(0f, size.height - 1f), Size(size.width, 1f)) }.padding(horizontal = 12.dp, vertical = 2.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            CampoRevista(consulta, onConsulta, "Buscar", Modifier.weight(1f), foco = foco, pista = "Una palabra o una frase", alTeclear = { k ->
+                if (k.type == KeyEventType.KeyDown && (k.key == Key.Enter || k.key == Key.NumPadEnter)) { if (k.isShiftPressed) onAnt() else onSig(); true } else false
+            })
+            Tecla("▲", Atajo.texto("Anterior (Mayús+Intro o Ctrl+Mayús+G)")) { onAnt() }
+            Tecla("▼", Atajo.texto("Siguiente (Intro o Ctrl+G)")) { onSig() }
+            Text(when { consulta.isEmpty() -> ""; total == 0 -> "Ninguna"; actual < 0 -> if (total == 1) "1 vez" else "$total veces"; else -> "${actual + 1} de $total" },
+                color = if (consulta.isNotEmpty() && total == 0) Acento else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.widthIn(min = 64.dp))
+            Tecla("Aa", "Distinguir mayúsculas", activa = mayus) { onMayus(!mayus) }
+            AccionPeque("En toda la obra →") { onVerObra() }
+            Tecla("✕", "Cerrar (Esc)") { onCierra() }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            CampoRevista(reemplazo, onReemplazo, "Cambiar por", Modifier.weight(1f), pista = "Lo que se pone en su lugar")
+            AccionPeque("Esta", apagada = actual < 0) { onEsta() }
+            AccionPeque("Todas aquí") { onEscena() }
+            AccionPeque("Todas en la obra", acento = true) { onObra() }
+        }
     }
 }
 
@@ -608,7 +614,7 @@ private fun PieEditor(e: Escritos, obra: Doc, esc: Doc, c: Cuentas, conc: Boolea
 /** La ficha de un nombre, en pequeño (al pasar el ratón por encima en el texto). */
 @Composable
 private fun PreviaFicha(e: Escritos, f: Doc) {
-    val datos = camposDe(f).filter { it.first.isNotBlank() && it.second.isNotBlank() }.take(4)
+    val datos = camposDe(f).filter { it.first.isNotBlank() && it.second.isNotBlank() }.take(3)
     val rels = e.relaciones(f.pid).filter { it.s("a") == f.id || it.s("b") == f.id }.take(4).mapNotNull { r -> e.get(if (r.s("a") == f.id) r.s("b") else r.s("a"))?.let { r to it } }
     val c = colorEscrito(f.s("color"))
     Column(Modifier.width(340.dp).clip(esquina(6.dp)).background(Crudo).border(1.dp, Line, esquina(6.dp)).drawBehind { drawRect(c, Offset.Zero, Size(size.width, 5.dp.toPx())) }
@@ -616,7 +622,7 @@ private fun PreviaFicha(e: Escritos, f: Doc) {
         Text(singularFicha(f.s("tipo")).uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
         Text(f.s("nombre"), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 25.sp)
         if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
-        if (datos.isNotEmpty()) Column(Modifier.padding(vertical = 4.dp)) { datos.forEach { (k, v) -> MagFact(k, v.take(30)) } }
+        if (datos.isNotEmpty()) Column(Modifier.padding(vertical = 4.dp)) { datos.forEach { (k, v) -> DatoLectura(k, if (v.length > 90) v.take(88) + "…" else v) } }
         rels.forEach { (r, o) -> Text("${r.s("titulo").ifBlank { "unión" }.uppercase()} · ${o.s("nombre")}", color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp) }
         Text("Doble clic para abrir la ficha", color = Muted, fontFamily = Body, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
     }

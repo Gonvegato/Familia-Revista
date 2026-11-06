@@ -49,6 +49,8 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
         Pantalla.Papelera -> 1 + obras.size
         Pantalla.Ajustes -> 2 + obras.size
     }
+    // (el menú del botón derecho de los textos, en español: el de Compose viene en inglés)
+    CompositionLocalProvider(androidx.compose.ui.platform.LocalLocalization provides MenuEnEspanol) {
     Row(Modifier.fillMaxSize()) {
         // (en la concentración solo queda la página: ni la columna)
         if (!Estudio.concentracion) {
@@ -74,4 +76,13 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
             SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
     }
+    }
+}
+
+/** Cortar, copiar, pegar y seleccionar todo, en el menú del botón derecho de los textos. */
+private object MenuEnEspanol : androidx.compose.ui.platform.PlatformLocalization {
+    override val copy = "Copiar"
+    override val cut = "Cortar"
+    override val paste = "Pegar"
+    override val selectAll = "Seleccionar todo"
 }

@@ -161,13 +161,18 @@ fun CampoRevista(
     Column(modifier.padding(vertical = 4.dp)) {
         if (etiqueta.isNotEmpty()) Text(etiqueta.uppercase(), color = if (enfocado) Acento else Muted, fontFamily = Body, fontSize = 9.5.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
         val linea = if (enfocado) Acento else Line
+        val tinte = Sand.copy(alpha = if (enfocado) 0.55f else 0.4f)
         BasicTextField(
             valor, onCambia,
             Modifier.fillMaxWidth().padding(top = 3.dp).let { if (foco != null) it.focusRequester(foco) else it }
                 .onFocusChanged { enfocado = it.isFocused }
                 .let { m -> if (alTeclear != null) m.onPreviewKeyEvent(alTeclear) else m }
-                .drawBehind { drawRect(linea, Offset(0f, size.height - (if (enfocado) 2.dp else 1.dp).toPx()), Size(size.width, (if (enfocado) 2.dp else 1.dp).toPx())) }
-                .padding(bottom = 6.dp),
+                .drawBehind {
+                    // (un texto largo lleva un tinte de papel: vacío, se ve dónde escribir)
+                    if (lineas > 1) drawRect(tinte, Offset.Zero, size)
+                    drawRect(linea, Offset(0f, size.height - (if (enfocado) 2.dp else 1.dp).toPx()), Size(size.width, (if (enfocado) 2.dp else 1.dp).toPx()))
+                }
+                .padding(start = if (lineas > 1) 10.dp else 0.dp, end = if (lineas > 1) 10.dp else 0.dp, top = if (lineas > 1) 8.dp else 0.dp, bottom = if (lineas > 1) 10.dp else 6.dp),
             singleLine = lineas == 1, minLines = lineas,
             textStyle = estilo.copy(color = Charcoal), cursorBrush = SolidColor(Acento),
             decorationBox = { inner -> Box { if (valor.isEmpty() && pista.isNotEmpty()) Text(pista, style = estilo.copy(color = Muted.copy(alpha = 0.7f), fontStyle = FontStyle.Italic)); inner() } }

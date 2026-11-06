@@ -12,6 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -44,9 +47,15 @@ private fun fechaHora(t: Long) = SimpleDateFormat("d MMM · HH:mm", ES).format(D
 fun PanelEscena(e: Escritos, esc: Doc, textoActual: String, modifier: Modifier, abre: AbreDoc, abrirEscena: (String) -> Unit, inserta: (String) -> Unit, pon: (String) -> Unit, onCierra: () -> Unit) {
     val pestanas = listOf("Escena", "Fichas", "Notas", "Borradores", "Historial")
     Column(modifier.background(Paper)) {
-        Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                pestanas.forEachIndexed { i, n -> Opcion(n, PrefsEditor.pestanaPanel == i) { PrefsEditor.pestanaPanel = i; PrefsEditor.guarda() } }
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
+                pestanas.forEachIndexed { i, n ->
+                    val on = PrefsEditor.pestanaPanel == i
+                    val acento = Acento
+                    Text(n.uppercase(), Modifier.pointerHoverIcon(PointerIcon.Hand).clickableSinFoco { PrefsEditor.pestanaPanel = i; PrefsEditor.guarda() }
+                        .drawBehind { if (on) drawRect(acento, Offset(0f, size.height - 9.dp.toPx()), Size(size.width, 1.5.dp.toPx())) }.padding(top = 9.dp, bottom = 13.dp),
+                        color = if (on) Acento else Charcoal, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 0.7.sp, maxLines = 1)
+                }
             }
             Tecla("✕", "Cerrar el panel") { onCierra() }
         }
