@@ -229,6 +229,7 @@ async function abrir() {
             }
         } catch (e) { }
     }
+    marcasBarra()
     showChrome(true)
     setTimeout(() => showChrome(false), 1600)
 }
@@ -250,6 +251,7 @@ async function reabrir() {
     docs.clear()
     const fr = last?.fraction
     last = null; lastTurn = null
+    fraccionesToc = null; titulosCap = null
     if (loc) st.location = loc
     if (fr > 0) st.fraction = fr
     st.goto = null
@@ -311,7 +313,9 @@ html.atrio-reflow p.derecha { text-align: right !important; text-indent: 0; marg
 html.atrio-reflow p.verso { text-indent: 0; text-align: left !important; margin: .5em 0; }
 html.atrio-reflow p.sep.esp { margin: .9em 0; letter-spacing: 0; }
 html.atrio-reflow p.nota { font-size: .8em; text-indent: 0; opacity: .85; margin: .6em 0; }
-::highlight(atrio) { background-color: ${fg}; color: ${bg}; }`
+::highlight(atrio) { background-color: ${fg}; color: ${bg}; }
+/* Los subrayados con nota llevan además una raya del acento (como en Marfil del ordenador) */
+::highlight(atrio-nota) { background-color: ${fg}; color: ${bg}; text-decoration-line: underline; text-decoration-color: ${accent}; text-decoration-thickness: 3px; }`
 }
 
 function applySettings() {
@@ -553,6 +557,7 @@ function onRelocate({ detail }) {
     drawStatus(detail)
     $('#b-marca-cinta')?.classList.toggle('oculta', !currentMark())
     $('#p-barra').value = detail.fraction ?? 0
+    pintaMarcas()
     $('#p-pct').textContent = pct(detail.fraction)
     const pg = detail.pageItem?.label ? 'pág. ' + detail.pageItem.label
         : detail.location ? `${detail.location.current + 1} / ${detail.location.total}` : ''
@@ -640,6 +645,45 @@ async function titulosDeCapitulos() {
     await walk(b?.toc)
     return (titulosCap = m)
 }
+let fraccionesToc = null
+/** El porcentaje del libro donde empieza cada entrada del índice (la de su capítulo). */
+async function fraccionesDelIndice() {
+    if (fraccionesToc) return fraccionesToc
+    const m = new Map(), b = view?.book, secs = b?.sections || [], fr = view?.getSectionFractions?.() || []
+    const walk = async items => {
+        for (const it of items || []) {
+            try {
+                const r = await b.splitTOCHref?.(it.href)
+                const id = Array.isArray(r) ? r[0] : r
+                const i = typeof id === 'number' ? id : secs.findIndex(s => s.id === id)
+                if (i >= 0 && fr[i] != null) m.set(it, Math.max(0, fr[i] - Number.EPSILON))
+            } catch (e) { }
+            if (it.subitems?.length) await walk(it.subitems)
+        }
+    }
+    await walk(b?.toc)
+    return (fraccionesToc = m)
+}
+/** Las marcas de la barra de lo leído: donde empieza cada capítulo (los del primer nivel del índice). */
+async function marcasBarra() {
+    const caja = $('#p-marcas')
+    if (!caja) return
+    caja.replaceChildren()
+    if (isPDF && !reflow) return    // (las páginas de un PDF no son capítulos)
+    const frs = await fraccionesDelIndice()
+    let nivel = view?.book?.toc || []
+    if (nivel.length === 1 && nivel[0].subitems?.length) nivel = nivel[0].subitems
+    const vistos = new Set()
+    for (const it of nivel) {
+        const f = frs.get(it)
+        if (f == null || f <= 0.002 || f >= 0.998 || vistos.has(Math.round(f * 400))) continue
+        vistos.add(Math.round(f * 400))
+        const i = document.createElement('i'); i.style.left = (f * 100) + '%'; i.dataset.f = f
+        caja.append(i)
+    }
+    pintaMarcas()
+}
+function pintaMarcas() { const f = last?.fraction ?? 0; for (const i of document.querySelectorAll('#p-marcas i')) i.classList.toggle('leido', Number(i.dataset.f) <= f) }
 /** Pasar de capítulo con el botón: se llega al principio del siguiente (o al final del anterior) y se dice cuál es. */
 async function irCapitulo(dir, i) {
     const t = (await titulosDeCapitulos()).get(i)
@@ -946,11 +990,14 @@ function liveDoc(index) {
 function paint(index) {
     const doc = liveDoc(index)
     if (!doc) return
-    const ranges = rangesFor(index, doc).map(x => x.range)
+    const hs = rangesFor(index, doc)
+    const ranges = hs.map(x => x.range)
     if (marca?.index === index) ranges.push(marca.range)
     const win = doc.defaultView
     if (!isPDF && win.CSS?.highlights && win.Highlight) {
-        win.CSS.highlights.set('atrio', new win.Highlight(...ranges))
+        const conNota = hs.filter(x => x.note.note).map(x => x.range)
+        win.CSS.highlights.set('atrio', new win.Highlight(...ranges.filter(r => !conNota.includes(r))))
+        win.CSS.highlights.set('atrio-nota', new win.Highlight(...conNota))
         return
     }
     // PDF (o un WebView muy viejo sin ::highlight): rectángulos encima del texto
@@ -1300,7 +1347,7 @@ function editNote(n, after) {
         </div>`, el => {
         const t = el.querySelector('#nota-txt'); setTimeout(() => t.focus(), 300)
         el.querySelector('#nota-no').onclick = () => { closePanel(); after?.() }
-        el.querySelector('#nota-si').onclick = () => { n.note = t.value.trim(); saveNotes(); closePanel(); aviso(n.note ? 'Nota guardada' : 'Nota borrada'); after?.() }
+        el.querySelector('#nota-si').onclick = () => { n.note = t.value.trim(); saveNotes(); paint(n.index); closePanel(); aviso(n.note ? 'Nota guardada' : 'Nota borrada'); after?.() }
     })
 }
 
@@ -1422,7 +1469,8 @@ function readingHtml() {
         ${s > 1 ? `<div><b>${s}</b><span>días seguidos</span></div>` : ''}
       </div>`
 }
-function openToc() {
+async function openToc() {
+    const frs = await fraccionesDelIndice().catch(() => new Map())
     const toc = view?.book?.toc || []
     const cur = last?.tocItem?.href
     const items = []
@@ -1434,7 +1482,7 @@ function openToc() {
       <div class="ir"><span>Ir a</span><input id="ir-n" type="number" inputmode="numeric" min="${isPDF ? 1 : 0}" max="${isPDF ? pages : 100}"
         placeholder="${isPDF ? 'página (1–' + pages + ')' : '%'}"><button class="boton" id="ir-si">Ir</button></div>
       ${items.length ? `<ul class="lista">${items.map(([t, d], i) =>
-        `<li class="n${Math.min(d, 3)} ${t.href === cur ? 'actual' : ''}" data-i="${i}">${esc(t.label?.trim() || 'Sin título')}</li>`).join('')}</ul>`
+        `<li class="cap n${Math.min(d, 3)} ${t.href === cur ? 'actual' : ''}" data-i="${i}"><span class="t">${esc(t.label?.trim() || 'Sin título')}</span><span class="pct">${t.href === cur ? 'Estás aquí' : frs.has(t) ? pct(frs.get(t)) : ''}</span></li>`).join('')}</ul>`
         : '<p class="vacio">Este libro no trae índice.</p>'}`, el => {
         el.querySelectorAll('li[data-i]').forEach(li => li.onclick = () => irA(items[li.dataset.i][0].href))
         el.querySelector('.actual')?.scrollIntoView({ block: 'center' })

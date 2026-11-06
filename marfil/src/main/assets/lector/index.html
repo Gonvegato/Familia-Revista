@@ -42,7 +42,8 @@ try {
 <footer id="abajo" class="barra oculta">
   <div class="prog">
     <span id="p-pct">0%</span>
-    <input type="range" id="p-barra" min="0" max="1" step="0.0005" value="0">
+    <!-- La barra de lo leído, con una marca donde empieza cada capítulo -->
+    <span class="pista"><span id="p-marcas" class="marcas"></span><input type="range" id="p-barra" min="0" max="1" step="0.0005" value="0"></span>
     <span id="p-pag"></span>
   </div>
   <nav class="botones">
