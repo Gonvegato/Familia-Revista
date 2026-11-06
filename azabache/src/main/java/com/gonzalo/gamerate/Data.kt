@@ -428,8 +428,11 @@ class Store(ctx: Context) {
     private val app = ctx.applicationContext
     /** El de la app (para lo que se guarda fuera de estas preferencias). */
     val contexto: Context get() = app
-    /** Las preferencias de Azabache: lo que es de la cuenta (tus listas: categorías, diario, sagas…), de la cuenta ([PrefsCuenta]). */
-    private val p: android.content.SharedPreferences = PrefsCuenta(ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE), ctx.applicationContext)
+    /**
+     * Las preferencias de Azabache: lo que es de la cuenta (tus listas: categorías, diario, sagas…), de la cuenta ([PrefsCuenta]); los demás
+     * ajustes tuyos, aquí y en la cuenta ([AjustesEnLaCuenta.GENERAL]).
+     */
+    private val p: android.content.SharedPreferences = PrefsCuenta(EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.GENERAL), ctx.applicationContext)
 
     var key: String
         get() = p.getString("key", "") ?: ""
@@ -491,13 +494,13 @@ class Store(ctx: Context) {
         get() = p.getLong("igdbexp", 0L)
         set(v) { p.edit().putLong("igdbexp", v).apply() }
 
-    // ---- Tus ajustes en todos tus dispositivos (salvo la maqueta de cada ficha y el brillo del lector) ----
+    // ---- Tus ajustes en todos tus dispositivos (salvo el brillo del lector, que es de cada pantalla y de su luz) ----
     /** Apariencia (claro/oscuro, acento, portadas en las listas…), ajustes del lector y capturas fuera de la nube. */
     fun ajustesJson(): JSONObject {
         val skin = JSONObject()
         for ((k, v) in p.all) if (k in AJUSTES_SKIN && v != null) skin.put(k, v)
         val lector = runCatching { JSONObject(app.getSharedPreferences("lector", Context.MODE_PRIVATE).getString("ajustes", "{}") ?: "{}") }.getOrElse { JSONObject() }
-        lector.remove("brightness"); lector.remove("size")
+        lector.remove("brightness")
         return JSONObject().put("at", p.getLong("ajustesAt", 0L)).put("skin", skin).put("lector", lector)
             .put("noCloud", JSONArray((p.getStringSet("shotsNoCloud", emptySet()) ?: emptySet()).toList()))
     }
@@ -523,7 +526,7 @@ class Store(ctx: Context) {
         r.optJSONObject("lector")?.let { l ->
             val lp = app.getSharedPreferences("lector", Context.MODE_PRIVATE)
             val mine = runCatching { JSONObject(lp.getString("ajustes", "{}") ?: "{}") }.getOrElse { JSONObject() }
-            for (k in listOf("brightness", "size")) mine.opt(k)?.let { l.put(k, it) }
+            mine.opt("brightness")?.let { l.put("brightness", it) } ?: l.remove("brightness")
             lp.edit().putString("ajustes", l.toString()).apply()
         }
         // La app aplica lo nuevo enseguida (Skin y el tema están en memoria)
@@ -1094,6 +1097,13 @@ class Store(ctx: Context) {
         applyLecturas()
         applyMaquetas()
         r.optJSONObject("ajustes")?.let { applyAjustes(it) }
+        // Lo último que te salió en Descubrir, de cada tipo el más reciente (subía para tu pareja, pero tus otros dispositivos no lo ponían)
+        r.optJSONObject("quiz")?.let { q ->
+            val mio = runCatching { JSONObject(p.getString("quizzes", "{}") ?: "{}") }.getOrElse { JSONObject() }
+            var cambio = false
+            for (d in q.keys()) { val o = q.optJSONObject(d) ?: continue; if (o.optLong("t") > (mio.optJSONObject(d)?.optLong("t") ?: 0L)) { mio.put(d, o); cambio = true } }
+            if (cambio) p.edit().putString("quizzes", mio.toString()).apply()
+        }
         r.optJSONObject("goals")?.let { g ->
             val y = LocalDate.now().year
             if (goalPropio(0, y) == 0 && g.optInt("g", 0) > 0) setGoal(0, y, g.optInt("g"))
@@ -1299,7 +1309,7 @@ class Store(ctx: Context) {
     // ---- Lo leído de cada libro (posición, subrayados, notas, marcadores): viaja con la cuenta ----
     /** Copia el estado del lector de un libro a la cuenta (sin la dirección del archivo, que es de este dispositivo). */
     fun saveLectura(id: Long, st: JSONObject) {
-        val s = JSONObject(st.toString()).apply { remove("uri"); remove("name"); remove("added"); optJSONObject("settings")?.let { it.remove("brightness"); it.remove("size") } }
+        val s = JSONObject(st.toString()).apply { remove("uri"); remove("name"); remove("added"); optJSONObject("settings")?.let { it.remove("brightness") } }
         val a = try { JSONArray(p.getString("lectura", "[]") ?: "[]") } catch (e: Exception) { JSONArray() }
         val out = JSONArray()
         for (i in 0 until a.length()) a.optJSONObject(i)?.let { if (it.optLong("id") != id) out.put(it) }
@@ -1326,10 +1336,10 @@ class Store(ctx: Context) {
             if (s.optDouble("bestFrac", 0.0) > cur.optDouble("bestFrac", 0.0) && s.optString("bestCfi").isNotBlank())
                 s.put("cfi", s.getString("bestCfi")).put("fraction", s.getDouble("bestFrac")).put("label", s.optString("bestLabel"))
             for (k in listOf("uri", "name", "added")) if (cur.has(k)) s.put(k, cur.get(k))
-            // El brillo y el tamaño de letra son de cada pantalla: se quedan los de aquí (el resto de ajustes del
-            // libro, como leer un manga hacia abajo, viaja con él)
+            // El brillo es de cada pantalla (y de su luz): se queda el de aquí. El resto de ajustes del libro (la letra, leer un manga
+            // hacia abajo…) viaja con él, como en Marfil
             val loc = cur.optJSONObject("settings")
-            for (k in listOf("brightness", "size")) loc?.opt(k)?.let { v -> s.optJSONObject("settings")?.put(k, v) }
+            loc?.opt("brightness")?.let { v -> s.optJSONObject("settings")?.put("brightness", v) }
             BookFiles.putQuiet(app, id, s.put("syncAt", o.optLong("updated")))
         }
     }

@@ -46,9 +46,10 @@ fun ordenar(o: OrdenLibros, l: List<Libro>): List<Libro> = when (o) {
     OrdenLibros.PAGINAS -> l.sortedWith(compareBy<Libro> { it.paginas <= 0 }.thenByDescending { it.paginas }.thenBy { norm(it.titulo) })
 }
 
-/** El orden que has elegido para cada estante (se recuerda al cerrar la app). */
+/** El orden que has elegido para cada estante: se recuerda y viaja con tu cuenta (`ajustes/marfil_orden`, un campo por estante). */
 object OrdenGuardado {
-    private fun prefs(c: android.content.Context) = c.getSharedPreferences("marfil_orden", android.content.Context.MODE_PRIVATE)
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("marfil_orden", "marfil_orden", { EspejoCuenta.Tipo.TEXTO })
+    private fun prefs(c: android.content.Context) = EspejoCuenta.prefs(c, GRUPO)
     fun de(c: android.content.Context, e: Estado): OrdenLibros = OrdenLibros.entries.firstOrNull { it.name == prefs(c).getString(e.name, null) && (it != OrdenLibros.TERMINADO || e == Estado.LEIDO) } ?: ordenInicial(e)
     fun pon(c: android.content.Context, e: Estado, o: OrdenLibros) { prefs(c).edit().putString(e.name, o.name).apply() }
 }
@@ -153,7 +154,7 @@ private fun vacioDe(e: Estado) = when (e) {
 @Composable
 private fun PaginaEstante(estado: Estado, todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit, alAnadir: () -> Unit) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    var orden by remember(estado) { mutableStateOf(OrdenGuardado.de(ctx, estado)) }
+    var orden by remember(estado, EspejoCuenta.version) { mutableStateOf(OrdenGuardado.de(ctx, estado)) }
     val libros = remember(todos, estado, orden) { ordenar(orden, todos.filter { it.estado == estado }) }
     var abiertas by rememberSaveable(estado) { mutableStateOf(setOf<String>()) }
     LazyColumn(Modifier.fillMaxSize()) {

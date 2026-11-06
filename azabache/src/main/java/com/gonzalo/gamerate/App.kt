@@ -127,8 +127,8 @@ private fun AppContenido(
     var cineTv by remember { mutableStateOf(false) }
     var diaryKind by remember { mutableStateOf(0) }
     // El Diario con todas las categorías juntas («Todo») o solo una
-    var diaryAll by remember { mutableStateOf(ctx.getSharedPreferences("gamerate", android.content.Context.MODE_PRIVATE).getBoolean("diario_todo", true)) }
-    fun ponDiarioTodo(on: Boolean) { diaryAll = on; ctx.getSharedPreferences("gamerate", android.content.Context.MODE_PRIVATE).edit().putBoolean("diario_todo", on).apply() }
+    var diaryAll by remember(EspejoCuenta.version) { mutableStateOf(EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.GENERAL).getBoolean("diario_todo", true)) }
+    fun ponDiarioTodo(on: Boolean) { diaryAll = on; EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.GENERAL).edit().putBoolean("diario_todo", on).apply() }
     var wheelOpen by remember { mutableStateOf(false) }
     var partner by remember { mutableStateOf(Couple.cached(store)) }
     var screen by remember { mutableStateOf<Screen>(Screen.Home) }
@@ -138,7 +138,7 @@ private fun AppContenido(
     var especialYear by remember { mutableStateOf<Int?>(null) }
     var syncTick by remember { mutableStateOf(0) }
     var reacts by remember { mutableStateOf(store.reacts) }
-    var recsDone by remember { mutableStateOf(store.recsDone) }
+    var recsDone by remember(EspejoCuenta.version) { mutableStateOf(store.recsDone) }
     var undoImport by remember { mutableStateOf(store.hasUndoImport) }
     val year = LocalDate.now().year
     var goalG by remember { mutableStateOf(store.goal(0, year)) }

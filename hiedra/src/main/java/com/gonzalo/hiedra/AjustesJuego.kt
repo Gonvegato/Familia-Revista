@@ -45,8 +45,21 @@ class AvanceRapido(var modo: Modo = Modo.MANTENER, var velocidad: Int = 3) {
     }
 }
 
-/** Cómo se juega con el jugador interno (los mandos, el avance rápido, la imagen). Se guarda en el móvil. */
+/**
+ * Cómo se juega con el jugador interno (los mandos, el avance rápido, la imagen) y lo que cambiaste de cada mando: se guarda aquí y viaja
+ * con tu cuenta (`ajustes/hiedra_juego`, un campo por ajuste; los mandos, `mapa:<descriptor>`).
+ */
 object AjustesJuego {
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("hiedra_juego", "hiedra_juego", tipo = { k ->
+        when (k) {
+            "opacidad", "tamano", "zona" -> EspejoCuenta.Tipo.DECIMAL
+            "vibracion", "pequenos", "etiqueta", "avSilencio" -> EspejoCuenta.Tipo.SI_NO
+            "avVel", "autoguardado" -> EspejoCuenta.Tipo.ENTERO
+            "tactil", "avModo", "orientacion", "filtro" -> EspejoCuenta.Tipo.TEXTO
+            else -> if (k.startsWith("mapa:")) EspejoCuenta.Tipo.TEXTO else null
+        }
+    }, alLlegar = { cargar(it) })
+
     enum class Tactil(val nombre: String) { AUTO("Ocultos con mando"), SIEMPRE("Siempre"), NUNCA("Nunca") }
     enum class Orientacion(val nombre: String) { APAISADA("Apaisada"), VERTICAL("Vertical"), MOVIL("La del móvil") }
     enum class Filtro(val nombre: String) { NITIDO("Nítido"), SUAVE("Suave"), LCD("LCD"), CRT("CRT") }
@@ -65,7 +78,7 @@ object AjustesJuego {
     var orientacion by mutableStateOf(Orientacion.APAISADA)
     var filtro by mutableStateOf(Filtro.NITIDO)
 
-    private fun p(c: Context) = c.getSharedPreferences("hiedra_juego", Context.MODE_PRIVATE)
+    private fun p(c: Context) = EspejoCuenta.prefs(c, GRUPO)
 
     fun cargar(c: Context) {
         val p = p(c)
@@ -80,11 +93,18 @@ object AjustesJuego {
         filtro = Filtro.entries.firstOrNull { it.name == p.getString("filtro", "") } ?: Filtro.NITIDO
     }
 
+    /** Guarda lo que ha cambiado (lo que nunca has tocado se queda sin guardar: así no pisa en la cuenta lo que elegiste en otro dispositivo). */
     fun guardar(c: Context) {
-        p(c).edit().putString("tactil", tactil.name).putFloat("opacidad", opacidad).putFloat("tamano", tamano).putBoolean("vibracion", vibracion)
-            .putBoolean("pequenos", botonesPequenosConMando).putBoolean("etiqueta", porEtiqueta).putFloat("zona", zonaMuerta)
-            .putString("avModo", avanceModo.name).putInt("avVel", avanceVelocidad).putBoolean("avSilencio", avanceSilencio)
-            .putInt("autoguardado", autoguardadoMin).putString("orientacion", orientacion.name).putString("filtro", filtro.name).apply()
+        val p = p(c); val hay = p.all; val ed = p.edit()
+        fun pon(k: String, v: Any, porDefecto: Any) {
+            if (hay[k] == v || (hay[k] == null && v == porDefecto)) return
+            when (v) { is Float -> ed.putFloat(k, v); is Boolean -> ed.putBoolean(k, v); is Int -> ed.putInt(k, v); else -> ed.putString(k, v.toString()) }
+        }
+        pon("tactil", tactil.name, Tactil.AUTO.name); pon("opacidad", opacidad, 0.6f); pon("tamano", tamano, 1f); pon("vibracion", vibracion, true)
+        pon("pequenos", botonesPequenosConMando, true); pon("etiqueta", porEtiqueta, false); pon("zona", zonaMuerta, 0.35f)
+        pon("avModo", avanceModo.name, AvanceRapido.Modo.MANTENER.name); pon("avVel", avanceVelocidad, 3); pon("avSilencio", avanceSilencio, true)
+        pon("autoguardado", autoguardadoMin, 2); pon("orientacion", orientacion.name, Orientacion.APAISADA.name); pon("filtro", filtro.name, Filtro.NITIDO.name)
+        ed.apply()
     }
 
     /** Lo que cambiaste de cada mando (por su descriptor de Android, que no cambia al reconectarlo). */

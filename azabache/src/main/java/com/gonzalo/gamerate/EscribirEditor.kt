@@ -87,7 +87,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
     if (escena == null) { LaunchedEffect(Unit) { onBack() }; return }
     val pid = escena.pid
     val obra = e.get(pid)
-    val prefs = remember { ctx.getSharedPreferences("escribir", android.content.Context.MODE_PRIVATE) }
+    val prefs = remember { EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.ESCRIBIR) }
     var tam by remember { mutableFloatStateOf(prefs.getFloat("tam", 19f)) }
     var fuente by remember { mutableIntStateOf(prefs.getInt("fuente", 0)) }
     var maquina by remember { mutableStateOf(prefs.getBoolean("maquina", false)) }

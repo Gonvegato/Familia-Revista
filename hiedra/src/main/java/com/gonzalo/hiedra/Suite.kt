@@ -71,13 +71,37 @@ data class StreamHost(val on: Boolean, val running: Boolean, val name: String, v
     }
 }
 
-/** La lista negra de Atrio: juegos que no salen en ningún sitio (Wallpaper Engine y cosas así). Se lee de lo que Atrio sube a tu cuenta. */
+/**
+ * La lista negra de Azabache: juegos que no salen en ningún sitio (Wallpaper Engine y cosas así). Se lee de tu cuenta, donde la pone Azabache
+ * (`azabache/negra~<id>`); si Azabache aún no la ha pasado a la cuenta, de lo que Atrio subía antes (`dev/<dispositivo>/data`).
+ */
 object Negra {
     var nombres by mutableStateOf<Set<String>>(emptySet()); private set
     fun poner(l: Collection<String>) { nombres = l.map { Catalogo.norm(it) }.filter { it.isNotEmpty() }.toSet() }
     fun vetado(nombre: String): Boolean = nombres.isNotEmpty() && Catalogo.norm(nombre) in nombres
     /** Los nombres vetados que hay en los datos de Atrio. Sin red: se puede probar. */
-    fun deBlobs(blobs: List<JSONObject>): List<String> = blobs.flatMap { b -> b.optJSONArray("negra")?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it)?.optString("nombre")?.takeIf { n -> n.isNotBlank() } } } ?: emptyList() }.distinct()
+    fun deBlobs(blobs: List<JSONObject>): List<String> = blobs.flatMap { b -> b.optJSONArray("negra")?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it)?.let { o -> o.optString("nombre").ifBlank { o.optString("n") } }?.takeIf { n -> n.isNotBlank() } } } ?: emptyList() }.distinct()
+
+    /**
+     * La lista negra tal como la tiene Azabache en tu cuenta: los nodos `negra~<id>` de la colección `azabache` (`o` = el elemento como texto
+     * JSON, con el nombre en `n`; lo que se quitó lleva `b`). null si Azabache aún no ha puesto ninguno. Sin red: se puede probar.
+     */
+    fun deCuenta(nodos: JSONObject?): List<String>? {
+        val ks = nodos?.keys()?.asSequence()?.filter { it.startsWith("negra~") }?.toList().orEmpty()
+        if (ks.isEmpty()) return null
+        return ks.mapNotNull { k ->
+            val n = nodos!!.optJSONObject(k) ?: return@mapNotNull null
+            if (n.optLong("b") > 0L) return@mapNotNull null
+            runCatching { JSONObject(n.optString("o")) }.getOrNull()?.let { it.optString("n").ifBlank { it.optString("nombre") } }?.takeIf { it.isNotBlank() }
+        }.distinct()
+    }
+
+    /** Solo esos nodos de tu cuenta (sin bajar todo lo de Azabache). Bloqueante (red). */
+    fun bajaDeCuenta(): List<String>? {
+        fun enc(x: String) = java.net.URLEncoder.encode(x, "UTF-8")
+        val q = "orderBy=" + enc("\"\$key\"") + "&startAt=" + enc("\"negra~\"") + "&endAt=" + enc("\"negra~\uf8ff\"")
+        return deCuenta(Cuenta.db("GET", "/users/${Cuenta.uid}/familia/azabache", null, q)?.let { JSONObject(it) })
+    }
 }
 
 /** Lee «suite» de tu cuenta en directo y manda órdenes al PC. */
@@ -110,7 +134,11 @@ object Suite {
     private val waits = HashMap<String, CompletableDeferred<JSONObject>>()
     private val busy = HashSet<String>()
     private var appCtx: Context? = null
-    private fun prefs() = appCtx!!.getSharedPreferences("hiedra_suite", Context.MODE_PRIVATE)
+    /** El PC elegido y si las capturas van a la galería viajan con tu cuenta (`ajustes/hiedra_suite`); las capturas bajadas y la lista negra que se lee, no. */
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("hiedra_suite", "hiedra_suite", tipo = { k ->
+        when (k) { "pc" -> EspejoCuenta.Tipo.TEXTO; "galeria" -> EspejoCuenta.Tipo.SI_NO; else -> null }
+    }, alLlegar = { c -> pcElegido = EspejoCuenta.base(c, GRUPO).getString("pc", "").orEmpty() })
+    private fun prefs() = EspejoCuenta.prefs(appCtx!!, GRUPO)
 
     fun online(): List<LiveDev> = devices.filter { it.online && it.app == "atrio" }
     fun pcs(): List<LiveDev> = devices.filter { it.app == "atrio" }
@@ -151,8 +179,10 @@ object Suite {
         }
         // La lista negra y las claves de servicios de Atrio, de vez en cuando; y las horas de Steam, cada 6 h
         sc.launch {
+            val deCuenta = runCatching { Negra.bajaDeCuenta() }.getOrNull()
+            deCuenta?.let { n -> Negra.poner(n); prefs().edit().putStringSet("negra", n.toSet()).apply() }
             runCatching { ImportarAtrio.blobs()?.let { b ->
-                val n = Negra.deBlobs(b); Negra.poner(n); prefs().edit().putStringSet("negra", n.toSet()).apply()
+                if (deCuenta == null) { val n = Negra.deBlobs(b); Negra.poner(n); prefs().edit().putStringSet("negra", n.toSet()).apply() }
                 val k = Servicios.deBlobs(b); ctx.getSharedPreferences("hiedra_servicios", Context.MODE_PRIVATE).edit().putString("a_sgdb", k.sgdb).putString("a_steamKey", k.steamKey).putString("a_steamUser", k.steamUser).apply()
             } }
             val c = appCtx ?: return@launch

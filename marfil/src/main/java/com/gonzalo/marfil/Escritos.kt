@@ -28,7 +28,9 @@ import java.util.zip.ZipOutputStream
  * capítulo que das por terminado (`/users/<uid>/cobalto/lectura/<obra>/<capítulo>`, ver cobalto/docs/CONTRATO-DATOS.md). Marfil los lee, hace de
  * cada obra un EPUB (los capítulos terminados, en orden, por partes) y lo abre en el lector como un libro más: con su posición, sus subrayados y
  * sus ajustes de lectura. Cuando Cobalto termina otro capítulo, el EPUB se rehace solo.
- * Estos libros son de aquí y no viajan con la biblioteca (ni a tu cuenta ni a kDrive, ni a Azabache): su clave empieza por «escrito:».
+ * Estos libros no son de la biblioteca (no van a los libros de tu cuenta ni a kDrive, ni a Azabache: su clave empieza por «escrito:» y cada
+ * dispositivo rehace el EPUB de lo que publica Cobalto), pero lo que lees en ellos sí viaja con tu cuenta como el de cualquier libro: por dónde
+ * vas, los ajustes, los subrayados, las notas y el tiempo (`lectura/escrito_<obra>`, `marcas/escrito_<obra>~…`, `tiempo/escrito_<obra>~…`).
  */
 /** Un libro que es una obra de Cobalto (no se sube, no va a los estantes ni a Azabache). */
 val Libro.esEscrito: Boolean get() = clave.startsWith("escrito:")

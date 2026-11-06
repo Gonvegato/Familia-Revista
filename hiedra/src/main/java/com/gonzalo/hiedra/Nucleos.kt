@@ -384,8 +384,9 @@ object Nucleos {
         } finally { tmp.delete() }
     }
 
-    /** Lo que has cambiado de las opciones de un sistema (se guarda en el móvil). */
-    private fun prefs(c: Context) = c.getSharedPreferences("hiedra_nucleos", Context.MODE_PRIVATE)
+    /** Lo que has cambiado de las opciones de un sistema: aquí y en tu cuenta (`ajustes/hiedra_nucleos`, un campo `op:<sistema>:<opción>`). */
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("hiedra_nucleos", "hiedra_nucleos", { k -> if (k.startsWith("op:")) EspejoCuenta.Tipo.TEXTO else null }, alLlegar = { version++ })
+    private fun prefs(c: Context) = EspejoCuenta.prefs(c, GRUPO)
     fun opcionesPropias(c: Context, sistema: String): Map<String, String> =
         prefs(c).all.mapNotNull { (k, v) -> if (k.startsWith("op:$sistema:") && v is String) k.removePrefix("op:$sistema:") to v else null }.toMap()
     fun ponOpcion(c: Context, sistema: String, clave: String, valor: String) { prefs(c).edit().putString("op:$sistema:$clave", valor).apply() }

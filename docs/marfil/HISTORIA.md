@@ -79,6 +79,17 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.14.2 — lo que eliges, en todos tus dispositivos
+
+- **El orden de cada estante, «tener aquí los libros de tu kDrive», la web de imágenes y «Actualizar sola» ya están en tu cuenta**, no
+  solo en cada dispositivo (la apariencia, los ajustes del lector y los objetivos ya viajaban). La primera vez, lo que ya tenías pasa sin
+  perder nada: lo que solo tenía uno, tal cual; lo que tenían distinto, el del dispositivo donde lo cambiaste más tarde. Después, de cada
+  ajuste gana el último cambio, venga de donde venga.
+- **Lo que lees de Cobalto sigue donde lo dejaste, en cualquier dispositivo.** Por dónde vas en una obra, sus subrayados, notas y
+  marcadores, sus ajustes y el tiempo leído se quedaban en el móvil donde la leías; ahora van con tu cuenta, como los de cualquier libro. La
+  obra sigue sin ser un libro de tu biblioteca (ni va a Azabache). Lo que ya habías leído en cada móvil sube la próxima vez que la abras ahí.
+- Marfil de Linux y Mac todavía no lee el orden de los estantes ni lo leído en los escritos: llegará en su próxima versión.
+
 ## 0.14.1
 
 - **El lector ya no se cierra solo.** Android puede cerrar lo que dibuja la página del libro (con un libro grande o el móvil justo de memoria), y si la app no lo atiende, Android cierra la app entera. Ahora se vuelve a abrir el libro donde ibas.

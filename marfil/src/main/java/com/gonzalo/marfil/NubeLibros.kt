@@ -26,7 +26,10 @@ class NubeLibro(val f: Long, val n: String, val s: Long)
 object NubeLibros {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val subiendo = AtomicBoolean(false)
-    private fun prefs(c: Context) = c.getSharedPreferences("marfil_nube", Context.MODE_PRIVATE)
+    /** «Tener aquí todos los libros de tu kDrive» es tuyo y viaja con la cuenta (`ajustes/marfil_nube`); los fallos de cada libro, de aquí. */
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("marfil_nube", "marfil_nube", { k -> if (k == "auto_bajar") EspejoCuenta.Tipo.SI_NO else null },
+        alLlegar = { c -> if (autoBajar(c)) runCatching { programar(c) } })
+    private fun prefs(c: Context) = EspejoCuenta.prefs(c, GRUPO)
 
     fun deJson(o: JSONObject?): NubeLibro? = o?.let { if (it.optLong("f") > 0) NubeLibro(it.optLong("f"), it.optString("n"), it.optLong("s")) else null }
     fun aJson(x: NubeLibro): JSONObject = JSONObject().put("f", x.f).put("n", x.n).put("s", x.s).put("u", System.currentTimeMillis())

@@ -25,9 +25,9 @@ import androidx.compose.ui.unit.sp
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Lo que llevas hecho de los duelos de libros: se guarda solo para poder dejarlo y seguir otro día. */
+/** Lo que llevas hecho de los duelos de libros: se guarda para poder dejarlo y seguir otro día, aquí o en otro dispositivo ([AjustesEnLaCuenta.DUELOS]). */
 class DuelosEstado(ctx: Context) {
-    private val p = ctx.getSharedPreferences("duelos", Context.MODE_PRIVATE)
+    private val p = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.DUELOS)
 
     var pool: List<Long>
         get() = ids("pool")

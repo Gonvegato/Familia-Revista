@@ -55,7 +55,8 @@ class WebActivity : Activity() {
             ctx.startActivity(i)
         }
 
-        private fun prefs(ctx: Context) = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE)
+        /** (Dónde te quedaste en cada guía viaja con tu cuenta: [AjustesEnLaCuenta.GENERAL], `guide_last`.) */
+        private fun prefs(ctx: Context) = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.GENERAL)
 
         /** Dónde te quedaste en una guía (dirección inicial → última página y su título), si fue hace menos de 2 semanas. */
         fun lastPage(ctx: Context, start: String): Pair<String, String>? = try {

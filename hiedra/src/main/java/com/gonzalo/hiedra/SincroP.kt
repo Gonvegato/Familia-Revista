@@ -9,7 +9,7 @@ import org.json.JSONObject
 /**
  * La sincronización de Hiedra: es la de la cuenta de la familia ([LaFamilia]): cada cambio va a la cuenta campo a campo, se escucha
  * en directo mientras se ve la app y lo pendiente se sube solo en cuanto hay red. Aquí queda lo que es de Hiedra: la apariencia y la
- * portada de la app (`ajustes/hiedra`), las ROMs a tu kDrive y la migración de lo de antes.
+ * portada de la app (`ajustes/hiedra`), los demás ajustes ([EspejoCuenta]: `ajustes/hiedra_*`), las ROMs a tu kDrive y la migración de lo de antes.
  */
 object SincroP {
     @Volatile private var app: Context? = null
@@ -39,8 +39,13 @@ object SincroP {
             ajustes().alCambiar { refs -> if ("hiedra" in refs) android.os.Handler(android.os.Looper.getMainLooper()).post { aplicaAjustes() } }
             aplicaAjustes()
         }
+        // Lo demás que eliges (el orden de cada sección, cómo se juega, el emulador de cada consola…): también en la cuenta
+        EspejoCuenta.inicia(c, GRUPOS)
         Migracion.siHaceFalta(c)
     }
+
+    /** Las preferencias de Hiedra que son tuyas (no de este móvil) y viajan con la cuenta, cada una en `ajustes/<nodo>` ([EspejoCuenta]). */
+    val GRUPOS: List<EspejoCuenta.Grupo> get() = listOf(OrdenGuardado.GRUPO, AjustesJuego.GRUPO, Ajustes.GRUPO, Nucleos.GRUPO, Suite.GRUPO, NubeP.GRUPO, Internet.GRUPO, Actualizador.GRUPO)
 
     /** La apariencia y la portada de la app que llegan de otro de tus Hiedra (si son más nuevas que las de aquí). */
     private fun aplicaAjustes() {

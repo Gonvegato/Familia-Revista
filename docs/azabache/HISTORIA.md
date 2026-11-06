@@ -9,6 +9,19 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.6.2 — lo que eliges, en todos tus dispositivos
+
+- **Lo que eliges en Azabache y se quedaba en el móvil ya está en tu cuenta**: las recomendaciones de tu pareja que ya añadiste o descartaste (ya no vuelven a salir en el otro); los avisos (de
+  lectura, del diario y de lo que hace tu pareja); el PC de Atrio elegido; las capturas en la galería y en tu kDrive; la web de imágenes;
+  «Actualizar sola». Si en dos dispositivos a la vez cambias cosas distintas, se quedan las dos; si es la misma, la última.
+- **Los objetivos del año**: uno nuevo solo llegaba a un dispositivo que aún no tuviera ninguno; ahora llega siempre el último que pones.
+- **Tu nombre** (el que ve tu pareja) no llegaba nunca a la cuenta, así que tu pareja no lo veía; ahora sí, y es el mismo en todos tus
+  dispositivos.
+- **La letra del lector es la misma en todos tus dispositivos**, como en Marfil. El brillo sigue siendo de cada pantalla.
+- La primera vez en cada dispositivo, lo que ya tenía pasa a la cuenta sin perder nada: las recomendaciones vistas se juntan; lo que tenían distinto, el del dispositivo donde lo cambiaste más
+  tarde. Las maquetas, las recomendaciones y todo lo que ya viajaba se guardan como antes.
+- Azabache de Linux y Mac todavía no lee estos ajustes: llegará en su próxima versión.
+
 ## 1.6.1
 
 - **Una versión nueva ya no te saca de lo que estás haciendo.** El actualizador instala en silencio cuando no usas la app, y Android la cierra para instalarla. Pero no siempre sabía que la estabas usando: si se entraba directamente a una pantalla que no es la portada (desde un widget, o cuando Android vuelve a abrir la app tras cerrarla por detrás), creía que no estabas; y con la pantalla apagada un momento, también. Ahora se lo pregunta a Android, nunca instala con la pantalla apagada o bloqueada.

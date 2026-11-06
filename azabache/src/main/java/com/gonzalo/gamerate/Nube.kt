@@ -85,7 +85,7 @@ object KDrive {
 
     class Fail(msg: String) : IOException(msg)
 
-    private fun prefs(ctx: Context) = ctx.getSharedPreferences("nube", Context.MODE_PRIVATE)
+    private fun prefs(ctx: Context) = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.NUBE)
     /**
      * El token y el número de tu kDrive son de la cuenta (`/claves`, se ponen una vez en Azabache y los usan todas las apps).
      * Si este móvil tenía uno guardado de antes y la cuenta aún no, se sube una vez ([migraALaCuenta]).

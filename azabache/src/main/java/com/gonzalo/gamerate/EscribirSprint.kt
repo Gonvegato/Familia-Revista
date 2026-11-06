@@ -40,7 +40,7 @@ object SprintEscribir {
     /** El último que terminó (para enseñarlo); se pone a null al verlo. */
     var terminado by mutableStateOf<Sprint?>(null)
 
-    private fun prefs(ctx: Context) = ctx.getSharedPreferences("escribir", Context.MODE_PRIVATE)
+    private fun prefs(ctx: Context) = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.ESCRIBIR)
 
     /** Lo recupera si se cerró la app con uno en marcha. */
     fun recupera(ctx: Context, e: Escritos) {

@@ -74,6 +74,8 @@ object Sincro {
             }
         }
         runCatching { Store(a).let { st -> if (st.accUid != com.gonzalo.familia.LaFamilia.familia.sesion.uid) Account.adoptaSesion(st) } }
+        // Lo demás que eliges (Descubrir, los duelos, tus guías, los avisos…): también en la cuenta, cada cosa en `ajustes/azabache_*`
+        runCatching { EspejoCuenta.inicia(a, AjustesEnLaCuenta.TODOS) }
         if (app === a) return
         synchronized(this) {
             if (app === a) return
