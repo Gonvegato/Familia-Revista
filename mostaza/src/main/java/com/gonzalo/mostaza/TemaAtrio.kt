@@ -52,6 +52,8 @@ object TemaAtrio {
         val nuevos = tonosDe(v)
         val cambio = tonos != nuevos
         tonos = nuevos; aviso = ""
+        // Los widgets llevan esos colores: se repintan
+        Widgets.pedir(c)
         guardado(c).edit().putString("atrio", JSONObject().also { o -> COLUMNAS.forEachIndexed { i, k -> o.put(k, v[i]) } }.toString()).apply()
         return true
     }

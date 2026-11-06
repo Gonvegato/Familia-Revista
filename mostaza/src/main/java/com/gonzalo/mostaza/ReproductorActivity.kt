@@ -562,6 +562,8 @@ class ReproductorActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Mientras se ve, los widgets no se repintan (ver Widgets.reproductorAbierto)
+        Widgets.reproductorAbierto = true
         // Volver al reproductor después de salir es otra sesión (la de antes terminó al irte)
         if (parado) { parado = false; visionado = visionado?.let { v -> Visionado(applicationContext, v.breve, v.meta, v.video) } }
     }
@@ -574,6 +576,8 @@ class ReproductorActivity : ComponentActivity() {
         parado = true
         val kbps = DefaultBandwidthMeter.getSingletonInstance(this).bitrateEstimate / 1000L
         if (listo && cortes.isEmpty()) Conexion.apunta(applicationContext, kbps)
+        // Y ahora sí, los widgets: «Seguir viendo» con lo que acabas de ver
+        Widgets.reproductorCerrado(applicationContext)
     }
 
     override fun onDestroy() {

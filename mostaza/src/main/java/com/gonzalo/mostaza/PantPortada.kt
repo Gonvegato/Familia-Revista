@@ -72,8 +72,9 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
     val hoy = remember { Calendar.getInstance() }
     val titulos = Biblioteca.titulos.toList()
     Biblioteca.version
-    val viendo = titulos.filter { it.estado == Estado.VIENDO }.sortedByDescending { maxOf(it.ultima, Biblioteca.ultimo(it.ref)?.ultima ?: 0L) }
-    val pendientes = titulos.filter { it.estado == Estado.PENDIENTE }.sortedByDescending { it.anadido }
+    // (el mismo orden que los widgets)
+    val viendo = Biblioteca.seguirViendo(titulos)
+    val pendientes = Biblioteca.pendientes(titulos)
     Tmdb.version
     val conTmdb = Tmdb.activo
     // Con TMDB, la portada es la de una plataforma (sus filas); sin TMDB, los catálogos de tus addons

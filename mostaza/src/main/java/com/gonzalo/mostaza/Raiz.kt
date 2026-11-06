@@ -37,15 +37,17 @@ private val saleHoja = slideOutVertically(tween(200, easing = FastOutLinearInEas
 
 /** La app: portada de revista, sus secciones, la ficha por encima y, encima de todo, las fuentes de lo que vas a ver. */
 @Composable
-fun MostazaApp(fichaPedida: String? = null, addonPedido: String? = null, alAtender: () -> Unit = {}) {
+fun MostazaApp(fichaPedida: String? = null, addonPedido: String? = null, seccionPedida: String? = null, alAtender: () -> Unit = {}) {
     var destino by rememberSaveable { mutableIntStateOf(0) }
     var ficha by remember { mutableStateOf<MetaBreve?>(null) }
     var instalar by remember { mutableStateOf<String?>(null) }
     val d = Destino.entries[destino]
-    LaunchedEffect(fichaPedida, addonPedido) {
+    LaunchedEffect(fichaPedida, addonPedido, seccionPedida) {
+        // (una sección que pide un widget: la de debajo; si además pide una ficha, la ficha va por encima)
+        seccionPedida?.let { s -> Destino.entries.firstOrNull { it.name == s }?.let { destino = it.ordinal; ficha = null } }
         fichaPedida?.let { r -> Biblioteca.porRef(r)?.let { ficha = it.breve() } }
         addonPedido?.let { instalar = it; destino = Destino.Addons.ordinal }
-        if (fichaPedida != null || addonPedido != null) alAtender()
+        if (fichaPedida != null || addonPedido != null || seccionPedida != null) alAtender()
     }
     fun ir(x: Destino) { destino = x.ordinal }
     AvisoActualizacion()
