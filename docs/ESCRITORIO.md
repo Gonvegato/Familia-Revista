@@ -39,6 +39,11 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   portadas (de un archivo, una dirección o internet), diario, sagas, cifras del año y ajustes (las claves de servicios de la cuenta y tus
   categorías). Sin valorar nunca sale con un 0. La ficha es la página de revista del móvil (a dos columnas), con tus maquetas del móvil
   tal cual; la vista de tu pareja («Vosotros dos», sus fichas con «Y tú»), y las cifras, la portada y el diario como en Android.
+  Desde la 1.2.0, **diseñar la página de una ficha** como en el móvil («Diseñar», junto a «Editar»: cada casilla con lo que quieras, un
+  texto o una imagen de SteamGridDB, TMDB, TVmaze, Open Library o una dirección, encuadrada; filas que se parten, se juntan y se estiran;
+  «Usar en todos los…» y «Restablecer»; se guarda sola, en las mismas maquetas de la cuenta que el móvil), las **recomendaciones** a tu
+  pareja y las suyas («Lucía te recomienda», con «A mi lista»), «En portada» que va pasando como el carrusel del móvil, **«Buscar en
+  todo»** y **«Tal día como hoy»**.
 - **Cobalto**: el núcleo de los escritos (formato, sincronización, mezcla a tres bandas), la estructura, el texto (Markdown ligero,
   tipografía automática, deshacer), exportar e importar son **los mismos archivos** que compila Cobalto de Android (se copian de
   `cobalto/src` al compilar; las pruebas de la mezcla y de la estructura, también). Portada (palabras de hoy, racha, últimos días, seguir
@@ -80,7 +85,9 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 
 ## Lo que todavía no hacen (para no engañar)
 
-- **Azabache**: editar las maquetas (las del móvil se ven tal cual), las recomendaciones y «Descubrir».
+- **Azabache**: las casillas de películas y series «Crítica», «Dónde verla» y «Progreso» (se colocan, pero se dibujan solo en el móvil), las
+  imágenes de tus archivos en una maqueta, las reacciones de tu pareja y «Lo último de tu pareja», y los próximos episodios. («Descubrir»
+  no está a propósito: se quitó de Azabache.)
 - **Cobalto**: compartir con tu pareja. El historial de sprints no viaja por la cuenta (tampoco en el móvil: cada dispositivo guarda el suyo).
 - **Marfil**: los subrayados de los PDF (el móvil los guarda sobre la capa de texto de pdf.js), leer en voz alta y traducir. Los ajustes
   que cambies en otro dispositivo se aplican aquí la próxima vez que abras el libro, no al momento. Otros formatos (MOBI, FB2, TXT): en
@@ -110,4 +117,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.1, Marfil 0.14.1, Cobalto 0.4.1, Azabache 1.6.1. De escritorio: las cuatro 1.1.0.
+Versiones de Android a día de hoy: Hiedra 0.6.1, Marfil 0.14.1, Cobalto 0.4.1, Azabache 1.6.1. De escritorio: Azabache 1.2.0; Cobalto, Hiedra y Marfil 1.1.0.

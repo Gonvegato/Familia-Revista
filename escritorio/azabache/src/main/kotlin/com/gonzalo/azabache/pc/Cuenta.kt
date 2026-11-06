@@ -295,6 +295,52 @@ object Cuenta {
     fun guardaKind(k: Kind) { synchronized(this) { escribeLista("kinds", lista("kinds").filter { it["id"].comoLong().toInt() != k.id } + kindAMapa(k)) } }
     fun siguienteKind(): Int = (kinds().maxOf { it.id } + 1).coerceAtLeast(2)
 
+    /**
+     * Una maqueta a la cuenta (`maquetas~<id>`, `o` = {id, k, j, updated}), como `Store.saveMaqueta` del móvil: si ya estaba y cambia,
+     * con su versión de sincronización (`sv`) como la pone el móvil al reescribirla.
+     */
+    fun guardaMaqueta(clave: String, j: String) {
+        synchronized(this) {
+            val id = Maquetas.idDe(clave); val ahora = System.currentTimeMillis()
+            val l = lista("maquetas")
+            val antes = l.firstOrNull { it["id"].comoLong() == id }
+            if (antes != null && antes["j"].comoTexto() == j && antes["k"].comoTexto() == clave) return
+            val e = linkedMapOf<String, Any?>("id" to id, "k" to clave, "j" to j, "updated" to ahora)
+            if (antes != null) e["sv"] = maxOf(ahora, antes["sv"].comoLong() + 1)
+            escribeLista("maquetas", l.filter { it["id"].comoLong() != id } + e)
+        }
+    }
+
+    /** Quita maquetas (se restablece el diseño de siempre): como en el móvil, el elemento lleva su marca de borrado. */
+    fun borraMaquetas(claves: List<String>) {
+        synchronized(this) {
+            val ids = claves.filter { Maquetas.claveValida(it) }.map { Maquetas.idDe(it) }.toSet()
+            val l = lista("maquetas")
+            if (l.none { it["id"].comoLong() in ids }) return
+            escribeLista("maquetas", l.filter { it["id"].comoLong() !in ids })
+        }
+    }
+
+    // ================================================================ las recomendaciones a tu pareja (`azabache/recs~<id>`)
+
+    /** Lo que le has recomendado a tu pareja (lo tuyo, de la cuenta), lo último primero. */
+    fun misRecs(): List<Rec> = cacheado("recs") { lista("recs").mapNotNull { recDeMapa(it) }.sortedByDescending { it.hora } }
+
+    /** Lo que te recomienda tu pareja (de su cuenta), lo último primero. */
+    fun recsDe(uid: String): List<Rec> = cacheado("recs_$uid") { lista("recs", ajena(uid, "azabache")).mapNotNull { recDeMapa(it) }.sortedByDescending { it.hora } }
+
+    /**
+     * Le recomiendas algo a tu pareja: un elemento nuevo en tu lista `recs` (el mismo que crea el móvil con «Recomendar»: un número
+     * nuevo cada vez, y lo de antes no se toca). Solo juegos y libros, como en el móvil.
+     */
+    fun recomienda(f: Ficha, nota: String): Rec {
+        val ahora = System.currentTimeMillis()
+        val id = synchronized(this) { maxOf(ahora, (lista("recs").maxOfOrNull { it["id"].comoLong() } ?: 0L) + 1) }
+        val r = Rec(id, f.kind, f.id, f.nombre, f.portadaWeb, f.creador, nota.trim(), ahora)
+        az().cambia("recs~${r.id}", mapOf("o" to Json.escribe(recAMapa(r)), "b" to 0L))
+        return r
+    }
+
     /** Las horas jugadas o leídas de una cosa, por día (`tiempo/<ref>~<fuente>`: se suman las fuentes). */
     fun porDia(ref: String): Map<String, Long> {
         val out = HashMap<String, Long>()

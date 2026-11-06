@@ -91,6 +91,13 @@ fun PantPareja(uid: String, nav: Nav) {
                 }
             }
         }
+        // Las recomendaciones: lo que te recomienda (a tu lista o descartar) y lo que le has recomendado tú
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            ColumnasRevista(if (maxWidth >= 860.dp) 2 else 1) {
+                Column(Modifier.fillMaxWidth()) { TeRecomienda(uid, nombre, nav, maximo = 10, volver = Pantalla.Pareja) }
+                Column(Modifier.fillMaxWidth()) { LeHasRecomendado(nombre, nav) }
+            }
+        }
         Spacer(Modifier.height(30.dp))
     }
 }
@@ -113,5 +120,5 @@ fun PantDeLaPareja(uid: String, kind: Int, id: Long, nav: Nav) {
     val k = Cuenta.kindsDe(uid).firstOrNull { it.id == kind } ?: GAMES
     val f = Cuenta.fichasDe(uid, kind).firstOrNull { it.id == id }
     if (f == null) { Pagina { VolverRevista({ nav.ir(Pantalla.Pareja) }, "Pareja"); Vacio("Esta ficha ya no está") }; return }
-    PaginaDeFicha(k, f, Pantalla.Pareja, nav, false, {}, {}, {}, {}, {}, {}, {}, {}, deUid = uid)
+    PaginaDeFicha(k, f, Pantalla.Pareja, nav, false, AccionesFicha(), deUid = uid)
 }

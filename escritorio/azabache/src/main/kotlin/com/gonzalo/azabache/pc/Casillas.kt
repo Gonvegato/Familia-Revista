@@ -108,7 +108,25 @@ fun ColumnasRevista(columnas: Int, modifier: Modifier = Modifier, hueco: Dp = 44
 /** La portada de la ficha: ocupa el ancho de su casilla (como mucho 240 dp), en 2:3. */
 @Composable
 fun MagPortada(f: Ficha, k: Kind, deUid: String? = null) {
-    Box(Modifier.widthIn(max = 240.dp).fillMaxWidth()) { PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.fillMaxWidth(), deUid = deUid, pie = k.unit) }
+    Box(Modifier.then(AnchoMaximo(240.dp)).fillMaxWidth()) { PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.fillMaxWidth(), deUid = deUid, pie = k.unit) }
+}
+
+/**
+ * Como `widthIn(max = …)`, pero también al preguntar por el alto (las filas de la página miden su alto así, `IntrinsicSize.Min`): con
+ * `widthIn`, una portada sola en una fila respondía con el alto que tendría a todo lo ancho (una fila de 800 dp para una portada de 360).
+ */
+private class AnchoMaximo(private val max: Dp) : androidx.compose.ui.layout.LayoutModifier {
+    override fun androidx.compose.ui.layout.MeasureScope.measure(measurable: androidx.compose.ui.layout.Measurable, constraints: Constraints): androidx.compose.ui.layout.MeasureResult {
+        val m = max.roundToPx()
+        val c = constraints.copy(minWidth = minOf(constraints.minWidth, m), maxWidth = minOf(constraints.maxWidth, m))
+        val p = measurable.measure(c)
+        return layout(p.width, p.height) { p.place(0, 0) }
+    }
+    private fun androidx.compose.ui.layout.IntrinsicMeasureScope.tope(w: Int) = if (w == Constraints.Infinity) w else minOf(w, max.roundToPx())
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.minIntrinsicHeight(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, width: Int) = measurable.minIntrinsicHeight(tope(width))
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.maxIntrinsicHeight(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, width: Int) = measurable.maxIntrinsicHeight(tope(width))
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.minIntrinsicWidth(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, height: Int) = tope(measurable.minIntrinsicWidth(height))
+    override fun androidx.compose.ui.layout.IntrinsicMeasureScope.maxIntrinsicWidth(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, height: Int) = tope(measurable.maxIntrinsicWidth(height))
 }
 
 /** La nota en cifras enormes y, debajo, los criterios con puntos guía. */
@@ -230,9 +248,13 @@ fun AccionCasilla(t: String, onClick: () -> Unit) =
  * (el título entero no cabe en 44 dp y salía «Ha d…»).
  */
 @Composable
-fun MiniPortada(f: Ficha, modifier: Modifier = Modifier, deUid: String? = null) {
-    if (f.portada.isNotBlank() || f.portadaWeb.isNotBlank()) { PortadaCosa(f.portada, f.portadaWeb, f.nombre, modifier, deUid = deUid); return }
+fun MiniPortada(f: Ficha, modifier: Modifier = Modifier, deUid: String? = null) = PortadaPequena(f.portada, f.portadaWeb, f.nombre, modifier, deUid)
+
+/** Lo mismo con los datos sueltos (lo que te recomienda tu pareja): la imagen, o la inicial sobre arena. */
+@Composable
+fun PortadaPequena(hash: String, url: String, titulo: String, modifier: Modifier = Modifier, deUid: String? = null) {
+    if (hash.isNotBlank() || url.isNotBlank()) { PortadaCosa(hash, url, titulo, modifier, deUid = deUid); return }
     Box(modifier.aspectRatio(2f / 3f).background(Sand), contentAlignment = Alignment.Center) {
-        Text(f.nombre.trim().take(1).uppercase(), color = Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+        Text(titulo.trim().trimStart('¿', '¡', '«', '"', '(').take(1).uppercase(), color = Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
     }
 }

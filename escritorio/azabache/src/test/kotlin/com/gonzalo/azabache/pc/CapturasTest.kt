@@ -49,6 +49,8 @@ class CapturasTest {
         libro("El nombre del viento", "Patrick Rothfuss", "terminado", mapOf("fin" to listOf(ms(hoy.minusDays(1))), "azid" to 12L))
         libro("Rayuela", "Julio Cortázar", "terminado", mapOf("fin" to listOf(ms(hoy.minusDays(20))), "nota" to 88L, "crit" to listOf(85L, 80L, 95L, 70L), "azid" to 13L))
         libro("El temor de un hombre sabio", "Patrick Rothfuss", "pendiente", mapOf("azid" to 14L))
+        // Leído un día como hoy, hace tres años («Tal día como hoy»)
+        libro("Fundación", "Isaac Asimov", "terminado", mapOf("fin" to listOf(ms(hoy.minusYears(3))), "nota" to 85L, "crit" to listOf(80L, 90L, 85L, 75L), "azid" to 15L))
         t.pon("j_000000000002~hiedra-1", mapOf("ref" to "j_000000000002", "fuente" to "hiedra-1", "total" to 9_000_000L, "d$hoy" to 5_400_000L, "d${hoy.minusDays(1)}" to 3_600_000L))
         t.pon("${Cuenta.kidDe(Cuenta.claveLibro("Dune", "Frank Herbert"))}~marfil-1", mapOf("ref" to Cuenta.kidDe(Cuenta.claveLibro("Dune", "Frank Herbert")), "fuente" to "marfil-1", "total" to 4_200_000L, "d$hoy" to 2_400_000L))
         az.pon("kinds~2", mapOf("o" to """{"id":2,"title":"Películas","criteria":["Guion","Actuación","Dirección","Música"],"progress":"Viendo","color":0,"source":"movie"}""", "b" to 0L))
@@ -70,7 +72,13 @@ class CapturasTest {
         fun libroDe(t0: String, a: String, extra: Map<String, Any?>) { val c = Cuenta.claveLibro(t0, a); lucia.coleccion("libros").pon(Cuenta.kidDe(c), mapOf("clave" to c, "t" to t0, "a" to a) + extra) }
         libroDe("Rayuela", "Julio Cortázar", mapOf("estado" to "terminado", "fin" to listOf(ms(hoy.minusDays(40))), "nota" to 92L, "crit" to listOf(90L, 85L, 98L, 80L), "azid" to 111L))
         libroDe("La sombra del viento", "Carlos Ruiz Zafón", mapOf("estado" to "en_curso", "fr" to 0.6, "pg" to 576L, "azid" to 112L))
+        // Lo que te recomienda Lucía (desde su móvil)
+        lucia.coleccion("azabache").pon("recs~5", mapOf("o" to """{"id":5,"kind":1,"item":112,"name":"La sombra del viento","cover":"","creator":"Carlos Ruiz Zafón","note":"Barcelona, los libros olvidados y un misterio que no te suelta. Léelo en otoño.","time":${ms(hoy.minusDays(1))}}""", "b" to 0L))
+        lucia.coleccion("azabache").pon("recs~6", mapOf("o" to """{"id":6,"kind":0,"item":103,"name":"Animal Crossing","cover":"","creator":"Nintendo","note":"","time":${ms(hoy.minusDays(4))}}""", "b" to 0L))
         check(lucia.sincroniza().ok)
+        // Lo tuyo: una recomendación que le hiciste
+        az.pon("recs~9", mapOf("o" to """{"id":9,"kind":0,"item":1,"name":"Hades","cover":"","creator":"Supergiant Games","note":"La música te va a encantar","time":${ms(hoy.minusDays(6))}}""", "b" to 0L))
+        check(otra.sincroniza().ok)
 
         LaFamilia.reiniciaParaPruebas()
         LaFamilia.alMomento = true
@@ -88,15 +96,27 @@ class CapturasTest {
         check(aqui.sincroniza().ok)
         Apariencia.inicia("azabache")
 
-        fun captura(nombre: String, p: Pantalla, oscuro: Boolean = false) {
+        Local.dirPruebas = File(LaFamilia.dirPruebas, "local"); Local.olvidaParaPruebas()
+        /** [haz]: lo que se hace con el ratón antes de la foto (un clic, desplazar), con el tiempo de la escena. */
+        fun captura(nombre: String, p: Pantalla, oscuro: Boolean = false, haz: (ImageComposeScene, Long) -> Unit = { _, _ -> }) {
             com.gonzalo.familia.pc.revista.Modo.eleccion = if (oscuro) 2 else 1
             val escena = ImageComposeScene(1440, 900, Density(1f)) {
                 TemaFamilia { TextoAireado { Box(Modifier.fillMaxSize().background(Paper)) { AppAzabache(p) } } }
             }
             var img = escena.render(0)
             repeat(6) { i -> Thread.sleep(150); img = escena.render((i + 1) * 500_000_000L) }
+            haz(escena, 3_500_000_000L)
+            repeat(5) { i -> Thread.sleep(150); img = escena.render(4_000_000_000L + i * 500_000_000L) }
             File(dir, "$nombre.png").writeBytes(img.encodeToData(EncodedImageFormat.PNG)!!.bytes)
             escena.close()
+        }
+        fun clic(x: Float, y: Float): (ImageComposeScene, Long) -> Unit = { e, t ->
+            e.sendPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Move, androidx.compose.ui.geometry.Offset(x, y), timeMillis = t / 1_000_000)
+            e.sendPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Press, androidx.compose.ui.geometry.Offset(x, y), timeMillis = t / 1_000_000 + 10, button = androidx.compose.ui.input.pointer.PointerButton.Primary)
+            e.sendPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Release, androidx.compose.ui.geometry.Offset(x, y), timeMillis = t / 1_000_000 + 60, button = androidx.compose.ui.input.pointer.PointerButton.Primary)
+        }
+        fun baja(x: Float, y: Float, cuanto: Float): (ImageComposeScene, Long) -> Unit = { e, t ->
+            e.sendPointerEvent(androidx.compose.ui.input.pointer.PointerEventType.Scroll, androidx.compose.ui.geometry.Offset(x, y), scrollDelta = androidx.compose.ui.geometry.Offset(0f, cuanto), timeMillis = t / 1_000_000)
         }
         captura("azabache-portada", Pantalla.Inicio)
         captura("azabache-juegos", Pantalla.Lista(GAMES.id))
@@ -114,6 +134,18 @@ class CapturasTest {
         captura("azabache-sagas", Pantalla.Sagas)
         captura("azabache-cifras", Pantalla.Cifras)
         captura("azabache-ajustes", Pantalla.Ajustes)
-        LaFamilia.reiniciaParaPruebas()
+        // 1.2.0: la portada con lo que te recomienda tu pareja, diseñar la página, buscar en todo
+        captura("azabache-portada-oscuro", Pantalla.Inicio, oscuro = true)
+        captura("azabache-portada-recomienda", Pantalla.Inicio, haz = baja(800f, 500f, 30f))
+        captura("azabache-portada-recomienda-oscuro", Pantalla.Inicio, oscuro = true, haz = baja(800f, 500f, 30f))
+        captura("azabache-pareja-recomendaciones", Pantalla.Pareja, haz = baja(800f, 500f, 30f))
+        captura("azabache-buscar-en-todo", Pantalla.Inicio, haz = clic(340f, 42f))
+        captura("azabache-buscar-en-todo-oscuro", Pantalla.Inicio, oscuro = true, haz = clic(340f, 42f))
+        captura("azabache-disenar", Pantalla.Detalle(GAMES.id, 6L, Pantalla.Lista(GAMES.id), disenar = true))
+        captura("azabache-disenar-oscuro", Pantalla.Detalle(GAMES.id, 6L, Pantalla.Lista(GAMES.id), disenar = true), oscuro = true)
+        captura("azabache-disenar-texto", Pantalla.Detalle(GAMES.id, 6L, Pantalla.Lista(GAMES.id), disenar = true), haz = clic(480f, 720f))
+        captura("azabache-disenar-casilla-oscuro", Pantalla.Detalle(GAMES.id, 1L, Pantalla.Lista(GAMES.id), disenar = true), oscuro = true, haz = clic(800f, 240f))
+        captura("azabache-disenar-jugando", Pantalla.Detalle(GAMES.id, 2L, Pantalla.Lista(GAMES.id), disenar = true), haz = clic(480f, 240f))
+        LaFamilia.reiniciaParaPruebas(); Local.dirPruebas = null; Local.olvidaParaPruebas()
     }
 }

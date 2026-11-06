@@ -94,6 +94,74 @@ object Buscar {
             Hallazgo(id, s["name"].comoTexto(), listOf(s["premiered"].comoTexto().take(4), red).filter { it.isNotBlank() }.joinToString(" · "), s["image"].comoMapa()["original"].comoTexto())
         }
 
+    // ---------------------------------------------------------------- imágenes para las casillas de la maqueta (las mismas fuentes que el móvil)
+
+    /** Un número de fuera (SteamGridDB, TMDB, TVmaze, Open Library): lo de antes de 100.000 millones (los hechos a mano son más grandes). */
+    fun esDeInternet(id: Long) = id in 1 until 100_000_000_000L
+
+    /** Los tipos de imagen de una categoría (como `MagImages.categories` del móvil). */
+    fun tiposDeImagen(k: Kind): List<String> = when {
+        k.isGame -> listOf("Portada", "Fondo", "Logo")
+        k.isMovie || k.isTv -> listOf("Póster", "Fondo")
+        k.isBook -> listOf("Portada")
+        else -> emptyList()
+    }
+
+    private fun sgdb(ruta: String): List<Pair<String, String>> {
+        val key = LaFamilia.clave("steamgriddb").ifBlank { throw IllegalArgumentException("Pon tu clave de SteamGridDB en Ajustes → Servicios para ver las imágenes de juegos.") }
+        return get("https://www.steamgriddb.com/api/v2$ruta", key).comoMapa()["data"].comoLista().map { it.comoMapa() }
+            .map { it["thumb"].comoTexto().ifBlank { it["url"].comoTexto() } to it["url"].comoTexto() }.filter { it.second.isNotBlank() }
+    }
+
+    private fun tmdb(ruta: String): Any? {
+        val k = LaFamilia.clave("tmdb").trim().ifBlank { throw IllegalArgumentException("Pon tu clave de TMDB en Ajustes → Servicios.") }
+        val token = k.startsWith("eyJ")
+        val sep = if ('?' in ruta) '&' else '?'
+        return get("https://api.themoviedb.org/3$ruta" + if (token) "" else "${sep}api_key=${enc(k)}", if (token) k else "")
+    }
+
+    /** Las imágenes (miniatura, grande) de una ficha para una casilla: [tipo], uno de [tiposDeImagen]. Bloquea. */
+    fun imagenes(k: Kind, f: Ficha, tipo: String): List<Pair<String, String>> {
+        val fondo = tipo == "Fondo"
+        return when {
+            k.isGame -> {
+                val ids = listOfNotNull(f.id.takeIf { esDeInternet(it) }) + juegos(f.nombre).let { h -> (h.firstOrNull { normName(it.nombre) == normName(f.nombre) } ?: h.firstOrNull())?.id }.let { listOfNotNull(it) }
+                ids.distinct().firstNotNullOfOrNull { id ->
+                    runCatching { sgdb(when (tipo) { "Fondo" -> "/heroes/game/$id"; "Logo" -> "/logos/game/$id"; else -> "/grids/game/$id?dimensions=600x900" }) }.getOrNull()?.takeIf { it.isNotEmpty() }
+                }.orEmpty()
+            }
+            k.isMovie -> {
+                val id = f.id.takeIf { esDeInternet(it) } ?: peliculas(f.nombre).firstOrNull()?.id ?: return emptyList()
+                tmdb("/movie/$id/images?include_image_language=es,en,null").comoMapa()[if (fondo) "backdrops" else "posters"].comoLista().map { it.comoMapa() }
+                    .sortedBy { if (it["iso_639_1"].comoTexto() == "es") 0 else 1 }
+                    .mapNotNull { it["file_path"].comoTexto().takeIf { p -> p.startsWith("/") } }.take(30)
+                    .map { p -> if (fondo) "https://image.tmdb.org/t/p/w780$p" to "https://image.tmdb.org/t/p/w1280$p" else "https://image.tmdb.org/t/p/w342$p" to "https://image.tmdb.org/t/p/w500$p" }
+            }
+            k.isTv -> {
+                val id = f.id.takeIf { esDeInternet(it) } ?: series(f.nombre).firstOrNull()?.id ?: return emptyList()
+                get("https://api.tvmaze.com/shows/$id/images").comoLista().map { it.comoMapa() }
+                    .filter { it["type"].comoTexto() == if (fondo) "background" else "poster" }
+                    .sortedByDescending { it["main"] == true }
+                    .mapNotNull { o ->
+                        val r = o["resolutions"].comoMapa()
+                        val grande = r["original"].comoMapa()["url"].comoTexto().ifBlank { return@mapNotNull null }
+                        r["medium"].comoMapa()["url"].comoTexto().ifBlank { grande } to grande
+                    }
+            }
+            k.isBook -> {
+                val deLaObra = if (esDeInternet(f.id)) runCatching {
+                    get("https://openlibrary.org/works/OL${f.id}W.json").comoMapa()["covers"].comoLista().map { it.comoLong() }.filter { it > 0 }.take(18)
+                        .map { "https://covers.openlibrary.org/b/id/$it-M.jpg" to "https://covers.openlibrary.org/b/id/$it-L.jpg" }
+                }.getOrDefault(emptyList()) else emptyList()
+                deLaObra.ifEmpty {
+                    libros(listOf(f.nombre, f.creador).filter { it.isNotBlank() }.joinToString(" ")).mapNotNull { h -> h.portada.takeIf { it.isNotBlank() } }.distinct()
+                        .map { it.replace("-L.jpg", "-M.jpg") to it }
+                }
+            }
+            else -> emptyList()
+        }
+    }
+
     /** Baja una imagen de internet (para ponerla de portada). */
     fun bytes(url: String): ByteArray {
         val c = URI(url).toURL().openConnection() as HttpURLConnection

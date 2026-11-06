@@ -8,7 +8,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.1.0"
+val version = "1.2.0"
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
@@ -17,6 +17,8 @@ dependencies {
     implementation(project(":escritorio:familia"))
     testImplementation("junit:junit:4.13.2")
     testImplementation(testFixtures(project(":nucleo")))
+    // El org.json de Android (AOSP): las pruebas escriben con el mismo código del móvil y comparan (maquetas y recomendaciones)
+    testImplementation(project(":escritorio:json"))
 }
 
 compose.desktop {

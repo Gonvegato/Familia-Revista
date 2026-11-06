@@ -2,9 +2,22 @@ package com.gonzalo.azabache.pc
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,7 +90,11 @@ fun PantInicio(nav: Nav) {
     val delAno = todas.filter { it.second.valorada && it.second.terminado >= inicioAno }
     val recientes = todas.filter { it.second.valorada }.sortedByDescending { it.second.terminado.takeIf { d -> d > 0 }?.times(86_400_000L) ?: it.second.actividad }.take(12)
     val mejores = todas.filter { it.second.valorada && !it.second.sinValorar }.sortedByDescending { it.second.general }.take(5)
+    var buscando by remember { mutableStateOf(false) }
+    if (buscando) DialogoBuscarEnTodo(nav) { buscando = false }
     Pagina {
+        // Arriba, como en el móvil: buscar en todo
+        EnlaceRevista("Buscar en todo") { buscando = true }
         // La cabecera: el nombre de lado a lado, el número (el día del año) y la fecha
         // (grande: encoge hasta llegar justo de lado a lado, como en el quiosco)
         Cabecera(240.sp, texto = "AZABACHE")
@@ -90,28 +107,11 @@ fun PantInicio(nav: Nav) {
         Filete(1.dp)
         HoyRevista()
 
-        // En portada: lo último que tienes entre manos, a lo grande
-        val primero = ahora.firstOrNull()
-        if (primero != null) {
+        // En portada: lo que tienes entre manos, a lo grande. Como en el móvil, si hay varias pasan solas (cada 7 s; con el ratón encima
+        // se quedan quietas) y los puntos de arriba dicen cuántas hay y cuál se ve
+        if (ahora.isNotEmpty()) {
             Spacer(Modifier.height(26.dp))
-            val (k, f) = primero
-            Row(Modifier.fillMaxWidth().border(1.5.dp, Charcoal).padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(260.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }) { PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.fillMaxWidth(), pie = k.unit) }
-                Spacer(Modifier.width(36.dp))
-                Column(Modifier.weight(1f)) {
-                    Antetitulo("En portada")
-                    Spacer(Modifier.height(10.dp))
-                    val (fs, lh) = headlineSize(f.nombre)
-                    FitTitle(f.nombre, (fs.value * 1.3f).sp, (lh.value * 1.3f).sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) })
-                    Text(listOf(k.title, f.creador, f.plataforma, if (!k.isBook && f.minutos > 0) duracion(f.minutos.toLong()) else "").filter { it.isNotBlank() }.joinToString(" · "),
-                        color = Muted, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
-                    val ses = remember(f.ref, LaFamilia.cambios) { sesionesDe(f.ref?.let { Cuenta.porDia(it) }.orEmpty().mapNotNull { (d, ms) -> runCatching { LocalDate.parse(d).toEpochDay() }.getOrNull()?.let { it to ms } }.toMap(), hoy.toEpochDay()) }
-                    if (ses != null) Text("${ses.dias} ${if (ses.dias == 1) "día" else "días"} ${if (k.isBook) "leyendo" else "jugando"} · la última, ${haceDias(ses.ultima, hoy.toEpochDay())}",
-                        color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 4.dp))
-                    Text("Abrir su página →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                        modifier = Modifier.padding(top = 14.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 4.dp))
-                }
-            }
+            EnPortada(ahora.take(8), nav)
         }
 
         // Ahora mismo (lo demás que llevas entre manos, numerado) y las notas más altas, en cifras enormes
@@ -148,6 +148,15 @@ fun PantInicio(nav: Nav) {
                     }
                 }
             }
+        }
+        // Lo que terminaste un día como hoy de otros años
+        TalDiaComoHoy(todas, nav)
+        // Tu pareja: lo que te recomienda (a tu lista o descartar), como en la portada del móvil
+        val pareja = Cuenta.uidParejaSabido()
+        if (pareja.isNotBlank()) {
+            var nombre by remember(pareja) { mutableStateOf("Tu pareja") }
+            LaunchedEffect(pareja) { nombre = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { Cuenta.nombreDe(pareja) }.getOrDefault("Tu pareja") } }
+            TeRecomienda(pareja, nombre, nav)
         }
         // Tu año, en cifras
         Seccion("Tu $ano", "Cifras →") { nav.ir(Pantalla.Cifras) }
@@ -207,6 +216,61 @@ fun FilaDeTarjetas(l: List<Pair<Kind, Ficha>>, nav: Nav, volver: Pantalla, porFi
         Row(Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             fila.forEach { (k, f) -> Tarjeta(f, k, Modifier.weight(1f)) { nav.ir(Pantalla.Detalle(k.id, f.id, volver)) } }
             repeat(porFila - fila.size) { Spacer(Modifier.weight(1f)) }
+        }
+    }
+}
+
+/**
+ * «En portada»: lo que llevas entre manos, enmarcado y a lo grande (la portada a la izquierda, el titular enorme a la derecha). Si hay varias,
+ * pasan solas cada 7 s con un fundido (con el ratón encima se quedan quietas), como el carrusel de la portada del móvil; los puntos de arriba
+ * dicen cuántas hay y cuál se ve, y con un clic se va a esa.
+ */
+@Composable
+fun EnPortada(l: List<Pair<Kind, Ficha>>, nav: Nav) {
+    val n = l.size
+    var actual by remember(n) { mutableStateOf(0) }
+    val hover = remember { MutableInteractionSource() }
+    val encima by hover.collectIsHoveredAsState()
+    LaunchedEffect(actual, n, encima) {
+        if (n < 2 || encima) return@LaunchedEffect
+        delay(7_000)
+        actual = (actual + 1) % n
+    }
+    val hoy = LocalDate.now()
+    Column(Modifier.fillMaxWidth().border(1.5.dp, Charcoal).hoverable(hover).padding(24.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Antetitulo("En portada", Modifier.weight(1f))
+            if (n > 1) Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                l.indices.forEach { i ->
+                    val tam by animateDpAsState(if (i == actual) 9.dp else 6.dp, tween(220))
+                    Box(Modifier.size(18.dp).clickable { actual = i }, contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(tam).clip(CircleShape).background(if (i == actual) Acento else Muted.copy(alpha = 0.45f)))
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        AnimatedContent(actual.coerceIn(0, n - 1), transitionSpec = {
+            (fadeIn(tween(420, delayMillis = 90)) togetherWith fadeOut(tween(260))).using(SizeTransform(clip = false))
+        }, label = "enPortada") { i ->
+            val (k, f) = l[i]
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.width(260.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }) { PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.fillMaxWidth(), pie = k.unit) }
+                Spacer(Modifier.width(36.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(listOf(k.statuses.getOrElse(f.estado) { "" }, k.title).filter { it.isNotBlank() }.joinToString(" · ").uppercase(), color = Acento, fontFamily = Body,
+                        fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+                    val (fs, lh) = headlineSize(f.nombre)
+                    FitTitle(f.nombre, (fs.value * 1.3f).sp, (lh.value * 1.3f).sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().padding(top = 6.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) })
+                    Text(listOf(f.creador, f.plataforma, if (!k.isBook && f.minutos > 0) duracion(f.minutos.toLong()) else "").filter { it.isNotBlank() }.joinToString(" · "),
+                        color = Muted, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
+                    val ses = remember(f.ref, LaFamilia.cambios) { sesionesDe(f.ref?.let { Cuenta.porDia(it) }.orEmpty().mapNotNull { (d, ms) -> runCatching { LocalDate.parse(d).toEpochDay() }.getOrNull()?.let { it to ms } }.toMap(), hoy.toEpochDay()) }
+                    if (ses != null) Text("${ses.dias} ${if (ses.dias == 1) "día" else "días"} ${if (k.isBook) "leyendo" else "jugando"} · la última, ${haceDias(ses.ultima, hoy.toEpochDay())}",
+                        color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 4.dp))
+                    Text("Abrir su página →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                        modifier = Modifier.padding(top = 14.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 4.dp))
+                }
+            }
         }
     }
 }
