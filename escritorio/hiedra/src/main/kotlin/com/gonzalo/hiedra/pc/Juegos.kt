@@ -28,8 +28,15 @@ class Lanzador(val m: Map<String, Any?>) {
     val url: String get() = m["u"].comoTexto()
     val menu: Menu get() = when (tipo) { "ROM" -> Menu.EMULACION; "APP" -> Menu.ANDROID; "WEB" -> Menu.WEB; else -> Menu.PC }
     /** La clave del lanzador (la misma que en Hiedra del móvil). */
-    val clave: String get() = when (tipo) { "ROM" -> "rom:$sistema:${archivo.lowercase()}"; "APP" -> "app:$paquete"; "WEB" -> "web:$url"; else -> "pc:$pcKey" }
-    companion object { fun pc(key: String, dev: String) = Lanzador(linkedMapOf("tp" to "PC", "pck" to key, "pcd" to dev)) }
+    val clave: String get() = when (tipo) {
+        "ROM" -> "rom:$sistema:${Emulacion.norm(archivo)}"; "APP" -> "app:$paquete"
+        "WEB" -> "web:" + url.lowercase().removePrefix("https://").removePrefix("http://").removePrefix("www.").trimEnd('/'); else -> "pc:$pcKey"
+    }
+    companion object {
+        fun pc(key: String, dev: String) = Lanzador(linkedMapOf("tp" to "PC", "pck" to key, "pcd" to dev))
+        /** Una ROM: su sistema y el nombre del archivo sin extensión (dónde está, en cada dispositivo, no va a la cuenta). */
+        fun rom(sistema: String, archivo: String) = Lanzador(linkedMapOf("tp" to "ROM", "s" to sistema, "a" to archivo))
+    }
 }
 
 /** Un juego de la cuenta (`juegos/<id>`), con sus horas (`tiempo/<id>~<fuente>`: lo de un juego es la suma de sus fuentes). */
@@ -52,6 +59,25 @@ class Juego(val n: Nodo, val horas: List<Nodo>) {
     val nota: Int? get() = n["nota"]?.let { n.entero("nota").toInt() }
     /** El lanzador de PC de este ordenador, si lo tiene (o uno de PC sin dueño claro: de Steam vale en cualquiera). */
     fun lanzadorAqui(dev: String): Lanzador? = lanzadores.firstOrNull { it.tipo == "PC" && it.pcDev == dev } ?: lanzadores.firstOrNull { it.tipo == "PC" && it.pcKey.startsWith("steam:") }
+
+    /**
+     * Con qué se juega aquí: lo de este ordenador que corresponde a uno de sus lanzadores. Los de Steam y Heroic valen vengan del PC que vengan
+     * (si está instalado aquí, es el mismo juego); los de Lutris y tus programas, solo los de este ordenador (su número es de cada uno); una ROM,
+     * si su archivo está en tus carpetas.
+     */
+    fun aqui(dev: String, buscar: (String) -> JuegoPc? = Pc::porClaveCuenta): JuegoPc? = lanzadores.firstNotNullOfOrNull { l ->
+        when {
+            l.tipo == "ROM" -> buscar(l.clave)
+            l.tipo != "PC" || l.pcKey.isBlank() -> null
+            l.pcKey.startsWith("steam:") || l.pcKey.startsWith("heroic:") || l.pcDev == dev -> buscar(l.clave)
+            else -> null
+        }
+    }
+
+    /** El sistema de su ROM, si tiene. */
+    val sistema: String get() = lanzadores.firstOrNull { it.tipo == "ROM" }?.sistema.orEmpty()
+    /** Lo que se enseña como plataforma: la suya, o el sistema de su ROM, o su menú. */
+    val donde: String get() = plataforma.ifBlank { Emulacion.sistema(sistema)?.corto ?: if (sistema.isNotBlank()) sistema.uppercase() else menu.nombre }
 }
 
 /**
@@ -69,6 +95,17 @@ object Juegos {
     }
     fun por(id: String): Juego? = col().nodo(id)?.takeIf { !it.borrado }?.let { n -> Juego(n, tiempo().vivos().filter { it.texto("ref") == id }) }
     fun porClave(clave: String): Juego? = todos().firstOrNull { j -> j.lanzadores.any { it.clave == clave } || clave in j.n.lista("k").map { it.comoTexto() } }
+
+    /**
+     * El último juego que borraste con esta clave (o con este nombre): un juego borrado sigue en la cuenta como borrado, con sus datos (como en
+     * Hiedra del móvil). Lo que entra solo no lo resucita; lo que añades o juegas tú desde aquí, sí: vuelve el de antes, con su estado y su nota.
+     */
+    fun borradoCon(clave: String, titulo: String = ""): Nodo? {
+        val n = norm(titulo)
+        return col().todos().values.filter { it.borrado && it.texto("t").isNotBlank() }.filter { b ->
+            b.lista("ln").any { Lanzador(it.comoMapa()).clave == clave } || clave in b.lista("k").map { it.comoTexto() } || (n.isNotEmpty() && norm(b.texto("t")) == n)
+        }.maxByOrNull { it.entero(Nodo.B) }
+    }
     fun porTitulo(t: String): Juego? = norm(t).let { k -> todos().firstOrNull { norm(it.titulo) == k } }
     fun norm(s: String) = java.text.Normalizer.normalize(s.lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").replace(Regex("[^\\p{L}\\p{N}]+"), "")
 
@@ -84,24 +121,50 @@ object Juegos {
      * Un juego de este ordenador en Hiedra: si ya hay uno con ese lanzador (o con ese nombre: una ficha de Atrio, su ROM…), gana el lanzador
      * de aquí; si no, uno nuevo (`j_` + 12 hexadecimales, como en el móvil). Devuelve su id.
      */
-    fun mete(clavePc: String, titulo: String, portadaUrl: String = "", jugando: Boolean = false): String {
-        val dev = dispositivo()
-        val previo = porClave("pc:$clavePc") ?: porTitulo(titulo)
-        val ln = Lanzador.pc(clavePc, dev)
-        if (previo != null) {
-            val ya = previo.lanzadores.any { it.tipo == "PC" && it.pcKey == clavePc && it.pcDev == dev }
-            val c = LinkedHashMap<String, Any?>()
-            if (!ya) c["ln"] = previo.lanzadores.filterNot { it.tipo == "PC" && it.pcKey == clavePc }.map { it.m } + ln.m
-            if (previo.portadaUrl.isBlank() && portadaUrl.isNotBlank()) c["pu"] = portadaUrl
-            // Lo que juegas pasa a «Jugando» (los de Steam no pasan por sumaPartida: su tiempo lo cuenta Steam)
-            if (jugando && (previo.estado == Estado.PENDIENTE || previo.estado == Estado.ABANDONADO)) c["estado"] = Estado.JUGANDO.cuenta
-            if (c.isNotEmpty()) cambia(previo.id, c)
-            return previo.id
+    fun mete(clavePc: String, titulo: String, portadaUrl: String = "", jugando: Boolean = false): String =
+        mete(Lanzador.pc(clavePc, dispositivo()), titulo, portadaUrl, jugando)
+
+    /** Un juego de este ordenador en Hiedra (lo has añadido o lo vas a jugar: si lo habías borrado, vuelve el de antes). Devuelve su id. */
+    fun mete(j: JuegoPc, jugando: Boolean = false): String =
+        mete(j.lanzador(dispositivo()), j.nombre, j.portada.takeIf { it.startsWith("http") }.orEmpty(), jugando)
+
+    /**
+     * Un juego en Hiedra con un lanzador de este ordenador: si ya hay uno con ese lanzador (o con ese nombre: una ficha de Atrio, su ROM del
+     * móvil…), gana el lanzador de aquí; si lo borraste, vuelve el de antes; si no, uno nuevo (`j_` + 12 hexadecimales, como en el móvil).
+     */
+    fun mete(ln: Lanzador, titulo: String, portadaUrl: String = "", jugando: Boolean = false): String {
+        val clave = ln.clave
+        val previo = porClave(clave) ?: porTitulo(titulo)
+        val c = LinkedHashMap<String, Any?>()
+        val id: String
+        val lanzadores: List<Lanzador>
+        val estado: Estado
+        if (previo != null) { id = previo.id; lanzadores = previo.lanzadores; estado = previo.estado; if (previo.portadaUrl.isBlank() && portadaUrl.isNotBlank()) c["pu"] = portadaUrl }
+        else {
+            val b = borradoCon(clave, titulo)
+            if (b != null) {
+                // El de antes vuelve (con su estado, su nota, sus horas)
+                id = b.ref; lanzadores = b.lista("ln").map { Lanzador(it.comoMapa()) }; estado = Estado.de(b.texto("estado")); c[Nodo.B] = 0L
+                if (b.texto("pu").isBlank() && portadaUrl.isNotBlank()) c["pu"] = portadaUrl
+            } else {
+                id = "j_" + java.util.UUID.randomUUID().toString().replace("-", "").take(12)
+                val rom = ln.tipo == "ROM"
+                col().cambia(id, linkedMapOf("t" to titulo, "pl" to if (rom) "" else "PC", "estado" to if (jugando) Estado.JUGANDO.cuenta else Estado.PENDIENTE.cuenta,
+                    "an" to System.currentTimeMillis(), "menu" to if (rom) "emulacion" else "pc", "ln" to listOf(ln.m), "pu" to portadaUrl))
+                return id
+            }
         }
-        val id = "j_" + java.util.UUID.randomUUID().toString().replace("-", "").take(12)
-        col().cambia(id, linkedMapOf("t" to titulo, "pl" to "PC", "estado" to if (jugando) Estado.JUGANDO.cuenta else Estado.PENDIENTE.cuenta, "an" to System.currentTimeMillis(), "menu" to "pc", "ln" to listOf(ln.m), "pu" to portadaUrl))
+        // El lanzador de aquí: el de PC con la misma clave se cambia por el de este ordenador; una ROM, si ya estaba, se queda como está
+        val ya = lanzadores.any { it.clave == clave && (ln.tipo != "PC" || it.pcDev == ln.pcDev) }
+        if (!ya) c["ln"] = lanzadores.filterNot { it.clave == clave }.map { it.m } + ln.m
+        // Lo que juegas pasa a «Jugando» (los de Steam no pasan por sumaPartida: su tiempo lo cuenta Steam)
+        if (jugando && (estado == Estado.PENDIENTE || estado == Estado.ABANDONADO)) c["estado"] = Estado.JUGANDO.cuenta
+        if (c.isNotEmpty()) cambia(id, c)
         return id
     }
+
+    /** Quita un juego de Hiedra (queda en la cuenta como borrado: no vuelve solo). */
+    fun quita(id: String) = col().borra(id)
 
     /** Suma una partida jugada en este ordenador (a las horas de este dispositivo: el total, las veces y las del día). */
     fun sumaPartida(id: String, ms: Long, ahora: java.time.LocalDate = java.time.LocalDate.now()) {

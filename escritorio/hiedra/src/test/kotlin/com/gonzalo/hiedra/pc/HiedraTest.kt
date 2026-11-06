@@ -27,7 +27,7 @@ class HiedraTest {
         LaFamilia.configPruebas = Emulador.cfg; LaFamilia.dirPruebas = tmp.root; LaFamilia.llaveroPruebas = LlaveroMemoria()
         LaFamilia.inicia("hiedra").also { it.automatico = false }
         LaFamilia.entrar("gonzalo", "secreto1")
-        Juegos.dispositivo = { "hiedra-linux-pc1" }; Pc.dirPruebas = tmp.root
+        Juegos.dispositivo = { "hiedra-linux-pc1" }; Pc.paraPruebas(tmp.root, emptyList())
         // Un Steam de mentira, con un juego y una herramienta (que no cuenta)
         val steam = File(tmp.root, "Steam"); File(steam, "steamapps").mkdirs()
         File(steam, "steamapps/appmanifest_1145360.acf").writeText("\"AppState\"\n{\n\t\"appid\"\t\t\"1145360\"\n\t\"name\"\t\t\"Hades\"\n}")
@@ -36,7 +36,7 @@ class HiedraTest {
         listOf("juegos", "tiempo").forEach { LaFamilia.coleccion(it); otra.coleccion(it) }
     }
 
-    @After fun fuera() { LaFamilia.reiniciaParaPruebas(); Pc.steamPruebas = null; Pc.dirPruebas = null }
+    @After fun fuera() { LaFamilia.reiniciaParaPruebas(); Pc.paraPruebas(null, null) }
     private fun sincroniza() { assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otra.sincroniza().ok); assertTrue(LaFamilia.sincronizaYa().ok) }
 
     @Test fun losJuegosDeSteamDeAquiSonLosQueYaTenias() {

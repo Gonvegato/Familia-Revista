@@ -41,8 +41,7 @@ class CapturasTest {
         LaFamilia.configPruebas = Emulador.cfg; LaFamilia.dirPruebas = tmp; LaFamilia.llaveroPruebas = LlaveroMemoria()
         val aqui = LaFamilia.inicia("hiedra").also { it.automatico = false }
         LaFamilia.entrar("gonzalo", "secreto1")
-        Juegos.dispositivo = { "hiedra-linux-pc1" }; Pc.dirPruebas = tmp
-        Pc.steamPruebas = emptyList()
+        Juegos.dispositivo = { "hiedra-linux-pc1" }; Pc.paraPruebas(tmp, emptyList())
         listOf("juegos", "tiempo", "ajustes").forEach { LaFamilia.coleccion(it) }
         check(aqui.sincroniza().ok)
         fun captura(nombre: String, p: Pantalla, oscuro: Boolean = false) {
