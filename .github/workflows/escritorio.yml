@@ -33,7 +33,7 @@ jobs:
             sleep 2
           done
           cat ../emulador.log; exit 1
-      - name: mpv (el reproductor de Mostaza del ordenador: sus pruebas lo abren de verdad, sin pantalla ni sonido)
+      - name: "mpv (el reproductor de Mostaza del ordenador: sus pruebas lo abren de verdad, sin pantalla ni sonido)"
         run: sudo apt-get update -qq && sudo apt-get install -y -qq mpv ffmpeg > /dev/null
       - name: Pruebas
         run: ./gradlew -PsoloEscritorio test --continue --console=plain
