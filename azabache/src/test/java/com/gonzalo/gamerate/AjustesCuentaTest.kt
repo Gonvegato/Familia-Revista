@@ -70,30 +70,27 @@ class AjustesCuentaTest {
 
     @Test fun loQueEligesAquiLlegaAlOtroYAlReves() {
         entra()
-        // Aquí: recomendaciones vistas, objetivo de juegos, un aviso, tus guías de un juego, el diario con todo, tu nombre…
+        // Aquí: recomendaciones vistas, objetivo de juegos, un aviso, el diario con todo, tu nombre…
         store.recsDone = setOf(11L, 12L)
         store.setGoal(0, 2026, 30)
         store.avisoDiario = 21
         store.notifyPartner = true
         Guides.setLocal(ctx, 42L, listOf(Guide("Mapa", "https://ejemplo.org/mapa", "movil")))
         store.myName = "Gonzalo"
-        // … Descubrir (filtros y preguntas vistas), unos duelos a medias, el editor y un sprint de Escribir, la web de imágenes
-        EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.DESCUBRIR).edit().putString("f_years", "1990-1999").putString("recent_0", "q1,q2").putString("rawg_parents", "{}").apply()
-        DuelosEstado(ctx).let { d -> d.pool = listOf(1L, 2L, 3L); d.duelos = listOf(Duelos.Duelo(1L, 2L, 1)); d.ordenados = setOf(9L) }
-        EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.ESCRIBIR).edit().putFloat("tam", 22f).putBoolean("maquina", true)
-            .putString("sprint", "{\"pid\":\"x\"}").putString("sprints", JSONArray().put(JSONObject().put("pid", "obra").put("desde", 5L).put("min", 25)).toString()).apply()
+        // … y lo que quede en el móvil de lo que se quitó de Azabache (guías, Descubrir, duelos, Escribir): eso no viaja
+        EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.DESCUBRIR).edit().putString("f_years", "1990-1999").putString("recent_0", "q1,q2").apply()
+        DuelosEstado(ctx).let { d -> d.pool = listOf(1L, 2L, 3L) }
+        EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.ESCRIBIR).edit().putFloat("tam", 22f).apply()
         EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.INTERNET).edit().putString("fuente", "pinterest").apply()
         KDrive.setShots(ctx, false); Actualizador.ponActivo(ctx, false)
         sincroniza()
         enLaCuenta("azabache_general")!!.let { n ->
             assertEquals("11,12", n.texto("recsdone")); assertEquals(30L, n.entero("goal_0_2026")); assertEquals(21L, n.entero("aviso_diario"))
             assertEquals(true, n["pnotify"]); assertEquals("Gonzalo", n.texto("myname"))
-            assertEquals("https://ejemplo.org/mapa", JSONArray(n.texto("guides_42")).getJSONObject(0).getString("u"))
+            assertTrue("las guías se quitaron de Azabache: no viajan", n["guides_42"] == null)
             assertTrue("lo de la sesión y lo ya subido no viajan", n["accuid"] == null && n["dirtyAt"] == null && n["devid"] == null)
         }
-        enLaCuenta("azabache_descubrir")!!.let { n -> assertEquals("1990-1999", n.texto("f_years")); assertEquals("q1,q2", n.texto("recent_0")); assertTrue("la caché de RAWG, no", n["rawg_parents"] == null) }
-        enLaCuenta("azabache_duelos")!!.let { n -> assertEquals("[1,2,3]", n.texto("pool")); assertEquals("[9]", n.texto("ordenados")); assertEquals("[[1,2,1]]", n.texto("duelos")) }
-        enLaCuenta("azabache_escribir")!!.let { n -> assertEquals(22.0, n.decimal("tam"), 0.0); assertEquals(true, n["maquina"]); assertTrue("el sprint que corre aquí, no", n["sprint"] == null); assertTrue(n.texto("sprints").contains("obra")) }
+        assertTrue("Descubrir, los duelos y Escribir no viajan", listOf("azabache_descubrir", "azabache_duelos", "azabache_escribir").all { enLaCuenta(it)?.let { n -> n["f_years"] == null && n["recent_0"] == null && n["pool"] == null && n["tam"] == null } ?: true })
         assertEquals("pinterest", enLaCuenta("azabache_internet")!!.texto("fuente"))
         assertEquals(false, enLaCuenta("azabache_nube")!!["shots"])
         assertEquals(false, enLaCuenta("azabache_actualizador")!!["on"])
@@ -102,22 +99,12 @@ class AjustesCuentaTest {
 
         // Otro dispositivo (o Azabache del ordenador) cambia cosas: llegan aquí
         val a = otra.coleccion("ajustes")
-        a.pon("azabache_general", mapOf("recsdone" to "11,12,13", "goal_1_2026" to 12L, "diario_todo" to false, "guide_last" to JSONObject().put("https://g", JSONObject().put("u", "https://g/3").put("t", "Capítulo 3").put("at", System.currentTimeMillis())).toString()))
-        a.pon("azabache_descubrir", mapOf("f_plats" to "pc,switch", "f_years" to ""))
-        a.pon("azabache_duelos", mapOf("pool" to "[1,2,3,4]", "saltados" to "[[3,4]]"))
-        a.pon("azabache_escribir", mapOf("fuente" to 2L, "tam" to 18.5))
+        a.pon("azabache_general", mapOf("recsdone" to "11,12,13", "goal_1_2026" to 12L, "diario_todo" to false))
         a.pon("azabache_actualizador", mapOf("on" to true))
         sincroniza()
         espera("llegan las recomendaciones vistas") { store.recsDone == setOf(11L, 12L, 13L) }
         assertEquals(12, store.goalPropio(1, 2026)); assertEquals(30, store.goalPropio(0, 2026))
         assertEquals(false, ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).getBoolean("diario_todo", true))
-        assertEquals("https://g/3", WebActivity.lastPage(ctx, "https://g")?.first)
-        val d = ctx.getSharedPreferences("descubrir", Context.MODE_PRIVATE)
-        assertEquals("pc,switch", d.getString("f_plats", "")); assertTrue("el filtro que se quitó allí, también aquí", !d.contains("f_years"))
-        DuelosEstado(ctx).let { e -> assertEquals(listOf(1L, 2L, 3L, 4L), e.pool); assertEquals(setOf(3L to 4L), e.saltados); assertEquals(setOf(9L), e.ordenados) }
-        val e = ctx.getSharedPreferences("escribir", Context.MODE_PRIVATE)
-        assertEquals(2, e.getInt("fuente", 0)); assertEquals(18.5f, e.getFloat("tam", 0f)); assertEquals(true, e.getBoolean("maquina", false))
-        assertEquals("{\"pid\":\"x\"}", e.getString("sprint", ""))
         assertTrue(Actualizador.activo(ctx))
     }
 
@@ -138,34 +125,22 @@ class AjustesCuentaTest {
 
     @Test fun loDeAntesDeLosDosDispositivosSeJuntaSinPerderNada() {
         val antes = System.currentTimeMillis() - 3_600_000L
-        // El otro dispositivo ya pasó lo suyo: unas recomendaciones vistas, libros ya ordenados por duelos, un sprint, una guía y un aviso
+        // El otro dispositivo ya pasó lo suyo: unas recomendaciones vistas y un aviso
         val o = otra.coleccion("ajustes")
-        o.pon("azabache_general", mapOf("recsdone" to "1,2", "guides_7" to JSONArray().put(JSONObject().put("n", "Wiki").put("u", "https://wiki")).toString(),
-            "guide_last" to JSONObject().put("https://a", JSONObject().put("u", "https://a/9").put("at", antes + 5)).toString(), "aviso_diario" to 21L), antes - 60_000L)
-        o.pon("azabache_duelos", mapOf("ordenados" to "[4,5]"), antes - 60_000L)
-        o.pon("azabache_escribir", mapOf("sprints" to JSONArray().put(JSONObject().put("pid", "obra").put("desde", 1L)).toString()), antes - 60_000L)
+        o.pon("azabache_general", mapOf("recsdone" to "1,2", "aviso_diario" to 21L), antes - 60_000L)
         assertTrue(otra.sincroniza().ok)
-        // Este móvil tenía lo suyo (la versión que aún no lo subía)
+        // Este móvil tenía lo suyo (la versión que aún no lo subía), y algo de las guías, que se quitaron de Azabache y no viajan
         ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).edit().putString("recsdone", "2,3")
             .putString("guides_7", JSONArray().put(JSONObject().put("n", "Mapa").put("u", "https://mapa")).toString())
-            .putString("guide_last", JSONObject().put("https://a", JSONObject().put("u", "https://a/2").put("at", antes)).put("https://b", JSONObject().put("u", "https://b/1").put("at", antes)).toString())
             .putInt("aviso_diario", 20).commit()
-        ctx.getSharedPreferences("duelos", Context.MODE_PRIVATE).edit().putString("ordenados", "[5,6]").commit()
-        ctx.getSharedPreferences("escribir", Context.MODE_PRIVATE).edit().putString("sprints", JSONArray().put(JSONObject().put("pid", "obra").put("desde", 2L)).toString()).commit()
-        ctx.getSharedPreferences("espejo_cuenta", Context.MODE_PRIVATE).edit().apply { listOf("gamerate", "duelos", "escribir").forEach { putLong("hora:$it", antes) } }.commit()
+        ctx.getSharedPreferences("espejo_cuenta", Context.MODE_PRIVATE).edit().putLong("hora:gamerate", antes).commit()
         entra()
         enLaCuenta("azabache_general")!!.let { n ->
             assertEquals("las recomendaciones vistas de los dos", setOf("1", "2", "3"), n.texto("recsdone").split(',').toSet())
-            assertEquals("las guías de los dos", setOf("https://wiki", "https://mapa"), JSONArray(n.texto("guides_7")).let { x -> (0 until x.length()).map { x.getJSONObject(it).getString("u") }.toSet() })
-            val ul = JSONObject(n.texto("guide_last"))
-            assertEquals("de cada guía, lo más reciente", "https://a/9", ul.getJSONObject("https://a").getString("u")); assertEquals("https://b/1", ul.getJSONObject("https://b").getString("u"))
             assertEquals("un ajuste suelto: el que se cambió más tarde", 20L, n.entero("aviso_diario"))
+            assertTrue("las guías no suben", n["guides_7"] == null)
         }
-        assertEquals(setOf(4L, 5L, 6L), JSONArray(enLaCuenta("azabache_duelos")!!.texto("ordenados")).let { x -> (0 until x.length()).map { x.getLong(it) }.toSet() })
-        assertEquals(2, JSONArray(enLaCuenta("azabache_escribir")!!.texto("sprints")).length())
         espera("y aquí, lo de los dos") { store.recsDone == setOf(1L, 2L, 3L) }
-        assertEquals(setOf(4L, 5L, 6L), DuelosEstado(ctx).ordenados)
-        assertEquals(2, SprintEscribir.historial(ctx).size)
     }
 
     /** Lo último que te salió en Descubrir (que ya subía para tu pareja) también llega a tus otros dispositivos: de cada tipo, lo más reciente. */

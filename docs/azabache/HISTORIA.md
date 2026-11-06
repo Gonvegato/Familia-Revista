@@ -11,19 +11,14 @@ aquí tal cual (con su «Añadir»).
 
 ## 1.6.2 — lo que eliges, en todos tus dispositivos
 
-- **Lo que eliges en Azabache y se quedaba en el móvil ya está en tu cuenta.** En Descubrir, las preguntas que ya te han salido (para no
-  repetirlas en la tableta) y los filtros de años y plataformas; los duelos de libros que llevas a medias (los sigues en otro dispositivo);
-  tus guías de cada juego y dónde te quedaste en cada una; el editor de Escribir (letra, tamaño, máquina de escribir, tipografía) y tu
-  historial de sprints; las recomendaciones de tu pareja que ya añadiste o descartaste (ya no vuelven a salir en el otro); los avisos (de
+- **Lo que eliges en Azabache y se quedaba en el móvil ya está en tu cuenta**: las recomendaciones de tu pareja que ya añadiste o descartaste (ya no vuelven a salir en el otro); los avisos (de
   lectura, del diario y de lo que hace tu pareja); el PC de Atrio elegido; las capturas en la galería y en tu kDrive; la web de imágenes;
   «Actualizar sola». Si en dos dispositivos a la vez cambias cosas distintas, se quedan las dos; si es la misma, la última.
 - **Los objetivos del año**: uno nuevo solo llegaba a un dispositivo que aún no tuviera ninguno; ahora llega siempre el último que pones.
-- **El último test de Descubrir** ya subía a la cuenta (para tu pareja), pero tus otros dispositivos no lo ponían: ahora sí.
 - **Tu nombre** (el que ve tu pareja) no llegaba nunca a la cuenta, así que tu pareja no lo veía; ahora sí, y es el mismo en todos tus
   dispositivos.
 - **La letra del lector es la misma en todos tus dispositivos**, como en Marfil. El brillo sigue siendo de cada pantalla.
-- La primera vez en cada dispositivo, lo que ya tenía pasa a la cuenta sin perder nada: las listas (recomendaciones vistas, guías,
-  sprints, libros ya ordenados por duelos, preguntas vistas) se juntan; lo que tenían distinto, el del dispositivo donde lo cambiaste más
+- La primera vez en cada dispositivo, lo que ya tenía pasa a la cuenta sin perder nada: las recomendaciones vistas se juntan; lo que tenían distinto, el del dispositivo donde lo cambiaste más
   tarde. Las maquetas, las recomendaciones y todo lo que ya viajaba se guardan como antes.
 - Azabache de Linux y Mac todavía no lee estos ajustes: llegará en su próxima versión.
 
