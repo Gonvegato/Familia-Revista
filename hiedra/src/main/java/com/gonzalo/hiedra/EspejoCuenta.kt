@@ -86,16 +86,18 @@ object EspejoCuenta {
         val a = c.applicationContext
         lista.forEach { registra(a, it) }
         val fam = runCatching { LaFamilia.familia }.getOrNull() ?: return
+        var nueva = false
         if (de !== fam) synchronized(this) {
             if (de !== fam) {
-                de = fam
+                de = fam; nueva = true
                 val col = LaFamilia.coleccion(COLECCION)
                 col.alCambiar { refs -> app?.let { x -> refs.forEach { r -> grupos[r]?.let { g -> if (hecho(x, g)) runCatching { aplica(x, g, col) } } } } }
                 val previo = fam.alSincronizar
                 fam.alSincronizar = { inf -> previo?.invoke(inf); if (inf.ok) app?.let { x -> runCatching { intenta(x) } } }
             }
         }
-        kotlin.concurrent.thread(name = "espejo-cuenta") { runCatching { intenta(a) } }
+        // (luego, tras cada sincronización: [Familia.alSincronizar])
+        if (nueva) kotlin.concurrent.thread(name = "espejo-cuenta") { runCatching { intenta(a) } }
     }
 
     /** Pasa lo de antes y lo cambiado sin cuenta, si ya se puede. Devuelve si todo está ya en la cuenta. (Las pruebas lo llaman a mano.) */
