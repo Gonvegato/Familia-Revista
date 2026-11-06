@@ -95,8 +95,13 @@ class MotorTorrent internal constructor(
         val hash = InfoHash.normaliza(infoHash)
             ?: throw ErrorTorrent(ErrorTorrent.Motivo.HASH_NO_VALIDO, "«$infoHash» no es el infoHash de un torrent.")
         compruebaRed()
-        borrando[hash]?.let { withTimeoutOrNull(tiempos.borradoMs) { it.hecho.await() } }
-        val t = withContext(serie) { abre(hash, LeeFuentes.lee(fuentes), fileIdx, nombre) }
+        val fu = LeeFuentes.lee(fuentes)
+        // Si se está borrando el mismo torrent (un para justo antes), se espera: su carpeta es la misma
+        var t: TorrentActivo? = null
+        while (t == null) {
+            borrando[hash]?.let { withTimeoutOrNull(tiempos.borradoMs) { it.hecho.await() } }
+            t = withContext(serie) { if (borrando.containsKey(hash)) null else abre(hash, fu, fileIdx, nombre) }
+        }
         try {
             esperaMetadatos(t)
             withContext(serie) { empieza(t, fileIdx, nombre) }

@@ -32,7 +32,7 @@ private class Falso(val datos: ByteArray, @Volatile var disponible: Long = datos
     fun llegaHasta(n: Long) = cerrojo.withLock { disponible = n; llega.signalAll() }
     fun falla(e: ErrorTorrent) = cerrojo.withLock { fallo = e; llega.signalAll() }
 
-    override fun abre(desde: Long): Lectura {
+    override fun abre(desde: Long, sigue: () -> Boolean): Lectura {
         aperturas += desde
         abiertos++
         return object : Lectura {
@@ -41,6 +41,7 @@ private class Falso(val datos: ByteArray, @Volatile var disponible: Long = datos
                     val limite = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(esperaMaxMs)
                     while (pos >= disponible) {
                         fallo?.let { throw it }
+                        if (!sigue()) throw ErrorTorrent(ErrorTorrent.Motivo.PARADO, "se ha ido")
                         if (System.nanoTime() > limite) throw ErrorTorrent(ErrorTorrent.Motivo.SIN_DATOS, "no llega")
                         llega.await(50, TimeUnit.MILLISECONDS)
                     }
@@ -166,6 +167,22 @@ class ServidorLocalTest {
         val hasta = System.currentTimeMillis() + 3_000
         while (falso.abiertos > 0 && System.currentTimeMillis() < hasta) Thread.sleep(20)
         assertEquals(0, falso.abiertos)
+    }
+
+    @Test fun siElReproductorSeVaDejaDeEsperar() {
+        // Pide algo que no ha llegado y se va (un salto): el servidor lo nota y suelta el lector, sin esperar a que llegue
+        val sinFin = Falso(datos, disponible = 0, esperaMaxMs = 60_000)
+        val otro = ServidorLocal({ sinFin })
+        try {
+            Socket("127.0.0.1", otro.puerto).use { s ->
+                s.getOutputStream().write("GET /x HTTP/1.1\r\nHost: x\r\nRange: bytes=500-\r\n\r\n".toByteArray())
+                s.getOutputStream().flush()
+                assertTrue(hastaQue(3_000) { sinFin.abiertos == 1 })
+            }
+            val inicio = System.currentTimeMillis()
+            assertTrue(hastaQue(5_000) { sinFin.abiertos == 0 })
+            assertTrue(System.currentTimeMillis() - inicio < 3_000)
+        } finally { otro.close() }
     }
 
     @Test fun alCerrarNoQuedanHilos() {

@@ -183,11 +183,15 @@ internal class TorrentActivo(
         }
     }
 
-    /** Espera a que la pieza [p] esté en el disco, como mucho [Tiempos.esperaPiezaMs]. */
-    private fun espera(p: Int) {
+    /**
+     * Espera a que la pieza [p] esté en el disco, como mucho [Tiempos.esperaPiezaMs]. Cada segundo mira si el reproductor [sigue]
+     * ahí: tras un salto, el lector viejo deja de esperar (y de tirar de la descarga) enseguida.
+     */
+    private fun espera(p: Int, sigue: () -> Boolean) {
         cerrojo.withLock {
             if (piezas.get(p)) return
             val limite = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(tiempos.esperaPiezaMs)
+            var mirado = System.nanoTime()
             while (!piezas.get(p)) {
                 if (parado) throw ErrorTorrent(ErrorTorrent.Motivo.PARADO, "Se ha parado el torrent.")
                 error?.let { throw it }
@@ -199,6 +203,11 @@ internal class TorrentActivo(
                 llega.awaitNanos(minOf(resto, TimeUnit.SECONDS.toNanos(1)))
                 // Por si se ha perdido algún aviso (la cola de libtorrent tiene un tope)
                 if (!piezas.get(p) && runCatching { handle.havePiece(p) }.getOrDefault(false)) piezas.set(p)
+                // Cada pieza que llega despierta a todos: lo de si el reproductor sigue ahí, solo una vez por segundo
+                if (!piezas.get(p) && System.nanoTime() - mirado >= TimeUnit.SECONDS.toNanos(1)) {
+                    mirado = System.nanoTime()
+                    if (!sigue()) throw ErrorTorrent(ErrorTorrent.Motivo.PARADO, "El reproductor ya no lo quiere.")
+                }
             }
         }
     }
@@ -251,9 +260,9 @@ internal class TorrentActivo(
         override val tamano: Long get() = archivo.tamano
         override val mime: String = Mime.de(archivo.nombre)
 
-        override fun abre(desde: Long): Lectura = cerrojo.withLock {
+        override fun abre(desde: Long, sigue: () -> Boolean): Lectura = cerrojo.withLock {
             if (parado) throw ErrorTorrent(ErrorTorrent.Motivo.PARADO, "Se ha parado el torrent.")
-            Lector(this, desde).also {
+            Lector(this, desde, sigue).also {
                 lectores += it
                 ultimaPos = desde
                 replanifica()
@@ -262,7 +271,7 @@ internal class TorrentActivo(
     }
 
     /** Un lector del reproductor (una respuesta del servidor): espera cada pieza y la lee del archivo. */
-    inner class Lector(private val a: ArchivoEnJuego, @Volatile var pos: Long) : Lectura {
+    inner class Lector(private val a: ArchivoEnJuego, @Volatile var pos: Long, private val sigue: () -> Boolean) : Lectura {
         private var archivo: RandomAccessFile? = null
         private var pieza = a.tramo.piezaEn(pos)
 
@@ -273,7 +282,7 @@ internal class TorrentActivo(
                 a.ultimaPos = pos
                 if (p != pieza) { pieza = p; replanifica() }
             }
-            espera(p)
+            espera(p, sigue)
             val n = minOf(max.toLong(), a.tramo.hastaFinDePieza(pos), a.tamano - pos).toInt()
             val leidos = leeDelDisco(pos, buf, n)
             cerrojo.withLock {

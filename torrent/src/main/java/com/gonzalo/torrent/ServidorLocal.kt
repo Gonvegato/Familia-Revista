@@ -22,8 +22,11 @@ import kotlin.concurrent.thread
 internal interface Contenido {
     val tamano: Long
     val mime: String
-    /** Un lector que empieza en [desde]: cuenta como un salto del reproductor (la descarga pasa a ir desde ahí). */
-    fun abre(desde: Long): Lectura
+    /**
+     * Un lector que empieza en [desde]: cuenta como un salto del reproductor (la descarga pasa a ir desde ahí). [sigue] dice si el
+     * reproductor sigue al otro lado (mientras se espera una pieza, para dejar de esperar si ya se ha ido).
+     */
+    fun abre(desde: Long, sigue: () -> Boolean = { true }): Lectura
 }
 
 internal interface Lectura : Closeable {
@@ -75,7 +78,7 @@ internal class ServidorLocal(
             val salida = BufferedOutputStream(s.getOutputStream(), 64 * 1024)
             while (!cerrado) {
                 val pet = Peticion.lee(entrada) ?: break
-                val seguir = responde(pet, salida)
+                val seguir = responde(pet, salida) { sigueAhi(s, entrada) }
                 salida.flush()
                 if (!seguir) break
             }
@@ -90,7 +93,7 @@ internal class ServidorLocal(
     }
 
     /** Responde a una petición; devuelve si la conexión sigue abierta para la siguiente. */
-    private fun responde(pet: Peticion, salida: OutputStream): Boolean {
+    private fun responde(pet: Peticion, salida: OutputStream, sigue: () -> Boolean): Boolean {
         val seguir = pet.mantener
         val conexion = if (seguir) "keep-alive" else "close"
         if (pet.metodo != "GET" && pet.metodo != "HEAD") {
@@ -120,7 +123,7 @@ internal class ServidorLocal(
         }
         if (pet.metodo == "HEAD") return seguir
         salida.flush()
-        c.abre(inicio).use { l ->
+        c.abre(inicio, sigue).use { l ->
             val buf = ByteArray(64 * 1024)
             var pos = inicio
             while (pos <= fin) {
@@ -132,6 +135,28 @@ internal class ServidorLocal(
             }
         }
         return seguir
+    }
+
+    /**
+     * Si el reproductor sigue conectado: un vistazo de 1 ms a lo que llega. Si ha cerrado, se lee el final; si no, no llega nada (o
+     * llega su siguiente petición, que se deja donde estaba). Solo desde el hilo de esta conexión.
+     */
+    private fun sigueAhi(s: Socket, entrada: BufferedInputStream): Boolean {
+        if (cerrado || s.isClosed) return false
+        val antes = s.soTimeout
+        return try {
+            s.soTimeout = 1
+            entrada.mark(1)
+            val b = entrada.read()
+            if (b >= 0) entrada.reset()
+            b >= 0
+        } catch (_: java.net.SocketTimeoutException) {
+            true
+        } catch (_: IOException) {
+            false
+        } finally {
+            runCatching { s.soTimeout = antes }
+        }
     }
 
     private fun cabecera(salida: OutputStream, codigo: Int, frase: String, campos: Map<String, String>) {
