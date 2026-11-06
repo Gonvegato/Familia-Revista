@@ -23,8 +23,8 @@ import kotlinx.coroutines.withContext
  * se dice que es de aquí.
  */
 @Composable
-fun PantAjustes(nav: Nav) {
-    var pestana by remember { mutableStateOf(0) }
+fun PantAjustes(nav: Nav, inicial: Int = 0) {
+    var pestana by remember { mutableStateOf(inicial) }
     Pagina(ancho = 900.dp) {
         Cabecera(84.sp, texto = "AJUSTES")
         FileteCabecera()

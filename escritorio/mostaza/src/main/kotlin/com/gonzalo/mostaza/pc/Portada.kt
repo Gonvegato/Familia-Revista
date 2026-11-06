@@ -72,7 +72,7 @@ fun PantPortada(nav: Nav) {
         } else when (val f = filas) {
             null -> Nota("Mirando tus catálogos…", Modifier.padding(top = 26.dp))
             else -> {
-                Nota("Para que Mostaza tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).pulsable { nav.ir(Pantalla.Ajustes) })
+                Nota("Para que Mostaza tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).pulsable { nav.ir(Pantalla.Ajustes()) })
                 if (f.isEmpty()) Nota("Tus addons no dan ningún catálogo ahora mismo (sin conexión, o no tienen). Añade addons en «Addons».", Modifier.padding(top = 26.dp))
                 f.forEach { fila -> FilaPosters(fila.titulo, fila.cosas.take(30), { nav.abre(it) }) }
             }

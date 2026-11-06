@@ -16,10 +16,10 @@ abstract class ConCuenta {
     protected var uid = ""
     protected lateinit var dir: File
 
-    protected fun espera(que: String, segundos: Int = 10, cond: () -> Boolean) {
+    protected fun espera(que: String, segundos: Int = 10, como: () -> String = { "" }, cond: () -> Boolean) {
         val hasta = System.currentTimeMillis() + segundos * 1000L
         while (System.currentTimeMillis() < hasta) { if (cond()) return; Thread.sleep(50) }
-        assertTrue(que, cond())
+        assertTrue(que + " " + como(), cond())
     }
 
     protected fun entra(usuario: String = "gonzalo") {
@@ -28,6 +28,8 @@ abstract class ConCuenta {
         LaFamilia.configPruebas = Emulador.cfg
         dir = kotlin.io.path.createTempDirectory("mostaza-pruebas").toFile()
         LaFamilia.dirPruebas = dir
+        // (todo lo de este «ordenador» en la carpeta de la prueba: la caché de imágenes, el número de dispositivo…)
+        System.setProperty("familia.dir", File(dir, "familia").absolutePath)
         LaFamilia.llaveroPruebas = LlaveroMemoria()
         Local.dirPruebas = File(dir, "local"); Local.olvidaParaPruebas()
         MemoriaPistas.archivo = File(dir, "pistas.txt"); MemoriaPistas.olvidaParaPruebas()
@@ -60,6 +62,7 @@ abstract class ConCuenta {
 
     protected fun suelta() {
         LaFamilia.reiniciaParaPruebas(); LaFamilia.configPruebas = null; LaFamilia.dirPruebas = null
+        System.clearProperty("familia.dir")
         Biblioteca.olvidaParaPruebas(); Addons.olvidaParaPruebas(); Local.dirPruebas = null; Local.olvidaParaPruebas()
         runCatching { dir.deleteRecursively() }
     }

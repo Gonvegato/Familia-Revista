@@ -78,6 +78,8 @@ object Reproductor {
     private val tanteando: Boolean get() = tanteo?.terminado == false
     /** La entrada de la lista de mpv que es lo de ahora (los sucesos de la anterior, al cambiar, no cuentan). */
     private var entrada = -1L
+    /** Ya ha empezado el archivo de ahora (lo que llega antes es del anterior, que mpv aún estaba contando, y no vale). */
+    private var empezado = false
     private var url = ""
     private var torrentAbierto = ""
     private var subsPendientes: List<Subtitulo> = emptyList()
@@ -93,6 +95,8 @@ object Reproductor {
     /** En las pruebas: el reloj de la sesión y la hora (para no esperar diez minutos de verdad). */
     @Volatile var relojPruebas: (() -> Long)? = null
     @Volatile var ahoraPruebas: (() -> Long)? = null
+    /** Cada cuánto se le pregunta a mpv por dónde va (en las pruebas, más a menudo). */
+    @Volatile var pulsoMs = 1_000L
     private fun reloj(): Long = relojPruebas?.invoke() ?: Reloj.ahora()
     private fun ahora(): Long = ahoraPruebas?.invoke() ?: System.currentTimeMillis()
 
@@ -190,7 +194,7 @@ object Reproductor {
         c.pon("input-gamepad", true)
         Thread({ p.waitFor(); hilo.execute { alSalir() } }, "mostaza-mpv-fin").apply { isDaemon = true; start() }
         pulso?.cancel(false)
-        pulso = hilo.scheduleAtFixedRate({ runCatching { late() } }, 1, 1, TimeUnit.SECONDS)
+        pulso = hilo.scheduleAtFixedRate({ runCatching { late() } }, pulsoMs, pulsoMs, TimeUnit.MILLISECONDS)
         return c
     }
 
@@ -239,7 +243,7 @@ object Reproductor {
         c.pon("force-media-title", listOf(t, s).filter { it.isNotBlank() }.joinToString(" · "))
         c.pon("pause", tanteando)
         c.pon("network-timeout", if (torrentAbierto.isNotBlank()) com.gonzalo.torrent.MotorTorrent.ESPERA_LECTURA_MS / 1000 else 30)
-        entrada = -1
+        entrada = -1; empezado = false
         val r = c.manda("loadfile", url, "replace")
         if (!r.ok) { if (!fallaEnTanteo()) { estado.cargando = false; estado.aviso = "No se ha podido abrir esta fuente." }; return }
         r.datos.comoMapa()["playlist_entry_id"]?.comoLong()?.takeIf { it > 0 }?.let { entrada = it }
@@ -253,8 +257,10 @@ object Reproductor {
 
     private fun suceso(s: MensajeMpv.Suceso) {
         val c = cliente ?: return
+        // (lo que llega del archivo anterior después de pedir otro no cuenta: sus pistas, su duración o su final no son de este)
+        if (s.nombre in setOf("file-loaded", "playback-restart", "seek", "end-file") && !empezado) return
         when (s.nombre) {
-            "start-file" -> if (entrada < 0) entrada = s.entrada
+            "start-file" -> if (entrada < 0 || s.entrada == entrada) { entrada = s.entrada; empezado = true }
             "file-loaded" -> {
                 // Los subtítulos de tus addons, como pistas más (sin ponerlos: lo decide [decidePistas])
                 subsPendientes.forEach { x -> c.manda("sub-add", x.url, "auto", x.etiqueta.ifBlank { PistaMpv.nombreIdioma(x.idioma).ifBlank { "Subtítulos" } }, x.idioma, espera = 8_000) }
@@ -519,6 +525,9 @@ object Reproductor {
     }
 
     private fun cierraTorrent() { if (torrentAbierto.isNotBlank()) { Torrents.para(torrentAbierto); torrentAbierto = "" } }
+
+    /** (Para las pruebas: el proceso de mpv, para mirar su línea de órdenes.) */
+    fun pidParaPruebas(): Long? = proceso?.takeIf { it.isAlive }?.pid()
 
     /** (Para las pruebas: espera a que el hilo del reproductor haya hecho lo que tenía pendiente.) */
     fun esperaParaPruebas() { runCatching { hilo.submit {}.get(10, TimeUnit.SECONDS) } }

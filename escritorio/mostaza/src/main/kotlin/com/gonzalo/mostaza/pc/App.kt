@@ -38,7 +38,7 @@ sealed class Pantalla {
     data class Ficha(val breve: MetaBreve, val volver: Pantalla) : Pantalla()
     data class Fuentes(val breve: MetaBreve, val meta: Meta?, val video: Video?, val volver: Pantalla) : Pantalla()
     data object Addons : Pantalla()
-    data object Ajustes : Pantalla()
+    data class Ajustes(val pestana: Int = 0) : Pantalla()
 }
 
 /** Lo que necesitan las pantallas para moverse y avisar. [abre]: la ficha de algo, volviendo luego a donde estabas. */
@@ -74,10 +74,10 @@ fun AppMostaza(inicial: Pantalla = Pantalla.Portada) {
         add(Entrada("Portada", grupo = "Mostaza") to Pantalla.Portada)
         listOf(Estado.VIENDO, Estado.PENDIENTE, Estado.VISTO, Estado.ABANDONADO).forEach { e -> add(Entrada(e.nombre, titulos.count { it.estado == e }, grupo = "Tu biblioteca") to Pantalla.Seccion(e)) }
         add(Entrada("Explorar", grupo = "El catálogo") to Pantalla.Explorar); add(Entrada("Buscar", grupo = "El catálogo") to Pantalla.Buscar)
-        add(Entrada("Addons", grupo = "Más") to Pantalla.Addons); add(Entrada("Ajustes", grupo = "Más") to Pantalla.Ajustes)
+        add(Entrada("Addons", grupo = "Más") to Pantalla.Addons); add(Entrada("Ajustes", grupo = "Más") to Pantalla.Ajustes())
     }
     val sel = destinos.indexOfFirst { (_, d) ->
-        when (val p = pantalla) { is Pantalla.Ficha -> false; is Pantalla.Fuentes -> false; else -> d == p }
+        when (val p = pantalla) { is Pantalla.Ficha -> false; is Pantalla.Fuentes -> false; is Pantalla.Ajustes -> d is Pantalla.Ajustes; else -> d == p }
     }.let { if (it < 0) -1 else it }
     val foco = LocalFocusManager.current
     val raiz = remember { FocusRequester() }
@@ -121,7 +121,7 @@ fun AppMostaza(inicial: Pantalla = Pantalla.Portada) {
                         is Pantalla.Ficha -> PantFicha(p.breve, nav)
                         is Pantalla.Fuentes -> PantFuentes(p.breve, p.meta, p.video, nav)
                         Pantalla.Addons -> PantAddons(nav)
-                        Pantalla.Ajustes -> PantAjustes(nav)
+                        is Pantalla.Ajustes -> PantAjustes(nav, p.pestana)
                     }
                 }
                 SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(16.dp))

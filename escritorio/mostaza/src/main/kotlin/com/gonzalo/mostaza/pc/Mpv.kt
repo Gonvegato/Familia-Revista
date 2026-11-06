@@ -84,7 +84,11 @@ object Mpv {
         if (o.subTam != 100) add("--sub-scale=" + String.format(java.util.Locale.ROOT, "%.2f", o.subTam / 100.0))
         if (o.subFondo) add("--sub-back-color=#B0000000")
         if (o.pantallaCompleta) add("--fs")
+        addAll(extra)
     }
+
+    /** En las pruebas: sin ventana ni sonido (`--vo=null`, `--ao=null`). */
+    @Volatile var extra: List<String> = emptyList()
 
     /** Los idiomas de audio para mpv a partir de tu preferencia (ISO 639: «spa» → «spa,es»; «eng» → «eng,en»). */
     fun idiomas(pref: String): List<String> {
