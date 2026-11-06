@@ -378,6 +378,7 @@ fun RevistaGameRead(
     // Lo que has escrito de esto en tu diario (solo si hay algo)
     if (!Mode.viewP && DiarioHub.de(kind.id, g.id).isNotEmpty()) defs["diario"] = MagDef("En tu diario", "Escribir" to { DiarioHub.escribirSobre?.invoke(kind, g.id) }) { DiarioDeFicha(kind, g.id) }
     defs["enlaces"] = MagDef("Enlaces") {
+        if (!Mode.viewP && (kind.isMovie || kind.isTv)) VerEnMostaza(kind, g.id)
         if (!Mode.viewP) MagLink("Escribir en el diario") { DiarioHub.escribirSobre?.invoke(kind, g.id) }
         if (kind.hasSoundtrack) MagLink("Banda sonora", "YouTube Music") { openSoundtrack(ctx, g.name) }
         SagaLink(g.id, kind)

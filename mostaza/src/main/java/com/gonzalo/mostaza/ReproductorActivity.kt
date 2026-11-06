@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -462,9 +464,9 @@ fun ControlesReproductor(
                 if (e.fuente.isNotBlank()) Text(e.fuente, color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp, maxLines = 1)
             }
             if (e.aviso == null) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
-                BotonIcono(Icons.Rounded.Replay10, "Atrás", tinta = blanco, tam = 56.dp) { alSaltar(-10) }
-                BotonIcono(if (e.reproduciendo) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (e.reproduciendo) "Pausa" else "Reproducir", tinta = blanco, tam = 76.dp) { alPlay() }
-                BotonIcono(Icons.Rounded.Forward10, "Adelante", tinta = blanco, tam = 56.dp) { alSaltar(10) }
+                BotonReproductor(Icons.Rounded.Replay10, "Atrás", blanco, 52.dp) { alSaltar(-10) }
+                BotonReproductor(if (e.reproduciendo) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (e.reproduciendo) "Pausa" else "Reproducir", blanco, 76.dp) { alPlay() }
+                BotonReproductor(Icons.Rounded.Forward10, "Adelante", blanco, 52.dp) { alSaltar(10) }
             }
             Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
                 if (e.dur > 0) {
@@ -521,6 +523,14 @@ fun ControlesReproductor(
                 EnlaceRevista("Cerrar") { e.eleccion = null }
             }
         }
+    }
+}
+
+/** Un botón del reproductor: el icono a buen tamaño (se ve desde el sofá), con el marco de foco del mando. */
+@Composable
+private fun BotonReproductor(icono: androidx.compose.ui.graphics.vector.ImageVector, descripcion: String, color: Color, tam: androidx.compose.ui.unit.Dp, alHacer: () -> Unit) {
+    Box(Modifier.size(tam + 20.dp).tocable(fuera = 2.dp) { alHacer() }.semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
+        Icon(icono, null, tint = color, modifier = Modifier.size(tam))
     }
 }
 

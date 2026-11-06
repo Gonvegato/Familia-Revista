@@ -44,7 +44,8 @@ guardan ya reducidas (unos 600×900, la proporción 2:3 de las cajas de SteamGri
 | `steam_key`, `steam_id` | Horas y biblioteca de Steam |
 | `igdb_id`, `igdb_secreto` | Datos de juegos |
 | `rawg` | Datos de juegos |
-| `tmdb` | Películas y series (Azabache) |
+| `tmdb` | Películas y series (Azabache; Mostaza, para pasar los ids de TMDB a los de IMDb) |
+| `mostaza_addons` | Los addons de Mostaza, en tu orden: un texto JSON `[{"u": <dirección del manifiesto>, "n": <nombre>}]`. Van aquí y en ningún otro sitio de la cuenta porque **sus direcciones pueden llevar la clave de tu debrid** (tu pareja puede leer `/users/<uid>`, esto no). Sin la clave, Mostaza usa solo Cinemeta (`https://v3-cinemeta.strem.io/manifest.json`); `"[]"` = ninguno. De la lista entera gana el último cambio (moverlos o quitarlos es poner la lista otra vez). |
 
 ## Colecciones
 
@@ -105,10 +106,51 @@ que está en `libros`.
 Un subrayado, una nota o un marcador: `ref` (el `kid`), `tipo` (`notes` / `marks`: el nombre de la lista del lector de donde sale), `n` (el objeto del lector tal cual: `value`,
 `created`, `text`, `note`, `color`…) y `b` si se quitó. `id` sale de su sitio y su hora de creación.
 
-### `tiempo/<ref>~<dispositivo>` (Marfil, Hiedra)
+### `tiempo/<ref>~<dispositivo>` (Marfil, Hiedra, Mostaza)
 
-Lo leído o jugado en un dispositivo (o fuente): `ref`, `fuente`, `total` (ms) y un campo por día `d2026-11-05` = ms. Cada
-dispositivo escribe solo los suyos: para saber lo de un día se **suman** los de todos.
+Lo leído, jugado o visto en un dispositivo (o fuente): `ref`, `fuente`, `total` (ms) y un campo por día `d2026-11-05` = ms. Cada
+dispositivo escribe solo los suyos: para saber lo de un día se **suman** los de todos. Mostaza añade `t` (el título) y `veces` (las
+sesiones), y apunta el tiempo de una serie en el título (no en cada episodio); solo el tiempo de verdad reproduciendo (sin pausas ni
+saltos), y solo de lo que está en tu biblioteca (ver `titulos`). Lo que Azabache tenía apuntado de una película o serie (sin días) pasó a
+`tiempo/<ref>~azabache` (`fuente` = `azabache`).
+
+### `titulos/<ref>` (Mostaza)
+
+Las películas y las series de tu biblioteca (Mostaza las ve; Azabache las valora en el mismo nodo). `ref` = el id de Stremio con el que se
+añadió, normalmente el de IMDb (`tt0111161`), con lo que Firebase no admite como `%XX`; lo que vino de Azabache sin código de IMDb,
+`tmdb:<id>` o `tvmaze:<id>` (y `azabache:<id>` lo que se añadió a mano allí), y la ref ya no cambia aunque luego se sepa el código.
+
+| Campo | Qué es |
+|---|---|
+| `id` | El id de Stremio (el de IMDb en cuanto se sabe) |
+| `tipo` | `movie` / `series` (los tipos de Stremio) |
+| `t`, `ano` | Título y año (`releaseInfo`: «1994», «2011–2019») |
+| `estado` | `pendiente` / `en_curso` (Viendo) / `terminado` (Visto) / `abandonado` |
+| `fav`, `an`, `ul`, `fin` | Favorita, cuándo se añadió, la última vez que la viste y cuándo la terminaste (ms) |
+| `pu`, `portada`, `fondo` | El póster (dirección), la portada (hash de `familia_img`, como las demás) y la imagen de fondo |
+| `dur`, `gen` | La duración (minutos: la de la película o la de un episodio) y los géneros |
+| `imdb`, `tmdb`, `tvmaze` | Los ids de fuera (`tmdb` y `tvmaze`, los que usaba Azabache: se quedan) |
+| `azid`, `azk` | El número de la ficha en Azabache y su categoría (los pone Azabache; ver «La valoración») |
+| `b` | Borrada (con su hora). **Borrar es para siempre**: lo que entra solo (abajo) nunca la devuelve; solo «Añadir» la recupera, el mismo nodo con lo suyo |
+
+Qué entra solo: nada hasta llevar **10 minutos viéndolo de verdad en una sesión del reproductor** (las pausas y los saltos no cuentan;
+salir del reproductor termina la sesión). Antes no se escribe nada en la cuenta (ni aquí, ni en `progreso`, ni en `tiempo`): solo un punto
+para seguir en ese dispositivo. A los 10 minutos entra en `en_curso` (o pasa a él desde `pendiente` o `abandonado`). Una película está
+vista al 90 %; una serie está `terminado` cuando tiene vistos todos sus episodios estrenados (sin la temporada 0, la de los especiales) y,
+si no, `en_curso`. De lo borrado no se escribe nada al verlo.
+
+### `progreso/<vídeo>` (Mostaza)
+
+Lo visto de cada película y de cada episodio, para seguir en cualquier dispositivo. `vídeo` = el id del vídeo en Stremio (el de la película,
+o `tt0944947:1:3` en una serie), con lo que Firebase no admite como `%XX`.
+
+| Campo | Qué es |
+|---|---|
+| `ref`, `v` | El título (`titulos/<ref>`) y el id del vídeo |
+| `temp`, `ep` | Temporada y episodio (en las series) |
+| `pos`, `dur` | Por dónde vas y lo que dura (ms) |
+| `visto`, `cuando` | Visto (al 90 %, o marcado a mano) y cuándo |
+| `ul` | La última vez que se vio (ms): gana lo más reciente entre esto y lo de cada dispositivo |
 
 ### `obras/<obra>`, `capitulos/<obra>~<capítulo>` y `palabras/<dispositivo>` (Cobalto)
 
@@ -150,12 +192,14 @@ sin perder ni repetir ninguno. Lo de antes se queda donde estaba, como copia.
 
 ### La valoración (Azabache)
 
-En el nodo de la cosa (`juegos/<id>`, `libros/<kid>`, `obras/<obra>`): `nota` (0–100; sin el campo = **sin valorar**), `crit` (los
+En el nodo de la cosa (`juegos/<id>`, `libros/<kid>`, `obras/<obra>`, `titulos/<ref>`): `nota` (0–100; sin el campo = **sin valorar**), `crit` (los
 cuatro criterios), `resena`, `az` (lo propio de Azabache de esa ficha, como texto JSON: apuntes, capítulos marcados, imagen de fondo,
 cuándo empezaste…) y `azid` (el número de la ficha en Azabache, el mismo en todos tus dispositivos: lo usan tus sagas, tu diario y
 tus maquetas).
 
-**Azabache no guarda copia de los juegos ni de los libros**: sus fichas son estos nodos, leídos tal cual (Azabache 1.4.0). Lo que
+**Azabache no guarda copia de los juegos ni de los libros** (desde la 1.4.0) **ni de las películas y series** (desde la 1.6.3, con
+Mostaza): sus fichas son estos nodos, leídos tal cual. En `titulos`, Azabache escribe además `azk` (su categoría) y, en lo que añade él
+(sin Mostaza en ese dispositivo), crea el nodo `tmdb:<id>` o `tvmaze:<id>` con `tipo`, `t`, `estado` y esos ids. Lo que
 cambias en Azabache va al nodo, y solo lo que has cambiado tú (si cambias el estado en Azabache, cambia en Hiedra o Marfil; si no
 lo tocas, no se escribe). Lo que solo estaba en Azabache (lo valorado en Atrio que nunca pasó por Hiedra ni Marfil) pasó, la
 primera vez, a ser juegos y libros de la cuenta como los demás.
@@ -165,11 +209,15 @@ primera vez, a ser juegos y libros de la cuenta como los demás.
 Lo que es solo de Azabache: cada elemento de cada lista (`items_<categoría>`, `iplays_<categoría>`, `diario`, `sagas`, `maquetas`…)
 es un nodo con `o` = el elemento tal cual (como texto JSON); lo que no es una lista (`goals`, `ajustes`…) va en `azabache/<nombre>`
 con `v`. Un elemento borrado lleva `b`. Los juegos y los libros no van aquí (`games`, `plays`, `books`, `bplays`: son `juegos` y
-`libros`); si quedó alguno de la 1.3, no se lee.
+`libros`); si quedó alguno de la 1.3, no se lee. Las películas y las series de las categorías de TMDB y TVmaze (`items_<categoría>` y
+`iplays_<categoría>`) pasaron a `titulos` (Mostaza, una vez en cada dispositivo, sin perder nada: estado, fechas, nota, criterios,
+reseña, lo de Azabache en `az`, el tiempo y los episodios marcados); los nodos de antes **se quedan como estaban** (los lee aún
+Azabache de escritorio) y Azabache del móvil deja de leerlos en cuanto existe `azabache/a_mostaza` (`v` = `[<hora>]`, `por`, `cuantas`:
+la marca de que Mostaza ya los trajo).
 
 ### `ajustes/<nombre>`
 
-`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
+`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto`, `ajustes/mostaza` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
 del lector; Hiedra también `ini`, su portada), `ajustes/azabache` (`at` y `skin`: la apariencia de Azabache, que las demás pueden
 copiar) y `ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros del año, `anio` el año en que se fijó; los fija Marfil).
 Lo demás que eliges en cada app, en `ajustes/<app>_<grupo>` (abajo).
@@ -199,11 +247,19 @@ tenía distinto, con la hora a la que ese dispositivo cambió esos ajustes por �
 | `marfil_nube` | `auto_bajar` (tener en cada dispositivo los libros de tu kDrive) |
 | `azabache_general` | `recsdone` (ids de las recomendaciones de tu pareja que ya añadiste o descartaste, con comas; se juntan), `suitepc` (el PC de Atrio elegido), `shotsgal`, `diario_todo`, `pnotify` (avisos de lo que hace tu pareja), `knows2tap`, `aviso_lectura` y `aviso_diario` (la hora del aviso, 0–23; −1 sin aviso), `goal_<categoría>_<año>` (el objetivo de ese año: 0 juegos, 1 libros…) y `myname` (tu nombre). Las guías no: se quitaron de Azabache |
 | `azabache_nube` | `shots` (subir las capturas del PC a tu kDrive) |
+| `mostaza_reproductor` | `subs` (el idioma de los subtítulos: `spa`, `eng`… ; `""` sin), `subsSiempre` (también con el audio en tu idioma), `subTam` (por ciento), `subFondo` (sobre una banda), `audio` (el idioma de audio preferido), `siguiente` (el episodio siguiente, solo), `salto` (segundos), `externo` (el paquete del reproductor de fuera; `""` = preguntar) |
+| `mostaza_elector` | El elector de fuentes: `idiomas` (el orden, con comas: `castellano`, `latino`, `vose` —original con subtítulos— y `original`), `subtitulados` (vale una sin audio en español), `maxima` (la calidad máxima: 2160, 1080, 720, 480), `directas` (las directas o de tu debrid antes que los torrents), `ahorro` (con datos del móvil, como mucho 720p), `auto` («Reproducir» elige sola) |
+| `mostaza_torrent` | Para el motor de torrents: `soloWifi`, `subida` y `bajada` (KB/s; 0 = sin límite), `compartir` (mientras ves). Lo que puede ocupar en cada dispositivo, no (no viaja) |
+| `mostaza_orden` | `VIENDO`, `PENDIENTE`, `VISTO`, `ABANDONADO` = `RECIENTES`, `ANADIDOS`, `TITULO`, `ANO`; `filtro_<sección>` = `TODO`, `PELICULAS`, `SERIES` |
+| `mostaza_portada` | `filas` (los catálogos de la portada, `<addon>\|<tipo>\|<catálogo>` con comas; `""` = los primeros), `cuantas`, y lo último de «Explorar»: `explorarTipo`, `explorarCatalogo`, `explorarGenero` |
+| `mostaza_actualizador` | `on`: «actualizar sola» |
 
 No viaja (es de cada dispositivo): dónde está cada ROM, las carpetas de ROMs y de guardados, lo ya sincronizado con kDrive, los núcleos y BIOS
 bajados, las capturas bajadas, el juego que está abierto ahora, «usar Hiedra como launcher» (es de Android), la configuración de cada widget,
 el brillo del lector, el sprint de Escribir que está corriendo, la copia en Google Drive de ese móvil, la sesión y las cachés (datos de
-juegos, páginas de libros, notas de Rotten Tomatoes, plataformas de RAWG, lo de las hermanas que se refleja en Azabache).
+juegos, páginas de libros, notas de Rotten Tomatoes, plataformas de RAWG, lo de las hermanas que se refleja en Azabache). En Mostaza: lo
+que mide la conexión de ese dispositivo (por wifi y por datos) y lo que sabe decodificar, lo que puede ocupar su caché de torrents, el punto
+para seguir de lo que aún no está en tu biblioteca (antes de los 10 minutos), los manifiestos de los addons (se vuelven a pedir) y su id.
 
 ### `/users/<uid>/name`
 

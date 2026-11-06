@@ -84,7 +84,7 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             // ---- El fondo, que se funde con el papel
             val fondo = m?.fondo?.ifBlank { null } ?: t?.fondo?.ifBlank { null } ?: b.fondo
-            Box(Modifier.fillMaxWidth().height(if (ancha) 300.dp else 210.dp)) {
+            Box(Modifier.fillMaxWidth().height(if (apaisada) 230.dp else if (ancha) 300.dp else 210.dp)) {
                 if (fondo.isNotBlank()) AsyncImage(fondo, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Paper.copy(alpha = 0.35f), Paper.copy(alpha = 0.55f), Paper))))
                 Box(Modifier.statusBarsPadding().padding(horizontal = mg)) { RevistaTopBar(alCerrar, "Volver") }
@@ -177,7 +177,7 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) 
                         val sel = if (temporada in temps) temporada else (t?.let { Biblioteca.siguiente(it, m)?.temporada } ?: temps.firstOrNull { it > 0 } ?: temps.first())
                         Spacer(Modifier.height(16.dp))
                         Antetitulo("Episodios")
-                        PestanasRevista(temps.map { if (it == 0) "Especiales" else "Temporada $it" }, temps.indexOf(sel), cuentas = temps.map { s -> m.episodios(s).size }) { i -> temporada = temps[i] }
+                        PestanasRevista(temps.map { if (it == 0) "Especiales" else "Temporada $it" }, temps.indexOf(sel)) { i -> temporada = temps[i] }
                         m.episodios(sel).forEach { v -> FilaEpisodio(v, t, m, alVer = { reproduce(v) }, alFuentes = { fuentesDe = v to true }) }
                     }
                 }

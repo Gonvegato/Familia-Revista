@@ -1,4 +1,4 @@
-# Las pruebas de las cuatro apps de Android (Hiedra, Marfil, Cobalto, Azabache), cada una en su máquina, contra el emulador de Firebase
+# Las pruebas de las apps de Android (Hiedra, Marfil, Cobalto, Azabache, Mostaza), cada una en su máquina, contra el emulador de Firebase
 # con las reglas del repositorio: lo mismo que se pasa antes de cada versión, pero en GitHub en cada cambio. (Las versiones se firman y se
 # suben fuera: las claves de firma no salen nunca de su sitio.)
 name: Android (pruebas)
@@ -6,7 +6,7 @@ name: Android (pruebas)
 on:
   push:
     branches: [main]
-    paths: ['hiedra/**', 'marfil/**', 'cobalto/**', 'azabache/**', 'familia/**', 'nucleo/**', 'nube/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/android.yml']
+    paths: ['hiedra/**', 'marfil/**', 'cobalto/**', 'azabache/**', 'mostaza/**', 'familia/**', 'nucleo/**', 'nube/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/android.yml']
   workflow_dispatch:
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [hiedra, marfil, cobalto, azabache]
+        app: [hiedra, marfil, cobalto, azabache, mostaza]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

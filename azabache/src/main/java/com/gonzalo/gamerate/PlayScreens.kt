@@ -163,6 +163,7 @@ fun PlayDetailScreen(
             // Lo que has escrito de esto en tu diario (solo si hay algo)
             if (!Mode.viewP && DiarioHub.de(kind.id, p.id).isNotEmpty()) defs["diario"] = MagDef("En tu diario", "Escribir" to { DiarioHub.escribirSobre?.invoke(kind, p.id) }) { DiarioDeFicha(kind, p.id) }
             defs["enlaces"] = MagDef("Enlaces") {
+                if (!Mode.viewP && (kind.isMovie || kind.isTv)) VerEnMostaza(kind, p.id)
                 if (!Mode.viewP) MagLink("Escribir en el diario") { DiarioHub.escribirSobre?.invoke(kind, p.id) }
                 SagaLink(p.id, kind)
                 PartnerFileLink(p.id, kind)

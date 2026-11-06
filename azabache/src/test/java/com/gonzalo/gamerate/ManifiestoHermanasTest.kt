@@ -23,6 +23,6 @@ class ManifiestoHermanasTest {
     fun declaraALasHermanas() {
         val m = manifiesto().readText()
         val queries = m.substringAfter("<queries>", "").substringBefore("</queries>")
-        for (p in listOf("com.gonzalo.hiedra", "com.gonzalo.marfil", "com.gonzalo.cobalto")) assertTrue("falta <package android:name=\"$p\"/> en <queries>", Regex("<package\\s+android:name=\"" + Regex.escape(p) + "\"").containsMatchIn(queries))
+        for (p in listOf("com.gonzalo.hiedra", "com.gonzalo.marfil", "com.gonzalo.cobalto", "com.gonzalo.mostaza")) assertTrue("falta <package android:name=\"$p\"/> en <queries>", Regex("<package\\s+android:name=\"" + Regex.escape(p) + "\"").containsMatchIn(queries))
     }
 }

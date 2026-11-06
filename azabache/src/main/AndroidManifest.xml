@@ -18,6 +18,7 @@
         <package android:name="com.gonzalo.hiedra" />
         <package android:name="com.gonzalo.marfil" />
         <package android:name="com.gonzalo.cobalto" />
+        <package android:name="com.gonzalo.mostaza" />
         <package android:name="com.valvesoftware.steamlink" />
         <!-- Leer en voz alta en el lector: desde Android 11, sin esto no se ve el motor de voz (TextToSpeech no arranca) -->
         <intent>

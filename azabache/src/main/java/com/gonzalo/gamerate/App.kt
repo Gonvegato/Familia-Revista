@@ -857,7 +857,7 @@ private fun AppContenido(
 
     LaunchedEffect(openId, openPartner, openGo) {
         // Los de los widgets (una ficha, el Diario) van más abajo, donde ya se sabe abrir cada cosa
-        if (openGo.startsWith("item:") || openGo.startsWith("diario:") || openGo.startsWith("empezar:") || openGo == "home") return@LaunchedEffect
+        if (openGo.startsWith("item:") || openGo.startsWith("diario:") || openGo.startsWith("empezar:") || openGo.startsWith("titulo:") || openGo == "home") return@LaunchedEffect
         // Atajos y avisos abren siempre lo tuyo (nunca se edita nada desde la vista de tu pareja).
         if ((openGo.isNotEmpty() || openId != 0L) && Mode.viewP) { Mode.viewP = false; Mode.calP = false }
         if (openGo.isNotEmpty()) {
@@ -982,6 +982,17 @@ private fun AppContenido(
     }
     // Desde un widget: una ficha ("item:<categoría>:<id>") o el Diario de una categoría ("diario:<categoría>")
     LaunchedEffect(openGo) {
+        // Desde Mostaza («Valorar en Azabache»): la ficha de ese título («titulo:<ref>»; la ref puede llevar «:», como «tmdb:550»)
+        if (openGo.startsWith("titulo:")) {
+            if (Mode.viewP) { Mode.viewP = false; Mode.calP = false }
+            CosasMostaza.buscaRef(ctx, myKinds, openGo.removePrefix("titulo:"))?.let { (k, id) ->
+                val p = playsOf(k).find { it.id == id }; val g = gamesOf(k).find { it.id == id }
+                if (k.isMovie || k.isTv) cineTv = k.isTv
+                if (p != null) { section = k.id; screen = Screen.PlayDetail(p) } else if (g != null) { section = k.id; screen = Screen.Edit(g, false) }
+            }
+            onOpenHandled()
+            return@LaunchedEffect
+        }
         val a = openGo.split(':')
         if (a[0] != "item" && a[0] != "diario" && a[0] != "empezar" && a[0] != "home" && a[0] != "escribir") return@LaunchedEffect
         if (Mode.viewP) { Mode.viewP = false; Mode.calP = false }
@@ -1174,7 +1185,10 @@ private fun AppContenido(
                                 write = if (pv) null else ({ go(5) }),
                                 discover = null,
                                 profile = if (pv) null else ({ screen = Screen.Profile }),
-                                add = if (pv) null else ({ k -> if (k.isGame) Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) else if (k.isBook) Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL) else { section = k.id; screen = Screen.Search(true) } }),
+                                add = if (pv) null else ({ k -> if (k.isGame) Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) else if (k.isBook) Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL)
+                                    // Las películas y las series se añaden en Mostaza (si está; si no, aquí, y van igual a la cuenta de Mostaza)
+                                    else if ((k.isMovie || k.isTv) && CosasMostaza.activa(ctx) && Hermanas.abrir(ctx, Hermanas.PAQ_MOSTAZA)) {}
+                                    else { section = k.id; screen = Screen.Search(true) } }),
                                 partner = if (p != null) ({ togglePartner() }) else null,
                                 // (desde la portada, al salir de Estadísticas se vuelve a la portada, no a la biblioteca)
                                 stats = { k -> section = k.id; shellLib = false; screen = Screen.Stats },

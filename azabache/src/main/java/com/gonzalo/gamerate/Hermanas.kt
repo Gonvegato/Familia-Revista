@@ -31,6 +31,7 @@ object Hermanas {
     const val PAQ_HIEDRA = "com.gonzalo.hiedra"
     const val PAQ_MARFIL = "com.gonzalo.marfil"
     const val PAQ_COBALTO = "com.gonzalo.cobalto"
+    const val PAQ_MOSTAZA = "com.gonzalo.mostaza"
     private const val STALE = 150L * 86_400_000L
 
     /** Sube cuando llega algo nuevo (la app vuelve a leer sus listas). */
@@ -69,6 +70,12 @@ object Hermanas {
     fun abrir(c: Context, paquete: String, destino: String = ""): Boolean {
         val i = c.packageManager.getLaunchIntentForPackage(paquete) ?: return false
         if (destino.isNotBlank()) i.putExtra("go", destino)
+        c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
+    }
+    /** «Ver en Mostaza»: Mostaza, en la ficha de ese título (entiende el extra «ficha», la ref del título en la cuenta). */
+    fun verEnMostaza(c: Context, ref: String?): Boolean {
+        val i = c.packageManager.getLaunchIntentForPackage(PAQ_MOSTAZA) ?: return false
+        if (!ref.isNullOrBlank()) i.putExtra("ficha", ref)
         c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
     }
     /** Abre Cobalto en esa obra (entiende el extra «obra», el id de Escribir). */

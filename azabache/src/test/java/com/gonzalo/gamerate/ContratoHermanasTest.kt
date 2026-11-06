@@ -77,6 +77,37 @@ class ContratoHermanasTest {
         assertNull(Hermanas.objetivosDe(null)); assertNull(Hermanas.objetivosDe(org.json.JSONObject()))
     }
 
+    /**
+     * Mostaza (las películas y las series): `mostaza.json` lo deja su ContratoTest con lo que Mostaza escribe de verdad en la cuenta (añadir,
+     * ver diez minutos, terminar, marcar episodios, quitar) y la valoración que pone Azabache en el mismo nodo. Aquí se lee con el mismo
+     * código con el que Azabache lee los nodos de Mostaza ([CosasMostaza]).
+     */
+    @Test fun loQueEscribeMostazaSeLeeEntero() {
+        val c = com.gonzalo.familia.nucleo.Json.lee(File(raiz(), "herramientas/casos/hermanas/mostaza.json").readText()).let { it as Map<*, *> }
+        fun nodos(col: String) = (c[col] as? Map<*, *>).orEmpty().map { (k, v) -> com.gonzalo.familia.nucleo.Nodo(k.toString(), (v as Map<*, *>).entries.associate { it.key.toString() to it.value }) }
+        val titulos = nodos("titulos"); val progreso = nodos("progreso"); val tiempo = nodos("tiempo")
+        val vivos = titulos.filter { !it.borrado }
+        assertTrue("lo que quitas en Mostaza queda borrado (y no se lee)", titulos.single { it.ref == c["borrada"] }.borrado)
+        val pelis = CosasMostaza.construye(vivos, tiempo.filter { !it.borrado }, progreso.filter { !it.borrado }, "movie", 4242)
+        val peli = pelis.games.single()
+        assertEquals("Cadena perpetua", peli.name); assertEquals("su número de Azabache", 278L, peli.id); assertEquals(92, peli.general); assertEquals(95, peli.story)
+        assertEquals("La esperanza es algo bueno.", peli.review); assertTrue("vista: con su día", peli.end > 0); assertEquals("los 14 minutos que viste", 14, peli.minutes)
+        assertEquals("https://images.metahub.space/poster/small/tt0111161/img", peli.cover)
+        assertEquals("tt0111161", pelis.refPorId[278L])
+        assertTrue(pelis.plays.isEmpty())
+        val series = CosasMostaza.construye(vivos, tiempo, progreso, "series", 5151)
+        val serie = series.plays.single()
+        assertEquals("Juego de tronos", serie.name); assertEquals("en curso (viendo)", 1, serie.status); assertEquals("sin número de Azabache: uno fijo de su ref", CosasMostaza.idDeRef("tt0944947"), serie.id)
+        assertEquals(12, serie.minutes)
+        // Los episodios de Mostaza: `progreso/<tt>:<t>:<e>` con su título y lo visto
+        val eps = progreso.filter { it.texto("ref") == c["serie"] }
+        assertEquals(setOf("tt0944947:1:1", "tt0944947:1:2"), eps.filter { it.si("visto") }.map { it.texto("v") }.toSet())
+        assertEquals(1L, eps.single { it.texto("v") == "tt0944947:1:1" }.entero("temp"))
+        // El tiempo, por título y dispositivo, con sus días
+        val t = tiempo.single { it.texto("ref") == "tt0111161" }
+        assertEquals(c["dispositivo"], t.texto("fuente")); assertTrue(t.campos.keys.any { it.length == 11 && it.startsWith("d20") })
+    }
+
     @Test fun loQuePublicaCobaltoSeLeeEntero() {
         val c = caso("cobalto"); val cuenta = c.getJSONObject("cuenta")
         val caps = Hermanas.capitulosDe(cuenta.getJSONObject("lectura"))

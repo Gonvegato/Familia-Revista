@@ -51,6 +51,15 @@ fun JugarHiedra(nombre: String) {
     } else Text("Se juega desde Hiedra (no está en este móvil).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
 }
 
+/** «Ver en Mostaza» en la ficha de una película o una serie: Mostaza la pone (sus fuentes, lo visto, el episodio que toca). */
+@Composable
+fun VerEnMostaza(kind: Kind, id: Long) {
+    val ctx = LocalContext.current
+    if (!Hermanas.instalada(ctx, Hermanas.PAQ_MOSTAZA)) return
+    val ref = remember(kind.id, id, Hermanas.version) { if (CosasMostaza.de(ctx, kind)) CosasMostaza.refDe(ctx, kind, id) else null }
+    MagLink("Ver en Mostaza", if (ref != null) "con tus addons, por donde ibas" else null, accent = true) { Hermanas.verEnMostaza(ctx, ref) }
+}
+
 /** «Escritos» en la portada: el último capítulo que diste por terminado en Cobalto, y cuántas palabras llevas esta semana. */
 @Composable
 fun RevistaEscritos(irAEscritos: () -> Unit) {

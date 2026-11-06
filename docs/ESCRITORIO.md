@@ -91,7 +91,9 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 
 ## Lo que todavía no hacen (para no engañar)
 
-- **Azabache**: las casillas de películas y series «Crítica», «Dónde verla» y «Progreso» (se colocan, pero se dibujan solo en el móvil), las
+- **Azabache**: las películas y las series son ya de Mostaza (`titulos/<ref>`, ver `nube/ESQUEMA.md`), y la de escritorio aún lee las
+  fichas de antes (`azabache/items_<categoría>~<id>`, que se quedaron como copia): lo que veas o cambies en Mostaza, o valores en Azabache del
+  móvil, no se ve aquí hasta su próxima versión. Las casillas de películas y series «Crítica», «Dónde verla» y «Progreso» (se colocan, pero se dibujan solo en el móvil), las
   imágenes de tus archivos en una maqueta, las reacciones de tu pareja y «Lo último de tu pareja», y los próximos episodios. («Descubrir»
   no está a propósito: se quitó de Azabache.)
 - **Cobalto**: compartir con tu pareja (la pareja ya está en la cuenta, pero en el ordenador aún no hay pantallas para ello).
@@ -124,4 +126,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.2. De escritorio: Azabache 1.2.0; Cobalto y Hiedra 1.1.1; Marfil 1.1.0.
+Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.3, Mostaza 0.1.0 (solo Android). De escritorio: Azabache 1.2.0; Cobalto y Hiedra 1.1.1; Marfil 1.1.0.

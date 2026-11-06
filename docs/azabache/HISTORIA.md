@@ -9,6 +9,23 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.6.3 — las películas y las series, de Mostaza
+
+- **Tus películas y tus series son las de Mostaza**, la app nueva de la familia para verlas (como los juegos son los de Hiedra y los
+  libros los de Marfil). La primera vez que abres Mostaza, se lleva lo que tenías aquí con todo lo suyo (el estado, las fechas, la nota y sus
+  criterios, la reseña, tus apuntes, el póster, el tiempo y los episodios marcados), y desde ese momento Azabache **valora las de Mostaza**:
+  la misma ficha, sin copia, con su número de siempre (tus sagas, tu diario y tus maquetas la siguen encontrando). Lo que ves en Mostaza
+  (lo que empiezas, lo que terminas, los episodios que llevas, el tiempo) está aquí en cuanto llega a la cuenta; lo que valoras aquí, en
+  Mostaza («En Azabache», en su ficha).
+- **Añadir** una película o una serie abre Mostaza (si está en este móvil; si no, se añade aquí como siempre y va igual a Mostaza).
+- En la ficha de una película o una serie, **«Ver en Mostaza»** la abre allí (con tus addons, por donde ibas). Desde Mostaza, «Valorar
+  en Azabache» abre aquí su ficha.
+- Quitar una película o una serie aquí la quita en Mostaza (queda borrada: no vuelve sola aunque la veas). Quitar la categoría entera no
+  borra nada de Mostaza.
+- Hasta que Mostaza no ha pasado por tu cuenta, todo sigue como siempre. Lo de antes no se borra: tus fichas de antes se quedan donde
+  estaban, como copia (las lee aún Azabache de Linux y Mac, que en su próxima versión leerá también las de Mostaza).
+- Entrar una vez: Mostaza puede pedirle la cuenta a Azabache (y al revés).
+
 ## 1.6.2 — lo que eliges, en todos tus dispositivos
 
 - **Lo que eliges en Azabache y se quedaba en el móvil ya está en tu cuenta**: las recomendaciones de tu pareja que ya añadiste o descartaste (ya no vuelven a salir en el otro); los avisos (de
