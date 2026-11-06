@@ -63,4 +63,32 @@ class CuentaCobaltoTest {
         assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otro.sincroniza().ok)
         assertNull(otro.coleccion("capitulos").nodo("${obra.id}~${cap.id}")?.takeIf { !it.borrado })
     }
+
+    @Test fun losSprintsQueGuardabaEsteMovilPasanALaCuentaUnaVez() {
+        // Lo que guardaba Cobalto 0.4.0 en sus preferencias («escribir»: «sprints», los terminados)
+        val ahora = System.currentTimeMillis()
+        val p = ctx.getSharedPreferences("escribir", android.content.Context.MODE_PRIVATE)
+        p.edit().putString("sprints", org.json.JSONArray()
+            .put(org.json.JSONObject().put("pid", "p_a").put("desde", ahora - 86_400_000L).put("min", 25).put("pal", 640).put("meta", 500))
+            .put(org.json.JSONObject().put("pid", "p_b").put("desde", ahora - 2 * 86_400_000L).put("min", 10).put("pal", 120).put("meta", 0)).toString()).commit()
+        SprintEscribir.reiniciaParaPruebas(); SprintsDeAntes.reiniciaParaPruebas(); SprintEscribir.cuenta = CuentaSprintsMovil
+        try {
+            LaFamilia.coleccion("sprints"); assertTrue(LaFamilia.sincronizaYa().ok)
+            assertEquals(2, SprintsDeAntes.migra(ctx))
+            assertEquals(0, SprintsDeAntes.migra(ctx))
+            assertTrue(LaFamilia.sincronizaYa().ok)
+            // El ordenador (el otro dispositivo de la cuenta) los tiene, con este móvil como su dispositivo
+            otro.coleccion("sprints"); assertTrue(otro.sincroniza().ok)
+            val n = otro.coleccion("sprints").nodo("p_a~${ahora - 86_400_000L}")!!
+            assertEquals(640L, n.entero("pal")); assertEquals(25L, n.entero("min")); assertEquals(500L, n.entero("meta")); assertEquals(Cuenta.dispositivo, n.texto("dev"))
+            assertEquals(2, otro.coleccion("sprints").vivos().size)
+            // Y aquí se ven en Cifras (de la cuenta)
+            assertEquals(listOf(640), SprintEscribir.historial("p_a").map { it.palabras })
+            // Lo de antes se queda como copia; al volver a abrir la app no se repite nada
+            assertEquals(Cuenta.uid, p.getString("sprints_en_cuenta", ""))
+            assertTrue(p.contains("sprints"))
+            SprintsDeAntes.reiniciaParaPruebas()
+            assertEquals(0, SprintsDeAntes.migra(ctx))
+        } finally { SprintEscribir.reiniciaParaPruebas(); SprintEscribir.cuenta = CuentaSprints.Ninguna }
+    }
 }

@@ -1,31 +1,56 @@
-@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-
 package com.gonzalo.cobalto
 
-import android.content.Context
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.gonzalo.familia.nucleo.Coleccion
+import com.gonzalo.familia.nucleo.Nodo
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Un sprint ya terminado: cuándo empezó, cuántos minutos, cuántas palabras y la meta (0 si no había). */
+/** Un sprint ya terminado: de qué obra, cuándo empezó, cuántos minutos, cuántas palabras y la meta (0 si no había). */
 class Sprint(val pid: String, val desde: Long, val minutos: Int, val palabras: Int, val meta: Int) {
     val porMinuto: Int get() = if (minutos > 0) palabras / minutos else 0
 }
 
+/** Dónde viven los sprints en cada app: la colección `sprints` de su cuenta de la familia, si hay sesión y qué dispositivo es este. */
+interface CuentaSprints {
+    /** La colección `sprints` de la cuenta (null si la cuenta de la app aún no está lista). */
+    fun coleccion(): Coleccion?
+    /** ¿Hay sesión? Sin ella, lo hecho espera en la cola de la cuenta y sube al entrar. */
+    val dentro: Boolean
+    /** Este dispositivo (el mismo id con el que apunta sus palabras de cada día). */
+    val dispositivo: String
+
+    object Ninguna : CuentaSprints {
+        override fun coleccion(): Coleccion? = null
+        override val dentro = false
+        override val dispositivo = ""
+    }
+}
+
 /**
- * Sprints de escritura: escribir sin parar durante un rato (10, 25, 45 min…), con una meta de palabras si quieres. Cuentan
- * las palabras nuevas de la obra (en cualquier escena). Sigue aunque salgas del editor o cierres la app, y lo hecho se
- * guarda en este dispositivo (Cifras de la obra).
+ * Sprints de escritura: escribir sin parar durante un rato (10, 25, 45 min…), con una meta de palabras si quieres. Cuentan las
+ * palabras nuevas de la obra (en cualquier escena y en cualquier dispositivo: las que apunta [Escritos.escribe], así no se cuenta nada
+ * dos veces). Viven en la cuenta (`sprints/<obra>~<desde>`, nube/ESQUEMA.md): los terminados están en todos tus dispositivos y el que
+ * está en marcha también (lo empiezas en el móvil y sigue en el ordenador). Sigue aunque cierres la app.
+ *
+ * Al cumplirse la hora, lo da por terminado cualquier dispositivo que lo tenga abierto, y todos escriben su fin con la misma hora (la
+ * del fin): gana el primero que llega a la cuenta y los demás no cambian nada. Terminarlo antes, a mano, gana siempre a eso. Si la hora
+ * pasa con todo cerrado, lo termina el dispositivo donde empezó al volver a abrirse (como antes).
+ *
+ * Sin nada de Android: es el MISMO archivo que compila Cobalto para Linux y Mac. Las pantallas, aparte (EscribirSprintUi.kt en el móvil,
+ * escritorio/cobalto/…/pc/Sprint.kt en el ordenador). Hasta Cobalto 0.4.0 y 1.1.0 se guardaban en cada dispositivo («sprints»: pid,
+ * desde, min, pal, meta; «sprint»: el que estaba en marcha): [migra] los pasa a la cuenta, una vez, sin perder ni repetir ninguno.
  */
-object SprintEscribir {
+open class MotorSprints {
+    @Volatile var cuenta: CuentaSprints = CuentaSprints.Ninguna
+    /** La hora y el día (para las pruebas). */
+    var reloj: () -> Long = { System.currentTimeMillis() }
+    var hoy: () -> Long = { Escritos.hoy() }
+
     var pid by mutableStateOf("")
         private set
     var hasta by mutableLongStateOf(0L)
@@ -40,137 +65,143 @@ object SprintEscribir {
     /** El último que terminó (para enseñarlo); se pone a null al verlo. */
     var terminado by mutableStateOf<Sprint?>(null)
 
-    private fun prefs(ctx: Context) = ctx.getSharedPreferences("escribir", Context.MODE_PRIVATE)
+    /** La referencia de un sprint en la cuenta: su obra y cuándo empezó (con eso es único, venga del dispositivo que venga). */
+    fun ref(obra: String, desde: Long) = "$obra~$desde"
 
-    /** Lo recupera si se cerró la app con uno en marcha. */
-    fun recupera(ctx: Context, e: Escritos) {
-        if (hasta > 0L) return
-        val o = runCatching { JSONObject(prefs(ctx).getString("sprint", "") ?: "") }.getOrNull() ?: return
-        pid = o.optString("pid"); desde = o.optLong("desde"); hasta = o.optLong("hasta"); base = o.optInt("base"); dia = o.optLong("dia")
-        meta = o.optInt("meta"); minutos = o.optInt("min")
-        if (hasta in 1..System.currentTimeMillis()) termina(ctx, e)
+    private fun col(): Coleccion? = runCatching { cuenta.coleccion() }.getOrNull()
+
+    private fun abierto(n: Nodo) = n.texto("ref").isNotEmpty() && n.entero("fin") == 0L && n.entero("hasta") > 0L
+
+    private fun adopta(n: Nodo) {
+        pid = n.texto("ref"); desde = n.entero("desde"); base = n.entero("base").toInt(); dia = n.entero("dia")
+        meta = n.entero("meta").toInt(); minutos = n.entero("min").toInt()
+        hasta = n.entero("hasta")
     }
 
-    fun activo(p: String? = null) = hasta > System.currentTimeMillis() && (p == null || p == pid)
+    /**
+     * Se pone al día con la cuenta (al abrir la app y cada vez que cambia algo en ella): termina los de este dispositivo que pasaron su
+     * hora con la app cerrada, sigue el que esté en marcha (también si lo empezaste en otro) y deja de enseñar el que se terminó en otro.
+     */
+    fun mira(e: Escritos) {
+        val c = col() ?: return
+        val ahora = reloj()
+        val abiertos = c.vivos().filter { abierto(it) }
+        abiertos.filter { it.entero("hasta") <= ahora && it.texto("dev") == cuenta.dispositivo }.sortedBy { it.entero("desde") }.forEach { adopta(it); termina(e) }
+        val enMarcha = abiertos.filter { it.entero("hasta") > ahora }.maxByOrNull { it.entero("desde") }
+        if (enMarcha != null) {
+            if (hasta == 0L || ref(pid, desde) != enMarcha.ref) adopta(enMarcha)
+        } else if (hasta > 0L) {
+            val n = c.nodo(ref(pid, desde))
+            // Se terminó en otro dispositivo: aquí se deja de ver (el resultado ya se vio allí)
+            if (n != null && (n.entero("fin") > 0L || n.borrado)) hasta = 0L
+        }
+    }
 
-    fun empieza(ctx: Context, e: Escritos, obra: String, min: Int, metaPalabras: Int) {
+    /** Lo de siempre al abrir la app: [mira]. */
+    fun recupera(e: Escritos) = mira(e)
+
+    fun activo(p: String? = null) = hasta > reloj() && (p == null || p == pid)
+
+    fun empieza(e: Escritos, obra: String, min: Int, metaPalabras: Int) {
         pid = obra; minutos = min; meta = metaPalabras
-        desde = System.currentTimeMillis(); hasta = desde + min * 60_000L
-        dia = Escritos.hoy(); base = e.escritas(dia, obra)
-        prefs(ctx).edit().putString("sprint", JSONObject().put("pid", pid).put("desde", desde).put("hasta", hasta).put("base", base).put("dia", dia).put("meta", meta).put("min", minutos).toString()).apply()
+        desde = reloj(); hasta = desde + min * 60_000L
+        dia = hoy(); base = e.escritas(dia, obra)
+        col()?.pon(ref(pid, desde), camposDe(pid, desde, hasta, min, meta, dia, base.toLong()) + mapOf("pal" to 0L, "fin" to 0L), desde)
     }
 
-    /** Palabras escritas en la obra desde que empezó. */
+    private fun camposDe(p: String, d: Long, h: Long, min: Int, m: Int, di: Long, b: Long): Map<String, Any?> =
+        mapOf("ref" to p, "desde" to d, "hasta" to h, "min" to min.toLong(), "meta" to m.toLong(), "dia" to di, "base" to b, "dev" to cuenta.dispositivo)
+
+    /** Palabras escritas en la obra desde que empezó (en todos tus dispositivos: las de cada día ya se suman). */
     fun llevas(e: Escritos): Int {
         if (hasta == 0L) return 0
-        val hoy = Escritos.hoy()
-        return ((e.escritas(dia, pid) + if (hoy != dia) e.escritas(hoy, pid) else 0) - base).coerceAtLeast(0)
+        val h = hoy()
+        return ((e.escritas(dia, pid) + if (h != dia) e.escritas(h, pid) else 0) - base).coerceAtLeast(0)
     }
 
-    /** Lo da por terminado (antes de tiempo si [ya]) y lo guarda en el historial. */
-    fun termina(ctx: Context, e: Escritos, ya: Boolean = false) {
+    /** Lo da por terminado (antes de tiempo si [ya]) y lo guarda en el historial (en la cuenta). */
+    fun termina(e: Escritos, ya: Boolean = false) {
         if (hasta == 0L) return
-        val fin = if (ya) System.currentTimeMillis().coerceAtMost(hasta) else hasta
+        val fin = if (ya) reloj().coerceAtMost(hasta) else hasta
         val min = (((fin - desde) + 30_000L) / 60_000L).toInt().coerceAtLeast(if (ya) 0 else minutos)
         val s = Sprint(pid, desde, min, llevas(e), meta)
+        val previsto = hasta
         hasta = 0L
-        prefs(ctx).edit().remove("sprint").apply()
-        if (s.minutos >= 1) {
-            val a = runCatching { JSONArray(prefs(ctx).getString("sprints", "[]")) }.getOrDefault(JSONArray())
-            a.put(JSONObject().put("pid", s.pid).put("desde", s.desde).put("min", s.minutos).put("pal", s.palabras).put("meta", s.meta))
-            val ult = JSONArray().also { n -> (maxOf(0, a.length() - 200) until a.length()).forEach { n.put(a.get(it)) } }
-            prefs(ctx).edit().putString("sprints", ult.toString()).apply()
-        }
+        guardaFin(s, fin, previsto, ya)
         if (s.minutos >= 1 || s.palabras > 0) terminado = s
     }
 
-    fun historial(ctx: Context, obra: String? = null): List<Sprint> = runCatching {
-        val a = JSONArray(prefs(ctx).getString("sprints", "[]"))
-        (0 until a.length()).map { a.getJSONObject(it) }.map { Sprint(it.optString("pid"), it.optLong("desde"), it.optInt("min"), it.optInt("pal"), it.optInt("meta")) }
-            .filter { obra == null || it.pid == obra }.sortedByDescending { it.desde }
-    }.getOrDefault(emptyList())
-
-    fun reiniciaParaPruebas() { hasta = 0L; pid = ""; terminado = null }
-}
-
-/** Mira cada segundo si el sprint en marcha ha terminado (va en la pantalla de Escribir, para que siga fuera del editor). */
-@Composable
-fun VigilaSprint(e: Escritos, ctx: Context) {
-    LaunchedEffect(Unit) { SprintEscribir.recupera(ctx, e) }
-    val hasta = SprintEscribir.hasta
-    LaunchedEffect(hasta) {
-        if (hasta == 0L) return@LaunchedEffect
-        delay((hasta - System.currentTimeMillis()).coerceAtLeast(0))
-        SprintEscribir.termina(ctx, e)
+    private fun guardaFin(s: Sprint, fin: Long, previsto: Long, ya: Boolean) {
+        val c = col() ?: return
+        val r = ref(s.pid, s.desde)
+        val n = c.nodo(r)
+        val mFin = n?.m?.get("fin") ?: 0L
+        // Al cumplirse la hora, todos escriben con la misma (gana el primero en llegar); a mano, siempre una más (gana a eso)
+        val hora = if (ya) maxOf(previsto, mFin) + 1 else maxOf(previsto, mFin + 1)
+        val campos = LinkedHashMap<String, Any?>()
+        if (n == null) campos += camposDe(s.pid, s.desde, previsto, minutos, s.meta, dia, base.toLong())
+        campos["fin"] = fin; campos["min"] = s.minutos.toLong(); campos["pal"] = s.palabras.toLong()
+        // Uno de menos de un minuto no queda en el historial (como siempre): se quita
+        if (s.minutos < 1) campos[Nodo.B] = fin
+        c.pon(r, campos, hora)
     }
-    SprintEscribir.terminado?.let { s -> ResultadoSprint(s, e, ctx) { SprintEscribir.terminado = null } }
-}
 
-/** Elegir cuánto dura y la meta, y empezar. */
-@Composable
-fun SprintDialogo(e: Escritos, pid: String, onCerrar: () -> Unit) {
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    var min by remember { mutableIntStateOf(25) }
-    var meta by remember { mutableStateOf("") }
-    val mejor = remember { SprintEscribir.historial(ctx, pid).maxByOrNull { it.porMinuto } }
-    HojaEscribir("Sprint de escritura", onCerrar) {
-        Text("Escribe sin parar, sin corregir, hasta que suene. Cuentan las palabras nuevas de toda la obra.", color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
-        EtiquetaEscribir("Cuánto")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(5, 10, 15, 20, 25, 30, 45, 60).forEach { m -> SoftChip("$m min", min == m) { min = m } }
+    /** Los sprints terminados (de la obra, o todos), el último primero: los de todos tus dispositivos. */
+    fun historial(obra: String? = null): List<Sprint> {
+        val c = col() ?: return emptyList()
+        return c.vivos().filter { it.entero("fin") > 0L && it.entero("min") >= 1 && it.texto("ref").isNotEmpty() && (obra == null || it.texto("ref") == obra) }
+            .map { Sprint(it.texto("ref"), it.entero("desde"), it.entero("min").toInt(), it.entero("pal").toInt(), it.entero("meta").toInt()) }
+            .sortedByDescending { it.desde }
+    }
+
+    /**
+     * ¿Se pueden pasar ya a la cuenta los de antes? Con sesión, cuando la colección ya se ha bajado entera (así se sabe qué hay y no se manda
+     * lo que ya está); sin sesión, ya (esperan en la cola y suben al entrar).
+     */
+    fun listoParaMigrar(): Boolean {
+        val c = col() ?: return false
+        return !cuenta.dentro || c.completa
+    }
+
+    /**
+     * Pasa a la cuenta los sprints que este dispositivo guardaba aparte (hasta Cobalto 0.4.0 / 1.1.0): [viejos] (pid, desde, min, pal, meta)
+     * y [enMarcha] (el que estaba en marcha: pid, desde, hasta, base, dia, meta, min). Cada uno va a `sprints/<obra>~<desde>`: si ya está
+     * (lo pasó otro dispositivo, o este otra vez), no se toca. Así se juntan los de todos tus dispositivos sin perder ni repetir ninguno.
+     * Devuelve cuántos ha pasado.
+     */
+    fun migra(viejos: JSONArray?, enMarcha: JSONObject?): Int {
+        val c = col() ?: return 0
+        var n = 0
+        if (viejos != null) for (i in 0 until viejos.length()) {
+            val o = viejos.optJSONObject(i) ?: continue
+            val p = o.optString("pid"); val d = o.optLong("desde"); val min = o.optInt("min")
+            if (p.isBlank() || d <= 0L || min < 1 || !Coleccion.refValida(ref(p, d))) continue
+            if (c.nodo(ref(p, d)) != null) continue
+            val fin = d + min * 60_000L
+            c.pon(ref(p, d), camposDe(p, d, fin, min, o.optInt("meta"), diaDe(d), 0L) + mapOf("pal" to o.optInt("pal").toLong(), "fin" to fin), fin)
+            n++
         }
-        CampoEscribir(meta, { meta = it.filter(Char::isDigit).take(5) }, "Meta de palabras (opcional)", numero = true)
-        if (mejor != null && mejor.porMinuto > 0) Text("Tu mejor ritmo en esta obra: ${mejor.porMinuto} palabras por minuto.", color = Muted, fontSize = 13.sp)
-        BotonEscribir("Empezar") { SprintEscribir.empieza(ctx, e, pid, min, meta.toIntOrNull() ?: 0); onCerrar() }
-    }
-}
-
-/** La tira del sprint en marcha (en los contadores del editor): el tiempo que queda y lo escrito. */
-@Composable
-fun TiraSprint(e: Escritos, onTerminar: () -> Unit) {
-    var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(SprintEscribir.hasta) { while (SprintEscribir.hasta > 0L) { ahora = System.currentTimeMillis(); delay(1000) } }
-    val queda = ((SprintEscribir.hasta - ahora) / 1000).coerceAtLeast(0)
-    val llevas = SprintEscribir.llevas(e)
-    val meta = SprintEscribir.meta
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("SPRINT %d:%02d".format(queda / 60, queda % 60), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-        Text("+$llevas" + if (meta > 0) " de $meta" else "", color = if (meta in 1..llevas) androidx.compose.ui.graphics.Color(0xFF5B8C5A) else Charcoal, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Text("TERMINAR", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, modifier = Modifier.press(haptic = false, onClick = onTerminar).padding(4.dp))
-    }
-}
-
-@Composable
-private fun ResultadoSprint(s: Sprint, e: Escritos, ctx: Context, onCerrar: () -> Unit) {
-    val antes = remember(s) { SprintEscribir.historial(ctx, s.pid).filter { it.desde != s.desde } }
-    val record = antes.isNotEmpty() && s.porMinuto > antes.maxOf { it.porMinuto }
-    HojaEscribir("Sprint terminado", onCerrar) {
-        Text(cifraE(s.palabras), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 66.sp, color = Charcoal)
-        Text(if (s.minutos >= 1) "PALABRAS EN ${s.minutos} MIN · ${s.porMinuto} POR MINUTO" else "PALABRAS EN MENOS DE UN MINUTO", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
-        if (s.meta > 0) Text(if (s.palabras >= s.meta) "Meta de ${cifraE(s.meta)} conseguida." else "Te quedaste a ${cifraE(s.meta - s.palabras)} de la meta (${cifraE(s.meta)}).", fontFamily = Display, fontSize = 20.sp, color = Charcoal)
-        if (record) Text("Es tu mejor ritmo en esta obra.", color = ColGeneral, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        e.get(s.pid)?.let { Text("En «${it.s("titulo")}»", color = Muted, fontSize = 13.sp) }
-        BotonEscribir("Seguir") { onCerrar() }
-    }
-}
-
-/** Los sprints de la obra (para Cifras). */
-@Composable
-fun SprintsObra(pid: String) {
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    val l = remember(SprintEscribir.terminado, SprintEscribir.hasta) { SprintEscribir.historial(ctx, pid) }
-    if (l.isEmpty()) return
-    val f = java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale("es"))
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        EtiquetaEscribir("Sprints (en este dispositivo)")
-        Text("${l.size} · ${cifraE(l.sumOf { it.palabras })} palabras en ${l.sumOf { it.minutos }} min · mejor ritmo ${l.maxOf { it.porMinuto }} por minuto", color = Muted, fontSize = 12.sp)
-        l.take(8).forEach { s ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(f.format(java.util.Date(s.desde)), color = Muted, fontSize = 13.sp, modifier = Modifier.width(110.dp))
-                Text("${s.minutos} min", color = Charcoal, fontSize = 13.sp, modifier = Modifier.width(56.dp))
-                Text("${cifraE(s.palabras)} palabras" + if (s.meta > 0) (if (s.palabras >= s.meta) " ✓" else " de ${cifraE(s.meta)}") else "", color = Charcoal, fontSize = 13.sp, modifier = Modifier.weight(1f))
-                Text("${s.porMinuto}/min", color = Muted, fontSize = 13.sp)
+        if (enMarcha != null) {
+            val p = enMarcha.optString("pid"); val d = enMarcha.optLong("desde"); val h = enMarcha.optLong("hasta")
+            if (p.isNotBlank() && d > 0L && h > d && Coleccion.refValida(ref(p, d)) && c.nodo(ref(p, d)) == null) {
+                c.pon(ref(p, d), camposDe(p, d, h, enMarcha.optInt("min"), enMarcha.optInt("meta"), enMarcha.optLong("dia", diaDe(d)), enMarcha.optLong("base")) +
+                    mapOf("pal" to 0L, "fin" to 0L), d)
+                n++
             }
         }
+        return n
     }
+
+    /** El día (días desde 1970, en la hora de aquí) de una hora. */
+    private fun diaDe(ms: Long): Long = (ms + java.util.TimeZone.getDefault().getOffset(ms)) / 86_400_000L
+
+    fun reiniciaParaPruebas() {
+        hasta = 0L; pid = ""; terminado = null; desde = 0L; base = 0; dia = 0L; meta = 0; minutos = 0
+        reloj = { System.currentTimeMillis() }; hoy = { Escritos.hoy() }
+    }
+}
+
+/** Los sprints de esta app (en las pruebas, cada «dispositivo» es otro [MotorSprints]). */
+object SprintEscribir : MotorSprints() {
+    const val COLECCION = "sprints"
 }

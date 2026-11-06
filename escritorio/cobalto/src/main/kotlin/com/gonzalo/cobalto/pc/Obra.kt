@@ -30,6 +30,7 @@ import com.gonzalo.cobalto.EscribirExport
 import com.gonzalo.cobalto.Escritos
 import com.gonzalo.cobalto.EstadoObra
 import com.gonzalo.cobalto.Formato
+import com.gonzalo.cobalto.GuiaNovela
 import com.gonzalo.cobalto.OpcionesExport
 import com.gonzalo.cobalto.estadoDe
 import com.gonzalo.cobalto.metaObra

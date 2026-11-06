@@ -4,6 +4,7 @@ import com.gonzalo.cobalto.Doc
 import com.gonzalo.cobalto.EstadoObra
 import com.gonzalo.cobalto.Escritos
 import com.gonzalo.cobalto.NubeEscritos
+import com.gonzalo.cobalto.SprintEscribir
 import com.gonzalo.cobalto.estadoDe
 import com.gonzalo.cobalto.ultimaEdicion
 import com.gonzalo.familia.nucleo.Red
@@ -69,6 +70,9 @@ object Cuaderno {
     /** Al arrancar la app (después de LaFamilia.inicia). */
     fun inicia() {
         val x = escritos
+        // Los sprints, en la cuenta (los de este ordenador de antes pasan a ella en cuanto se ha bajado lo que ya había: [VigilaSprint])
+        SprintEscribir.cuenta = CuentaSprintsPC
+        runCatching { LaFamilia.coleccion(SprintEscribir.COLECCION) }
         LaFamilia.alEntrar { x.cuenta(LaFamilia.uid); pronto(0) }
         if (NubePC.vinculada) { x.cuenta(LaFamilia.uid); pronto(0) }
         escucha()

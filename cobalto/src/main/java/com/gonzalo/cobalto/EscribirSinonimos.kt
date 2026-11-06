@@ -1,22 +1,25 @@
 package com.gonzalo.cobalto
 
-import android.content.Context
-
 /**
  * Sinónimos del español para el editor de Escribir: el tesauro libre de RLA-ES (assets/sinonimos/th_es_v2.dat, LGPL 2.1,
  * sin cambios; ver LEEME.txt). Se busca la palabra, o su singular / masculino, y lo encontrado se adapta (plural,
  * femenino, mayúscula) a la palabra escrita. Igual que escritorio/src/main/sinonimos.js (casos en herramientas/casos).
+ * Sin nada de Android: es el MISMO archivo que compila Cobalto para Linux y Mac (cada uno lee el tesauro de su sitio con [cargaDe]:
+ * el móvil, de sus assets; el ordenador, de sus recursos, que son el mismo archivo copiado al compilar).
  */
 object Sinonimos {
     @Volatile private var lineas: List<String>? = null
     @Volatile private var indice: HashMap<String, Int>? = null
+    /** ¿Ya está leído el tesauro? */
+    @Volatile var cargado = false
+        private set
 
-    /** Lo lee de la app la primera vez (unos 3 MB; mejor fuera del hilo principal). */
-    fun carga(ctx: Context) {
+    /** Lo lee la primera vez de donde diga [abre] (unos 3 MB; mejor fuera del hilo de la pantalla). Si no se puede, se queda sin sinónimos. */
+    fun cargaDe(abre: () -> java.io.InputStream?) {
         if (indice != null) return
         synchronized(this) {
             if (indice != null) return
-            runCatching { ctx.assets.open("sinonimos/th_es_v2.dat").use { cargaTexto(String(it.readBytes(), Charsets.ISO_8859_1)) } }
+            runCatching { abre()?.use { cargaTexto(String(it.readBytes(), Charsets.ISO_8859_1)) } }
         }
     }
 
@@ -32,7 +35,7 @@ object Sinonimos {
             idx.putIfAbsent(l[i].substring(0, bar).lowercase(), i)
             i += n + 1
         }
-        lineas = l; indice = idx
+        lineas = l; indice = idx; cargado = true
         return idx.size
     }
 

@@ -69,6 +69,8 @@ import com.gonzalo.cobalto.Escritos
 import com.gonzalo.cobalto.FormatoMarkdown
 import com.gonzalo.cobalto.Formato
 import com.gonzalo.cobalto.HistorialTexto
+import com.gonzalo.cobalto.Sinonimos
+import com.gonzalo.cobalto.SprintEscribir
 import com.gonzalo.cobalto.Tipografia
 import com.gonzalo.familia.pc.revista.*
 import kotlinx.coroutines.Dispatchers

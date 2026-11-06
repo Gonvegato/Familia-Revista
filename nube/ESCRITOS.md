@@ -112,8 +112,14 @@ versión se guarda aparte (las 3 últimas, en `b/<id>.json`, solo en el disposit
 | PDF | `EscribirPdf.kt` (PdfDocument) | `escritorio/src/main/escritos-pdf.js` (Chromium) |
 | Tipografía automática | `EscribirTexto.kt` (Tipografia) | `revista/js/escribir-texto.js` (ET.tipografia) |
 | Sinónimos (tesauro RLA-ES, LGPL 2.1) | `EscribirSinonimos.kt` + `assets/sinonimos` | `escritorio/src/main/sinonimos.js` |
-| Sprints | `EscribirSprint.kt` | `revista/js/escribir.js` (E.sprint) |
-| Guía de la novela (pasos, textos y qué se da por hecho) | `EscribirGuia.kt` | `revista/js/escribir-guia.js` (la lógica) y `escribir.js` (las pantallas) |
+| Sprints (en la cuenta: `sprints/<obra>~<desde>`, ver `ESQUEMA.md`) | `EscribirSprint.kt` (la lógica) y `EscribirSprintUi.kt` (las pantallas) | `revista/js/escribir.js` (E.sprint, en este PC) |
+| Guía de la novela (pasos, textos y qué se da por hecho) | `EscribirGuia.kt` (la lógica) y `EscribirGuiaUi.kt` (las pantallas) | `revista/js/escribir-guia.js` (la lógica) y `escribir.js` (las pantallas) |
+| Árbol (medidas y «Ordenar») | `EscribirArbol.kt` (la lógica) y `EscribirArbolUi.kt` (el lienzo) | `revista/js/escribir-arbol.js` |
+
+**Cobalto para Linux y Mac** (`escritorio/cobalto`) compila los MISMOS archivos de Kotlin que el móvil para todo lo que no es pantalla (se
+copian de `cobalto/src/main` al compilar, ver su `build.gradle.kts`): el núcleo, la mezcla, la estructura, el texto, exportar, el árbol, la
+guía, los sinónimos y los sprints. Sus pruebas compartidas también (`EscribirMezclaTest`, `EscribirEstructuraTest`,
+`EscribirArbolGuiaTest`, `EscribirSprintTest`).
 
 Casos compartidos (los pasan el móvil y el PC): `herramientas/casos/mezcla.json`, `tipografia.json`, `sinonimos.json` y `guia.json`.
 

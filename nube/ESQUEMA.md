@@ -119,6 +119,31 @@ demás apps, Cobalto publica:
   se mandaba como `u`, que es la hora del servidor y el núcleo no deja escribir: no llegaba nada. Quien lee usa `ue` o, si falta, la `u` del nodo.)
 - `palabras/<dispositivo>`: `d<AAAA-MM-DD>` = palabras escritas ese día en ese dispositivo (se suman los dispositivos).
 
+### `sprints/<obra>~<desde>` (Cobalto)
+
+Cada sprint de escritura, uno por nodo: la obra y la hora en que empezó (ms), así el mismo sprint es el mismo nodo venga del dispositivo
+que venga. Lo escribe Cobalto (el móvil desde la 0.4.1 y el ordenador desde la 1.1.1) al empezar y al terminar; no se borra. Las reglas
+de siempre (`familia/$col/$ref`) ya lo cubren: solo tú lo escribes y, como lo demás de tu cuenta, tu pareja puede leerlo.
+
+| Campo | Qué es |
+|---|---|
+| `ref` | La obra (el id de su documento de Escribir) |
+| `desde`, `hasta` | Cuándo empezó y cuándo acaba (o acababa) según lo elegido (ms) |
+| `min` | Los minutos: los elegidos mientras está en marcha; al terminar, los que duró |
+| `meta` | La meta de palabras (0 = sin meta) |
+| `pal` | Las palabras nuevas de la obra mientras duró (las de todos los dispositivos) |
+| `dia`, `base` | El día en que empezó (días desde 1970, en la hora del dispositivo) y las palabras que llevaba la obra ese día al empezar: con eso cualquier dispositivo cuenta lo que se lleva |
+| `dev` | El dispositivo donde empezó (el mismo id de `palabras/<dispositivo>`) |
+| `fin` | Cuándo terminó (ms); 0 = en marcha |
+| `b` | Si duró menos de un minuto: no cuenta (como siempre) |
+
+Quién lo termina: al cumplirse `hasta`, cualquier dispositivo que lo tenga abierto escribe `fin`, `min` y `pal` con la hora `m` =
+`hasta`; gana el primero que llega (los demás llevan la misma hora y las reglas no les dejan pisarlo). Terminarlo antes, a mano, se
+escribe con `m` = `hasta` + 1: gana siempre a eso, llegue cuando llegue. Si la hora pasa con todo cerrado, lo termina el dispositivo de
+`dev` al volver a abrirse. Hasta Cobalto 0.4.0 (móvil) y 1.1.0 (ordenador) los sprints se guardaban en cada dispositivo (con `pid`,
+`desde`, `min`, `pal` y `meta`); cada uno los pasa aquí una vez por cuenta y, si el nodo ya existe, no lo toca: se juntan los de todos
+sin perder ni repetir ninguno. Lo de antes se queda donde estaba, como copia.
+
 ### La valoración (Azabache)
 
 En el nodo de la cosa (`juegos/<id>`, `libros/<kid>`, `obras/<obra>`): `nota` (0–100; sin el campo = **sin valorar**), `crit` (los

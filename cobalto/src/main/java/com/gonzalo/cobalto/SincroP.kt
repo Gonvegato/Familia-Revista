@@ -36,7 +36,11 @@ object SincroP {
             aplicaAjustes()
             // Lo que leen Azabache y Marfil: que estén abiertas para que se suban y se bajen solas
             listOf("obras", "capitulos", "palabras").forEach { LaFamilia.coleccion(it) }
+            // Los sprints, en la cuenta (los de este móvil de antes pasan a ella en cuanto se ha bajado lo que ya había)
+            SprintEscribir.cuenta = CuentaSprintsMovil
+            LaFamilia.coleccion(SprintEscribir.COLECCION).alCambiar { app?.let { SprintsDeAntes.pronto(it) } }
         }
+        SprintsDeAntes.pronto(c)
         Migracion.siHaceFalta(c)
     }
 

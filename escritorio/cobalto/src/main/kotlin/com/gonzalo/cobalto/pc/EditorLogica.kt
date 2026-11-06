@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.gonzalo.cobalto.Escritos
+import com.gonzalo.cobalto.Sinonimos
 import com.gonzalo.familia.pc.Sitio
 import org.json.JSONObject
 import java.io.File
@@ -70,6 +71,12 @@ object PrefsEditor {
 
     fun reiniciaParaPruebas() { cargadas = false; tam = TAM_NORMAL; fuente = 0; maquina = false; tipografia = true; panel = false; pestanaPanel = 0 }
 }
+
+/**
+ * El tesauro de sinónimos de la app (th_es_v2.dat, el mismo archivo que lleva el móvil en sus assets, copiado al compilar). La búsqueda
+ * es la del móvil ([Sinonimos], EscribirSinonimos.kt, el mismo archivo): aquí solo se dice de dónde se lee.
+ */
+fun Sinonimos.carga() = cargaDe { Sinonimos::class.java.getResourceAsStream("/sinonimos/th_es_v2.dat") }
 
 /** Buscar y reemplazar dentro de una escena (lo de toda la obra lo hace [Escritos.reemplaza], el mismo del móvil). */
 object Busqueda {

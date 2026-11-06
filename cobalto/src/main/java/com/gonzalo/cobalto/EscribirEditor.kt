@@ -115,7 +115,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
     var sinonimos by remember { mutableStateOf<Pair<IntRange, List<List<String>>>?>(null) }
     var avisoEd by remember { mutableStateOf("") }
     LaunchedEffect(avisoEd) { if (avisoEd.isNotEmpty()) { kotlinx.coroutines.delay(2600); avisoEd = "" } }
-    LaunchedEffect(Unit) { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Sinonimos.carga(ctx) } }
+    LaunchedEffect(Unit) { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Sinonimos.cargaDe { ctx.assets.open("sinonimos/th_es_v2.dat") } } }
     var foco by remember { mutableStateOf(false) }
     var panel by remember { mutableStateOf(false) }
     var buscar by remember { mutableStateOf(false) }
@@ -366,7 +366,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
                             DropdownMenu(menu, { menu = false }, containerColor = Paper) {
                                 DropdownMenuItem({ Text("Buscar y cambiar") }, { menu = false; abreBusca(cambiar = true) })
                                 DropdownMenuItem({ Text("La página: letra, tamaño, interlineado…") }, { menu = false; hojaPagina = true })
-                                DropdownMenuItem({ Text(if (SprintEscribir.activo()) "Terminar el sprint" else "Sprint de escritura…") }, { menu = false; if (SprintEscribir.activo()) SprintEscribir.termina(ctx, e, ya = true) else sprint = true })
+                                DropdownMenuItem({ Text(if (SprintEscribir.activo()) "Terminar el sprint" else "Sprint de escritura…") }, { menu = false; if (SprintEscribir.activo()) SprintEscribir.termina(e, ya = true) else sprint = true })
                                 DropdownMenuItem({ Text("Sinónimos de la palabra") }, { menu = false; abreSinonimos() })
                                 DropdownMenuItem({ Text(if (pagina.maquina) "Máquina de escribir: sí" else "Máquina de escribir: no") }, { menu = false; pagina.maquina = !pagina.maquina; pagina.guarda() })
                                 DropdownMenuItem({ Text("Guardar una versión ahora") }, { menu = false; guardaYa(); e.instantanea(eid, tf.text, fuerza = true); avisoEd = "Versión guardada" })
@@ -460,7 +460,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
                     }
                     if (foco) Text("SALIR", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
                         modifier = Modifier.align(Alignment.TopEnd).padding(14.dp).press(haptic = false) { foco = false }.padding(6.dp))
-                    if (foco && SprintEscribir.activo(pid)) Box(Modifier.align(Alignment.TopStart).padding(14.dp).padding(6.dp)) { TiraSprint(e) { SprintEscribir.termina(ctx, e, ya = true) } }
+                    if (foco && SprintEscribir.activo(pid)) Box(Modifier.align(Alignment.TopStart).padding(14.dp).padding(6.dp)) { TiraSprint(e) { SprintEscribir.termina(e, ya = true) } }
                     // Los avisos, un momento, abajo
                     AvisoEditor(avisoEd, Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp, start = 20.dp, end = 20.dp))
                 }
@@ -469,7 +469,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
                 if (!foco) {
                     CuentasEditor(cuentas, discreto = false, Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
                     if (SprintEscribir.activo(pid)) Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TiraSprint(e) { SprintEscribir.termina(ctx, e, ya = true) }
+                        TiraSprint(e) { SprintEscribir.termina(e, ya = true) }
                     }
                     BarraFormato(
                         tableta = tableta, maquina = pagina.maquina,
@@ -480,7 +480,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
                         onSalto = { cambia(EdicionTexto.salto(tf)) }, onComillas = { cambia(EdicionTexto.comillas(tf)) },
                         onRaya = { cambia(EdicionTexto.inserta(tf, "—")) }, onBuscar = { if (buscar) cierraBusca() else abreBusca() }, onSinonimos = { abreSinonimos() },
                         onPagina = { hojaPagina = true }, onMaquina = { pagina.maquina = !pagina.maquina; pagina.guarda() },
-                        onSprint = { if (SprintEscribir.activo()) SprintEscribir.termina(ctx, e, ya = true) else sprint = true }, onFoco = { foco = true }
+                        onSprint = { if (SprintEscribir.activo()) SprintEscribir.termina(e, ya = true) else sprint = true }, onFoco = { foco = true }
                     )
                 } else if (pagina.cuentasFoco) {
                     CuentasEditor(cuentas, discreto = true, Modifier.padding(horizontal = 28.dp, vertical = 10.dp).widthIn(max = pagina.anchoMax).align(Alignment.CenterHorizontally))
