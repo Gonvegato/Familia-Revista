@@ -207,12 +207,15 @@ private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Est
                         ContextMenuItem("Duplicar") { e.duplicaEscena(s.id)?.let { abre(it.id) } },
                         ContextMenuItem("A la papelera…") { borrar(s) },
                     ) }) {
+                    // (con el ratón quieto encima: su resumen, su estado y cuándo pasa)
+                    Ayuda(listOf(s.s("resumen"), ESTADOS_ESCENA.getOrElse(s.i("estado")) { "" } + (s.s("cuando").takeIf { it.isNotBlank() }?.let { " · $it" } ?: "")).filter { it.isNotBlank() }.joinToString("\n")) {
                     Row(Modifier.fillMaxWidth().padding(start = (sangria + 12).dp).background(if (sel) Sand else androidx.compose.ui.graphics.Color.Transparent).pointerHoverIcon(PointerIcon.Hand).clickable { abre(s.id) }.padding(horizontal = 8.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.width(3.dp).height(14.dp).background(if (sel) Acento else colorEstado(s.i("estado")).copy(alpha = 0.7f)))
                         Spacer(Modifier.width(8.dp))
                         Text(s.s("titulo").ifBlank { "Escena" }, Modifier.weight(1f), color = if (sel) Charcoal else Muted, fontFamily = Body, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(Formato.cifra(s.i("palabras")), color = Muted, fontFamily = Body, fontSize = 10.sp)
+                    }
                     }
                     }
                 }

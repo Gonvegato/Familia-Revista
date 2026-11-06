@@ -207,7 +207,7 @@ fun Ayuda(texto: String, contenido: @Composable () -> Unit) {
     if (texto.isBlank()) { contenido(); return }
     TooltipArea(
         tooltip = {
-            Text(texto, Modifier.clip(esquina(4.dp)).background(Charcoal).padding(horizontal = 10.dp, vertical = 6.dp), color = Paper, fontFamily = Body, fontSize = 12.sp)
+            Text(texto, Modifier.widthIn(max = 340.dp).clip(esquina(4.dp)).background(Charcoal).padding(horizontal = 10.dp, vertical = 6.dp), color = Paper, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
         },
         delayMillis = 550,
         tooltipPlacement = TooltipPlacement.CursorPoint(offset = DpOffset(0.dp, 18.dp)),
