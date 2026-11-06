@@ -9,7 +9,8 @@ import org.json.JSONObject
 /**
  * La sincronización de Marfil: ya no es suya, es la de la cuenta de la familia ([LaFamilia]): cada cambio va a la cuenta campo a
  * campo, se escucha en directo mientras se ve la app y lo pendiente se sube solo en cuanto hay red. Aquí queda lo que es de Marfil:
- * la apariencia y los ajustes del lector (`ajustes/marfil`), lo leído de cada libro ([LecturaNube]) y la migración de lo de antes.
+ * la apariencia y los ajustes del lector (`ajustes/marfil`), los demás ajustes ([EspejoCuenta]: `ajustes/marfil_*`), lo leído de cada libro
+ * ([LecturaNube]) y la migración de lo de antes.
  */
 object SincroP {
     @Volatile private var app: Context? = null
@@ -39,6 +40,8 @@ object SincroP {
             ajustes().alCambiar { refs -> if ("marfil" in refs) aplicaAjustes() }
             aplicaAjustes()
         }
+        // Lo demás que eliges (el orden de cada estante, tener aquí los libros de tu kDrive…): también en la cuenta
+        EspejoCuenta.inicia(c, GRUPOS)
         // Los Escritos de Cobalto se rehacen solos al cambiar sus capítulos en la cuenta
         runCatching { Escritos.escucha(c) }
         // La primera vez con la cuenta en este móvil: lo de antes pasa a la cuenta
@@ -46,6 +49,9 @@ object SincroP {
         // Lo que quedara por subir a tu kDrive (o por bajar)
         runCatching { NubeLibros.siHaceFalta(c) }
     }
+
+    /** Las preferencias de Marfil que son tuyas (no de este móvil) y viajan con la cuenta, cada una en `ajustes/<nodo>` ([EspejoCuenta]). */
+    val GRUPOS: List<EspejoCuenta.Grupo> get() = listOf(OrdenGuardado.GRUPO, NubeLibros.GRUPO, Internet.GRUPO, Actualizador.GRUPO)
 
     /** La apariencia y los ajustes del lector que llegan de otro de tus Marfil (si son más nuevos que los de aquí). */
     private fun aplicaAjustes() {

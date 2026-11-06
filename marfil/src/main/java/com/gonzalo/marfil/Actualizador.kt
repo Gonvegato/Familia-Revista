@@ -50,7 +50,9 @@ object Actualizador {
     /** Ya hay una comprobación o una descarga en marcha. */
     private val ocupado = java.util.concurrent.atomic.AtomicBoolean(false)
 
-    private fun prefs(ctx: Context) = ctx.getSharedPreferences("marfil_actualizador", Context.MODE_PRIVATE)
+    /** «Actualizar sola» es tuyo y viaja con la cuenta (`ajustes/marfil_actualizador`); lo que pasó en la última comprobación es de aquí. */
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("marfil_actualizador", "marfil_actualizador", { k -> if (k == "on") EspejoCuenta.Tipo.SI_NO else null })
+    private fun prefs(ctx: Context) = EspejoCuenta.prefs(ctx, GRUPO)
     fun activo(ctx: Context) = prefs(ctx).getBoolean("on", true)
     fun ponActivo(ctx: Context, v: Boolean) = prefs(ctx).edit().putBoolean("on", v).apply()
 

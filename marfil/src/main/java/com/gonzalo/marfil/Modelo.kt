@@ -93,7 +93,8 @@ fun estadoDeCuenta(s: String): Estado = when (s) { "en_curso" -> Estado.LEYENDO;
 /**
  * Tu biblioteca: los libros de la cuenta (la colección `libros`, la misma en todos tus dispositivos y en Azabache) más lo que es
  * solo de este móvil (dónde está el archivo de cada libro). Cada libro se llama por su `kid` (sale de su clave: el mismo en todas
- * partes). Las obras de Cobalto que se leen aquí ([esEscrito]) no son de la biblioteca: se quedan en este móvil.
+ * partes). Las obras de Cobalto que se leen aquí ([esEscrito]) no son de la biblioteca: cada móvil las rehace de la cuenta (lo leído en
+ * ellas sí viaja, con [LecturaNube]).
  */
 object Biblioteca {
     val libros = mutableStateListOf<Libro>()

@@ -37,6 +37,9 @@ import java.net.URLEncoder
 
 /** Buscar una imagen en internet dentro de la app (Pinterest, con su rejilla en cuadrados, o Google Imágenes) y quedarse con ella como portada. Es el buscador de Atrio. */
 object Internet {
+    /** La web de imágenes que usaste la última vez: viaja con tu cuenta (`ajustes/marfil_internet`). */
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("marfil_internet", "marfil_internet", { k -> if (k == "fuente") EspejoCuenta.Tipo.TEXTO else null })
+
     /** Una web de imágenes donde buscar: cómo se llama y cómo es su búsqueda. */
     class Fuente(val id: String, val nombre: String, val url: (String) -> String)
 
@@ -269,7 +272,7 @@ fun InternetPicker(consultaInicial: String, alElegir: (ByteArray) -> Unit, alCer
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
     var consulta by remember { mutableStateOf(consultaInicial) }
-    val prefs = remember { ctx.getSharedPreferences("marfil_internet", Context.MODE_PRIVATE) }
+    val prefs = remember { EspejoCuenta.prefs(ctx, Internet.GRUPO) }
     var fuente by remember { mutableStateOf(Internet.fuente(prefs.getString("fuente", null))) }
     var web by remember { mutableStateOf<WebView?>(null) }
     var msg by remember { mutableStateOf("") }

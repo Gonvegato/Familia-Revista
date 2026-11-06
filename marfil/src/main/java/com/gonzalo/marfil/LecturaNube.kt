@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit
  *  - `lectura/<kid>`: por dónde vas y los ajustes del lector para ese libro;
  *  - `marcas/<kid>~<id>`: cada subrayado, nota o marcador, por separado (así dos dispositivos nunca se pisan);
  *  - `tiempo/<kid>~<dispositivo>`: el tiempo leído en cada dispositivo, por días (cada uno escribe solo el suyo).
+ * Lo mismo con los escritos de Cobalto que lees aquí ([Escritos]), con `escrito_<obra>` en lugar del `kid`.
  *
  * El lector sigue trabajando con su estado de siempre en el móvil ([EstadoLectura]); aquí se traduce en los dos sentidos:
  * lo que cambia el lector se sube ([sube]) y lo que llega de fuera se une con [MezclaLectura] ([baja]).
@@ -79,7 +80,8 @@ object LecturaNube {
     /** Sube lo que el lector tiene de un libro y la cuenta aún no: solo lo que ha cambiado. */
     fun sube(c: Context, id: String, st: JSONObject, hora: Long? = null) {
         val l = Biblioteca.por(id)
-        if (l?.esEscrito == true || st.length() == 0) return
+        // (también lo leído en un escrito de Cobalto: `escrito_<obra>`, el mismo en todos tus dispositivos; el libro en sí se rehace en cada uno)
+        if (st.length() == 0) return
         val kid = id
         // Por dónde vas y los ajustes del libro
         val pos = LinkedHashMap<String, Any?>()
@@ -152,7 +154,7 @@ object LecturaNube {
 
     /** Une lo que llega de la cuenta con lo de este móvil ([kids]: solo esos libros; null: todos). */
     fun baja(c: Context, kids: Set<String>?) {
-        val libros = Biblioteca.libros.toList().filter { !it.esEscrito && (kids == null || it.id in kids) }
+        val libros = Biblioteca.libros.toList().filter { kids == null || it.id in kids }
         for (l in libros) {
             val remoto = estadoRemoto(l.id)
             if (remoto.length() == 0) continue
