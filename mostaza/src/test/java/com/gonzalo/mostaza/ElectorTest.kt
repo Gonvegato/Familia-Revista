@@ -35,7 +35,8 @@ class ElectorTest {
         assertEquals(setOf(Idioma.LATINO), a("Dune.Part.Two.2024.1080p.WEB-DL.LATINO.DD5.1.x264").idiomas)
         // Las banderas: España es castellano; México o Argentina, latino; Reino Unido, inglés
         assertEquals(setOf(Idioma.INGLES, Idioma.CASTELLANO, Idioma.FRANCES), a("Dune.2024.2160p\n👤 312 💾 64.2 GB\n🇬🇧 / 🇪🇸 / 🇫🇷").idiomas)
-        assertEquals(setOf(Idioma.CASTELLANO, Idioma.LATINO, Idioma.MULTI), a("Dune.Part.Two.2024.MULTI.1080p.BluRay.x264 🇪🇸 🇲🇽").idiomas)
+        // (con 🇲🇽, la 🇪🇸 de Torrentio no es castellano: la pone para cualquier español)
+        assertEquals(setOf(Idioma.LATINO, Idioma.MULTI), a("Dune.Part.Two.2024.MULTI.1080p.BluRay.x264 🇪🇸 🇲🇽").idiomas)
         assertEquals(setOf(Idioma.LATINO), a("Pelicula 2024 1080p 🇦🇷").idiomas)
         val dual = a("Dune.Parte.Dos.2024.BDRip.1080p.Dual.Castellano-Inglés")
         assertTrue(Idioma.CASTELLANO in dual.idiomas); assertTrue(Idioma.INGLES in dual.idiomas); assertTrue(Idioma.DUAL in dual.idiomas)

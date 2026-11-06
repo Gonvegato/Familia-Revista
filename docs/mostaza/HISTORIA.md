@@ -16,6 +16,37 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## 0.1.2
+
+Arreglo de un fallo de verdad: con tres películas, «Reproducir» eligió para una una fuente **sin ningún audio en español**, para otra
+una en **latino** (y tu orden era castellano antes que latino), y solo acertó con la tercera. El elector decidía el idioma solo por el
+texto de la fuente, y ese texto muchas veces no dice nada fiable.
+
+- **Ahora mira las pistas de verdad.** Al abrir el vídeo, el reproductor lee el idioma y el nombre de cada pista de audio («es-ES»,
+  «es-419», «spa», «Castellano», «Latino», «Spanish (Latin America)»…) y sabe si es castellano, latino, español sin saber cuál (cuenta
+  para castellano a medias, como en el texto) u otro idioma. Pone **la mejor pista de audio** del archivo según tu orden y, si el audio no
+  es español y aceptas la original con subtítulos, **pone unos subtítulos en español** si los hay.
+- **Si la que eligió sola no tiene tu primer idioma, prueba otra**: «Esta no tiene audio en castellano: probando otra…». Como mucho 4
+  fuentes y unos 45 segundos; solo las que podrían ser mejores y se abren rápido (directas o de tu debrid ya bajadas; un torrent, solo si
+  tu debrid lo tiene o tiene semillas). Mientras prueba no empieza a reproducir. Si ninguna es mejor, vuelve a la mejor y lo dice tal
+  cual: «No hay ninguna en castellano; la mejor es en latino» (o «… en versión original con subtítulos»); si se ha parado por el
+  límite, dice cuántas ha probado. **Si tocas tú una fuente concreta, no se cambia nunca.** Si una pista no dice su idioma («und»), no
+  se puede saber si le falta el tuyo: entonces no prueba otra.
+- **Se acuerda.** Lo que trae cada fuente se guarda en este dispositivo (es saber de la fuente, no tuyo; por el `infoHash` y el archivo,
+  o por una huella de la dirección: las claves de tu debrid no se guardan) y la próxima vez cuenta antes que el texto. En la lista de
+  fuentes se ve: «Castellano ✓».
+- **El texto, mejor leído** (con fuentes de Torrentio de verdad): con 🇲🇽 u otra bandera latinoamericana, o «LATINO» en el texto, la 🇪🇸
+  ya no se toma por castellano (Torrentio la pone para cualquier español). Y el idioma lleva **lo seguro que es**, que cuenta antes que
+  la calidad y el tamaño: seguro («[Esp]», «Castellano», o solo 🇪🇸), a medias (🇪🇸 entre pocas banderas, «Dual Audio», «Spanish English
+  Subs») y poco seguro (🇪🇸 en una lista larga de banderas: casi siempre son los subtítulos). El poco seguro va como «MULTI»: detrás del
+  español seguro (también del latino) y delante de lo que seguro que no lo tiene; en la lista se ve «¿Castellano?». «MULTI» y «DUAL» sin
+  más son «puede tener español», no «no se sabe». Con «Ahorrar datos», el caso de verdad elige ya «[Bluray][Esp] 🇪🇸 1,09 GB» y no la de
+  12 banderas y 584 MB.
+- **Nunca una grabada en el cine** (CAM, TS…) ni una reescalada («AI Upscale») si hay otra en el mismo idioma. 4320p cuenta como 4K.
+
+Lo que no hace todavía: no abre la fuente por adelantado para mirar sus pistas antes de elegir (solo la que se pone); y un archivo con
+una sola pista sin idioma sigue dependiendo de lo que diga su texto.
+
 ## 0.1.1
 
 - **Con datos del móvil se ve igual.** Las fuentes directas y las de tu Real-Debrid no tienen ningún límite con datos (con «Ahorrar

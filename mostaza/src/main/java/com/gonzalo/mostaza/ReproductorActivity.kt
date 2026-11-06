@@ -103,6 +103,9 @@ class ReproductorActivity : ComponentActivity() {
     private val cortes = ArrayList<Long>()
     private var cargandoDesde = 0L
     private var subsDecididos = false
+    /** Probando fuentes hasta dar con una en tu idioma (solo si la eligió el elector solo). */
+    private var tanteo: Tanteo? = null
+    private val tanteando: Boolean get() = tanteo?.terminado == false
     private var ultimaInteraccion = SystemClock.elapsedRealtime()
     private var parado = false
 
@@ -116,6 +119,8 @@ class ReproductorActivity : ComponentActivity() {
             if (estado.visibles && p.isPlaying && estado.eleccion == null && SystemClock.elapsedRealtime() - ultimaInteraccion > 4_000L) estado.visibles = false
             // Cargando demasiado tiempo: se corta
             if (cargandoDesde > 0 && listo && SystemClock.elapsedRealtime() - cargandoDesde > 15_000L && estado.corte == null) seCorta()
+            // Probando fuentes y se acaba el tiempo sin ver las pistas de esta: a la mejor comprobada, o se queda con esta
+            if (tanteando && !subsDecididos) tanteo?.let { t -> val d = t.trasTiempo(encargo.elegida, SystemClock.elapsedRealtime()); if (t.terminado) haz(d) }
             principal.postDelayed(this, 1_000L)
         }
     }
@@ -130,6 +135,7 @@ class ReproductorActivity : ComponentActivity() {
         val e = Reproducir.toma()
         if (e == null) { finish(); return }
         encargo = e
+        if (e.automatica) tanteo = nuevoTanteo(e)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply { hide(WindowInsetsCompat.Type.systemBars()); systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE }
         setContent { MostazaTheme { PantallaReproductor() } }
@@ -191,8 +197,9 @@ class ReproductorActivity : ComponentActivity() {
                 val tipo = e.breve.tipo.ifBlank { if (e.video != null) "series" else "movie" }
                 val subs = withTimeoutOrNull(4_000) { runCatching { Addons.subtitulos(tipo, e.video?.id ?: e.breve.id, f) }.getOrDefault(emptyList()) }.orEmpty() + f.subtitulos
                 empieza(url, subs, Reanudar.desde(applicationContext, visionado!!.videoId))
-            } catch (x: SinTorrent) { estado.cargando = false; estado.aviso = x.message }
-            catch (x: Exception) { estado.cargando = false; estado.aviso = "No se ha podido abrir esta fuente: ${x.message ?: "sin respuesta"}." }
+            } catch (x: SinTorrent) { if (!fallaEnTanteo()) { estado.cargando = false; estado.aviso = x.message } }
+            catch (x: kotlinx.coroutines.CancellationException) { throw x }
+            catch (x: Exception) { if (!fallaEnTanteo()) { estado.cargando = false; estado.aviso = "No se ha podido abrir esta fuente: ${x.message ?: "sin respuesta"}." } }
         }
     }
 
@@ -227,7 +234,8 @@ class ReproductorActivity : ComponentActivity() {
         val lower = u.substringBefore('?').lowercase()
         if (lower.endsWith(".m3u8")) item.setMimeType(MimeTypes.APPLICATION_M3U8) else if (lower.endsWith(".mpd")) item.setMimeType(MimeTypes.APPLICATION_MPD)
         p.setMediaItem(item.build(), desde)
-        p.prepare(); p.playWhenReady = true
+        // (probando fuentes: no empieza hasta ver sus pistas, para no ver un trozo en otro idioma)
+        p.prepare(); p.playWhenReady = !tanteando
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
@@ -247,7 +255,10 @@ class ReproductorActivity : ComponentActivity() {
             val p = player ?: return
             estado.cargando = s == Player.STATE_BUFFERING || s == Player.STATE_IDLE
             when (s) {
-                Player.STATE_READY -> { listo = true; cargandoDesde = 0L; estado.dur = p.duration.coerceAtLeast(0L) }
+                Player.STATE_READY -> {
+                    listo = true; cargandoDesde = 0L; estado.dur = p.duration.coerceAtLeast(0L)
+                    if (!subsDecididos) { subsDecididos = true; alVerPistas(p.currentTracks) }
+                }
                 Player.STATE_BUFFERING -> if (listo && p.playWhenReady) {
                     val ahora = SystemClock.elapsedRealtime()
                     cargandoDesde = ahora; cortes += ahora; cortes.removeAll { ahora - it > 120_000L }
@@ -263,10 +274,11 @@ class ReproductorActivity : ComponentActivity() {
             val audios = tracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
             if (audios.isNotEmpty() && audios.none { g -> (0 until g.length).any { g.isTrackSupported(it) } })
                 estado.aviso = "Este dispositivo no sabe reproducir el sonido de esta fuente (${audios.first().getTrackFormat(0).sampleMimeType?.substringAfter('/')?.uppercase().orEmpty()}). Prueba con otro reproductor o con otra fuente."
-            if (!subsDecididos && tracks.groups.isNotEmpty()) { subsDecididos = true; decideSubtitulos(tracks) }
+            if (!subsDecididos && tracks.groups.any { it.type == C.TRACK_TYPE_AUDIO }) { subsDecididos = true; alVerPistas(tracks) }
         }
 
         override fun onPlayerError(error: PlaybackException) {
+            if (fallaEnTanteo()) return
             estado.cargando = false
             val codec = error.errorCode in setOf(PlaybackException.ERROR_CODE_DECODER_INIT_FAILED, PlaybackException.ERROR_CODE_DECODER_QUERY_FAILED, PlaybackException.ERROR_CODE_DECODING_FAILED,
                 PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES, PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
@@ -275,22 +287,94 @@ class ReproductorActivity : ComponentActivity() {
         }
     }
 
-    /** Subtítulos: si el audio ya está en tu idioma, sin subtítulos (salvo que los quieras siempre); si no, en el tuyo, si los hay. */
-    private fun decideSubtitulos(tracks: Tracks) {
+    private fun nuevoTanteo(e: Encargo) = Tanteo(AjustesElector.prefs(applicationContext), e.candidatas.filter { Reproducir.accion(it.fuente) is Accion.Reproductor }, SystemClock.elapsedRealtime())
+
+    private fun pistasDe(tracks: Tracks, tipo: Int) = tracks.groups.filter { it.type == tipo }.flatMap { g -> (0 until g.length).map { g to it } }
+
+    /**
+     * Ya se ven las pistas de verdad del archivo: se recuerda lo que trae (en este dispositivo), se pone su mejor audio según tu orden (y
+     * subtítulos en español si el audio no lo es y aceptas la original con subtítulos) y, si se están probando fuentes, se decide si esta vale.
+     */
+    private fun alVerPistas(tracks: Tracks) {
+        val prefs = AjustesElector.prefs(applicationContext)
+        val audios = pistasDe(tracks, C.TRACK_TYPE_AUDIO)
+        val textos = pistasDe(tracks, C.TRACK_TYPE_TEXT)
+        val v = Pistas.verifica(audios.map { (g, i) -> g.getTrackFormat(i).let { it.language to it.label } }, textos.map { (g, i) -> g.getTrackFormat(i).let { it.language to it.label } }, prefs)
+        if (audios.isNotEmpty()) MemoriaPistas.apunta(applicationContext, Elector.clave(encargo.elegida.fuente), v)
+        decidePistas(tracks, prefs)
+        val t = tanteo
+        if (t == null || t.terminado || audios.isEmpty()) { player?.playWhenReady = true; return }
+        haz(t.tras(encargo.elegida, v, SystemClock.elapsedRealtime()))
+    }
+
+    /** Lo que ha decidido el [Tanteo]. */
+    private fun haz(d: Decision) {
+        when (d) {
+            is Decision.SeQueda -> { estado.mensaje = null; player?.playWhenReady = true; d.mensaje?.let { muestra(it, 7_000L) } }
+            is Decision.Prueba -> { estado.mensaje = d.mensaje; pruebaOtra(d.candidata) }
+            is Decision.Vuelve -> { pruebaOtra(d.candidata); muestra(d.mensaje, 8_000L) }
+            Decision.Nada -> { estado.mensaje = null; player?.playWhenReady = true }
+        }
+    }
+
+    /** Falla la fuente que se está probando: ¿hay otra? (true si se encarga el tanteo y no hay que avisar) */
+    private fun fallaEnTanteo(): Boolean {
+        val t = tanteo ?: return false
+        if (t.terminado) return false
+        val d = t.trasFallo(encargo.elegida, SystemClock.elapsedRealtime())
+        if (d is Decision.Nada) { estado.mensaje = null; return false }
+        principal.post { haz(d) }
+        return true
+    }
+
+    /** Otra fuente mientras se prueba: sin apuntar nada de esta (no se ha visto) y desde el mismo sitio. */
+    private fun pruebaOtra(c: Candidata) {
+        cierraTorrent()
+        val v = visionado
+        visionado = null
+        abre(Encargo(encargo.breve, encargo.meta, encargo.video, c, encargo.candidatas, v?.sesion?.vistoMs ?: 0L, v?.takeIf { !it.enCuenta }?.pendiente().orEmpty(), encargo.automatica))
+    }
+
+    /**
+     * El audio y los subtítulos. Audio: si tu idioma de audio es el español (el de serie), el mejor de este archivo según el orden del
+     * elector (castellano antes que latino, o al revés). Subtítulos: si el audio ya está en tu idioma, sin ellos (salvo que los quieras
+     * siempre); si no lo está y tu orden acepta la original con subtítulos, unos en español, si los hay.
+     */
+    private fun decidePistas(tracks: Tracks, prefs: PrefsElector) {
         val p = player ?: return
-        val audioPref = AjustesReproductor.audio(this).take(2)
-        val audioSel = tracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }.firstNotNullOfOrNull { g -> (0 until g.length).firstOrNull { g.isTrackSelected(it) }?.let { g.getTrackFormat(it).language } }
-        val enMiIdioma = audioSel != null && audioPref.isNotBlank() && normal(audioSel) == normal(audioPref)
-        if (enMiIdioma && !AjustesReproductor.subsSiempre(this)) p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
+        val audioPref = AjustesReproductor.audio(this)
+        val prefEspanol = audioPref.isBlank() || normal(audioPref) == "es"
+        val audios = pistasDe(tracks, C.TRACK_TYPE_AUDIO)
+        val pistas = audios.map { (g, i) -> val f = g.getTrackFormat(i); PistaAudio(Pistas.clasifica(f.language, f.label), g.isTrackSupported(i), g.isTrackSelected(i)) }
+        var audio: Idioma? = pistas.firstOrNull { it.elegida }?.idioma
+        if (prefEspanol) Pistas.mejorAudio(pistas, prefs)?.let { k ->
+            val (g, i) = audios[k]
+            audio = pistas[k].idioma
+            if (!g.isTrackSelected(i)) p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().setOverrideForType(TrackSelectionOverride(g.mediaTrackGroup, i)).build()
+        }
+        val audioSel = audios.firstOrNull { (g, i) -> g.isTrackSelected(i) }?.let { (g, i) -> g.getTrackFormat(i).language }
+        val enMiIdioma = if (prefEspanol) audio?.espanol == true else audioSel != null && normal(audioSel) == normal(audioPref)
+        if (enMiIdioma) {
+            if (!AjustesReproductor.subsSiempre(this)) p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
+            return
+        }
+        if (Pistas.quiereSubtitulos(audio, prefs)) {
+            val esp = pistasDe(tracks, C.TRACK_TYPE_TEXT).filter { (g, i) -> g.isTrackSupported(i) && g.getTrackFormat(i).let { Pistas.subtituloEspanol(it.language, it.label) } }
+            if (esp.isEmpty() || esp.any { (g, i) -> g.isTrackSelected(i) }) return
+            // (los de latino, después, salvo que en tu orden vaya el latino antes que el castellano)
+            val latinoPrimero = prefs.idiomas.indexOf("latino").let { l -> l >= 0 && (prefs.idiomas.indexOf("castellano").let { c -> c < 0 || l < c }) }
+            val (g, i) = esp.sortedBy { (g, i) -> g.getTrackFormat(i).let { (Pistas.clasifica(it.language, it.label) == Idioma.LATINO) != latinoPrimero } }.first()
+            p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setOverrideForType(TrackSelectionOverride(g.mediaTrackGroup, i)).build()
+        }
     }
 
     private fun normal(l: String) = when (val x = l.lowercase().take(3)) { "spa", "esp", "es-", "es" -> "es"; "eng", "en-", "en" -> "en"; else -> x.take(2) }
 
     private fun idiomaBonito(l: String): String = when (normal(l)) { "es" -> "Español"; "en" -> "Inglés"; "fr" -> "Francés"; "it" -> "Italiano"; "de" -> "Alemán"; "pt" -> "Portugués"; else -> l.ifBlank { "Subtítulos" } }
 
-    private fun muestra(m: String) {
+    private fun muestra(m: String, ms: Long = 4_000L) {
         estado.mensaje = m
-        principal.postDelayed({ if (estado.mensaje == m) estado.mensaje = null }, 4_000L)
+        principal.postDelayed({ if (estado.mensaje == m) estado.mensaje = null }, ms)
     }
 
     private fun tocado() { ultimaInteraccion = SystemClock.elapsedRealtime(); estado.visibles = !estado.visibles || estado.eleccion != null }
@@ -332,6 +416,8 @@ class ReproductorActivity : ComponentActivity() {
     }
 
     private fun cambiaA(c: Candidata) {
+        // La eliges tú: se acabó probar solas
+        tanteo?.cancela(); tanteo = null; estado.mensaje = null
         val pos = player?.currentPosition ?: 0L
         visionado?.guarda(pos, estado.dur, forzar = true)
         cierraTorrent()
@@ -398,11 +484,14 @@ class ReproductorActivity : ComponentActivity() {
             val cs = Addons.fuentes("series", sig.id)
             val m = encargo.meta
             val red = Conexion.red(applicationContext)
-            val e = Elector.elige(cs, AjustesElector.prefs(applicationContext), red, Conexion.capacidades(applicationContext), m?.minutos ?: 0, Torrents.usables(applicationContext, red), grupo)
+            val e = Elector.elige(cs, AjustesElector.prefs(applicationContext), red, Conexion.capacidades(applicationContext), m?.minutos ?: 0, Torrents.usables(applicationContext, red), grupo,
+                MemoriaPistas.busca(applicationContext))
             val c = e.elegida ?: run { estado.cargando = false; estado.aviso = "No hay fuentes para el episodio siguiente."; return@launch }
             visionado?.termina(estado.dur, estado.dur)
             cierraTorrent()
-            abre(Encargo(encargo.breve, m, sig, c, e.ordenadas))
+            val nuevo = Encargo(encargo.breve, m, sig, c, e.ordenadas, automatica = true)
+            tanteo = nuevoTanteo(nuevo)
+            abre(nuevo)
         }
     }
 

@@ -35,7 +35,7 @@ object Busqueda {
     suspend fun fuentes(tipo: String, videoId: String, alLlegar: (List<Candidata>) -> Unit = {}): List<Candidata> = fijas ?: Addons.fuentes(tipo, videoId, alLlegar)
 
     fun elige(c: Context, cs: List<Candidata>, m: Meta?, grupo: String = ""): Eleccion =
-        Conexion.red(c).let { red -> Elector.elige(cs, AjustesElector.prefs(c), red, Conexion.capacidades(c), m?.minutos ?: 0, Torrents.usables(c, red), grupo) }
+        Conexion.red(c).let { red -> Elector.elige(cs, AjustesElector.prefs(c), red, Conexion.capacidades(c), m?.minutos ?: 0, Torrents.usables(c, red), grupo, MemoriaPistas.busca(c)) }
 }
 
 /**
@@ -73,7 +73,7 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) 
             buscando = false; elegida = e
             val c = e.elegida
             if (c == null) { fuentesDe = v to true; return@launch }
-            Reproducir.pon(ctx, t?.breve() ?: b, m, v, c, e.ordenadas)?.let { Toast.makeText(ctx, it, Toast.LENGTH_LONG).show() }
+            Reproducir.pon(ctx, t?.breve() ?: b, m, v, c, e.ordenadas, automatica = true)?.let { Toast.makeText(ctx, it, Toast.LENGTH_LONG).show() }
         }
     }
 

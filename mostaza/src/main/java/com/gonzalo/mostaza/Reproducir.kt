@@ -10,6 +10,8 @@ class Encargo(
     val breve: MetaBreve, val meta: Meta?, val video: Video?, val elegida: Candidata, val candidatas: List<Candidata>,
     /** Lo que ya llevaba esta sesión del reproductor con este título (al pasar al episodio siguiente). */
     val previo: Long = 0L, val pendiente: Map<String, Long> = emptyMap(),
+    /** La eligió el elector solo («Reproducir», el episodio siguiente), no tú: si sus pistas no traen tu idioma, se prueba otra. */
+    val automatica: Boolean = false,
 )
 
 /** Qué hacer con una fuente. */
@@ -42,7 +44,8 @@ object Reproducir {
     /**
      * Pone [c] (de [todas], ya ordenadas) para [breve]. Devuelve un aviso si no se puede (para enseñarlo), o null si ya está en marcha.
      */
-    fun pon(ctx: Context, breve: MetaBreve, meta: Meta?, video: Video?, c: Candidata, todas: List<Candidata>, previo: Long = 0L, pendiente: Map<String, Long> = emptyMap()): String? {
+    fun pon(ctx: Context, breve: MetaBreve, meta: Meta?, video: Video?, c: Candidata, todas: List<Candidata>, previo: Long = 0L, pendiente: Map<String, Long> = emptyMap(),
+            automatica: Boolean = false): String? {
         return when (val a = accion(c.fuente)) {
             is Accion.Aviso -> a.texto
             is Accion.Fuera -> {
@@ -51,7 +54,7 @@ object Reproducir {
                 try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); null } catch (e: ActivityNotFoundException) { "No hay ninguna app en este dispositivo que lo abra." }
             }
             Accion.Reproductor -> {
-                encargo = Encargo(breve, meta, video, c, todas, previo, pendiente)
+                encargo = Encargo(breve, meta, video, c, todas, previo, pendiente, automatica)
                 ctx.startActivity(Intent(ctx, ReproductorActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 null
             }
