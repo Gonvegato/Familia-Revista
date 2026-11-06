@@ -1,10 +1,12 @@
 package com.gonzalo.azabache.pc
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +26,7 @@ fun PantDiario(nav: Nav) {
     LaFamilia.cambios
     var escribir by remember { mutableStateOf(false) }
     var editar by remember { mutableStateOf<Nota?>(null) }
+    var escribirDia by remember { mutableStateOf<Long?>(null) }
     val kinds = Cuenta.kinds()
     val porRef = HashMap<String, Pair<Kind, Ficha>>()
     val porClave = HashMap<String, Pair<Kind, Ficha>>()
@@ -36,44 +39,85 @@ fun PantDiario(nav: Nav) {
         .filter { it in (hoy - 365)..hoy }.distinct().sortedDescending().take(120)
     Pagina(ancho = 900.dp) {
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(84.sp, texto = "DIARIO") }
-            BotonAcento("Escribir", alto = 44.dp, modifier = Modifier.width(150.dp)) { escribir = true }
+            Column(Modifier.weight(1f)) {
+                Text(diaLargo(LocalDate.now()).uppercase(), color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+                Cabecera(84.sp, texto = "DIARIO")
+            }
+            BotonAcento("Escribir", alto = 44.dp, modifier = Modifier.padding(bottom = 12.dp).width(150.dp)) { escribir = true }
         }
         FileteCabecera()
         Spacer(Modifier.height(8.dp))
-        Entradilla("Lo que escribes y lo que hiciste cada día: lo terminado, lo jugado, lo leído.")
+        // Los días seguidos (la regla de las cuatro: un minuto leyendo o jugando, o una palabra)
+        val delDia = diasDeLaCuenta()
+        val racha = rachaDe(hoy) { delDia[it]?.cuenta == true }
+        Entradilla(if (racha >= 2) "$racha días seguidos leyendo, jugando o escribiendo." else "Lo que escribes y lo que hiciste cada día: lo terminado, lo jugado, lo leído.")
+        // Por meses, como en el móvil: el mes en cursiva con su resumen y, debajo, cada día con su número grande
+        var mes: java.time.YearMonth? = null
         dias.forEach { d ->
             val ns = notas[d].orEmpty(); val ts = terminados[d].orEmpty(); val tm = tiempo[LocalDate.ofEpochDay(d).toString()].orEmpty()
             if (ns.isEmpty() && ts.isEmpty() && tm.isEmpty() && d != hoy) return@forEach
-            Seccion(if (d == hoy) "Hoy" else diaLargo(LocalDate.ofEpochDay(d)))
-            if (ns.isEmpty() && ts.isEmpty() && tm.isEmpty()) Cuerpo("Nada todavía. ¿Escribes algo?", tam = 14)
-            ns.forEach { n ->
-                Column(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                    Text(n.texto, color = Charcoal, fontFamily = Display, fontSize = 19.sp, lineHeight = 27.sp)
-                    val sobre = n.sobre.mapNotNull { porClave[it]?.second?.nombre }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (sobre.isNotEmpty()) Text("Sobre " + sobre.joinToString(", "), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.weight(1f)) else Spacer(Modifier.weight(1f))
-                        EnlaceRevista("Editar") { editar = n }
+            val ym = java.time.YearMonth.from(LocalDate.ofEpochDay(d))
+            if (ym != mes) {
+                mes = ym
+                val delMes = dias.filter { java.time.YearMonth.from(LocalDate.ofEpochDay(it)) == ym }
+                val nTerm = delMes.sumOf { terminados[it].orEmpty().size }
+                val leido = delMes.sumOf { delDia[it]?.leidoMs ?: 0L }; val jugado = delMes.sumOf { delDia[it]?.jugadoMs ?: 0L }
+                Column(Modifier.fillMaxWidth().padding(top = 30.dp)) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(ym.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("es", "ES")).replaceFirstChar { it.uppercase() }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 36.sp, lineHeight = 40.sp)
+                        Text("${ym.year}", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(start = 10.dp, bottom = 7.dp))
                     }
+                    val resumen = listOfNotNull(
+                        if (nTerm > 0) "$nTerm ${if (nTerm == 1) "terminado" else "terminados"}" else null,
+                        if (leido >= 60_000L) "${duracion(leido / 60_000L)} leyendo" else null,
+                        if (jugado >= 60_000L) "${duracion(jugado / 60_000L)} jugando" else null
+                    ).joinToString(" · ")
+                    if (resumen.isNotBlank()) Text(resumen, color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
+                    Spacer(Modifier.height(8.dp)); Filete(2.dp)
                 }
             }
-            ts.forEach { (_, k, f) -> FilaFicha(f, k, (if (k.isBook) "Lo terminaste" else if (k.isMovie || k.isTv) "La terminaste" else "Lo terminaste") + if (f.sinValorar) "" else " · nota ${f.general}") { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Diario)) } }
-            tm.entries.sortedByDescending { it.value }.forEach { (ref, ms) ->
-                val par = porRef[ref]
-                if (par != null && ms >= 60_000L) FilaFicha(par.second, par.first, "${duracion(ms / 60_000L)} ${if (par.first.isBook) "leyendo" else "jugando"}") { nav.ir(Pantalla.Detalle(par.first.id, par.second.id, Pantalla.Diario)) }
+            Column(Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp), verticalAlignment = Alignment.Bottom) {
+                    Text(if (d == hoy) "Hoy" else "${LocalDate.ofEpochDay(d).dayOfMonth}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
+                    Text(LocalDate.ofEpochDay(d).dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("es", "ES")), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(start = 10.dp, bottom = 4.dp))
+                    Spacer(Modifier.weight(1f))
+                    EnlaceRevista("Escribir") { escribirDia = d }
+                }
+                if (ns.isEmpty() && ts.isEmpty() && tm.isEmpty()) MagVacio("Nada todavía. ¿Escribes algo?")
+                ns.forEach { n ->
+                    Column(Modifier.fillMaxWidth().clickable { editar = n }.padding(vertical = 8.dp)) {
+                        Text(n.texto, color = Charcoal, fontFamily = Display, fontSize = 19.sp, lineHeight = 27.sp)
+                        val sobre = n.sobre.mapNotNull { porClave[it] }
+                        if (sobre.isNotEmpty()) Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            sobre.forEach { (k, f) -> Text("${f.nombre} →", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Diario)) }) }
+                        }
+                    }
+                }
+                ts.forEach { (_, k, f) ->
+                    FilaFicha(f, k, (if (k.isMovie || k.isTv) "La terminaste" else "Lo terminaste"), derecha = {
+                        if (!f.sinValorar) Text("${f.general}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp)
+                    }) { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Diario)) }
+                }
+                tm.entries.sortedByDescending { it.value }.forEach { (ref, ms) ->
+                    val par = porRef[ref]
+                    if (par != null && ms >= 60_000L) FilaFicha(par.second, par.first, "${duracion(ms / 60_000L)} ${if (par.first.isBook) "leyendo" else "jugando"}") { nav.ir(Pantalla.Detalle(par.first.id, par.second.id, Pantalla.Diario)) }
+                }
+                Spacer(Modifier.height(8.dp))
+                Filete(1.dp, Line)
             }
         }
     }
     if (escribir) DialogoNota(null, emptyList(), nav) { escribir = false }
+    escribirDia?.let { d -> DialogoNota(null, emptyList(), nav, diaInicial = d) { escribirDia = null } }
     editar?.let { n -> DialogoNota(n, n.sobre, nav) { editar = null } }
 }
 
 /** Escribir (o cambiar) una nota del diario. [sobre]: las fichas de las que habla. */
 @Composable
-fun DialogoNota(nota: Nota?, sobre: List<String>, nav: Nav, onCerrar: () -> Unit) {
+fun DialogoNota(nota: Nota?, sobre: List<String>, nav: Nav, diaInicial: Long? = null, onCerrar: () -> Unit) {
     val scope = rememberCoroutineScope()
     var texto by remember { mutableStateOf(nota?.texto.orEmpty()) }
-    var dia by remember { mutableStateOf(nota?.dia ?: LocalDate.now().toEpochDay()) }
+    var dia by remember { mutableStateOf(nota?.dia ?: diaInicial ?: LocalDate.now().toEpochDay()) }
     Dialogo(if (nota == null) "Escribir en el diario" else "La nota del ${fecha(nota.dia)}", onCerrar, ancho = 640.dp, botones = {
         if (nota != null) EnlaceRevista("Borrar", acento = true) { scope.launch { withContext(Dispatchers.IO) { Cuenta.borraNota(nota) }; onCerrar(); nav.aviso("Nota borrada") } }
         Spacer(Modifier.weight(1f))

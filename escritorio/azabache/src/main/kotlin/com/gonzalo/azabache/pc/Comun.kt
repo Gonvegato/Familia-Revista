@@ -25,11 +25,10 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val ES = Locale.forLanguageTag("es-ES")
-private val FECHA = DateTimeFormatter.ofPattern("d MMM yyyy", ES)
 private val DIA_LARGO = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ES)
 
 /** «5 nov 2026» de un día desde 1970 ("" si no hay fecha). */
-fun fecha(dia: Long): String = if (dia <= 0) "" else LocalDate.ofEpochDay(dia).format(FECHA)
+fun fecha(dia: Long): String = if (dia <= 0) "" else Formato.fechaDia(dia)
 fun diaLargo(d: LocalDate): String = d.format(DIA_LARGO).replaceFirstChar { it.uppercase() }
 
 /** «2 h 10 min». */
@@ -46,12 +45,12 @@ fun metaDe(f: Ficha, k: Kind): String = listOf(f.creador, f.plataforma, if (f.va
 
 /** Una ficha en una cuadrícula: la portada, el nombre y la nota. */
 @Composable
-fun Tarjeta(f: Ficha, k: Kind, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun Tarjeta(f: Ficha, k: Kind, modifier: Modifier = Modifier, deUid: String? = null, onClick: () -> Unit) {
     val hover = remember { MutableInteractionSource() }
     val encima by hover.collectIsHoveredAsState()
     Column(modifier.hoverable(hover).pointerHoverIcon(PointerIcon.Hand).clickable(onClick = onClick).padding(bottom = 6.dp)) {
         Box {
-            PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.fillMaxWidth().graphicsLayer { val e = if (encima) 1.02f else 1f; scaleX = e; scaleY = e }, pie = if (f.valorada) "" else k.unit)
+            PortadaCosa(f.portada, f.portadaWeb, f.nombre, Modifier.fillMaxWidth().graphicsLayer { val e = if (encima) 1.02f else 1f; scaleX = e; scaleY = e }, deUid = deUid, pie = if (f.valorada) "" else k.unit)
             if (f.valorada) {
                 Box(Modifier.align(Alignment.BottomStart).padding(8.dp).clip(esquina(4.dp)).background(if (f.sinValorar) Crudo else Acento).padding(horizontal = 7.dp, vertical = 3.dp)) {
                     Text(notaTexto(f), color = if (f.sinValorar) Muted else SobreAcento, fontFamily = Body, fontSize = if (f.sinValorar) 10.sp else 15.sp, fontWeight = FontWeight.Bold)

@@ -28,8 +28,11 @@ class CapturasTest {
         val dir = System.getProperty("capturas")?.let { File(it) }
         Assume.assumeTrue("Solo con -Dcapturas=<carpeta>", dir != null)
         dir!!.mkdirs()
-        Emulador.limpia(); Emulador.cuenta("gonzalo")
+        Emulador.limpia(); val yo = Emulador.cuenta("gonzalo")
         val otra = Emulador.dispositivo("gonzalo")
+        // Tu pareja (Lucía): os tenéis puestos el uno al otro, y lo suyo está en su cuenta
+        val ella = Emulador.cuenta("lucia")
+        Emulador.escribe("/users/$yo/partner", ella); Emulador.escribe("/users/$ella/partner", yo); Emulador.escribe("/users/$ella/name", "Lucía")
         val hoy = LocalDate.now()
         fun ms(d: LocalDate) = d.atTime(20, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         val j = otra.coleccion("juegos"); val l = otra.coleccion("libros"); val t = otra.coleccion("tiempo"); val az = otra.coleccion("azabache")
@@ -53,7 +56,21 @@ class CapturasTest {
         az.pon("diario~1", mapOf("o" to """{"id":1,"dia":${hoy.toEpochDay()},"x":"Por fin el Palacio de la Reina Blanca. Qué música.","sobre":["0:2"],"updated":1}""", "b" to 0L))
         az.pon("sagas~7", mapOf("o" to """{"id":7,"name":"Crónica del asesino de reyes","kind":1,"items":[12,14],"updated":2}""", "b" to 0L))
         otra.coleccion("ajustes").pon("lectura", mapOf("dia" to 30L, "ano" to 24L, "anio" to hoy.year.toLong()))
+        // Lo jugado de Hades y de Hollow Knight, día a día (sus «Sesiones»), y una maqueta hecha en el móvil para Disco Elysium
+        t.pon("j_000000000001~hiedra-1", mapOf<String, Any?>("ref" to "j_000000000001", "fuente" to "hiedra-1", "total" to 50_400_000L) +
+            listOf(40L to 90, 38L to 150, 33L to 60, 30L to 200, 26L to 45, 21L to 120, 15L to 80, 12L to 30, 8L to 140, 4L to 95).associate { (n, m) -> "d${hoy.minusDays(n)}" to m * 60_000L })
+        t.pon("j_000000000002~hiedra-1", mapOf("ref" to "j_000000000002", "fuente" to "hiedra-1", "d${hoy.minusDays(3)}" to 2_700_000L, "d${hoy.minusDays(6)}" to 4_000_000L, "d${hoy.minusDays(9)}" to 1_800_000L))
+        val maqueta = """[{"s":0.6,"a":0,"c":[{"t":"texto","h":"Mi veredicto","x":"El mejor juego de rol que he jugado: se lee como una novela y se juega como una conversación."},{"t":"nota"}]},{"s":0.5,"a":0,"c":[{"t":"datos"},{"t":"enlaces"}]}]"""
+        az.pon("maquetas~42", mapOf("o" to com.gonzalo.familia.nucleo.Json.escribe(mapOf("id" to 42L, "k" to "v:0:6", "j" to maqueta, "updated" to 3L)), "b" to 0L))
         check(otra.sincroniza().ok)
+        val lucia = Emulador.dispositivo("lucia")
+        lucia.coleccion("juegos").pon("j_0000000000a1", mapOf("t" to "Hades", "pl" to "Switch", "estado" to "terminado", "nota" to 88L, "crit" to listOf(90L, 80L, 95L, 85L), "fin" to ms(hoy.minusDays(12)), "resena" to "Adictivo. La música, lo mejor.", "azid" to 101L))
+        lucia.coleccion("juegos").pon("j_0000000000a2", mapOf("t" to "Disco Elysium", "pl" to "PC", "estado" to "terminado", "nota" to 70L, "crit" to listOf(60L, 85L, 75L, 55L), "fin" to ms(hoy.minusDays(80)), "azid" to 102L))
+        lucia.coleccion("juegos").pon("j_0000000000a3", mapOf("t" to "Animal Crossing", "pl" to "Switch", "estado" to "en_curso", "an" to ms(hoy.minusDays(20)), "azid" to 103L))
+        fun libroDe(t0: String, a: String, extra: Map<String, Any?>) { val c = Cuenta.claveLibro(t0, a); lucia.coleccion("libros").pon(Cuenta.kidDe(c), mapOf("clave" to c, "t" to t0, "a" to a) + extra) }
+        libroDe("Rayuela", "Julio Cortázar", mapOf("estado" to "terminado", "fin" to listOf(ms(hoy.minusDays(40))), "nota" to 92L, "crit" to listOf(90L, 85L, 98L, 80L), "azid" to 111L))
+        libroDe("La sombra del viento", "Carlos Ruiz Zafón", mapOf("estado" to "en_curso", "fr" to 0.6, "pg" to 576L, "azid" to 112L))
+        check(lucia.sincroniza().ok)
 
         LaFamilia.reiniciaParaPruebas()
         LaFamilia.alMomento = true
@@ -64,6 +81,10 @@ class CapturasTest {
         LaFamilia.entrar("gonzalo", "secreto1")
         Cuenta.olvidaParaPruebas()
         listOf("juegos", "libros", "tiempo", "azabache", "ajustes").forEach { LaFamilia.coleccion(it) }
+        check(aqui.sincroniza().ok)
+        // Lo de tu pareja: su uid y sus colecciones (de su cuenta, solo para leer)
+        check(Cuenta.uidPareja() == ella) { "no se encuentra a la pareja" }
+        listOf("juegos", "libros", "tiempo", "azabache").forEach { LaFamilia.ajena(ella, it) }
         check(aqui.sincroniza().ok)
         Apariencia.inicia("azabache")
 
@@ -82,6 +103,12 @@ class CapturasTest {
         captura("azabache-libros-oscuro", Pantalla.Lista(BOOKS.id), oscuro = true)
         captura("azabache-ficha", Pantalla.Detalle(GAMES.id, 1L, Pantalla.Lista(GAMES.id)))
         captura("azabache-ficha-sin-valorar", Pantalla.Detalle(BOOKS.id, 12L, Pantalla.Lista(BOOKS.id)))
+        captura("azabache-ficha-jugando", Pantalla.Detalle(GAMES.id, 2L, Pantalla.Lista(GAMES.id)))
+        captura("azabache-libro-leyendo", Pantalla.Detalle(BOOKS.id, 11L, Pantalla.Lista(BOOKS.id)))
+        captura("azabache-ficha-maqueta", Pantalla.Detalle(GAMES.id, 6L, Pantalla.Lista(GAMES.id)))
+        captura("azabache-ficha-oscuro", Pantalla.Detalle(GAMES.id, 1L, Pantalla.Lista(GAMES.id)), oscuro = true)
+        captura("azabache-pareja", Pantalla.Pareja)
+        captura("azabache-pareja-ficha", Pantalla.DeLaPareja(ella, GAMES.id, 101L))
         captura("azabache-diario", Pantalla.Diario)
         captura("azabache-sagas", Pantalla.Sagas)
         captura("azabache-cifras", Pantalla.Cifras)
