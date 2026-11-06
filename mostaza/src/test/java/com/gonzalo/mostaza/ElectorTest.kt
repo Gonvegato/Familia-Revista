@@ -24,7 +24,7 @@ class ElectorTest {
         assertTrue(dv.dv); assertTrue(dv.hdr); assertEquals("hevc", dv.codec)
         assertEquals("avc", a("Movie.2024.1080p.AMZN.WEB-DL.DDP5.1.H.264-FLUX").codec)
         assertEquals("hevc", a("Serie.S01E01.1080p.x265.10bit").codec)
-        assertEquals("av1", a("Movie.2024.1080p.WEB.AV1.Opus").codec)
+        assertEquals("av1", a("Movie.2024.1080p.WEB.AV1.AAC").codec)
         assertTrue(a("Dune 2 (2024) HDCAM").mala)
         assertFalse("un .ts no es telesync", a("canal/directo/video.ts").mala)
         assertFalse(a("Dune.Part.Two.2024.1080p.WEB-DL").hdr)

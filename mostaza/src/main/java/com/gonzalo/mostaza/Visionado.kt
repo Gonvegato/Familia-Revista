@@ -90,7 +90,10 @@ class Visionado(
             if (enCuenta) guarda(pos, dur, forzar = true)
         }
         if (enCuenta && ahora() - guardadoEn > 15_000L) guarda(pos, dur)
+        // El punto para seguir, aquí, cada poco (también si la app se cierra de golpe)
+        if (ahora() - localEn > 15_000L) { localEn = ahora(); ctx?.let { Reanudar.pon(it, videoId, pos, dur, ahora()) } }
     }
+    private var localEn = 0L
 
     /** Apunta dónde vas: aquí siempre; en la cuenta, solo si toca (ver arriba). */
     fun guarda(pos: Long = ultimaPos, dur: Long = ultimaDur, forzar: Boolean = false) {

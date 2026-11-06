@@ -205,7 +205,10 @@ class ReproductorActivity : ComponentActivity() {
         val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent("Mostaza/$VERSION").setDefaultRequestProperties(cabeceras)
             .setConnectTimeoutMs(20_000).setReadTimeoutMs(30_000)
         val datos = DefaultDataSource.Factory(this, http)
-        val p = player ?: ExoPlayer.Builder(this).setMediaSourceFactory(DefaultMediaSourceFactory(datos))
+        // Un reproductor nuevo para cada fuente (cada una con sus cabeceras)
+        player?.let { viejo -> viejo.removeListener(oyente); viejo.release() }
+        principal.removeCallbacks(pulso)
+        val p = ExoPlayer.Builder(this).setMediaSourceFactory(DefaultMediaSourceFactory(datos))
             .setBandwidthMeter(DefaultBandwidthMeter.getSingletonInstance(this)).build().also { nuevo ->
                 player = nuevo; vista?.player = nuevo
                 nuevo.addListener(oyente)
