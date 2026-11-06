@@ -249,6 +249,9 @@ internal class TorrentActivo(
             listoAdelante = listos,
             archivo = a?.archivo?.nombre,
             error = error?.message,
+            conocidos = st?.listPeers() ?: 0,
+            semillasEnjambre = st?.numComplete() ?: -1,
+            bajandoEnjambre = st?.numIncomplete() ?: -1,
         )
     }
 

@@ -51,6 +51,14 @@ data class EstadoTorrent(
     val archivo: String?,
     /** Si algo ha ido mal (sin espacio, sin wifi…): el mensaje para enseñar. */
     val error: String?,
+    /**
+     * Para saber de quién es la culpa si va lento: la gente que libtorrent conoce (de los trackers, la DHT y los demás pares), conectada
+     * o no, y lo que dicen los trackers que hay en todo el enjambre (semillas y los que lo están bajando; −1 si ningún tracker lo dice).
+     * Muchos conocidos y pocos conectados: no se consigue conectar. Pocos conocidos y el tracker dice que hay pocos: hay poca gente.
+     */
+    val conocidos: Int = 0,
+    val semillasEnjambre: Int = -1,
+    val bajandoEnjambre: Int = -1,
 ) {
     enum class Fase { BUSCANDO, DESCARGANDO, COMPLETO, EN_PAUSA }
 }

@@ -30,10 +30,16 @@ interface FuenteTorrent {
 /** Lo que se le deja a un torrent para empezar a verse (buscar gente, la lista de archivos y el primer trozo); luego, otra fuente. */
 const val TORRENT_MAX_ARRANQUE_MS = 150_000L
 
-/** «3 pares · 1,2 MB/s · 4 %» (lo de un torrent mientras carga). */
-fun resumenTorrent(pares: Int, bajadaBs: Long, progreso: Float, buscando: Boolean): String {
+/**
+ * «3 pares de 40 conocidos · el tracker dice 12 semillas · 1,2 MB/s · 4 %» (lo de un torrent mientras carga). Lo de los conocidos y el
+ * tracker es para saber de quién es la culpa si va lento: si se conoce a mucha gente y se conecta con poca, es la conexión (la tuya o
+ * la del motor); si el tracker dice que hay poca, es que el torrent tiene poca gente.
+ */
+fun resumenTorrent(pares: Int, bajadaBs: Long, progreso: Float, buscando: Boolean, conocidos: Int = 0, semillasEnjambre: Int = -1): String {
     val partes = ArrayList<String>()
-    partes += if (pares == 0) (if (buscando) "buscando gente" else "sin nadie conectado") else if (pares == 1) "1 par" else "$pares pares"
+    val conectados = if (pares == 0) (if (buscando) "buscando gente" else "sin nadie conectado") else if (pares == 1) "1 par" else "$pares pares"
+    partes += if (conocidos > pares) "$conectados de $conocidos conocidos" else conectados
+    if (semillasEnjambre >= 0) partes += if (semillasEnjambre == 1) "el tracker dice 1 semilla" else "el tracker dice $semillasEnjambre semillas"
     if (bajadaBs > 0) partes += if (bajadaBs >= 1_000_000) String.format(java.util.Locale("es", "ES"), "%.1f MB/s", bajadaBs / 1e6) else "${bajadaBs / 1000} KB/s"
     if (progreso > 0f) partes += "${(progreso * 100).toInt().coerceIn(0, 100)} %"
     return partes.joinToString(" · ")

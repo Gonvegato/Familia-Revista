@@ -57,5 +57,7 @@ class ResumenTorrentTest {
         org.junit.Assert.assertEquals("sin nadie conectado", resumenTorrent(0, 0, 0f, false))
         org.junit.Assert.assertEquals("1 par · 300 KB/s", resumenTorrent(1, 300_000, 0f, false))
         org.junit.Assert.assertEquals("4 pares · 1,2 MB/s · 3 %", resumenTorrent(4, 1_200_000, 0.031f, false))
+        org.junit.Assert.assertEquals("1 par de 35 conocidos · el tracker dice 120 semillas · 18 KB/s", resumenTorrent(1, 18_000, 0f, false, 35, 120))
+        org.junit.Assert.assertEquals("1 par · el tracker dice 1 semilla", resumenTorrent(1, 0, 0f, false, 1, 1))
     }
 }

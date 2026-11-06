@@ -16,6 +16,12 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## 0.3.3
+
+Para saber de quién es la culpa cuando un torrent va lento, su estado dice ahora también cuánta gente conoce el motor (conectada o
+no) y cuántas semillas dice el tracker que hay en todo el enjambre: «1 par de 35 conocidos · el tracker dice 120 semillas» (es el
+motor o tu conexión, que no consigue conectar) frente a «1 par · el tracker dice 1 semilla» (es que el torrent tiene poca gente).
+
 ## 0.3.2
 
 - **El sonido AC3, E-AC3, DTS o TrueHD en cualquier aparato.** Hay tablets (una OPPO, por ejemplo) que no traen la licencia de Dolby
