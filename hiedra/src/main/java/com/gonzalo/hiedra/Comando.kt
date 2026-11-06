@@ -25,6 +25,11 @@ interface Entorno {
     val internos: String
     /** /storage/emulated/0 */
     val externos: String
+    /**
+     * El texto de la propia ROM (para %INJECT%: un .psvita o un .ps4 solo llevan dentro el identificador del juego, y es eso lo que
+     * se le pasa al emulador). null = no se puede leer.
+     */
+    fun leer(uri: String): String? = null
 }
 
 /** La ROM: el documento (content://) y, si se sabe, su ruta real. */
@@ -40,6 +45,11 @@ object Comando {
     private val CORTE = Regex("\\s+(?=%[A-Za-z_]+%)")
     private val NO_SOPORTADOS = setOf("GAMEDIRRAW", "ROMPATHRAW", "ROMRAW", "INJECT", "BASENAME", "ANDROIDAPP", "FILEINJECT", "ROMPATH")
     private val TOKEN = Regex("%([A-Za-z_]+?)%")
+    /**
+     * Lo único de %INJECT% que Hiedra entiende: meter el contenido de la propia ROM (%INJECT%=%ROM%, o %INJECT%=%BASENAME%.psvita cuando la
+     * ROM es ese .psvita). ES-DE lo usa para los emuladores que arrancan un juego por su identificador (Vita3K, BachataS4, aPS3e…).
+     */
+    private val INYECTAR = Regex("%INJECT%=(%ROM%|%BASENAME%\\.([A-Za-z0-9]+))")
 
     private fun trozos(p: String): List<String> = p.trim().split(CORTE).filter { it.isNotBlank() }
 
@@ -47,8 +57,7 @@ object Comando {
     fun emuladoresDe(p: String): List<String> = Regex("%EMULATOR_([^%]+)%").findAll(p).map { it.groupValues[1] }.toList()
 
     /** ¿Puede Hiedra interpretarlo? (algunos comandos de ES-DE usan cosas solo de su aplicación) */
-    fun soportado(p: String): Boolean =
-        TOKEN.findAll(p).none { it.groupValues[1] in NO_SOPORTADOS || it.groupValues[1].startsWith("EXTRAARRAY") }
+    fun soportado(p: String): Boolean = TOKEN.findAll(INYECTAR.replace(p, "")).none { it.groupValues[1] in NO_SOPORTADOS }
 
     /** ¿Va por RetroArch (hace falta que tenga el núcleo descargado)? */
     fun esRetroArch(p: String) = "RETROARCH" in emuladoresDe(p)
@@ -71,8 +80,15 @@ object Comando {
         if (comp == null) return Resultado.Falta("No está instalado", nombre, primero)
         val paquete = comp.first
 
-        fun sustituir(v: String): String? {
+        var contenido: String? = null
+        fun sustituir(v0: String): String? {
             var falta = false
+            // %INJECT%: la primera línea del texto de la ROM (el catálogo solo trae los que piden la propia ROM: su extensión es la del sistema)
+            val v = INYECTAR.replace(v0) { _ ->
+                val t = contenido ?: env.leer(rom.uri)?.trim()?.lines()?.firstOrNull()?.trim().also { contenido = it }
+                if (t.isNullOrBlank()) { falta = true; "" } else t
+            }
+            if (falta) return null
             val r = TOKEN.replace(v) { m ->
                 when (m.groupValues[1]) {
                     "ROM" -> rom.ruta ?: run { falta = true; "" }
@@ -96,7 +112,8 @@ object Comando {
             if (k == "ACTIVITY_CLEAR_TASK") { tarea = true; continue }
             if (k == "ACTIVITY_CLEAR_TOP") { arriba = true; continue }
             if (vRaw == null) continue
-            val v = sustituir(vRaw) ?: return Resultado.Falta("Este emulador necesita la ruta del archivo, y esta ROM no la tiene (elígela desde una carpeta del almacenamiento del móvil)")
+            val v = sustituir(vRaw) ?: return Resultado.Falta(if (INYECTAR.containsMatchIn(vRaw)) "No se ha podido leer el identificador del juego que lleva dentro este archivo"
+                else "Este emulador necesita la ruta del archivo, y esta ROM no la tiene (elígela desde una carpeta del almacenamiento del móvil)")
             if (vRaw.contains("%ROMSAF%") || vRaw.contains("%ROMPROVIDER%")) conceder = rom.uri
             when {
                 k == "ACTION" -> accion = v
@@ -105,6 +122,8 @@ object Comando {
                 k == "CATEGORY" -> cats.add(v)
                 k.startsWith("EXTRABOOL_") -> extras.add(Extra(k.removePrefix("EXTRABOOL_"), v.equals("true", true)))
                 k.startsWith("EXTRAINTEGER_") -> extras.add(Extra(k.removePrefix("EXTRAINTEGER_"), v.toIntOrNull() ?: 0))
+                // Una lista de textos (Vita3K: «-r», «PCSE00000»)
+                k.startsWith("EXTRAARRAY_") -> extras.add(Extra(k.removePrefix("EXTRAARRAY_"), v.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toTypedArray()))
                 k.startsWith("EXTRA_") -> extras.add(Extra(k.removePrefix("EXTRA_"), v))
             }
         }

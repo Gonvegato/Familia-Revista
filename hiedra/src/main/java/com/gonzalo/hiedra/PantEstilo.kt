@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.5.2"
+const val VERSION = "0.6.0"
 
 private fun aliasInicio(c: Context) = ComponentName(c, "com.gonzalo.hiedra.InicioAlias")
 private fun esInicio(c: Context) = c.packageManager.getComponentEnabledSetting(aliasInicio(c)) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -69,7 +69,7 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
             0 -> SeccionApariencia()
             1 -> {
                 Antetitulo("Sistemas", Modifier.padding(bottom = 4.dp))
-                MagLink("Sistemas y emuladores", "Cada consola, con el emulador que elijas, y las carpetas de ROMs", onClick = alSistemas)
+                MagLink("Sistemas y emuladores", "Las ${Nucleos.principales.size} consolas que juega Hiedra, el emulador de cada una, sus BIOS y las carpetas de ROMs", onClick = alSistemas)
                 Spacer(Modifier.height(26.dp))
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
@@ -140,7 +140,7 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
         Filete(3.dp)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Hiedra $VERSION")
-        Text("Hiedra es hermana de Azabache, Marfil y Cobalto. Los comandos para abrir emuladores salen de ES-DE Frontend (licencia MIT, © Northwestern Software AB, Leon Styhre y Alec Lofquist). Las portadas, de libretro. El jugador interno usa LibretroDroid y RadialGamePad (GPL-3.0, Filippo Scognamiglio) y los núcleos de libretro (mGBA, MPL-2.0), que se descargan del buildbot de libretro; por eso Hiedra es software libre (GPL-3.0).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Hiedra es hermana de Azabache, Marfil y Cobalto. Los comandos para abrir emuladores salen de ES-DE Frontend (licencia MIT, © Northwestern Software AB, Leon Styhre y Alec Lofquist). Las portadas, de libretro. El jugador interno usa LibretroDroid y RadialGamePad (GPL-3.0, Filippo Scognamiglio) y los núcleos de libretro (mGBA, Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle, Handy, Stella, ProSystem, FinalBurn Neo, Mupen64Plus-Next, PCSX ReARMed, PPSSPP y melonDS, cada uno con su licencia), que no van dentro de la app: se descargan del buildbot de libretro, como en RetroArch. Las consolas y sus mandos son los de Lemuroid. Por eso Hiedra es software libre (GPL-3.0).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.height(30.dp))
     }
 }

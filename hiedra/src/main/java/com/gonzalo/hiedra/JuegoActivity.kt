@@ -18,10 +18,12 @@ import android.view.PixelCopy
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -30,6 +32,8 @@ import androidx.lifecycle.lifecycleScope
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroViewData
 import com.swordfish.libretrodroid.ShaderConfig
+import com.swordfish.libretrodroid.Variable
+import com.swordfish.libretrodroid.VirtualFile
 import com.swordfish.radialgamepad.library.RadialGamePad
 import com.swordfish.radialgamepad.library.event.Event
 import kotlinx.coroutines.CompletableDeferred
@@ -51,7 +55,8 @@ import java.util.zip.ZipInputStream
 sealed interface FaseJuego {
     data class Preparando(val texto: String, val fraccion: Float? = null) : FaseJuego
     data class Pregunta(val texto: String, val si: String, val no: String, val respuesta: CompletableDeferred<Boolean>) : FaseJuego
-    data class Error(val texto: String) : FaseJuego
+    /** Algo ha fallado. [accion]: lo que se puede hacer para arreglarlo (elegir la BIOS que falta, probar de otra manera). */
+    data class Error(val texto: String, val accion: Pair<String, () -> Unit>? = null) : FaseJuego
     data object Jugando : FaseJuego
 }
 
@@ -70,7 +75,9 @@ class JuegoActivity : ComponentActivity() {
     companion object {
         fun intent(c: Context, id: String): Intent = Intent(c, JuegoActivity::class.java).putExtra("id", id)
         /** Los fotogramas por segundo de cada consola (para medir la velocidad real del avance rápido). */
-        fun fpsNominal(sistema: String) = when (sistema) { "gba", "gb", "gbc" -> 59.73f; else -> 60f }
+        fun fpsNominal(sistema: String) = Nucleos.para(sistema)?.fps ?: 60f
+        /** El directorio «virtual» de los archivos que el núcleo abre donde están (el mismo que usa Lemuroid). */
+        const val VIRTUAL = "/virtual/file/path"
         /** Solo para las capturas de las pruebas (el núcleo es código nativo de ARM y no corre en el ordenador): sin núcleo ni juego. */
         @androidx.annotation.VisibleForTesting internal var sinMotor = false
     }
@@ -79,7 +86,22 @@ class JuegoActivity : ComponentActivity() {
     var motor: Motor? = null; private set
     var vista: GLRetroView? = null; private set
     var nucleo: Nucleos.Instalado? = null; private set
-    private lateinit var nucleoDef: Nucleos.Nucleo
+    lateinit var nucleoDef: Nucleos.Nucleo; private set
+    /** La ROM se abrió donde está, sin copiarla (si falla, se ofrece probar copiándola). */
+    private var abiertaDirecta = false
+    /** Lo que se hace con la BIOS que elijas (si falta una, al elegirla se vuelve a preparar el juego). */
+    private val elegirBios = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNullOrEmpty()) return@registerForActivityResult
+        lifecycleScope.launch {
+            val puestas = withContext(Dispatchers.IO) { uris.mapNotNull { u -> runCatching { Nucleos.instalarBios(this@JuegoActivity, u, Escaneo.nombreDe(this@JuegoActivity, u) ?: "") }.getOrNull() } }
+            val f = fase
+            if (puestas.isEmpty() && f is FaseJuego.Error) {
+                fase = f.copy(texto = "Ese archivo no es ninguna de las BIOS que busca ${nucleoDef.nombre} (se reconocen por su contenido): " + Nucleos.faltan(this@JuegoActivity, nucleoDef).joinToString(" · ") { it.archivo })
+                return@launch
+            }
+            preparar()
+        }
+    }
 
     val entrada = Mandos.Estado("gba")
     val avance = AvanceRapido()
@@ -169,7 +191,9 @@ class JuegoActivity : ComponentActivity() {
     }
 
     fun aplicarOrientacion() {
-        requestedOrientation = when (AjustesJuego.orientacion) {
+        // La DS tiene dos pantallas una encima de otra: en apaisado se ven pequeñas, así que sigue al móvil (de pie se juega mejor)
+        val dosPantallas = juego?.let { Nucleos.para(it.sistema)?.tactil } == true
+        requestedOrientation = if (dosPantallas && AjustesJuego.orientacion == AjustesJuego.Orientacion.APAISADA) ActivityInfo.SCREEN_ORIENTATION_FULL_USER else when (AjustesJuego.orientacion) {
             AjustesJuego.Orientacion.APAISADA -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             AjustesJuego.Orientacion.VERTICAL -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
             AjustesJuego.Orientacion.MOVIL -> ActivityInfo.SCREEN_ORIENTATION_FULL_USER
@@ -187,18 +211,32 @@ class JuegoActivity : ComponentActivity() {
     private suspend fun preparar() {
         val j = juego ?: return
         try {
-            // 1. El núcleo (se baja la primera vez)
+            // 1. El núcleo (se baja la primera vez) y, si los necesita, sus archivos (PPSSPP)
             nucleo = Nucleos.instalado(this, nucleoDef.id) ?: run {
                 fase = FaseJuego.Preparando("Bajando el núcleo ${nucleoDef.nombre}…", 0f)
                 withContext(Dispatchers.IO) { Nucleos.instalar(this@JuegoActivity, nucleoDef.id) { p -> fase = FaseJuego.Preparando("Bajando el núcleo ${nucleoDef.nombre}…", p) } }
+            }
+            if (!Nucleos.recursosListos(this, nucleoDef)) {
+                fase = FaseJuego.Preparando("Bajando los archivos de ${nucleoDef.nombre} (una vez)…", 0f)
+                withContext(Dispatchers.IO) { Nucleos.instalarRecursos(this@JuegoActivity, nucleoDef) { p -> fase = FaseJuego.Preparando("Bajando los archivos de ${nucleoDef.nombre} (una vez)…", p) } }
             }
             // 2. La ROM, en un archivo que el núcleo pueda abrir (si está en otro móvil, se baja antes de tu kDrive)
             val (jj, local) = if (j.uri.isBlank()) bajarDeLaNube(j) else j to null
             fase = FaseJuego.Preparando("Abriendo «${j.titulo}»…")
             val rom = withContext(Dispatchers.IO) { prepararRom(jj, local) }
-            // 3. La partida (SRAM) más reciente: la de aquí o la de la carpeta de guardados (que ya trae la de la nube si era más nueva)
+            // 3. La BIOS, si el núcleo no arranca sin ella (después de la ROM: la de Neo Geo se coge de su carpeta si está allí)
+            val faltan = Nucleos.faltan(this, nucleoDef)
+            if (faltan.isNotEmpty()) {
+                val una = faltan.size > 1 && faltan.all { it.grupo != null && it.grupo == faltan[0].grupo }
+                fase = FaseJuego.Error(
+                    "${nucleoDef.nombre} necesita " + (if (una) "una de estas BIOS: " else if (faltan.size == 1) "la BIOS " else "estas BIOS: ") +
+                        faltan.joinToString(" · ") { "${it.archivo} (${it.descripcion})" } + ". Elige el archivo: Hiedra lo reconoce y lo deja donde lo busca.",
+                    "Elegir la BIOS" to { elegirBios.launch(arrayOf("*/*")) })
+                return
+            }
+            // 4. La partida (SRAM) más reciente: la de aquí o la de la carpeta de guardados (que ya trae la de la nube si era más nueva)
             val partida = withContext(Dispatchers.IO) { Estados.leerPartida(this@JuegoActivity, j) }
-            // 4. El estado automático: el de aquí o, si es más nuevo, el de otro móvil
+            // 5. El estado automático: el de aquí o, si es más nuevo, el de otro móvil
             val estado = elegirEstado(j)
             arrancar(j, rom, partida, estado)
         } catch (e: Exception) {
@@ -257,75 +295,173 @@ class JuegoActivity : ComponentActivity() {
         } finally { vigia.cancel() }
     }
 
-    /** Copia la ROM a la caché de la app (los núcleos abren archivos, no documentos de Android); descomprime un .zip. */
-    private fun prepararRom(j: Juego, local: File? = null): File {
-        if (j.uri.isBlank() && local == null) throw IOException("La ROM de «${j.titulo}» no está en este móvil")
-        val uri = Uri.parse(j.uri)
-        val doc = if (local == null) DocumentFile.fromSingleUri(this, uri) else null
-        val nombre = local?.name ?: doc?.name ?: (j.archivo + "." + nucleoDef.extensiones.first())
-        val sello = if (local != null) "$nombre|${local.length()}|${local.lastModified()}" else "$nombre|${doc?.length() ?: -1}|${doc?.lastModified() ?: 0}"
-        fun abrir() = if (local != null) local.inputStream() else contentResolver.openInputStream(uri) ?: throw IOException("No se puede leer la ROM")
-        val raiz = File(cacheDir, "rom")
-        val dir = File(raiz, j.id)
-        val marca = File(dir, ".sello")
-        // Solo se queda en la caché la ROM del último juego (la caché no es para guardar ROMs)
-        raiz.listFiles()?.filter { it.name != j.id }?.forEach { it.deleteRecursively() }
-        if (marca.exists() && marca.readText() == sello) dir.listFiles()?.firstOrNull { it.name != ".sello" }?.let { return it }
-        dir.deleteRecursively(); dir.mkdirs()
-        val ext = nombre.substringAfterLast('.', "").lowercase()
-        val destino: File = if (ext == "zip") {
-            var hallado: File? = null
-            ZipInputStream(abrir()).use { z ->
-                while (true) {
-                    val e = z.nextEntry ?: break
-                    val n = e.name.substringAfterLast('/')
-                    if (!e.isDirectory && n.substringAfterLast('.', "").lowercase() in nucleoDef.extensiones) {
-                        hallado = File(dir, n).also { f -> f.outputStream().use { z.copyTo(it) } }; break
-                    }
-                }
-            }
-            hallado ?: throw IOException("En ese .zip no hay ninguna ROM que ${nucleoDef.nombre} sepa abrir (${nucleoDef.extensiones.joinToString { ".$it" }})")
-        } else {
-            if (ext !in nucleoDef.extensiones) throw IOException("${nucleoDef.nombre} no abre archivos .$ext")
-            File(dir, nombre).also { f -> abrir().use { i -> f.outputStream().use { i.copyTo(it) } } }
-        }
-        marca.writeText(sello)
-        return destino
+    /** La ROM lista para el núcleo: un archivo de la app, o los documentos tal cual (para los núcleos que los abren donde están). */
+    sealed interface RomLista {
+        data class Archivo(val f: File) : RomLista
+        /** El juego y lo que lleva al lado (las pistas de un .cue…): nombre → documento. */
+        data class Directa(val archivos: List<Pair<String, Uri>>) : RomLista
     }
 
-    private fun arrancar(j: Juego, rom: File, partida: ByteArray?, estado: ByteArray?) {
+    /**
+     * Deja la ROM donde el núcleo pueda abrirla (los núcleos abren archivos, no documentos de Android):
+     *  - FBNeo: el .zip tal cual y con su nombre (el nombre dice qué juego es); y si junto a él están las BIOS de arcade (neogeo.zip…),
+     *    se copian a la carpeta del sistema.
+     *  - Un .zip: se saca lo que el núcleo sepa abrir (con sus pistas, si es un .cue).
+     *  - Un .cue, .m3u o .ccd: también los archivos a los que apunta, que están en la misma carpeta.
+     *  - PlayStation y PSP: los documentos se abren donde están (no se copian discos de cientos de MB), salvo que pidas copiarlos.
+     */
+    private fun prepararRom(j: Juego, local: File? = null): RomLista {
+        if (j.uri.isBlank() && local == null) throw IOException("La ROM de «${j.titulo}» no está en este móvil")
+        val n = nucleoDef
+        if (local != null) return RomLista.Archivo(if (local.extension.lowercase() == "zip" && !n.zipEntero) descomprimir(j, local.name, local.length(), local.lastModified()) { local.inputStream() } else local)
+        val uri = Uri.parse(j.uri)
+        val doc = DocumentFile.fromSingleUri(this, uri)
+        val nombre = doc?.name ?: (j.archivo + "." + n.extensiones.first())
+        val ext = nombre.substringAfterLast('.', "").lowercase()
+        fun abrir() = contentResolver.openInputStream(uri) ?: throw IOException("No se puede leer la ROM")
+        if (ext == "7z") throw IOException("Hiedra no abre archivos .7z: descomprímelo o guárdalo como .zip")
+        val hermanos by lazy { Discos.hermanos(this, uri) }
+        if (n.zipEntero) {
+            if (ext != "zip") throw IOException("${n.nombre} abre los juegos en .zip, tal cual (con el nombre de su romset)")
+            copiarBiosDeArcade(hermanos)
+            return RomLista.Archivo(copiar(j, listOf(nombre to uri), doc?.length() ?: -1, doc?.lastModified() ?: 0))
+        }
+        if (ext == "zip") return RomLista.Archivo(descomprimir(j, nombre, doc?.length() ?: -1, doc?.lastModified() ?: 0) { abrir() })
+        if (ext !in n.extensiones) throw IOException("${n.nombre} no abre archivos .$ext")
+        // Lo que va con él (las pistas de un .cue, los discos de un .m3u…), de su misma carpeta
+        val juntos = ArrayList<Pair<String, Uri>>().apply { add(nombre to uri) }
+        if (ext in Discos.INDICES) {
+            val faltan = ArrayList<String>()
+            val leer = { x: String -> if (x.equals(nombre, true)) Discos.texto(this, uri) else hermanos[x.lowercase()]?.second?.let { Discos.texto(this, it) } }
+            for (r in Discos.necesarios(nombre, leer, { hermanos.containsKey(it.lowercase()) })) {
+                val h = hermanos[r.lowercase()]
+                if (h == null) faltan += r else juntos += h
+            }
+            if (faltan.isNotEmpty()) throw IOException(
+                if (hermanos.isEmpty()) "Este .$ext necesita los archivos que tiene al lado (${faltan.take(3).joinToString()}), y una ROM elegida suelta no deja verlos: añade su carpeta en «Añadir → Carpeta de ROMs»."
+                else "Faltan archivos de este juego en su carpeta: ${faltan.take(4).joinToString()}")
+        }
+        if (n.directo && !intent.getBooleanExtra("copiar", false)) { abiertaDirecta = true; return RomLista.Directa(juntos) }
+        return RomLista.Archivo(copiar(j, juntos, doc?.length() ?: -1, doc?.lastModified() ?: 0))
+    }
+
+    /** La carpeta de la caché para la ROM de este juego (solo se queda la del último juego: la caché no es para guardar ROMs). */
+    private fun cacheDe(j: Juego): File {
+        val raiz = File(cacheDir, "rom")
+        raiz.listFiles()?.filter { it.name != j.id }?.forEach { it.deleteRecursively() }
+        return File(raiz, j.id)
+    }
+
+    /** Copia los documentos a la caché (el primero es el juego). Si ya estaban (mismo nombre, tamaño y fecha), no se vuelven a copiar. */
+    private fun copiar(j: Juego, archivos: List<Pair<String, Uri>>, tam: Long, mod: Long): File {
+        val dir = cacheDe(j); val marca = File(dir, ".sello")
+        val sello = archivos.joinToString(";") { it.first } + "|$tam|$mod"
+        if (marca.exists() && marca.readText() == sello) File(dir, archivos[0].first).takeIf { it.exists() }?.let { return it }
+        dir.deleteRecursively(); dir.mkdirs()
+        for ((n, u) in archivos) {
+            val f = Nucleos.dentroDe(dir, n) ?: continue
+            (contentResolver.openInputStream(u) ?: throw IOException("No se puede leer $n")).use { i -> f.outputStream().use { i.copyTo(it) } }
+        }
+        marca.writeText(sello)
+        return File(dir, archivos[0].first)
+    }
+
+    /** Saca de un .zip lo que el núcleo sepa abrir (y lo que haga falta para eso: las pistas de un .cue) y devuelve el juego. */
+    private fun descomprimir(j: Juego, nombre: String, tam: Long, mod: Long, abrir: () -> java.io.InputStream): File {
+        val n = nucleoDef
+        val dir = cacheDe(j); val marca = File(dir, ".sello")
+        val sello = "$nombre|$tam|$mod"
+        if (marca.exists() && marca.readText().startsWith("$sello|")) File(dir, marca.readText().removePrefix("$sello|")).takeIf { it.exists() }?.let { return it }
+        dir.deleteRecursively(); dir.mkdirs()
+        val sacados = ArrayList<String>()
+        ZipInputStream(abrir()).use { z ->
+            while (true) {
+                val e = z.nextEntry ?: break
+                val nom = e.name.substringAfterLast('/')
+                val x = nom.substringAfterLast('.', "").lowercase()
+                // Lo que abre el núcleo y lo que suele ir con ello (las pistas y los subcanales de un .cue o un .ccd)
+                if (e.isDirectory || (x !in n.extensiones && x !in setOf("bin", "img", "sub", "wav", "iso", "ecm"))) continue
+                Nucleos.dentroDe(dir, nom)?.let { f -> f.outputStream().use { z.copyTo(it) }; sacados += nom }
+            }
+        }
+        val principal = Discos.principal(sacados, n.extensiones)
+            ?: throw IOException("En ese .zip no hay ninguna ROM que ${n.nombre} sepa abrir (${n.extensiones.joinToString { ".$it" }})")
+        marca.writeText("$sello|$principal")
+        return File(dir, principal)
+    }
+
+    /** FBNeo busca las BIOS de arcade (neogeo.zip…) junto al juego: como el juego se copia a la caché, se dejan en la carpeta del sistema. */
+    private fun copiarBiosDeArcade(hermanos: Map<String, Pair<String, Uri>>) {
+        for (b in nucleoDef.bios) {
+            if (Nucleos.biosEsta(this, b)) continue
+            val h = hermanos[b.archivo.lowercase()] ?: continue
+            runCatching {
+                val f = File(Nucleos.sistema(this), b.ruta).apply { parentFile?.mkdirs() }
+                contentResolver.openInputStream(h.second)?.use { i -> f.outputStream().use { i.copyTo(it) } }
+            }
+        }
+    }
+
+    private fun arrancar(j: Juego, rom: RomLista, partida: ByteArray?, estado: ByteArray?) {
         val n = nucleo ?: return
+        val def = nucleoDef
         val datos = GLRetroViewData(this).apply {
             coreFilePath = Nucleos.archivo(this@JuegoActivity, n.id).absolutePath
-            gameFilePath = rom.absolutePath
+            when (rom) {
+                is RomLista.Archivo -> gameFilePath = rom.f.absolutePath
+                // Los documentos se le pasan al núcleo abiertos (LibretroDroid se queda con ellos), con su nombre de verdad
+                is RomLista.Directa -> gameVirtualFiles = rom.archivos.map { (nom, u) ->
+                    VirtualFile("$VIRTUAL/$nom", contentResolver.openFileDescriptor(u, "r") ?: throw IOException("No se puede abrir $nom"))
+                }
+            }
             systemDirectory = Nucleos.sistema(this@JuegoActivity).absolutePath
             savesDirectory = File(filesDir, "guardados/${j.id}").apply { mkdirs() }.absolutePath
             saveRAMState = partida?.takeIf { it.isNotEmpty() }
+            variables = Nucleos.variables(def, Nucleos.opcionesPropias(this@JuegoActivity, j.sistema)).map { (k, v) -> Variable(k, v) }.toTypedArray()
             shader = shaderDe(AjustesJuego.filtro)
+            skipDuplicateFrames = def.saltarRepetidos
             preferLowLatencyAudio = true
             rumbleEventsEnabled = false
         }
         val v = GLRetroView(this, datos)
         v.isFocusable = false
+        v.isFocusableInTouchMode = false
+        // Como Lemuroid: solo la DS recibe lo que tocas en la imagen (su pantalla de abajo); en las demás, tocar no le manda nada al núcleo
+        if (!def.tactil) v.setOnTouchListener { _, _ -> true }
         vista = v; motor = MotorRetro(v)
         lifecycle.addObserver(v)
         lifecycleScope.launch {
             v.getGLRetroEvents().collect { e ->
                 when (e) {
-                    // La superficie puede crearse otra vez (si Android tira el contexto de OpenGL): el estado se carga solo la primera
-                    is GLRetroView.GLRetroEvents.SurfaceCreated -> if (!estadoCargado) { estadoCargado = true
-                        estado?.let { if (motor?.cargarEstado(it) != true) aviso = "El estado guardado no ha cargado: sigues desde la última partida del cartucho" } }
-                    is GLRetroView.GLRetroEvents.FrameRendered -> imagenes++
+                    // El estado se carga tras la primera imagen, no antes: PPSSPP y Mupen64 preparan cosas al dibujarla (lo que hace Lemuroid).
+                    // La superficie puede crearse otra vez (si Android tira el contexto de OpenGL): el estado se carga solo la primera vez.
+                    is GLRetroView.GLRetroEvents.FrameRendered -> {
+                        imagenes++
+                        if (!estadoCargado) {
+                            estadoCargado = true
+                            estado?.let { runOnUiThread { if (motor?.cargarEstado(it) != true) aviso = "El estado guardado no ha cargado: sigues desde la última partida del cartucho" } }
+                        }
+                    }
+                    is GLRetroView.GLRetroEvents.SurfaceCreated -> {}
                 }
             }
         }
-        lifecycleScope.launch { v.getGLRetroErrors().collect { c -> fase = FaseJuego.Error(textoError(c)) } }
+        lifecycleScope.launch { v.getGLRetroErrors().collect { c -> fase = errorDe(c) } }
         lifecycleScope.launch { medirVelocidad(j) }
         Sesion.marcarJugado(j)
         fase = FaseJuego.Jugando
         empiezaTiempo()
         programarAutoguardado()
     }
+
+    /** Cambia una opción del núcleo mientras juegas (y la guarda para la próxima vez). */
+    fun ponerOpcion(o: Nucleos.Opcion, valor: String) {
+        val j = juego ?: return
+        Nucleos.ponOpcion(this, j.sistema, o.clave, valor)
+        runCatching { vista?.updateVariables(Variable(o.clave, valor)) }
+        versionOpciones++
+    }
+    var versionOpciones by mutableStateOf(0)
 
     fun shaderDe(f: AjustesJuego.Filtro): ShaderConfig = when (f) {
         AjustesJuego.Filtro.NITIDO -> ShaderConfig.Sharp
@@ -334,11 +470,14 @@ class JuegoActivity : ComponentActivity() {
         AjustesJuego.Filtro.CRT -> ShaderConfig.CRT
     }
 
-    private fun textoError(c: Int) = when (c) {
-        GLRetroView.ERROR_LOAD_LIBRARY -> "No se ha podido cargar el núcleo ${nucleoDef.nombre}. Quítalo y vuelve a bajarlo en Sistemas."
-        GLRetroView.ERROR_LOAD_GAME -> "${nucleoDef.nombre} no ha podido abrir esta ROM. ¿Está bien el archivo?"
-        GLRetroView.ERROR_GL_NOT_COMPATIBLE -> "Este móvil no tiene la versión de OpenGL que hace falta."
-        else -> "El núcleo se ha parado (error $c)."
+    private fun errorDe(c: Int): FaseJuego.Error = when (c) {
+        GLRetroView.ERROR_LOAD_LIBRARY -> FaseJuego.Error("No se ha podido cargar el núcleo ${nucleoDef.nombre}. Quítalo y vuelve a bajarlo en Sistemas.")
+        // Abierta donde está (sin copiar): hay núcleos y archivos que no se llevan bien con eso; copiándola a Hiedra suele ir
+        GLRetroView.ERROR_LOAD_GAME -> if (abiertaDirecta) FaseJuego.Error("${nucleoDef.nombre} no ha podido abrir esta ROM donde está. Se puede probar copiándola antes (tarda más la primera vez).",
+                "Probar copiándola" to { intent.putExtra("copiar", true); recreate() })
+            else FaseJuego.Error("${nucleoDef.nombre} no ha podido abrir esta ROM. ¿Está bien el archivo?" + if (nucleoDef.pruebas) " (Este sistema está en pruebas en Hiedra: en «Emulador» puedes elegir otro.)" else "")
+        GLRetroView.ERROR_GL_NOT_COMPATIBLE -> FaseJuego.Error("Este móvil no tiene la versión de OpenGL que necesita ${nucleoDef.nombre}.")
+        else -> FaseJuego.Error("El núcleo se ha parado (error $c).")
     }
 
     // ------------------------------------------------------------------ guardar
@@ -463,8 +602,13 @@ class JuegoActivity : ComponentActivity() {
         if (avance.apagar()) aplicarVelocidad()
         acabaTiempo()
         menu = true; pantallaMenu = "principal"
+        // La foto del momento, para el menú (se pide antes de pausar: la imagen ya está en pantalla)
+        capturar { b -> fotoPausa = b?.asImageBitmap() }
         motor?.pausar()
     }
+
+    /** La imagen del juego al abrir el menú (la enseña el menú, como una portada). */
+    var fotoPausa by mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
 
     fun cerrarMenu() {
         if (!menu) return
@@ -586,7 +730,13 @@ class JuegoActivity : ComponentActivity() {
                 if (menu || fase != FaseJuego.Jugando) return@collect
                 when (ev) {
                     is Event.Button -> MandoTactil.destinoDe(ev.id)?.let { procesar(entrada.destino("tactil:${ev.id}", it, ev.action == KeyEvent.ACTION_DOWN)) }
-                    is Event.Direction -> if (ev.id == MandoTactil.ID_CRUZ) procesar(entrada.crucetaTactil(ev.xAxis, ev.yAxis))
+                    is Event.Direction -> when (ev.id) {
+                        MandoTactil.ID_CRUZ -> procesar(entrada.crucetaTactil(ev.xAxis, ev.yAxis))
+                        MandoTactil.ID_STICK_IZQ -> procesar(entrada.stickTactil(true, ev.xAxis, ev.yAxis))
+                        MandoTactil.ID_STICK_DER, MandoTactil.ID_CRUZ_C -> procesar(entrada.stickTactil(false, ev.xAxis, ev.yAxis))
+                        // La palanca de las recreativas: a la cruceta y al stick izquierdo a la vez (como Lemuroid)
+                        MandoTactil.ID_CRUZ_Y_STICK -> procesar(entrada.crucetaTactil(ev.xAxis, ev.yAxis) + entrada.stickTactil(true, ev.xAxis, ev.yAxis))
+                    }
                 }
             }
         }

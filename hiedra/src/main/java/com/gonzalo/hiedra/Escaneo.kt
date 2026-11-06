@@ -45,7 +45,11 @@ object Escaneo {
                     }
                 }
             }
-            for ((id, n) in quitarPistas(archivos)) {
+            // Un .m3u es un juego de varios discos: sus discos no son juegos aparte
+            val enListas = archivos.filter { it.second.endsWith(".m3u", true) }.flatMap { (id, _) ->
+                Discos.texto(c, DocumentsContract.buildDocumentUriUsingTree(arbol, id))?.let { Discos.listaM3u(it) }.orEmpty()
+            }
+            for ((id, n) in quitarDiscos(quitarPistas(archivos), enListas)) {
                 if (Catalogo.esRom(n)) { salida.add(Hallazgo(n, DocumentsContract.buildDocumentUriUsingTree(arbol, id), id, ruta)); progreso(salida.size) }
             }
             for ((id, n) in carpetas) rec(id, ruta + n, prof + 1)
@@ -62,6 +66,13 @@ object Escaneo {
             val ext = n.substringAfterLast('.', "").lowercase()
             ext in setOf("bin", "img", "wav", "ccd", "sub") && cues.any { cue -> n.lowercase().startsWith(cue) }
         }
+    }
+
+    /** Los discos que ya están en un .m3u de la misma carpeta (y sus pistas) no se añaden como juegos sueltos: el juego es el .m3u. */
+    fun quitarDiscos(archivos: List<Pair<String, String>>, enListas: List<String>): List<Pair<String, String>> {
+        if (enListas.isEmpty()) return archivos
+        val fuera = enListas.map { it.lowercase() }.toSet()
+        return archivos.filterNot { it.second.lowercase() in fuera }
     }
 
     /** Nombre del archivo de un documento suelto. */

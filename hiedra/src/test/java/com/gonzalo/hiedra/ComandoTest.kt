@@ -109,6 +109,34 @@ class ComandoTest {
         assertTrue("debería haber cientos de comandos utilizables, hay $ok", ok > 300)
     }
 
+    @Test fun vita3kArrancaPorElIdentificadorQueLlevaElArchivo() {
+        // Un .psvita solo lleva dentro el identificador del juego; ES-DE se lo pasa a Vita3K como «-r PCSE00000»
+        val vita = RomRef("content://x/document/primary%3ARoms%2Fpsvita%2FPersona%204.psvita", null)
+        val env = object : Entorno {
+            override fun instalado(paquete: String) = paquete == "org.vita3k.emulator"
+            override val internos = "/data/data"; override val externos = "/storage/emulated/0"
+            override fun leer(uri: String) = "PCSE00120\n"
+        }
+        val r = Comando.resolver(plantilla("psvita", "Vita3K (Standalone)"), vita, env) as Resultado.Ok
+        assertEquals("org.vita3k.emulator", r.spec.paquete)
+        assertEquals("org.vita3k.emulator.Emulator", r.spec.clase)
+        val params = r.spec.extras.single { it.clave == "AppStartParameters" }.valor as Array<*>
+        assertEquals(listOf("-r", "PCSE00120"), params.toList())
+        // Si no se puede leer el archivo, no se inventa nada
+        val sinLeer = Comando.resolver(plantilla("psvita", "Vita3K (Standalone)"), vita, entorno("org.vita3k.emulator"))
+        assertTrue(sinLeer is Resultado.Falta)
+        // BachataS4 (PS4): el identificador va en un extra de texto
+        val ps4 = Comando.resolver(plantilla("ps4", "BachataS4 (Standalone)"), vita, object : Entorno by env { override fun instalado(paquete: String) = paquete == "com.bachatas4.android" }) as Resultado.Ok
+        assertEquals("PCSE00120", ps4.spec.extras.single { it.clave == "game_id" }.valor)
+    }
+
+    @Test fun soloSeInyectaLaPropiaRom() {
+        assertTrue(Comando.soportado("%EMULATOR_VITA3K% %EXTRAARRAY_AppStartParameters%=-r,%INJECT%=%BASENAME%.psvita"))
+        assertTrue(Comando.soportado("%EMULATOR_X% %DATA%=%INJECT%=%ROM%"))
+        assertFalse(Comando.soportado("%EMULATOR_X% %EXTRA_command%=%INJECT%=%ROMPATH%/otro.txt"))
+        assertFalse(Comando.soportado("%EMULATOR_X% %EXTRA_x%=%BASENAME%"))
+    }
+
     @Test fun cuePierdeSusPistas() {
         val l = Escaneo.quitarPistas(listOf("1" to "Juego.cue", "2" to "Juego (Track 1).bin", "3" to "Juego (Track 2).bin", "4" to "Otro.bin"))
         assertEquals(listOf("Juego.cue", "Otro.bin"), l.map { it.second })

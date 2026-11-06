@@ -48,6 +48,20 @@ object Catalogo {
         "ps2" to Meta("PS2", 0xFF2A4BA8, "Sony - PlayStation 2", listOf("playstation2")),
         "psp" to Meta("PSP", 0xFF1F7A8C, "Sony - PlayStation Portable", listOf("playstationportable")),
         "pcengine" to Meta("PCE", 0xFFE08A1E, "NEC - PC Engine - TurboGrafx 16", listOf("turbografx16", "tg16", "pce")),
+        // Los que juega Hiedra desde la 0.6 (las carpetas de libretro, comprobadas en thumbnails.libretro.com)
+        "fds" to Meta("FDS", 0xFFB5472F, "Nintendo - Family Computer Disk System", listOf("famicomdisksystem", "disksystem")),
+        "segacd" to Meta("MCD", 0xFF3D4B78, "Sega - Mega-CD - Sega CD", listOf("megacd", "sega cd", "mcd")),
+        "ngp" to Meta("NGP", 0xFF4F6B7A, "SNK - Neo Geo Pocket", listOf("neogeopocket")),
+        "ngpc" to Meta("NGPC", 0xFF2F8C8C, "SNK - Neo Geo Pocket Color", listOf("neogeopocketcolor")),
+        "wonderswan" to Meta("WS", 0xFF7A7064, "Bandai - WonderSwan", listOf("ws")),
+        "wonderswancolor" to Meta("WSC", 0xFF9B5FB5, "Bandai - WonderSwan Color", listOf("wsc")),
+        "atarilynx" to Meta("LYNX", 0xFFC9822B, "Atari - Lynx", listOf("lynx")),
+        "atari2600" to Meta("2600", 0xFF9C5A33, "Atari - 2600", listOf("2600", "a2600", "vcs")),
+        "atari7800" to Meta("7800", 0xFF6E4A8E, "Atari - 7800", listOf("7800", "a7800")),
+        "neogeo" to Meta("NEO", 0xFFB8892C, "SNK - Neo Geo", listOf("neogeoaes", "neogeomvs")),
+        "arcade" to Meta("ARC", 0xFFA33B4C, "FBNeo - Arcade Games", listOf("recreativas", "arcades")),
+        "fbneo" to Meta("FBN", 0xFF8C3B5A, "FBNeo - Arcade Games", listOf("finalburnneo")),
+        "psvita" to Meta("VITA", 0xFF2B5E9E, "Sony - PlayStation Vita", listOf("vita", "playstationvita")),
     )
 
     fun norm(s: String): String = Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase().filter { it.isLetterOrDigit() }

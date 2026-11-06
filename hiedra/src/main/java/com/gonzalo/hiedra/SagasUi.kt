@@ -49,7 +49,7 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Juego) -> Unit, alJugar
         if (i < 0 || j !in l.indices) return
         l[i] = l[j].also { l[j] = l[i] }; Sagas.poner(s.copy(juegos = l))
     }
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
+    Column(Modifier.fillMaxSize().atrapaFoco().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
         RevistaTopBar(alCerrar, "Volver") { EnlaceRevista(if (editando) "Listo" else "Editar", acento = editando) { editando = !editando } }
         Filete(3.dp)
         Spacer(Modifier.height(14.dp))
@@ -70,12 +70,12 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Juego) -> Unit, alJugar
         Spacer(Modifier.height(10.dp))
         if (siguiente != null) {
             Filete(1.dp)
-            Row(Modifier.fillMaxWidth().clickable { alAbrir(siguiente) }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().tocable { alAbrir(siguiente) }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(if (siguiente.estado == Estado.JUGANDO) "AHORA" else "TOCA ESTE", color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
                     Text(siguiente.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 24.sp, maxLines = 2)
                 }
-                if (!siguiente.sinLanzador) Text("JUGAR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp, modifier = Modifier.clickable { alJugar(siguiente) }.padding(8.dp))
+                if (!siguiente.sinLanzador) Text("JUGAR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp, modifier = Modifier.tocable { alJugar(siguiente) }.padding(8.dp))
                 else Text("ABRIR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp)
             }
         }
@@ -85,9 +85,9 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Juego) -> Unit, alJugar
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { FilaJuego(j, alAbrir, if (editando) null else alJugar, numero = i + 1, conEstado = true) }
                 if (editando) Row {
-                    Text("▲", color = if (i > 0) Charcoal else Line, fontSize = 18.sp, modifier = Modifier.clickable(enabled = i > 0) { mover(j.id, -1) }.padding(8.dp))
-                    Text("▼", color = if (i < juegos.size - 1) Charcoal else Line, fontSize = 18.sp, modifier = Modifier.clickable(enabled = i < juegos.size - 1) { mover(j.id, 1) }.padding(8.dp))
-                    Text("✕", color = Acento, fontSize = 18.sp, modifier = Modifier.clickable { val r = s.juegos - j.id; if (r.isEmpty()) { Sagas.quitar(s.id); alCerrar() } else Sagas.poner(s.copy(juegos = r)) }.padding(8.dp))
+                    Text("▲", color = if (i > 0) Charcoal else Line, fontSize = 18.sp, modifier = Modifier.tocable(enabled = i > 0) { mover(j.id, -1) }.padding(8.dp))
+                    Text("▼", color = if (i < juegos.size - 1) Charcoal else Line, fontSize = 18.sp, modifier = Modifier.tocable(enabled = i < juegos.size - 1) { mover(j.id, 1) }.padding(8.dp))
+                    Text("✕", color = Acento, fontSize = 18.sp, modifier = Modifier.tocable { val r = s.juegos - j.id; if (r.isEmpty()) { Sagas.quitar(s.id); alCerrar() } else Sagas.poner(s.copy(juegos = r)) }.padding(8.dp))
                 }
             }
             Filete(1.dp, Line)
@@ -131,9 +131,9 @@ fun DialogoSagaDeJuego(j: Juego, alCerrar: () -> Unit) {
                 Sagas.lista.sortedBy { Catalogo.norm(it.nombre) }.forEach { s ->
                     val on = s.id == actual?.id
                     Text((if (on) "● " else "○ ") + s.nombre, color = if (on) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp,
-                        modifier = Modifier.fillMaxWidth().clickable { Sagas.asignar(j.id, s); alCerrar() }.padding(vertical = 8.dp))
+                        modifier = Modifier.fillMaxWidth().tocable { Sagas.asignar(j.id, s); alCerrar() }.padding(vertical = 8.dp))
                 }
-                if (actual != null) Text("Quitar de su saga", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().clickable { Sagas.asignar(j.id, null); alCerrar() }.padding(vertical = 10.dp))
+                if (actual != null) Text("Quitar de su saga", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.fillMaxWidth().tocable { Sagas.asignar(j.id, null); alCerrar() }.padding(vertical = 10.dp))
                 CampoRevista("Nueva", nueva, "nombre de la saga") { nueva = it }
             }
         },
@@ -171,7 +171,7 @@ fun SelectorJuegos(titulo: String, candidatos: List<Juego>, alCerrar: () -> Unit
                 if (lista.isEmpty()) item { Text("No hay más juegos para elegir.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
                 items(lista, key = { it.id }) { j ->
                     val on = j.id in marcados
-                    Row(Modifier.fillMaxWidth().clickable { if (uno) alElegir(listOf(j.id)) else marcados = if (on) marcados - j.id else marcados + j.id }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().tocable { if (uno) alElegir(listOf(j.id)) else marcados = if (on) marcados - j.id else marcados + j.id }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (!uno) Text(if (on) "■" else "□", color = if (on) Acento else Muted, fontSize = 22.sp, modifier = Modifier.width(34.dp))
                         Box(Modifier.width(40.dp).aspectRatio(PROPORCION_PORTADA).clip(esquina(3.dp))) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 18) }
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {

@@ -44,7 +44,7 @@ fun Cuerpo(t: String, modifier: Modifier = Modifier, color: Color = Muted, tam: 
 @Composable
 fun BotonAcento(texto: String, icono: ImageVector? = null, modifier: Modifier = Modifier, alto: Dp = 52.dp, alHacer: () -> Unit) {
     Row(
-        modifier.heightIn(min = alto).clip(pildora()).background(Acento).clickable(onClick = alHacer).padding(horizontal = 22.dp, vertical = 14.dp),
+        modifier.heightIn(min = alto).clip(pildora()).background(Acento).tocable(onClick = alHacer).padding(horizontal = 22.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
         if (icono != null) { Icon(icono, null, tint = SobreAcento, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)) }
@@ -61,7 +61,7 @@ fun AccionGrande(icono: ImageVector?, texto: String, modifier: Modifier = Modifi
     val fondo = if (acento) Acento else Charcoal
     val letra = if (acento) SobreAcento else Paper
     Row(
-        modifier.heightIn(min = 52.dp).clip(pildora()).background(if (enabled) fondo else fondo.copy(alpha = 0.35f)).clickable(enabled = enabled, onClick = alHacer)
+        modifier.heightIn(min = 52.dp).clip(pildora()).background(if (enabled) fondo else fondo.copy(alpha = 0.35f)).tocable(enabled = enabled, onClick = alHacer)
             .padding(horizontal = 22.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
@@ -75,7 +75,7 @@ fun AccionGrande(icono: ImageVector?, texto: String, modifier: Modifier = Modifi
 fun BotonSuave(texto: String, icono: ImageVector? = null, modifier: Modifier = Modifier, peligro: Boolean = false, alHacer: () -> Unit) {
     val col = if (peligro) Acento else Charcoal
     Row(
-        modifier.heightIn(min = 44.dp).clip(pildora()).border(1.5.dp, col, pildora()).clickable(onClick = alHacer).padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier.heightIn(min = 44.dp).clip(pildora()).border(1.5.dp, col, pildora()).tocable(onClick = alHacer).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
         if (icono != null) { Icon(icono, null, tint = col, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)) }
@@ -89,7 +89,7 @@ fun BotonIcono(icono: ImageVector, descripcion: String, modifier: Modifier = Mod
     val conCaja = Skin.forma.esq != Esq.Recta || fondo != Color.Transparent
     Box(
         modifier.size(tam).let { if (conCaja) it.clip(if (Skin.forma.esq == Esq.Redonda) CircleShape else esquina(12.dp)).background(if (fondo == Color.Transparent) Sand else fondo) else it }
-            .clickable(onClick = alHacer).semantics { contentDescription = descripcion },
+            .tocable(onClick = alHacer).semantics { contentDescription = descripcion },
         contentAlignment = Alignment.Center
     ) { Icon(icono, null, tint = tinta, modifier = Modifier.size(tam * 0.5f)) }
 }
@@ -107,7 +107,7 @@ fun Panel(modifier: Modifier = Modifier, alHacer: (() -> Unit)? = null, contenid
     if (f.esq == Esq.Recta && f.borde.value == 0f) {
         val tinta = Charcoal
         Column(
-            modifier.fillMaxWidth().let { if (alHacer != null) it.clickable(onClick = alHacer) else it }
+            modifier.fillMaxWidth().let { if (alHacer != null) it.tocable(onClick = alHacer) else it }
                 .drawBehind { drawRect(tinta, topLeft = Offset(0f, 0f), size = Size(size.width, 2.dp.toPx())) }.padding(top = 14.dp, bottom = 10.dp),
             content = contenido
         )
@@ -116,7 +116,7 @@ fun Panel(modifier: Modifier = Modifier, alHacer: (() -> Unit)? = null, contenid
     val forma = esquina(22.dp)
     Column(
         modifier.clip(forma).background(Crudo).let { if (f.borde.value > 0f) it.border(f.borde, if (f.bordeTinta) Charcoal else Line, forma) else it }
-            .let { if (alHacer != null) it.clickable(onClick = alHacer) else it }.padding(16.dp),
+            .let { if (alHacer != null) it.tocable(onClick = alHacer) else it }.padding(16.dp),
         content = contenido
     )
 }
@@ -125,7 +125,7 @@ fun Panel(modifier: Modifier = Modifier, alHacer: (() -> Unit)? = null, contenid
 @Composable
 fun Fila(titulo: String, descripcion: String? = null, modifier: Modifier = Modifier, alHacer: (() -> Unit)? = null, final: @Composable (() -> Unit)? = null) {
     Row(
-        modifier.fillMaxWidth().let { if (alHacer != null) it.clickable(onClick = alHacer) else it }.padding(vertical = 10.dp),
+        modifier.fillMaxWidth().let { if (alHacer != null) it.tocable(onClick = alHacer) else it }.padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
@@ -141,7 +141,7 @@ fun Fila(titulo: String, descripcion: String? = null, modifier: Modifier = Modif
 fun Interruptor(activo: Boolean, alCambiar: (Boolean) -> Unit) {
     val fondo by animateColorAsState(if (activo) Acento else Sand, label = "sw")
     val forma = if (Skin.forma.esq == Esq.Redonda) RoundedCornerShape(50) else esquina(4.dp)
-    Box(Modifier.width(48.dp).height(28.dp).clip(forma).background(fondo).border(1.dp, if (activo) Acento else Line, forma).clickable(role = Role.Switch) { alCambiar(!activo) }.padding(3.dp)) {
+    Box(Modifier.width(48.dp).height(28.dp).clip(forma).background(fondo).border(1.dp, if (activo) Acento else Line, forma).tocable(role = Role.Switch) { alCambiar(!activo) }.padding(3.dp)) {
         Box(Modifier.align(if (activo) Alignment.CenterEnd else Alignment.CenterStart).size(22.dp).clip(if (Skin.forma.esq == Esq.Redonda) CircleShape else esquina(3.dp)).background(if (activo) SobreAcento else Muted))
     }
 }

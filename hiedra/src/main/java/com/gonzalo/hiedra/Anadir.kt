@@ -229,7 +229,7 @@ private fun SelectorApps(alAnadir: (List<AppInstalada>) -> Unit) {
         else LazyColumn(Modifier.weight(1f)) {
             items(lista, key = { it.paquete }) { a ->
                 val on = a.paquete in marcadas
-                Row(Modifier.fillMaxWidth().clip(esquina(14.dp)).clickable { if (on) marcadas.remove(a.paquete) else marcadas.add(a.paquete) }.padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().clip(esquina(14.dp)).tocable { if (on) marcadas.remove(a.paquete) else marcadas.add(a.paquete) }.padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     rememberIconoApp(a.paquete)?.let { Image(it, null, Modifier.size(42.dp).clip(esquina(10.dp))) } ?: Box(Modifier.size(42.dp).background(Sand))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) { Text(a.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 1); Cuerpo(a.paquete, tam = 11, lineas = 1) }

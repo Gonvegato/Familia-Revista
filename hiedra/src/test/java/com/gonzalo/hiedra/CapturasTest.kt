@@ -35,7 +35,7 @@ class CapturasTest {
     @get:Rule val rule = createComposeRule()
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
 
-    private fun siembra() {
+    internal fun siembra() {
         Catalogo.cargar(ctx); Skin.cargar(ctx); Ajustes.cargar(ctx)
         Skin.invertido = false; Skin.origenAtrio = false; Skin.fondoId = ""
         Ajustes.portadasLibretro = false
@@ -68,6 +68,12 @@ class CapturasTest {
         Biblioteca.juegos.add(nuevoJuego("Tears of the Kingdom", "Switch", anadido = ahora - 30_000).conEstado(Estado.JUGANDO).copy(propias = Horas(25 * 3600_000L, 9), ultima = ahora - 7200_000))
         // Un juego con dos maneras de abrirse: la ROM aquí y el mismo juego en el PC
         Biblioteca.juegos[Biblioteca.juegos.indexOfFirst { it.id == "r7" }] = Biblioteca.por("r7")!!.conLanzador(Lanzador.pc("steam:367520", "pc1")).copy(externas = mapOf(Fuentes.pc("pc1") to Horas(30 * 3600_000L)))
+        // Dos partidas del jugador de Hiedra en Pokémon Esmeralda (el automático y un hueco), con su foto
+        fun imagen(a: Int, b: Int) = android.graphics.Bitmap.createBitmap(240, 160, android.graphics.Bitmap.Config.ARGB_8888).also { bm ->
+            android.graphics.Canvas(bm).drawPaint(android.graphics.Paint().apply { shader = android.graphics.LinearGradient(0f, 0f, 240f, 160f, a, b, android.graphics.Shader.TileMode.CLAMP) })
+        }
+        Estados.guardar(ctx, "r1", Estados.AUTO, ByteArray(64) { it.toByte() }, "mgba", "v1", imagen(0xFF4B7F52.toInt(), 0xFFA8D08D.toInt()), ahora - 3600_000)
+        Estados.guardar(ctx, "r1", "1", ByteArray(64) { 1 }, "mgba", "v1", imagen(0xFF2E4C8C.toInt(), 0xFF8FB3E8.toInt()), ahora - 86_400_000L * 2)
         Sagas.cargada = true; Sagas.lista.clear(); Sagas.borradas.clear()
         Sagas.lista.add(Saga("s1", "Pokémon", listOf("r1", "r5"), 1))
         Sagas.lista.add(Saga("s2", "The Legend of Zelda", listOf("r4", Biblioteca.juegos.first { it.titulo == "Tears of the Kingdom" }.id), 1))

@@ -137,7 +137,7 @@ class JugadorTest {
         val n = Nucleos.para("gba")!!
         assertEquals("mgba", n.id)
         assertEquals("https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/mgba_libretro_android.so.zip", Nucleos.url(n.id))
-        assertNull(Nucleos.para("snes"))
+        assertNull(Nucleos.para("dreamcast"))
     }
 
     @Test fun fechaYDescripcion() {
@@ -146,7 +146,7 @@ class JugadorTest {
         assertEquals(0L, Nucleos.fechaHttp(null))
         assertEquals(0L, Nucleos.fechaHttp("ayer"))
         val n = Nucleos.para("gba")!!
-        assertEquals("mGBA · se descarga al jugar", Nucleos.describir(n, null))
+        assertEquals("mGBA · se descarga al jugar (420 KB)", Nucleos.describir(n, null))
         assertEquals("mGBA · 2,4 MB", Nucleos.describir(n, Nucleos.Instalado("mgba", 0L, 2_516_582L, "abc")))
     }
 
@@ -205,14 +205,22 @@ class LanzarInternoTest {
         assertNull(Lanzar.lanzar(ctx, gba))
         val abierta = org.robolectric.Shadows.shadowOf(ctx as android.app.Application).nextStartedActivity
         assertEquals(JuegoActivity::class.java.name, abierta.component?.className)
-        // Con otro emulador hace falta el archivo: se dice cómo bajarlo
-        Biblioteca.juegos.add(Juego("s1", "Chrono Trigger", lanzadores = listOf(Lanzador.rom("snes", "Chrono Trigger"))))
+        // Con otro emulador hace falta el archivo: se dice cómo bajarlo (la GameCube no tiene núcleo en Hiedra)
+        Biblioteca.juegos.add(Juego("s1", "Wind Waker", lanzadores = listOf(Lanzador.rom("gc", "Wind Waker"))))
         assertEquals("Esta ROM está en otro de tus móviles: en su ficha, «Jugar» la baja de tu kDrive.", Lanzar.lanzar(ctx, Biblioteca.por("s1")!!))
     }
 
     @Test fun sinNucleoNoSale() {
-        val r = RomRef("content://x", "/storage/emulated/0/Roms/snes/Juego.sfc")
-        assertFalse(Lanzar.evaluar(ctx, "snes", r).any { Lanzar.esInterno(it) })
-        assertFalse(Lanzar.esInterno(Lanzar.elegirSistema(ctx, "snes")))
+        val r = RomRef("content://x", "/storage/emulated/0/Roms/gc/Juego.rvz")
+        assertFalse(Lanzar.evaluar(ctx, "gc", r).any { Lanzar.esInterno(it) })
+        assertFalse(Lanzar.esInterno(Lanzar.elegirSistema(ctx, "gc")))
+    }
+
+    @Test fun lasNuevasConsolasTambienSeJueganEnHiedra() {
+        // Sin otro emulador instalado (en Robolectric no hay ninguno), «Automático» es Hiedra en SNES, PlayStation, DS…
+        for (s in listOf("snes", "nes", "gb", "megadrive", "psx", "n64", "psp", "nds", "neogeo")) {
+            assertTrue(s, Lanzar.esInterno(Lanzar.elegirSistema(ctx, s)))
+            assertEquals(s, 1, Lanzar.evaluar(ctx, s, RomRef("content://x", null)).count { Lanzar.esInterno(it) })
+        }
     }
 }

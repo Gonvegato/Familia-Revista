@@ -90,7 +90,7 @@ fun DialogoBajarRom(j: Juego, jugar: Boolean, alCerrar: () -> Unit) {
                     Box(Modifier.fillMaxWidth(hecho).fillMaxHeight().background(Acento))
                 }
                 if (paso is PasoRom.Lista && carpeta != null) Text("Elegir otra carpeta", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 10.dp).clickable { elegir.launch(null) })
+                    modifier = Modifier.padding(top = 10.dp).tocable { elegir.launch(null) })
             }
         },
         confirmButton = {

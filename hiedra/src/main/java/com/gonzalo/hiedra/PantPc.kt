@@ -109,7 +109,7 @@ fun TarjetaPc(alIr: () -> Unit, alAbrir: (Juego) -> Unit, enPortada: Boolean = t
     }
     if (pc == null) {
         val conocido = Suite.pcs().maxByOrNull { it.at } ?: return
-        Column(Modifier.fillMaxWidth().clickable(onClick = alIr).padding(bottom = if (enPortada) 18.dp else 0.dp)) {
+        Column(Modifier.fillMaxWidth().tocable(onClick = alIr).padding(bottom = if (enPortada) 18.dp else 0.dp)) {
             Antetitulo("Tu PC · ${conocido.name}", color = Muted, conCuadro = false)
             Text("Desconectado" + if (conocido.at > 0) " · visto ${hace(conocido.at)}" else "", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 2.dp))
             if (!enPortada) Cuerpo("Enciende el PC y abre Atrio con tu cuenta: aparecerá aquí en directo.", tam = 12, modifier = Modifier.padding(top = 4.dp))
@@ -134,7 +134,7 @@ fun TarjetaPc(alIr: () -> Unit, alAbrir: (Juego) -> Unit, enPortada: Boolean = t
     Column(Modifier.fillMaxWidth().padding(bottom = if (enPortada) 18.dp else 0.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) { PuntoDirecto(); Spacer(Modifier.width(8.dp)); Antetitulo("En directo · ${pc.name}", color = Acento, conCuadro = false) }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (juego != null) Box(Modifier.width(54.dp).aspectRatio(PROPORCION_PORTADA).clip(esquina(4.dp)).clickable { alAbrir(juego) }) { PortadaArco(juego, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 26) }
+            if (juego != null) Box(Modifier.width(54.dp).aspectRatio(PROPORCION_PORTADA).clip(esquina(4.dp)).tocable { alAbrir(juego) }) { PortadaArco(juego, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 26) }
             else PortadaPc(PcGame(g.key, g.name, g.cover, g.sg, false, 0, "", 0), Modifier.width(54.dp).aspectRatio(PROPORCION_PORTADA))
             Column(Modifier.weight(1f).padding(start = 14.dp)) {
                 FitTitle(g.name, 26.sp, 28.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, letterSpacing = (-0.5).sp)
@@ -171,7 +171,7 @@ fun TiraCapturas(shots: List<Shot>, titulo: String, alAbrir: (Shot) -> Unit) {
                 }
             }
             items(shots, key = { it.id }) { s ->
-                AsyncImage(s.uri, s.game, Modifier.width(150.dp).aspectRatio(16f / 9f).clip(esquina(6.dp)).background(Sand).clickable { alAbrir(s) }, contentScale = ContentScale.Crop)
+                AsyncImage(s.uri, s.game, Modifier.width(150.dp).aspectRatio(16f / 9f).clip(esquina(6.dp)).background(Sand).tocable { alAbrir(s) }, contentScale = ContentScale.Crop)
             }
         }
     }
@@ -211,7 +211,7 @@ fun VisorCaptura(shot: Shot, alCerrar: () -> Unit, alBorrar: () -> Unit) {
         AnimatedVisibility(chrome) {
             Column(Modifier.fillMaxWidth().background(Brush.verticalGradient(0f to Color(0xAA000000), 1f to Color.Transparent)).statusBarsPadding().padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("← VOLVER", color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.clickable(onClick = alCerrar).padding(vertical = 8.dp))
+                    Text("← VOLVER", color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.tocable(onClick = alCerrar).padding(vertical = 8.dp))
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
                         Text(shot.game.ifBlank { "Escritorio" }, color = Color.White, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -223,7 +223,7 @@ fun VisorCaptura(shot: Shot, alCerrar: () -> Unit, alBorrar: () -> Unit) {
         AnimatedVisibility(chrome, Modifier.align(Alignment.BottomCenter)) {
             Row(Modifier.fillMaxWidth().background(Brush.verticalGradient(0f to Color.Transparent, 1f to Color(0xAA000000))).navigationBarsPadding().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(22.dp)) {
                 listOf("Compartir" to { compartirCaptura(ctx, shot) }, "Abrir" to { abrirCaptura(ctx, shot) }, "Borrar" to { ask = true }).forEach { (t, f) ->
-                    Text(t.uppercase(), color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.clickable(onClick = f).padding(vertical = 8.dp))
+                    Text(t.uppercase(), color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.tocable(onClick = f).padding(vertical = 8.dp))
                 }
             }
         }
@@ -310,7 +310,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                             Antetitulo("Seguir jugando", Modifier.padding(bottom = 8.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 items(recientes, key = { it.key }) { g ->
-                                    Column(Modifier.width(96.dp).clickable { hoja = dev to g }) {
+                                    Column(Modifier.width(96.dp).tocable { hoja = dev to g }) {
                                         PortadaPc(g, Modifier.fillMaxWidth().aspectRatio(PROPORCION_PORTADA))
                                         Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
                                     }
@@ -335,7 +335,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                         LazyVerticalGrid(GridCells.Adaptive(96.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                             items(lib, key = { it.key }) { g ->
                                 val en = Biblioteca.porClave("pc:" + g.key) != null
-                                Column(Modifier.clickable { hoja = dev to g }) {
+                                Column(Modifier.tocable { hoja = dev to g }) {
                                     PortadaPc(g, Modifier.fillMaxWidth().aspectRatio(PROPORCION_PORTADA))
                                     // (todas las casillas miden lo mismo: dos líneas de nombre y dos de horas, quepan o no en una)
                                     Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
@@ -354,7 +354,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                     if (Suite.downloading.isNotEmpty()) { Spacer(Modifier.height(8.dp)); TiraCapturas(emptyList(), "Llegando") { } }
                     LazyVerticalGrid(GridCells.Adaptive(150.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                         items(Suite.localShots, key = { it.id }) { s ->
-                            Column(Modifier.clickable { alCaptura(s) }) {
+                            Column(Modifier.tocable { alCaptura(s) }) {
                                 AsyncImage(s.uri, s.game, Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(esquina(6.dp)).background(Sand), contentScale = ContentScale.Crop)
                                 Text(s.game.ifBlank { "Escritorio" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
                                 Text(fechaHora(s.time).uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)

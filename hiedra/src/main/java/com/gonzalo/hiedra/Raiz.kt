@@ -2,7 +2,12 @@ package com.gonzalo.hiedra
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -20,6 +25,10 @@ fun iniciar(c: Context) {
     TemaAtrio.cargarGuardado(c)
     Cuenta.cargar(c); SincroP.iniciar(c)
 }
+
+/** La ficha y la saga entran desde un poco más abajo, frenando al llegar, y se van más deprisa de lo que llegan. */
+private val entraHoja = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it / 10 } + fadeIn(tween(220))
+private val saleHoja = slideOutVertically(tween(200, easing = FastOutLinearInEasing)) { it / 14 } + fadeOut(tween(160))
 
 /** Dónde estás: la portada y sus secciones (se llega a ellas desde el menú de la portada, como en Atrio). Sistemas se abre desde Ajustes. */
 enum class Destino { Portada, Jugando, Pendiente, Pasado, Abandonado, Sagas, Sistemas, Ajustes, PC }
@@ -70,6 +79,11 @@ fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrir
     BackHandler(enabled = fichaId == null && sagaId == null && d != Destino.Portada) { destino = 0 }
 
     Box(Modifier.fillMaxSize().background(Paper)) {
+        // Entre páginas, un fundido corto con un poco de subida (la portada vuelve hacia abajo): sin saltos, como pasar una hoja
+        AnimatedContent(d, transitionSpec = {
+            val ida = targetState != Destino.Portada
+            (fadeIn(tween(220, delayMillis = 40)) + slideInVertically(tween(300, easing = FastOutSlowInEasing)) { if (ida) it / 24 else -it / 24 }) togetherWith fadeOut(tween(140))
+        }, label = "pagina") { d ->
         when (d) {
             Destino.Portada -> PantInicio(
                 alAbrir = { fichaId = it.id }, alJugar = ::jugar, alAnadir = { abrirAnadir(it) },
@@ -80,10 +94,11 @@ fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrir
             Destino.PC -> PantPc(alVolver = { destino = 0 }, alAbrir = { fichaId = it.id }, alCaptura = { captura = it })
             else -> PantSecciones(d, alVolver = { destino = 0 }, alAbrir = { fichaId = it.id }, alJugar = ::jugar, alAbrirSaga = { sagaId = it.id }, alAnadir = { abrirAnadir(null) }, buscandoInicial = buscar)
         }
-        AnimatedVisibility(sagaId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
+        }
+        AnimatedVisibility(sagaId != null, enter = entraHoja, exit = saleHoja) {
             sagaId?.let { id -> PantSaga(id, alCerrar = { sagaId = null }, alAbrir = { fichaId = it.id }, alJugar = ::jugar) }
         }
-        AnimatedVisibility(fichaId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
+        AnimatedVisibility(fichaId != null, enter = entraHoja, exit = saleHoja) {
             fichaId?.let { id -> Ficha(id, alCerrar = { fichaId = null }, alJugar = ::jugar, alVincular = { abrirAnadir(null, it.id) }, alIrA = { fichaId = it }) }
         }
         AnimatedVisibility(captura != null, enter = fadeIn(), exit = fadeOut()) {
