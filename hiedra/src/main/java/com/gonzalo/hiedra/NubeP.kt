@@ -44,7 +44,13 @@ object NubeP {
 
     /** Carpeta de guardados de cada sistema (sistema → uri del árbol que diste). */
     val carpetas = mutableStateMapOf<String, String>()
-    private fun prefs(c: Context) = c.getSharedPreferences("hiedra_nube_p", Context.MODE_PRIVATE)
+    /**
+     * Las carpetas de guardados y lo ya sincronizado son de este móvil; «subir mis ROMs solas» es tuyo y viaja con la cuenta
+     * (`ajustes/hiedra_nube_p`).
+     */
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("hiedra_nube_p", "hiedra_nube_p", { k -> if (k == "roms_solas") EspejoCuenta.Tipo.SI_NO else null },
+        alLlegar = { c -> if (romsSolas(c) && KDrive.on(c)) runCatching { SubirRomsWorker.programar(c) } })
+    private fun prefs(c: Context) = EspejoCuenta.prefs(c, GRUPO)
 
     fun cargar(c: Context) {
         carpetas.clear()

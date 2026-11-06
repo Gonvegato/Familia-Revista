@@ -557,22 +557,43 @@ object Biblioteca {
     fun migraBorrado(id: String, hora: Long) { col?.pon(id, mapOf("b" to hora), hora.coerceAtLeast(1L)) }
 }
 
-/** Ajustes de Hiedra que no son del tema. De este dispositivo. */
+/**
+ * Ajustes de Hiedra que no son del tema: las portadas automáticas (`libretro`) y el emulador elegido para cada consola (`emu:<sistema>`).
+ * Viajan con tu cuenta (`ajustes/hiedra_ajustes`, un campo por ajuste): si eliges un emulador que en otro móvil no está, allí se usa el
+ * automático hasta que lo instales.
+ */
 object Ajustes {
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("hiedra_ajustes", "hiedra_ajustes", tipo = { k ->
+        when { k == "libretro" -> EspejoCuenta.Tipo.SI_NO; k.startsWith("emu:") -> EspejoCuenta.Tipo.TEXTO; else -> null }
+    }, alLlegar = { cargar(it); Widgets.pedir(it) })
+
     /** Emulador elegido por sistema: la etiqueta del comando; sin entrada = automático. */
     val emuladorPorSistema = HashMap<String, String>()
     var portadasLibretro by mutableStateOf(true)
-    private fun p(c: Context) = c.getSharedPreferences("hiedra_ajustes", Context.MODE_PRIVATE)
+    private fun p(c: Context) = EspejoCuenta.prefs(c, GRUPO)
 
     fun cargar(c: Context) {
         val p = p(c)
+        // (hasta la 0.6.0 iban todos juntos en «emus»: ahora cada consola por su cuenta, para que dos móviles que eligen el de consolas
+        // distintas no se pisen; el paso es aquí, sin tocar la cuenta: lo de antes sube luego con su hora)
+        val b = EspejoCuenta.base(c, GRUPO)
+        b.getString("emus", null)?.let { s ->
+            val ed = b.edit()
+            runCatching { JSONObject(s).let { o -> o.keys().forEach { k -> if (!b.contains("emu:$k") && o.optString(k).isNotBlank()) ed.putString("emu:$k", o.getString(k)) } } }
+            ed.remove("emus").commit()
+        }
         portadasLibretro = p.getBoolean("libretro", true)
         emuladorPorSistema.clear()
-        runCatching { JSONObject(p.getString("emus", "{}")!!).let { o -> o.keys().forEach { k -> emuladorPorSistema[k] = o.getString(k) } } }
+        p.all.forEach { (k, v) -> if (k.startsWith("emu:") && v is String && v.isNotBlank()) emuladorPorSistema[k.removePrefix("emu:")] = v }
     }
 
     fun guardar(c: Context) {
-        p(c).edit().putBoolean("libretro", portadasLibretro).putString("emus", JSONObject(emuladorPorSistema as Map<*, *>).toString()).apply()
+        val p = p(c)
+        val ed = p.edit()
+        if (p.contains("libretro") || !portadasLibretro) ed.putBoolean("libretro", portadasLibretro)
+        p.all.keys.filter { it.startsWith("emu:") && it.removePrefix("emu:") !in emuladorPorSistema }.forEach { ed.remove(it) }
+        emuladorPorSistema.forEach { (s, l) -> ed.putString("emu:$s", l) }
+        ed.apply()
     }
 }
 

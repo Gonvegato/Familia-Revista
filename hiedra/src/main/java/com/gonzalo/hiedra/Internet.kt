@@ -61,6 +61,9 @@ import java.net.URLEncoder
 
 /** Buscar una imagen en internet (Google Imágenes, Pinterest…, dentro de la app) y quedarse con ella como portada. Viene de Atrio (Internet.kt). */
 object Internet {
+    /** La web de imágenes que usaste la última vez: viaja con tu cuenta (`ajustes/hiedra_internet`). */
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("internet", "hiedra_internet", { k -> if (k == "fuente") EspejoCuenta.Tipo.TEXTO else null })
+
     /** Una web de imágenes donde buscar: cómo se llama y cómo es su búsqueda. */
     class Fuente(val id: String, val nombre: String, val url: (String) -> String)
 
@@ -291,7 +294,7 @@ fun InternetPicker(initialQuery: String, idJuego: String, onPick: (String) -> Un
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf(initialQuery) }
-    val prefs = remember { ctx.getSharedPreferences("internet", Context.MODE_PRIVATE) }
+    val prefs = remember { EspejoCuenta.prefs(ctx, Internet.GRUPO) }
     var fuente by remember { mutableStateOf(Internet.fuente(prefs.getString("fuente", null))) }
     var web by remember { mutableStateOf<WebView?>(null) }
     var msg by remember { mutableStateOf("") }

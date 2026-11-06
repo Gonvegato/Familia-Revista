@@ -55,9 +55,10 @@ fun ordenar(o: Orden, l: List<Juego>): List<Juego> = when (o) {
     Orden.Pasados -> l.sortedWith(compareByDescending<Juego> { it.finalizado }.thenByDescending { it.ultima })
 }
 
-/** El orden que has elegido para cada sección (se recuerda al cerrar la app). */
+/** El orden que has elegido para cada sección: se recuerda y viaja con tu cuenta (`ajustes/hiedra_orden`, un campo por sección). */
 object OrdenGuardado {
-    private fun prefs(c: Context) = c.getSharedPreferences("hiedra_orden", Context.MODE_PRIVATE)
+    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("hiedra_orden", "hiedra_orden", { EspejoCuenta.Tipo.TEXTO })
+    private fun prefs(c: Context) = EspejoCuenta.prefs(c, GRUPO)
     fun de(c: Context, e: Estado): Orden = (Orden.entries.firstOrNull { it.name == prefs(c).getString(e.name, null) } ?: ordenInicial(e)).let { if (it == Orden.Pasados && e != Estado.PASADO) ordenInicial(e) else it }
     fun pon(c: Context, e: Estado, o: Orden) { prefs(c).edit().putString(e.name, o.name).apply() }
 }
@@ -181,7 +182,7 @@ fun MenusPequenos(sel: Menu?, cuentas: Map<Menu, Int>, onSel: (Menu?) -> Unit) {
 @Composable
 private fun PaginaEstante(estado: Estado, todos: List<Juego>, menu: Menu?, alMenu: (Menu?) -> Unit, alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAbrirSaga: (Saga) -> Unit, alAnadir: () -> Unit) {
     val ctx = LocalContext.current
-    var orden by remember(estado) { mutableStateOf(OrdenGuardado.de(ctx, estado)) }
+    var orden by remember(estado, EspejoCuenta.version) { mutableStateOf(OrdenGuardado.de(ctx, estado)) }
     var sistema by rememberSaveable(estado) { mutableStateOf<String?>(null) }
     val delEstado = remember(todos, estado) { todos.filter { it.estado == estado } }
     val cuentas = remember(delEstado) { Menu.entries.associateWith { m -> delEstado.count { m in it.menus } } }
