@@ -47,6 +47,12 @@ object Torrents {
 
     val disponible: Boolean get() = fuente !== SinTorrents
 
+    /**
+     * ¿Se puede poner un torrent ahora mismo? Con «Solo con wifi» y datos del móvil, no: así el elector no escoge solo un torrent que el
+     * motor rechazaría, y pone la mejor fuente directa o de tu debrid.
+     */
+    fun usables(c: Context, red: Red = Conexion.red(c)): Boolean = disponible && !(red.movil && ajustes(c).soloWifi)
+
     /** Los ajustes de tu cuenta para el motor. */
     fun ajustes(c: Context): AjustesTorrent = AjustesTorrents.ajustes(c)
 

@@ -397,7 +397,8 @@ class ReproductorActivity : ComponentActivity() {
         ambito.launch {
             val cs = Addons.fuentes("series", sig.id)
             val m = encargo.meta
-            val e = Elector.elige(cs, AjustesElector.prefs(applicationContext), Conexion.red(applicationContext), Conexion.capacidades(applicationContext), m?.minutos ?: 0, Torrents.disponible, grupo)
+            val red = Conexion.red(applicationContext)
+            val e = Elector.elige(cs, AjustesElector.prefs(applicationContext), red, Conexion.capacidades(applicationContext), m?.minutos ?: 0, Torrents.usables(applicationContext, red), grupo)
             val c = e.elegida ?: run { estado.cargando = false; estado.aviso = "No hay fuentes para el episodio siguiente."; return@launch }
             visionado?.termina(estado.dur, estado.dur)
             cierraTorrent()

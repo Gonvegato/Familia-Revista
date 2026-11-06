@@ -14,7 +14,6 @@ class VersionTest {
         val gradle = listOf(File("build.gradle.kts"), File("mostaza/build.gradle.kts")).first { it.exists() }.readText()
         val nombre = Regex("versionName\\s*=\\s*\"([^\"]+)\"").find(gradle)!!.groupValues[1]
         assertEquals(nombre, VERSION)
-        assertEquals("0.1.0", VERSION)
     }
 
     @Test fun elActualizadorSoloCogeLasDeMostaza() {

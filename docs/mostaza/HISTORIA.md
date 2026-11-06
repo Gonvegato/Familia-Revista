@@ -16,6 +16,13 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## 0.1.1
+
+- **Con datos del móvil se ve igual.** Las fuentes directas y las de tu Real-Debrid no tienen ningún límite con datos (con «Ahorrar
+  datos del móvil», Mostaza prefiere hasta 720p y lo que menos pese; si quieres la mejor calidad también con datos, apágalo en Ajustes →
+  Elector). Arreglo: con «Solo con wifi» puesto y yendo con datos, «Reproducir» podía elegir un torrent que el motor no iba a abrir; ahora
+  elige la mejor fuente directa o de tu debrid. Si quieres torrents con datos, quita «Solo con wifi» en Ajustes → Torrent.
+
 ## 0.1.0 — la primera
 
 **Lo que hay**

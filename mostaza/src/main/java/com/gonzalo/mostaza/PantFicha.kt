@@ -35,7 +35,7 @@ object Busqueda {
     suspend fun fuentes(tipo: String, videoId: String, alLlegar: (List<Candidata>) -> Unit = {}): List<Candidata> = fijas ?: Addons.fuentes(tipo, videoId, alLlegar)
 
     fun elige(c: Context, cs: List<Candidata>, m: Meta?, grupo: String = ""): Eleccion =
-        Elector.elige(cs, AjustesElector.prefs(c), Conexion.red(c), Conexion.capacidades(c), m?.minutos ?: 0, Torrents.disponible, grupo)
+        Conexion.red(c).let { red -> Elector.elige(cs, AjustesElector.prefs(c), red, Conexion.capacidades(c), m?.minutos ?: 0, Torrents.usables(c, red), grupo) }
 }
 
 /**
