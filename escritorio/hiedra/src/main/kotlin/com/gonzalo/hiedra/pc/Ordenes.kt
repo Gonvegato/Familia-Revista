@@ -28,11 +28,14 @@ object Programas {
 
     @Volatile private var flatpaks: Pair<Long, Set<String>>? = null
 
-    /** Las apps de Flatpak instaladas (`flatpak list --app --columns=application`), mirado como mucho cada minuto. */
-    fun flatpaks(): Set<String> {
+    /**
+     * Las apps de Flatpak instaladas (`flatpak list --app --columns=application`). Se miran al mirar lo de este ordenador ([otraVez]) y,
+     * si no, como mucho cada diez minutos (así no se espera al pintar los ajustes).
+     */
+    fun flatpaks(otraVez: Boolean = false): Set<String> {
         flatpaksPruebas?.let { return it }
         if (Sitio.sistema != Sitio.Sistema.LINUX) return emptySet()
-        flatpaks?.takeIf { System.currentTimeMillis() - it.first < 60_000 }?.let { return it.second }
+        if (!otraVez) flatpaks?.takeIf { System.currentTimeMillis() - it.first < 600_000 }?.let { return it.second }
         val s = if (!enPath("flatpak")) emptySet() else salida(listOf("flatpak", "list", "--app", "--columns=application"), 10)
             ?.lines()?.map { it.trim() }?.filter { it.isNotBlank() && it.contains('.') }?.toSet().orEmpty()
         flatpaks = System.currentTimeMillis() to s

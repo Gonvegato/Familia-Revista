@@ -99,6 +99,7 @@ object Pc {
 
     /** Todo lo de este ordenador, mirado ahora (bloquea: Lutris tarda unos segundos). [escanear]: recorre otra vez tus carpetas de ROMs. */
     fun todos(escanear: Boolean = false): List<JuegoPc> {
+        Programas.flatpaks(otraVez = true)
         val steam = runCatching { Steam.juegos() }.getOrDefault(emptyList())
         val heroic = runCatching { Heroic.juegos() }.getOrDefault(emptyList())
         val lutris = runCatching { Lutris.juegos(conSteam = steam.isNotEmpty()) }.getOrDefault(emptyList())
@@ -136,7 +137,7 @@ object Pc {
 
     fun por(clave: String): JuegoPc? = lista().firstOrNull { it.clave == clave }
     /** El de este ordenador para un lanzador de la cuenta (por su clave: «pc:steam:…», «rom:gba:…»). */
-    fun porClaveCuenta(clave: String): JuegoPc? { lista(); return indice[clave] }
+    fun porClaveCuenta(clave: String): JuegoPc? = indice[clave]   // (sin esperar: lo que ya se ha mirado; se usa al pintar)
 
     private fun enPantalla(que: () -> Unit) { if (SwingUtilities.isEventDispatchThread()) que() else SwingUtilities.invokeLater(que) }
 

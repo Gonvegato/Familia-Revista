@@ -74,15 +74,19 @@ object Entrada {
         if (e.isControlDown || e.isAltDown || e.isMetaDown) return false
         if (e.id == java.awt.event.KeyEvent.KEY_TYPED) {
             val c = e.keyChar
+            // (la letra de una tecla que ya ha hecho algo —la F que abre la búsqueda— no se escribe)
+            if (tragar) { tragar = false; return true }
             if (!escribiendo || c == java.awt.event.KeyEvent.CHAR_UNDEFINED) return false
             if (c == '\b') { alEscribir('\b'); return true }
             if (c.isLetterOrDigit() || c == ' ' || c in ":'-.&!?") { alEscribir(c); return true }
             return false
         }
+        if (e.id == java.awt.event.KeyEvent.KEY_PRESSED) tragar = false
         val a = deTecla(e.keyCode, escribiendo) ?: return escribiendo && e.keyCode != VK_TAB
-        if (e.id == java.awt.event.KeyEvent.KEY_PRESSED) despacha(a, deMando = false)
+        if (e.id == java.awt.event.KeyEvent.KEY_PRESSED) { tragar = true; despacha(a, deMando = false) }
         return true
     }
+    private var tragar = false
 }
 
 /**

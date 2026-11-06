@@ -163,11 +163,19 @@ fun PantallaSala(est: EstadoSala, foco: FocoSala = remember { FocoSala() }, alSa
             SideEffect { focoDePrueba = foco }
             ctl.fm = fm; ctl.bib = bib; ctl.alSalir = alSalir; ctl.scope = scope
             DisposableEffect(Unit) {
-                Entrada.manejador = { a -> ctl.hace(a) }
-                Mando.alDesplazar = { px -> ctl.desplaza(px) }
+                // En la sala se ve el marco desde el principio (con el ratón se va)
+                if (Entrada.con == ConQue.RATON) Entrada.con = if (Mando.mandos.isNotEmpty()) ConQue.MANDO else ConQue.TECLADO
+                val h: (Accion) -> Boolean = { a -> ctl.hace(a) }
+                val d: (Float) -> Unit = { px -> ctl.desplaza(px) }
+                Entrada.manejador = h
+                Mando.alDesplazar = d
                 val disp = java.awt.KeyEventDispatcher { e -> if (VentanaHiedra.ventana?.isFocused == false && !Mando.ventanaActiva()) false else Entrada.teclaAwt(e, est.buscando) { c -> ctl.escribe(c) } }
                 java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(disp)
-                onDispose { Entrada.manejador = null; Mando.alDesplazar = null; java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(disp) }
+                onDispose {
+                    if (Entrada.manejador === h) Entrada.manejador = null
+                    if (Mando.alDesplazar === d) Mando.alDesplazar = null
+                    java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(disp)
+                }
             }
             // Al mover el ratón, el marco se va (y vuelve al tocar el mando o una tecla)
             Box(Modifier.fillMaxSize().pointerInput(Unit) {
@@ -246,7 +254,7 @@ class ControlSala(val est: EstadoSala, val foco: FocoSala) {
             Accion.Y -> if (!foco.opcionesDe()) est.pila.lastOrNull()?.let { if (capa() == "base") abreOpciones(it) }
             Accion.LB, Accion.RB -> if (capa() == "base") seccion(if (a == Accion.LB) -1 else 1)
             Accion.LT, Accion.RT -> if (capa() == "base" && est.pila.isEmpty() && est.seccion == Seccion.BIBLIOTECA) saltaLetra(if (a == Accion.LT) -1 else 1)
-            Accion.MENU -> if (est.menu) cierra("menu") else if (capa() == "base") { est.menu = true; abre("menu") }
+            Accion.MENU -> if (est.menu) cierra("menu") else if (capa() == "base") { est.menu = true; abre("menu"); foco.pedido = "op:0" }
             Accion.VISTA -> alSalir()
         }
         return true

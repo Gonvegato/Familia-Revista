@@ -94,6 +94,25 @@ class NavegacionTest {
         assertEquals(Accion.ARRIBA, Entrada.deTecla(java.awt.event.KeyEvent.VK_UP, true))
     }
 
+    @Test fun laTeclaQueAbreLaBusquedaNoSeEscribe() {
+        val c = javax.swing.JPanel()
+        val escrito = StringBuilder(); val acciones = ArrayList<Accion>()
+        Entrada.manejador = { a -> acciones += a; true }
+        fun ev(id: Int, code: Int, ch: Char) = java.awt.event.KeyEvent(c, id, 0L, 0, code, ch)
+        val P = java.awt.event.KeyEvent.KEY_PRESSED; val T = java.awt.event.KeyEvent.KEY_TYPED; val U = java.awt.event.KeyEvent.VK_UNDEFINED
+        assertTrue(Entrada.teclaAwt(ev(P, java.awt.event.KeyEvent.VK_F, 'f'), escribiendo = false))
+        assertTrue(Entrada.teclaAwt(ev(T, U, 'f'), escribiendo = true) { escrito.append(it) })
+        Entrada.teclaAwt(ev(P, java.awt.event.KeyEvent.VK_C, 'c'), escribiendo = true)
+        Entrada.teclaAwt(ev(T, U, 'c'), escribiendo = true) { escrito.append(it) }
+        Entrada.teclaAwt(ev(P, java.awt.event.KeyEvent.VK_BACK_SPACE, '\b'), escribiendo = true)
+        Entrada.teclaAwt(ev(T, U, '\b'), escribiendo = true) { escrito.append(if (it == '\b') "⌫" else it.toString()) }
+        assertEquals(listOf(Accion.X), acciones)
+        assertEquals("c⌫", escrito.toString())
+        // Con Control o Alt, las teclas son del sistema
+        assertFalse(Entrada.teclaAwt(java.awt.event.KeyEvent(c, P, 0L, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.KeyEvent.VK_F, 'f'), escribiendo = false))
+        Entrada.manejador = null
+    }
+
     @Test fun conSteamElMandoYSuTeclaCuentanUnaVez() {
         // Steam con su configuración de escritorio: el botón A llega del mando y, a la vez, como Intro
         assertFalse(Entrada.repetida(Accion.A, deMando = true, ahora = 10_000))

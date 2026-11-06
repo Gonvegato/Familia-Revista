@@ -91,7 +91,7 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
     // (F11 es la pantalla completa de las cuatro apps, sin la sala)
     val fm = androidx.compose.ui.platform.LocalFocusManager.current
     DisposableEffect(Unit) {
-        Entrada.manejador = { a ->
+        val h: (Accion) -> Boolean = { a ->
             when (a) {
                 Accion.ARRIBA, Accion.ABAJO, Accion.IZQUIERDA, Accion.DERECHA -> {
                     val d = when (a) { Accion.ARRIBA -> androidx.compose.ui.focus.FocusDirection.Up; Accion.ABAJO -> androidx.compose.ui.focus.FocusDirection.Down
@@ -106,7 +106,8 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
             }
             true
         }
-        onDispose { Entrada.manejador = null }
+        Entrada.manejador = h
+        onDispose { if (Entrada.manejador === h) Entrada.manejador = null }
     }
     Row(Modifier.fillMaxSize()) {
         Lateral("Hiedra", entradas, sel) { i -> ve(i) }
@@ -137,7 +138,10 @@ private fun pulsaIntro() {
 @Composable
 fun Tarjeta(j: Juego, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(modifier.clickable(onClick = onClick)) {
-        PortadaCosa(j.portada, j.portadaUrl, j.titulo, Modifier.fillMaxWidth(), pie = j.donde)
+        // (sin portada propia, la de lo de este ordenador: la de Steam, la de su tienda, la de libretro)
+        val local = remember(j.id, Pc.version) { if (j.portada.isBlank() && j.portadaUrl.isBlank()) j.aqui(Juegos.dispositivo()) else null }
+        if (local != null) PortadaPc(local, j, Modifier.fillMaxWidth())
+        else PortadaCosa(j.portada, j.portadaUrl, j.titulo, Modifier.fillMaxWidth(), pie = j.donde)
         Spacer(Modifier.height(8.dp))
         Text(j.titulo, color = Charcoal, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(listOf(j.donde, if (j.ms > 0) horas(j.ms) else "").filter { it.isNotBlank() }.joinToString(" · ").ifBlank { j.estado.nombre }, color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1)
@@ -339,6 +343,7 @@ fun Campo(etiqueta: String, v: String, onCambia: (String) -> Unit) = OutlinedTex
 @Composable
 fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
     LaFamilia.cambios
+    Pc.version
     val j = Juegos.por(id) ?: run { Pagina { VolverRevista({ nav.ir(volver) }); Vacio("Este juego ya no está") }; return }
     val scope = rememberCoroutineScope()
     val dev = Juegos.dispositivo()
