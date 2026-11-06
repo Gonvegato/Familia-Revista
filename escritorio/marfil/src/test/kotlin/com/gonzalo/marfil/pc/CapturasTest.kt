@@ -108,6 +108,12 @@ class CapturasTest {
         ajustes("theme" to "sepia", "font" to "garamond", "size" to 110L)
         captura("marfil-lector-sepia", leer, vueltas = 22)
         captura("marfil-lector-letra", Pantalla.Leer(id, Pantalla.Portada, panel = Panel.LETRA), vueltas = 22)
+        // Lo que sale encima del texto: el menú de un subrayado, una nota al pie, «Definir» y escribir una nota
+        fun encima(nombre: String, que: (EstadoLector) -> Unit) { alAbrirParaPruebas = que; captura(nombre, leer, vueltas = 22); alAbrirParaPruebas = null }
+        encima("marfil-lector-menu") { st -> Marcas.de(id, Marcas.SUBRAYADOS).maxByOrNull { it.nota.length }?.let { st.menu = MenuTexto(it, null, 520f, 300f) } }
+        encima("marfil-lector-nota-al-pie") { st -> st.epub.textoDeNota(Epub.Enlace(0, "n1", nota = true))?.let { (n, t) -> st.nota = NotaAbierta(n, t, Epub.Enlace(0, "n1", nota = true), 560f, 560f) } }
+        encima("marfil-lector-definir") { st -> st.definicion = Definiendo("marea", 600f, 360f).also { it.resultado = Diccionario.Definicion("marea", listOf("Movimiento periódico y alternativo de ascenso y descenso de las aguas del mar, producido por la atracción del Sol y de la Luna.", "Parte de la ribera del mar que se ocupa y moja en el flujo o pleamar.")) } }
+        encima("marfil-lector-editor") { st -> st.editando = Marcas.de(id, Marcas.SUBRAYADOS).maxByOrNull { it.nota.length } }
         ajustes("theme" to "noche", "font" to "literata", "size" to 100L, "columns" to false)
         captura("marfil-lector-noche", leer, vueltas = 22)
         ajustes("theme" to "app", "flow" to "scrolled")

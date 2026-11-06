@@ -93,6 +93,7 @@ fun LectorEpub(l: Libro, f: File, volver: Pantalla, nav: Nav, ir: String = "", p
                 estado = EstadoLector(l, libro, pedido ?: donde, fr).also { st ->
                     if (pedido != null) { st.vuelta = donde to fr; e.ubica(ir)?.hasta?.let { h -> st.destello = pedido to Sitio(pedido.seccion, h.first, h.second) } }
                     st.panel = panel; st.busqueda = busqueda
+                    alAbrirParaPruebas?.invoke(st)
                 }
             }.onFailure { fallo = it.message ?: "No se puede abrir este EPUB." }
         }
@@ -102,6 +103,9 @@ fun LectorEpub(l: Libro, f: File, volver: Pantalla, nav: Nav, ir: String = "", p
     val st = estado ?: run { Box(Modifier.fillMaxSize().background(Paper)) { Vacio("Abriendo…", modifier = Modifier.align(Alignment.Center)) }; return }
     VistaLector(st, volver, nav)
 }
+
+/** Para las capturas: lo que se abre encima del libro nada más abrirlo (un menú, una nota al pie…), que si no pide el ratón. */
+@Volatile internal var alAbrirParaPruebas: ((EstadoLector) -> Unit)? = null
 
 /** La forma de la página: cuánto mide (px), dónde va cada una y si se ven dos (el libro abierto). */
 class Geometria(val ancho: Int, val alto: Int, val anchoTexto: Int, val altoTexto: Int, val origenes: List<IntOffset>) {
