@@ -98,7 +98,7 @@ lector para ese libro).
 
 ### `marcas/<kid>~<id>` (Marfil)
 
-Un subrayado, una nota o un marcador: `ref` (el `kid`), `tipo` (`note` / `mark`), `n` (el objeto del lector tal cual: `value`,
+Un subrayado, una nota o un marcador: `ref` (el `kid`), `tipo` (`notes` / `marks`: el nombre de la lista del lector de donde sale), `n` (el objeto del lector tal cual: `value`,
 `created`, `text`, `note`, `color`…) y `b` si se quitó. `id` sale de su sitio y su hora de creación.
 
 ### `tiempo/<ref>~<dispositivo>` (Marfil, Hiedra)

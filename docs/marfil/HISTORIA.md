@@ -101,6 +101,8 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 - **El índice dice dónde empieza cada capítulo** (su porcentaje) y marca «Estás aquí» en el que lees.
 - **La barra de lo leído tiene una marca donde empieza cada capítulo**, como en el ordenador.
 - **Los subrayados con nota llevan una raya del acento** debajo: se ve dónde hay nota sin tocar nada (en el ordenador, una raya en el margen).
+- La portada ya no se repinta entera a cada píxel al bajar (gastaba batería), y la versión de debajo de la portada es la de verdad (la
+  0.13.5 decía 0.13.3; ahora lo comprueba una prueba).
 
 ## 0.13.5
 

@@ -58,6 +58,12 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   el mismo EPUB CFI que guarda foliate en el móvil, y la del móvil se abre aquí en el mismo párrafo), PDF (Apache PDFBox) y cómics (CBZ).
   Lo leído (`lectura/<kid>`), «Leyendo» y «Leído» con su fecha (las reglas del móvil), el tiempo de este ordenador, el reto del año, los
   archivos por tu kDrive (`Marfil/Libros/…`: se suben al añadirlos y se bajan al abrirlos) y los capítulos terminados de Cobalto.
+  Desde la 1.1.0, **el lector como el del móvil**: tus subrayados y notas de la cuenta se pintan (y se crean aquí: arrastrar o doble clic,
+  y Subrayar · Nota · Copiar · Buscar · Definir, con el Wikcionario como el móvil), los marcadores, páginas de verdad (a dos páginas si
+  la ventana es ancha, o seguido), el índice con el % de cada capítulo, notas, buscar (sin mirar acentos), las notas al pie como tarjeta
+  y «Volver a donde estabas». Los ajustes de lectura viajan con las mismas claves que el móvil (los de cada libro y los de siempre; el
+  brillo y lo del PDF, no). Las posiciones se escriben como las escribe foliate en el móvil, letra por letra (probado contra el lector
+  del móvil de verdad): antes, desde el capítulo 2, el ordenador abría un párrafo antes de donde ibas en el móvil, y al revés.
 - **Hiedra**: tus juegos de la cuenta (los mismos de Hiedra del móvil), los de Steam instalados en el ordenador (se abren con Steam: sus
   horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Hiedra cuenta el tiempo hasta que los cierras, en
   `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Hiedra del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil
@@ -67,8 +73,9 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 
 - **Azabache**: editar las maquetas (las del móvil se ven tal cual), las recomendaciones y «Descubrir».
 - **Cobalto**: compartir con tu pareja. El historial de sprints no viaja por la cuenta (tampoco en el móvil: cada dispositivo guarda el suyo).
-- **Marfil**: subrayados y notas nuevos (los del móvil se conservan en la cuenta; aquí no se pintan), los diccionarios y los ajustes del
-  lector que viajan (`settings`). Otros formatos (MOBI, FB2, TXT): en el móvil.
+- **Marfil**: los subrayados de los PDF (el móvil los guarda sobre la capa de texto de pdf.js), leer en voz alta y traducir. Los ajustes
+  que cambies en otro dispositivo se aplican aquí la próxima vez que abras el libro, no al momento. Otros formatos (MOBI, FB2, TXT): en
+  el móvil.
 - **Hiedra**: emuladores y ROMs, capturas y streaming para el móvil (`shot`, `stream` responden que todavía no).
 - Las letras de Google Fonts que se eligen en el móvil: aquí van las de la app (Atrio y Vitrina) en su lugar.
 
@@ -92,4 +99,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.0, Marfil 0.13.5, Cobalto 0.3.3, Azabache 1.6.0. De escritorio: Azabache y Cobalto 1.1.0; Hiedra y Marfil 1.0.1.
+Versiones de Android a día de hoy: Hiedra 0.6.0, Marfil 0.14.0, Cobalto 0.4.0, Azabache 1.6.0. De escritorio: Azabache, Cobalto y Marfil 1.1.0; Hiedra 1.0.1.
