@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -161,6 +162,15 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
 
 @Composable
 private fun Stat(label: String, value: String) {
+    // Revista: con puntos guía, como los datos de la ficha (la cifra pegada a la derecha); un dato largo (un título), debajo y a la derecha
+    if (Skin.revista) {
+        if (value.length <= 24) MagFact(label, value)
+        else Column(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+            if (label.isNotBlank()) Text(label, color = Muted, fontSize = 14.sp)
+            Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f), color = UiSoft, fontSize = 14.sp)
         Text(value, fontWeight = FontWeight.Medium, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End)
@@ -169,6 +179,14 @@ private fun Stat(label: String, value: String) {
 
 @Composable
 private fun LabeledBar(label: String, value: String, frac: Float, color: Color) {
+    // Revista: el dato con puntos guía y, debajo, una barra fina en tinta (la de la ficha)
+    if (Skin.revista) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+            MagFact(label, value)
+            Box(Modifier.fillMaxWidth().height(3.dp).background(Line)) { if (frac > 0f) Box(Modifier.fillMaxWidth(frac.coerceIn(0f, 1f)).fillMaxHeight().background(Charcoal)) }
+        }
+        return
+    }
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row(Modifier.fillMaxWidth()) {
             Text(label, Modifier.weight(1f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -239,9 +257,11 @@ fun StatsScreen(
 
     val creatorWord = kind.creatorWord
     val unit = kind.unit
+    // En la tableta en horizontal, los bloques a dos columnas (como la ficha)
+    val cols = if (Skin.revista) columnasDePagina() else 1
 
     Column(
-        Modifier.fillMaxSize().wrapContentWidth().widthIn(max = 760.dp).statusBarsPadding().verticalScroll(rememberScrollState())
+        Modifier.fillMaxSize().wrapContentWidth().widthIn(max = if (cols > 1) 1080.dp else 760.dp).statusBarsPadding().verticalScroll(rememberScrollState())
             .padding(start = 12.dp, end = 12.dp, bottom = 16.dp)
     ) {
         TopBar(kind.title, onMenu, "Cifras") {
@@ -257,7 +277,7 @@ fun StatsScreen(
         if (onSpecial != null) {
             val y = year ?: thisYear
             Text("VER TU $y, NÚMERO ESPECIAL\u00A0→", color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
-                modifier = Modifier.padding(start = 4.dp, bottom = 14.dp).press { onSpecial(y) }.padding(vertical = 6.dp))
+                modifier = Modifier.padding(start = if (Skin.revista) 0.dp else 4.dp, bottom = 14.dp).press { onSpecial(y) }.padding(vertical = 6.dp))
         }
 
         if (g.isEmpty() && p.isEmpty()) {
@@ -268,6 +288,7 @@ fun StatsScreen(
             return@Column
         }
 
+        ColumnasRevista(cols, hueco = 56.dp) {
         if (!kind.custom && (year == null || year == thisYear)) {
             Section("Objetivo de $thisYear") {
                 if (goalNow <= 0) {
@@ -373,7 +394,7 @@ fun StatsScreen(
                     }
                 }
             }
-            if (kind.isBook && !useP) TiempoLeyendoSection(year, games, plays)
+            if ((kind.isBook || kind.isGame) && !useP) TiempoSection(kind, year, games, plays)
 
             Section("Tiempo") {
                 if (st.dated == 0) {
@@ -396,9 +417,10 @@ fun StatsScreen(
                     st.months.forEach { m ->
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(if (m.second > 0) "" + m.second else "", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                            // (en la revista, barras rectas y la del mejor mes en el acento, como las del tiempo)
                             Box(
                                 Modifier.fillMaxWidth(0.45f).height((m.second.toFloat() / mx * 62f).dp.coerceAtLeast(2.dp))
-                                    .background(if (m.second > 0) Charcoal else Line, shp(3.dp))
+                                    .background(if (m.second > 0) (if (Skin.revista && m.second == mx) ColGeneral else Charcoal) else Line, shp(if (Skin.revista) 0.dp else 3.dp))
                             )
                             Text(m.first, fontSize = 11.sp, color = UiSoft)
                         }
@@ -488,30 +510,41 @@ fun StatsScreen(
                 }
             }
         }
+        }
     }
 }
 
-/** Cifras de libros: el tiempo leído con el lector de Atrio (de todos tus dispositivos). */
+/**
+ * Cifras de juegos y libros: el tiempo que cuentan Hiedra (lo jugado) y Marfil (lo leído), de todos tus dispositivos: total, días, la
+ * racha más larga, lo que más tiempo te ha llevado y las horas de cada mes.
+ */
 @Composable
-private fun TiempoLeyendoSection(year: Int?, games: List<Game>, plays: List<Play>) {
+private fun TiempoSection(kind: Kind, year: Int?, games: List<Game>, plays: List<Play>) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val vuelve = rememberResumeTick()
-    val t = remember(year, vuelve) { tiempoLeyendo(Hermanas.leidoPorDia(ctx), year) }
+    val t = remember(kind.id, year, vuelve, Hermanas.version) {
+        val porDia = if (kind.isBook) Hermanas.leidoPorDia(ctx)
+            else Hermanas.jugadoPorDia(ctx).mapValues { (_, m) -> m.entries.filter { it.key.sg != 0L }.groupBy { it.key.sg }.mapValues { e -> e.value.sumOf { it.value } } }
+        tiempoLeyendo(porDia, year)
+    }
     if (t.total < 60_000L) return
-    Section("Tiempo leyendo") {
+    val verbo = if (kind.isBook) "leyendo" else "jugando"
+    Section(if (kind.isBook) "Tiempo leyendo" else "Tiempo jugando") {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BigNumber(readTime(t.total / 60_000L), if (year == null) "leyendo en total" else "leyendo en $year", Modifier.weight(1f))
-            BigNumber("${t.dias}", if (t.dias == 1) "día con lectura" else "días con lectura", Modifier.weight(1f))
+            // (desde diez horas, solo las horas: «25 h 55 min» no cabía en una línea)
+            val min = t.total / 60_000L
+            BigNumber(if (min >= 600) "${Math.round(min / 60.0)} h" else readTime(min), if (year == null) "$verbo en total" else "$verbo en $year", Modifier.weight(1f))
+            BigNumber("${t.dias}", if (t.dias == 1) "día $verbo" else "días $verbo", Modifier.weight(1f))
         }
         Spacer(Modifier.height(8.dp))
-        if (t.dias > 0) Stat("Media los días que lees", readTime(t.total / t.dias / 60_000L))
+        if (t.dias > 0) Stat(if (kind.isBook) "Media los días que lees" else "Media los días que juegas", readTime(t.total / t.dias / 60_000L))
         if (t.racha > 1) Stat("Racha más larga", "${t.racha} días seguidos")
         val nombre = { id: Long -> (plays.find { it.id == id }?.name ?: games.find { it.id == id }?.name) }
         t.libros.mapNotNull { (id, ms) -> nombre(id)?.let { it to ms } }.take(3).forEachIndexed { i, (n, ms) ->
             Stat(if (i == 0) "El que más tiempo te ha llevado" else "", "$n (${readTime(ms / 60_000L)})")
         }
         Spacer(Modifier.height(6.dp))
-        Text(if (year == null) "Horas leyendo en los últimos 12 meses" else "Horas leyendo en $year", color = UiSoft, fontSize = 13.sp)
+        Text(if (year == null) "Horas $verbo en los últimos 12 meses" else "Horas $verbo en $year", color = UiSoft, fontSize = 13.sp)
         val mx = (t.meses.maxOfOrNull { it.second } ?: 1L).coerceAtLeast(1L)
         Row(Modifier.fillMaxWidth().height(110.dp).padding(top = 8.dp), verticalAlignment = Alignment.Bottom) {
             t.meses.forEach { (m, ms) ->
@@ -520,9 +553,9 @@ private fun TiempoLeyendoSection(year: Int?, games: List<Game>, plays: List<Play
                     Text(if (ms >= 60_000L) (if (h >= 10) "${h.roundToInt()}" else f1(h)) else "", fontSize = 10.sp, fontWeight = FontWeight.Medium, maxLines = 1)
                     Box(
                         Modifier.fillMaxWidth(0.45f).height((ms.toFloat() / mx * 62f).dp.coerceAtLeast(2.dp))
-                            .background(if (ms >= 60_000L) ColGeneral else Line, shp(3.dp))
+                            .background(if (ms >= 60_000L) (if (ms == mx) ColGeneral else Charcoal) else Line, shp(if (Skin.revista) 0.dp else 3.dp))
                     )
-                    Text(m, fontSize = 11.sp, color = UiSoft)
+                    Text(m.take(1).uppercase(), fontSize = 11.sp, color = UiSoft, maxLines = 1)
                 }
             }
         }

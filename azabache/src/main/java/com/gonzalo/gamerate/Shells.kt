@@ -157,7 +157,8 @@ private fun RevistaHome(m: ShellModel) {
         val ancha = ancho >= 900
         // Cabecera de revista
         Column(Modifier.llega(0)) {
-            Cabecera(if (ancho >= 700) 132.sp else 92.sp, Modifier.padding(top = 8.dp), color = Ink2)
+            // (en horizontal, la cabecera llega de lado a lado, como en el quiosco)
+            Cabecera(if (ancho >= 960) 168.sp else if (ancho >= 700) 132.sp else 92.sp, Modifier.padding(top = 8.dp), color = Ink2)
             FileteCabecera(3.dp)
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                 Text("Nº ${today.dayOfYear}", color = Ink2, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
@@ -310,7 +311,7 @@ private fun RevistaHome(m: ShellModel) {
                 val e = ShellEntry(o.kind, o.play, null)
                 Row(Modifier.fillMaxWidth().press(haptic = false) { m.open(e) }.padding(vertical = 14.dp), verticalAlignment = if (Skin.listCovers) Alignment.CenterVertically else Alignment.Top) {
                     Text("%02d".format(i + 1), color = Red2, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.width(56.dp))
-                    if (Skin.listCovers) { ListCover(e.cover, e.name, 52.dp, 74.dp); Spacer(Modifier.width(14.dp)) }
+                    if (Skin.listCovers) { ListCover(e.cover, e.name, 52.dp, 74.dp, if (m.readOnly) null else coverKey(e.kind.id, e.id)); Spacer(Modifier.width(14.dp)) }
                     Column(Modifier.weight(1f)) {
                         FitTitle(e.name, 22.sp, 25.sp, color = Ink2, fontWeight = FontWeight.SemiBold)
                         // (los libros con su archivo: por dónde vas)

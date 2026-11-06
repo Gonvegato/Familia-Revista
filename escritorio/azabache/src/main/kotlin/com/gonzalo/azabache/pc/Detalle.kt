@@ -44,21 +44,37 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav) {
     var borrar by remember { mutableStateOf(false) }
     var diario by remember { mutableStateOf(false) }
     var saga by remember { mutableStateOf(false) }
+    var notaAbierta by remember { mutableStateOf<Nota?>(null) }
+    // Se abre en modo lectura (la página de revista, como en el móvil); «Editar» abre los datos y la nota
+    var editando by remember(id) { mutableStateOf(false) }
     fun guarda() {
         val nueva = if (valorada && !conNota) LinkedHashMap(o).also { m -> NOTAS.forEach { m[it] = 0L } } else o
         Cuenta.guarda(k.id, base, nueva, valorada)
         base = Ficha(k.id, nueva, valorada, base.ref, base.portada, base.portadaUrl, base.sinNota && !conNota)
         o = nueva
         nav.aviso("Guardado en la cuenta")
+        editando = false
+    }
+    fun descarta() { o = base.o; valorada = base.valorada; conNota = !base.sinValorar }
+    // «Terminar y valorar» (o «Valorar»): pasa a terminado, con la nota a la vista, y abre los datos
+    fun valora() {
+        valorada = true; conNota = true
+        if (NOTAS.all { n(it) == 0L }) NOTAS.forEach { pon(it, 50L) }
+        if (n("end") <= 0) pon("end", LocalDate.now().toEpochDay())
+        editando = true
     }
 
-    Pagina {
+    if (!editando) PaginaDeFicha(
+        k, f, volver, nav, sucio,
+        onEditar = { editando = true }, onValorar = { valora() }, onGuardar = { guarda() }, onDescartar = { descarta() },
+        onPortada = { portadaAbierta = true }, onDiario = { diario = true }, onSaga = { saga = true }, onNota = { notaAbierta = it }
+    ) else Pagina {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) { VolverRevista({ nav.ir(volver) }, texto = if (volver is Pantalla.Lista) k.title else "Volver") }
+            Box(Modifier.weight(1f)) { VolverRevista({ editando = false }, texto = "La página") }
             if (sucio) {
                 Text("Sin guardar", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(14.dp))
-                EnlaceRevista("Descartar") { o = base.o; valorada = base.valorada; conNota = !base.sinValorar }
+                EnlaceRevista("Descartar") { descarta() }
                 Spacer(Modifier.width(14.dp))
             }
             if (sucio) BotonAcento("Guardar", alto = 42.dp, modifier = Modifier.width(140.dp)) { guarda() }
@@ -158,6 +174,7 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav) {
 
     if (portadaAbierta) DialogoPortada(k, f, nav) { portadaAbierta = false }
     if (diario) DialogoNota(null, listOf("${k.id}:$id"), nav) { diario = false }
+    notaAbierta?.let { n0 -> DialogoNota(n0, n0.sobre, nav) { notaAbierta = null } }
     if (saga) DialogoSaga(k, f, nav) { saga = false }
     if (borrar) Dialogo("¿Borrar «${f.nombre}»?", { borrar = false }, botones = {
         BotonSuave("Cancelar") { borrar = false }

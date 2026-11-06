@@ -78,11 +78,11 @@ object Cuenta {
 
     private fun dia(ms: Long): Long = if (ms > 0) Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay() else 0L
 
-    private fun construye(kind: Int): List<Ficha> {
-        val horas = tiempo().vivos().groupBy { it.texto("ref") }
+    private fun construye(kind: Int, juegosOLibros: Coleccion = col(kind), tiempos: Coleccion = tiempo()): List<Ficha> {
+        val horas = tiempos.vivos().groupBy { it.texto("ref") }
         val out = ArrayList<Ficha>()
         val vistos = HashSet<Long>()
-        for (n in col(kind).vivos().filter { it.texto("t").isNotBlank() }.sortedBy { it.ref }) {
+        for (n in juegosOLibros.vivos().filter { it.texto("t").isNotBlank() }.sortedBy { it.ref }) {
             var id = idDe(n)
             if (id in vistos) id = idDeRef(n.ref)
             if (id in vistos) continue
@@ -253,16 +253,18 @@ object Cuenta {
     // ================================================================ lo propio de Azabache (azabache/<lista>~<id>)
 
     /** Una lista de Azabache tal como está en la cuenta (elemento a elemento, por su número; o, de antes, entera en `v`). */
-    fun lista(key: String): List<Obj> {
+    fun lista(key: String): List<Obj> = lista(key, az())
+
+    private fun lista(key: String, az: Coleccion): List<Obj> {
         val pre = "$key~"
         val els = sortedMapOf<Long, Obj>()
-        for (n in az().vivos()) {
+        for (n in az.vivos()) {
             if (!n.ref.startsWith(pre)) continue
             val id = n.ref.substring(pre.length).toLongOrNull() ?: continue
             objDe(n.texto("o")).takeIf { it.isNotEmpty() }?.let { els[id] = it }
         }
         if (els.isNotEmpty()) return els.values.toList()
-        val v = az().nodo(key)?.takeIf { !it.borrado }?.texto("v")?.takeIf { it.startsWith("[") } ?: return emptyList()
+        val v = az.nodo(key)?.takeIf { !it.borrado }?.texto("v")?.takeIf { it.startsWith("[") } ?: return emptyList()
         return runCatching { Json.lee(v).comoLista().firstOrNull().comoLista().map { it.comoMapa() }.filter { it.isNotEmpty() } }.getOrDefault(emptyList())
     }
 
@@ -316,6 +318,48 @@ object Cuenta {
         return n.entero("ano").toInt() to n.entero("anio").toInt()
     }
 
+    // ================================================================ lo de tu pareja (de su cuenta, solo para leer)
+
+    /** Tu pareja: su uid (`/users/<tú>/partner`), si la tienes. Se mira una vez por sesión (bloquea: la primera vez va a la red). */
+    @Volatile private var pareja: Pair<String, String>? = null   // (tu uid, el suyo)
+    fun uidPareja(): String {
+        val yo = LaFamilia.uid
+        if (yo.isBlank()) return ""
+        pareja?.let { (de, pu) -> if (de == yo) return pu }
+        val pu = runCatching { LaFamilia.db("GET", "/users/$yo/partner")?.let { Json.lee(it) as? String }.orEmpty() }.getOrDefault("")
+        pareja = yo to pu
+        return pu
+    }
+    /** Lo ya sabido de tu pareja (sin ir a la red): su uid, o "" si aún no se ha mirado o no hay. */
+    fun uidParejaSabido(): String = pareja?.takeIf { it.first == LaFamilia.uid }?.second.orEmpty()
+
+    /** Su nombre (el que puso en su Azabache) o su usuario. Bloquea. */
+    fun nombreDe(uid: String): String = nombres.getOrPut(uid) {
+        listOf("name", "user").firstNotNullOfOrNull { c -> runCatching { LaFamilia.db("GET", "/users/$uid/$c")?.let { Json.lee(it) as? String } }.getOrNull()?.takeIf { it.isNotBlank() } } ?: "Tu pareja"
+    }
+    private val nombres = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private val ajenasOidas = java.util.Collections.synchronizedSet(HashSet<String>())
+    private fun ajena(uid: String, nombre: String): Coleccion = LaFamilia.ajena(uid, nombre).also { c ->
+        if (ajenasOidas.add("$uid/$nombre")) c.alCambiar { synchronized(this) { version++ } }
+    }
+
+    /** Sus categorías (las suyas, por si tiene alguna que tú no). */
+    fun kindsDe(uid: String): List<Kind> = listOf(GAMES, BOOKS) + cacheado("kinds_$uid") { lista("kinds", ajena(uid, "azabache")).mapNotNull { kindDeMapa(it) }.distinctBy { it.id } }
+
+    /** Sus fichas de una categoría (los juegos y libros de su cuenta, con sus notas; sus categorías, de su Azabache). */
+    fun fichasDe(uid: String, kind: Int): List<Ficha> = cacheado("fichas_${uid}_$kind") {
+        if (kind == JUEGOS || kind == LIBROS) construye(kind, ajena(uid, if (kind == JUEGOS) "juegos" else "libros"), ajena(uid, "tiempo"))
+        else lista("items_$kind", ajena(uid, "azabache")).map { Ficha(kind, it, true) } + lista("iplays_$kind", ajena(uid, "azabache")).map { Ficha(kind, it, false) }
+    }
+
+    /** Lo suyo jugado o leído de una cosa, por día. */
+    fun porDiaDe(uid: String, ref: String): Map<String, Long> {
+        val out = HashMap<String, Long>()
+        ajena(uid, "tiempo").vivos().filter { it.texto("ref") == ref }.forEach { n -> n.campos.forEach { (k, v) -> if (k.length == 11 && k.startsWith("d2")) out[k.substring(1)] = (out[k.substring(1)] ?: 0L) + v.comoLong() } }
+        return out
+    }
+
     /** (Para las pruebas.) */
-    fun olvidaParaPruebas() { synchronized(this) { cache.clear(); oyendoDe = null } }
+    fun olvidaParaPruebas() { synchronized(this) { cache.clear(); oyendoDe = null; pareja = null; ajenasOidas.clear(); nombres.clear() } }
 }

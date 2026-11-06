@@ -9,6 +9,34 @@ Hermana de [Hiedra](https://github.com/Gonvegato/hiedra) (juegos), [Marfil](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.6.0 — mejores páginas
+
+- **La ficha, en la tableta en horizontal, a dos columnas**, como una revista abierta: las filas de la página (las tuyas, si la
+  diseñaste) se reparten en dos columnas en su orden, partidas donde quedan igual de altas, con un filete fino en medio. Antes era una
+  sola columna de 1080 dp con líneas larguísimas y medio hueco en cada casilla. Al editarla se ve a una columna (para mover las filas).
+  En la tableta el titular crece con el sitio (en vertical, un poco; en horizontal, más).
+- **«Sesiones», casilla nueva** en las fichas de juegos y libros: lo que has jugado o leído, día a día (lo que cuentan Hiedra y Marfil,
+  sumando tus dispositivos), en barras —por día si fue cosa de pocas semanas, por semana o por mes si fue más larga—, con los días, la
+  sesión más larga y la última (o, si ya lo terminaste, cuánto duró de principio a fin). Sale sola cuando hay algo; en las maquetas que
+  ya tenías entra una vez detrás de «Horas» o «Lectura» (si la quitas, no vuelve).
+- **Barras de avance**: jugando, lo que llevas frente a lo que suele durar la historia («vas por el 62 %»); leyendo, por dónde vas
+  según Marfil y en qué página.
+- **La portada viaja de la lista a la ficha** al abrirla (en la biblioteca y en «Ahora mismo»).
+- **La biblioteca, a dos columnas en la tableta** (como el índice de una revista), con los filetes a la misma altura; y las opciones de
+  orden y filtros, todas a la vista (en el móvil la última salía cortada).
+- **Cifras más de revista**: los datos con puntos guía y barras finas (como en la ficha), «Tiempo jugando» además de «Tiempo leyendo»,
+  y en la tableta en horizontal los bloques a dos columnas.
+- **La portada en horizontal**: la cabecera llega de lado a lado y las barras de «Hoy» ya no son ladrillos (como mucho media página).
+- **Arreglado**: la opción elegida (Pendiente · **Jugando** · Abandonado, Todo · 2026…) llevaba el subrayado por dentro de la letra y
+  parecía tachada; la estrella y «Editar» de la ficha estaban a alturas distintas.
+- **Prueba nueva** (`PantallasQuietasTest`, en el móvil y en la tableta en horizontal): cada página, una vez pintada, no se vuelve a
+  componer ni un fotograma si no tocas nada (la que no dejaba de redibujarse de la 1.5.2 la habría pillado).
+- Nada nuevo en la cuenta: «Sesiones» lee los nodos `tiempo/` de siempre y el avance de Marfil (`fr`).
+- **En el ordenador (Azabache para Linux y Mac 1.1.0)**, lo mismo que aquí: la ficha se lee como página de revista (las mismas
+  casillas y, si diseñaste la página en el móvil, tu maqueta tal cual, a dos columnas) y «Editar» abre los datos; la portada con su
+  número, «Hoy» y «En portada»; las cifras del año como estas; el diario por meses y días; la biblioteca también en índice; y tu
+  pareja (su revista, sus fichas para leer y «Vosotros dos»). Las maquetas se diseñan en el móvil; allí se leen.
+
 ## 1.5.2
 
 - **La portada de la ficha ocupa su casilla** (como mucho 200 dp de ancho, en 2:3). Antes era una miniatura de 96 dp y la fila se medía

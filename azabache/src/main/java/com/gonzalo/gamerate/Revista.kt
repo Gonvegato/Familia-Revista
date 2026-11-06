@@ -73,17 +73,19 @@ fun Interruptor(activo: Boolean, alCambiar: (Boolean) -> Unit) {
 
 /** La casilla «Portada» de la ficha: la misma imagen que tiene en Hiedra o en Marfil (o la que pusiste aquí); sin ninguna, la inicial sobre arena. */
 @Composable
-fun MagPortada(cover: String, name: String) {
+fun MagPortada(cover: String, name: String, clave: String? = null) {
     // Ocupa el ancho de su casilla (como mucho 200 dp) en proporción 2:3. Mide lo mismo cuando la fila de dos casillas pregunta cuánto
     // ocupa (IntrinsicSize.Min) que cuando se pinta: con width + aspectRatio la fila se medía como si la portada llenara la casilla y
     // la portada salía pequeña con un hueco enorme debajo (en la tablet, sobre todo)
-    val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { 200.dp.roundToPx() }
+    // (en la tableta, hasta 260 dp: con 200 la casilla quedaba medio vacía y la nota de al lado, más alta que la portada)
+    val tope = if (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700) 260.dp else 200.dp
+    val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { tope.roundToPx() }
     Box(Modifier.layout { m, c ->
             val w = if (c.hasBoundedWidth) minOf(c.maxWidth, maxPx) else maxPx
             val h = w * 3 / 2
             val p = m.measure(androidx.compose.ui.unit.Constraints.fixed(w, h))
             layout(w, h) { p.place(0, 0) }
-        }.then(if (cover.isBlank()) Modifier.background(fondoTela(name)) else Modifier.background(Sand)), contentAlignment = Alignment.Center) {
+        }.sharedCover(clave).then(if (cover.isBlank()) Modifier.background(fondoTela(name)) else Modifier.background(Sand)), contentAlignment = Alignment.Center) {
         if (cover.isNotBlank()) coil.compose.AsyncImage(cover, name, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop, colorFilter = Ediciones.filtro)
         else Text(name.take(1).uppercase(), fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, color = PAPEL_TELA.copy(alpha = 0.88f))
     }
@@ -153,8 +155,10 @@ fun MagChoice(options: List<String>, selected: Int, label: String? = null, onPic
                 val on = i == selected
                 Text(
                     o.uppercase(), color = if (on) ColGeneral else Charcoal, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
-                    modifier = Modifier.clickable(enabled = !on) { onPick(i) }.padding(vertical = 8.dp)
+                    // (el subrayado se pinta con el aire de abajo incluido: dentro del texto salía tachado)
+                    modifier = Modifier.clickable(enabled = !on) { onPick(i) }
                         .drawBehind { if (on) drawRect(ColGeneral, topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - 6.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 1.5.dp.toPx())) }
+                        .padding(vertical = 8.dp)
                 )
             }
         }
@@ -293,11 +297,17 @@ fun MagDonde(kind: Kind, id: Long, name: String) {
 
 /** Horas: las tuyas en grande y las habituales (historia, extras, completo) con puntos guía. */
 @Composable
-fun MagHours(mine: Int, main: Int, extra: Int, full: Int, msg: String = "") {
+fun MagHours(mine: Int, main: Int, extra: Int, full: Int, msg: String = "", enCurso: Boolean = false) {
     if (mine > 0) {
         val k = (LocalCellFraction.current / 0.5f).coerceIn(0.6f, 1f)
         Text(shortHours(mine), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (40 * k).sp, lineHeight = (42 * k).sp, maxLines = 1, softWrap = false)
         Text("TUS HORAS", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        // Jugando: lo que llevas frente a lo que suele durar la historia
+        if (enCurso && main > 0) {
+            val pct = mine * 100 / main
+            BarraAvance(mine.toFloat() / main, Modifier.padding(top = 10.dp))
+            Text(if (pct < 100) "VAS POR EL $pct % DE LA HISTORIA" else "YA MÁS DE LO QUE SUELE DURAR", color = if (pct < 100) Muted else ColGeneral, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp, modifier = Modifier.padding(top = 5.dp))
+        }
         Spacer(Modifier.height(8.dp))
     }
     if (main > 0) MagFact("Historia", shortHours(main))
@@ -346,7 +356,7 @@ fun RevistaGameRead(
     Spacer(Modifier.height(14.dp))
 
     val defs = linkedMapOf<String, MagDef>()
-    if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(g.cover, g.name) }
+    if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(g.cover, g.name, coverKey(kind.id, g.id)) }
     defs["nota"] = MagDef("Nota") {
         if (Hermanas.sinValorar(g)) {
             Text("Sin valorar", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)
@@ -362,6 +372,9 @@ fun RevistaGameRead(
         else Text("Aún no has escrito nada.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
     }
     if (kind.isGame) defs["horas"] = MagDef("Horas") { MagHours(g.minutes, g.ttbMain, g.ttbExtra, g.ttbFull, ttbMsg) }
+    // Cómo lo jugaste o lo leíste, día a día (solo si Hiedra o Marfil han contado algo)
+    val ses = if (Mode.viewP) null else rememberSesiones(kind, g.id, g.end)
+    if (ses != null) defs["sesiones"] = MagDef("Sesiones") { MagSesiones(ses, kind, terminado = true) }
     // Lo que has escrito de esto en tu diario (solo si hay algo)
     if (!Mode.viewP && DiarioHub.de(kind.id, g.id).isNotEmpty()) defs["diario"] = MagDef("En tu diario", "Escribir" to { DiarioHub.escribirSobre?.invoke(kind, g.id) }) { DiarioDeFicha(kind, g.id) }
     defs["enlaces"] = MagDef("Enlaces") {
@@ -377,9 +390,9 @@ fun RevistaGameRead(
     }
     defs["datos"] = MagDef("Datos") { GameFacts(g, kind) }
     val defaults = when {
-        kind.isGame -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("horas"), listOf("diario"), listOf("datos", "enlaces"))
+        kind.isGame -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("horas", "sesiones"), listOf("diario"), listOf("datos", "enlaces"))
         kind.isMovie || kind.isTv -> magRows(listOf("critica", "nota"), listOf("opinion"), listOf("diario"), listOf("datos", "enlaces"), listOf("donde"))
-        kind.isBook -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("lectura"), listOf("diario"), listOf("datos", "enlaces"))
+        kind.isBook -> magRows(listOf("nota", "portada"), listOf("opinion"), listOf("lectura", "sesiones"), listOf("diario"), listOf("datos", "enlaces"))
         else -> magRows(listOf("datos", "nota"), listOf("opinion"), listOf("diario"), listOf("enlaces"))
     }
     MagPage("v:${kind.id}:${g.id}", "tpl:v:${kind.id}", kind.title, defaults, defs, kind, g.id, g.name, designing)
@@ -402,7 +415,9 @@ fun DesignHint(onData: () -> Unit, name: String = "", onDelete: (() -> Unit)? = 
                 }
             }
         }
-        Text("Toca una casilla para elegir qué va en ella (o texto libre, o una imagen). Arrastra el círculo de la línea para moverla.",
+        Text("Toca una casilla para elegir qué va en ella (o texto libre, o una imagen). Arrastra el círculo de la línea para moverla." +
+            // (en la tableta en horizontal se lee a dos columnas; se edita a una, para mover las filas)
+            if (columnasDePagina() > 1) " Al leerla, las filas se reparten en dos columnas, en este orden." else "",
             fontSize = 13.sp, lineHeight = 18.sp)
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("DATOS Y NOTA\u00A0→", color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.clickable(onClick = onData).padding(vertical = 4.dp))
