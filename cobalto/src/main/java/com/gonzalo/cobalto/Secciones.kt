@@ -197,7 +197,8 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int>,
                     .drawBehind { if (on) drawRect(Acento, topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - 3.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 3.dp.toPx())) }
                     .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
                     Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1)
-                    Text(" ${cuentas.getOrElse(i) { 0 }}", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1)
+                    // (en tinta, como en las pestañas de la obra: el rojo queda para lo que se toca)
+                    Text(" ${cuentas.getOrElse(i) { 0 }}", color = if (on) Charcoal else Muted, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1)
                 }
             }
         }

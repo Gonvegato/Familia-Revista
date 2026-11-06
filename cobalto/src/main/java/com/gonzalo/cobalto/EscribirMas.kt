@@ -43,33 +43,39 @@ fun FichasObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir) {
     // En cuántas escenas sale cada ficha
     val sale = remember(ver, pid) { val m = HashMap<String, Int>(); escenas.forEach { s -> e.fichasEn(pid, s.s("texto")).forEach { m[it.id] = (m[it.id] ?: 0) + 1 } }; m }
     val lista = fichas.filter { tipo.isBlank() || it.s("tipo") == tipo }.sortedBy { it.s("nombre").lowercase() }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = dockSpace(40.dp))) {
-        item("tipos") {
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Como un reparto: en el móvil una columna, en la tableta las que quepan; cada una con la franja de su color
+    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(androidx.compose.foundation.lazy.grid.GridCells.Adaptive(300.dp), Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = dockSpace(40.dp)),
+        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        val ancho: androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope.() -> androidx.compose.foundation.lazy.grid.GridItemSpan = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }
+        item("tipos", span = ancho) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 SoftChip("Todas ${fichas.size}", tipo.isBlank()) { tipo = "" }
                 TIPOS_FICHA.forEach { (k, n) -> val c = fichas.count { it.s("tipo") == k }; if (c > 0 || tipo == k) SoftChip("$n $c", tipo == k) { tipo = k } }
             }
         }
-        if (fichas.isEmpty()) item("vacio") {
+        if (fichas.isEmpty()) item("vacio", span = ancho) {
             Column(Modifier.padding(vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("El mundo de tu historia", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
                 Text("Personajes, lugares, objetos y reglas del mundo en fichas. Cuando escribas su nombre (o un alias) en una escena, quedará subrayado y lo tendrás en el panel, con sus datos, sin salir del texto.", color = Muted, fontSize = 14.sp, lineHeight = 21.sp)
             }
         }
-        items(lista.size) { i ->
+        items(lista.size, key = { lista[it].id }) { i ->
             val f = lista[i]
-            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).clip(shp(14.dp)).background(Crudo).border(1.dp, Line, shp(14.dp)).press(haptic = false) { a.ver = f.id }.padding(14.dp), verticalAlignment = Alignment.Top) {
-                Box(Modifier.padding(top = 5.dp, end = 12.dp).size(14.dp).clip(CircleShape).background(colorEscrito(f.s("color"), ColGeneral)))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(f.s("nombre"), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 21.sp, color = Charcoal)
-                    Text((singularFicha(f.s("tipo"))) + (sale[f.id]?.let { " · sale en $it ${if (it == 1) "escena" else "escenas"}" } ?: " · aún no sale"), color = Muted, fontSize = 12.sp)
-                    if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), color = Charcoal, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            val color = colorEscrito(f.s("color"), ColGeneral)
+            val datos = remember(f.u) { f.o.optJSONArray("campos")?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it) }.filter { it.optString("k").isNotBlank() && it.optString("v").isNotBlank() }.map { it.optString("k") to it.optString("v") } }.orEmpty().take(2) }
+            Column(Modifier.fillMaxWidth().height(168.dp).background(Crudo).press(haptic = false) { a.ver = f.id }) {
+                Box(Modifier.fillMaxWidth().height(4.dp).background(color))
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text((singularFicha(f.s("tipo"))).uppercase() + (sale[f.id]?.let { " · sale en $it ${if (it == 1) "escena" else "escenas"}" } ?: " · aún no sale").uppercase(), color = color, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(f.s("nombre"), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 23.sp, lineHeight = 26.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), fontFamily = Display, fontStyle = FontStyle.Italic, color = Charcoal, fontSize = 15.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    if (datos.isNotEmpty()) Text(datos.joinToString("  ·  ") { (k, v) -> "$k: $v" }, color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
-        item("nueva") { BotonEscribir("Nueva ficha", suave = true, modifier = Modifier.padding(top = 14.dp)) { nueva = true } }
+        item("nueva", span = ancho) { BotonEscribir("Nueva ficha", suave = true, modifier = Modifier.padding(top = 6.dp).wrapContentWidth(Alignment.Start)) { nueva = true } }
     }
-    if (nueva) FichaDialogo(e, pid, null, tipoNuevo = tipo.ifBlank { "personaje" }, onCerrar = { nueva = false })
+    if (nueva) FichaDialogo(e, pid, null, tipoNuevo = tipo.ifBlank { "personaje" }, onCerrar = { nueva = false }, onCreada = { a.ver = it.id })
 }
 
 // ---------------------------------------------------------------- Notas (el tablón)
@@ -102,12 +108,13 @@ fun NotasObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir) {
                 Text("Ideas sueltas, investigación, cosas por arreglar y plantillas (como una ficha de escena) que puedes tener junto al texto mientras escribes.", color = Muted, fontSize = 14.sp, lineHeight = 21.sp)
             }
         }
-        // Dos columnas de tarjetas, como un tablón
+        // Columnas de tarjetas, como un tablón (dos en el móvil, tres en la tableta)
         item("tablon") {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
-                listOf(0, 1).forEach { col ->
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        lista.filterIndexed { i, _ -> i % 2 == col }.forEach { n ->
+            val cols = if (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 840) 3 else 2
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                (0 until cols).forEach { col ->
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        lista.filterIndexed { i, _ -> i % cols == col }.forEach { n ->
                             val c = colorEscrito(n.s("color"), ColGeneral)
                             Column(Modifier.fillMaxWidth().clip(shp(14.dp)).background(c.copy(alpha = 0.16f)).border(1.dp, c.copy(alpha = 0.5f), shp(14.dp)).press(haptic = false) { a.ver = n.id }.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 val vinc = n.vin().mapNotNull { e.get(it) }.map { x -> if (x.t == Escritos.T_PARTE) x.s("titulo") else "cap. ${numeroCapitulo(e, x)}" }
@@ -181,7 +188,7 @@ fun CifrasObra(e: Escritos, obra: Doc, ver: Int) {
                 Row(Modifier.fillMaxWidth().height(10.dp).clip(shp(5.dp))) {
                     ESTADOS_ESCENA.indices.forEach { i -> val n = estados[i] ?: 0; if (n > 0) Box(Modifier.weight(n.toFloat()).fillMaxHeight().background(colorEstado(i))) }
                 }
-                Text(ESTADOS_ESCENA.mapIndexed { i, n -> "${estados[i] ?: 0} ${n.lowercase()}" }.joinToString(" · "), color = Muted, fontSize = 12.sp)
+                Text(ESTADOS_ESCENA.indices.joinToString(" · ") { i -> cuentaEstado(i, estados[i] ?: 0) }, color = Muted, fontSize = 12.sp)
             }
         }
         item("sprints") { SprintsObra(pid) }

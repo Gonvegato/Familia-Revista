@@ -15,6 +15,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -50,6 +52,8 @@ fun PantInicio(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, a
 
     val desplazado = rememberScrollState()
     val umbral = with(androidx.compose.ui.platform.LocalDensity.current) { 300.dp.toPx() }
+    // (solo cuando cruza el umbral: leer el desplazamiento aquí mismo recomponía la portada entera a cada píxel que bajabas)
+    val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(desplazado).statusBarsPadding().padding(horizontal = 28.dp)) {
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -87,70 +91,14 @@ fun PantInicio(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, a
             MagLink("Nueva obra", "Con un capítulo y una escena para empezar ya", accent = true) { alNueva() }
         }
 
-        // ---- Ahora: la obra en la que estás, enmarcada
-        if (ahora != null) {
-            val palabras = remember(ver, ahora.id) { e.palabrasObra(ahora.id) }
-            val hoyObra = remember(ver, ahora.id) { e.escritas(Escritos.hoy(), ahora.id) }
-            val escena = remember(ver, ahora.id) { e.ultimaEscenaDe(ahora.id) }
-            val meta = ahora.i("meta"); val diaria = ahora.i("diaria")
-            val color = colorEscrito(ahora.s("color"))
-            Column(Modifier.fillMaxWidth().border(1.5.dp, Charcoal).clickable { alAbrir(ahora.id) }.padding(20.dp)) {
-                Antetitulo("Ahora", Modifier.padding(bottom = 12.dp))
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                    Box(Modifier.width(10.dp).fillMaxHeight().background(color))
-                    Column(Modifier.weight(1f).padding(start = 16.dp)) {
-                        FitTitle(ahora.s("titulo").ifBlank { "Sin título" }, 32.sp, 34.sp, maxLines = 3, minSize = 16f, letterSpacing = (-0.5).sp)
-                        val sub = listOf(ahora.s("autor"), ahora.s("genero")).filter { it.isNotBlank() }.joinToString(" · ")
-                        if (sub.isNotBlank()) Text(sub, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 2.dp))
-                        Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.Bottom) {
-                            Text(cifraE(hoyObra), color = if (diaria > 0 && hoyObra >= diaria) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 52.sp, lineHeight = 52.sp)
-                            Column(Modifier.padding(start = 10.dp, bottom = 8.dp)) {
-                                Text(if (diaria > 0) "HOY · DE ${cifraE(diaria)}" else "PALABRAS HOY", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                            }
-                        }
-                        if (meta > 0) {
-                            Bar((palabras.toFloat() / meta).coerceIn(0f, 1f), Acento, Modifier.padding(top = 6.dp), height = 3.dp)
-                            Text("${cifraE(palabras)} de ${cifraE(meta)} palabras · ${(palabras * 100L / meta).coerceAtMost(999)} %".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
-                        } else Text("${cifraE(palabras)} palabras · ${e.cuentaObra(ahora.id)}".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
-                    }
-                }
-                if (escena != null) {
-                    Spacer(Modifier.height(14.dp))
-                    Filete(1.dp, Line)
-                    val linea = escena.s("texto").lineSequence().map { it.trim() }.lastOrNull { it.isNotBlank() && !it.startsWith("#") && it != "***" }.orEmpty()
-                    Text(escena.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
-                    if (linea.isNotEmpty()) Text("…" + linea.takeLast(140), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
-                Spacer(Modifier.height(10.dp))
-                // La acción de siempre, como en Marfil y Hiedra: un botón grande; el sprint, al lado, en pequeño
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    AccionGrande(androidx.compose.material.icons.Icons.Rounded.Edit, "Seguir escribiendo", Modifier.weight(1f)) { alSeguir(ahora.id, escena?.id) }
-                    Text("SPRINT →", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
-                        modifier = Modifier.clickable { alSprint(ahora.id) }.padding(vertical = 8.dp))
-                }
-            }
-        }
-
-        TeComparte(alPareja)
-
-        // ---- Sobre la mesa: las demás obras en marcha
-        if (mesa.isNotEmpty()) {
-            Spacer(Modifier.height(30.dp))
-            Antetitulo("Sobre la mesa", Modifier.padding(bottom = 6.dp))
-            Filete(1.dp)
-            mesa.forEach { o -> FilaObra(e, o, alAbrir) }
-            Text("VER LAS QUE ESCRIBES →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
-                modifier = Modifier.clickable { alIr(Destino.Escribiendo) }.padding(vertical = 12.dp))
-        }
-
-        // ---- En el cajón: lo que está en pausa
-        if (pausa.isNotEmpty()) {
-            Spacer(Modifier.height(30.dp))
-            Antetitulo("En el cajón", Modifier.padding(bottom = 6.dp))
-            Filete(1.dp)
-            pausa.forEach { o -> FilaObra(e, o, alAbrir) }
-            Text("VER LAS QUE ESPERAN →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
-                modifier = Modifier.clickable { alIr(Destino.EnPausa) }.padding(vertical = 12.dp))
+        // En la tableta en horizontal, dos columnas: «Ahora» a la izquierda y lo demás (sobre la mesa, en el cajón) a la derecha
+        if (ancho >= 1000) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+            Column(Modifier.weight(1.3f)) { if (ahora != null) AhoraPortada(e, ver, ahora, alAbrir, alSeguir, alSprint); TeComparte(alPareja) }
+            Column(Modifier.weight(1f)) { MesaPortada(e, mesa, pausa, alAbrir, alIr, arriba = false) }
+        } else {
+            if (ahora != null) AhoraPortada(e, ver, ahora, alAbrir, alSeguir, alSprint)
+            TeComparte(alPareja)
+            MesaPortada(e, mesa, pausa, alAbrir, alIr, arriba = true)
         }
 
         Text("Cobalto · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 18.dp))
@@ -161,7 +109,76 @@ fun PantInicio(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, a
         Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
     }
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre y lo de siempre (Buscar · + Nueva…)
-    BarraPlegada("Cobalto", desplazado.value > umbral) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Nueva", Modifier.padding(start = 14.dp), acento = true) { alNueva() } }
+    BarraPlegada("Cobalto", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Nueva", Modifier.padding(start = 14.dp), acento = true) { alNueva() } }
+    }
+}
+
+/** «Ahora»: la obra en la que estás, enmarcada, con lo de hoy, la escena por la que vas y «Seguir escribiendo». */
+@Composable
+private fun AhoraPortada(e: Escritos, ver: Int, ahora: Doc, alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, alSprint: (String) -> Unit) {
+    val palabras = remember(ver, ahora.id) { e.palabrasObra(ahora.id) }
+    val hoyObra = remember(ver, ahora.id) { e.escritas(Escritos.hoy(), ahora.id) }
+    val escena = remember(ver, ahora.id) { e.ultimaEscenaDe(ahora.id) }
+    val meta = ahora.i("meta"); val diaria = ahora.i("diaria")
+    val color = colorEscrito(ahora.s("color"))
+    Column(Modifier.fillMaxWidth().border(1.5.dp, Charcoal).clickable { alAbrir(ahora.id) }.padding(20.dp)) {
+        Antetitulo("Ahora", Modifier.padding(bottom = 12.dp))
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            Box(Modifier.width(10.dp).fillMaxHeight().background(color))
+            Column(Modifier.weight(1f).padding(start = 16.dp)) {
+                FitTitle(ahora.s("titulo").ifBlank { "Sin título" }, 32.sp, 34.sp, maxLines = 3, minSize = 16f, letterSpacing = (-0.5).sp)
+                val sub = listOf(ahora.s("autor"), ahora.s("genero")).filter { it.isNotBlank() }.joinToString(" · ")
+                if (sub.isNotBlank()) Text(sub, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 2.dp))
+                Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.Bottom) {
+                    Text(cifraE(hoyObra), color = if (diaria > 0 && hoyObra >= diaria) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 52.sp, lineHeight = 52.sp)
+                    Column(Modifier.padding(start = 10.dp, bottom = 8.dp)) {
+                        Text(if (diaria > 0) "HOY · DE ${cifraE(diaria)}" else "PALABRAS HOY", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+                    }
+                }
+                if (meta > 0) {
+                    Bar((palabras.toFloat() / meta).coerceIn(0f, 1f), Acento, Modifier.padding(top = 6.dp), height = 3.dp)
+                    Text("${cifraE(palabras)} de ${cifraE(meta)} palabras · ${(palabras * 100L / meta).coerceAtMost(999)} %".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
+                } else Text("${cifraE(palabras)} palabras · ${e.cuentaObra(ahora.id)}".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
+            }
+        }
+        if (escena != null) {
+            Spacer(Modifier.height(14.dp))
+            Filete(1.dp, Line)
+            val linea = escena.s("texto").lineSequence().map { it.trim() }.lastOrNull { it.isNotBlank() && !it.startsWith("#") && it != "***" }.orEmpty()
+            Text(escena.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
+            if (linea.isNotEmpty()) Text("…" + linea.takeLast(140), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        Spacer(Modifier.height(10.dp))
+        // La acción de siempre, como en Marfil y Hiedra: un botón grande; el sprint, al lado, en pequeño
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            AccionGrande(androidx.compose.material.icons.Icons.Rounded.Edit, "Seguir escribiendo", Modifier.weight(1f)) { alSeguir(ahora.id, escena?.id) }
+            Text("SPRINT →", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
+                modifier = Modifier.clickable { alSprint(ahora.id) }.padding(vertical = 8.dp))
+        }
+    }
+}
+
+/** Sobre la mesa (las demás obras en marcha) y en el cajón (las que esperan). */
+@Composable
+private fun MesaPortada(e: Escritos, mesa: List<Doc>, pausa: List<Doc>, alAbrir: (String) -> Unit, alIr: (Destino) -> Unit, arriba: Boolean) {
+    // ---- Sobre la mesa: las demás obras en marcha
+    if (mesa.isNotEmpty()) {
+        if (arriba) Spacer(Modifier.height(30.dp))
+        Antetitulo("Sobre la mesa", Modifier.padding(bottom = 6.dp))
+        Filete(1.dp)
+        mesa.forEach { o -> FilaObra(e, o, alAbrir) }
+        Text("VER LAS QUE ESCRIBES →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
+            modifier = Modifier.clickable { alIr(Destino.Escribiendo) }.padding(vertical = 12.dp))
+    }
+
+    // ---- En el cajón: lo que está en pausa
+    if (pausa.isNotEmpty()) {
+        if (arriba || mesa.isNotEmpty()) Spacer(Modifier.height(30.dp))
+        Antetitulo("En el cajón", Modifier.padding(bottom = 6.dp))
+        Filete(1.dp)
+        pausa.forEach { o -> FilaObra(e, o, alAbrir) }
+        Text("VER LAS QUE ESPERAN →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
+            modifier = Modifier.clickable { alIr(Destino.EnPausa) }.padding(vertical = 12.dp))
     }
 }
 
@@ -197,11 +214,13 @@ fun BarrasEscritura(e: Escritos, ver: Int) {
         }
         if (algo) {
             val tope = maxOf(semana.maxOf { it.second }, r.diaria, 1).toFloat()
+            // (en la tableta, un poco más altas)
+            val alto = if (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700) 44f else 30f
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 semana.forEach { (d, n) ->
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(Modifier.fillMaxWidth(0.62f).height(30.dp), contentAlignment = Alignment.BottomCenter) {
-                            Box(Modifier.fillMaxWidth().height(if (n > 0) maxOf(3f, 30f * n / tope).dp else 1.dp)
+                        Box((if (alto > 30f) Modifier.width(30.dp) else Modifier.fillMaxWidth(0.62f)).height(alto.dp), contentAlignment = Alignment.BottomCenter) {
+                            Box(Modifier.fillMaxWidth().height(if (n > 0) maxOf(3f, alto * n / tope).dp else 1.dp)
                                 .background(if (n > 0) (if (r.diaria > 0 && n >= r.diaria) Acento else Charcoal) else Line))
                         }
                         Text(d.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, Locale("es", "ES")).uppercase(), fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold,

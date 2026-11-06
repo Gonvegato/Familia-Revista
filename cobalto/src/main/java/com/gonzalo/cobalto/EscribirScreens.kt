@@ -309,7 +309,7 @@ fun ObraScreen(e: Escritos, id: String, onBack: () -> Unit, abrir: (String) -> U
     accionGuia?.let { a -> AccionGuia(a, e, obra, abrir = abrir, irManuscrito = { pestana = 0 }, exportar = { exportar = true }, onCerrar = { accionGuia = null }) }
     if (ajustes) ObraDialogo(e, obra, onCerrar = { ajustes = false })
     if (exportar) ExportarDialogo(e, obra, onCerrar = { exportar = false })
-    if (buscar) BuscarObraDialogo(e, obra, onCerrar = { buscar = false }, abrir = { buscar = false; abrir(it) })
+    if (buscar) BuscarObraDialogo(e, obra, onCerrar = { buscar = false }, abrir = { buscar = false; abrir(it) }, leer = { buscar = false; a.ver = it })
     VentanasEscribir(e, obra.id, a, abrir, verArbol = { focoArbol = it; pestana = TAB_ARBOL })
 }
 
@@ -441,20 +441,36 @@ private fun baja(e: Escritos, s: Doc, caps: List<Doc>) {
 }
 
 @Composable
-private fun BuscarObraDialogo(e: Escritos, obra: Doc, onCerrar: () -> Unit, abrir: (String) -> Unit) {
+private fun BuscarObraDialogo(e: Escritos, obra: Doc, onCerrar: () -> Unit, abrir: (String) -> Unit, leer: (String) -> Unit = {}) {
     var q by remember { mutableStateOf("") }
     val res = remember(q, e.version) { if (q.trim().length < 2) emptyList() else e.busca(obra.id, q) }
+    // (sin mirar mayúsculas ni acentos, como la búsqueda: lo encontrado, resaltado en el extracto)
+    fun norma(s: String) = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
+    fun resalta(t: String): androidx.compose.ui.text.AnnotatedString = androidx.compose.ui.text.buildAnnotatedString {
+        append(t)
+        val n = norma(q.trim()); val tn = norma(t)
+        // (al quitar los acentos la longitud no cambia en el español de siempre; si cambiara, mejor sin resaltar)
+        if (n.isNotEmpty() && tn.length == t.length) {
+            var i = tn.indexOf(n)
+            while (i >= 0) { addStyle(androidx.compose.ui.text.SpanStyle(background = Acento.copy(alpha = 0.25f), fontWeight = FontWeight.Bold), i, i + n.length); i = tn.indexOf(n, i + n.length) }
+        }
+    }
     HojaEscribir("Buscar en «${obra.s("titulo")}»", onCerrar) {
         CampoEscribir(q, { q = it }, "Una palabra o una frase", mayus = false)
         if (q.trim().length >= 2 && res.isEmpty()) Text("Nada con «$q».", color = Muted, fontSize = 14.sp)
-        if (res.isNotEmpty()) Text("${res.size} ${if (res.size == 1) "resultado" else "resultados"}", color = Muted, fontSize = 12.sp)
+        if (res.isNotEmpty()) Text("${res.size} ${if (res.size == 1) "resultado" else "resultados"}. Toca uno: una escena se abre con lo buscado resaltado; una ficha o una nota, para leerla.", color = Muted, fontSize = 12.sp)
         res.forEach { h ->
             Column(Modifier.fillMaxWidth().press(haptic = false) {
-                when (h.doc.t) { Escritos.T_ESCENA -> abrir(h.doc.id); else -> onCerrar() }
+                when (h.doc.t) {
+                    Escritos.T_ESCENA -> { EscribirHub.buscarAlAbrir = h.doc.id to q.trim(); abrir(h.doc.id) }
+                    Escritos.T_FICHA, Escritos.T_NOTA -> leer(h.doc.id)
+                    else -> onCerrar()
+                }
             }.padding(vertical = 6.dp)) {
                 Text(h.donde.uppercase(), color = ColGeneral, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1)
-                Text(h.extracto, fontFamily = Display, fontSize = 15.sp, color = Charcoal, maxLines = 3)
+                Text(resalta(h.extracto), fontFamily = Display, fontSize = 15.sp, color = Charcoal, maxLines = 3)
             }
+            Filete(1.dp, Line)
         }
     }
 }

@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.3.1"
+const val VERSION = "0.4.0"
 
 /** «Ajustes»: Apariencia (como la de Atrio), cuenta de Atrio y pareja, actualizaciones, escritura y copias. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -41,6 +41,9 @@ fun PantEstilo(alVolver: () -> Unit) {
     val e = remember { Escritos.get(ctx) }
     var mensaje by remember { mutableStateOf<String?>(null) }
     var papelera by remember { mutableStateOf(false) }
+    var hojaPagina by remember { mutableStateOf(false) }
+    var atajos by remember { mutableStateOf(false) }
+    val pagina = remember { PaginaEscribir.de(ctx) }
     val exportar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { u ->
         if (u != null) mensaje = runCatching { ctx.contentResolver.openOutputStream(u)!!.use { it.write(e.volcado().toString().toByteArray()) }; "Copia guardada" }.getOrElse { "No se pudo guardar la copia" }
     }
@@ -58,6 +61,8 @@ fun PantEstilo(alVolver: () -> Unit) {
             1 -> {
                 Antetitulo("Escritura", Modifier.padding(bottom = 4.dp))
                 val enPapelera = remember(e.version) { e.papelera().size }
+                MagLink("La página del editor", "Letra, tamaño, interlineado, sangría, máquina de escribir y concentración") { hojaPagina = true }
+                MagLink("Atajos de teclado", "Con un teclado físico, como el de la tableta") { atajos = true }
                 MagLink("Papelera" + if (enPapelera > 0) " · $enPapelera" else "", "Lo borrado se guarda 30 días, también lo borrado desde el PC") { papelera = true }
                 Filete(1.dp, Line)
                 Text("Cobalto escribe en los mismos documentos que Escribir de Atrio y de Atrio del PC: tus obras salen aquí tal cual, y lo que cambies aquí llega allí.",
@@ -95,6 +100,8 @@ fun PantEstilo(alVolver: () -> Unit) {
         Spacer(Modifier.height(30.dp))
     }
     if (papelera) PapeleraEscribir(e, onCerrar = { papelera = false })
+    if (hojaPagina) HojaPagina(pagina, androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700) { hojaPagina = false }
+    if (atajos) AtajosDialogo { atajos = false }
 }
 
 /** Una casilla de texto con el estilo de la revista: etiqueta en versalitas, texto en cursiva sobre un filete. */

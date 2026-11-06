@@ -6,6 +6,11 @@ sealed class Parte {
     class Cambio(val aqui: List<String>, val otro: List<String>) : Parte()
 }
 
+/** Un trozo de la comparación palabra a palabra: igual en los dos, solo en el de aquí (se quitó) o solo en el otro (se añadió). */
+class TrozoDiff(val tipo: Int, val texto: String) {
+    companion object { const val IGUAL = 0; const val AQUI = 1; const val OTRO = 2 }
+}
+
 /** Comparar dos versiones de un texto párrafo a párrafo, y mezclarlas eligiendo de cada diferencia. */
 object EscribirDiff {
     fun parrafos(t: String): List<String> = t.replace("\r\n", "\n").split(Regex("\n\\s*\n|\n")).map { it.trim() }.filter { it.isNotEmpty() }
@@ -29,6 +34,34 @@ object EscribirDiff {
             }
         }
         cierraIgual(); cierraCambio()
+        return out
+    }
+
+    private val PIEZA = Regex("\\s+|[\\p{L}\\p{N}]+|[^\\s\\p{L}\\p{N}]")
+
+    /**
+     * Las diferencias entre dos trozos de texto palabra a palabra (los espacios y los signos cuentan como piezas): para
+     * enseñar, dentro de un párrafo cambiado, qué palabras se quitaron y cuáles se añadieron. Los trozos seguidos del mismo
+     * tipo van juntos; unidos los de [TrozoDiff.IGUAL] y [TrozoDiff.AQUI] dan [aqui], y los de [TrozoDiff.IGUAL] y
+     * [TrozoDiff.OTRO] dan [otro].
+     */
+    fun porPalabras(aqui: String, otro: String): List<TrozoDiff> {
+        val a = PIEZA.findAll(aqui).map { it.value }.toList()
+        val b = PIEZA.findAll(otro).map { it.value }.toList()
+        val out = ArrayList<TrozoDiff>()
+        fun pon(tipo: Int, x: String) {
+            if (x.isEmpty()) return
+            val u = out.lastOrNull()
+            if (u != null && u.tipo == tipo) out[out.size - 1] = TrozoDiff(tipo, u.texto + x) else out += TrozoDiff(tipo, x)
+        }
+        var i = 0; var j = 0
+        for ((x, y) in EscribirMezcla.comunes(a, b)) {
+            while (i < x) pon(TrozoDiff.AQUI, a[i++])
+            while (j < y) pon(TrozoDiff.OTRO, b[j++])
+            pon(TrozoDiff.IGUAL, a[i]); i++; j++
+        }
+        while (i < a.size) pon(TrozoDiff.AQUI, a[i++])
+        while (j < b.size) pon(TrozoDiff.OTRO, b[j++])
         return out
     }
 
