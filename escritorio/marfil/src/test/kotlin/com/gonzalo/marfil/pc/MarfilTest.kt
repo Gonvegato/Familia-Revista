@@ -58,23 +58,29 @@ class MarfilTest {
 
     @Test fun laPosicionDelMovilAbreAquiEnElMismoSitioYLaDeAquiLaEntiendeElMovil() {
         Epub(epub()).use { e ->
-            val todos = e.secciones.indices.flatMap { e.bloques(it) }
-            // Una posición de foliate en el móvil: 2.º capítulo, su <section>, el párrafo, el texto en la letra 5
-            val movil = Cfi.lee("epubcfi(/6/4[c2]!/4/2/4/1:5)")!!
-            assertEquals(1 to 1, movil.bloque(e))
-            // Un rango (subrayado) también vale: su principio
-            assertEquals(0 to 3, Cfi.lee("epubcfi(/6/2[c1]!/4/6,/4/1:0,/4/1:12)")!!.bloque(e))
-            // La de aquí: el bloque con su camino, y la vuelve a encontrar igual
-            val b = todos.first { it.texto.text.startsWith("La vieja") }
-            val cfi = Cfi.de(e, b)
-            assertEquals("epubcfi(/6/2[c1]!/4/6/4/1:0)", cfi)
-            assertEquals(0 to 3, Cfi.lee(cfi)!!.bloque(e))
-            // El porcentaje crece con el libro
-            val fr = todos.indices.map { fraccionDe(e, todos, it) }
+            val libro = LibroAbierto(e)
+            // Una posición de foliate en el móvil: 2.º capítulo, su <section>, el párrafo, el texto en la letra 5. El lector del móvil pone
+            // arriba del <body> el botón «← Capítulo anterior» (oculto al pasar páginas, pero en el documento): la <section> es /4/4, no /4/2
+            val movil = e.ubica("epubcfi(/6/4!/4/4/4/1:5)")!!
+            assertEquals(1, movil.seccion); assertEquals(1 to 5, movil.desde)
+            // Un rango (subrayado): su principio y su final
+            val r = e.ubica("epubcfi(/6/2!/4/6,/4/1:0,/4/1:8)")!!
+            assertEquals(3 to 0, r.desde); assertEquals(3 to 8, r.hasta)
+            assertEquals("La vieja", e.bloques(0)[3].texto.text.substring(0, 8))
+            // La de aquí: el principio del bloque, como lo escribiría foliate, y la vuelve a encontrar igual
+            val b = e.bloques(0).first { it.texto.text.startsWith("La vieja") }
+            val cfi = e.cfiDe(b, 0)
+            assertEquals("epubcfi(/6/2!/4/6/4/1:0)", cfi)
+            assertEquals(3 to 0, e.ubica(cfi)!!.desde)
+            // El porcentaje crece con el libro y vuelve al mismo sitio
+            val sitios = e.secciones.indices.flatMap { s -> e.bloques(s).indices.map { Sitio(s, it) } }
+            val fr = sitios.map { libro.fraccion(it.seccion, libro.fraccionEnSeccion(it)) }
             assertEquals(fr.sorted(), fr)
             assertTrue(fr.last() < 1.0 && fr.first() == 0.0)
-            assertEquals(todos.indexOf(b), indicePorFraccion(e, todos, fraccionDe(e, todos, todos.indexOf(b))))
-            assertEquals("Arrakis", etiqueta(e, todos, 2)); assertEquals("El sueño", etiqueta(e, todos, todos.size - 1))
+            val x = Sitio(0, 3)
+            val (s, f) = libro.deFraccion(libro.fraccion(0, libro.fraccionEnSeccion(x)))
+            assertEquals(x, libro.sitioEnSeccion(s, f))
+            assertEquals("Arrakis", libro.etiqueta(Sitio(0, 2))); assertEquals("El sueño", libro.etiqueta(Sitio(1, e.bloques(1).size - 1)))
         }
         assertEquals(3, PosicionPaginas.pagina(PosicionPaginas.cfi(3)))
     }

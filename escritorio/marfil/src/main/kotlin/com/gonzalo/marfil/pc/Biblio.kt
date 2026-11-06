@@ -14,6 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,10 +44,13 @@ fun fechaDe(ms: Long): String = if (ms <= 0) "" else java.time.Instant.ofEpochMi
 fun tiempoDe(min: Long): String = if (min < 60) "$min min" else "${min / 60} h" + if (min % 60 > 0) " ${min % 60} min" else ""
 fun avance(l: Libro) = if (l.estado == Estado.LEIDO) "Terminado" else "${(l.fraccion * 100).toInt()} %"
 
-/** Un libro en la cuadrícula: su portada, lo que llevas y su título. */
+/** Un libro en la cuadrícula: su portada, lo que llevas y su título. Al pasar el ratón, se levanta un poco (como al cogerlo de la estantería). */
 @Composable
 fun TarjetaLibro(l: Libro, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Column(modifier.clickable(onClick = onClick)) {
+    val h = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val encima by h.collectIsHoveredAsState()
+    val alza by androidx.compose.animation.core.animateFloatAsState(if (encima) 1f else 0f, androidx.compose.animation.core.tween(160), label = "alza")
+    Column(modifier.hoverable(h).pointerHoverIcon(PointerIcon.Hand).graphicsLayer { translationY = -5f * density * alza }.clickable(onClick = onClick)) {
         PortadaCosa(l.portada, l.portadaUrl, l.titulo, Modifier.fillMaxWidth(), pie = l.autor)
         if (l.estado == Estado.LEYENDO || (l.fraccion > 0 && l.estado != Estado.LEIDO)) {
             Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(3.dp).background(Sand)) { Box(Modifier.fillMaxWidth(l.fraccion).fillMaxHeight().background(Acento)) }
@@ -96,6 +104,21 @@ fun PantPortada(nav: Nav) {
                     Text("${(sigue.fraccion * 100).toInt()} % · ${tiempoDe(sigue.minutos)} leyendo", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
                     Spacer(Modifier.height(10.dp))
                     EnlaceRevista("Seguir leyendo →", acento = true) { nav.ir(Pantalla.Leer(sigue.id, Pantalla.Portada)) }
+                }
+                // Lo último que subrayaste en él (en cualquier dispositivo), como el destacado de una revista
+                Marcas.de(sigue.id, Marcas.SUBRAYADOS).filter { !it.delTextoDeUnPdf }.maxByOrNull { it.creada }?.let { m ->
+                    Spacer(Modifier.width(36.dp))
+                    Row(Modifier.width(380.dp).height(IntrinsicSize.Min).clickable { nav.ir(Pantalla.Leer(sigue.id, Pantalla.Portada, ir = m.valor)) }) {
+                        Box(Modifier.width(3.dp).fillMaxHeight().background(Acento))
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Antetitulo("Lo último que subrayaste", tam = 11.sp)
+                            Spacer(Modifier.height(8.dp))
+                            Text("«${m.texto}»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 21.sp, lineHeight = 28.sp, maxLines = 5, overflow = TextOverflow.Ellipsis)
+                            if (m.nota.isNotBlank()) Text(m.nota, color = Acento, fontFamily = Display, fontSize = 15.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+                            Etiqueta(listOfNotNull(m.etiqueta.ifBlank { null }, if (m.creada > 0) fechaDe(m.creada) else null).joinToString(" · "), Modifier.padding(top = 8.dp))
+                        }
+                    }
                 }
             }
         }
@@ -194,6 +217,7 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
                 l.terminados.takeIf { it.isNotEmpty() }?.let { MagFact(if (it.size > 1) "Lo terminaste" else "Terminado", it.joinToString(", ") { t -> fechaDe(t) }) }
                 if (l.anadido > 0) MagFact("Añadido", fechaDe(l.anadido))
                 if (l.formato.isNotBlank()) MagFact("Formato", l.formato.uppercase())
+                SubrayadosDeLaFicha(l, nav, volver, aqui != null || l.nube != null)
                 Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
                 Antetitulo("En Azabache")
                 Spacer(Modifier.height(6.dp))
@@ -208,6 +232,43 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
         BotonSuave("Cancelar") { borrar = false }
         BotonSuave("Borrar", peligro = true) { Libros.quita(id); borrar = false; nav.ir(volver); nav.aviso("Borrado") }
     }) { Cuerpo("Sale de tu biblioteca en todos tus dispositivos (y de Azabache). El archivo de tu kDrive no se borra.", tam = 14) }
+}
+
+/**
+ * «Subrayados y notas» en la ficha (como en la del móvil): los de todos tus dispositivos, en el orden del libro; tocar uno abre el libro
+ * justo ahí (si el archivo está en tu kDrive, se baja antes).
+ */
+@Composable
+private fun SubrayadosDeLaFicha(l: Libro, nav: Nav, volver: Pantalla, sePuedeAbrir: Boolean) {
+    val notas = Marcas.de(l.id, Marcas.SUBRAYADOS).filter { !it.delTextoDeUnPdf }
+        .sortedWith { a, b -> val x = EpubCfi.lee(a.valor); val y = EpubCfi.lee(b.valor); (if (x != null && y != null) EpubCfi.compara(x, y) else 0).takeIf { it != 0 } ?: a.creada.compareTo(b.creada) }
+    var todas by remember(l.id) { mutableStateOf(false) }
+    Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Antetitulo("Subrayados y notas")
+    Spacer(Modifier.height(6.dp))
+    if (notas.isEmpty()) {
+        Text("Aún no has subrayado nada. En el lector, selecciona un trozo con el ratón y elige Subrayar o Nota (lo que subrayes en el móvil sale aquí).",
+            color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
+        return
+    }
+    val conNota = notas.count { it.nota.isNotBlank() }
+    Etiqueta(listOfNotNull("${notas.size} subrayado${if (notas.size == 1) "" else "s"}", if (conNota > 0) "$conNota con nota" else null).joinToString(" · "))
+    fun abre(m: Marca?) {
+        if (sePuedeAbrir) nav.ir(Pantalla.Leer(l.id, Pantalla.Ficha(l.id, volver), ir = m?.valor.orEmpty(), panel = if (m == null) Panel.NOTAS else null))
+        else nav.aviso("Este libro no está en este ordenador ni en tu kDrive: súbelo desde el móvil donde lo tienes.")
+    }
+    (if (todas) notas else notas.take(4)).forEachIndexed { i, m ->
+        if (i > 0) Filete(1.dp, Line)
+        Column(Modifier.fillMaxWidth().clickable { abre(m) }.padding(vertical = 10.dp)) {
+            Text("«${m.texto}»", color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 23.sp, maxLines = if (todas) 12 else 5, overflow = TextOverflow.Ellipsis)
+            if (m.nota.isNotBlank()) Text(m.nota, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp))
+            Etiqueta(listOfNotNull(m.etiqueta.ifBlank { null }, if (m.creada > 0) fechaDe(m.creada) else null).joinToString(" · "), Modifier.padding(top = 4.dp))
+        }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+        if (notas.size > 4) EnlaceRevista(if (todas) "Ver menos" else "Ver los ${notas.size} →", acento = true) { todas = !todas }
+        EnlaceRevista("Abrir tus notas en el lector →") { abre(null) }
+    }
 }
 
 /** Añadir un libro desde un archivo de este ordenador: EPUB, PDF o cómic (CBZ). */
