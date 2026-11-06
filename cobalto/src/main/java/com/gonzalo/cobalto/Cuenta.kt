@@ -34,13 +34,16 @@ object Cuenta {
     val uid: String get() = runCatching { sesion.uid }.getOrDefault("")
     val usuario: String get() { LaFamilia.cambios; return runCatching { sesion.usuario }.getOrDefault("") }
 
-    /** Tu pareja: su usuario y su uid, para compartirle capítulos y leer lo que te comparte. */
+    /** Tu pareja: su usuario (o su nombre) y su uid, para compartirle capítulos y leer lo que te comparte. La de la cuenta ([sincronizaPareja]). */
     var parejaUsuario by mutableStateOf("")
         private set
     var parejaUid by mutableStateOf("")
         private set
 
-    /** Busca a tu pareja por su usuario (en /usernames) y la guarda. */
+    /**
+     * Busca a tu pareja por su usuario (en /usernames) y la pone en tu cuenta: `/users/<tú>/partner` = su uid, la misma pareja de toda la
+     * familia (la que pone Azabache, y la que deja a tu pareja leer lo que le compartes). Así está en todos tus dispositivos.
+     */
     suspend fun ponPareja(user: String) = withContext(Dispatchers.IO) {
         val u = normUser(user)
         if (u.isBlank()) throw Fail("Escribe el usuario de tu pareja.")
@@ -48,11 +51,50 @@ object Cuenta {
         val raw = db("GET", "/usernames/$u", null) ?: throw Fail("No hay nadie con el usuario «$u».")
         val pu = (JSONTokener(raw).nextValue() as? String).orEmpty().ifBlank { throw Fail("No hay nadie con el usuario «$u».") }
         if (pu == uid) throw Fail("Ese usuario eres tú.")
-        parejaUsuario = u; parejaUid = pu
-        p.edit().putString("parejaUsuario", u).putString("parejaUid", pu).apply()
+        db("PUT", "/users/$uid/partner", org.json.JSONObject.quote(pu))
+        guardaPareja(u, pu)
     }
 
-    fun quitarPareja() { parejaUsuario = ""; parejaUid = ""; if (::p.isInitialized) p.edit().remove("parejaUsuario").remove("parejaUid").apply() }
+    /** Quita a tu pareja de tu cuenta (en todos tus dispositivos y en las demás apps de la familia): dejas de compartirle y de ver lo suyo. */
+    suspend fun quitarPareja() = withContext(Dispatchers.IO) {
+        // (nunca null: vacío es «sin pareja», como lo lee Azabache)
+        if (vinculada) db("PUT", "/users/$uid/partner", "\"\"")
+        olvidaPareja()
+    }
+
+    /** Olvida en este dispositivo a tu pareja (al salir de la cuenta o cambiar de cuenta); en la cuenta no se toca. */
+    fun olvidaPareja() { parejaUsuario = ""; parejaUid = ""; if (::p.isInitialized) p.edit().remove("parejaUsuario").remove("parejaUid").apply() }
+
+    private fun guardaPareja(usuario: String, pu: String) {
+        parejaUsuario = usuario; parejaUid = pu
+        p.edit().putString("parejaUsuario", usuario).putString("parejaUid", pu).putString(PAREJA_EN_CUENTA, uid).apply()
+    }
+
+    private const val PAREJA_EN_CUENTA = "parejaEnCuenta"
+
+    /**
+     * Tu pareja, la de la cuenta (`/users/<tú>/partner`), al día en este dispositivo (bloquea: llámalo fuera del hilo principal). Hasta
+     * Cobalto 0.4.1 se guardaba solo en este móvil: si la cuenta aún no tenía ninguna, la de aquí pasa a ella, una vez por cuenta. Después
+     * manda la cuenta: si se quitó o se cambió en otro sitio, aquí también.
+     */
+    fun sincronizaPareja() {
+        if (!vinculada || !::p.isInitialized) return
+        val enCuenta = (db("GET", "/users/$uid/partner", null)?.let { runCatching { JSONTokener(it).nextValue() as? String }.getOrNull() }).orEmpty()
+        val yaPaso = p.getString(PAREJA_EN_CUENTA, "") == uid
+        when {
+            enCuenta.isNotBlank() && enCuenta != uid -> {
+                if (enCuenta != parejaUid || parejaUsuario.isBlank()) guardaPareja(nombreDe(enCuenta).ifBlank { if (enCuenta == parejaUid) parejaUsuario else "" }, enCuenta)
+                else p.edit().putString(PAREJA_EN_CUENTA, uid).apply()
+            }
+            !yaPaso && parejaUid.isNotBlank() -> { db("PUT", "/users/$uid/partner", org.json.JSONObject.quote(parejaUid)); guardaPareja(parejaUsuario, parejaUid) }
+            else -> { if (parejaUid.isNotBlank()) olvidaPareja(); p.edit().putString(PAREJA_EN_CUENTA, uid).apply() }
+        }
+    }
+
+    /** El nombre de alguien (el que puso en Azabache, o su usuario), si su cuenta te deja leerlo; "" si no. */
+    private fun nombreDe(otro: String): String = listOf("name", "user").firstNotNullOfOrNull { c ->
+        runCatching { db("GET", "/users/$otro/$c", null)?.let { JSONTokener(it).nextValue() as? String } }.getOrNull()?.takeIf { it.isNotBlank() }
+    }.orEmpty()
 
     fun cargar(c: Context) {
         LaFamilia.inicia(c)
@@ -69,13 +111,14 @@ object Cuenta {
     suspend fun entrar(user: String, pass: String): String = withContext(Dispatchers.IO) {
         val previo = uid
         try { LaFamilia.entrar(user, pass) } catch (e: Sesion.Error) { throw Fail(e.message ?: "No se ha podido entrar.") }
-        if (previo.isNotBlank() && previo != uid) quitarPareja()
+        if (previo.isNotBlank() && previo != uid) olvidaPareja()
+        runCatching { sincronizaPareja() }
         uid
     }
 
     suspend fun entrar(@Suppress("UNUSED_PARAMETER") c: Context, user: String, pass: String): String = entrar(user, pass)
 
-    fun salir() { LaFamilia.salir(); quitarPareja() }
+    fun salir() { LaFamilia.salir(); olvidaPareja() }
 
     /** Una petición a la base de datos con tu sesión. Devuelve el texto, o null si no hay nada. */
     fun db(method: String, path: String, body: String?, query: String = ""): String? {

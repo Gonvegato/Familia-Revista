@@ -182,8 +182,17 @@ private fun SeccionCuenta() {
             }
         } else {
             Etiqueta("Tu pareja", Modifier.padding(top = 8.dp))
-            Text(Cuenta.parejaUsuario, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
-            MagLink("Quitar a mi pareja", "Dejas de compartir y de ver lo suyo") { Cuenta.quitarPareja() }
+            Text(Cuenta.parejaUsuario.ifBlank { "Enlazada en tu cuenta" }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+            Text("Es la de tu cuenta: la misma en todos tus dispositivos y en las demás apps de la familia.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+            MagLink(if (ocupado) "Quitando…" else "Quitar a mi pareja", "Dejas de compartir y de ver lo suyo, en todas tus apps") {
+                if (!ocupado) {
+                    ocupado = true; aviso = null
+                    ambito.launch {
+                        aviso = try { Cuenta.quitarPareja(); null } catch (x: Exception) { "No se pudo: ${x.message ?: "sin conexión"}" }
+                        ocupado = false
+                    }
+                }
+            }
         }
         Filete(1.dp, Line)
         MagLink("Salir de la cuenta", "Tus obras se quedan aquí; dejan de sincronizarse") { SincroP.parar(); Cuenta.salir(); Escritos.get(ctx).olvidaNube(); Publicar.olvidar(ctx) }

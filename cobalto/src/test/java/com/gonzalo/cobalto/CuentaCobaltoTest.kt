@@ -91,4 +91,35 @@ class CuentaCobaltoTest {
             assertEquals(0, SprintsDeAntes.migra(ctx))
         } finally { SprintEscribir.reiniciaParaPruebas(); SprintEscribir.cuenta = CuentaSprints.Ninguna }
     }
+
+    @Test fun tuParejaEsLaDeLaCuentaEnTodosTusDispositivos() {
+        val yo = Cuenta.uid
+        val ella = Emulador.cuenta("lucia")
+        // (Lucía te deja leer su cuenta y tiene su nombre puesto en Azabache; su usuario es «lucia»)
+        Emulador.escribe("/users/$ella/partner", yo); Emulador.escribe("/users/$ella/name", "Lucía"); Emulador.escribe("/usernames/lucia", ella)
+        // Hasta la 0.4.1 se guardaba solo en este móvil: si la cuenta no tenía ninguna, pasa a ella (una vez)
+        ctx.getSharedPreferences("cobalto_cuenta", android.content.Context.MODE_PRIVATE).edit()
+            .putString("parejaUid", ella).putString("parejaUsuario", "lucia").remove("parejaEnCuenta").commit()
+        Cuenta.cargar(ctx)
+        assertEquals(ella, Cuenta.parejaUid)
+        Cuenta.sincronizaPareja()
+        assertEquals(ella, Emulador.lee("/users/$yo/partner"))
+        // Si se quita en otro sitio (Azabache, otro móvil), aquí también
+        Emulador.escribe("/users/$yo/partner", "")
+        Cuenta.sincronizaPareja()
+        assertEquals("", Cuenta.parejaUid)
+        // Si se pone en otro sitio, aquí aparece, con su nombre
+        Emulador.escribe("/users/$yo/partner", ella)
+        Cuenta.sincronizaPareja()
+        assertEquals(ella, Cuenta.parejaUid); assertEquals("Lucía", Cuenta.parejaUsuario)
+        // Quitarla aquí la quita de la cuenta (vacío, nunca null)…
+        runBlocking { Cuenta.quitarPareja() }
+        assertEquals("", Emulador.lee("/users/$yo/partner")); assertEquals("", Cuenta.parejaUid)
+        // …y ponerla aquí, la pone
+        runBlocking { Cuenta.ponPareja("lucia") }
+        assertEquals(ella, Emulador.lee("/users/$yo/partner")); assertEquals(ella, Cuenta.parejaUid)
+        // Salir de la cuenta la olvida en este móvil, pero no la quita de la cuenta
+        Cuenta.salir()
+        assertEquals("", Cuenta.parejaUid); assertEquals(ella, Emulador.lee("/users/$yo/partner"))
+    }
 }
