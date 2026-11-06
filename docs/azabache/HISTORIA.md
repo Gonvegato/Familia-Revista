@@ -32,6 +32,10 @@ aquí tal cual (con su «Añadir»).
 - **Prueba nueva** (`PantallasQuietasTest`, en el móvil y en la tableta en horizontal): cada página, una vez pintada, no se vuelve a
   componer ni un fotograma si no tocas nada (la que no dejaba de redibujarse de la 1.5.2 la habría pillado).
 - Nada nuevo en la cuenta: «Sesiones» lee los nodos `tiempo/` de siempre y el avance de Marfil (`fr`).
+- **En el ordenador (Azabache para Linux y Mac 1.1.0)**, lo mismo que aquí: la ficha se lee como página de revista (las mismas
+  casillas y, si diseñaste la página en el móvil, tu maqueta tal cual, a dos columnas) y «Editar» abre los datos; la portada con su
+  número, «Hoy» y «En portada»; las cifras del año como estas; el diario por meses y días; la biblioteca también en índice; y tu
+  pareja (su revista, sus fichas para leer y «Vosotros dos»). Las maquetas se diseñan en el móvil; allí se leen.
 
 ## 1.5.2
 
