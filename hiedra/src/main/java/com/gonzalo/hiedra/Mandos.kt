@@ -74,10 +74,42 @@ object Mandos {
     /** Los botones que usa cada sistema (para el mando táctil y para saber si L2/R2 quedan libres para el avance rápido). */
     class Disposicion(val botones: Set<Boton>, val analogico: Boolean = false)
 
-    val disposiciones: Map<String, Disposicion> = mapOf(
-        "gba" to Disposicion(setOf(Boton.A, Boton.B, Boton.L, Boton.R, Boton.START, Boton.SELECT)),
-    )
-    fun disposicion(sistema: String): Disposicion = disposiciones[sistema] ?: Disposicion(Boton.entries.toSet(), analogico = true)
+    /**
+     * Los mandos de cada consola, como en Lemuroid: qué botones del RetroPad usa el núcleo y si los sticks van como sticks
+     * ([analogico]: N64 y PSP; en los demás, el stick izquierdo hace de cruceta). El mando táctil de cada uno está en [MandoTactil].
+     *
+     * Cómo llama cada núcleo a sus botones (los de la consola → los del RetroPad, que es lo que se le manda):
+     *  - Mega Drive (Genesis Plus GX): A → Y, B → B, C → A. Master System y Game Gear: 1 → B, 2 → A, Start (pausa) → Start.
+     *  - PC Engine: I → B, II → A, Run → Start. Neo Geo Pocket: A → B, B → A, Option → Start. Atari 2600: disparo → B,
+     *    dificultad A/B → L/L2, Reset → Start. Lynx: A, B, Option 1 → L, Option 2 → R, Pausa → Start.
+     *  - Nintendo 64 (Mupen64Plus-Next): A → B, B → Y, Z → L2, L, R, Start; los botones C, el stick derecho.
+     *  - PlayStation y PSP: ✕ → B, ○ → A, □ → Y, △ → X.
+     *  - Nintendo DS (melonDS): A, B, X, Y, L, R, Select, Start; el micrófono (soplar) → L2, cerrar la tapa → L3 (R2 cambia las pantallas: aquí acelera).
+     */
+    enum class Pad(val botones: Set<Boton>, val analogico: Boolean = false) {
+        GBA(setOf(Boton.A, Boton.B, Boton.L, Boton.R, Boton.START, Boton.SELECT)),
+        GB(setOf(Boton.A, Boton.B, Boton.START, Boton.SELECT)),
+        NES(setOf(Boton.A, Boton.B, Boton.START, Boton.SELECT)),
+        SNES(setOf(Boton.A, Boton.B, Boton.X, Boton.Y, Boton.L, Boton.R, Boton.START, Boton.SELECT)),
+        MEGADRIVE(setOf(Boton.A, Boton.B, Boton.Y, Boton.START, Boton.SELECT)),
+        MASTERSYSTEM(setOf(Boton.A, Boton.B, Boton.START)),
+        GAMEGEAR(setOf(Boton.A, Boton.B, Boton.START)),
+        PCENGINE(setOf(Boton.A, Boton.B, Boton.START, Boton.SELECT)),
+        NEOGEOPOCKET(setOf(Boton.A, Boton.B, Boton.START)),
+        WONDERSWAN(setOf(Boton.A, Boton.B, Boton.START)),
+        LYNX(setOf(Boton.A, Boton.B, Boton.L, Boton.R, Boton.START)),
+        ATARI2600(setOf(Boton.B, Boton.L, Boton.L2, Boton.START, Boton.SELECT)),
+        ATARI7800(setOf(Boton.A, Boton.B, Boton.START, Boton.SELECT)),
+        ARCADE4(setOf(Boton.A, Boton.B, Boton.X, Boton.Y, Boton.START, Boton.SELECT)),
+        ARCADE6(setOf(Boton.A, Boton.B, Boton.X, Boton.Y, Boton.L, Boton.R, Boton.START, Boton.SELECT)),
+        N64(setOf(Boton.B, Boton.Y, Boton.L, Boton.R, Boton.L2, Boton.START), analogico = true),
+        PSX(setOf(Boton.A, Boton.B, Boton.X, Boton.Y, Boton.L, Boton.R, Boton.L2, Boton.R2, Boton.START, Boton.SELECT)),
+        PSP(setOf(Boton.A, Boton.B, Boton.X, Boton.Y, Boton.L, Boton.R, Boton.START, Boton.SELECT), analogico = true),
+        NDS(setOf(Boton.A, Boton.B, Boton.X, Boton.Y, Boton.L, Boton.R, Boton.START, Boton.SELECT, Boton.L2, Boton.L3)),
+    }
+
+    fun disposicion(sistema: String): Disposicion =
+        Nucleos.para(sistema)?.pad?.let { Disposicion(it.botones, it.analogico) } ?: Disposicion(Boton.entries.toSet(), analogico = true)
 
     /**
      * Qué hace una tecla de un mando físico si no la has cambiado tú. [porEtiqueta]: «Botones como en el mando» (por la letra en vez
@@ -143,7 +175,9 @@ object Mandos {
         private val fuentes = HashMap<Destino, MutableSet<String>>()
         private val crucetas = HashMap<String, Pair<Float, Float>>()
         private var ultimaCruceta = 0f to 0f
-        private val analogicos = HashMap<Boolean, Pair<Float, Float>>()
+        /** Los sticks de cada fuente («<mando>:i», «tactil:d»…) y lo último que se mandó de cada lado (true = el izquierdo). */
+        private val sticks = HashMap<String, Pair<Float, Float>>()
+        private val ultimoStick = HashMap<Boolean, Pair<Float, Float>>()
         /** Teclas que se comieron en un combo (su «soltar» tampoco va al juego). */
         private val enCombo = HashSet<String>()
 
@@ -182,10 +216,10 @@ object Mandos {
             crucetas[dispositivo] = if (dis.analogico) cuantiza(e.hatX, 0.5f) to cuantiza(e.hatY, 0.5f) else crucetaDe(e, zonaMuerta)
             cruceta()?.let { out += it }
             if (dis.analogico) {
-                val izq = (if (abs(e.x) < zonaMuerta) 0f else e.x) to (if (abs(e.y) < zonaMuerta) 0f else e.y)
-                val der = (if (abs(e.z) < zonaMuerta) 0f else e.z) to (if (abs(e.rz) < zonaMuerta) 0f else e.rz)
-                if (analogicos[true] != izq) { analogicos[true] = izq; out += Salida.Analogico(true, izq.first, izq.second) }
-                if (analogicos[false] != der) { analogicos[false] = der; out += Salida.Analogico(false, der.first, der.second) }
+                sticks["$dispositivo:i"] = (if (abs(e.x) < zonaMuerta) 0f else e.x) to (if (abs(e.y) < zonaMuerta) 0f else e.y)
+                sticks["$dispositivo:d"] = (if (abs(e.z) < zonaMuerta) 0f else e.z) to (if (abs(e.rz) < zonaMuerta) 0f else e.rz)
+                stick(true)?.let { out += it }
+                stick(false)?.let { out += it }
             }
             // Los gatillos analógicos hacen lo mismo que su botón (L2/R2), con su mapeo
             for ((tecla, v) in listOf(KeyEvent.KEYCODE_BUTTON_L2 to e.gatilloL, KeyEvent.KEYCODE_BUTTON_R2 to e.gatilloR)) {
@@ -194,6 +228,23 @@ object Mandos {
                 out += destino("$dispositivo:g$tecla", d, v > 0.5f)
             }
             return out
+        }
+
+        /** Un stick del mando táctil (o los botones C de la N64, que van al derecho). */
+        fun stickTactil(izquierdo: Boolean, x: Float, y: Float): List<Salida> {
+            sticks["tactil:" + if (izquierdo) "i" else "d"] = x to y
+            return listOfNotNull(stick(izquierdo))
+        }
+
+        /** Lo que se manda de un stick: la suma de todas las fuentes, sin pasarse de 1 (solo si ha cambiado). */
+        private fun stick(izquierdo: Boolean): Salida? {
+            val suf = if (izquierdo) ":i" else ":d"
+            val v = sticks.filterKeys { it.endsWith(suf) }.values
+            val x = v.sumOf { it.first.toDouble() }.toFloat().coerceIn(-1f, 1f)
+            val y = v.sumOf { it.second.toDouble() }.toFloat().coerceIn(-1f, 1f)
+            if ((ultimoStick[izquierdo] ?: (0f to 0f)) == (x to y)) return null
+            ultimoStick[izquierdo] = x to y
+            return Salida.Analogico(izquierdo, x, y)
         }
 
         /** La cruceta del mando táctil. */
@@ -215,8 +266,9 @@ object Mandos {
         fun soltarTodo(): List<Salida> {
             val out = ArrayList<Salida>()
             for ((d, s) in fuentes) if (s.isNotEmpty()) { s.clear(); if (d is Destino.Pad) out += Salida.Boton(d.boton, false) }
-            enCombo.clear(); crucetas.clear()
+            enCombo.clear(); crucetas.clear(); sticks.clear()
             if (ultimaCruceta != (0f to 0f)) { ultimaCruceta = 0f to 0f; out += Salida.Cruceta(0f, 0f) }
+            for (lado in listOf(true, false)) if ((ultimoStick[lado] ?: (0f to 0f)) != (0f to 0f)) { ultimoStick[lado] = 0f to 0f; out += Salida.Analogico(lado, 0f, 0f) }
             return out
         }
     }

@@ -20,6 +20,10 @@ object Lanzar {
         } catch (_: PackageManager.NameNotFoundException) { false }
         override val internos = "/data/data"
         override val externos: String = Environment.getExternalStorageDirectory().absolutePath
+        /** Los archivos que se inyectan son de unos pocos bytes (un identificador): se lee como mucho 4 KB. */
+        override fun leer(uri: String): String? = runCatching {
+            c.contentResolver.openInputStream(Uri.parse(uri))?.use { i -> val b = ByteArray(4096); val n = i.read(b); if (n <= 0) "" else String(b, 0, n, Charsets.UTF_8) }
+        }.getOrNull()
     }
 
     fun comandosDe(sistema: String): List<Pair<String, String>> =
@@ -44,20 +48,25 @@ object Lanzar {
     }
 
     /** El comando que se usaría para un sistema, con una ROM de mentira (para la pantalla de sistemas). */
-    fun elegirSistema(c: Context, sistema: String): Eleccion? = elegirDe(evaluar(c, sistema, RomRef("content://sonda", "/storage/emulated/0/sonda")), Ajustes.emuladorPorSistema[sistema].orEmpty())
+    fun elegirSistema(c: Context, sistema: String): Eleccion? = elegirDe(evaluar(c, sistema, RomRef("content://sonda", "/storage/emulated/0/sonda")), Ajustes.emuladorPorSistema[sistema].orEmpty(), sistema)
 
     /**
      * El comando que se usará: el elegido para el juego, si no el elegido para el sistema, y si no uno automático:
      * primero los emuladores propios (sin núcleos que descargar), luego RetroArch, entre los que estén instalados.
      */
-    fun elegir(c: Context, j: Juego): Eleccion? = elegirDe(evaluar(c, j), j.emulador.ifBlank { Ajustes.emuladorPorSistema[j.sistema].orEmpty() })
+    fun elegir(c: Context, j: Juego): Eleccion? = elegirDe(evaluar(c, j), j.emulador.ifBlank { Ajustes.emuladorPorSistema[j.sistema].orEmpty() }, j.sistema)
 
-    private fun elegirDe(todos: List<Eleccion>, pedido: String): Eleccion? {
+    /**
+     * El automático: el jugador de Hiedra si el sistema lo tiene (sabe cuándo acabas, guarda al salir y lo sube) y no tienes ya otro
+     * emulador instalado para él (si lo tienes, sigue siendo ese: nada cambia sin que lo elijas; RetroArch no cuenta, que necesita
+     * sus núcleos). En GBA, Hiedra siempre (como desde la 0.4).
+     */
+    fun elegirDe(todos: List<Eleccion>, pedido: String, sistema: String): Eleccion? {
         if (todos.isEmpty()) return null
         if (pedido.isNotBlank()) todos.firstOrNull { it.etiqueta == pedido }?.let { return it }
-        // Automático: el jugador interno, si el sistema lo tiene (sabe cuándo acabas, guarda al salir y lo sube)
-        todos.firstOrNull { esInterno(it) }?.let { return it }
-        return todos.filter { it.resultado is Resultado.Ok && !Comando.esRetroArch(it.plantilla) }.firstOrNull()
+        val propio = todos.filter { !esInterno(it) && it.resultado is Resultado.Ok && !Comando.esRetroArch(it.plantilla) }.firstOrNull()
+        todos.firstOrNull { esInterno(it) }?.let { if (propio == null || Nucleos.para(sistema)?.alFrente == true) return it }
+        return propio
             ?: todos.firstOrNull { it.resultado is Resultado.Ok }
             ?: todos.firstOrNull { !Comando.esRetroArch(it.plantilla) } ?: todos.first()
     }
@@ -69,7 +78,11 @@ object Lanzar {
         val d = s.datos?.let { Uri.parse(it) }
         if (d != null && s.mime != null) i.setDataAndType(d, s.mime) else if (d != null) i.data = d else if (s.mime != null) i.type = s.mime
         s.categorias.forEach { i.addCategory(it) }
-        for (e in s.extras) when (val v = e.valor) { is Boolean -> i.putExtra(e.clave, v); is Int -> i.putExtra(e.clave, v); else -> i.putExtra(e.clave, v.toString()) }
+        for (e in s.extras) when (val v = e.valor) {
+            is Boolean -> i.putExtra(e.clave, v); is Int -> i.putExtra(e.clave, v)
+            is Array<*> -> i.putExtra(e.clave, v.map { it.toString() }.toTypedArray())
+            else -> i.putExtra(e.clave, v.toString())
+        }
         var f = Intent.FLAG_ACTIVITY_NEW_TASK
         if (s.limpiarTarea) f = f or Intent.FLAG_ACTIVITY_CLEAR_TASK
         if (s.limpiarArriba) f = f or Intent.FLAG_ACTIVITY_CLEAR_TOP
