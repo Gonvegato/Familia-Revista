@@ -121,7 +121,7 @@ fun PlayDetailScreen(
                     MagLink("Marcar «${kind.statuses[1]}»", accent = true) { empezar() }
                 }
             }
-            if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(p.cover, p.name) }
+            if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(p.cover, p.name, coverKey(kind.id, p.id)) }
             defs["estado"] = MagDef(if (b != null) "Nota" else "Estado") {
                 if (b != null) MagScore(b.general, b.scores(), kind)
                 else FitTitle(kind.statuses.getOrElse(p.status) { "" }, 30.sp, 32.sp)

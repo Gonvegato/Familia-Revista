@@ -52,7 +52,7 @@ fun PantLista(k: Kind, nav: Nav) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Box(Modifier.weight(1f)) { Cabecera(76.sp, texto = k.title.uppercase()) }
                         Spacer(Modifier.width(20.dp))
-                        BotonAcento("+ Añadir", alto = 44.dp, modifier = Modifier.width(150.dp)) { anadir = true }
+                        BotonAcento("+ Añadir", alto = 44.dp, modifier = Modifier.padding(bottom = 12.dp).width(150.dp)) { anadir = true }
                     }
                     FileteCabecera()
                     Spacer(Modifier.height(14.dp))

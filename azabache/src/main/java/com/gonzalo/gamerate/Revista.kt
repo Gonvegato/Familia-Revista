@@ -73,17 +73,19 @@ fun Interruptor(activo: Boolean, alCambiar: (Boolean) -> Unit) {
 
 /** La casilla «Portada» de la ficha: la misma imagen que tiene en Hiedra o en Marfil (o la que pusiste aquí); sin ninguna, la inicial sobre arena. */
 @Composable
-fun MagPortada(cover: String, name: String) {
+fun MagPortada(cover: String, name: String, clave: String? = null) {
     // Ocupa el ancho de su casilla (como mucho 200 dp) en proporción 2:3. Mide lo mismo cuando la fila de dos casillas pregunta cuánto
     // ocupa (IntrinsicSize.Min) que cuando se pinta: con width + aspectRatio la fila se medía como si la portada llenara la casilla y
     // la portada salía pequeña con un hueco enorme debajo (en la tablet, sobre todo)
-    val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { 200.dp.roundToPx() }
+    // (en la tableta, hasta 260 dp: con 200 la casilla quedaba medio vacía y la nota de al lado, más alta que la portada)
+    val tope = if (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700) 260.dp else 200.dp
+    val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { tope.roundToPx() }
     Box(Modifier.layout { m, c ->
             val w = if (c.hasBoundedWidth) minOf(c.maxWidth, maxPx) else maxPx
             val h = w * 3 / 2
             val p = m.measure(androidx.compose.ui.unit.Constraints.fixed(w, h))
             layout(w, h) { p.place(0, 0) }
-        }.then(if (cover.isBlank()) Modifier.background(fondoTela(name)) else Modifier.background(Sand)), contentAlignment = Alignment.Center) {
+        }.sharedCover(clave).then(if (cover.isBlank()) Modifier.background(fondoTela(name)) else Modifier.background(Sand)), contentAlignment = Alignment.Center) {
         if (cover.isNotBlank()) coil.compose.AsyncImage(cover, name, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop, colorFilter = Ediciones.filtro)
         else Text(name.take(1).uppercase(), fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, color = PAPEL_TELA.copy(alpha = 0.88f))
     }
@@ -354,7 +356,7 @@ fun RevistaGameRead(
     Spacer(Modifier.height(14.dp))
 
     val defs = linkedMapOf<String, MagDef>()
-    if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(g.cover, g.name) }
+    if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(g.cover, g.name, coverKey(kind.id, g.id)) }
     defs["nota"] = MagDef("Nota") {
         if (Hermanas.sinValorar(g)) {
             Text("Sin valorar", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)
@@ -413,7 +415,9 @@ fun DesignHint(onData: () -> Unit, name: String = "", onDelete: (() -> Unit)? = 
                 }
             }
         }
-        Text("Toca una casilla para elegir qué va en ella (o texto libre, o una imagen). Arrastra el círculo de la línea para moverla.",
+        Text("Toca una casilla para elegir qué va en ella (o texto libre, o una imagen). Arrastra el círculo de la línea para moverla." +
+            // (en la tableta en horizontal se lee a dos columnas; se edita a una, para mover las filas)
+            if (columnasDePagina() > 1) " Al leerla, las filas se reparten en dos columnas, en este orden." else "",
             fontSize = 13.sp, lineHeight = 18.sp)
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("DATOS Y NOTA\u00A0→", color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.clickable(onClick = onData).padding(vertical = 4.dp))

@@ -36,7 +36,7 @@ fun PantSagas(nav: Nav) {
     Pagina {
         Row(verticalAlignment = Alignment.Bottom) {
             Box(Modifier.weight(1f)) { Cabecera(84.sp, texto = "SAGAS") }
-            BotonAcento("+ Nueva saga", alto = 44.dp, modifier = Modifier.width(170.dp)) { nueva = true }
+            BotonAcento("+ Nueva saga", alto = 44.dp, modifier = Modifier.padding(bottom = 12.dp).width(170.dp)) { nueva = true }
         }
         FileteCabecera()
         Spacer(Modifier.height(8.dp))

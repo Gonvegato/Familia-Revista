@@ -417,9 +417,10 @@ fun StatsScreen(
                     st.months.forEach { m ->
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(if (m.second > 0) "" + m.second else "", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                            // (en la revista, barras rectas y la del mejor mes en el acento, como las del tiempo)
                             Box(
                                 Modifier.fillMaxWidth(0.45f).height((m.second.toFloat() / mx * 62f).dp.coerceAtLeast(2.dp))
-                                    .background(if (m.second > 0) Charcoal else Line, shp(3.dp))
+                                    .background(if (m.second > 0) (if (Skin.revista && m.second == mx) ColGeneral else Charcoal) else Line, shp(if (Skin.revista) 0.dp else 3.dp))
                             )
                             Text(m.first, fontSize = 11.sp, color = UiSoft)
                         }

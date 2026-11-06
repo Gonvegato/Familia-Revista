@@ -307,7 +307,8 @@ fun MagPage(
     rows.forEachIndexed { i, r ->
         val cells = r.cells.withIndex().filter { visible(it.value) }
         if (cells.isEmpty() && !designing) return@forEachIndexed
-        Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
+        // Al abrir la ficha, las filas llegan una tras otra (muy deprisa), como una página que se compone
+        Column(Modifier.fillMaxWidth().rise(i, i < 8).padding(horizontal = 18.dp)) {
             // Sin antetítulo propio (paneles de progreso, partes…) el filete lo ponen ellos
             val ownRule = cells.size == 1 && defs[cells[0].value.type]?.label == null && cells[0].value.type !in listOf("texto", "imagen", "vacio")
             if (!ownRule || designing) Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
