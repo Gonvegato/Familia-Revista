@@ -45,6 +45,15 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   escribiendo), la obra con su índice (partes, capítulos, escenas) y el editor, fichas, notas, papelera, exportar (Word como libro o como
   manuscrito, EPUB, Markdown, texto), copias de seguridad completas en el ordenador (cada 15 min y al cerrar; las últimas 40) y lo que se
   publica para Azabache y Marfil (`obras/`, `capitulos/`, `palabras/`).
+  Desde la 1.1.0, **el estudio de escritura**: las fichas y las notas se abren como una página para leer (datos, uniones, en qué escenas
+  salen) y con un clic se editan (se guarda sola; «Listo» o Esc vuelve a leer). El editor tiene barra de herramientas, **modo
+  concentración** (solo la página; Esc sale; con pantalla completa), modo máquina de escribir, buscar y cambiar (en la escena o en toda la
+  obra), las **palabras al momento** en el pie (de la escena, la selección, esta sesión, hoy, el capítulo y la obra), los nombres de las
+  fichas subrayados (al pasar, su resumen; doble clic, la ficha), sinónimos, borradores e historial al lado. Y las pestañas **Árbol**
+  (arrastrar, unir con Mayús, la rueda acerca), **Línea**, **Cifras**, **Guía** (los 11 pasos), **Leer** (la obra entera como un libro),
+  los **sprints** y el manuscrito en **cuadros** (como un corcho). Atajos: ⌘ en el Mac y Ctrl en Linux (⌘1–⌘8 cambian de pestaña; «?»
+  en la barra los enseña todos). Lo que es solo de este ordenador (el tamaño de letra y la letra del editor, y el historial de sprints) se
+  guarda en `editor.json` y `sprints.json` de la carpeta de la app; las obras, fichas y notas, en la cuenta como siempre.
 - **Marfil**: tus libros de la cuenta y leerlos por donde ibas en el móvil. EPUB (leído como XML, sin reordenar: la posición que guarda es
   el mismo EPUB CFI que guarda foliate en el móvil, y la del móvil se abre aquí en el mismo párrafo), PDF (Apache PDFBox) y cómics (CBZ).
   Lo leído (`lectura/<kid>`), «Leyendo» y «Leído» con su fecha (las reglas del móvil), el tiempo de este ordenador, el reto del año, los
@@ -57,8 +66,7 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 ## Lo que todavía no hacen (para no engañar)
 
 - **Azabache**: editar las maquetas (las del móvil se ven tal cual), las recomendaciones y «Descubrir».
-- **Cobalto**: el árbol de fichas, la línea temporal, la guía de la novela, los sprints, los sinónimos, el historial de versiones a la
-  vista (se guarda igual) y compartir con tu pareja.
+- **Cobalto**: compartir con tu pareja. El historial de sprints no viaja por la cuenta (tampoco en el móvil: cada dispositivo guarda el suyo).
 - **Marfil**: subrayados y notas nuevos (los del móvil se conservan en la cuenta; aquí no se pintan), los diccionarios y los ajustes del
   lector que viajan (`settings`). Otros formatos (MOBI, FB2, TXT): en el móvil.
 - **Hiedra**: emuladores y ROMs, capturas y streaming para el móvil (`shot`, `stream` responden que todavía no).
@@ -84,4 +92,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.5.4, Marfil 0.13.5, Cobalto 0.3.3, Azabache 1.6.0. De escritorio: Azabache 1.1.0; Cobalto, Hiedra y Marfil 1.0.1.
+Versiones de Android a día de hoy: Hiedra 0.6.0, Marfil 0.13.5, Cobalto 0.3.3, Azabache 1.6.0. De escritorio: Azabache y Cobalto 1.1.0; Hiedra y Marfil 1.0.1.
