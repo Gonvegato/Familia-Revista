@@ -60,6 +60,9 @@ import androidx.media3.ui.SubtitleView
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** Lo que enseñan los controles del reproductor (Compose encima del vídeo). */
@@ -102,6 +105,8 @@ class ReproductorActivity : ComponentActivity() {
     private var listo = false
     private val cortes = ArrayList<Long>()
     private var cargandoDesde = 0L
+    /** Cuándo se empezó a abrir esta fuente (para el tope de un torrent que no arranca). */
+    private var arrancaDesde = 0L
     private var subsDecididos = false
     /** Lo abierto es un vídeo de aviso de tu debrid ([esAvisoDelDebrid]): ya se ha pasado a otra. */
     private var avisoDelDebrid = false
@@ -119,6 +124,15 @@ class ReproductorActivity : ComponentActivity() {
             visionado?.let { v -> if (v.entro && estado.mensaje == null && !avisadoEntrada) { avisadoEntrada = true; muestra("Ha entrado en «Viendo»") } }
             // Los controles se esconden solos mientras se reproduce
             if (estado.visibles && p.isPlaying && estado.eleccion == null && SystemClock.elapsedRealtime() - ultimaInteraccion > 4_000L) estado.visibles = false
+            // Un torrent que aún no ha empezado: cómo va y, si tarda demasiado, otra fuente
+            if (torrentAbierto.isNotBlank() && !listo) {
+                val m = estado.mensaje
+                if (m == null || m.startsWith("Cargando el torrent")) estado.mensaje = "Cargando el torrent…" + (runCatching { Torrents.fuente.estado(torrentAbierto) }.getOrNull()?.let { " · $it" } ?: "")
+                if (arrancaDesde > 0 && SystemClock.elapsedRealtime() - arrancaDesde > TORRENT_MAX_ARRANQUE_MS + 60_000L && estado.corte == null) {
+                    arrancaDesde = 0L
+                    if (!fallaEnTanteo()) siguienteCandidata()?.let { sig -> estado.corte = "No acaba de empezar. ¿Probar con ${sig.analisis.resumen().ifBlank { sig.addon }}?" }
+                }
+            } else if (listo && estado.mensaje?.startsWith("Cargando el torrent") == true) estado.mensaje = null
             // Cargando demasiado tiempo: se corta
             if (cargandoDesde > 0 && listo && SystemClock.elapsedRealtime() - cargandoDesde > 15_000L && estado.corte == null) seCorta()
             // Probando fuentes y se acaba el tiempo sin ver las pistas de esta: a la mejor comprobada, o se queda con esta
@@ -184,7 +198,7 @@ class ReproductorActivity : ComponentActivity() {
         val (t, s) = nombreDe(e); estado.titulo = t; estado.subtitulo = s
         estado.fuente = e.elegida.analisis.resumen().ifBlank { e.elegida.addon }
         estado.cargando = true; estado.aviso = null; estado.corte = null; estado.siguiente = null; estado.cuentaAtras = -1
-        listo = false; cortes.clear(); cargandoDesde = 0L; subsDecididos = false; avisadoEntrada = false; avisoDelDebrid = false
+        listo = false; cortes.clear(); cargandoDesde = 0L; arrancaDesde = SystemClock.elapsedRealtime(); subsDecididos = false; avisadoEntrada = false; avisoDelDebrid = false
         val v = visionado
         visionado = if (v != null && v.breve.id == e.breve.id && e.video != null && v.videoId != e.video.id) v.siguiente(e.video, e.meta)
             else Visionado(applicationContext, e.breve, e.meta, e.video, previo = e.previo, pendiente = e.pendiente)
@@ -192,8 +206,23 @@ class ReproductorActivity : ComponentActivity() {
         ambito.launch {
             try {
                 url = if (f.tipo == TipoFuente.TORRENT) {
-                    estado.mensaje = "Preparando el torrent…"
-                    Torrents.fuente.prepara(f.infoHash, f.fileIdx, f.trackers, f.archivo.ifBlank { e.breve.nombre }).also { torrentAbierto = f.infoHash; estado.mensaje = null }
+                    // Lo que va pasando, cada segundo (para que no parezca colgado), y un tope: si no arranca, a otra fuente
+                    val ini = SystemClock.elapsedRealtime()
+                    val tic = ambito.launch {
+                        while (true) {
+                            val como = withContext(Dispatchers.IO) { runCatching { Torrents.fuente.estado(f.infoHash) }.getOrNull() }
+                            estado.mensaje = "Preparando el torrent… ${(SystemClock.elapsedRealtime() - ini) / 1000} s" + (como?.let { " · $it" } ?: "")
+                            delay(1_000)
+                        }
+                    }
+                    try {
+                        withTimeoutOrNull(TORRENT_MAX_ARRANQUE_MS) { Torrents.fuente.prepara(f.infoHash, f.fileIdx, f.trackers, f.archivo.ifBlank { e.breve.nombre }) }
+                            ?.also { torrentAbierto = f.infoHash; estado.mensaje = null }
+                            ?: run {
+                                runCatching { Torrents.fuente.para(f.infoHash) }
+                                throw SinTorrent("Este torrent no arranca: en ${TORRENT_MAX_ARRANQUE_MS / 60_000} minutos y medio no ha llegado nada. Prueba con otra fuente.")
+                            }
+                    } finally { tic.cancel() }
                 } else f.url
                 cabeceras = f.cabeceras
                 val tipo = e.breve.tipo.ifBlank { if (e.video != null) "series" else "movie" }

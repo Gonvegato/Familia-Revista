@@ -234,7 +234,10 @@ object Reproductor {
         try {
             url = if (f.tipo == TipoFuente.TORRENT) {
                 estado.mensaje = "Preparando el torrent…"
-                runBlocking { Torrents.prepara(f.infoHash, f.fileIdx, f.trackers, f.archivo.ifBlank { e.breve.nombre }) }.also { torrentAbierto = f.infoHash; estado.mensaje = null }
+                // (con tope, como en el móvil: si no arranca en dos minutos y medio, a otra fuente)
+                (runBlocking { kotlinx.coroutines.withTimeoutOrNull(150_000L) { Torrents.prepara(f.infoHash, f.fileIdx, f.trackers, f.archivo.ifBlank { e.breve.nombre }) } }
+                    ?: run { Torrents.para(f.infoHash); throw SinTorrent("Este torrent no arranca: en 2 minutos y medio no ha llegado nada. Prueba con otra fuente.") })
+                    .also { torrentAbierto = f.infoHash; estado.mensaje = null }
             } else f.url
         } catch (x: SinTorrent) { if (!fallaEnTanteo()) { estado.cargando = false; estado.aviso = x.message }; return }
         val c = asegura() ?: run { estado.cargando = false; estado.activo = false; estado.aviso = if (hayMpv) "No se ha podido abrir mpv." else Mpv.comoInstalar(); return }

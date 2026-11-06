@@ -16,6 +16,12 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## 0.3.1
+
+Un torrent ya no puede quedarse en «Preparando el torrent…» sin decir nada: mientras arranca enseña los segundos, cuánta gente hay, a
+qué velocidad baja y cuánto lleva («Preparando el torrent… 23 s · 4 pares · 1,2 MB/s»), y si en 2 minutos y medio no ha empezado, se
+deja y se pasa a otra fuente (si la eligió Mostaza sola) o te propone otra. Lo mismo en el ordenador (1.0.1).
+
 ## 0.3.0
 
 **Tus películas y series en tu kDrive.** Lo que subas a «Mi carpeta/Mostaza/Películas» y «Mi carpeta/Mostaza/Series» (las crea la

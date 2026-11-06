@@ -19,6 +19,21 @@ interface FuenteTorrent {
 
     /** Deja ese torrent (al cerrar el reproductor). */
     fun para(infoHash: String)
+
+    /** Cómo va, en pocas palabras, para enseñarlo mientras carga («3 pares · 1,2 MB/s»); null si no se sabe. */
+    fun estado(infoHash: String): String? = null
+}
+
+/** Lo que se le deja a un torrent para empezar a verse (buscar gente, la lista de archivos y el primer trozo); luego, otra fuente. */
+const val TORRENT_MAX_ARRANQUE_MS = 150_000L
+
+/** «3 pares · 1,2 MB/s · 4 %» (lo de un torrent mientras carga). */
+fun resumenTorrent(pares: Int, bajadaBs: Long, progreso: Float, buscando: Boolean): String {
+    val partes = ArrayList<String>()
+    partes += if (pares == 0) (if (buscando) "buscando gente" else "sin nadie conectado") else if (pares == 1) "1 par" else "$pares pares"
+    if (bajadaBs > 0) partes += if (bajadaBs >= 1_000_000) String.format(java.util.Locale("es", "ES"), "%.1f MB/s", bajadaBs / 1e6) else "${bajadaBs / 1000} KB/s"
+    if (progreso > 0f) partes += "${(progreso * 100).toInt().coerceIn(0, 100)} %"
+    return partes.joinToString(" · ")
 }
 
 /** Un torrent que no se puede poner (el texto es para enseñártelo tal cual). */
