@@ -14,6 +14,8 @@ include(":nucleo")
 if (!soloEscritorio) {
     include(":familia")
     include(":hiedra", ":marfil", ":cobalto", ":azabache", ":mostaza")
+    // El motor de torrents de Mostaza (libtorrent4j): ver un torrent mientras se baja
+    include(":torrent")
 }
 // Las versiones de escritorio (Linux y Mac), con Compose Multiplatform: lo común y las cuatro apps (ver docs/ESCRITORIO.md)
 include(":escritorio:json", ":escritorio:familia", ":escritorio:azabache", ":escritorio:cobalto", ":escritorio:marfil", ":escritorio:hiedra")

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El reproductor lee el torrent de http://127.0.0.1:… (sin cifrar, sin salir del móvil). Desde Android 9 eso hay que permitirlo:
+     la app pone android:networkSecurityConfig="@xml/torrent_red_local" en <application> (o copia este domain-config en el suyo).
+     Todo lo demás sigue igual que sin este archivo: nada sin cifrar fuera del propio móvil. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>
