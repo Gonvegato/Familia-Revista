@@ -25,4 +25,14 @@ class ManifiestoHermanasTest {
         val queries = m.substringAfter("<queries>", "").substringBefore("</queries>")
         for (p in listOf("com.gonzalo.marfil", "com.gonzalo.cobalto", "com.gonzalo.gamerate")) assertTrue("falta <package android:name=\"$p\"/> en <queries>", Regex("<package\\s+android:name=\"" + Regex.escape(p) + "\"").containsMatchIn(queries))
     }
+
+    /** Lo mismo con los emuladores: uno que no está en <queries> sale siempre como «no instalado» aunque lo tengas. */
+    @Test
+    fun declaraTodosLosEmuladoresDelCatalogo() {
+        val queries = manifiesto().readText().substringAfter("<queries>", "").substringBefore("</queries>")
+        val declarados = Regex("<package\\s+android:name=\"([^\"]+)\"").findAll(queries).map { it.groupValues[1] }.toSet()
+        val json = org.json.JSONObject(File(manifiesto().parentFile, "assets/emulators.json").readText()).getJSONObject("emus")
+        val faltan = json.keys().asSequence().flatMap { k -> json.getJSONArray(k).let { a -> (0 until a.length()).map { a.getString(it).substringBefore('/') } } }.toSet() - declarados
+        assertTrue("faltan en <queries>: $faltan", faltan.isEmpty())
+    }
 }
