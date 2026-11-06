@@ -110,4 +110,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.0, Marfil 0.14.0, Cobalto 0.4.0, Azabache 1.6.0. De escritorio: las cuatro 1.1.0.
+Versiones de Android a día de hoy: Hiedra 0.6.1, Marfil 0.14.1, Cobalto 0.4.1, Azabache 1.6.1. De escritorio: las cuatro 1.1.0.
