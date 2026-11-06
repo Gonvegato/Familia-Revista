@@ -15,6 +15,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -50,6 +52,8 @@ fun PantInicio(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, a
 
     val desplazado = rememberScrollState()
     val umbral = with(androidx.compose.ui.platform.LocalDensity.current) { 300.dp.toPx() }
+    // (solo cuando cruza el umbral: leer el desplazamiento aquí mismo recomponía la portada entera a cada píxel que bajabas)
+    val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(desplazado).statusBarsPadding().padding(horizontal = 28.dp)) {
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -105,7 +109,7 @@ fun PantInicio(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, a
         Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
     }
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre y lo de siempre (Buscar · + Nueva…)
-    BarraPlegada("Cobalto", desplazado.value > umbral) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Nueva", Modifier.padding(start = 14.dp), acento = true) { alNueva() } }
+    BarraPlegada("Cobalto", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Nueva", Modifier.padding(start = 14.dp), acento = true) { alNueva() } }
     }
 }
 
@@ -215,7 +219,7 @@ fun BarrasEscritura(e: Escritos, ver: Int) {
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 semana.forEach { (d, n) ->
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(Modifier.fillMaxWidth(0.62f).widthIn(max = 30.dp).height(alto.dp), contentAlignment = Alignment.BottomCenter) {
+                        Box((if (alto > 30f) Modifier.width(30.dp) else Modifier.fillMaxWidth(0.62f)).height(alto.dp), contentAlignment = Alignment.BottomCenter) {
                             Box(Modifier.fillMaxWidth().height(if (n > 0) maxOf(3f, alto * n / tope).dp else 1.dp)
                                 .background(if (n > 0) (if (r.diaria > 0 && n >= r.diaria) Acento else Charcoal) else Line))
                         }

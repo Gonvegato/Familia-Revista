@@ -122,7 +122,7 @@ fun ParrafoCapitular(texto: AnnotatedString, color: Color, tam: Int = 17, lineas
         Column {
             Row {
                 Text(letra, color = color, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = tamLetra, lineHeight = tamLetra,
-                    modifier = Modifier.padding(end = 8.dp).offset(y = (-(tam * 0.18f)).dp))
+                    modifier = Modifier.padding(end = 8.dp).height((alto * lineas).dp).offset(y = (-(tam * 0.18f)).dp))
                 Text(resto.subSequence(0, corte), style = estilo)
             }
             if (corte < resto.length) Text(resto.subSequence(corte, resto.length).let { r -> if (r.text.startsWith(" ")) r.subSequence(1, r.length) else r }, style = estilo)

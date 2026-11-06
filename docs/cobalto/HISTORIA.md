@@ -44,7 +44,16 @@ Lo que escribas en el PC aparece aquí al momento, y al revés.
   esperar al medio segundo de calma. Y si llega un cambio de otro dispositivo mientras escribes, se juntan los dos a tres bandas
   (antes ganaba lo de aquí y lo de fuera se perdía); si chocan en la misma frase, lo de fuera se guarda como borrador.
 - **En la tableta**: la portada en dos columnas en horizontal («Ahora» y, al lado, lo que tienes sobre la mesa y en el cajón),
-  las barras de la semana finas (antes eran ladrillos), y los cuadrados del manuscrito del mismo alto (cada fila, pareja).
+  las barras de la semana finas (antes eran ladrillos), los cuadrados del manuscrito del mismo alto (cada fila, pareja), las
+  fichas como un reparto (las que quepan a lo ancho, cada una con la franja de su color) y el tablón de notas en tres columnas.
+- «Leerlo entero» (un capítulo) empieza con letra capitular, como un libro.
+- En Ajustes → Escritura, «La página del editor» y «Atajos de teclado».
+- **Ninguna pantalla se queda recomponiéndose sola** (lo que gasta batería con la app abierta): una prueba recorre la portada,
+  las secciones, cada pestaña de la obra, una ficha, un capítulo, el editor y la concentración, en el móvil y en la tableta, y
+  cuenta lo que se repinta en un segundo sin tocar nada: nada.
+- Las cifras de las pestañas de las secciones, en tinta (como las de la obra; el rojo, para lo que se toca).
+- **La portada ya no se repinta entera a cada píxel que bajas**: la cabecera plegada miraba el desplazamiento en cada fotograma;
+  ahora solo cuando cruza el umbral (como en Hiedra). Bajar por la portada es más suave y gasta menos.
 - «4 borradores · 0 en revisión · 2 finales» (antes «4 borrador · 0 revisión · 2 final»).
 - La versión de debajo de la portada es la de verdad (la 0.3.3 decía 0.3.1).
 - Nada cambia en lo que se guarda en la cuenta: los mismos documentos y campos de siempre.
