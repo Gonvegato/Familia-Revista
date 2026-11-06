@@ -86,6 +86,8 @@ fun PantEstilo(alVolver: () -> Unit) {
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Copias", Modifier.padding(bottom = 4.dp))
+                SeccionCopias(e) { mensaje = it }
+                Spacer(Modifier.height(8.dp))
                 MagLink("Guardar copia de mis obras", "Un archivo con todo lo escrito (obras, capítulos, escenas, fichas, notas…), también la papelera") { exportar.launch("cobalto-obras.json") }
                 Text("Cada obra se puede exportar aparte (texto, Markdown, Word, libro o PDF) desde «Exportar», dentro de la obra.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
                 mensaje?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }

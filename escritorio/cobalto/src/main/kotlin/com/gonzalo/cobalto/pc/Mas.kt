@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gonzalo.cobalto.CopiasEscritos
 import com.gonzalo.cobalto.Doc
 import com.gonzalo.cobalto.Escritos
 import com.gonzalo.familia.pc.AjustesCuenta
@@ -193,6 +194,7 @@ fun PantPapelera(nav: Nav) {
 @Composable
 fun PantAjustes(nav: Nav) {
     var pestana by remember { mutableStateOf(0) }
+    var abierta by remember { mutableStateOf<CopiasEscritos.Copia?>(null) }
     Pagina(ancho = 900.dp) {
         Cabecera(84.sp, texto = "AJUSTES")
         FileteCabecera()
@@ -218,7 +220,14 @@ fun PantAjustes(nav: Nav) {
                     BotonSuave("Abrir la carpeta") { Sitio.abre(Copias.carpeta().absolutePath) }
                 }
                 Spacer(Modifier.height(10.dp))
-                Copias.lista().take(12).forEach { f -> MagFact(f.name.removePrefix("copia-").removeSuffix(".json"), "${f.length() / 1024} KB") }
+                Cuerpo("Pulsa una para sacar de ella una obra como obra nueva (no se toca nada de lo que tienes).", tam = 13)
+                Spacer(Modifier.height(4.dp))
+                Copias.copias().take(12).forEach { c ->
+                    Box(Modifier.fillMaxWidth().pointerHoverIcon(PointerIcon.Hand).clickable { abierta = c }) {
+                        MagFact(c.archivo.name.removePrefix("copia-").removeSuffix(".gz").removeSuffix(".json"), "${maxOf(1L, c.tam / 1024)} KB")
+                    }
+                }
+                abierta?.let { c -> DialogoCopia(c, nav) { abierta = null } }
             }
             2 -> {
                 Antetitulo("Apariencia")
@@ -265,6 +274,34 @@ fun PantAjustes(nav: Nav) {
                 ListaAtajos()
             }
             else -> AjustesVersion("cobalto", "Cobalto")
+        }
+    }
+}
+
+/** Una copia de seguridad: sus obras, y sacar una como obra nueva («… (copia)», con todo lo suyo; no pisa nada). */
+@Composable
+private fun DialogoCopia(c: CopiasEscritos.Copia, nav: Nav, onCerrar: () -> Unit) {
+    val docs = remember(c) { Copias.lee(c.archivo) }
+    val obras = remember(docs) { CopiasEscritos.obras(docs) }
+    Dialogo("Copia del " + java.text.SimpleDateFormat("d MMM yyyy, HH:mm", java.util.Locale.forLanguageTag("es-ES")).format(java.util.Date(c.hecha)), onCerrar, ancho = 640.dp,
+        botones = { BotonSuave("Cerrar") { onCerrar() } }) {
+        Cuerpo("Elige una obra para sacarla como obra nueva, «… (copia)», con todo lo suyo: capítulos, escenas, fichas, notas, el árbol, la línea y los borradores. No se toca nada de lo que tienes.", tam = 14)
+        Spacer(Modifier.height(8.dp))
+        if (obras.isEmpty()) Cuerpo("Esta copia no tiene obras (o no se puede leer).", tam = 14)
+        obras.forEach { o ->
+            val (palabras, escenas) = remember(docs, o.id) { CopiasEscritos.resumen(docs, o.id) }
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(o.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("${com.gonzalo.cobalto.Formato.cifra(palabras)} palabras · $escenas ${if (escenas == 1) "escena" else "escenas"}" + if (o.borrado) " · estaba en la papelera" else "",
+                        color = Muted, fontFamily = Body, fontSize = 13.sp)
+                }
+                BotonSuave("Sacar como obra nueva") {
+                    val n = CopiasEscritos.recupera(Cuaderno.escritos, docs, o.id)
+                    onCerrar()
+                    if (n != null) { nav.aviso("«${n.s("titulo")}» está en tus obras"); nav.ir(Pantalla.Obra(n.id)) } else nav.aviso("No se pudo sacar esa obra")
+                }
+            }
         }
     }
 }
