@@ -163,7 +163,8 @@ object Biblioteca {
         if (url.isBlank() || !url.startsWith("http")) return
         kotlin.concurrent.thread(name = "mostaza-portada") {
             runCatching {
-                val bytes = java.net.URL(url).openStream().use { it.readBytes() }
+                val cx = java.net.URL(url).openConnection().apply { connectTimeout = 15_000; readTimeout = 20_000 }
+                val bytes = cx.getInputStream().use { it.readBytes() }
                 PortadasFamilia.guardar(bytes)?.let { h -> col?.cambia(r, mapOf("portada" to h)) }
             }
         }
@@ -183,7 +184,7 @@ object Biblioteca {
             return por(b.id)
         }
         val r = ref(b.id)
-        cc.pon(r, campos(m, b) + mapOf("estado" to estado.cuenta, "an" to ahora, "fav" to false), ahora)
+        cc.pon(r, campos(m, b) + mapOf("estado" to estado.cuenta, "an" to ahora, "fav" to false))
         ponPortada(r, m?.poster?.ifBlank { null } ?: b.poster)
         refresca()
         return por(b.id)
@@ -205,7 +206,7 @@ object Biblioteca {
         }
         if (loBorraste(b.id)) return false
         val r = ref(b.id)
-        cc.pon(r, campos(m, b) + mapOf("estado" to Estado.VIENDO.cuenta, "an" to ahora, "ul" to ahora, "fav" to false), ahora)
+        cc.pon(r, campos(m, b) + mapOf("estado" to Estado.VIENDO.cuenta, "an" to ahora, "ul" to ahora, "fav" to false))
         ponPortada(r, m?.poster?.ifBlank { null } ?: b.poster)
         refresca()
         return true
@@ -265,8 +266,8 @@ object Biblioteca {
         pc.cambia(ref(vid), c)
     }
 
-    /** Marcar (o desmarcar) a mano un episodio o la película como visto. */
-    fun marcaVisto(t: Titulo, video: Video?, visto: Boolean, ahora: Long = System.currentTimeMillis()) {
+    /** Marcar (o desmarcar) a mano un episodio o la película como visto (y, en una serie, su estado según sus episodios). */
+    fun marcaVisto(t: Titulo, video: Video?, visto: Boolean, meta: Meta? = null, ahora: Long = System.currentTimeMillis()) {
         val pc = prog ?: return
         val vid = video?.id ?: t.idStremio
         val c = LinkedHashMap<String, Any?>(); c["ref"] = t.ref; c["v"] = vid; c["visto"] = visto; c["cuando"] = ahora
@@ -274,6 +275,8 @@ object Biblioteca {
         if (!visto) c["pos"] = 0L
         pc.cambia(ref(vid), c)
         version++
+        if (meta != null && meta.esSerie && video != null) recalculaSerie(t, meta, ahora, trasVer = false)
+        else if (video == null && visto && t.estado != Estado.VISTO) cambiaEstado(t.ref, Estado.VISTO, ahora)
     }
 
     /**

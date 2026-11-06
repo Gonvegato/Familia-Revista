@@ -166,11 +166,9 @@ object MigraAzabache {
                 val poner = if (existente == null) campos else campos.filterKeys { f -> existente[f] == null || existente[f] == "" }
                 if (poner.isNotEmpty()) tit.pon(ref, poner, actualizada.coerceAtMost(ahora))
                 if (existente == null) nuevos++
-                // La portada que elegiste de tus archivos (si está en este dispositivo): a la cuenta
+                // La portada que elegiste de tus archivos (si está en este dispositivo): a la cuenta (las de internet ya van en `pu`)
                 if (c != null && !cover.startsWith("http") && cover.isNotBlank() && (existente == null || existente.texto("portada").isBlank()))
                     runCatching { File(cover.removePrefix("file://").removePrefix("file:")).takeIf { it.isFile }?.readBytes()?.let { PortadasFamilia.guardar(it) }?.let { h -> tit.pon(ref, mapOf("portada" to h), actualizada.coerceAtMost(ahora)) } }
-                else if (cover.startsWith("http") && (existente == null || existente.texto("portada").isBlank()) && c != null)
-                    runCatching { java.net.URL(cover).openStream().use { it.readBytes() }.let { PortadasFamilia.guardar(it) }?.let { h -> tit.pon(ref, mapOf("portada" to h), actualizada.coerceAtMost(ahora)) } }
                 // El tiempo que Azabache tenía apuntado (sin días: Azabache no los guardaba)
                 val min = o["minutes"].comoLong()
                 if (min > 0 && tiempo.nodo("$ref~azabache") == null) tiempo.pon("$ref~azabache", mapOf("ref" to ref, "fuente" to "azabache", "t" to nombre, "total" to min * 60_000L), actualizada.coerceAtMost(ahora))

@@ -178,7 +178,7 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) 
                         Spacer(Modifier.height(16.dp))
                         Antetitulo("Episodios")
                         PestanasRevista(temps.map { if (it == 0) "Especiales" else "Temporada $it" }, temps.indexOf(sel), cuentas = temps.map { s -> m.episodios(s).size }) { i -> temporada = temps[i] }
-                        m.episodios(sel).forEach { v -> FilaEpisodio(v, t, alVer = { reproduce(v) }, alFuentes = { fuentesDe = v to true }) }
+                        m.episodios(sel).forEach { v -> FilaEpisodio(v, t, m, alVer = { reproduce(v) }, alFuentes = { fuentesDe = v to true }) }
                     }
                 }
                 if (apaisada) Row(Modifier.fillMaxWidth()) {
@@ -212,7 +212,7 @@ object Fichas {
 
 /** Un episodio: número y título, cuándo se estrenó, lo que llevas visto y la marca de visto (si la serie está en tu biblioteca). */
 @Composable
-private fun FilaEpisodio(v: Video, t: Titulo?, alVer: () -> Unit, alFuentes: () -> Unit) {
+private fun FilaEpisodio(v: Video, t: Titulo?, m: Meta, alVer: () -> Unit, alFuentes: () -> Unit) {
     val p = Biblioteca.progreso(v.id)
     val estrenado = v.estrenado()
     Column(Modifier.fillMaxWidth()) {
@@ -226,7 +226,7 @@ private fun FilaEpisodio(v: Video, t: Titulo?, alVer: () -> Unit, alFuentes: () 
             }
             if (estrenado) EnlaceRevista("Fuentes", Modifier.padding(start = 8.dp)) { alFuentes() }
             if (t != null) Text(if (p?.visto == true) "✓" else "○", color = if (p?.visto == true) Acento else Muted, fontWeight = FontWeight.Black, fontSize = 20.sp,
-                modifier = Modifier.padding(start = 10.dp).tocable { Biblioteca.marcaVisto(t, v, p?.visto != true) }.padding(8.dp))
+                modifier = Modifier.padding(start = 10.dp).tocable { Biblioteca.marcaVisto(t, v, p?.visto != true, m) }.padding(8.dp))
         }
         Filete(1.dp, Line)
     }

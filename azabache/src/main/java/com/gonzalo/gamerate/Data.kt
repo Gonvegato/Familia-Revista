@@ -926,7 +926,15 @@ class Store(ctx: Context) {
     }
 
     /** Una lista guardada, como texto JSON. Las de juegos y libros, de la cuenta de la familia ([Cosas]). */
-    private fun cruda(n: String): String = if (n in Cosas.LISTAS && Cosas.activa(app)) Cosas.listaJson(app, n).toString() else p.getString(n, "[]") ?: "[]"
+    private fun cruda(n: String): String {
+        if (n in Cosas.LISTAS && Cosas.activa(app)) return Cosas.listaJson(app, n).toString()
+        // Las películas y las series, de Mostaza
+        if (n.startsWith("items_") || n.startsWith("iplays_")) n.substringAfter('_').toIntOrNull()?.let { deMostaza(it) }?.let { k ->
+            val v = CosasMostaza.vista(app, k)
+            return JSONArray().also { a -> if (n.startsWith("items_")) v.games.forEach { a.put(gameToJson(it)) } else v.plays.forEach { a.put(playToJson(it)) } }.toString()
+        }
+        return p.getString(n, "[]") ?: "[]"
+    }
 
     private fun gk(kind: Int) = when (kind) { 0 -> "games"; 1 -> "books"; else -> "items_$kind" }
     private fun pk(kind: Int) = when (kind) { 0 -> "plays"; 1 -> "bplays"; else -> "iplays_$kind" }
@@ -983,6 +991,10 @@ class Store(ctx: Context) {
     private fun writeList(name: String, arr: JSONArray, ed: android.content.SharedPreferences.Editor, espera: Long = Sincro.ESPERA) = synchronized(cerrojo) {
         // Los juegos y libros son de la cuenta: lo de una copia, de antes o de otro sitio se pone en ella (lo nuevo y lo cambiado, sin borrar)
         if (name in Cosas.LISTAS && Cosas.activa(app)) { Cosas.importa(app, name, (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }); return@synchronized }
+        // Las películas y las series son de Mostaza: lo mismo, en sus nodos
+        if (name.startsWith("items_") || name.startsWith("iplays_")) name.substringAfter('_').toIntOrNull()?.let { deMostaza(it) }?.let { k ->
+            CosasMostaza.importa(app, k, name.startsWith("items_"), (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }); return@synchronized
+        }
         val old = try { JSONArray(p.getString(name, "[]") ?: "[]") } catch (e: Exception) { JSONArray() }
         val oldById = HashMap<Long, JSONObject>()
         for (i in 0 until old.length()) old.optJSONObject(i)?.let { oldById[it.optLong("id")] = it }
@@ -1149,19 +1161,26 @@ class Store(ctx: Context) {
     fun deleteKind(id: Int) {
         // Si era Películas o Series y la borras tú, no vuelve a crearse sola (la marca viaja con tu cuenta)
         kinds.find { it.id == id }?.source?.takeIf { it.isNotEmpty() }?.let { tombs = tombs.put("media:$it", System.currentTimeMillis()) }
+        // (las fichas de películas y series son de Mostaza: quitar la categoría aquí no las borra allí, ni toca lo de antes)
+        val deMostaza = deMostaza(id) != null
         tombs = tombs.put("kind:$id", System.currentTimeMillis())
         kinds = kinds.filter { it.id != id }
-        p.edit().remove(gk(id)).remove(pk(id)).apply()
+        if (!deMostaza) p.edit().remove(gk(id)).remove(pk(id)).apply()
     }
 
     private fun customNames(ks: List<Kind>) = ks.flatMap { listOf(gk(it.id), pk(it.id)) }
 
+    /** La categoría de películas o series cuyas fichas son ya las de Mostaza (null: no lo es, o Mostaza aún no ha traído lo de aquí). */
+    private fun deMostaza(kind: Int): Kind? = if (kind == 0 || kind == 1) null else kinds.firstOrNull { it.id == kind }?.takeIf { CosasMostaza.de(app, it) }
+
     fun load(kind: Int = 0): List<Game> =
-        if ((kind == 0 || kind == 1) && Cosas.activa(app)) Cosas.vista(app, kind).games else gamesFromJson(JSONArray(p.getString(gk(kind), "[]")))
+        if ((kind == 0 || kind == 1) && Cosas.activa(app)) Cosas.vista(app, kind).games
+        else deMostaza(kind)?.let { CosasMostaza.vista(app, it).games } ?: gamesFromJson(JSONArray(p.getString(gk(kind), "[]")))
 
     /** Guarda una lista. [antes]: cómo la tenías antes de cambiarla (los juegos y libros de la cuenta solo escriben lo que has cambiado). */
     fun save(list: List<Game>, kind: Int = 0, antes: List<Game>? = null) {
         if ((kind == 0 || kind == 1) && Cosas.activa(app)) { Cosas.guarda(app, gk(kind), list.map { gameToJson(it) }, antes?.map { gameToJson(it) }); Widgets.pedir(app); return }
+        deMostaza(kind)?.let { k -> CosasMostaza.guarda(app, k, true, list.map { gameToJson(it) }, antes?.map { gameToJson(it) }); Widgets.pedir(app); return }
         val a = JSONArray()
         list.forEach { a.put(gameToJson(it)) }
         synchronized(cerrojo) {
@@ -1173,10 +1192,12 @@ class Store(ctx: Context) {
     }
 
     fun loadPlays(kind: Int = 0): List<Play> =
-        if ((kind == 0 || kind == 1) && Cosas.activa(app)) Cosas.vista(app, kind).plays else playsFromJson(JSONArray(p.getString(pk(kind), "[]")))
+        if ((kind == 0 || kind == 1) && Cosas.activa(app)) Cosas.vista(app, kind).plays
+        else deMostaza(kind)?.let { CosasMostaza.vista(app, it).plays } ?: playsFromJson(JSONArray(p.getString(pk(kind), "[]")))
 
     fun savePlays(list: List<Play>, kind: Int = 0, antes: List<Play>? = null) {
         if ((kind == 0 || kind == 1) && Cosas.activa(app)) { Cosas.guarda(app, pk(kind), list.map { playToJson(it) }, antes?.map { playToJson(it) }); Widgets.pedir(app); return }
+        deMostaza(kind)?.let { k -> CosasMostaza.guarda(app, k, false, list.map { playToJson(it) }, antes?.map { playToJson(it) }); Widgets.pedir(app); return }
         val a = JSONArray()
         list.forEach { a.put(playToJson(it)) }
         synchronized(cerrojo) {
@@ -1384,7 +1405,7 @@ class Store(ctx: Context) {
         }
         val ks = kinds
         o.put("kinds", JSONArray().apply { ks.forEach { put(kindToJson(it)) } })
-        for (n in customNames(ks)) o.put(n, JSONArray(p.getString(n, "[]")))
+        for (n in customNames(ks)) o.put(n, JSONArray(cruda(n)))
         return o.toString(2)
     }
 
