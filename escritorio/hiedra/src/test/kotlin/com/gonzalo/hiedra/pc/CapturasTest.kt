@@ -131,6 +131,15 @@ class CapturasTest {
         }
         ajustes("hiedra-ajustes-emulacion") { AjustesEmulacion(Nav({}, {})) }
         ajustes("hiedra-ajustes-sala") { AjustesSalaMando {} }
+        // Ajustes → Este PC, con dos capturas hechas aquí (la sala de antes, y jugando a Hades)
+        Capturas.imagenesPruebas = File(tmp, "Imágenes")
+        listOf("sala-inicio", "sala-juego").mapNotNull { File(dir, "$it.png").takeIf { f -> f.isFile } }.forEach { f ->
+            val b = f.readBytes(); val m = Captura.mide(b)
+            Capturas.capturaPruebas = { Captura.Imagen(b, m.w, m.h, m.mime, "spectacle") }
+            Capturas.haz(alMovil = false)
+        }
+        ajustes("hiedra-ajustes-este-pc") { AjustesCapturasStreaming(Nav({}, {})) }
+        Capturas.imagenesPruebas = null; Capturas.capturaPruebas = null
         LaFamilia.reiniciaParaPruebas()
         Pc.paraPruebas(null, null); Emulacion.instaladoPruebas = null
     }

@@ -724,6 +724,15 @@ private fun PanelMenu(est: EstadoSala, ctl: ControlSala) {
     Lateral("Menú", "Hiedra · ${Sitio.nombreEquipo}", { ctl.cierra("menu") }) {
         OpcionSala("Volver a la ventana", "op:0", "⧉ o F11") { ctl.cierra("menu"); ctl.alSalir() }
         OpcionSala(if (Pc.mirando) "Mirando…" else "Volver a mirar este PC", "op:1", "Steam, Heroic, Lutris, tus ROMs y tus programas") { Pc.refresca(escanear = true) { est.avisa("Mirado de nuevo: ${Pc.yaMirado().orEmpty().size} juegos aquí") }; ctl.cierra("menu") }
+        OpcionSala("Hacer una captura", "op:7", "De esta pantalla, a Imágenes/Hiedra" + if (AjustesTuPc.capturasAlMovil) " y al móvil" else "") {
+            ctl.cierra("menu")
+            // (cuando el menú ya se ha ido)
+            Thread({
+                Thread.sleep(700)
+                val r = runCatching { Capturas.haz() }
+                javax.swing.SwingUtilities.invokeLater { est.avisa(r.fold({ "Captura de ${it.w}×${it.h}" + if (it.subida) ", también en el móvil" else "" }, { it.message ?: "No se ha podido capturar" })) }
+            }, "hiedra-captura").apply { isDaemon = true; start() }
+        }
         OpcionSala(if (AjustesSala.oscura) "Sala clara" else "Sala oscura", "op:2", "Los colores de tu Hiedra") { AjustesSala.ponOscura(!AjustesSala.oscura) }
         OpcionSala(if (AjustesSala.apartar) "Al jugar: Hiedra se aparta" else "Al jugar: Hiedra se queda", "op:3", "Cambiar") { AjustesSala.ponApartar(!AjustesSala.apartar) }
         Spacer(Modifier.height(14.dp)); AnteSala("El ordenador", tam = 14.sp); Spacer(Modifier.height(6.dp))
