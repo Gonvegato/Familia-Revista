@@ -49,6 +49,9 @@ private val ES = Locale.forLanguageTag("es-ES")
 fun horas(ms: Long): String { val m = ms / 60_000L; return if (m < 60) "$m min" else "${m / 60} h" + if (m % 60 > 0) " ${m % 60} min" else "" }
 fun fecha(ms: Long): String = if (ms <= 0) "" else java.time.Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate().format(DateTimeFormatter.ofPattern("d MMM yyyy", ES))
 
+/** Las veces que se ha pedido la sala desde fuera (`Hiedra --sala` con Hiedra ya abierta). */
+object SalaPedida { var veces by mutableStateOf(0) }
+
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
@@ -73,6 +76,8 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
         Pc.alTerminar += f
         onDispose { Pc.alTerminar -= f }
     }
+    // `Hiedra --sala` con Hiedra ya abierta: a la sala
+    LaunchedEffect(Unit) { snapshotFlow { SalaPedida.veces }.collect { if (it > 0) enSala = true } }
     if (enSala) { PantallaSala(estSala) { enSala = false }; return }
     var pantalla by remember { mutableStateOf(inicial) }
     val snack = remember { SnackbarHostState() }

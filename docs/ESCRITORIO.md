@@ -13,7 +13,7 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
 - **Linux** (ordenadores x86-64, los de siempre; no ARM):
   - **CachyOS, Arch y cualquier otro**: `Azabache-1.0.1-linux.tar.gz`. Se descomprime y se ejecuta su `instalar.sh` (sin sudo):
     `tar xzf Azabache-1.0.1-linux.tar.gz && ./instalar.sh`. Queda en `~/.local/share/familia-apps/Azabache`, con su icono en el menú
-    de aplicaciones. Con `./instalar.sh --al-iniciar` se abre sola al entrar en tu sesión (para Hiedra como launcher del PC);
+    de aplicaciones. Con `./instalar.sh --al-iniciar` se abre sola al entrar en tu sesión (Hiedra, ya en la sala: el launcher del PC);
     `./instalar.sh --quitar` la desinstala (lo tuyo está en la cuenta: no se toca).
   - **Ubuntu, Debian, Mint…**: también vale el `Azabache-1.0.1-linux.deb` (`sudo apt install ./Azabache-1.0.1-linux.deb`), pero así no
     se actualiza sola (la del .deb es del sistema): mejor el .tar.gz.
@@ -68,6 +68,15 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Hiedra cuenta el tiempo hasta que los cierras, en
   `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Hiedra del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil
   (el protocolo `suite/` de Atrio del PC). Su presencia dice `tiempo: true`, y Hiedra del móvil (0.5.3) no vuelve a contar ese tiempo.
+  Desde la 1.1.0, **el launcher del PC de jugar**: además de Steam (también el de Flatpak y sus otras bibliotecas), **Heroic** (Epic, GOG,
+  Amazon y los que añades a mano, con sus portadas), **Lutris**, tus **carpetas de ROMs** (25 sistemas, con las mismas claves que en el
+  móvil: una ROM es el mismo juego aquí y allí) y los **emuladores** (RetroArch con sus núcleos, Dolphin, PCSX2, DuckStation, PPSSPP,
+  RPCS3, Ryujinx, Cemu, melonDS, mGBA y Flycast, normales o de Flatpak; cuál para cada sistema, en Ajustes → Emulación). Y el **modo
+  sala**: a pantalla completa, para la tele y **el mando** (Xbox, PlayStation o Nintendo, con sus botones dibujados; también con teclado):
+  Inicio con el juego grande arriba y filas (Seguir jugando, Favoritos, por tienda y por consola…), Biblioteca, En este PC, la página de
+  cada juego con JUGAR, buscar con teclado en pantalla, y un menú para suspender o apagar. Al abrir un juego, Hiedra se aparta y vuelve
+  sola al cerrarlo. Nada entra en tu cuenta solo por estar instalado: entra al jugarlo o al añadirlo (y si lo habías quitado, vuelve el
+  mismo, con lo suyo). El tiempo de Heroic, Lutris, emuladores y programas se cuenta mientras el juego está abierto; el de Steam, Steam.
 
 ## Lo que todavía no hacen (para no engañar)
 
@@ -76,7 +85,9 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Marfil**: los subrayados de los PDF (el móvil los guarda sobre la capa de texto de pdf.js), leer en voz alta y traducir. Los ajustes
   que cambies en otro dispositivo se aplican aquí la próxima vez que abras el libro, no al momento. Otros formatos (MOBI, FB2, TXT): en
   el móvil.
-- **Hiedra**: emuladores y ROMs, capturas y streaming para el móvil (`shot`, `stream` responden que todavía no).
+- **Hiedra**: capturas y streaming para el móvil (`shot`, `stream` responden que todavía no). En el Mac no se sabe con seguridad cuándo
+  se cierra un juego de Steam (Hiedra no vuelve sola). Sin carpeta de instalación de Heroic o Lutris, ese juego no cuenta tiempo. Los
+  emuladores de Flatpak necesitan permiso para leer tus carpetas de ROMs (Flatseal). El mando se ha probado sin un mando de verdad.
 - Las letras de Google Fonts que se eligen en el móvil: aquí van las de la app (Atrio y Vitrina) en su lugar.
 
 ## Por dentro
@@ -99,4 +110,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.0, Marfil 0.14.0, Cobalto 0.4.0, Azabache 1.6.0. De escritorio: Azabache, Cobalto y Marfil 1.1.0; Hiedra 1.0.1.
+Versiones de Android a día de hoy: Hiedra 0.6.0, Marfil 0.14.0, Cobalto 0.4.0, Azabache 1.6.0. De escritorio: las cuatro 1.1.0.

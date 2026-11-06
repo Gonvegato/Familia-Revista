@@ -11,7 +11,9 @@ import com.gonzalo.familia.pc.appDeLaFamilia
  */
 fun main(args: Array<String>) {
     val sala = "--sala" in args
-    appDeLaFamilia("hiedra", "Hiedra", icono(), alIniciar = { alIniciarHiedra() }, alCerrar = { alCerrarHiedra() }) { AppHiedra(sala = sala || AjustesSala.alAbrir) }
+    // (si Hiedra ya estaba abierta, `--sala` pone en la sala esa: la del inicio de sesión, o un atajo del mando de Steam)
+    appDeLaFamilia("hiedra", "Hiedra", icono(), alIniciar = { alIniciarHiedra() }, alCerrar = { alCerrarHiedra() },
+        args = args, alPedirOtraVez = { a -> if ("--sala" in a) SalaPedida.veces++ }) { AppHiedra(sala = sala || AjustesSala.alAbrir) }
 }
 
 fun icono() = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
@@ -27,4 +29,4 @@ fun alIniciarHiedra() {
     Mando.inicia()
 }
 
-fun alCerrarHiedra() { VentanaHiedra.alCerrar(); TuPc.alCerrar(); Mando.para() }
+fun alCerrarHiedra() { TuPc.alCerrar(); Mando.para() }

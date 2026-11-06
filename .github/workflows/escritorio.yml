@@ -54,6 +54,9 @@ jobs:
           test -x /tmp/prueba/datos/familia-apps/Hiedra/bin/Hiedra
           cat /tmp/prueba/datos/applications/familia-hiedra.desktop
           test -f /tmp/prueba/config/autostart/familia-hiedra.desktop
+          # al entrar en la sesión, Hiedra se abre ya en la sala; desde el menú, en su ventana
+          grep -q '^Exec=.*/bin/Hiedra" --sala$' /tmp/prueba/config/autostart/familia-hiedra.desktop
+          if grep -q -- '--sala' /tmp/prueba/datos/applications/familia-hiedra.desktop; then echo "el menú no debe llevar --sala"; exit 1; fi
       - name: Cada app se abre en Linux, instalada con su instalar.sh (y una captura de cada una)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq xvfb imagemagick > /dev/null
