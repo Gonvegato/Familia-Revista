@@ -1,0 +1,535 @@
+package com.gonzalo.mostaza
+
+import android.annotation.SuppressLint
+import android.graphics.Color as AColor
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
+import android.view.KeyEvent
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.CaptionStyleCompat
+import androidx.media3.ui.PlayerView
+import androidx.media3.ui.SubtitleView
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** Lo que enseñan los controles del reproductor (Compose encima del vídeo). */
+class EstadoReproductor {
+    var titulo by mutableStateOf(""); var subtitulo by mutableStateOf("")
+    var reproduciendo by mutableStateOf(false); var cargando by mutableStateOf(true)
+    var pos by mutableStateOf(0L); var dur by mutableStateOf(0L)
+    var visibles by mutableStateOf(true)
+    /** Un aviso que no se va solo (no se puede reproducir…). */
+    var aviso by mutableStateOf<String?>(null)
+    /** Un mensaje que se va solo («Ha entrado en Viendo»). */
+    var mensaje by mutableStateOf<String?>(null)
+    /** Se corta: se propone la siguiente fuente. */
+    var corte by mutableStateOf<String?>(null)
+    /** El episodio siguiente, y en cuántos segundos empieza (−1: sin cuenta atrás). */
+    var siguiente by mutableStateOf<String?>(null); var cuentaAtras by mutableStateOf(-1)
+    /** Para elegir audio o subtítulos: (título, opciones (texto, elegida), al elegir). */
+    var eleccion by mutableStateOf<Triple<String, List<Pair<String, Boolean>>, (Int) -> Unit>?>(null)
+    var fuente by mutableStateOf("")
+}
+
+/**
+ * El reproductor de Mostaza (AndroidX Media3, ExoPlayer): las fuentes con `url` (http/https, también HLS y DASH; con las cabeceras de
+ * `proxyHeaders` si las pide) y, con el motor de torrents, los torrents (por una dirección local). Subtítulos de tus addons y los que trae
+ * el vídeo, elegir audio y subtítulos, seguir donde lo dejaste (aquí o en otro dispositivo), el episodio siguiente y «Abrir con otro
+ * reproductor» para lo que este dispositivo no sabe decodificar. Mientras está abierto, la app no se actualiza (`Actualizador.ocupada`).
+ */
+@androidx.annotation.OptIn(UnstableApi::class)
+class ReproductorActivity : ComponentActivity() {
+    private var player: ExoPlayer? = null
+    private var vista: PlayerView? = null
+    private lateinit var encargo: Encargo
+    private var visionado: Visionado? = null
+    private val estado = EstadoReproductor()
+    private val ambito = MainScope()
+    private val principal = Handler(Looper.getMainLooper())
+    private var url = ""
+    private var cabeceras: Map<String, String> = emptyMap()
+    private var torrentAbierto = ""
+    private var listo = false
+    private val cortes = ArrayList<Long>()
+    private var cargandoDesde = 0L
+    private var subsDecididos = false
+    private var ultimaInteraccion = SystemClock.elapsedRealtime()
+    private var parado = false
+
+    private val pulso = object : Runnable {
+        override fun run() {
+            val p = player ?: return
+            estado.pos = p.currentPosition.coerceAtLeast(0L); estado.dur = p.duration.takeIf { it > 0 } ?: estado.dur
+            if (p.isPlaying) visionado?.tick(estado.pos, estado.dur)
+            visionado?.let { v -> if (v.entro && estado.mensaje == null && !avisadoEntrada) { avisadoEntrada = true; muestra("Ha entrado en «Viendo»") } }
+            // Los controles se esconden solos mientras se reproduce
+            if (estado.visibles && p.isPlaying && estado.eleccion == null && SystemClock.elapsedRealtime() - ultimaInteraccion > 4_000L) estado.visibles = false
+            // Cargando demasiado tiempo: se corta
+            if (cargandoDesde > 0 && listo && SystemClock.elapsedRealtime() - cargandoDesde > 15_000L && estado.corte == null) seCorta()
+            principal.postDelayed(this, 1_000L)
+        }
+    }
+    private var avisadoEntrada = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Con algo en marcha, la versión nueva no se instala (Android cerraría la app y te sacaría de la película); y el actualizador se
+        // pone en marcha también si se entra directamente aquí
+        Actualizador.ocupada++; Actualizador.init(applicationContext)
+        iniciar(applicationContext)
+        val e = Reproducir.toma()
+        if (e == null) { finish(); return }
+        encargo = e
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply { hide(WindowInsetsCompat.Type.systemBars()); systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE }
+        setContent { MostazaTheme { PantallaReproductor() } }
+        abre(e)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Composable
+    private fun PantallaReproductor() {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            AndroidView({ c ->
+                PlayerView(c).apply {
+                    useController = false
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+                    setKeepContentOnPlayerReset(true)
+                    estiloSubtitulos(subtitleView)
+                    vista = this
+                    player = this@ReproductorActivity.player
+                }
+            }, Modifier.fillMaxSize(), update = { it.player = player })
+            ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { s -> salta(s) }, alIr = { p -> player?.seekTo(p); visionado?.sesion?.salto() },
+                alVolver = { finish() }, alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alFuente = { eligeFuente() }, alOtro = { conOtro() },
+                alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() })
+        }
+    }
+
+    private fun estiloSubtitulos(s: SubtitleView?) {
+        s ?: return
+        val tam = AjustesReproductor.subTam(this) / 100f
+        s.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * tam)
+        s.setStyle(if (AjustesReproductor.subFondo(this)) CaptionStyleCompat(AColor.WHITE, 0xB0000000.toInt(), AColor.TRANSPARENT, CaptionStyleCompat.EDGE_TYPE_NONE, AColor.BLACK, null)
+            else CaptionStyleCompat(AColor.WHITE, AColor.TRANSPARENT, AColor.TRANSPARENT, CaptionStyleCompat.EDGE_TYPE_OUTLINE, AColor.BLACK, null))
+    }
+
+    private fun nombreDe(e: Encargo): Pair<String, String> {
+        val v = e.video
+        return e.breve.nombre to (if (v != null && v.temporada > 0) "T${v.temporada} · E${v.episodio}" + (if (v.titulo.isNotBlank()) " · ${v.titulo}" else "") else e.breve.ano)
+    }
+
+    /** Pone el encargo: la dirección (o el torrent), los subtítulos de tus addons y por dónde ibas. */
+    private fun abre(e: Encargo) {
+        encargo = e
+        val (t, s) = nombreDe(e); estado.titulo = t; estado.subtitulo = s
+        estado.fuente = e.elegida.analisis.resumen().ifBlank { e.elegida.addon }
+        estado.cargando = true; estado.aviso = null; estado.corte = null; estado.siguiente = null; estado.cuentaAtras = -1
+        listo = false; cortes.clear(); cargandoDesde = 0L; subsDecididos = false; avisadoEntrada = false
+        val v = visionado
+        visionado = if (v != null && v.breve.id == e.breve.id && e.video != null && v.videoId != e.video.id) v.siguiente(e.video, e.meta)
+            else Visionado(applicationContext, e.breve, e.meta, e.video, previo = e.previo, pendiente = e.pendiente)
+        val f = e.elegida.fuente
+        ambito.launch {
+            try {
+                url = if (f.tipo == TipoFuente.TORRENT) {
+                    estado.mensaje = "Preparando el torrent…"
+                    Torrents.fuente.prepara(f.infoHash, f.fileIdx, f.trackers, f.archivo.ifBlank { e.breve.nombre }).also { torrentAbierto = f.infoHash; estado.mensaje = null }
+                } else f.url
+                cabeceras = f.cabeceras
+                val tipo = e.breve.tipo.ifBlank { if (e.video != null) "series" else "movie" }
+                val subs = withTimeoutOrNull(4_000) { runCatching { Addons.subtitulos(tipo, e.video?.id ?: e.breve.id, f) }.getOrDefault(emptyList()) }.orEmpty() + f.subtitulos
+                empieza(url, subs, Reanudar.desde(applicationContext, visionado!!.videoId))
+            } catch (x: SinTorrent) { estado.cargando = false; estado.aviso = x.message }
+            catch (x: Exception) { estado.cargando = false; estado.aviso = "No se ha podido abrir esta fuente: ${x.message ?: "sin respuesta"}." }
+        }
+    }
+
+    private fun mimeSubtitulo(u: String): String {
+        val p = Uri.parse(u).lastPathSegment.orEmpty().lowercase()
+        return when { p.endsWith(".vtt") -> MimeTypes.TEXT_VTT; p.endsWith(".ass") || p.endsWith(".ssa") -> MimeTypes.TEXT_SSA; p.endsWith(".ttml") || p.endsWith(".dfxp") -> MimeTypes.APPLICATION_TTML; else -> MimeTypes.APPLICATION_SUBRIP }
+    }
+
+    private fun empieza(u: String, subs: List<Subtitulo>, desde: Long) {
+        val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent("Mostaza/$VERSION").setDefaultRequestProperties(cabeceras)
+            .setConnectTimeoutMs(20_000).setReadTimeoutMs(30_000)
+        val datos = DefaultDataSource.Factory(this, http)
+        val p = player ?: ExoPlayer.Builder(this).setMediaSourceFactory(DefaultMediaSourceFactory(datos))
+            .setBandwidthMeter(DefaultBandwidthMeter.getSingletonInstance(this)).build().also { nuevo ->
+                player = nuevo; vista?.player = nuevo
+                nuevo.addListener(oyente)
+                principal.post(pulso)
+            }
+        val audio = AjustesReproductor.audio(this); val texto = AjustesReproductor.subs(this)
+        p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().clearOverrides()
+            .setPreferredAudioLanguage(audio.ifBlank { null }).setPreferredTextLanguage(texto.ifBlank { null }).setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).build()
+        val item = MediaItem.Builder().setUri(u).setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setTitle(estado.titulo).build())
+            .setSubtitleConfigurations(subs.distinctBy { it.url }.take(40).map { s ->
+                MediaItem.SubtitleConfiguration.Builder(Uri.parse(s.url)).setMimeType(mimeSubtitulo(s.url)).setLanguage(s.idioma.ifBlank { null })
+                    .setLabel(s.etiqueta.ifBlank { idiomaBonito(s.idioma) }).setId(s.id).build()
+            })
+        val lower = u.substringBefore('?').lowercase()
+        if (lower.endsWith(".m3u8")) item.setMimeType(MimeTypes.APPLICATION_M3U8) else if (lower.endsWith(".mpd")) item.setMimeType(MimeTypes.APPLICATION_MPD)
+        p.setMediaItem(item.build(), desde)
+        p.prepare(); p.playWhenReady = true
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private val oyente = object : Player.Listener {
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            estado.reproduciendo = isPlaying
+            visionado?.sesion?.reproduciendo(isPlaying)
+            if (!isPlaying) visionado?.guarda(estado.pos, estado.dur)
+            if (isPlaying) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+
+        override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+            if (reason == Player.DISCONTINUITY_REASON_SEEK || reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT) visionado?.sesion?.salto()
+        }
+
+        override fun onPlaybackStateChanged(s: Int) {
+            val p = player ?: return
+            estado.cargando = s == Player.STATE_BUFFERING || s == Player.STATE_IDLE
+            when (s) {
+                Player.STATE_READY -> { listo = true; cargandoDesde = 0L; estado.dur = p.duration.coerceAtLeast(0L) }
+                Player.STATE_BUFFERING -> if (listo && p.playWhenReady) {
+                    val ahora = SystemClock.elapsedRealtime()
+                    cargandoDesde = ahora; cortes += ahora; cortes.removeAll { ahora - it > 120_000L }
+                    if (cortes.size >= 3 && estado.corte == null) seCorta()
+                }
+                Player.STATE_ENDED -> { visionado?.guarda(estado.dur, estado.dur, forzar = true); alTerminar() }
+                else -> {}
+            }
+        }
+
+        override fun onTracksChanged(tracks: Tracks) {
+            // El audio que no se puede decodificar aquí (DTS, TrueHD… según el dispositivo): se avisa, con la salida de otro reproductor
+            val audios = tracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
+            if (audios.isNotEmpty() && audios.none { g -> (0 until g.length).any { g.isTrackSupported(it) } })
+                estado.aviso = "Este dispositivo no sabe reproducir el sonido de esta fuente (${audios.first().getTrackFormat(0).sampleMimeType?.substringAfter('/')?.uppercase().orEmpty()}). Prueba con otro reproductor o con otra fuente."
+            if (!subsDecididos && tracks.groups.isNotEmpty()) { subsDecididos = true; decideSubtitulos(tracks) }
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            estado.cargando = false
+            val codec = error.errorCode in setOf(PlaybackException.ERROR_CODE_DECODER_INIT_FAILED, PlaybackException.ERROR_CODE_DECODER_QUERY_FAILED, PlaybackException.ERROR_CODE_DECODING_FAILED,
+                PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES, PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
+            estado.aviso = if (codec) "Este dispositivo no sabe reproducir este vídeo (su formato o su calidad). «Abrir con otro reproductor» suele poder (VLC, Just Player…), o prueba otra fuente."
+                else "No se puede ver esta fuente ahora (no responde, o el enlace ha caducado). Prueba con otra."
+        }
+    }
+
+    /** Subtítulos: si el audio ya está en tu idioma, sin subtítulos (salvo que los quieras siempre); si no, en el tuyo, si los hay. */
+    private fun decideSubtitulos(tracks: Tracks) {
+        val p = player ?: return
+        val audioPref = AjustesReproductor.audio(this).take(2)
+        val audioSel = tracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }.firstNotNullOfOrNull { g -> (0 until g.length).firstOrNull { g.isTrackSelected(it) }?.let { g.getTrackFormat(it).language } }
+        val enMiIdioma = audioSel != null && audioPref.isNotBlank() && normal(audioSel) == normal(audioPref)
+        if (enMiIdioma && !AjustesReproductor.subsSiempre(this)) p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
+    }
+
+    private fun normal(l: String) = when (val x = l.lowercase().take(3)) { "spa", "esp", "es-", "es" -> "es"; "eng", "en-", "en" -> "en"; else -> x.take(2) }
+
+    private fun idiomaBonito(l: String): String = when (normal(l)) { "es" -> "Español"; "en" -> "Inglés"; "fr" -> "Francés"; "it" -> "Italiano"; "de" -> "Alemán"; "pt" -> "Portugués"; else -> l.ifBlank { "Subtítulos" } }
+
+    private fun muestra(m: String) {
+        estado.mensaje = m
+        principal.postDelayed({ if (estado.mensaje == m) estado.mensaje = null }, 4_000L)
+    }
+
+    private fun tocado() { ultimaInteraccion = SystemClock.elapsedRealtime(); estado.visibles = !estado.visibles || estado.eleccion != null }
+    private fun alternar() { ultimaInteraccion = SystemClock.elapsedRealtime(); player?.let { if (it.isPlaying) it.pause() else it.play() } }
+    private fun salta(seg: Int) { ultimaInteraccion = SystemClock.elapsedRealtime(); player?.let { it.seekTo((it.currentPosition + seg * 1000L).coerceIn(0L, it.duration.coerceAtLeast(0L))) } }
+
+    private fun eligeAudio() {
+        val p = player ?: return
+        val g = p.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
+        val ops = g.flatMap { gr -> (0 until gr.length).map { i -> gr to i } }
+        if (ops.isEmpty()) { muestra("Esta fuente solo tiene un audio"); return }
+        estado.eleccion = Triple("Audio", ops.map { (gr, i) -> val f = gr.getTrackFormat(i); listOfNotNull(f.label, f.language?.let { idiomaBonito(it) }, f.sampleMimeType?.substringAfter('/')?.uppercase(), if (f.channelCount > 0) "${f.channelCount} canales" else null).distinct().joinToString(" · ") + (if (!gr.isTrackSupported(i)) " (no se puede aquí)" else "") to gr.isTrackSelected(i) }) { k ->
+            val (gr, i) = ops[k]
+            p.trackSelectionParameters = p.trackSelectionParameters.buildUpon().setOverrideForType(TrackSelectionOverride(gr.mediaTrackGroup, i)).build()
+            estado.eleccion = null
+        }
+    }
+
+    private fun eligeSubs() {
+        val p = player ?: return
+        val g = p.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
+        val ops = g.flatMap { gr -> (0 until gr.length).map { i -> gr to i } }
+        val ninguno = p.trackSelectionParameters.disabledTrackTypes.contains(C.TRACK_TYPE_TEXT) || ops.none { (gr, i) -> gr.isTrackSelected(i) }
+        estado.eleccion = Triple("Subtítulos", listOf("Sin subtítulos" to ninguno) + ops.map { (gr, i) -> val f = gr.getTrackFormat(i); (f.label ?: f.language?.let { idiomaBonito(it) } ?: "Pista ${i + 1}") to (!ninguno && gr.isTrackSelected(i)) }) { k ->
+            p.trackSelectionParameters = if (k == 0) p.trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true).build()
+                else { val (gr, i) = ops[k - 1]; p.trackSelectionParameters.buildUpon().setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false).setOverrideForType(TrackSelectionOverride(gr.mediaTrackGroup, i)).build() }
+            estado.eleccion = null
+        }
+    }
+
+    /** Otra fuente de las que había (en el orden del elector). */
+    private fun eligeFuente() {
+        val cs = encargo.candidatas.filter { Reproducir.accion(it.fuente) is Accion.Reproductor }
+        if (cs.size <= 1) { muestra("No hay otra fuente que se pueda poner aquí"); return }
+        estado.eleccion = Triple("Fuente", cs.map { c -> (c.analisis.resumen().ifBlank { c.fuente.nombre.lineSequence().firstOrNull().orEmpty() } + " · " + c.addon) to (c === encargo.elegida) }) { k ->
+            estado.eleccion = null
+            cambiaA(cs[k])
+        }
+    }
+
+    private fun cambiaA(c: Candidata) {
+        val pos = player?.currentPosition ?: 0L
+        visionado?.guarda(pos, estado.dur, forzar = true)
+        cierraTorrent()
+        Reanudar.pon(applicationContext, visionado?.videoId ?: encargo.breve.id, pos, estado.dur)
+        val v = visionado
+        visionado = null   // (la misma sesión sigue con la otra fuente: lo visto y lo que falta por apuntar pasan al nuevo)
+        abre(Encargo(encargo.breve, encargo.meta, encargo.video, c, encargo.candidatas, v?.sesion?.vistoMs ?: 0L, v?.takeIf { !it.enCuenta }?.pendiente().orEmpty()))
+    }
+
+    /** Se corta una y otra vez: se apunta que la conexión da menos y se propone la siguiente. */
+    private fun seCorta() {
+        val kbps = DefaultBandwidthMeter.getSingletonInstance(this).bitrateEstimate / 1000L
+        Conexion.apunta(applicationContext, kbps, corte = true)
+        val sig = siguienteCandidata() ?: return
+        estado.corte = "Se corta. ¿Probar con ${sig.analisis.resumen().ifBlank { sig.addon }}?"
+    }
+
+    private fun siguienteCandidata(): Candidata? {
+        val cs = encargo.candidatas.filter { Reproducir.accion(it.fuente) is Accion.Reproductor }
+        val i = cs.indexOfFirst { it === encargo.elegida }
+        return cs.drop(i + 1).firstOrNull()
+    }
+
+    private fun siguienteFuente() { estado.corte = null; siguienteCandidata()?.let { cambiaA(it) } }
+
+    private fun conOtro() {
+        val pos = player?.currentPosition ?: 0L
+        player?.pause()
+        val r = Reproducir.conOtro(this, url, estado.titulo, pos, cabeceras)
+        if (r != null) muestra(r) else finish()
+    }
+
+    // ---------------------------------------------------------------- el episodio siguiente
+
+    private fun videoSiguiente(): Video? {
+        val m = encargo.meta ?: return null
+        val v = encargo.video ?: return null
+        val eps = m.videos.filter { it.temporada > 0 }.sortedWith(compareBy({ it.temporada }, { it.episodio }))
+        val i = eps.indexOfFirst { it.id == v.id }
+        return eps.getOrNull(i + 1)?.takeIf { it.estrenado() }
+    }
+
+    private fun alTerminar() {
+        val sig = videoSiguiente()
+        if (sig == null || !AjustesReproductor.siguiente(this)) { estado.visibles = true; return }
+        estado.siguiente = "T${sig.temporada} · E${sig.episodio}" + if (sig.titulo.isNotBlank()) " · ${sig.titulo}" else ""
+        estado.cuentaAtras = 8
+        val cuenta = object : Runnable {
+            override fun run() {
+                if (estado.cuentaAtras < 0) return
+                if (estado.cuentaAtras == 0) { siguienteYa(); return }
+                estado.cuentaAtras--; principal.postDelayed(this, 1_000L)
+            }
+        }
+        principal.postDelayed(cuenta, 1_000L)
+    }
+
+    /** El siguiente episodio: sus fuentes, y la que toca (la del mismo grupo que esta, si la hay). */
+    private fun siguienteYa() {
+        val sig = videoSiguiente() ?: return
+        estado.cuentaAtras = -1; estado.siguiente = null; estado.cargando = true
+        val grupo = encargo.elegida.fuente.grupo
+        ambito.launch {
+            val cs = Addons.fuentes("series", sig.id)
+            val m = encargo.meta
+            val e = Elector.elige(cs, AjustesElector.prefs(applicationContext), Conexion.red(applicationContext), Conexion.capacidades(applicationContext), m?.minutos ?: 0, Torrents.disponible, grupo)
+            val c = e.elegida ?: run { estado.cargando = false; estado.aviso = "No hay fuentes para el episodio siguiente."; return@launch }
+            visionado?.termina(estado.dur, estado.dur)
+            cierraTorrent()
+            abre(Encargo(encargo.breve, m, sig, c, e.ordenadas))
+        }
+    }
+
+    private fun cierraTorrent() { if (torrentAbierto.isNotBlank()) { runCatching { Torrents.fuente.para(torrentAbierto) }; torrentAbierto = "" } }
+
+    // ---------------------------------------------------------------- el mando (cruceta, OK, reproducir/pausa)
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        ultimaInteraccion = SystemClock.elapsedRealtime()
+        if (!estado.visibles && estado.eleccion == null) when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MEDIA_REWIND -> { salta(-AjustesReproductor.salto(this)); return true }
+            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { salta(AjustesReproductor.salto(this)); return true }
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> { estado.visibles = true; return true }
+        }
+        when (keyCode) {
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_SPACE -> { alternar(); return true }
+            KeyEvent.KEYCODE_MEDIA_PLAY -> { player?.play(); return true }
+            KeyEvent.KEYCODE_MEDIA_PAUSE -> { player?.pause(); return true }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Volver al reproductor después de salir es otra sesión (la de antes terminó al irte)
+        if (parado) { parado = false; visionado = visionado?.let { v -> Visionado(applicationContext, v.breve, v.meta, v.video) } }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Salir del reproductor termina la sesión (regla 1): lo de antes no se junta con lo de cuando vuelvas
+        player?.pause()
+        visionado?.termina(player?.currentPosition ?: estado.pos, estado.dur)
+        parado = true
+        val kbps = DefaultBandwidthMeter.getSingletonInstance(this).bitrateEstimate / 1000L
+        if (listo && cortes.isEmpty()) Conexion.apunta(applicationContext, kbps)
+    }
+
+    override fun onDestroy() {
+        principal.removeCallbacksAndMessages(null)
+        ambito.cancel()
+        if (::encargo.isInitialized && !parado) visionado?.termina(player?.currentPosition ?: estado.pos, estado.dur)
+        cierraTorrent()
+        player?.release(); player = null
+        Actualizador.ocupada = (Actualizador.ocupada - 1).coerceAtLeast(0)
+        super.onDestroy()
+    }
+}
+
+/** Los controles: arriba el título, en medio reproducir y saltar, abajo la barra y lo de audio, subtítulos, fuente y otro reproductor. */
+@Composable
+fun ControlesReproductor(
+    e: EstadoReproductor, alTocar: () -> Unit, alPlay: () -> Unit, alSaltar: (Int) -> Unit, alIr: (Long) -> Unit, alVolver: () -> Unit,
+    alAudio: () -> Unit, alSubs: () -> Unit, alFuente: () -> Unit, alOtro: () -> Unit, alSiguiente: () -> Unit, alCancelarSiguiente: () -> Unit, alCorte: () -> Unit,
+) {
+    val blanco = Color(0xFFF7F2E8)
+    Box(Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { alTocar() }) {
+        if (e.cargando && e.aviso == null) Text("Cargando…", color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 20.sp, modifier = Modifier.align(Alignment.Center))
+        if (e.visibles || e.aviso != null) {
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xCC000000), Color.Transparent, Color.Transparent, Color(0xCC000000)))))
+            Column(Modifier.align(Alignment.TopStart).fillMaxWidth().statusBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp)) {
+                Text("← VOLVER", color = blanco, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp, modifier = Modifier.tocable { alVolver() }.padding(vertical = 8.dp))
+                Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
+                if (e.fuente.isNotBlank()) Text(e.fuente, color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp, maxLines = 1)
+            }
+            if (e.aviso == null) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
+                BotonIcono(Icons.Rounded.Replay10, "Atrás", tinta = blanco, tam = 56.dp) { alSaltar(-10) }
+                BotonIcono(if (e.reproduciendo) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (e.reproduciendo) "Pausa" else "Reproducir", tinta = blanco, tam = 76.dp) { alPlay() }
+                BotonIcono(Icons.Rounded.Forward10, "Adelante", tinta = blanco, tam = 56.dp) { alSaltar(10) }
+            }
+            Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
+                if (e.dur > 0) {
+                    Slider(e.pos.toFloat().coerceIn(0f, e.dur.toFloat()), { alIr(it.toLong()) }, valueRange = 0f..e.dur.toFloat(),
+                        colors = SliderDefaults.colors(thumbColor = Acento, activeTrackColor = Acento, inactiveTrackColor = blanco.copy(alpha = 0.3f)))
+                    Row(Modifier.fillMaxWidth()) {
+                        Text(tiempo(e.pos), color = blanco, fontFamily = Body, fontSize = 12.sp); Spacer(Modifier.weight(1f))
+                        Text("−" + tiempo((e.dur - e.pos).coerceAtLeast(0L)), color = blanco, fontFamily = Body, fontSize = 12.sp)
+                    }
+                }
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    EnlaceClaro("Audio", blanco, alAudio); EnlaceClaro("Subtítulos", blanco, alSubs); EnlaceClaro("Fuente", blanco, alFuente)
+                    Spacer(Modifier.weight(1f))
+                    EnlaceClaro("Abrir con otro reproductor", blanco, alOtro)
+                }
+            }
+        }
+        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 70.dp).background(Color(0x99000000)).padding(horizontal = 16.dp, vertical = 8.dp)) }
+        e.aviso?.let { a ->
+            Column(Modifier.align(Alignment.Center).widthIn(max = 520.dp).padding(24.dp).background(Paper).padding(22.dp)) {
+                Antetitulo("No se puede", Modifier.padding(bottom = 8.dp))
+                Text(a, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp)
+                Spacer(Modifier.height(10.dp))
+                MagLink("Abrir con otro reproductor", accent = true) { alOtro() }
+                MagLink("Probar otra fuente") { alFuente() }
+                MagLink("Volver") { alVolver() }
+            }
+        }
+        e.corte?.let { c ->
+            Row(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 110.dp).background(Paper).padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(c, color = Charcoal, fontFamily = Body, fontSize = 14.sp, modifier = Modifier.weight(1f, fill = false))
+                Spacer(Modifier.width(14.dp))
+                EnlaceRevista("Sí, cambiar", acento = true) { alCorte() }
+            }
+        }
+        e.siguiente?.let { s ->
+            Column(Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(24.dp).background(Paper).padding(18.dp)) {
+                Antetitulo("Siguiente", Modifier.padding(bottom = 4.dp))
+                Text(s, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2)
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    EnlaceRevista(if (e.cuentaAtras >= 0) "Ver ya (${e.cuentaAtras})" else "Ver ya", acento = true) { alSiguiente() }
+                    EnlaceRevista("Cancelar") { alCancelarSiguiente() }
+                }
+            }
+        }
+        e.eleccion?.let { (titulo, ops, elegir) ->
+            Column(Modifier.align(Alignment.CenterEnd).fillMaxHeight().widthIn(max = 420.dp).fillMaxWidth(0.9f).background(Paper).statusBarsPadding().padding(20.dp).verticalScroll(rememberScrollState())) {
+                Antetitulo(titulo, Modifier.padding(bottom = 6.dp))
+                ops.forEachIndexed { i, (t, sel) ->
+                    Text((if (sel) "✓ " else "   ") + t, color = if (sel) Acento else Charcoal, fontFamily = Body, fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal, fontSize = 15.sp,
+                        modifier = Modifier.fillMaxWidth().tocable { elegir(i) }.padding(vertical = 10.dp))
+                    Filete(1.dp, Line)
+                }
+                EnlaceRevista("Cerrar") { e.eleccion = null }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EnlaceClaro(t: String, color: Color, alHacer: () -> Unit) =
+    Text(t.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.3.sp, maxLines = 1, modifier = Modifier.tocable { alHacer() }.padding(vertical = 10.dp))
+
+/** «1:23:45» o «23:45». */
+fun tiempo(ms: Long): String {
+    val s = ms / 1000; val h = s / 3600; val m = (s % 3600) / 60; val x = s % 60
+    return if (h > 0) "%d:%02d:%02d".format(h, m, x) else "%d:%02d".format(m, x)
+}

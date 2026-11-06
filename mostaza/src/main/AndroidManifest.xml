@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Actualizarse sola desde tu kDrive (Actualizador.kt): instalar la versión nueva de sí misma, y reabrirse después -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Actualizarse sola sin preguntar (Android 12+): lo exige SessionParams.setRequireUserAction -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- Android 13 o más: sin este permiso no se ven los avisos del actualizador («tienes una versión nueva», «se ha actualizado») -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- También en la tele (con el mando a distancia): sin pantalla táctil y en el menú de Android TV -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <queries>
+        <!-- Desde Android 11 una app no ve a las demás si no las declara aquí: las hermanas («En Azabache»), los colores de Azabache, -->
+        <!-- los reproductores de fuera («Abrir con otro reproductor») y YouTube -->
+        <package android:name="com.gonzalo.hiedra" />
+        <package android:name="com.gonzalo.marfil" />
+        <package android:name="com.gonzalo.cobalto" />
+        <package android:name="com.gonzalo.gamerate" />
+        <provider android:authorities="com.gonzalo.gamerate.tema" />
+        <package android:name="org.videolan.vlc" />
+        <package android:name="com.brouken.player" />
+        <package android:name="is.xyz.mpv" />
+        <package android:name="com.mxtech.videoplayer.ad" />
+        <package android:name="com.mxtech.videoplayer.pro" />
+        <package android:name="com.google.android.youtube" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="video/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+    <!-- Hay fuentes que solo van por http (las marca «notWebReady») y el motor de torrents sirve en 127.0.0.1: sin esto, Android no las deja abrir -->
+    <application
+        android:label="Mostaza"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:banner="@drawable/banner_mostaza"
+        android:theme="@style/Mostaza"
+        android:usesCleartextTraffic="true"
+        android:allowBackup="true">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <!-- El botón «Install» de la página de un addon (stremio://…/manifest.json): se instala aquí -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="stremio" />
+            </intent-filter>
+        </activity>
+        <!-- El reproductor (Media3): a pantalla completa, sin cortarse al girar -->
+        <activity android:name=".ReproductorActivity" android:exported="false" android:theme="@style/Reproductor"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density|navigation" />
+        <!-- La página de configurar de un addon (la del propio addon, en una web) -->
+        <activity android:name=".ConfigurarActivity" android:exported="false" android:theme="@style/Mostaza"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
+        <receiver android:name=".ActualizadorReceiver" android:exported="false" />
+        <receiver android:name=".ActualizadorReabrir" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
+    </application>
+</manifest>

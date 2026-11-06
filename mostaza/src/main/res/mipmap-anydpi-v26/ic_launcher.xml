@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El icono de Mostaza: un degradado mostaza y, encima, un fotograma de película con el triángulo de «reproducir» en líneas claras (dentro de la zona segura del 66 %). El monocromo es el mismo dibujo, para los iconos con tema. Lo saca herramientas/mostaza/icono-mostaza.py. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_mostaza_bg"/>
+    <foreground android:drawable="@drawable/ic_launcher_mostaza_fg"/>
+    <monochrome android:drawable="@drawable/ic_launcher_mostaza_mono"/>
+</adaptive-icon>
