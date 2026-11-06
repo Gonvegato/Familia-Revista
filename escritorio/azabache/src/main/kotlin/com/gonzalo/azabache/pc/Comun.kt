@@ -37,6 +37,9 @@ fun duracion(min: Long): String = when { min <= 0 -> "—"; min < 60 -> "$min mi
 /** Cómo está: «Pasado», «Leyendo», «Pendiente»… */
 fun estadoDe(f: Ficha, k: Kind): String = if (f.valorada) k.doneWord.removeSuffix("s") else k.statuses[f.estado.coerceIn(0, 2)]
 
+/** Lo que se hace con algo de esa categoría mientras pasa el tiempo: «leyendo», «viendo» o «jugando». */
+fun verboDeTiempo(k: Kind): String = if (k.isBook) "leyendo" else if (k.isMovie || k.isTv) "viendo" else "jugando"
+
 /** La nota como se enseña: nunca un 0 que no has puesto. */
 fun notaTexto(f: Ficha): String = if (f.sinValorar) "Sin valorar" else f.general.toString()
 

@@ -83,6 +83,8 @@ fun DialogoAnadir(k: Kind, estadoInicial: Int, nav: Nav, onCerrar: () -> Unit) {
         if (aMano) BotonAcento("Añadir", modifier = Modifier.width(140.dp), alto = 44.dp) { if (nombre.isNotBlank()) crea(if (k.custom) customItemId(nombre) else System.currentTimeMillis(), nombre, creador, "", 0) }
     }) {
         MagChoice(listOf(k.doneWord.removeSuffix("s"), k.statuses[1], k.statuses[0], k.statuses[2]), estado, "Cómo está") { estado = it }
+        // (en el móvil, «Añadir» abre Mostaza; aquí no la hay, y se añade igual a tu biblioteca de Mostaza)
+        if (CosasMostaza.de(k)) Cuerpo("Va a tu biblioteca de Mostaza, la misma que ves en el móvil.", tam = 12)
         Spacer(Modifier.height(12.dp))
         if (aMano) {
             Campo("Nombre", nombre) { nombre = it }
@@ -128,7 +130,7 @@ fun DialogoPortada(k: Kind, f: Ficha, nav: Nav, onCerrar: () -> Unit) {
         trabajando = "Poniendo la portada…"
         scope.launch {
             val r = withContext(Dispatchers.IO) { runCatching {
-                if (k.custom) { if (!de.startsWith("http")) error("En tus categorías la portada tiene que ser de internet (la ve también el móvil)."); Cuenta.ponPortadaWeb(f, de); "ok" }
+                if (k.custom && !f.mostaza) { if (!de.startsWith("http")) error("En tus categorías la portada tiene que ser de internet (la ve también el móvil)."); Cuenta.ponPortadaWeb(f, de); "ok" }
                 else Cuenta.ponPortada(f, bytes(), de) ?: error("Eso no es una imagen.")
             } }
             trabajando = ""
@@ -146,7 +148,7 @@ fun DialogoPortada(k: Kind, f: Ficha, nav: Nav, onCerrar: () -> Unit) {
         trabajando = ""
     }
     Dialogo("La portada de «${f.nombre}»", onCerrar, ancho = 780.dp, botones = {
-        if (!k.custom) BotonSuave("Elegir un archivo…") {
+        if (!k.custom || f.mostaza) BotonSuave("Elegir un archivo…") {
             val a = eligeArchivo("Elige una imagen", listOf("jpg", "jpeg", "png", "webp", "gif"))
             if (a != null) pon({ a.readBytes() }, "")
         }

@@ -61,9 +61,11 @@ val NOTAS = listOf("general", "gfx", "story", "music", "gameplay")
 
 /**
  * Una ficha de Azabache: [o] es la ficha tal cual (la misma forma que en el móvil: `id`, `name`, `cover`, las notas, `status`…).
- * [valorada]: está terminada (en la lista de valoradas). En los juegos y libros, [ref] es su cosa de la cuenta y [portada] su imagen.
+ * [valorada]: está terminada (en la lista de valoradas). En los juegos y libros, [ref] es su cosa de la cuenta y [portada] su imagen; en las
+ * películas y series de Mostaza ([mostaza]), su título de la cuenta (`titulos/<ref>`).
  */
-class Ficha(val kind: Int, val o: Obj, val valorada: Boolean, val ref: String? = null, val portada: String = "", val portadaUrl: String = "", val sinNota: Boolean = false) {
+class Ficha(val kind: Int, val o: Obj, val valorada: Boolean, val ref: String? = null, val portada: String = "", val portadaUrl: String = "", val sinNota: Boolean = false,
+    val mostaza: Boolean = false) {
     val id: Long get() = o["id"].comoLong()
     val nombre: String get() = o["name"].comoTexto()
     val creador: String get() = o["creator"].comoTexto()

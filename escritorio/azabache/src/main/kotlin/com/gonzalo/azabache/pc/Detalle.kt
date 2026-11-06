@@ -56,7 +56,7 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav, disenar: Boolean 
     fun guarda() {
         val nueva = if (valorada && !conNota) LinkedHashMap(o).also { m -> NOTAS.forEach { m[it] = 0L } } else o
         Cuenta.guarda(k.id, base, nueva, valorada)
-        base = Ficha(k.id, nueva, valorada, base.ref, base.portada, base.portadaUrl, base.sinNota && !conNota)
+        base = Ficha(k.id, nueva, valorada, base.ref, base.portada, base.portadaUrl, base.sinNota && !conNota, base.mostaza)
         o = nueva
         nav.aviso("Guardado en la cuenta")
         editando = false
@@ -106,7 +106,7 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav, disenar: Boolean 
                 EnlaceRevista("Borrar", acento = true) { borrar = true }
                 if (f.ref != null) {
                     Spacer(Modifier.height(16.dp))
-                    Cuerpo(if (k.id == GAMES.id) "Es el mismo juego que en Hiedra: lo que cambies aquí lo ve allí, y al revés." else "Es el mismo libro que en Marfil: lo que cambies aquí lo ve allí, y al revés.", tam = 12)
+                    Cuerpo(mismaQueEnSuApp(k, f), tam = 12)
                 }
             }
             Spacer(Modifier.width(40.dp))
@@ -171,7 +171,7 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav, disenar: Boolean 
                 // El tiempo (de Hiedra, Marfil, Steam…: se suman los dispositivos)
                 if (f.minutos > 0 || f.ref != null) {
                     Spacer(Modifier.height(22.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-                    Antetitulo(if (k.id == GAMES.id) "Tiempo jugado" else if (k.id == BOOKS.id) "Tiempo leyendo" else "Tiempo")
+                    Antetitulo(if (k.id == GAMES.id) "Tiempo jugado" else if (k.id == BOOKS.id) "Tiempo leyendo" else if (f.mostaza) "Tiempo viendo" else "Tiempo")
                     Spacer(Modifier.height(6.dp))
                     MagFact("En total", duracion(f.minutos.toLong()))
                     val dias = f.ref?.let { Cuenta.porDia(it) }.orEmpty().entries.sortedByDescending { it.key }.take(7)
@@ -195,7 +195,11 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav, disenar: Boolean 
             scope.launch { withContext(Dispatchers.IO) { Cuenta.borra(f) }; nav.aviso("Borrado"); nav.ir(volver) }
         }
     }) {
-        Cuerpo(if (f.ref != null) "Se borra de la cuenta: deja de estar también en ${if (k.id == GAMES.id) "Hiedra" else "Marfil"} y en tus otros dispositivos." else "Se borra de la cuenta (y de tus otros dispositivos).", tam = 14)
+        Cuerpo(when {
+            f.mostaza -> "Se quita de Mostaza (queda borrada en la cuenta y en tus otros dispositivos: no vuelve sola aunque la veas; solo «Añadir» la recupera, con lo suyo)."
+            f.ref != null -> "Se borra de la cuenta: deja de estar también en ${if (k.id == GAMES.id) "Hiedra" else "Marfil"} y en tus otros dispositivos."
+            else -> "Se borra de la cuenta (y de tus otros dispositivos)."
+        }, tam = 14)
     }
 }
 

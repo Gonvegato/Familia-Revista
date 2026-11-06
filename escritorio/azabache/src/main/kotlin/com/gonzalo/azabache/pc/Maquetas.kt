@@ -130,7 +130,7 @@ object Maquetas {
             if (k.isGame || k.isBook) Modulo("portada", "Portada") else null,
             Modulo("estado", "Estado y nota"),
             if (k.isGame) Modulo("jugar", "Jugar") else null,
-            if (cine) Modulo("progreso", "Progreso", false) else null,
+            if (cine) Modulo("progreso", "Progreso") else null,
             Modulo("apuntes", "Apuntes"),
             if (k.isGame) Modulo("horas", "Horas") else null,
             Modulo("sesiones", "Sesiones"),

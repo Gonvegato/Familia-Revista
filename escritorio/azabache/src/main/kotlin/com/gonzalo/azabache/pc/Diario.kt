@@ -100,7 +100,7 @@ fun PantDiario(nav: Nav) {
                 }
                 tm.entries.sortedByDescending { it.value }.forEach { (ref, ms) ->
                     val par = porRef[ref]
-                    if (par != null && ms >= 60_000L) FilaFicha(par.second, par.first, "${duracion(ms / 60_000L)} ${if (par.first.isBook) "leyendo" else "jugando"}") { nav.ir(Pantalla.Detalle(par.first.id, par.second.id, Pantalla.Diario)) }
+                    if (par != null && ms >= 60_000L) FilaFicha(par.second, par.first, "${duracion(ms / 60_000L)} ${verboDeTiempo(par.first)}") { nav.ir(Pantalla.Detalle(par.first.id, par.second.id, Pantalla.Diario)) }
                 }
                 Spacer(Modifier.height(8.dp))
                 Filete(1.dp, Line)
