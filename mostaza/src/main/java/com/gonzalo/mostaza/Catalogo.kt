@@ -83,7 +83,7 @@ fun Destacado(b: MetaBreve, alAbrir: (MetaBreve) -> Unit) {
                 Text(b.nombre, color = Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = if (ancha) 40.sp else 28.sp, lineHeight = if (ancha) 42.sp else 30.sp,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val datos = listOfNotNull(b.ano.ifBlank { null }, b.generos.take(2).joinToString(", ").ifBlank { null }, b.nota.ifBlank { null }?.let { "★ $it" })
-                if (datos.isNotEmpty()) Text(datos.joinToString(" · "), color = Color.Black.copy(alpha = 0.85f), fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (datos.isNotEmpty()) Text(datos.joinToString(" · "), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         if (b.descripcion.isNotBlank()) Text(b.descripcion, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))

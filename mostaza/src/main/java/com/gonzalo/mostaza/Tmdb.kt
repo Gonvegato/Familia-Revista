@@ -47,7 +47,9 @@ object TmdbDatos {
     const val IMG = "https://image.tmdb.org/t/p/"
     const val REGION = "ES"
 
-    fun img(path: String, tam: String) = if (path.isBlank()) "" else IMG + tam + path
+    /** De la ruta de una imagen de TMDB a su dirección (en las pruebas de pantallas: imágenes hechas aquí). */
+    @Volatile var imagen: (String, String) -> String = { path, tam -> IMG + tam + path }
+    fun img(path: String, tam: String) = if (path.isBlank()) "" else imagen(path, tam)
 
     data class IdTmdb(val tv: Boolean, val id: Long) { val ruta: String get() = (if (tv) "tv/" else "movie/") + id }
 

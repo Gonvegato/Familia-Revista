@@ -105,7 +105,41 @@ class Escaparate(private val ctx: Context) : Http {
         mapOf("name" to "Casa\n720p", "description" to "Dune.Part.Two.2024.720p.WEBRip.x265.VOSE\n👤 230 💾 1.6 GB", "infoHash" to "0123456789abcdef0123456789abcdef01234567"),
         mapOf("name" to "Tráiler", "ytId" to "U2Qp5pL3ovA"))
 
+    /** Lo que contestaría TMDB (con la forma de su documentación), con las mismas películas y series. */
+    private fun tmdb(u: String, q: String): String {
+        fun item(p: P) = mapOf("id" to (todas.indexOf(p) + 100), "media_type" to if (p.tipo == "series") "tv" else "movie", (if (p.tipo == "series") "name" else "title") to p.nombre,
+            "poster_path" to poster(p), "backdrop_path" to poster(p), (if (p.tipo == "series") "first_air_date" else "release_date") to "${p.ano.take(4)}-03-01",
+            "vote_average" to 8.1, "overview" to p.desc, "genre_ids" to listOf(18))
+        fun lista(l: List<P>) = Json.escribe(mapOf("page" to 1, "total_pages" to 1, "results" to l.map { item(it) }))
+        val ruta = u.substringAfter("/3/")
+        return when {
+            ruta.startsWith("genre/") -> """{"genres":[{"id":18,"name":"Drama"},{"id":28,"name":"Acción"},{"id":35,"name":"Comedia"},{"id":878,"name":"Ciencia ficción"}]}"""
+            ruta.startsWith("watch/providers") -> """{"results":[{"display_priorities":{"ES":0},"provider_id":8,"provider_name":"Netflix","logo_path":""},{"display_priorities":{"ES":1},"provider_id":119,"provider_name":"Prime Video","logo_path":""}]}"""
+            ruta.startsWith("search/") -> lista(todas.filter { it.nombre.contains("d", true) })
+            ruta.startsWith("trending/tv") || ruta.startsWith("tv/") && !ruta.substringAfter("tv/").first().isDigit() || ruta.startsWith("discover/tv") -> lista(series)
+            ruta.startsWith("find/") -> todas.firstOrNull { ruta.contains(it.id) }?.let { p -> Json.escribe(mapOf("movie_results" to if (p.tipo == "movie") listOf(item(p)) else emptyList<Any>(), "tv_results" to if (p.tipo == "series") listOf(item(p)) else emptyList<Any>())) } ?: """{"movie_results":[],"tv_results":[]}"""
+            ruta.contains("/recommendations") -> lista(pelis.drop(2))
+            Regex("^(movie|tv)/(\\d+)$").find(ruta) != null -> {
+                val (k, n) = Regex("^(movie|tv)/(\\d+)$").find(ruta)!!.destructured
+                val p = todas.getOrNull(n.toInt() - 100) ?: throw java.io.IOException("404")
+                val m = LinkedHashMap<String, Any?>(item(p)); m.remove("media_type")
+                m["imdb_id"] = p.id; m["external_ids"] = mapOf("imdb_id" to p.id); m["tagline"] = "Lo que pasó de verdad."; m["runtime"] = p.dur.filter(Char::isDigit).toIntOrNull() ?: 0
+                m["genres"] = p.generos.map { mapOf("id" to 1, "name" to it) }; m["production_countries"] = listOf(mapOf("name" to "Estados Unidos"))
+                m["credits"] = mapOf("cast" to listOf("Timothée Chalamet" to "Paul Atreides", "Zendaya" to "Chani", "Rebecca Ferguson" to "Lady Jessica", "Javier Bardem" to "Stilgar").mapIndexed { i, (a, b) -> mapOf("name" to a, "character" to b, "order" to i, "profile_path" to poster(p)) },
+                    "crew" to listOf(mapOf("name" to "Denis Villeneuve", "job" to "Director")))
+                m["videos"] = mapOf("results" to listOf(mapOf("iso_639_1" to "es", "key" to "U2Qp5pL3ovA", "site" to "YouTube", "type" to "Trailer", "official" to true)))
+                m["recommendations"] = mapOf("results" to pelis.drop(3).map { item(it) })
+                m["watch/providers"] = mapOf("results" to mapOf("ES" to mapOf("flatrate" to listOf(mapOf("provider_id" to 8, "provider_name" to "Netflix", "logo_path" to "", "display_priority" to 0)))))
+                if (k == "tv") { m["seasons"] = listOf(mapOf("season_number" to 1), mapOf("season_number" to 2)); m["created_by"] = listOf(mapOf("name" to "David Benioff")) }
+                Json.escribe(m)
+            }
+            ruta.startsWith("configuration") -> "{}"
+            else -> lista(pelis)
+        }
+    }
+
     override fun get(url: String, cabeceras: Map<String, String>): String {
+        if (url.contains("api.themoviedb.org/3/")) return tmdb(url.substringBefore('?'), url.substringAfter('?', ""))
         val u = url.substringBefore('?')
         fun metas(l: List<P>) = Json.escribe(mapOf("metas" to l.map { breve(it) }))
         return when {
@@ -185,6 +219,7 @@ abstract class CapturasBase {
                         7 -> PantFuentes(Biblioteca.titulos[2].breve(), null, null, alCerrar = {})
                         8 -> PantAddons(alVolver = {})
                         9 -> PantEstilo(alVolver = {})
+                        11 -> PantFicha(MetaBreve("tmdb:movie:100", "movie", "Dune: Parte dos"), alCerrar = {}, alAbrir = {})
                         else -> Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF3A3F48), Color(0xFF0E1014))))) {
                             ControlesReproductor(rep, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
                         }
@@ -205,6 +240,14 @@ abstract class CapturasBase {
         cual = 9; foto("10-ajustes")
         rule.onAllNodesWithText("FUENTES")[0].performClick(); foto("11-ajustes-fuentes")
         cual = 10; foto("12-reproductor")
+        // Con el catálogo de TMDB (como si tuvieras tu clave puesta)
+        TmdbDatos.imagen = { path, _ -> path }
+        Tmdb.http = e; Tmdb.claveFija = "prueba"; Tmdb.guarda("prueba")
+        cual = 0; esperaTexto("Tendencias"); foto("15-portada-tmdb")
+        cual = 3; esperaTexto("Oppenheimer"); foto("16-explorar-tmdb")
+        cual = 11; esperaTexto("Lady Jessica"); foto("17-ficha-tmdb")
+        cual = 9; rule.onAllNodesWithText("CATÁLOGO")[0].performClick(); foto("18-ajustes-catalogo")
+        Tmdb.claveFija = null; cual = 10
         rep.eleccion = Triple("Subtítulos", listOf("Sin subtítulos" to false, "Español" to true, "Inglés" to false, "English [CC]" to false)) { _ -> }
         foto("13-reproductor-subtitulos")
         rep.eleccion = null; rep.visibles = false; rep.siguiente = "T2 · E6 · La noche"; rep.cuentaAtras = 6

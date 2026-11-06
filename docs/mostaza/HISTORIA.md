@@ -16,6 +16,23 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## 0.2.0
+
+**Un catálogo propio, como una plataforma.** Con tu clave de TMDB (gratis, se pega una vez en Ajustes → Catálogo y va con tu cuenta,
+en `/claves`), la portada ya no son los catálogos de tus addons: un destacado arriba, «Seguir viendo», «Pendientes», «Tendencias de la
+semana», «Porque viste…», estrenos en cines, series del momento, populares, lo que hay en cada plataforma de suscripción en España
+(«En Netflix», «En Prime Video»…, en el orden de JustWatch), las más valoradas, por género y lo que llega a los cines. «Explorar» es
+películas o series por orden, plataforma y género; «Buscar», todo TMDB. Las fichas salen en castellano con el lema, el tráiler, dónde
+verla en España, el reparto con fotos y «Más como esta»; en las series, los episodios son los de tus addons (es su numeración la que
+usan las fuentes) con el título, la imagen y el resumen de TMDB. Tus addons quedan para las fuentes; sin clave, todo sigue como antes.
+Y los dos widgets de abajo.
+
+## 0.1.3
+
+Cuando tu debrid no da un archivo (Real-Debrid con «infringing_file»), algunos addons mandan un vídeo de aviso de unos dos minutos en vez
+de un error: Mostaza lo reconoce (menos de 4 minutos para algo que dura más de 10), no lo cuenta para nada y pasa sola a otra fuente; la
+rota se apunta en tu cuenta (`ajustes/mostaza_rotas`) y no se elige sola en 30 días.
+
 ## Widgets
 
 Dos widgets para la pantalla de inicio, como los de las hermanas (la misma revista: papel y tinta, los colores y las letras que tengas

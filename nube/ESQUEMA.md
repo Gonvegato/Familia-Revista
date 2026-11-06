@@ -46,6 +46,7 @@ guardan ya reducidas (unos 600×900, la proporción 2:3 de las cajas de SteamGri
 | `rawg` | Datos de juegos |
 | `tmdb` | Películas y series (Azabache; Mostaza, para pasar los ids de TMDB a los de IMDb) |
 | `mostaza_addons` | Los addons de Mostaza, en tu orden: un texto JSON `[{"u": <dirección del manifiesto>, "n": <nombre>}]`. Van aquí y en ningún otro sitio de la cuenta porque **sus direcciones pueden llevar la clave de tu debrid** (tu pareja puede leer `/users/<uid>`, esto no). Sin la clave, Mostaza usa solo Cinemeta (`https://v3-cinemeta.strem.io/manifest.json`); `"[]"` = ninguno. De la lista entera gana el último cambio (moverlos o quitarlos es poner la lista otra vez). |
+| `mostaza_tmdb` | Tu clave de TMDB (el «token de lectura de la API», texto), para el catálogo propio de Mostaza (portada, Explorar, Buscar y fichas en castellano). Va aquí porque es una clave tuya: no la lee tu pareja. `""` o sin campo = sin catálogo propio (se usan los catálogos de tus addons) |
 
 ## Colecciones
 
