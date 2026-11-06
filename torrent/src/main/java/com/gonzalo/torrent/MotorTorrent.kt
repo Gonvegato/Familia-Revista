@@ -52,11 +52,11 @@ class MotorTorrent internal constructor(
     private val config: ConfigSesion,
     private val tiempos: Tiempos,
     private val ventanas: Ventanas = Ventanas(),
-    /** Lo que queda libre en el disco de una carpeta (las pruebas fingen un disco lleno). */
-    private val espacioLibre: (File) -> Long = { it.usableSpace },
+    /** El sitio del disco (las pruebas fingen uno lleno). */
+    private val disco: Disco = DiscoSimple,
 ) {
     constructor(context: Context, ajustes: AjustesTorrent = AjustesTorrent()) :
-        this(File(context.applicationContext.cacheDir, "torrent"), ajustes, RedAndroid(context), ConfigSesion(), Tiempos())
+        this(File(context.applicationContext.cacheDir, "torrent"), ajustes, RedAndroid(context), ConfigSesion(), Tiempos(), Ventanas(), DiscoAndroid(context))
 
     @Volatile private var ajustes: AjustesTorrent = ajustes
     private val ambito = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -263,9 +263,10 @@ class MotorTorrent internal constructor(
         val ya = runCatching { t.handle.fileProgress(TorrentHandle.PIECE_GRANULARITY)[a.indice] }.getOrDefault(0L)
         val falta = (a.tamano - ya).coerceAtLeast(0)
         val c = carpeta()
-        runCatching { Cache.libera(c, ajustes.cacheMaxMB * MB, enUso(), reserva = falta, necesarios = falta + MARGEN) { espacioLibre(c) } }
-        val libre = espacioLibre(c)
-        if (libre < falta + MARGEN) throw ErrorTorrent(
+        runCatching { Cache.libera(c, ajustes.cacheMaxMB * MB, enUso(), reserva = falta, necesarios = falta + MARGEN) { disco.libre(c) } }
+        val libre = disco.libre(c)
+        if (libre >= falta + MARGEN) disco.pide(c, falta + MARGEN)
+        else throw ErrorTorrent(
             ErrorTorrent.Motivo.SIN_ESPACIO,
             "No hay sitio para «${a.nombre}»: hacen falta ${legible(falta + MARGEN)} y en el móvil quedan ${legible(libre)}.",
         )

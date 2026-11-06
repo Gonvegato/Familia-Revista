@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Como lo hará la app: el reproductor (aquí, la prueba) lee de http://127.0.0.1 -->
+    <application android:networkSecurityConfig="@xml/torrent_red_local" />
+</manifest>

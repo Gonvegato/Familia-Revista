@@ -29,7 +29,7 @@ class ErroresTest {
     private val soloLocal = listOf("dht:local")
 
     private fun motor(pares: List<Int> = emptyList(), ajustes: AjustesTorrent = AjustesTorrent(), t: Tiempos = tiempos, libre: (File) -> Long = { it.usableSpace }) =
-        MotorTorrent(cache, ajustes, red, ConfigSesion(interfaces = "127.0.0.1:0", dht = false, lsd = false, pares = pares.map { "127.0.0.1" to it }), t, Ventanas(), libre)
+        MotorTorrent(cache, ajustes, red, ConfigSesion(interfaces = "127.0.0.1:0", dht = false, lsd = false, pares = pares.map { "127.0.0.1" to it }), t, Ventanas(), object : Disco { override fun libre(dir: File) = libre(dir) })
 
     private fun hashAlAzar() = Random.nextBytes(20).joinToString("") { "%02x".format(it) }
 

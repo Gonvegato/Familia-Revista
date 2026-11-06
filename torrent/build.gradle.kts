@@ -15,6 +15,12 @@ android {
         minSdk = 29
         // libtorrent4j llama a Java desde C++ (SWIG): R8 no puede quitar ni renombrar nada suyo en la app
         consumerProguardFiles("consumer-rules.pro")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    // Lo que usan las pruebas del ordenador y las del móvil (un sembrador, un .torrent hecho a mano, pedir por HTTP…)
+    sourceSets {
+        getByName("test").java.srcDir("src/compartido/java")
+        getByName("androidTest").java.srcDir("src/compartido/java")
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     testOptions {
@@ -55,6 +61,9 @@ dependencies {
     implementation("org.libtorrent4j:libtorrent4j-android-x86_64:$libtorrent4j")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
     nativosLinux("org.libtorrent4j:libtorrent4j-linux:$libtorrent4j")
 }
 

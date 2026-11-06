@@ -36,7 +36,7 @@ class MotorLocalTest {
     private val cache get() = File(tmp.root, "cache")
 
     private fun motor(pares: List<Int>, ajustes: AjustesTorrent = AjustesTorrent(), t: Tiempos = tiempos, libre: (File) -> Long = { it.usableSpace }) =
-        MotorTorrent(cache, ajustes, red, ConfigSesion(interfaces = "127.0.0.1:0", dht = false, lsd = false, pares = pares.map { "127.0.0.1" to it }), t, ventanas, libre)
+        MotorTorrent(cache, ajustes, red, ConfigSesion(interfaces = "127.0.0.1:0", dht = false, lsd = false, pares = pares.map { "127.0.0.1" to it }), t, ventanas, object : Disco { override fun libre(dir: File) = libre(dir) })
 
     /** Una película con su muestra y su .nfo, en una carpeta, con piezas de 32 KB. */
     private fun pelicula(nombre: String = "Peli (2024)", tamano: Int = 4 * 1024 * 1024 + 12_345, semilla: Int = 1): Triple<File, ByteArray, org.libtorrent4j.TorrentInfo> {
