@@ -34,7 +34,7 @@ jobs:
           done
           cat ../emulador.log; exit 1
       - name: Pruebas
-        run: ./gradlew -PsoloEscritorio test --console=plain
+        run: ./gradlew -PsoloEscritorio test --continue --console=plain
       - name: Qué pruebas se han hecho (y cuáles se han saltado)
         if: always()
         run: python3 herramientas/escritorio/resumen-pruebas.py
@@ -107,7 +107,7 @@ jobs:
           done
           cat ../emulador.log; exit 1
       - name: Pruebas (en un Mac de verdad, con su Llavero, y contra el emulador)
-        run: ./gradlew -PsoloEscritorio test --console=plain
+        run: ./gradlew -PsoloEscritorio test --continue --console=plain
       - name: Qué pruebas se han hecho (y cuáles se han saltado)
         if: always()
         run: python3 herramientas/escritorio/resumen-pruebas.py

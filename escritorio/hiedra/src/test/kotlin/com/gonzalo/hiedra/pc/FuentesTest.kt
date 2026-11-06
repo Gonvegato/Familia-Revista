@@ -10,6 +10,9 @@ import java.io.File
 
 /** Lo que Hiedra lee de este ordenador (Steam, Heroic, Lutris, tus ROMs) y cómo abre cada cosa, con archivos de ejemplo. */
 class FuentesTest {
+    /** (En el Mac las direcciones steam:// y heroic:// las abre `open`; en Linux, Steam o xdg-open.) */
+    private val mac = com.gonzalo.familia.pc.Sitio.sistema == com.gonzalo.familia.pc.Sitio.Sistema.MAC
+
     @get:Rule val tmp = TemporaryFolder()
 
     @Before fun prepara() { Pc.paraPruebas(tmp.root, emptyList()); Programas.flatpaksPruebas = emptySet() }
@@ -62,8 +65,13 @@ class FuentesTest {
     }
 
     @Test fun steamSeAbreConSteamYSeVeQueJuegoEstaAbierto() {
-        assertEquals(listOf("steam", "steam://rungameid/10"), Steam.orden("10", flatpak = false) { it == "steam" })
-        assertEquals(listOf("flatpak", "run", "com.valvesoftware.Steam", "steam://rungameid/10"), Steam.orden("10", flatpak = true) { it == "flatpak" })
+        if (mac) {
+            // En el Mac, el sistema abre la dirección steam:// con Steam
+            assertEquals(listOf("open", "steam://rungameid/10"), Steam.orden("10", flatpak = false) { it == "steam" })
+        } else {
+            assertEquals(listOf("steam", "steam://rungameid/10"), Steam.orden("10", flatpak = false) { it == "steam" })
+            assertEquals(listOf("flatpak", "run", "com.valvesoftware.Steam", "steam://rungameid/10"), Steam.orden("10", flatpak = true) { it == "flatpak" })
+        }
         val lineas = listOf("/home/g/.local/share/Steam/ubuntu12_32/reaper SteamLaunch AppId=1145360 -- /home/g/.local/share/Steam/steamapps/common/SteamLinuxRuntime_sniper/_v2-entry-point",
             "/usr/bin/kwin_wayland", "/home/g/.local/share/Steam/ubuntu12_32/steam -srt-logger-opened")
         assertEquals(setOf("1145360"), Steam.enMarcha(lineas))
@@ -91,7 +99,7 @@ class FuentesTest {
         assertEquals("Juego de Amazon", l.getValue("heroic:nile:amzn1.adg.product.abc").nombre); assertEquals("Amazon", l.getValue("heroic:nile:amzn1.adg.product.abc").etiqueta)
         assertEquals("/opt/mijuego", l.getValue("heroic:sideload:abcd").carpeta)
         assertEquals("heroic://launch?appName=Unreal%20Tournament&runner=gog", Heroic.url("gog", "Unreal Tournament"))
-        assertEquals(listOf("xdg-open", "heroic://launch?appName=Fortnite&runner=legendary"), Heroic.orden("legendary", "Fortnite"))
+        assertEquals(listOf(if (mac) "open" else "xdg-open", "heroic://launch?appName=Fortnite&runner=legendary"), Heroic.orden("legendary", "Fortnite"))
     }
 
     // ---------------------------------------------------------------- Lutris
