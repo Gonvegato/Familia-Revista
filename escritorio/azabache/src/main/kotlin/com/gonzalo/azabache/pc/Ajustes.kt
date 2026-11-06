@@ -96,7 +96,8 @@ fun AjustesCategorias(nav: Nav) {
     Cuerpo("Además de los videojuegos y los libros: películas, series, discos… lo que quieras valorar. Son de la cuenta: las tienes igual en el móvil.", tam = 14)
     Spacer(Modifier.height(10.dp))
     Cuenta.propias().forEach { k ->
-        Fila(k.title, (k.labels.drop(1).joinToString(" · ") + " · «${k.statuses[1]}»" + when { k.isMovie -> " · busca en TMDB"; k.isTv -> " · busca en TVmaze"; else -> "" }), alHacer = { editar = k }) {
+        Fila(k.title, (k.labels.drop(1).joinToString(" · ") + " · «${k.statuses[1]}»" + when { k.isMovie -> " · busca en TMDB"; k.isTv -> " · busca en TVmaze"; else -> "" } +
+            if (CosasMostaza.de(k)) " · las de Mostaza" else ""), alHacer = { editar = k }) {
             Text("${Cuenta.fichas(k.id).size}", color = Muted, fontFamily = Body, fontSize = 13.sp)
         }
         Filete(1.dp, Line)
@@ -129,6 +130,7 @@ fun DialogoCategoria(k: Kind?, nav: Nav, onCerrar: () -> Unit) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { (0 until 4).forEach { i -> Campo("Criterio ${i + 1}", crit[i], Modifier.weight(1f)) { crit[i] = it } } }
         Campo("«En curso» se dice…", progreso) { progreso = it }
         MagChoice(listOf("A mano", "Películas (TMDB)", "Series (TVmaze)"), fuente, "Dónde se busca") { fuente = it }
+        if (CosasMostaza.activa() && (fuente == 1 || fuente == 2)) Cuerpo("Sus fichas son las de tu biblioteca de Mostaza (las mismas que en el móvil).", tam = 12)
     }
 }
 

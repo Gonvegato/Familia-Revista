@@ -20,9 +20,12 @@ import java.time.ZoneId
  *    sale de ahí, y lo que cambias va a ese nodo, campo a campo y solo lo que has cambiado tú (así nunca se pisa lo que Hiedra o Marfil
  *    hayan cambiado mientras). La nota va en `nota` (sin el campo = sin valorar), los criterios en `crit`, la reseña en `resena`, lo
  *    demás de Azabache en `az` y el número de la ficha en `azid`.
+ *  - Las películas y las series SON las de Mostaza (`titulos/<ref>`) en cuanto Mostaza ha traído lo de Azabache (la marca
+ *    `azabache/a_mostaza`): ver [CosasMostaza]. Antes, como las demás categorías tuyas.
  *  - Lo propio de Azabache (tus categorías y sus fichas, el diario, las sagas…) en `azabache/<lista>~<id>` con `o` = el elemento.
  *
- * Es la misma lógica que `Cosas.kt` y `Propias.kt` de Android (ver nube/ESQUEMA.md), con las pruebas cruzadas en `CuentaTest`.
+ * Es la misma lógica que `Cosas.kt`, `CosasMostaza.kt` y `Propias.kt` de Android (ver nube/ESQUEMA.md), con las pruebas cruzadas en
+ * `CuentaTest` y `MostazaTest`.
  */
 object Cuenta {
     const val JUEGOS = 0
@@ -44,7 +47,7 @@ object Cuenta {
         synchronized(this) {
             if (oyendoDe === fam) return
             oyendoDe = fam
-            listOf(col(JUEGOS), col(LIBROS), tiempo(), az()).forEach { c -> c.alCambiar { synchronized(this) { version++ } } }
+            listOf(col(JUEGOS), col(LIBROS), tiempo(), az(), CosasMostaza.col(), CosasMostaza.progreso()).forEach { c -> c.alCambiar { synchronized(this) { version++ } } }
             version++
         }
     }
@@ -60,6 +63,9 @@ object Cuenta {
         }
     }
 
+    /** Lo ya leído se vuelve a leer (lo que no es de la cuenta ha cambiado: una portada que se está poniendo). */
+    fun invalida() { synchronized(this) { version++ } }
+
     /** Las categorías: Videojuegos, Libros y las tuyas. */
     fun kinds(): List<Kind> = listOf(GAMES, BOOKS) + propias()
     fun propias(): List<Kind> = cacheado("kinds") { lista("kinds").mapNotNull { kindDeMapa(it) }.distinctBy { it.id } }
@@ -67,8 +73,17 @@ object Cuenta {
 
     /** Las fichas de una categoría: terminadas (valoradas) y las demás. */
     fun fichas(kind: Int): List<Ficha> = cacheado("fichas_$kind") {
-        if (kind == JUEGOS || kind == LIBROS) construye(kind) else
-            lista("items_$kind").map { Ficha(kind, it, true) } + lista("iplays_$kind").map { Ficha(kind, it, false) }
+        if (kind == JUEGOS || kind == LIBROS) construye(kind)
+        else mostazaDe(kind)?.let { vistaMostaza(it).fichas }
+            ?: (lista("items_$kind").map { Ficha(kind, it, true) } + lista("iplays_$kind").map { Ficha(kind, it, false) })
+    }
+
+    /** La categoría de películas o series cuyas fichas son ya las de Mostaza (null: no lo es, o Mostaza aún no ha traído lo de Azabache). */
+    fun mostazaDe(kind: Int): Kind? = if (kind == JUEGOS || kind == LIBROS) null else propias().firstOrNull { it.id == kind }?.takeIf { CosasMostaza.de(it) }
+
+    /** Las películas o las series de Mostaza de una categoría, como fichas de Azabache. */
+    fun vistaMostaza(k: Kind): CosasMostaza.Vista = cacheado("mostaza_${k.id}") {
+        CosasMostaza.construye(CosasMostaza.col().vivos(), tiempo().vivos(), CosasMostaza.progreso().vivos(), CosasMostaza.tipoDe(k) ?: "movie", k.id) { CosasMostaza.puesta(it) }
     }
 
     fun ficha(kind: Int, id: Long): Ficha? = fichas(kind).firstOrNull { it.id == id }
@@ -130,8 +145,8 @@ object Cuenta {
         return Ficha(kind, o, n.texto("estado") == "terminado", n.ref, n.texto("portada"), n.texto("pu"), sinNota = !conNota)
     }
 
-    /** La cosa de la cuenta de una ficha (para «tiempo», enlaces con Hiedra y Marfil…). */
-    fun nodo(kind: Int, f: Ficha): Nodo? = f.ref?.let { col(kind).nodo(it) }
+    /** La cosa de la cuenta de una ficha (para «tiempo», enlaces con Hiedra, Marfil y Mostaza…). */
+    fun nodo(kind: Int, f: Ficha): Nodo? = f.ref?.let { (if (f.mostaza) CosasMostaza.col() else col(kind)).nodo(it) }
 
     // ================================================================ escribir
 
@@ -144,6 +159,9 @@ object Cuenta {
             if (kind == JUEGOS || kind == LIBROS) {
                 val mismaLista = antes != null && antes.valorada == valorada
                 escribe(kind, antes?.ref, nueva, if (mismaLista) antes!!.o else null, valorada)
+            } else if (mostazaDe(kind) != null) {
+                // Las películas y las series: a su título de Mostaza (nunca a lo de antes)
+                CosasMostaza.guarda(mostazaDe(kind)!!, antes, nueva, valorada)
             } else {
                 val (esta, otra) = if (valorada) "items_$kind" to "iplays_$kind" else "iplays_$kind" to "items_$kind"
                 val id = nueva["id"].comoLong()
@@ -153,10 +171,11 @@ object Cuenta {
         }
     }
 
-    /** Quita una ficha (en los juegos y libros, la cosa entera de la cuenta: deja de estar en Hiedra o Marfil también). */
+    /** Quita una ficha (en los juegos, libros, películas y series, la cosa entera de la cuenta: deja de estar en Hiedra, Marfil o Mostaza también). */
     fun borra(f: Ficha) {
         synchronized(this) {
             if (f.kind == JUEGOS || f.kind == LIBROS) { f.ref?.let { col(f.kind).borra(it) }; return }
+            if (f.mostaza) { CosasMostaza.borra(f); return }
             val l = if (f.valorada) "items_${f.kind}" else "iplays_${f.kind}"
             escribeLista(l, lista(l).filter { it["id"].comoLong() != f.id })
         }
@@ -237,13 +256,14 @@ object Cuenta {
     }
 
     /**
-     * Pone la portada de un juego o un libro: la imagen va a la cuenta (reducida, por su hash) y la ven Hiedra, Marfil y tus otros
-     * dispositivos. [url]: de dónde salió, si fue de internet. Bloquea (puede haber que bajarla). Devuelve el hash, o null si no es una imagen.
+     * Pone la portada de un juego, un libro, una película o una serie: la imagen va a la cuenta (reducida, por su hash) y la ven Hiedra,
+     * Marfil, Mostaza y tus otros dispositivos. [url]: de dónde salió, si fue de internet. Bloquea (puede haber que bajarla). Devuelve el
+     * hash, o null si no es una imagen.
      */
     fun ponPortada(f: Ficha, bytes: ByteArray, url: String = ""): String? {
         val ref = f.ref ?: return null
         val h = Portadas.guardar(bytes) ?: return null
-        col(f.kind).cambia(ref, if (url.startsWith("http")) mapOf("portada" to h, "pu" to url) else mapOf("portada" to h))
+        (if (f.mostaza) CosasMostaza.col() else col(f.kind)).cambia(ref, if (url.startsWith("http")) mapOf("portada" to h, "pu" to url) else mapOf("portada" to h))
         return h
     }
 

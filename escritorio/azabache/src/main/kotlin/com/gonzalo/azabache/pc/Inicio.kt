@@ -61,9 +61,13 @@ fun rachaDe(hoy: Long, cuenta: (Long) -> Boolean): Int {
     return n
 }
 
-/** Lo de cada día (día → [DiaHoy]) de la cuenta: `tiempo/` (libros y juegos, por sus refs) y `palabras/` (Cobalto). */
+/**
+ * Lo de cada día (día → [DiaHoy]) de la cuenta: `tiempo/` (libros y juegos, por sus refs) y `palabras/` (Cobalto). Lo visto en Mostaza (sus
+ * títulos) no es ni leer ni jugar: no cuenta aquí, como en el móvil.
+ */
 fun diasDeLaCuenta(): Map<Long, DiaHoy> {
     val libros = Cuenta.fichas(BOOKS.id).mapNotNull { it.ref }.toSet()
+    val titulos = runCatching { CosasMostaza.col().todos().keys }.getOrDefault(emptySet())
     val porDia = Cuenta.tiempoPorDia()
     val palabras = HashMap<Long, Int>()
     runCatching {
@@ -74,7 +78,7 @@ fun diasDeLaCuenta(): Map<Long, DiaHoy> {
     val dias = porDia.keys.mapNotNull { runCatching { LocalDate.parse(it).toEpochDay() }.getOrNull() } + palabras.keys
     return dias.distinct().associateWith { d ->
         val m = porDia[LocalDate.ofEpochDay(d).toString()].orEmpty()
-        DiaHoy(m.filterKeys { it in libros }.values.sum(), m.filterKeys { it !in libros }.values.sum(), palabras[d] ?: 0)
+        DiaHoy(m.filterKeys { it in libros }.values.sum(), m.filterKeys { it !in libros && it !in titulos }.values.sum(), palabras[d] ?: 0)
     }
 }
 
@@ -265,7 +269,7 @@ fun EnPortada(l: List<Pair<Kind, Ficha>>, nav: Nav) {
                     Text(listOf(f.creador, f.plataforma, if (!k.isBook && f.minutos > 0) duracion(f.minutos.toLong()) else "").filter { it.isNotBlank() }.joinToString(" · "),
                         color = Muted, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
                     val ses = remember(f.ref, LaFamilia.cambios) { sesionesDe(f.ref?.let { Cuenta.porDia(it) }.orEmpty().mapNotNull { (d, ms) -> runCatching { LocalDate.parse(d).toEpochDay() }.getOrNull()?.let { it to ms } }.toMap(), hoy.toEpochDay()) }
-                    if (ses != null) Text("${ses.dias} ${if (ses.dias == 1) "día" else "días"} ${if (k.isBook) "leyendo" else "jugando"} · la última, ${haceDias(ses.ultima, hoy.toEpochDay())}",
+                    if (ses != null) Text("${ses.dias} ${if (ses.dias == 1) "día" else "días"} ${verboDeTiempo(k)} · la última, ${haceDias(ses.ultima, hoy.toEpochDay())}",
                         color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 4.dp))
                     Text("Abrir su página →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 16.sp,
                         modifier = Modifier.padding(top = 14.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 4.dp))

@@ -101,9 +101,11 @@ class MaquetasTest {
         assertEquals(listOf("portada", "nota", "opinion", "horas", "sesiones", "diario", "enlaces", "datos"), Maquetas.modulos(GAMES, false).map { it.tipo })
         assertEquals(listOf("portada", "estado", "jugar", "apuntes", "horas", "sesiones", "diario", "enlaces"), Maquetas.modulos(GAMES, true).map { it.tipo })
         val pelis = customKind(2, "Películas", listOf("Guion"), "Viendo", 0, SRC_MOVIE)
-        // Lo que aquí no se pinta (la crítica, dónde verla, el progreso de una serie) se puede poner: se ve en el móvil
+        // Lo que aquí no se pinta (la crítica, dónde verla) se puede poner: se ve en el móvil. El progreso de una serie se pinta aquí
+        // desde la 1.2.1 (lo visto en Mostaza)
         assertEquals(setOf("critica", "donde"), Maquetas.modulos(pelis, false).filter { !it.aqui }.map { it.tipo }.toSet())
-        assertEquals(setOf("critica", "donde", "progreso"), Maquetas.modulos(pelis, true).filter { !it.aqui }.map { it.tipo }.toSet())
+        assertEquals(setOf("critica", "donde"), Maquetas.modulos(pelis, true).filter { !it.aqui }.map { it.tipo }.toSet())
+        assertTrue(Maquetas.modulos(pelis, true).any { it.tipo == "progreso" && it.aqui })
     }
 
     // ---------------------------------------------------------------- en la cuenta

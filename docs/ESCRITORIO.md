@@ -44,6 +44,14 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   «Usar en todos los…» y «Restablecer»; se guarda sola, en las mismas maquetas de la cuenta que el móvil), las **recomendaciones** a tu
   pareja y las suyas («Lucía te recomienda», con «A mi lista»), «En portada» que va pasando como el carrusel del móvil, **«Buscar en
   todo»** y **«Tal día como hoy»**.
+  Desde la 1.2.1, **las películas y las series son las de Mostaza**, como en Azabache 1.6.3 del móvil: en cuanto Mostaza ha traído lo de
+  Azabache (la marca `azabache/a_mostaza`), «Películas» y «Series» leen sus títulos (`titulos/<ref>`, con el número de ficha de siempre,
+  `azid`: tus sagas, tu diario y tus maquetas las siguen encontrando), los minutos de `tiempo/<ref>~*` y los episodios vistos de
+  `progreso` (y, si no, los que marcaste en Azabache); lo que valoras o cambias va a ese mismo nodo (`nota`, `crit`, `resena`, `fin`,
+  `estado`, `az`…, solo lo que cambias), lo que añades es un título nuevo (`tmdb:<id>`, `tvmaze:<id>` o `azabache:<id>`) y quitar una la
+  deja borrada en Mostaza. Lo de antes (`azabache/items_<categoría>~<id>`) no se toca. La casilla «Progreso» se pinta también aquí (los
+  episodios, o por dónde vas en una película). Las mismas reglas que el móvil, letra a letra (`MostazaTest`, con el código del móvil y el
+  contrato que deja Mostaza).
 - **Cobalto**: el núcleo de los escritos (formato, sincronización, mezcla a tres bandas), la estructura, el texto (Markdown ligero,
   tipografía automática, deshacer), exportar e importar son **los mismos archivos** que compila Cobalto de Android (se copian de
   `cobalto/src` al compilar; las pruebas de la mezcla y de la estructura, también). Portada (palabras de hoy, racha, últimos días, seguir
@@ -91,9 +99,8 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 
 ## Lo que todavía no hacen (para no engañar)
 
-- **Azabache**: las películas y las series son ya de Mostaza (`titulos/<ref>`, ver `nube/ESQUEMA.md`), y la de escritorio aún lee las
-  fichas de antes (`azabache/items_<categoría>~<id>`, que se quedaron como copia): lo que veas o cambies en Mostaza, o valores en Azabache del
-  móvil, no se ve aquí hasta su próxima versión. Las casillas de películas y series «Crítica», «Dónde verla» y «Progreso» (se colocan, pero se dibujan solo en el móvil), las
+- **Azabache**: «Ver en Mostaza» (no hay Mostaza para el ordenador: la ficha lo dice) y, en la vista de tu pareja, sus películas y series
+  son aún las de antes (como en el móvil). Las casillas de películas y series «Crítica» y «Dónde verla» (se colocan, pero se dibujan solo en el móvil), las
   imágenes de tus archivos en una maqueta, las reacciones de tu pareja y «Lo último de tu pareja», y los próximos episodios. («Descubrir»
   no está a propósito: se quitó de Azabache.)
 - **Cobalto**: compartir con tu pareja (la pareja ya está en la cuenta, pero en el ordenador aún no hay pantallas para ello).
@@ -126,4 +133,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.3, Mostaza 0.1.0 (solo Android). De escritorio: Azabache 1.2.0; Cobalto y Hiedra 1.1.1; Marfil 1.1.0.
+Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.3, Mostaza 0.1.0 (solo Android). De escritorio: Azabache 1.2.1; Cobalto y Hiedra 1.1.1; Marfil 1.1.0.
