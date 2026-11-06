@@ -83,7 +83,7 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
     val entradas = buildList {
         add(Entrada("Portada", grupo = "Hiedra"))
         estados.forEach { e -> add(Entrada(if (e == Estado.JUGANDO) "Jugando" else e.nombre + "s", juegos.count { it.estado == e }, grupo = "Tus juegos")) }
-        add(Entrada("En este ordenador", Pc.yaMirado()?.size, grupo = "Más")); add(Entrada("Ajustes", grupo = "Más")); add(Entrada("▶  Modo sala", grupo = "Para la tele"))
+        add(Entrada("En este ordenador", Pc.yaMirado()?.size, grupo = "Más")); add(Entrada("Ajustes", grupo = "Más")); add(Entrada("Modo sala", grupo = "Para la tele"))
     }
     val sel = when (val p = pantalla) { Pantalla.Portada -> 0; is Pantalla.Lista -> 1 + estados.indexOf(p.estado); Pantalla.EsteOrdenador -> 5; Pantalla.Ajustes -> 6; is Pantalla.Ficha -> (p.volver as? Pantalla.Lista)?.let { 1 + estados.indexOf(it.estado) } ?: 0 }
     fun ve(i: Int) { if (i == 7) enSala = true else pantalla = when (i) { 0 -> Pantalla.Portada; in 1..4 -> Pantalla.Lista(estados[i - 1]); 5 -> Pantalla.EsteOrdenador; else -> Pantalla.Ajustes } }

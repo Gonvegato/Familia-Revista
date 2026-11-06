@@ -109,6 +109,9 @@ fun Modifier.enfocable(id: String, radio: Dp = 10.dp, crece: Float = 1.06f, alOp
     val escala by animateFloatAsState(if (enfocado && foco.visible) crece else if (encima && !foco.visible) 1f + (crece - 1f) / 2 else 1f,
         spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow), label = "escala")
     val radioPx = with(LocalDensity.current) { radio.toPx() }
+    // Dónde está (sin contar lo que crece al enfocarse): el marco va a ese sitio, ya crecido
+    val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
+    fun marca() { sitio[0]?.takeIf { it.isAttached }?.let { c -> foco.ponMarco(crecido(c.boundsInRoot(), crece), radioPx * crece) } }
     DisposableEffect(id) { onDispose { foco.suelta(id) } }
     return this
         .zIndex(if (enfocado) 2f else if (encima) 1f else 0f)
@@ -116,14 +119,20 @@ fun Modifier.enfocable(id: String, radio: Dp = 10.dp, crece: Float = 1.06f, alOp
         .focusProperties { canFocus = activa }
         .onFocusChanged { f ->
             enfocado = f.isFocused
-            if (f.isFocused) { foco.enfoca(id, { pulsar() }, opciones?.let { { it() } }); enfocar?.invoke() } else foco.suelta(id)
+            if (f.isFocused) { foco.enfoca(id, { pulsar() }, opciones?.let { { it() } }); marca(); enfocar?.invoke() } else foco.suelta(id)
         }
         .focusable(activa)
+        .onGloballyPositioned { c -> sitio[0] = c; if (enfocado) marca() }
         .graphicsLayer { scaleX = escala; scaleY = escala }
-        .onGloballyPositioned { c -> if (enfocado) foco.ponMarco(c.boundsInRoot(), radioPx * escala) }
         .hoverable(hover)
         .pointerHoverIcon(PointerIcon.Hand)
         .pointerInput(activa) { if (activa) detectTapGestures(onTap = { runCatching { fr.requestFocus() }; pulsar() }) }
+}
+
+/** Un rectángulo crecido [k] veces desde su centro (lo que ocupa algo enfocado). */
+fun crecido(r: Rect, k: Float): Rect {
+    val dx = r.width * (k - 1f) / 2f; val dy = r.height * (k - 1f) / 2f
+    return Rect(r.left - dx, r.top - dy, r.right + dx, r.bottom + dy)
 }
 
 /** El marco del foco: se desliza (con un poco de muelle) de lo enfocado a lo siguiente y desaparece al usar el ratón. */

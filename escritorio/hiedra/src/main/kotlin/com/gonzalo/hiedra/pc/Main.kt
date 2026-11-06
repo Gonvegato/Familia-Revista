@@ -11,14 +11,20 @@ import com.gonzalo.familia.pc.appDeLaFamilia
  */
 fun main(args: Array<String>) {
     val sala = "--sala" in args
-    val icono = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
-        ?.let { runCatching { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }.getOrNull() }
-    appDeLaFamilia("hiedra", "Hiedra", icono, alIniciar = {
-        listOf("juegos", "tiempo", "ajustes").forEach { LaFamilia.coleccion(it) }
-        TuPc.inicia()
-        // Lo de este ordenador: primero lo que ya se sabe (rápido) y enseguida otra vuelta por tus carpetas de ROMs
-        Pc.refresca { Pc.refresca(escanear = true) }
-        Pc.vigila()
-        Mando.inicia()
-    }, alCerrar = { VentanaHiedra.alCerrar(); TuPc.alCerrar(); Mando.para() }) { AppHiedra(sala = sala || AjustesSala.alAbrir) }
+    appDeLaFamilia("hiedra", "Hiedra", icono(), alIniciar = { alIniciarHiedra() }, alCerrar = { alCerrarHiedra() }) { AppHiedra(sala = sala || AjustesSala.alAbrir) }
 }
+
+fun icono() = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
+    ?.let { runCatching { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }.getOrNull() }
+
+/** Al arrancar: la cuenta, «Tu PC» para el móvil, lo de este ordenador, los procesos (lo que se juega) y el mando. */
+fun alIniciarHiedra() {
+    listOf("juegos", "tiempo", "ajustes").forEach { LaFamilia.coleccion(it) }
+    TuPc.inicia()
+    // Lo de este ordenador: primero lo que ya se sabe (rápido) y enseguida otra vuelta por tus carpetas de ROMs
+    Pc.refresca { Pc.refresca(escanear = true) }
+    Pc.vigila()
+    Mando.inicia()
+}
+
+fun alCerrarHiedra() { VentanaHiedra.alCerrar(); TuPc.alCerrar(); Mando.para() }

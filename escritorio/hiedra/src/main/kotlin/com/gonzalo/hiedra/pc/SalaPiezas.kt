@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -168,7 +169,7 @@ fun Tapa(f: Ficha) {
 @Composable
 fun FondoJuego(f: Ficha?, modifier: Modifier = Modifier, velo: Float = 1f) {
     val tinta = LocalTinta.current
-    Box(modifier.background(tinta.fondo)) {
+    Box(modifier.clipToBounds().background(tinta.fondo)) {
         Crossfade(f?.clave, animationSpec = tween(520), label = "fondo") { clave ->
             val ff = f?.takeIf { it.clave == clave }
             if (ff != null) {

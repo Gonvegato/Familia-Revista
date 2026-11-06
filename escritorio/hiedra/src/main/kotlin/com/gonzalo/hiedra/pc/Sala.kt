@@ -111,6 +111,9 @@ class EstadoSala {
     fun avisa(t: String) { aviso = t to System.currentTimeMillis() }
 }
 
+/** (La sala que se ve ahora, para probarla de verdad desde fuera: ProbarSala.) */
+@Volatile var focoDePrueba: FocoSala? = null
+
 val FILTROS = listOf("Todo", "Jugando", "Pendientes", "Pasados", "Favoritos", "En este PC")
 
 /** Calcula la biblioteca en segundo plano cada vez que cambia la cuenta, lo de este ordenador o lo que se juega. */
@@ -148,8 +151,7 @@ private fun SwingUtilitiesLater(que: () -> Unit) = javax.swing.SwingUtilities.in
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PantallaSala(est: EstadoSala, alSalir: () -> Unit) {
-    val foco = remember { FocoSala() }
+fun PantallaSala(est: EstadoSala, foco: FocoSala = remember { FocoSala() }, alSalir: () -> Unit) {
     val tinta = TintaSala(if (AjustesSala.oscura) Skin.tonosPara(true) else Skin.tones)
     val bib = rememberBiblioteca()
     val scope = rememberCoroutineScope()
@@ -158,6 +160,7 @@ fun PantallaSala(est: EstadoSala, alSalir: () -> Unit) {
         CompositionLocalProvider(LocalDensity provides Density(k, 1f), LocalTinta provides tinta, LocalFoco provides foco) {
             val fm = LocalFocusManager.current
             val ctl = remember { ControlSala(est, foco) }
+            SideEffect { focoDePrueba = foco }
             ctl.fm = fm; ctl.bib = bib; ctl.alSalir = alSalir; ctl.scope = scope
             DisposableEffect(Unit) {
                 Entrada.manejador = { a -> ctl.hace(a) }
@@ -208,8 +211,8 @@ fun PantallaSala(est: EstadoSala, alSalir: () -> Unit) {
             }
         }
     }
-    // Al entrar, el foco a donde estaba
-    LaunchedEffect(Unit) { delay(120); foco.pedido = foco.ultimo[est.vista] ?: primeroDe(est, bib) }
+    // Al entrar (y en cuanto llega la biblioteca, que se calcula aparte), el foco a donde estaba
+    LaunchedEffect(bib.fichas.isEmpty()) { delay(120); if (foco.actual == null && foco.pedido == null) foco.pedido = foco.ultimo[est.vista] ?: primeroDe(est, bib) }
 }
 
 /** Lo primero que se enfoca en una vista. */
@@ -325,7 +328,7 @@ private fun BarraSala(est: EstadoSala, bib: Biblioteca) {
             Seccion.entries.forEach { s ->
                 val on = s == est.seccion && est.pila.isEmpty()
                 val ancho by animateFloatAsState(if (s == est.seccion) 1f else 0f, spring(dampingRatio = 0.7f), label = "pestaña")
-                Column(Modifier.padding(horizontal = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.padding(horizontal = 18.dp).width(IntrinsicSize.Max), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(s.nombre.uppercase(), color = if (s == est.seccion) tinta.tinta else tinta.gris, fontFamily = Body, fontWeight = FontWeight.Black,
                         fontSize = 19.sp, letterSpacing = 2.4.sp, modifier = Modifier.alpha(if (on || est.pila.isEmpty()) 1f else 0.75f))
                     Spacer(Modifier.height(8.dp))
@@ -420,7 +423,7 @@ private fun Escaparate(filas: List<Hilera>, bib: Biblioteca, est: EstadoSala, ct
                 }
             }
             val scroll = est.pagina(est.vista)
-            CompositionLocalProvider(LocalBringIntoViewSpec provides remember { TraerAVista(80f, inicio = 46f * 1f) }) {
+            CompositionLocalProvider(LocalBringIntoViewSpec provides remember { TraerAVista(80f, inicio = 100f) }) {
                 Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(bottom = 60.dp)) {
                     filas.forEach { f -> FilaSala(f, est, ctl) }
                 }
@@ -480,7 +483,7 @@ private fun FilaSala(f: Hilera, est: EstadoSala, ctl: ControlSala) {
         CompositionLocalProvider(LocalBringIntoViewSpec provides remember { TraerAVista(300f) }) {
             LazyRow(Modifier.fillMaxWidth().focusRestorer().focusGroup().focusProperties {
                 onExit = { if (requestedFocusDirection == FocusDirection.Left || requestedFocusDirection == FocusDirection.Right) cancelFocusChange() }
-            }, state = est.fila("${est.vista}/${f.id}"), contentPadding = PaddingValues(horizontal = 72.dp, vertical = 22.dp), horizontalArrangement = Arrangement.spacedBy(30.dp)) {
+            }, state = est.fila("${est.vista}/${f.id}"), contentPadding = PaddingValues(start = 72.dp, end = 72.dp, top = 30.dp, bottom = 22.dp), horizontalArrangement = Arrangement.spacedBy(30.dp)) {
                 itemsIndexed(f.fichas, key = { _, x -> x.clave }) { _, x -> Carta(x, "${f.id}/${x.clave}", est, ctl) }
             }
         }
@@ -502,7 +505,7 @@ private fun Carta(f: Ficha, id: String, est: EstadoSala, ctl: ControlSala, ancho
                 }
             if (f.fav) Text("★", color = tinta.acento, fontSize = 26.sp, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp))
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(24.dp))
         Text(f.titulo, color = if (enfocada) tinta.tinta else tinta.tinta.copy(alpha = 0.86f), fontFamily = Display, fontSize = 19.sp, lineHeight = 22.sp,
             fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(listOf(f.etiqueta, if (f.ms > 0) horas(f.ms) else "").filter { it.isNotBlank() }.joinToString(" · ").uppercase(), color = tinta.gris, fontFamily = Body,
@@ -747,7 +750,7 @@ private fun PanelBuscar(bib: Biblioteca, est: EstadoSala, ctl: ControlSala) {
     val filas = listOf("ABCDEFGHIJ", "KLMNÑOPQRS", "TUVWXYZ123", "4567890:'-")
     var caret by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) { while (true) { delay(530); caret = !caret } }
-    Box(Modifier.fillMaxSize().background(tinta.fondo.copy(alpha = 0.97f))) {
+    Box(Modifier.fillMaxSize().background(tinta.fondo)) {
         Column(Modifier.fillMaxSize().padding(horizontal = 72.dp, vertical = 60.dp)) {
             AnteSala("Buscar en tu biblioteca y en este PC", tam = 16.sp)
             Spacer(Modifier.height(14.dp))

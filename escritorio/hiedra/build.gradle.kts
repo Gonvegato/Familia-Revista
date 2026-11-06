@@ -49,6 +49,17 @@ compose.desktop {
     }
 }
 
+// Probar la sala de verdad (la ventana, contra el emulador de Firebase, recorrida con el teclado y con capturas de la pantalla):
+// ./gradlew -PsoloEscritorio :escritorio:hiedra:probarSala -Psalida=<carpeta>   (necesita una pantalla: en un servidor, Xvfb)
+tasks.register<JavaExec>("probarSala") {
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.gonzalo.hiedra.pc.ProbarSalaKt")
+    systemProperty("familia.emulador", System.getProperty("familia.emulador") ?: "http://127.0.0.1")
+    systemProperty("familia.reglas", rootProject.file("nube/reglas.json").absolutePath)
+    systemProperty("familia.version", version)
+    args(providers.gradleProperty("salida").getOrElse(layout.buildDirectory.dir("probar-sala").get().asFile.path))
+}
+
 tasks.test {
     systemProperty("familia.emulador", System.getProperty("familia.emulador") ?: "http://127.0.0.1")
     systemProperty("familia.reglas", rootProject.file("nube/reglas.json").absolutePath)
