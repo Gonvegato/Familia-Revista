@@ -41,8 +41,8 @@ jobs:
       - name: Qué pruebas se han hecho (y cuáles se han saltado)
         if: always()
         run: python3 herramientas/escritorio/resumen-pruebas.py ${{ matrix.app }}
-      - name: Y que la app compila entera
-        run: ./gradlew :${{ matrix.app }}:assembleDebug --console=plain
+      - name: 'Y que la app compila entera (sin empaquetar: la de depuración de Azabache se firma con una clave que no sale de su sitio)'
+        run: ./gradlew :${{ matrix.app }}:compileDebugSources --console=plain
       - if: always()
         uses: actions/upload-artifact@v4
         with: { name: 'pruebas-${{ matrix.app }}', path: '${{ matrix.app }}/build/test-results/', retention-days: 14 }

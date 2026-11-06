@@ -21,7 +21,8 @@ class ActualizadorTest {
     companion object {
         private var proc: Process? = null
         private val puerto = 8800 + (System.nanoTime() % 500).toInt().let { if (it < 0) -it else it }
-        private val js = listOf("/home/user/Atrio-Suite-2.0/herramientas/fakekdrive.js", "../../Atrio-Suite-2.0/herramientas/fakekdrive.js").map { File(it) }.firstOrNull { it.exists() }
+        // (el de este repositorio; si no, el del repositorio de Atrio)
+        private val js = listOf("../herramientas/azabache/fakekdrive.js", "/home/user/Atrio-Suite-2.0/herramientas/fakekdrive.js").map { File(it) }.firstOrNull { it.exists() }
 
         @BeforeClass @JvmStatic fun arranca() {
             Assume.assumeTrue("falta fakekdrive.js (repo de Atrio)", js != null)

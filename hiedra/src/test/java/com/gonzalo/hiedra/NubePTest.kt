@@ -24,7 +24,8 @@ class NubePTest {
         private var fb: Process? = null; private var kd: Process? = null
         private val pf = 9500 + (System.nanoTime() % 200).toInt().let { if (it < 0) -it else it }
         private val pk = pf + 250
-        private val dir = File("/home/user/Atrio-Suite-2.0/herramientas")
+        // Los servidores de mentira: los de este repositorio (los mismos que los de Atrio); si no, los del repositorio de Atrio
+        private val dir = listOf(File("../herramientas/azabache"), File("/home/user/Atrio-Suite-2.0/herramientas")).firstOrNull { File(it, "fakekdrive.js").exists() } ?: File("../herramientas/azabache")
 
         private fun espera(p: Int) { repeat(60) { try { URL("http://127.0.0.1:$p/__dump").openConnection().apply { connectTimeout = 300 }.getInputStream().close(); return } catch (e: java.io.IOException) { if (e.message?.contains("Server returned") == true) return; Thread.sleep(100) } }; fail("no arranca $p") }
 
