@@ -360,6 +360,8 @@ fun InternetPicker(consultaInicial: String, alElegir: (ByteArray) -> Unit, alCer
                             CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                             webChromeClient = WebChromeClient()
                             webViewClient = object : WebViewClient() {
+                                // (si Android cierra lo que dibuja la página, que no cierre la app entera: la búsqueda se queda en blanco y se vuelve a abrir)
+                                override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean = true
                                 override fun onPageCommitVisible(v: WebView, url: String?) {
                                     haEntrado(url)
                                     Internet.rejillaDe(url)?.let { (f, q) -> v.evaluateJavascript(Internet.rejillaUi(f, q.ifBlank { consulta }, papel, tinta, gris), null) }

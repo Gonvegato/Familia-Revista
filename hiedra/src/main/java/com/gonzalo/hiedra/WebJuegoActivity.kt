@@ -67,6 +67,8 @@ class WebJuegoActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Jugando, la versión nueva no se instala (Android cerraría la app con la partida a medias)
+        Actualizador.ocupada++; Actualizador.init(applicationContext)
         Biblioteca.cargar(this); Skin.cargar(this)
         val url = intent.getStringExtra("url").orEmpty()
         juego = intent.getStringExtra("id")?.let { Biblioteca.por(it) }
@@ -96,6 +98,12 @@ class WebJuegoActivity : ComponentActivity() {
             }
             CookieManager.getInstance().setAcceptCookie(true)
             webViewClient = object : WebViewClient() {
+                // Android puede cerrar (o se le puede caer) lo que dibuja la página: sin atenderlo, cierra la app entera. Se cierra solo esta pantalla.
+                override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                    (view.parent as? android.view.ViewGroup)?.removeView(view)
+                    if (!isFinishing) { android.widget.Toast.makeText(applicationContext, "La página se ha cerrado (Android se quedó sin memoria). Vuelve a abrirla.", android.widget.Toast.LENGTH_LONG).show(); finish() }
+                    return true
+                }
                 // Por si el WebView no deja poner el script al principio: se pone en cuanto la página se ve
                 override fun onPageCommitVisible(v: WebView, url: String?) { v.evaluateJavascript(JS_SIN_REBOTE, null) }
                 override fun onPageFinished(v: WebView, url: String?) { v.evaluateJavascript(JS_SIN_REBOTE, null) }
@@ -167,7 +175,7 @@ class WebJuegoActivity : ComponentActivity() {
     override fun onResume() { super.onResume(); web?.onResume() }
     override fun onPause() { super.onPause(); web?.onPause() }
     override fun onSaveInstanceState(o: Bundle) { super.onSaveInstanceState(o); web?.saveState(o) }
-    override fun onDestroy() { (web?.parent as? ViewGroup)?.removeView(web); web?.destroy(); web = null; super.onDestroy() }
+    override fun onDestroy() { (web?.parent as? ViewGroup)?.removeView(web); web?.destroy(); web = null; Actualizador.ocupada = (Actualizador.ocupada - 1).coerceAtLeast(0); super.onDestroy() }
 
     companion object {
         /** Quita el rebote y el «deslizar para recargar» de la página (y de Chromium) en la dirección vertical y horizontal. */
