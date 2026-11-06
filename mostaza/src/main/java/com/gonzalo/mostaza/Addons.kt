@@ -179,6 +179,9 @@ object Addons {
     suspend fun fuentes(tipo: String, videoId: String, alLlegar: (List<Candidata>) -> Unit = {}): List<Candidata> = withContext(Dispatchers.IO) {
         val addons = conManifiesto().filter { it.manifiesto.soporta("stream", tipo, videoId) }
         val todas = java.util.Collections.synchronizedList(ArrayList<Candidata>())
+        // Lo tuyo primero: lo que tienes en tu kDrive («Mi carpeta/Mostaza»)
+        appCtx?.let { c -> todas.addAll(runCatching { CineKDrive.fuentes(c, videoId) }.getOrDefault(emptyList())) }
+        if (todas.isNotEmpty()) alLlegar(todas.toList())
         coroutineScope {
             addons.map { a ->
                 async {

@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.2.0"
+const val VERSION = "0.3.0"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Catálogo · Reproductor · Fuentes · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable

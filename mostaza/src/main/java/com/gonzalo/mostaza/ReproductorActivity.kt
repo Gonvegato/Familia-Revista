@@ -213,9 +213,15 @@ class ReproductorActivity : ComponentActivity() {
     private fun empieza(u: String, subs: List<Subtitulo>, desde: Long) {
         // (un torrent que empieza puede tardar en tener el trozo que se pide: el motor espera, y el reproductor tiene que esperarle)
         val espera = if (torrentAbierto.isNotBlank()) com.gonzalo.torrent.MotorTorrent.ESPERA_LECTURA_MS else 30_000
-        val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent("Mostaza/$VERSION").setDefaultRequestProperties(cabeceras)
+        val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent("Mostaza/$VERSION")
             .setConnectTimeoutMs(20_000).setReadTimeoutMs(espera)
-        val datos = DefaultDataSource.Factory(this, http)
+        // Las cabeceras de la fuente (las de tu debrid, o tu token de kDrive) van solo a su servidor, no a los de los subtítulos de fuera
+        val host = Uri.parse(u).host.orEmpty()
+        val cab = cabeceras
+        val conCabeceras = androidx.media3.datasource.ResolvingDataSource.Factory(http) { ds ->
+            if (cab.isNotEmpty() && ds.uri.host == host) ds.withAdditionalHeaders(cab) else ds
+        }
+        val datos = DefaultDataSource.Factory(this, conCabeceras)
         // Un reproductor nuevo para cada fuente (cada una con sus cabeceras)
         player?.let { viejo -> viejo.removeListener(oyente); viejo.release() }
         principal.removeCallbacks(pulso)
@@ -492,6 +498,7 @@ class ReproductorActivity : ComponentActivity() {
     private fun conOtro() {
         val pos = player?.currentPosition ?: 0L
         player?.pause()
+        if (encargo.elegida.fuente.privada) { muestra("Esta es de tu kDrive: no se abre en otra app (le darías tu token). Se ve aquí."); return }
         val r = Reproducir.conOtro(this, url, estado.titulo, pos, cabeceras)
         if (r != null) muestra(r) else finish()
     }

@@ -82,6 +82,13 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
     val filasTmdb by produceState<List<FilaTmdb>?>(null, conTmdb, Tmdb.version, porqueViste?.id) {
         value = if (!conTmdb) emptyList() else runCatching { Tmdb.portada(porqueViste) }.getOrDefault(emptyList())
     }
+    // Lo que tienes en tu kDrive («Mi carpeta/Mostaza»), con su ficha
+    val enKDrive by produceState(emptyList<MetaBreve>(), CineKDrive.version, conTmdb) {
+        value = runCatching {
+            CineKDrive.indice(ctx)
+            coroutineScope { CineKDrive.titulos().take(40).map { (id, tipo) -> async { Fichas.carga(tipo, id)?.first?.breve() } }.awaitAll().filterNotNull() }
+        }.getOrDefault(emptyList())
+    }
     val filas by produceState<List<FilaCatalogo>?>(null, Addons.version, conTmdb) { value = if (conTmdb) emptyList() else runCatching { Catalogos.portada(ctx) }.getOrDefault(emptyList()) }
     val secciones = listOf("Viendo" to Destino.Viendo, "Pendiente" to Destino.Pendiente, "Visto" to Destino.Visto, "Abandonado" to Destino.Abandonado, "Explorar" to Destino.Explorar, "Addons" to Destino.Addons)
     val desplazado = rememberScrollState()
@@ -127,6 +134,7 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
                 imagen = { b -> viendo.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster })
             if (pendientes.isNotEmpty()) FilaPosters("Pendientes", pendientes.take(20).map { it.breve() }, alAbrir, verTodo = { alIr(Destino.Pendiente) },
                 sub = { b -> tipoNombre(b.tipo) + if (b.ano.isNotBlank()) " · ${b.ano}" else "" }, imagen = { b -> pendientes.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster })
+            if (enKDrive.isNotEmpty()) FilaPosters("En tu kDrive", enKDrive, alAbrir, sub = { tipoNombre(it.tipo) + if (it.ano.isNotBlank()) " · ${it.ano}" else "" })
             if (conTmdb) when (val f = filasTmdb) {
                 null -> Nota("Mirando el catálogo…", Modifier.padding(top = 26.dp))
                 else -> {

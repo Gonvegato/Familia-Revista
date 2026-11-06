@@ -101,17 +101,17 @@ object KDrive {
         "Conectado a tu kDrive"
     }
 
-    private class Item(val name: String, val id: Long, val dir: Boolean, val visibility: String)
+    class Item(val name: String, val id: Long, val dir: Boolean, val visibility: String, val size: Long = 0L)
 
     /** Lo que hay dentro de una carpeta. */
-    private fun children(ctx: Context, dir: Long): List<Item> {
+    fun children(ctx: Context, dir: Long): List<Item> {
         val out = mutableListOf<Item>()
         var cursor = ""
         do {
             val q = if (cursor.isNotEmpty()) "?cursor=${URLEncoder.encode(cursor, "UTF-8")}" else ""
             val o = call(ctx, "GET", "/3/drive/${drive(ctx)}/files/$dir/files$q")
             val a = o.optJSONArray("data") ?: JSONArray()
-            for (i in 0 until a.length()) a.optJSONObject(i)?.let { out += Item(it.optString("name"), it.optLong("id"), it.optString("type") == "dir", it.optString("visibility")) }
+            for (i in 0 until a.length()) a.optJSONObject(i)?.let { out += Item(it.optString("name"), it.optLong("id"), it.optString("type") == "dir", it.optString("visibility"), it.optLong("size")) }
             cursor = if (o.optBoolean("has_more")) o.optString("cursor") else ""
         } while (cursor.isNotEmpty() && out.size < 5000)
         return out
@@ -129,6 +129,17 @@ object KDrive {
         prefs(ctx).edit().putLong("home", h.id).apply()
         return h.id
     }
+
+    /** La carpeta «Mi carpeta/[ruta]…» (null si no está). */
+    fun carpeta(ctx: Context, vararg ruta: String): Long? {
+        var dir = home(ctx)
+        for (n in ruta) dir = children(ctx, dir).firstOrNull { it.dir && it.name.equals(n, ignoreCase = true) }?.id ?: return null
+        return dir
+    }
+
+    /** La dirección para ver o bajar un archivo (con [cabeceras], que llevan tu token: solo para kDrive). */
+    fun direccion(ctx: Context, file: Long) = "$api/2/drive/${drive(ctx)}/files/$file/download"
+    fun cabeceras(ctx: Context) = mapOf("Authorization" to "Bearer ${token(ctx)}")
 
     /** Archivos de más de 5 MB: a trozos (como la app oficial). */
     private const val CHUNKED = 5L * 1024 * 1024

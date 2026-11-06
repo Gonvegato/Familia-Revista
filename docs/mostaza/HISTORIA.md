@@ -16,6 +16,16 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## 0.3.0
+
+**Tus películas y series en tu kDrive.** Lo que subas a «Mi carpeta/Mostaza/Películas» y «Mi carpeta/Mostaza/Series» (las crea la
+familia, con un LEEME.txt que dice cómo llamar a los archivos) sale como una fuente más, «Tu kDrive», la primera de la lista, y en la
+portada, en «En tu kDrive». Mostaza averigua qué es cada archivo por su nombre (título y año; en las series, la carpeta de la serie y
+S01E02 o 1x02; si el nombre lleva su número de IMDb, manda ese), con TMDB si tienes la clave y si no con tus addons. Se ve desde kDrive
+mientras se baja (a trozos), con los subtítulos .srt que tenga al lado. Tu token de kDrive solo va a kDrive: el reproductor ya no manda
+las cabeceras de una fuente a otros servidores (tampoco las de tu debrid a los de los subtítulos), y «Abrir con otro reproductor» no se
+ofrece con lo de tu kDrive.
+
 ## 0.2.0
 
 **Un catálogo propio, como una plataforma.** Con tu clave de TMDB (gratis, se pega una vez en Ajustes → Catálogo y va con tu cuenta,
