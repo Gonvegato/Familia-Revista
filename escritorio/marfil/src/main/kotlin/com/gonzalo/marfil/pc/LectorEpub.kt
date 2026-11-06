@@ -356,7 +356,14 @@ private fun VistaLector(st: EstadoLector, volver: Pantalla, nav: Nav) {
     LaunchedEffect(st.panel, st.editando) { if (st.panel == null && st.editando == null) runCatching { foco.requestFocus() } }
     // Si sales de la pantalla completa (F11), vuelven las barras; al cerrar el libro, la ventana como estaba
     LaunchedEffect(VentanaFamilia.pantallaCompleta) { if (!VentanaFamilia.pantallaCompleta && st.inmersivo) st.inmersivo = false }
-    DisposableEffect(st) { onDispose { if (st.inmersivo) VentanaFamilia.pantallaCompleta = false } }
+    DisposableEffect(st) {
+        onDispose {
+            if (st.inmersivo) VentanaFamilia.pantallaCompleta = false
+            // Lo que quedara por subir de los ajustes (tu ritmo se junta unos minutos), al cerrar el libro
+            val aj = st.ajustes
+            Thread({ runCatching { if (aj.m != AjustesLectura.de(st.l.id).m) AjustesLectura.guarda(st.l.id, aj) } }, "marfil-ajustes").apply { isDaemon = true; start() }
+        }
+    }
 }
 
 // ---------------------------------------------------------------- páginas

@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +50,8 @@ fun PantInicio(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -
     // La cabecera y el menú, exactamente como en la portada de Atrio (RevistaHome): mismos márgenes, mismo tamaño de cabecera, de filetes y de letra
     val desplazado = rememberScrollState()
     val umbral = with(androidx.compose.ui.platform.LocalDensity.current) { 300.dp.toPx() }
+    // (solo cambia al cruzar el umbral: leer el desplazamiento aquí recomponía la portada entera en cada píxel que bajabas)
+    val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(desplazado).statusBarsPadding().padding(horizontal = 28.dp)) {
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -140,7 +144,7 @@ fun PantInicio(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -
         Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
     }
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre y lo de siempre (Buscar · + Añadir…)
-    BarraPlegada("Marfil", desplazado.value > umbral) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), acento = true) { alAnadir() } }
+    BarraPlegada("Marfil", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), acento = true) { alAnadir() } }
     }
 }
 
