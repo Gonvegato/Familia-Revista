@@ -79,6 +79,29 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.14.0
+
+- **Lo que subrayas en el ordenador sale en el móvil, y al revés.** Marfil para Linux y Mac (1.1.0) ya pinta tus subrayados y tus notas
+  y los crea (seleccionas con el ratón y eliges Subrayar, Nota o, para una palabra, Definir: el mismo Wikcionario que aquí), con marcadores,
+  y todo va a la cuenta exactamente como lo guarda el lector
+  del móvil (`marcas/<kid>~<id>`, el mismo id, la misma hora de edición): una nota editada en los dos sitios es la misma nota, y lo que
+  quitas en uno se quita en el otro. Lo comprueba una prueba de cada lado: la del ordenador escribe en el emulador de Firebase y la del
+  móvil (`MarcasEscritorioTest`) lee esos mismos nodos con el código de Android.
+- **Las posiciones, letra a letra.** Para que un subrayado caiga en las mismas letras se comparó el ordenador con el lector del móvil de
+  verdad (foliate en Chromium, `herramientas/marfil/lector-prueba/cfi.js`). Así salió que el botón oculto «← Capítulo anterior» que el
+  lector pone arriba de cada capítulo cuenta en las posiciones: el ordenador no lo contaba y, del segundo capítulo en adelante, lo que
+  guardaba abría en el móvil un párrafo antes (y lo del móvil, en el ordenador, uno después). Ya cuenta igual. Tampoco contaba bien el
+  porcentaje en los libros con páginas que no se leen seguido (portadas, notas finales): ahora es el mismo que en el móvil.
+- **Los ajustes del lector viajan también al ordenador**: tema (Papel, Sepia, Gris, Noche, Negro, Como la app), letra (las mismas: Literata,
+  Garamond, Fraunces, Atkinson…), tamaño, interlineado, márgenes, justificado, párrafos, páginas o continuo, dos columnas y luz cálida, con
+  los del libro mandando sobre los de partida, como aquí. Y tu ritmo de lectura (el que calcula lo que te queda) se comparte.
+- **En la tableta tumbada, el panel va de lado**: Índice, Notas, Letra y Buscar salen a la derecha, de arriba abajo, y el libro se sigue
+  viendo (antes eran hojas de todo el ancho de la pantalla, con las filas estiradas de punta a punta). En vertical (o en un móvil ancho),
+  las hojas y la de las notas al pie van al centro, del ancho de una columna.
+- **El índice dice dónde empieza cada capítulo** (su porcentaje) y marca «Estás aquí» en el que lees.
+- **La barra de lo leído tiene una marca donde empieza cada capítulo**, como en el ordenador.
+- **Los subrayados con nota llevan una raya del acento** debajo: se ve dónde hay nota sin tocar nada (en el ordenador, una raya en el margen).
+
 ## 0.13.5
 
 - **Una pantalla que no dejaba de redibujarse**: los títulos que se encogen para caber (FitTitle) apuntaban su ancho desde dentro de la

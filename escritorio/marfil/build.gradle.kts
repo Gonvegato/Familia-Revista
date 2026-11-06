@@ -1,5 +1,6 @@
 // Marfil para Linux y Mac: tus libros (los de la cuenta, `libros/<kid>`), leerlos aquí (EPUB, PDF y cómics) por donde ibas en el
-// móvil, y lo leído, los tiempos y los archivos (tu kDrive) igual que Marfil de Android. Ver nube/ESQUEMA.md.
+// móvil, con tus subrayados, notas, marcadores y los ajustes del lector de la cuenta, y lo leído, los tiempos y los archivos (tu kDrive)
+// igual que Marfil de Android. Ver nube/ESQUEMA.md.
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -8,7 +9,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.0.1"
+val version = "1.1.0"
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
@@ -45,5 +46,7 @@ tasks.test {
     systemProperty("familia.emulador", System.getProperty("familia.emulador") ?: "http://127.0.0.1")
     systemProperty("familia.reglas", rootProject.file("nube/reglas.json").absolutePath)
     System.getProperty("capturas")?.let { systemProperty("capturas", it); outputs.upToDateWhen { false } }
+    // Para rehacer los casos que comparten el móvil y el ordenador (herramientas/casos): -Dcasos.escribe=<carpeta>, -Dcasos.imprime
+    listOf("casos.escribe", "casos.imprime").forEach { k -> System.getProperty(k)?.let { systemProperty(k, it); outputs.upToDateWhen { false } } }
     testLogging { events("failed"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }

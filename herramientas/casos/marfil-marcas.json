@@ -1,0 +1,108 @@
+{
+ "nota": "Los subrayados, notas y marcadores que escribe Marfil del ordenador (MarcasTest de escritorio/marfil, con -Dcasos.escribe), tal cual quedan en la cuenta (familia/marcas). Los lee MarcasEscritorioTest de Marfil de Android con su propio código.",
+ "kid": "d02b9975c5e9c3903b1d",
+ "titulo": "Dune",
+ "autor": "Frank Herbert",
+ "nodos": {
+  "d02b9975c5e9c3903b1d~0e0bea0eb29fa097": {
+   "b": 0,
+   "m": {
+    "b": 1700000500000,
+    "n": 1700000500000,
+    "ref": 1700000500000,
+    "tipo": 1700000500000
+   },
+   "n": {
+    "created": 1700000500000,
+    "fraction": 0.75,
+    "index": 1,
+    "label": "Capítulo 2",
+    "mod": 1700000500000,
+    "value": "epubcfi(/6/4!/4/4/1:0)"
+   },
+   "ref": "d02b9975c5e9c3903b1d",
+   "tipo": "marks",
+   "u": 1793925248852
+  },
+  "d02b9975c5e9c3903b1d~2808101b0dcc3e5d": {
+   "b": 0,
+   "m": {
+    "b": 1700000400000,
+    "n": 1700000400000,
+    "ref": 1700000400000,
+    "tipo": 1700000400000
+   },
+   "n": {
+    "color": "subrayado",
+    "created": 1700000000000,
+    "frac": 0.12,
+    "index": 0,
+    "label": "Arrakis",
+    "mod": 1700000400000,
+    "note": "La letanía contra el miedo.",
+    "text": "El miedo mata la mente.",
+    "value": "epubcfi(/6/2!/4/4,/1:0,/1:23)"
+   },
+   "ref": "d02b9975c5e9c3903b1d",
+   "tipo": "notes",
+   "u": 1793925248819
+  },
+  "d02b9975c5e9c3903b1d~a3248cf40eec6ad3": {
+   "b": 1700000700000,
+   "m": {
+    "b": 1700000700000,
+    "n": 1700000700000,
+    "ref": 1700000700000,
+    "tipo": 1700000700000
+   },
+   "n": {
+    "color": "subrayado",
+    "created": 1700000600000,
+    "frac": 0.1,
+    "index": 0,
+    "label": "Arrakis",
+    "mod": 1700000600000,
+    "note": "",
+    "text": "El miedo",
+    "value": "epubcfi(/6/2!/4/4,/1:0,/1:8)"
+   },
+   "ref": "d02b9975c5e9c3903b1d",
+   "tipo": "notes",
+   "u": 1793925248852
+  }
+ },
+ "lectura": {
+  "m": {
+   "ref": 1793925248884,
+   "settings": 1793925248884,
+   "settingsAt": 1793925248884
+  },
+  "ref": "d02b9975c5e9c3903b1d",
+  "settings": {
+   "animated": true,
+   "columns": false,
+   "flow": "paginated",
+   "font": "garamond",
+   "hyphens": true,
+   "justify": true,
+   "margin": "m",
+   "nightAuto": false,
+   "paraSpace": 0,
+   "size": 100,
+   "spacing": 1.5,
+   "speed": 0,
+   "status": true,
+   "theme": "sepia",
+   "warm": 0
+  },
+  "settingsAt": 1793925248885,
+  "u": 1793925248888
+ },
+ "ajustes": {
+  "lector": "{\"at\":1793925248885,\"s\":{\"theme\":\"sepia\",\"size\":100,\"font\":\"garamond\",\"spacing\":1.5,\"margin\":\"m\",\"justify\":true,\"flow\":\"paginated\",\"hyphens\":true,\"paraSpace\":0,\"columns\":false,\"animated\":true,\"status\":true,\"speed\":0,\"nightAuto\":false,\"warm\":0}}",
+  "m": {
+   "lector": 1793925248885
+  },
+  "u": 1793925248888
+ }
+}

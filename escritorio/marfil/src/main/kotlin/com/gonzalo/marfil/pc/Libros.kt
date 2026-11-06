@@ -126,27 +126,29 @@ object Libros {
 
     // ---------------------------------------------------------------- por dónde vas
 
-    /** Lo leído de un libro (`lectura/<kid>`): la posición (CFI), el porcentaje, el nombre del capítulo y cuándo. */
-    class Posicion(val cfi: String, val fraccion: Double, val etiqueta: String, val cuando: Long, val mejorFraccion: Double)
+    /** Lo leído de un libro (`lectura/<kid>`): la posición (CFI), el porcentaje, el nombre del capítulo, cuándo y lo más lejos que llegaste. */
+    class Posicion(val cfi: String, val fraccion: Double, val etiqueta: String, val cuando: Long, val mejorFraccion: Double, val mejorCfi: String = "", val mejorEtiqueta: String = "", val fijada: Long = 0L)
     fun posicion(id: String): Posicion? = lectura().nodo(id)?.takeIf { !it.borrado }?.let { n ->
-        Posicion(n.texto("cfi"), n.decimal("fraction"), n.texto("label"), n.entero("read"), n.decimal("bestFrac"))
+        Posicion(n.texto("cfi"), n.decimal("fraction"), n.texto("label"), n.entero("read"), n.decimal("bestFrac"), n.texto("bestCfi"), n.texto("bestLabel"), n.entero("bestSet"))
     }
 
     /**
      * Apunta por dónde vas ([cfi], [fr] 0–1, el capítulo [etiqueta]): en `lectura/<kid>` (lo que abre el móvil en el mismo sitio) y en el
      * libro lo leído (lo más lejos que has llegado), la última vez y, si toca, «Leyendo» o «Leído» (las mismas reglas que en el móvil).
+     * Un [salto] largo (la barra, el índice…) apunta dónde estás pero no cuenta como leído hasta que digas que vas por ahí ([fija]).
      */
-    fun leido(id: String, cfi: String, fr: Double, etiqueta: String, msHoy: Long = 0L) {
+    fun leido(id: String, cfi: String, fr: Double, etiqueta: String, msHoy: Long = 0L, salto: Boolean = false) {
         val l = por(id) ?: return
         val ahora = System.currentTimeMillis()
         val pos = LinkedHashMap<String, Any?>()
         pos["ref"] = id; pos["cfi"] = cfi; pos["fraction"] = Math.round(fr * 10000.0) / 10000.0; pos["label"] = etiqueta; pos["read"] = ahora
         val antes = posicion(id)
-        if (fr > (antes?.mejorFraccion ?: 0.0)) { pos["bestCfi"] = cfi; pos["bestFrac"] = pos["fraction"]; pos["bestLabel"] = etiqueta }
+        if (!salto && fr > (antes?.mejorFraccion ?: 0.0)) { pos["bestCfi"] = cfi; pos["bestFrac"] = pos["fraction"]; pos["bestLabel"] = etiqueta }
         lectura().cambia(id, pos)
-        val mejor = maxOf(fr, antes?.mejorFraccion ?: 0.0).toFloat()
         val c = LinkedHashMap<String, Any?>()
         c["ul"] = ahora
+        if (salto) { cambia(id, c); return }
+        val mejor = maxOf(fr, antes?.mejorFraccion ?: 0.0).toFloat()
         if (mejor > l.fraccion + 0.0005f) c["fr"] = Math.round(mejor * 10000.0) / 10000.0
         val estado = when {
             mejor >= 0.985f -> Estado.LEIDO
@@ -156,6 +158,38 @@ object Libros {
         }
         cambia(id, c)
         if (estado != l.estado) ponEstado(por(id) ?: l, estado)
+    }
+
+    /**
+     * «Voy por aquí» (tras un salto largo): esta es tu posición de verdad, aunque sea menos de lo que llegaste, en todos tus dispositivos
+     * (como `fijarPosicion` del móvil: `bestSet` con la hora). Lo leído del libro pasa a ser esto.
+     */
+    fun fija(id: String, cfi: String, fr: Double, etiqueta: String) {
+        val l = por(id) ?: return
+        val ahora = System.currentTimeMillis()
+        val f = Math.round(fr * 10000.0) / 10000.0
+        lectura().cambia(id, linkedMapOf("ref" to id, "cfi" to cfi, "fraction" to f, "label" to etiqueta, "read" to ahora, "bestCfi" to cfi, "bestFrac" to f, "bestLabel" to etiqueta, "bestSet" to ahora))
+        cambia(id, mapOf("fr" to f, "ul" to ahora))
+        val estado = when {
+            fr >= 0.985 -> Estado.LEIDO
+            l.estado == Estado.LEIDO -> Estado.LEYENDO
+            fr <= 0.003 && l.estado == Estado.LEYENDO -> Estado.PENDIENTE
+            l.estado == Estado.PENDIENTE && fr > 0.003 -> Estado.LEYENDO
+            else -> l.estado
+        }
+        if (estado != l.estado) ponEstado(por(id) ?: l, estado)
+    }
+
+    /** Tu tiempo con un libro (todos tus dispositivos): lo de hoy y el total (ms) y los días seguidos que lo has leído (hasta hoy o ayer). */
+    fun tiempoDe(id: String): Triple<Long, Long, Int> {
+        val ns = tiempo().vivos().filter { it.texto("ref") == id }
+        val hoy = java.time.LocalDate.now()
+        val dias = HashMap<String, Long>()
+        ns.forEach { n -> n.campos.forEach { (k, v) -> if (k.length == 11 && k[0] == 'd' && k[5] == '-') dias[k.substring(1)] = (dias[k.substring(1)] ?: 0L) + ((v as? Number)?.toLong() ?: 0L) } }
+        var d = if ((dias[hoy.toString()] ?: 0L) > 0) hoy else hoy.minusDays(1)
+        var racha = 0
+        while ((dias[d.toString()] ?: 0L) >= 60_000L) { racha++; d = d.minusDays(1) }
+        return Triple(dias[hoy.toString()] ?: 0L, ns.sumOf { it.entero("total") }, racha)
     }
 
     /** Suma tiempo leído en este ordenador (`tiempo/<kid>~<dispositivo>`: `total` y el del día). */

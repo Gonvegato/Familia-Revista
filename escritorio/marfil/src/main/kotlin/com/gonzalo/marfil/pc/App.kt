@@ -16,7 +16,8 @@ sealed class Pantalla {
     data object Portada : Pantalla()
     data class Lista(val estado: Estado) : Pantalla()
     data class Ficha(val id: String, val volver: Pantalla) : Pantalla()
-    data class Leer(val id: String, val volver: Pantalla) : Pantalla()
+    /** Leer un libro: por donde ibas o, con [ir], en ese sitio (un subrayado); [panel]: abierto con ese panel. */
+    data class Leer(val id: String, val volver: Pantalla, val ir: String = "", val panel: Panel? = null, val busqueda: String = "") : Pantalla()
     data object Escritos : Pantalla()
     data class Capitulo(val ref: String) : Pantalla()
     data object Ajustes : Pantalla()
@@ -32,7 +33,7 @@ fun AppMarfil(inicial: Pantalla = Pantalla.Portada) {
     val scope = rememberCoroutineScope()
     val nav = remember { Nav({ pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
     // El lector, a pantalla completa (sin la columna)
-    (pantalla as? Pantalla.Leer)?.let { p -> Box(Modifier.fillMaxSize()) { PantLector(p.id, p.volver, nav); SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(16.dp)) }; return }
+    (pantalla as? Pantalla.Leer)?.let { p -> Box(Modifier.fillMaxSize()) { PantLector(p.id, p.volver, nav, p.ir, p.panel, p.busqueda); SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(16.dp)) }; return }
     (pantalla as? Pantalla.Capitulo)?.let { p -> Box(Modifier.fillMaxSize()) { PantCapitulo(p.ref, nav) }; return }
     val libros = Libros.todos()
     val estados = listOf(Estado.LEYENDO, Estado.PENDIENTE, Estado.LEIDO, Estado.ABANDONADO)

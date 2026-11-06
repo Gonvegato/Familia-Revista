@@ -1,0 +1,322 @@
+{
+ "nota": "Las posiciones (EPUB CFI) del lector del móvil, calculadas por foliate-js de verdad en Chromium (herramientas/marfil/lector-prueba/cfi.js): para cada frase, el CFI de su tramo (como un subrayado) y, en «inicios», el de la primera página de cada sección. En «escritorio», los CFI que escribe Marfil del ordenador y lo que foliate lee en ellos. Lo comprueba CfiTest (escritorio/marfil). Para rehacerlo: NODE_PATH=<carpeta de playwright> node herramientas/marfil/lector-prueba/cfi.js herramientas/casos/marfil-cfi.json",
+ "archivos": {
+  "mimetype": "application/epub+zip",
+  "META-INF/container.xml": "<?xml version=\"1.0\"?><container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"><rootfiles><rootfile full-path=\"OEBPS/content.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>",
+  "OEBPS/content.opf": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"id\">\n  <metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:identifier id=\"id\">dune-prueba</dc:identifier><dc:title>Dune</dc:title><dc:creator>Frank Herbert</dc:creator><dc:language>es</dc:language></metadata>\n  <manifest>\n    <item id=\"nav\" href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>\n    <item id=\"portada\" href=\"texto/portada.xhtml\" media-type=\"application/xhtml+xml\"/>\n    <item id=\"c1\" href=\"texto/c1.xhtml\" media-type=\"application/xhtml+xml\"/>\n    <item id=\"c2\" href=\"texto/c2.xhtml\" media-type=\"application/xhtml+xml\"/>\n    <item id=\"notas\" href=\"texto/notas.xhtml\" media-type=\"application/xhtml+xml\"/>\n    <item id=\"c3\" href=\"texto/c3.xhtml\" media-type=\"application/xhtml+xml\"/>\n  </manifest>\n  <spine>\n    <itemref idref=\"portada\" linear=\"no\"/>\n    <itemref idref=\"c1\"/>\n    <itemref idref=\"c2\"/>\n    <itemref idref=\"notas\" linear=\"no\"/>\n    <itemref idref=\"c3\" id=\"ref-c3\"/>\n  </spine>\n</package>",
+  "OEBPS/nav.xhtml": "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><title>Índice</title></head><body><nav epub:type=\"toc\"><ol><li><a href=\"texto/c1.xhtml\">Arrakis</a></li><li><a href=\"texto/c2.xhtml#sueno\">El sueño</a></li><li><a href=\"texto/c3.xhtml\">El desierto</a></li></ol></nav></body></html>",
+  "OEBPS/texto/portada.xhtml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Portada</title></head><body><p>Dune, de Frank Herbert.</p></body></html>",
+  "OEBPS/texto/c1.xhtml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head><title>Uno</title></head>\n<body>\n  <h1 id=\"arrakis\">Arrakis</h1>\n  <p>Al principio es el <em>tiempo</em> de dar precisión a las cosas.</p>\n  <div class=\"bloque\">\n    <p>Una semana antes de partir hacia Arrakis, una vieja vino a ver a la madre del muchacho.</p>\n    <p id=\"p-vieja\">La vieja <!-- un comentario --> miró al muchacho con atención.</p>\n  </div>\n  <p>Texto con nota<a epub:type=\"noteref\" href=\"#n1\" id=\"r1\">1</a> y sigue la historia.</p>\n  <aside epub:type=\"footnote\" id=\"n1\"><p>La nota al pie del primer capítulo.</p></aside>\n</body>\n</html>",
+  "OEBPS/texto/c2.xhtml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Dos</title></head><body><section id=\"s2\"><h2 id=\"sueno\">El sueño</h2>\n<p>Soñó con <strong>agua</strong> y con arena.</p><hr/><blockquote><p>El miedo mata la mente.</p></blockquote></section>\n<p>Fuera de la sección,&#160;un párrafo final<br/>con un salto de línea.</p></body></html>",
+  "OEBPS/texto/notas.xhtml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Notas</title></head><body><p>Una nota del final que no se lee seguido.</p></body></html>",
+  "OEBPS/texto/c3.xhtml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Tres</title></head>\n<body>\n<h2>El desierto</h2>\n<p>La arena se extendía hasta el horizonte.</p>\n</body></html>"
+ },
+ "frases": [
+  {
+   "seccion": 0,
+   "texto": "Frank Herbert"
+  },
+  {
+   "seccion": 1,
+   "texto": "Arrakis"
+  },
+  {
+   "seccion": 1,
+   "texto": "principio es el"
+  },
+  {
+   "seccion": 1,
+   "texto": "tiempo de dar"
+  },
+  {
+   "seccion": 1,
+   "texto": "semana antes"
+  },
+  {
+   "seccion": 1,
+   "texto": "miró al muchacho"
+  },
+  {
+   "seccion": 1,
+   "texto": "sigue la historia"
+  },
+  {
+   "seccion": 2,
+   "texto": "El sueño"
+  },
+  {
+   "seccion": 2,
+   "texto": "agua"
+  },
+  {
+   "seccion": 2,
+   "texto": "con arena"
+  },
+  {
+   "seccion": 2,
+   "texto": "El miedo mata"
+  },
+  {
+   "seccion": 2,
+   "texto": "un párrafo final"
+  },
+  {
+   "seccion": 2,
+   "texto": "con un salto"
+  },
+  {
+   "seccion": 3,
+   "texto": "Una nota del final"
+  },
+  {
+   "seccion": 4,
+   "texto": "se extendía"
+  }
+ ],
+ "foliate": {
+  "inicios": {
+   "0": {
+    "cfi": "epubcfi(/6/2!/4,/2,/4/2/4/1:7)",
+    "botones": [
+     "atrio-cap sig"
+    ]
+   },
+   "1": {
+    "cfi": "epubcfi(/6/4!/4,/2[arrakis],/12/2/4/1:8)",
+    "botones": [
+     "atrio-cap sig"
+    ]
+   },
+   "2": {
+    "cfi": "epubcfi(/6/6!/4,/2,/8/2/4/1:11)",
+    "botones": [
+     "atrio-cap ant",
+     "atrio-cap sig"
+    ]
+   },
+   "3": {
+    "cfi": "epubcfi(/6/8!/4,/2,/6/2/4/1:11)",
+    "botones": [
+     "atrio-cap ant",
+     "atrio-cap sig"
+    ]
+   },
+   "4": {
+    "cfi": "epubcfi(/6/10[ref-c3]!/4,/2,/6/1:40)",
+    "botones": [
+     "atrio-cap ant"
+    ]
+   }
+  },
+  "frases": [
+   {
+    "seccion": 0,
+    "texto": "Frank Herbert",
+    "cfi": "epubcfi(/6/2!/4/2,/1:9,/1:22)",
+    "texto_resuelto": "Frank Herbert",
+    "indice": 0
+   },
+   {
+    "seccion": 1,
+    "texto": "Arrakis",
+    "cfi": "epubcfi(/6/4!/4/2[arrakis],/1:0,/1:7)",
+    "texto_resuelto": "Arrakis",
+    "indice": 1
+   },
+   {
+    "seccion": 1,
+    "texto": "principio es el",
+    "cfi": "epubcfi(/6/4!/4/4,/1:3,/1:18)",
+    "texto_resuelto": "principio es el",
+    "indice": 1
+   },
+   {
+    "seccion": 1,
+    "texto": "tiempo de dar",
+    "cfi": "epubcfi(/6/4!/4/4,/2/1:0,/3:7)",
+    "texto_resuelto": "tiempo de dar",
+    "indice": 1
+   },
+   {
+    "seccion": 1,
+    "texto": "semana antes",
+    "cfi": "epubcfi(/6/4!/4/6/2,/1:4,/1:16)",
+    "texto_resuelto": "semana antes",
+    "indice": 1
+   },
+   {
+    "seccion": 1,
+    "texto": "miró al muchacho",
+    "cfi": "epubcfi(/6/4!/4/6/4[p-vieja],/1:10,/1:26)",
+    "texto_resuelto": "miró al muchacho",
+    "indice": 1
+   },
+   {
+    "seccion": 1,
+    "texto": "sigue la historia",
+    "cfi": "epubcfi(/6/4!/4/8,/3:3,/3:20)",
+    "texto_resuelto": "sigue la historia",
+    "indice": 1
+   },
+   {
+    "seccion": 2,
+    "texto": "El sueño",
+    "cfi": "epubcfi(/6/6!/4/4[s2]/2[sueno],/1:0,/1:8)",
+    "texto_resuelto": "El sueño",
+    "indice": 2
+   },
+   {
+    "seccion": 2,
+    "texto": "agua",
+    "cfi": "epubcfi(/6/6!/4/4[s2]/4/2,/1:0,/1:4)",
+    "texto_resuelto": "agua",
+    "indice": 2
+   },
+   {
+    "seccion": 2,
+    "texto": "con arena",
+    "cfi": "epubcfi(/6/6!/4/4[s2]/4,/3:3,/3:12)",
+    "texto_resuelto": "con arena",
+    "indice": 2
+   },
+   {
+    "seccion": 2,
+    "texto": "El miedo mata",
+    "cfi": "epubcfi(/6/6!/4/4[s2]/8/2,/1:0,/1:13)",
+    "texto_resuelto": "El miedo mata",
+    "indice": 2
+   },
+   {
+    "seccion": 2,
+    "texto": "un párrafo final",
+    "cfi": "epubcfi(/6/6!/4/6,/1:21,/1:37)",
+    "texto_resuelto": "un párrafo final",
+    "indice": 2
+   },
+   {
+    "seccion": 2,
+    "texto": "con un salto",
+    "cfi": "epubcfi(/6/6!/4/6,/3:0,/3:12)",
+    "texto_resuelto": "con un salto",
+    "indice": 2
+   },
+   {
+    "seccion": 3,
+    "texto": "Una nota del final",
+    "cfi": "epubcfi(/6/8!/4/4,/1:0,/1:18)",
+    "texto_resuelto": "Una nota del final",
+    "indice": 3
+   },
+   {
+    "seccion": 4,
+    "texto": "se extendía",
+    "cfi": "epubcfi(/6/10[ref-c3]!/4/6,/1:9,/1:20)",
+    "texto_resuelto": "se extendía",
+    "indice": 4
+   }
+  ],
+  "version": "78914aef4466eb960965702401634c2cb348e9b1",
+  "escritorio": [
+   {
+    "cfi": "epubcfi(/6/2!/4/2/1:0)",
+    "indice": 0,
+    "texto": "Dune, de Frank Herbert.",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/4!/4/2[arrakis]/1:0)",
+    "indice": 1,
+    "texto": "Arrakis Al principio es el tiempo de dar",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/4!/4/4/1:0)",
+    "indice": 1,
+    "texto": "Al principio es el tiempo de dar precisi",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/4!/4/6/2/1:0)",
+    "indice": 1,
+    "texto": "Una semana antes de partir hacia Arrakis",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/4!/4/6/4[p-vieja]/1:0)",
+    "indice": 1,
+    "texto": "La vieja miró al muchacho con atención.",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/4!/4/8/1:0)",
+    "indice": 1,
+    "texto": "Texto con nota1 y sigue la historia. La ",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/6!/4/4[s2]/2[sueno]/1:0)",
+    "indice": 2,
+    "texto": "El sueño Soñó con agua y con arena.El mi",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/6!/4/4[s2]/4/1:0)",
+    "indice": 2,
+    "texto": "Soñó con agua y con arena.El miedo mata ",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/6!/4/4[s2]/6)",
+    "indice": 2,
+    "texto": "El miedo mata la mente. Fuera de la secc",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/6!/4/4[s2]/8/2/1:0)",
+    "indice": 2,
+    "texto": "El miedo mata la mente. Fuera de la secc",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/6!/4/6/1:0)",
+    "indice": 2,
+    "texto": "Fuera de la sección, un párrafo finalcon",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/8!/4/4/1:0)",
+    "indice": 3,
+    "texto": "Una nota del final que no se lee seguido",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/10[ref-c3]!/4/4/1:0)",
+    "indice": 4,
+    "texto": "El desierto La arena se extendía hasta e",
+    "punto": true
+   },
+   {
+    "cfi": "epubcfi(/6/10[ref-c3]!/4/6/1:0)",
+    "indice": 4,
+    "texto": "La arena se extendía hasta el horizonte.",
+    "punto": true
+   }
+  ]
+ },
+ "escritorio": [
+  "epubcfi(/6/2!/4/2/1:0)",
+  "epubcfi(/6/4!/4/2[arrakis]/1:0)",
+  "epubcfi(/6/4!/4/4/1:0)",
+  "epubcfi(/6/4!/4/6/2/1:0)",
+  "epubcfi(/6/4!/4/6/4[p-vieja]/1:0)",
+  "epubcfi(/6/4!/4/8/1:0)",
+  "epubcfi(/6/6!/4/4[s2]/2[sueno]/1:0)",
+  "epubcfi(/6/6!/4/4[s2]/4/1:0)",
+  "epubcfi(/6/6!/4/4[s2]/6)",
+  "epubcfi(/6/6!/4/4[s2]/8/2/1:0)",
+  "epubcfi(/6/6!/4/6/1:0)",
+  "epubcfi(/6/8!/4/4/1:0)",
+  "epubcfi(/6/10[ref-c3]!/4/4/1:0)",
+  "epubcfi(/6/10[ref-c3]!/4/6/1:0)"
+ ]
+}

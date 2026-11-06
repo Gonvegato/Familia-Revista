@@ -77,6 +77,12 @@ body.menu .reloj, body.sin-estado .reloj { opacity: 0; }
 .titulo small { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .prog { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); font-variant-numeric: tabular-nums; }
 .prog input { flex: 1; accent-color: var(--accent); }
+/* La barra con las marcas de los capítulos (debajo, sin estorbar al dedo; el pulgar del deslizador mide unos 16 px) */
+.pista { flex: 1; position: relative; display: flex; align-items: center; min-width: 0; }
+.pista input { position: relative; z-index: 1; width: 100%; margin: 0; background: transparent; }
+.marcas { position: absolute; left: 8px; right: 8px; top: 50%; height: 0; pointer-events: none; z-index: 2; }
+.marcas i { position: absolute; top: -4px; width: 1.5px; height: 8px; margin-left: -.75px; background: var(--muted); opacity: .55; }
+.marcas i.leido { background: var(--bg); opacity: .9; }
 .botones { display: flex; justify-content: space-between; margin-top: 6px; }
 .botones button { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; padding: 6px 8px; color: var(--fg); }
 .botones button:active { background: var(--line); }
@@ -118,6 +124,11 @@ body.menu .reloj, body.sin-estado .reloj { opacity: 0; }
 .lista li { padding: 12px 2px; border-bottom: 1px solid var(--line); }
 .lista li.actual { color: var(--accent); font-weight: 700; }
 .lista li .sub { color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+/* Índice: cada capítulo con su porcentaje (y «estás aquí» en el que lees) */
+.lista li.cap { display: flex; align-items: baseline; gap: 12px; }
+.lista li.cap .t { flex: 1; min-width: 0; }
+.lista li.cap .pct { flex: none; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.lista li.cap.actual .pct { color: var(--accent); }
 .lista .n1 { padding-left: 18px; } .lista .n2 { padding-left: 34px; } .lista .n3 { padding-left: 50px; }
 .cita { border-left: 3px solid var(--fg); padding-left: 10px; font-family: var(--font-titulo); font-size: 16px; line-height: 1.45; }
 .nota { margin-top: 6px; font-size: 14px; color: var(--accent); font-family: var(--font-titulo); font-style: italic; }
@@ -208,3 +219,16 @@ body.menu .volver { bottom: calc(var(--safe-bottom) + 132px); }
 .lamina img { width: 100%; max-width: 420px; display: block; }
 .lamina .gris { color: var(--muted); font-style: italic; font-family: var(--font-titulo); padding: 30px 0; }
 .boton:disabled { opacity: .4; }
+
+/* En una pantalla ancha (la tableta, el móvil tumbado) las hojas de abajo no ocupan todo el ancho: van al centro, del ancho de una columna */
+@media (min-width: 760px) {
+  .panel, .pie { left: 50%; right: auto; width: min(680px, 94vw); transform: translate(-50%, 105%); border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .panel.on, .pie.on { transform: translate(-50%, 0); }
+}
+/* Y en la tableta tumbada, el panel va de lado, a la derecha y de arriba abajo (como en Marfil del ordenador): el libro se sigue viendo */
+@media (min-width: 1000px) and (orientation: landscape) {
+  .panel { left: auto; right: 0; top: 0; bottom: 0; width: 460px; max-height: none; transform: translateX(105%); border-top: 0; border-right: 0;
+    border-left: 3px solid var(--fg); padding-top: var(--safe-top); }
+  .panel.on { transform: none; }
+  .panel .asa { visibility: hidden; }
+}
