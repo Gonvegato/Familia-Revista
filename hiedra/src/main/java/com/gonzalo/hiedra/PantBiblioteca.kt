@@ -32,7 +32,7 @@ fun CampoBusquedaRevista(valor: String, pista: String, foco: FocusRequester? = n
                 BasicTextField(valor, alCambiar, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp), cursorBrush = SolidColor(Acento),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), modifier = Modifier.fillMaxWidth().let { if (foco != null) it.focusRequester(foco) else it })
             }
-            if (valor.isNotEmpty()) Text("✕", color = Muted, fontSize = 16.sp, modifier = Modifier.clickable { alCambiar("") }.padding(start = 8.dp))
+            if (valor.isNotEmpty()) Text("✕", color = Muted, fontSize = 16.sp, modifier = Modifier.tocable { alCambiar("") }.padding(start = 8.dp))
         }
         Filete(2.dp)
     }

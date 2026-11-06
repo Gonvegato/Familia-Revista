@@ -124,11 +124,11 @@ fun BotonesJugarPc(key: String, modifier: Modifier = Modifier, alHacer: (String)
     }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         val canPc = pc != null && !running
-        Column(Modifier.fillMaxWidth().clickable(enabled = canPc && !busyPc) { launch() }) {
+        Column(Modifier.fillMaxWidth().tocable(enabled = canPc && !busyPc) { launch() }) {
             Text(if (busyPc) "Abriendo…" else if (running) "En marcha" else "Jugar en el PC →", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = if (canPc || running) Charcoal else Muted)
             Text((pc?.let { if (running) "Ya en ${it.name}" else "En ${it.name}" } ?: "PC apagado").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
-        Column(Modifier.fillMaxWidth().clickable(enabled = !busySt) { stream() }) {
+        Column(Modifier.fillMaxWidth().tocable(enabled = !busySt) { stream() }) {
             Text(if (busySt) "Conectando…" else "Streaming →", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Acento)
             Text((if (running) "Seguir en el móvil, con Steam Link" else "En este móvil, con Steam Link").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }

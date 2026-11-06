@@ -68,7 +68,7 @@ fun Antetitulo(texto: String, modifier: Modifier = Modifier, tam: TextUnit = 13.
 @Composable
 fun EnlaceRevista(texto: String, modifier: Modifier = Modifier, acento: Boolean = false, onClick: () -> Unit) {
     Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
-        modifier = modifier.semantics { role = Role.Button }.clickable(onClick = onClick).padding(vertical = 10.dp))
+        modifier = modifier.semantics { role = Role.Button }.tocable(onClick = onClick).padding(vertical = 10.dp))
 }
 
 /** «← VOLVER» (o «← LECTURA» en lo que cuelga de la portada). */
@@ -98,7 +98,7 @@ fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifi
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
                 Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }
-                    .semantics { selected = on; role = Role.Tab }.clickable { onSel(i) }
+                    .semantics { selected = on; role = Role.Tab }.tocable(fuera = 0.dp) { onSel(i) }
                     .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
                     .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
                     Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1)
@@ -126,7 +126,7 @@ fun FiltrosRevista(opciones: List<String>, sel: Int, modifier: Modifier = Modifi
 @Composable
 fun FiltroRevista(texto: String, on: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Text(texto.uppercase(), color = if (on) Acento else Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1,
-        modifier = modifier.semantics { selected = on }.clickable(onClick = onClick).padding(top = 8.dp, bottom = 13.dp)
+        modifier = modifier.semantics { selected = on }.tocable(onClick = onClick).padding(top = 8.dp, bottom = 13.dp)
             .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 4.dp.toPx()), size = Size(size.width, 1.5.dp.toPx())) })
 }
 
@@ -174,7 +174,7 @@ private val Double.em get() = this.toFloat().em
 /** Un enlace de texto (serif, con flecha): «Cambiar emulador →». */
 @Composable
 fun MagLink(text: String, sub: String? = null, accent: Boolean = false, onClick: () -> Unit) {
-    Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 5.dp)) {
+    Column(Modifier.fillMaxWidth().tocable(onClick = onClick).padding(vertical = 5.dp)) {
         Text("$text →", fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp, color = if (accent) Acento else Charcoal)
         if (sub != null) Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     }
@@ -191,7 +191,7 @@ fun MagChoice(options: List<String>, selected: Int, label: String? = null, onPic
                 val on = i == selected
                 Text(
                     o.uppercase(), color = if (on) Acento else Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
-                    modifier = Modifier.clickable(enabled = !on) { onPick(i) }.padding(vertical = 8.dp)
+                    modifier = Modifier.tocable(enabled = !on) { onPick(i) }.padding(vertical = 8.dp)
                         .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 6.dp.toPx()), size = Size(size.width, 1.5.dp.toPx())) }
                 )
             }
@@ -249,14 +249,14 @@ fun MagFooter(text: String = "Editar", onClick: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(3.dp).background(Charcoal))
         Text("${text.uppercase()} →", color = Acento, fontFamily = Body, fontSize = 14.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp,
-            modifier = Modifier.clickable(onClick = onClick).padding(vertical = 18.dp))
+            modifier = Modifier.tocable(onClick = onClick).padding(vertical = 18.dp))
     }
 }
 
 /** Una línea de la lista: título en serif, datos en versalitas y, a la derecha, lo que se pase. */
 @Composable
 fun FilaRevista(titulo: String, meta: String, modifier: Modifier = Modifier, derecha: @Composable RowScope.() -> Unit = {}, onClick: () -> Unit) {
-    Row(modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().tocable(onClick = onClick).padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             FitTitle(titulo, 26.sp, 28.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (meta.isNotBlank()) Text(meta.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 2, modifier = Modifier.padding(top = 3.dp))

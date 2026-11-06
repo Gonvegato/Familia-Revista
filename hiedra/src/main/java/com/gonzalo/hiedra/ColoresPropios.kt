@@ -30,7 +30,7 @@ private fun hexDe(c: Color) = "#%06X".format(c.toArgb() and 0xFFFFFF)
 @Composable
 fun SelectorColor(nombre: String, valor: Long, actual: Color, onCambia: (Long) -> Unit, onGuarda: () -> Unit, copiar: (() -> Unit)? = null) {
     var abierto by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().clickable { abierto = !abierto }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().tocable { abierto = !abierto }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(36.dp).background(actual).border(1.dp, Charcoal))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {

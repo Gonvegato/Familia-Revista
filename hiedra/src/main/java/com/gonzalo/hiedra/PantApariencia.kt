@@ -47,7 +47,7 @@ fun SeccionApariencia() {
     listOf(1 to "Claro", 2 to "Oscuro", 0 to "Como el móvil").forEachIndexed { i, (modo, nombre) ->
         if (i > 0) Filete(1.dp, Line)
         val on = Modo.eleccion == modo
-        Row(Modifier.fillMaxWidth().clickable { if (!on) { Modo.eleccion = modo; Skin.fondoId = ""; propio(); guarda() } }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().tocable { if (!on) { Modo.eleccion = modo; Skin.fondoId = ""; propio(); guarda() } }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(nombre, fontFamily = Display, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = 24.sp, color = if (on) Charcoal else Muted, modifier = Modifier.weight(1f))
             if (on) Text("✓", color = Acento, fontWeight = FontWeight.Black, fontSize = 20.sp)
         }
@@ -61,7 +61,7 @@ fun SeccionApariencia() {
         Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             fila.forEach { f ->
                 val on = Skin.fondoId == (f?.id ?: "")
-                Column(Modifier.weight(1f).clickable { if (!on) { Skin.fondoId = f?.id ?: ""; Skin.fondoPropio = 0L; propio(); guarda() } }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.weight(1f).tocable { if (!on) { Skin.fondoId = f?.id ?: ""; Skin.fondoPropio = 0L; propio(); guarda() } }, horizontalAlignment = Alignment.CenterHorizontally) {
                     val papel = f?.tones?.cPaper ?: Color(if (Modo.eleccion == 1) 0xFFF3EEE4 else 0xFF141210)
                     Box(Modifier.fillMaxWidth().aspectRatio(1f).background(papel).border(if (on) 3.dp else 1.dp, if (on) Acento else Line), contentAlignment = Alignment.Center) {
                         Text("Aa", color = f?.tones?.cInk ?: Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
@@ -80,7 +80,7 @@ fun SeccionApariencia() {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Bottom) {
         listOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande").forEach { (pct, nombre) ->
             val on = Skin.escala == pct
-            Column(Modifier.weight(1f).clickable { if (!on) { Skin.escala = pct; guarda() } }.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.weight(1f).tocable { if (!on) { Skin.escala = pct; guarda() } }.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Aa", fontFamily = Display, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = (22f * pct / 100f / (Skin.escala / 100f)).sp, color = if (on) Charcoal else Muted)
                 Text(nombre.uppercase(), color = if (on) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
             }
@@ -96,7 +96,7 @@ fun SeccionApariencia() {
             fila.forEach { a ->
                 val on = Skin.accentId == a.id || (a.id == "rojo" && Skin.accentId == "paleta")
                 val c = Color((if (Skin.tones.darkBg) a.dark else a.light) or 0xFF000000)
-                Column(Modifier.weight(1f).clickable { if (!on) { Skin.accentId = a.id; Skin.acentoPropio = 0L; propio(); guarda() } }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.weight(1f).tocable { if (!on) { Skin.accentId = a.id; Skin.acentoPropio = 0L; propio(); guarda() } }, horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.fillMaxWidth().aspectRatio(1f).background(c).then(if (on) Modifier.border(3.dp, Charcoal) else Modifier), contentAlignment = Alignment.Center) {
                         if (on) Text("✓", color = if (a.id == "tinta") Paper else Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
                     }
@@ -187,7 +187,7 @@ private fun SeccionCopiar() {
     }
     ajustes?.let { a ->
         CopiaAtrio.filas(a).forEach { f ->
-            Row(Modifier.fillMaxWidth().clickable { marcadas = if (f.id in marcadas) marcadas - f.id else marcadas + f.id }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().tocable { marcadas = if (f.id in marcadas) marcadas - f.id else marcadas + f.id }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(22.dp).border(1.5.dp, Charcoal), contentAlignment = Alignment.Center) { if (f.id in marcadas) Text("✓", color = Acento, fontWeight = FontWeight.Black, fontSize = 16.sp) }
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
@@ -208,7 +208,7 @@ private fun SeccionCopiar() {
 @Composable
 fun SelectorLetra(nombre: String, valor: String, opciones: List<String>, onCambia: (String) -> Unit) {
     var abierto by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().clickable { abierto = true }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().tocable { abierto = true }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("Aa", fontFamily = valor.takeIf { it.isNotBlank() }?.let { Skin.family(it) } ?: Display, fontSize = 28.sp, color = Charcoal, modifier = Modifier.width(50.dp))
         Column(Modifier.weight(1f)) {
             Text(nombre, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
@@ -223,12 +223,12 @@ fun SelectorLetra(nombre: String, valor: String, opciones: List<String>, onCambi
         text = {
             LazyColumn(Modifier.heightIn(max = 460.dp)) {
                 item {
-                    Text("La de Hiedra", fontSize = 18.sp, color = if (valor.isEmpty()) Acento else Charcoal, modifier = Modifier.fillMaxWidth().clickable { onCambia(""); abierto = false }.padding(vertical = 10.dp))
+                    Text("La de Hiedra", fontSize = 18.sp, color = if (valor.isEmpty()) Acento else Charcoal, modifier = Modifier.fillMaxWidth().tocable { onCambia(""); abierto = false }.padding(vertical = 10.dp))
                 }
                 items(opciones) { o ->
                     // (cada letra se baja de Google Fonts la primera vez: hasta entonces sale con la del sistema)
                     Text(o, fontFamily = Skin.family(o), fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = if (o == valor) Acento else Charcoal,
-                        modifier = Modifier.fillMaxWidth().clickable { onCambia(o); abierto = false }.padding(vertical = 10.dp))
+                        modifier = Modifier.fillMaxWidth().tocable { onCambia(o); abierto = false }.padding(vertical = 10.dp))
                 }
             }
         },

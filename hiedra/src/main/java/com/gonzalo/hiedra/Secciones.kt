@@ -76,7 +76,7 @@ fun metaJuego(j: Juego, conEstado: Boolean = false): String = listOf(
  */
 @Composable
 fun FilaJuego(j: Juego, alAbrir: (Juego) -> Unit, alJugar: ((Juego) -> Unit)? = null, modifier: Modifier = Modifier, portada: Dp = 54.dp, numero: Int = 0, conEstado: Boolean = false, extra: String = "") {
-    Row(modifier.fillMaxWidth().clickable { alAbrir(j) }.padding(top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().tocable { alAbrir(j) }.padding(top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         if (numero > 0) Text("$numero", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, modifier = Modifier.width(26.dp))
         Box(Modifier.width(portada).aspectRatio(PROPORCION_PORTADA).clip(esquina(4.dp))) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 26) }
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
@@ -85,7 +85,7 @@ fun FilaJuego(j: Juego, alAbrir: (Juego) -> Unit, alJugar: ((Juego) -> Unit)? = 
             if (meta.isNotBlank()) Text(meta.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2, lineHeight = 15.sp, modifier = Modifier.padding(top = 3.dp))
         }
         if (alJugar != null && !j.sinLanzador) Text(if (j.enPc) "PC →" else "JUGAR →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
-            modifier = Modifier.clickable { alJugar(j) }.padding(start = 8.dp, top = 12.dp, bottom = 12.dp))
+            modifier = Modifier.tocable { alJugar(j) }.padding(start = 8.dp, top = 12.dp, bottom = 12.dp))
     }
 }
 
@@ -116,7 +116,7 @@ fun resumenSaga(todos: List<Juego>): String {
 fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAbrirSaga: (Saga) -> Unit, alAbrirJuego: (Juego) -> Unit, alJugar: ((Juego) -> Unit)? = null) {
     val todos = remember(f.saga, Biblioteca.juegos.size) { Sagas.juegos(f.saga) }
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().clickable(onClick = alAlternar).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().tocable(onClick = alAlternar).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             AbanicoSaga(f.miembros)
             Column(Modifier.weight(1f).padding(start = 16.dp, end = 8.dp)) {
                 Text(f.saga.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 22.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -165,7 +165,7 @@ fun MenusPequenos(sel: Menu?, cuentas: Map<Menu, Int>, onSel: (Menu?) -> Unit) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.Bottom) {
             Menu.entries.forEach { m ->
                 val on = m == sel
-                Row(Modifier.clickable { onSel(if (on) null else m) }
+                Row(Modifier.tocable(fuera = 0.dp) { onSel(if (on) null else m) }
                     .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
                     .padding(top = 10.dp, bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
                     Text(m.nombre.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1)
@@ -281,7 +281,10 @@ fun PantSecciones(inicial: Destino, alVolver: () -> Unit, alAbrir: (Juego) -> Un
     val cuentas = listOf(Estado.JUGANDO, Estado.PENDIENTE, Estado.PASADO, Estado.ABANDONADO).map { e -> todos.count { it.estado == e } } + Sagas.lista.size
     val foco = remember { FocusRequester() }
     LaunchedEffect(buscando) { if (buscando) runCatching { foco.requestFocus() } }
-    Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
+    // En la tablet, la página no pasa de 960 dp de ancho (como una revista abierta: las filas no se estiran de lado a lado)
+    val tablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700
+    Box(Modifier.fillMaxSize().background(Paper), contentAlignment = Alignment.TopCenter) {
+    Column(Modifier.widthIn(max = 960.dp).fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = if (tablet) 44.dp else 28.dp)) {
         RevistaTopBar(alVolver, "Hiedra") {
             EnlaceRevista("Buscar", acento = buscando) { buscando = !buscando; if (!buscando) busca = "" }
             EnlaceRevista("+ Añadir", acento = true) { alAnadir() }
@@ -300,6 +303,7 @@ fun PantSecciones(inicial: Destino, alVolver: () -> Unit, alAbrir: (Juego) -> Un
                 else -> PaginaSagas(todos, alAbrir, alJugar, alAbrirSaga)
             }
         }
+    }
     }
 }
 
@@ -325,7 +329,7 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int>,
             }.horizontalScroll(scroll), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.Bottom) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }.clickable { onSel(i) }
+                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }.tocable(fuera = 0.dp) { onSel(i) }
                     .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
                     .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
                     Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1)

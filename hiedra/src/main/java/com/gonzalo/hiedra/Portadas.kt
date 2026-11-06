@@ -150,7 +150,7 @@ fun PortadaArco(
         }
         if (j.favorito) Icon(Icons.Filled.Star, "Favorito", tint = Color(0xFFFFD24A), modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 12.dp).size(16.dp))
         if (alJugar != null) Box(
-            Modifier.align(Alignment.BottomEnd).padding(8.dp).size(30.dp).shadow(4.dp, CircleShape).clip(CircleShape).background(Acento).clickable(onClick = alJugar),
+            Modifier.align(Alignment.BottomEnd).padding(8.dp).size(30.dp).shadow(4.dp, CircleShape).clip(CircleShape).background(Acento).tocable(onClick = alJugar),
             contentAlignment = Alignment.Center
         ) { Icon(Icons.Filled.PlayArrow, "Jugar ${j.titulo}", tint = SobreAcento, modifier = Modifier.size(20.dp)) }
     }

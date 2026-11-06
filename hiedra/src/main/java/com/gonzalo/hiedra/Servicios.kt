@@ -240,7 +240,7 @@ fun DialogoSgdb(j: Juego, alCerrar: () -> Unit, alElegir: (String) -> Unit) {
             if (error.isNotBlank()) Text(error, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
             if (elegido == null) Column(Modifier.verticalScroll(rememberScrollState())) {
                 hits.forEach { h ->
-                    Row(Modifier.fillMaxWidth().clickable { elegir(h) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().tocable { elegir(h) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(h.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(1f))
                         if (h.sub.isNotBlank()) Text(h.sub, color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
@@ -248,7 +248,7 @@ fun DialogoSgdb(j: Juego, alCerrar: () -> Unit, alElegir: (String) -> Unit) {
                 }
             } else LazyVerticalGrid(GridCells.Adaptive(100.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                 items(portadas, key = { it.second }) { (thumb, url) ->
-                    AsyncImage(thumb, null, Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(esquina(3.dp)).background(Sand).clickable { alElegir(url) }, contentScale = ContentScale.Crop)
+                    AsyncImage(thumb, null, Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(esquina(3.dp)).background(Sand).tocable { alElegir(url) }, contentScale = ContentScale.Crop)
                 }
             }
         }
