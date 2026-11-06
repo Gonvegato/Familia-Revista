@@ -61,6 +61,7 @@ fun PantObra(pid: String, eidInicial: String?, nav: Nav, pestanaInicial: Int = 0
     var focoArbol by remember(pid) { mutableStateOf<String?>(null) }
     var fraseGuia by remember { mutableStateOf(false) }
     var metaGuia by remember { mutableStateOf(false) }
+    var cuadros by remember(pid) { mutableStateOf(false) }
     val modoFichas = remember(pid) { ModoPagina() }
     val modoNotas = remember(pid) { ModoPagina() }
     val abre = remember(pid) { AbreDoc() }
@@ -98,7 +99,7 @@ fun PantObra(pid: String, eidInicial: String?, nav: Nav, pestanaInicial: Int = 0
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when (pestana) {
-                0 -> Manuscrito(obra, eid, { Editor.guardaYa(); eid = it }, nav, abre, guia, verGuia = { pestana = TAB_GUIA })
+                0 -> Manuscrito(obra, eid, { Editor.guardaYa(); eid = it; if (it != null) cuadros = false }, nav, abre, guia, verGuia = { pestana = TAB_GUIA }, cuadros = cuadros, onCuadros = { cuadros = it })
                 1 -> Fichas(obra, nav, modoFichas, abrirEscena, verArbol)
                 2 -> ArbolObra(obra, nav, abre, focoArbol, abrirEscena)
                 3 -> Notas(obra, nav, modoNotas)
@@ -117,7 +118,7 @@ fun PantObra(pid: String, eidInicial: String?, nav: Nav, pestanaInicial: Int = 0
 
 /** El manuscrito: a la izquierda el índice (partes, capítulos y escenas, en el orden del libro); a la derecha la escena que escribes. */
 @Composable
-private fun Manuscrito(obra: Doc, eid: String?, abre: (String?) -> Unit, nav: Nav, docs: AbreDoc, guia: AccionesGuia, verGuia: () -> Unit) {
+private fun Manuscrito(obra: Doc, eid: String?, abre: (String?) -> Unit, nav: Nav, docs: AbreDoc, guia: AccionesGuia, verGuia: () -> Unit, cuadros: Boolean, onCuadros: (Boolean) -> Unit) {
     val e = Cuaderno.escritos
     e.version
     val pid = obra.id
@@ -129,11 +130,12 @@ private fun Manuscrito(obra: Doc, eid: String?, abre: (String?) -> Unit, nav: Na
     Row(Modifier.fillMaxSize().padding(top = if (conc) 0.dp else 8.dp)) {
         // ---- El índice
         if (!conc) {
-            IndiceManuscrito(e, obra, est, esc, abre, guia, verGuia, borrar = { borrar = it }) { renombrar = it }
+            IndiceManuscrito(e, obra, est, esc, abre, guia, verGuia, cuadros, onCuadros, borrar = { borrar = it }) { renombrar = it }
             Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
         }
-        // ---- La escena
-        Column(Modifier.weight(1f).fillMaxHeight().padding(start = if (conc) 0.dp else 28.dp)) {
+        // ---- El corcho (los capítulos en cuadros) o la escena
+        if (cuadros && !conc) Box(Modifier.weight(1f).fillMaxHeight().padding(start = 28.dp)) { CorchoObra(obra, abrirEscena = { abre(it) }, editar = { renombrar = it }) }
+        else Column(Modifier.weight(1f).fillMaxHeight().padding(start = if (conc) 0.dp else 28.dp)) {
             if (esc == null) { Vacio("Elige una escena", "O crea un capítulo: la primera escena se abre sola."); return@Column }
             val cap = e.get(esc.s("cid"))
             if (!conc) {
@@ -170,7 +172,8 @@ private fun Manuscrito(obra: Doc, eid: String?, abre: (String?) -> Unit, nav: Na
 
 /** El índice del manuscrito: el paso de la guía, las partes, los capítulos y sus escenas (con el color de su estado). */
 @Composable
-private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Estructura, esc: Doc?, abre: (String?) -> Unit, guia: AccionesGuia, verGuia: () -> Unit, borrar: (Doc) -> Unit, renombrar: (Doc) -> Unit) {
+private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Estructura, esc: Doc?, abre: (String?) -> Unit, guia: AccionesGuia, verGuia: () -> Unit,
+                             cuadros: Boolean, onCuadros: (Boolean) -> Unit, borrar: (Doc) -> Unit, renombrar: (Doc) -> Unit) {
     val pid = obra.id
     val scrollIndice = rememberScrollState()
     var mover by remember { mutableStateOf<Doc?>(null) }
@@ -179,12 +182,17 @@ private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Est
         Column(Modifier.fillMaxSize().verticalScroll(scrollIndice).padding(end = 14.dp, bottom = 40.dp)) {
             Spacer(Modifier.height(6.dp))
             TarjetaGuia(e, obra, hacer = { haceGuia(it, e, obra, guia) }, verGuia = verGuia)
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(vertical = 2.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                 EnlaceRevista("+ Capítulo", acento = true) {
                     val c = e.nuevo(Escritos.T_CAP, pid) { put("titulo", "Capítulo ${e.capitulos(pid).size + 1}") }
                     abre(e.nuevo(Escritos.T_ESCENA, pid) { put("cid", c.id); put("titulo", "") }.id)
                 }
                 EnlaceRevista("+ Parte") { e.nuevo(Escritos.T_PARTE, pid) { put("titulo", "Parte ${e.partes(pid).size + 1}") } }
+                Spacer(Modifier.weight(1f))
+                // (el manuscrito en cuadros, como un corcho; o volver a escribir)
+                Ayuda(if (cuadros) "Volver a la escena" else "Los capítulos en cuadros, como en un corcho") {
+                    EnlaceRevista(if (cuadros) "Escribir" else "Cuadros", acento = cuadros) { onCuadros(!cuadros) }
+                }
             }
             @Composable
             fun Capitulo(c: Doc, n: Int, sangria: Int) {
@@ -294,6 +302,11 @@ private fun DialogoNombre(d: Doc, nav: Nav, onCerrar: () -> Unit) {
     }) {
         CampoRevista(t, { t = it }, "Título", estilo = androidx.compose.ui.text.TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp))
         CampoRevista(resumen, { resumen = it }, if (esParte) "Qué pasa en esta parte" else "Resumen", lineas = 3, pista = "Cuenta para la guía (el esquema)")
+        val partes = remember(e.version) { e.partes(d.pid) }
+        if (!esParte && partes.isNotEmpty()) Desplegable("En qué parte", d.s("aid").takeIf { a -> partes.any { it.id == a } }.orEmpty(),
+            listOf("" to "Ninguna (capítulo suelto)") + partes.map { it.id to it.s("titulo").ifBlank { "Sin título" } }, Modifier.fillMaxWidth().padding(vertical = 6.dp)) { a ->
+            if (a != d.s("aid")) e.mueveCapitulo(d.id, a, null, null)
+        }
         EtiquetaCampo(if (esParte) "Color" else "Color de su cuadrado")
         Muestras(color, conNinguno = true) { color = it }
         Spacer(Modifier.height(12.dp))

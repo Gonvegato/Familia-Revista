@@ -134,6 +134,8 @@ class CapturasTest {
         captura("cobalto-sprint-en-marcha", Pantalla.Obra(obra.id, s2.id), antes = { SprintEscribir.empieza(e, obra.id, 25, 500) })
         // (se acaba al momento: de menos de un minuto, no queda en el historial)
         SprintEscribir.termina(e, ya = true); SprintEscribir.terminado = null
+        // El manuscrito en cuadros: el enlace «Cuadros» del índice
+        captura("cobalto-cuadros", Pantalla.Obra(obra.id, s2.id), gestos = { it.clic(530f, 410f) })
         captura("cobalto-indice-menu", Pantalla.Obra(obra.id, s2.id), gestos = { it.clic(420f, 594f, derecho = true) })
         captura("cobalto-arbol", Pantalla.Obra(obra.id, pestana = 2))
         captura("cobalto-arbol-oscuro", Pantalla.Obra(obra.id, pestana = 2), oscuro = true)
