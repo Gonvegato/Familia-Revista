@@ -15,6 +15,23 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.6.2 — lo que eliges, en todos tus dispositivos
+
+- **Lo que eliges en Hiedra ya está en tu cuenta, no solo en este móvil.** Hasta ahora viajaban los juegos, las horas, la apariencia y la
+  portada; lo demás se quedaba en cada móvil. Ahora también: el orden de cada sección, cómo se juega con el jugador de Hiedra (los botones
+  en pantalla, el avance rápido, el filtro, la orientación, cada cuánto guarda) y lo que cambiaste de cada mando, el emulador que elegiste
+  para cada consola, las portadas automáticas, las opciones de los núcleos, el PC al que mandas las órdenes, si las capturas del PC van a la
+  galería, si tus ROMs suben solas a kDrive, la web de imágenes que usaste la última vez y «Actualizar sola». Lo cambias en un móvil y está
+  en los demás; si en dos a la vez cambias cosas distintas, se quedan las dos, y si es la misma, la última.
+- **La primera vez en cada móvil, lo que ya tenías pasa a la cuenta sin perder nada**: lo que solo tenía uno, tal cual (así se juntan las
+  opciones de los núcleos y los emuladores de cada consola de los dos); lo que tenían distinto, el del móvil donde lo cambiaste más tarde.
+- Si eliges un emulador que en otro móvil no está instalado, allí se usa el automático hasta que lo instales.
+- Lo que es de cada móvil sigue en él: dónde están tus ROMs y sus carpetas, los guardados ya sincronizados, los núcleos y BIOS bajados,
+  «usar Hiedra como launcher» y los widgets.
+- **La lista negra de Azabache vuelve a llegar a Hiedra.** Hiedra la leía de lo que subía Atrio, que ya no cambia desde que Azabache la
+  guarda en la cuenta: un juego que vetabas (o que quitabas de la lista) en Azabache no se enteraba aquí. Ahora la lee de la cuenta.
+- Hiedra de Linux y Mac todavía no lee estos ajustes: llegará en su próxima versión.
+
 ## 0.6.1
 
 - **Una versión nueva ya no te saca de lo que estás haciendo.** El actualizador instala en silencio cuando no usas la app, y Android la cierra para instalarla. Pero no siempre sabía que la estabas usando: si se entraba directamente a un juego del jugador de Hiedra (desde un widget, o cuando Android vuelve a abrir la app tras cerrarla por detrás), creía que no estabas; y con la pantalla apagada un momento, también. Ahora se lo pregunta a Android, nunca instala con la pantalla apagada o bloqueada, y con un juego abierto espera a que lleves un rato fuera.

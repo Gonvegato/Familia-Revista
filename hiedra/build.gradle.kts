@@ -17,8 +17,8 @@ android {
         applicationId = "com.gonzalo.hiedra"
         minSdk = 29
         targetSdk = 35
-        versionCode = 32
-        versionName = "0.6.1"
+        versionCode = 33
+        versionName = "0.6.2"
         // El jugador interno (LibretroDroid y los núcleos del buildbot de libretro) solo se usa en arm64: así el APK no lleva
         // las bibliotecas nativas de otras arquitecturas que ningún móvil actual necesita.
         ndk { abiFilters += "arm64-v8a" }
