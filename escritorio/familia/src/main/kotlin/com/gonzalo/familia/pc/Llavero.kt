@@ -7,7 +7,7 @@ import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 /**
- * El llavero del sistema: lo delicado de la familia en este ordenador (la sesión que comparten las cuatro apps y la clave con la
+ * El llavero del sistema: lo delicado de la familia en este ordenador (la sesión que comparten las apps de la familia y la clave con la
  * que se cifra lo de cada una). Se guarda como texto; nunca la contraseña.
  *
  *  - Mac: el Llavero (Keychain), con la orden `security` del sistema. Los elementos son de servicio «Familia».

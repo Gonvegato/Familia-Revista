@@ -37,7 +37,7 @@ object Sitio {
     /** La carpeta de una app («azabache», «cobalto», «hiedra», «marfil»). */
     fun de(app: String): File = File(raiz, if (sistema == Sistema.MAC) app.replaceFirstChar { it.uppercase() } else app).also { it.mkdirs() }
 
-    /** Lo común a las cuatro apps de este ordenador (el llavero de repuesto). */
+    /** Lo común a las apps de la familia de este ordenador (el llavero de repuesto). */
     val comun: File get() = File(raiz, if (sistema == Sistema.MAC) "Comun" else "comun").also { it.mkdirs() }
 
     /** El nombre del equipo, para enseñarlo («portátil de Gonzalo»). */

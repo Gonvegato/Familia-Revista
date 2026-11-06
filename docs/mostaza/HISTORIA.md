@@ -26,6 +26,31 @@ mientras se baja (a trozos), con los subtítulos .srt que tenga al lado. Tu toke
 las cabeceras de una fuente a otros servidores (tampoco las de tu debrid a los de los subtítulos), y «Abrir con otro reproductor» no se
 ofrece con lo de tu kDrive.
 
+## En el ordenador (Linux y Mac): Mostaza 1.0.0
+
+**Mostaza también en el ordenador**, como sus hermanas (`escritorio/mostaza`, ver [ESCRITORIO](../ESCRITORIO.md)): la misma cuenta (entra
+sola si otra app de la familia de ese ordenador ya ha entrado), la apariencia de tu Mostaza del móvil, se actualiza sola desde tu kDrive
+(`Mostaza-<versión>-linux.tar.gz` / `-linux.deb` / `-mac.dmg`) y lo mismo de la cuenta, campo a campo: tu biblioteca (`titulos`), lo
+visto de cada película y episodio (`progreso`), el tiempo por día y dispositivo (`tiempo/<ref>~mostaza-linux-…`), lo que eliges
+(`ajustes/mostaza_*`: el elector, el reproductor, el orden de cada sección, la portada, los torrents y las fuentes rotas) y tus addons y tu
+clave de TMDB en `/claves`. Lo que ves en el ordenador lo sigues en el móvil, y al revés. El protocolo de los addons, el elector, las
+pistas, TMDB y las tres reglas son el mismo código que aquí, con las mismas pruebas (`ElectorTest`, `PistasTest`, `ProtocoloTest`,
+`TmdbTest`, `RotasTest` y `ReglasTest`, esta contra la cuenta de verdad).
+
+- **Se ve con mpv** (`sudo pacman -S mpv` en CachyOS y Arch, `brew install mpv` en el Mac). Mostaza lo abre en su ventana y le habla por su
+  socket: la dirección de la fuente y sus cabeceras van por ahí, nunca en la línea de órdenes (que cualquier programa puede leer), y mpv no
+  guarda nada suyo (ni «seguir donde lo dejé» ni yt-dlp). Le pregunta cada segundo por dónde va y si está reproduciendo de verdad, así
+  que las tres reglas funcionan como en el móvil; y lee sus pistas (`track-list`): pone el audio en tu idioma, los subtítulos en español
+  si hacen falta, prueba otra fuente si la que eligió sola no trae tu primer idioma, y recuerda lo de cada fuente. El vídeo de aviso del
+  debrid se reconoce igual (menos de 4 minutos para algo de más de 10) y se pasa a otra. Sin mpv, se ofrece el reproductor del sistema
+  (sin contar nada). Probado con mpv de verdad (`MpvDeVerdadTest`: vídeos hechos con ffmpeg y un servidor que pide la cabecera de la fuente).
+- **Torrents** con el mismo motor que el del móvil (`escritorio/torrent`, que compila `torrent/src/main` tal cual, con libtorrent4j y su
+  biblioteca de Linux x86-64 o del Mac con Apple Silicon); con tu debrid (TorBox, Real-Debrid…), las directas van antes.
+- **Teclado y mando**: las flechas (o la cruceta) mueven el foco, Intro (o A) pulsa, Esc (o B) vuelve.
+- Lo que aún no: «Tu kDrive» (el sitio donde entrará está en `Addons.fuentesExtra`), los widgets y traer lo de Azabache (lo hace el móvil).
+- Capturas: `CapturasTest` (con `-Dcapturas=<carpeta>`): portada (clara y oscura), Viendo, Visto, la ficha de una película y la de una
+  serie, las fuentes, los addons, Ajustes (fuentes y reproductor) y la banda de mpv.
+
 ## 0.2.0
 
 **Un catálogo propio, como una plataforma.** Con tu clave de TMDB (gratis, se pega una vez en Ajustes → Catálogo y va con tu cuenta,
