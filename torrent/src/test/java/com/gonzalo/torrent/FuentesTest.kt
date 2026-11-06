@@ -13,7 +13,8 @@ class FuentesTest {
             "tracker:http://tracker.ejemplo.org:80/announce",
             "dht:0123456789abcdef0123456789abcdef01234567",
         ))
-        assertEquals(listOf("udp://tracker.opentrackr.org:1337/announce", "http://tracker.ejemplo.org:80/announce"), f.trackers)
+        // (público: los suyos primero y luego los públicos de siempre, sin repetir)
+        assertEquals((listOf("udp://tracker.opentrackr.org:1337/announce", "http://tracker.ejemplo.org:80/announce") + LeeFuentes.PUBLICOS).distinct(), f.trackers)
         assertTrue(f.dht)
     }
 
@@ -26,7 +27,7 @@ class FuentesTest {
 
     @Test fun soloDht() {
         val f = LeeFuentes.lee(listOf("dht:0123456789abcdef0123456789abcdef01234567"))
-        assertTrue(f.trackers.isEmpty())
+        assertEquals(LeeFuentes.PUBLICOS, f.trackers)
         assertTrue(f.dht)
     }
 
@@ -45,7 +46,7 @@ class FuentesTest {
 
     @Test fun trackersSinPrefijoYRepetidos() {
         val f = LeeFuentes.lee(listOf("udp://a.org:1/announce", "tracker:udp://a.org:1/announce", "TRACKER:UDP://b.org:2", "DHT:x"))
-        assertEquals(listOf("udp://a.org:1/announce", "UDP://b.org:2"), f.trackers)
+        assertEquals(listOf("udp://a.org:1/announce", "UDP://b.org:2") + LeeFuentes.PUBLICOS, f.trackers)
         assertTrue(f.dht)
     }
 

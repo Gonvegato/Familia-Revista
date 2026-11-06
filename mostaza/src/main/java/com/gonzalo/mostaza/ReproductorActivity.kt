@@ -107,6 +107,8 @@ class ReproductorActivity : ComponentActivity() {
     private var cargandoDesde = 0L
     /** Cuándo se empezó a abrir esta fuente (para el tope de un torrent que no arranca). */
     private var arrancaDesde = 0L
+    /** Desde cuándo el torrent que se está abriendo casi no baja nada. */
+    private var lentoDesde = 0L
     private var subsDecididos = false
     /** Lo abierto es un vídeo de aviso de tu debrid ([esAvisoDelDebrid]): ya se ha pasado a otra. */
     private var avisoDelDebrid = false
@@ -128,9 +130,14 @@ class ReproductorActivity : ComponentActivity() {
             if (torrentAbierto.isNotBlank() && !listo) {
                 val m = estado.mensaje
                 if (m == null || m.startsWith("Cargando el torrent")) estado.mensaje = "Cargando el torrent…" + (runCatching { Torrents.fuente.estado(torrentAbierto) }.getOrNull()?.let { " · $it" } ?: "")
-                if (arrancaDesde > 0 && SystemClock.elapsedRealtime() - arrancaDesde > TORRENT_MAX_ARRANQUE_MS + 60_000L && estado.corte == null) {
+                // Sin bajar nada (o casi) durante 45 s: así no va a empezar
+                val bajada = runCatching { Torrents.fuente.bajada(torrentAbierto) }.getOrNull()
+                val ahora = SystemClock.elapsedRealtime()
+                if (bajada != null && bajada < 8_000L) { if (lentoDesde == 0L) lentoDesde = ahora } else lentoDesde = 0L
+                val parado = lentoDesde > 0 && ahora - lentoDesde > 45_000L
+                if (arrancaDesde > 0 && (parado || ahora - arrancaDesde > TORRENT_MAX_ARRANQUE_MS + 60_000L) && estado.corte == null) {
                     arrancaDesde = 0L
-                    if (!fallaEnTanteo()) siguienteCandidata()?.let { sig -> estado.corte = "No acaba de empezar. ¿Probar con ${sig.analisis.resumen().ifBlank { sig.addon }}?" }
+                    if (!fallaEnTanteo()) siguienteCandidata()?.let { sig -> estado.corte = "Este torrent casi no baja (hay muy poca gente compartiéndolo). ¿Probar con ${sig.analisis.resumen().ifBlank { sig.addon }}?" }
                 }
             } else if (listo && estado.mensaje?.startsWith("Cargando el torrent") == true) estado.mensaje = null
             // Cargando demasiado tiempo: se corta
@@ -198,7 +205,7 @@ class ReproductorActivity : ComponentActivity() {
         val (t, s) = nombreDe(e); estado.titulo = t; estado.subtitulo = s
         estado.fuente = e.elegida.analisis.resumen().ifBlank { e.elegida.addon }
         estado.cargando = true; estado.aviso = null; estado.corte = null; estado.siguiente = null; estado.cuentaAtras = -1
-        listo = false; cortes.clear(); cargandoDesde = 0L; arrancaDesde = SystemClock.elapsedRealtime(); subsDecididos = false; avisadoEntrada = false; avisoDelDebrid = false
+        listo = false; cortes.clear(); cargandoDesde = 0L; arrancaDesde = SystemClock.elapsedRealtime(); lentoDesde = 0L; subsDecididos = false; avisadoEntrada = false; avisoDelDebrid = false
         val v = visionado
         visionado = if (v != null && v.breve.id == e.breve.id && e.video != null && v.videoId != e.video.id) v.siguiente(e.video, e.meta)
             else Visionado(applicationContext, e.breve, e.meta, e.video, previo = e.previo, pendiente = e.pendiente)
@@ -254,7 +261,9 @@ class ReproductorActivity : ComponentActivity() {
         // Un reproductor nuevo para cada fuente (cada una con sus cabeceras)
         player?.let { viejo -> viejo.removeListener(oyente); viejo.release() }
         principal.removeCallbacks(pulso)
-        val p = ExoPlayer.Builder(this).setMediaSourceFactory(DefaultMediaSourceFactory(datos))
+        // (con FFmpeg detrás de los decodificadores del aparato: el AC3 o el DTS que este no sepa, lo decodifica la app)
+        val renderers = androidx.media3.exoplayer.DefaultRenderersFactory(this).setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+        val p = ExoPlayer.Builder(this, renderers).setMediaSourceFactory(DefaultMediaSourceFactory(datos))
             .setBandwidthMeter(DefaultBandwidthMeter.getSingletonInstance(this)).build().also { nuevo ->
                 player = nuevo; vista?.player = nuevo
                 nuevo.addListener(oyente)
@@ -644,7 +653,7 @@ fun ControlesReproductor(
                 if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
                 if (e.fuente.isNotBlank()) Text(e.fuente, color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp, maxLines = 1)
             }
-            if (e.aviso == null) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (e.aviso == null && !e.cargando) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
                 BotonReproductor(Icons.Rounded.Replay10, "Atrás", blanco, 52.dp) { alSaltar(-10) }
                 BotonReproductor(if (e.reproduciendo) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (e.reproduciendo) "Pausa" else "Reproducir", blanco, 76.dp) { alPlay() }
                 BotonReproductor(Icons.Rounded.Forward10, "Adelante", blanco, 52.dp) { alSaltar(10) }
@@ -665,7 +674,9 @@ fun ControlesReproductor(
                 }
             }
         }
-        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 70.dp).background(Color(0x99000000)).padding(horizontal = 16.dp, vertical = 8.dp)) }
+        // (debajo de «Cargando…», en el centro: arriba tapaba el título)
+        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.align(Alignment.Center).offset(y = 64.dp).widthIn(max = 560.dp).padding(horizontal = 24.dp).background(Color(0x99000000)).padding(horizontal = 16.dp, vertical = 8.dp)) }
         e.aviso?.let { a ->
             Column(Modifier.align(Alignment.Center).widthIn(max = 520.dp).padding(24.dp).background(Paper).padding(22.dp)) {
                 Antetitulo("No se puede", Modifier.padding(bottom = 8.dp))

@@ -16,6 +16,17 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## 0.3.2
+
+- **El sonido AC3, E-AC3, DTS o TrueHD en cualquier aparato.** Hay tablets (una OPPO, por ejemplo) que no traen la licencia de Dolby
+  y no saben decodificar el AC3 que llevan muchas fuentes en castellano. Mostaza lleva ahora su propio decodificador (FFmpeg, el que
+  precompila Jellyfin para Media3, `org.jellyfin.media3:media3-ffmpeg-decoder`, GPL-3.0), que solo se usa si el aparato no puede.
+- **Torrents con más gente.** A un torrent público (con `dht:`) se le suman los trackers públicos de siempre además de los suyos:
+  con los pocos que traía la fuente a veces solo se encontraba un par. Uno privado (sin `dht:`) sigue solo con los suyos.
+- Si un torrent que aún no ha empezado casi no baja nada (menos de 8 KB/s) durante 45 s, se pasa a otra fuente (o te la propone).
+- El estado del torrent («Cargando el torrent… · 1 par · 44 KB/s») sale en el centro, debajo de «Cargando…», y no tapa el título; sin
+  los botones de reproducir mientras carga. Lo de los trackers también en el ordenador (1.0.2).
+
 ## 0.3.1
 
 Un torrent ya no puede quedarse en «Preparando el torrent…» sin decir nada: mientras arranca enseña los segundos, cuánta gente hay, a

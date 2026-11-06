@@ -22,6 +22,9 @@ interface FuenteTorrent {
 
     /** Cómo va, en pocas palabras, para enseñarlo mientras carga («3 pares · 1,2 MB/s»); null si no se sabe. */
     fun estado(infoHash: String): String? = null
+
+    /** Lo que baja ahora (bytes por segundo); null si no se sabe. */
+    fun bajada(infoHash: String): Long? = null
 }
 
 /** Lo que se le deja a un torrent para empezar a verse (buscar gente, la lista de archivos y el primer trozo); luego, otra fuente. */

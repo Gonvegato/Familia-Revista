@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.mostaza"
         minSdk = 29
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.3.1"
+        versionCode = 8
+        versionName = "0.3.2"
         // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura
         ndk { abiFilters += "arm64-v8a" }
     }
@@ -73,6 +73,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-exoplayer-dash:$media3")
     implementation("androidx.media3:media3-ui:$media3")
+    // El sonido que no todos los aparatos saben decodificar (AC3, E-AC3, DTS, TrueHD…: muchas tablets no traen la licencia de Dolby):
+    // FFmpeg dentro de la app, precompilado por Jellyfin para Media3 (GPL-3.0). Se usa solo si el aparato no puede.
+    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1")
     testImplementation("junit:junit:4.13.2")
     testImplementation(testFixtures(project(":nucleo")))
     testImplementation("org.json:json:20240303")

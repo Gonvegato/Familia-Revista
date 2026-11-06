@@ -18,6 +18,8 @@ class FuenteMotor private constructor(c: Context) : FuenteTorrent {
 
     override fun para(infoHash: String) = motor.para(infoHash)
 
+    override fun bajada(infoHash: String): Long? = runCatching { motor.estado(infoHash)?.bajadaBs }.getOrNull()
+
     override fun estado(infoHash: String): String? = runCatching { motor.estado(infoHash) }.getOrNull()?.let { e ->
         e.error ?: resumenTorrent(e.pares, e.bajadaBs, e.progreso, e.fase == com.gonzalo.torrent.EstadoTorrent.Fase.BUSCANDO)
     }

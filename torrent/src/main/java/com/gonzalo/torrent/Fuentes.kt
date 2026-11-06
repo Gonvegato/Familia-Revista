@@ -7,7 +7,8 @@ import java.net.URLEncoder
  * - `tracker:<protocolo>://<host>:<puerto>…` es un tracker (http, https o udp).
  * - `dht:<hash>` pide buscar en la DHT. Sin ninguna entrada `dht:` (y con trackers) no se usa la DHT para ese torrent: así lo quieren
  *   los addons de trackers privados, que no dejan anunciarse en la DHT.
- * Si `sources` no trae nada aprovechable, se busca como Stremio sin fuentes: DHT y unos cuantos trackers públicos de siempre.
+ * Si `sources` no trae nada aprovechable, se busca con la DHT y unos cuantos trackers públicos de siempre; si es público (trae `dht:`),
+ * a sus trackers se les suman esos públicos.
  */
 internal data class Fuentes(val trackers: List<String>, val dht: Boolean)
 
@@ -38,6 +39,9 @@ internal object LeeFuentes {
             }
         }
         if (trackers.isEmpty() && !dht) return Fuentes(PUBLICOS, dht = true)
+        // Un torrent público (se puede buscar en la DHT): además de los suyos, los trackers públicos de siempre, para dar con más gente
+        // (con pocos trackers propios se encontraba uno o dos pares). Uno de un tracker privado (sin `dht:`) se queda solo con los suyos.
+        if (dht) trackers.addAll(PUBLICOS)
         return Fuentes(trackers.toList(), dht)
     }
 
