@@ -20,9 +20,11 @@ cuatro llevan la misma firma y se actualizan solas.
 
 ## En el ordenador (Linux y Mac)
 
-Azabache, Cobalto, Hiedra y Marfil también son apps de escritorio: `.dmg` para el Mac (Apple Silicon) y `.deb`/`.tar.gz` para Linux,
-en tu kDrive («Mi carpeta/versiones») y en cada ejecución de *Escritorio* en GitHub Actions. No guardan nada suyo: leen y escriben la
-misma cuenta, así que lo que haces en el ordenador está al momento en el móvil y al revés. Todo en `docs/ESCRITORIO.md`.
+Azabache, Cobalto, Hiedra y Marfil también son apps de escritorio, en tu kDrive («Mi carpeta/versiones»): `.dmg` para el Mac (Apple
+Silicon) y `.tar.gz` para Linux (CachyOS, Arch y cualquier otro: se descomprime y `./instalar.sh`, sin sudo; `--al-iniciar` para que
+Hiedra se abra al entrar en la sesión). No guardan nada suyo: leen y escriben la misma cuenta, así que lo que haces en el ordenador está al
+momento en el móvil y al revés. **Se actualizan solas** desde tu kDrive (la versión nueva se pone al cerrar la app). Una sola copia de cada
+una abierta a la vez, y desde cualquiera se abren las otras. Todo en `docs/ESCRITORIO.md`.
 
 ## Pasar a la familia (una sola vez)
 
