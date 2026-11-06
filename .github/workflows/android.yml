@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [hiedra, marfil, cobalto, azabache, mostaza]
+        app: [hiedra, marfil, cobalto, azabache, mostaza, torrent]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
