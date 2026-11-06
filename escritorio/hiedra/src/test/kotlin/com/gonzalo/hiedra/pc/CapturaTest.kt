@@ -164,7 +164,10 @@ class CapturaTest {
             val b = ByteArray(tam).also { r.nextBytes(it) }
             for (trozo in listOf(4, 8, 1024, Capturas.TROZO)) {
                 val l = Capturas.trozos(b, trozo)
-                assertEquals((Base64.getEncoder().encodeToString(b).length + trozo - 1) / trozo, l.size)
+                val entero = Base64.getEncoder().encodeToString(b)
+                assertEquals((entero.length + trozo - 1) / trozo, l.size)
+                // Lo mismo que cortar el base64 entero cada «trozo» caracteres, como Atrio del PC
+                assertEquals(entero.chunked(trozo), l)
                 assertTrue(l.dropLast(1).all { it.length == trozo }); assertTrue(l.last().length in 1..trozo)
                 // Como el móvil: cada trozo se decodifica solo y se juntan
                 val o = ByteArrayOutputStream(); l.forEach { o.write(Base64.getDecoder().decode(it)) }

@@ -139,19 +139,24 @@ object Capturas {
     /**
      * Hace una captura: la guarda en Imágenes/Hiedra, la apunta y (si [alMovil] y hay cuenta) la sube para el móvil; la copia del kDrive, en
      * segundo plano. Bloquea hasta que está subida. [por]: quién la pidió (lo que se apunta en `by`: «Hiedra · <móvil>» o «Hiedra»).
-     * Si ya se está haciendo una, espera a esa y devuelve la misma.
+     * Si ya se está haciendo una, espera a esa y devuelve la misma (o, si hacía falta para el móvil y esa no ha ido, hace otra).
      */
     fun haz(por: String? = null, alMovil: Boolean = AjustesTuPc.capturasAlMovil): Hecha {
         val nueva = CompletableFuture<Hecha>()
         val otra = synchronized(this) { enCurso ?: run { enCurso = nueva; null } }
-        if (otra != null) return try { otra.get() } catch (e: ExecutionException) { throw e.cause ?: e }
+        if (otra != null) {
+            val h = try { otra.get() } catch (e: ExecutionException) { throw e.cause ?: e }
+            return if (alMovil && !h.subida && LaFamilia.iniciada && LaFamilia.dentro) haz(por, alMovil) else h
+        }
         try {
             val h = hazYa(por, alMovil)
+            synchronized(this) { enCurso = null }
             nueva.complete(h)
             return h
         } catch (e: Throwable) {
+            synchronized(this) { enCurso = null }
             nueva.completeExceptionally(e); throw e
-        } finally { synchronized(this) { enCurso = null } }
+        }
     }
 
     private fun hazYa(por: String?, alMovil: Boolean): Hecha {
@@ -163,14 +168,14 @@ object Capturas {
         val t = System.currentTimeMillis()
         // Copia en este ordenador (Imágenes/Hiedra/<juego>)
         val archivo = runCatching { File(carpeta(), seguro(p?.nombre)).also { it.mkdirs() }.let { File(it, nombre) }.also { it.writeBytes(img.bytes) } }.getOrNull()
-        val sube = alMovil && LaFamilia.iniciada && LaFamilia.dentro
-        val h = Hecha(id, archivo, img.w, img.h, img.mime, img.bytes.size.toLong(), img.metodo, p?.nombre.orEmpty(), t, sube)
+        val aLaCuenta = alMovil && LaFamilia.iniciada && LaFamilia.dentro
+        val h = Hecha(id, archivo, img.w, img.h, img.mime, img.bytes.size.toLong(), img.metodo, p?.nombre.orEmpty(), t, aLaCuenta)
         apunta(h)
         javax.swing.SwingUtilities.invokeLater { version++ }
         // A tu kDrive, en segundo plano
         if (AjustesTuPc.capturasAKDrive && LaFamilia.iniciada && LaFamilia.dentro) Thread({ runCatching { aKDrive(img.bytes, nombre, p?.nombre) } }, "hiedra-captura-kdrive").apply { isDaemon = true; start() }
         // A la cuenta, por trozos, para que el móvil la baje tal cual (sin recomprimir)
-        if (sube) sube(id, img, nombre, por ?: "Hiedra", p)
+        if (aLaCuenta) sube(id, img, nombre, por ?: "Hiedra", p)
         return h
     }
 
@@ -182,21 +187,28 @@ object Capturas {
         "n" to n, "up" to 0, "done" to false, "m" to img.metodo, "name" to nombre, "by" to por,
         "game" to juego?.let { mapOf("n" to it.nombre, "k" to it.clave, "sg" to 0L) }, "t" to mapOf(".sv" to "timestamp"))
 
-    /** Los trozos de una imagen en base64 (cada uno de [trozo] caracteres, múltiplo de 4: se decodifican uno a uno). */
-    fun trozos(bytes: ByteArray, trozo: Int = TROZO): List<String> {
-        require(trozo > 0 && trozo % 4 == 0) { "el trozo tiene que ser múltiplo de 4" }
-        val b64 = Base64.getEncoder().encodeToString(bytes)
-        return (0 until (b64.length + trozo - 1) / trozo).map { b64.substring(it * trozo, minOf(b64.length, (it + 1) * trozo)) }
+    /** Cuántos trozos de [trozo] caracteres de base64 salen de [tamano] bytes. */
+    fun cuantos(tamano: Int, trozo: Int = TROZO): Int { require(trozo > 0 && trozo % 4 == 0) { "el trozo tiene que ser múltiplo de 4" }; val b = trozo / 4 * 3; return (tamano + b - 1) / b }
+
+    /**
+     * El trozo [i] de una imagen en base64: lo mismo que cortar el base64 entero cada [trozo] caracteres (como Atrio), pero sin tenerlo
+     * entero en memoria (una captura en 4K son decenas de MB): cada trozo es el base64 de sus 3·[trozo]/4 bytes, y se decodifica solo.
+     */
+    fun parte(bytes: ByteArray, i: Int, trozo: Int = TROZO): String {
+        val b = trozo / 4 * 3
+        return Base64.getEncoder().encodeToString(bytes.copyOfRange(i * b, minOf(bytes.size, (i + 1) * b)))
     }
+
+    /** Todos los trozos (para las pruebas). */
+    fun trozos(bytes: ByteArray, trozo: Int = TROZO): List<String> = (0 until cuantos(bytes.size, trozo)).map { parte(bytes, it, trozo) }
 
     /** Sube una captura a la cuenta para el móvil (bloquea hasta el final). */
     fun sube(id: String, img: Captura.Imagen, nombre: String, por: String, juego: Pc.Partida?, trozo: Int = TROZO, tanda: Int = TANDA) {
-        val partes = trozos(img.bytes, trozo)
-        val n = partes.size
+        val n = cuantos(img.bytes.size, trozo)
         LaFamilia.db("PUT", "${base()}/suite/shots/$id", Json.escribe(ficha(id, img, nombre, por, juego, n)), "print=silent")
         for (i in 0 until n step tanda) {
             val hasta = minOf(n, i + tanda)
-            LaFamilia.db("PATCH", "${base()}/shotdata/$id", Json.escribe((i until hasta).associate { it.toString() to partes[it] }), "print=silent")
+            LaFamilia.db("PATCH", "${base()}/shotdata/$id", Json.escribe((i until hasta).associate { it.toString() to parte(img.bytes, it, trozo) }), "print=silent")
             LaFamilia.db("PATCH", "${base()}/suite/shots/$id", Json.escribe(mapOf("up" to hasta)), "print=silent")
         }
         LaFamilia.db("PATCH", "${base()}/suite/shots/$id", Json.escribe(mapOf("done" to true)), "print=silent")

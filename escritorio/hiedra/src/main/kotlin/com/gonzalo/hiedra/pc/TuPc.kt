@@ -30,7 +30,7 @@ object TuPc {
     private fun dev() = Juegos.dispositivo()
     private fun ahora() = mapOf(".sv" to "timestamp")
 
-    /** Lo que publica de sí mismo (lo que lee el móvil: `app`, `name`, `os`, `on`, `at`, `game`). */
+    /** Lo que publica de sí mismo (lo que lee el móvil: `app`, `name`, `dn`, `os`, `on`, `at`, `game`, `shot`, `st`, `tiempo`). */
     fun presencia(on: Boolean): Map<String, Any?> {
         val p = Pc.ahora
         val m = linkedMapOf<String, Any?>("app" to "atrio", "cliente" to "hiedra", "name" to "Hiedra · ${Sitio.nombreEquipo}", "dn" to Sitio.nombreEquipo,

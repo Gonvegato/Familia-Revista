@@ -181,6 +181,20 @@ class TuPcCapturasTest {
         assertEquals(false, respuesta(otra)["ok"]); assertTrue(respuesta(otra)["msg"].comoTexto().contains("spectacle"))
     }
 
+    @Test fun dosALaVezSonLaMisma() {
+        val png = ImagenesPrueba.png(ImagenesPrueba.ruido(32, 18))
+        val veces = java.util.concurrent.atomic.AtomicInteger()
+        Capturas.capturaPruebas = { veces.incrementAndGet(); Thread.sleep(400); Captura.Imagen(png, 32, 18, "image/png", "prueba") }
+        val hechas = java.util.Collections.synchronizedList(ArrayList<Capturas.Hecha>())
+        val hilos = (1..3).map { Thread { hechas += Capturas.haz(alMovil = false) }.apply { start() } }
+        hilos.forEach { it.join() }
+        assertEquals("una sola captura", 1, veces.get())
+        assertEquals(1, hechas.map { it.id }.distinct().size)
+        // La que hacía falta para el móvil y no ha ido: otra
+        val h = Capturas.haz(alMovil = true)
+        assertTrue(h.subida); assertEquals(2, veces.get())
+    }
+
     // ---------------------------------------------------------------- streaming
 
     @Test fun elMovilPreparaElStreaming() {
