@@ -374,7 +374,8 @@ private fun PistasSala(est: EstadoSala, foco: FocoSala) {
         Box(Modifier.fillMaxWidth().padding(horizontal = 72.dp).height(1.dp).background(tinta.linea))
         Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 72.dp), verticalAlignment = Alignment.CenterVertically) {
             val m = Mando.mandos.lastOrNull()
-            Text(when { m != null && Entrada.con != ConQue.TECLADO -> "🎮  " + m.nombre; Entrada.con == ConQue.TECLADO || Mando.mandos.isEmpty() -> "Teclado"; else -> "" },
+            Text(LaFamilia.usuario, color = tinta.tinta, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
+            Text("  ·  " + when { m != null && Entrada.con != ConQue.TECLADO -> "Mando: " + m.nombre; else -> "Teclado" },
                 color = tinta.gris, fontFamily = Body, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 520.dp))
             Spacer(Modifier.weight(1f))
             val pistas = buildList {

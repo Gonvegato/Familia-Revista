@@ -123,7 +123,7 @@ fun AjustesSalaMando(alSala: () -> Unit) {
         Spacer(Modifier.height(10.dp))
         BotonAcento("▶  Entrar en la sala", alto = 48.dp) { alSala() }
         Spacer(Modifier.height(12.dp))
-        Fila("Abrir Hiedra ya en la sala", "Al encender el PC de jugar, directamente la sala (o con `--sala`, que es lo que va en el inicio de sesión)") { Interruptor(AjustesSala.alAbrir) { AjustesSala.ponAlAbrir(it) } }
+        Fila("Abrir Hiedra ya en la sala", "Al encender el PC de jugar, directamente la sala (o abriéndola con «--sala», lo que va en el inicio de sesión)") { Interruptor(AjustesSala.alAbrir) { AjustesSala.ponAlAbrir(it) } }
         Fila("Sala oscura", "Los colores de tu Hiedra, en su versión de noche (mejor para la tele). Si no, como la app") { Interruptor(AjustesSala.oscura) { AjustesSala.ponOscura(it) } }
         Fila("Al jugar, Hiedra se aparta", "Se minimiza para que el juego quede delante, y vuelve sola al cerrarlo") { Interruptor(AjustesSala.apartar) { AjustesSala.ponApartar(it) } }
         Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))

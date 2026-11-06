@@ -50,10 +50,17 @@ object VentanaHiedra {
         if (!apartada) return@enPantalla
         w.extendedState = w.extendedState and Frame.ICONIFIED.inv()
         w.isVisible = true
-        luego(250) {
-            if (enSala) VentanaFamilia.pantallaCompleta = true
-            w.toFront(); w.requestFocus()
-            apartada = false
+        fun delante() { w.toFront(); w.requestFocus(); apartada = false }
+        luego(300) {
+            when {
+                // (si al minimizarla dejó de estar a pantalla completa —según el sistema—, se vuelve a poner)
+                enSala && VentanaFamilia.pantallaCompleta && w.placement != WindowPlacement.Fullscreen -> {
+                    VentanaFamilia.pantallaCompleta = false
+                    luego(150) { VentanaFamilia.pantallaCompleta = true; luego(300) { delante() } }
+                }
+                enSala && !VentanaFamilia.pantallaCompleta -> { VentanaFamilia.pantallaCompleta = true; luego(300) { delante() } }
+                else -> delante()
+            }
         }
     }
 

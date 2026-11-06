@@ -120,6 +120,17 @@ class CapturasTest {
         captura("hiedra-ficha", Pantalla.Ficha("j_000000000001", Pantalla.Portada), oscuro = true)
         capturasSala(dir, tmp, otra)
         captura("hiedra-ordenador", Pantalla.EsteOrdenador)
+        // Ajustes → Emulación y → Sala y mando
+        fun ajustes(nombre: String, que: @androidx.compose.runtime.Composable () -> Unit) {
+            com.gonzalo.familia.pc.revista.Modo.eleccion = 1
+            val escena = ImageComposeScene(1200, 1000, Density(1f)) { TemaFamilia { TextoAireado { Box(Modifier.fillMaxSize().background(Paper)) { com.gonzalo.familia.pc.revista.Pagina { que() } } } } }
+            var img = escena.render(0)
+            repeat(5) { i -> Thread.sleep(120); img = escena.render((i + 1) * 500_000_000L) }
+            File(dir, "$nombre.png").writeBytes(img.encodeToData(EncodedImageFormat.PNG)!!.bytes)
+            escena.close()
+        }
+        ajustes("hiedra-ajustes-emulacion") { AjustesEmulacion(Nav({}, {})) }
+        ajustes("hiedra-ajustes-sala") { AjustesSalaMando {} }
         LaFamilia.reiniciaParaPruebas()
         Pc.paraPruebas(null, null); Emulacion.instaladoPruebas = null
     }
