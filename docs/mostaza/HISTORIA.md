@@ -57,8 +57,12 @@ fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproduc
   Con el mando: la cruceta salta adelante y atrás, OK enseña los controles.
 - Las fuentes de **YouTube** (los tráileres) se abren en YouTube y las de una **web**, en el navegador. Las de **Usenet** (NZB) y las de
   **comprimidos** dicen, con la verdad, que todavía no.
-- **Los torrents llegan en la próxima versión** (con el motor de la familia): un torrent dice que todavía no y propone una fuente directa o
-  de tu debrid. Lo que elijas de los torrents (solo con wifi, límites de subida y bajada, compartir mientras ves) ya viaja con tu cuenta.
+- **Los torrents se ven mientras se bajan**, con el motor de la familia (libtorrent4j, de código abierto): eliges un torrent, se prepara
+  (unos segundos: buscar a quién lo tiene y leer su lista de archivos) y se reproduce mientras baja, y puedes saltar a cualquier punto (se
+  baja primero lo que vas a ver). Al cerrar el vídeo se deja de compartir y se borra. Mientras lo ves, lo que bajas se comparte con otros
+  (así van los torrents), con la subida limitada a 100 KB/s de partida. Con «Solo con wifi», con datos del móvil no se baja nada. Todo eso
+  (solo con wifi, subida, bajada, compartir) viaja con tu cuenta; lo que pueden ocupar los torrents en el móvil es de cada dispositivo.
+  Una fuente de tu Real-Debrid no es un torrent para el móvil: se ve como cualquier vídeo, sin compartir nada.
 - **Tus addons**: instalar uno por la dirección de su manifiesto (o desde el botón «Install» de su página: los `stremio://` se abren
   aquí), subirlos y bajarlos (el de arriba manda en las fichas), quitarlos y **configurarlos** (la página del propio addon: lo que pongas
   allí, como tu debrid, se queda en la dirección nueva). Si quitas Cinemeta, «Poner Cinemeta» lo devuelve; OpenSubtitles (el oficial de
@@ -132,7 +136,8 @@ hayas cambiado o borrado en Mostaza no se pisa.
 - Sin TMDB en tu cuenta, lo que venía de Azabache como película entra sin código de IMDb (`tmdb:<id>`) hasta que pongas la clave: su ficha
   no sale de Cinemeta hasta entonces.
 - Hiedra, Marfil y Cobalto aún no le dan la cuenta a Mostaza (lo hará su próxima versión): entra con Azabache 1.6.3, o con tu usuario.
-- Los torrents, Usenet y los comprimidos: en la próxima versión (los torrents) o más adelante.
+- Usenet y los comprimidos: más adelante. Los torrents están probados de verdad (un torrent compartido en el mismo ordenador, visto
+  entero y saltando, byte a byte), pero todavía no en un móvil de verdad ni con gente de internet.
 
 ## Compilar
 

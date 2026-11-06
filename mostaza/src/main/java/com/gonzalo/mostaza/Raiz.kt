@@ -25,6 +25,8 @@ fun iniciar(c: Context) {
     Skin.cargar(c); TemaAtrio.cargarGuardado(c)
     Biblioteca.cargar(c); Addons.cargar(c)
     SincroP.iniciar(c)
+    // El motor de torrents (no arranca nada hasta que se abre un torrent)
+    FuenteMotor.conecta(c)
 }
 
 /** Dónde estás: la portada y sus secciones (se llega a ellas desde el menú de la portada, como en las hermanas). */

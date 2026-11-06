@@ -15,7 +15,11 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura
+        ndk { abiFilters += "arm64-v8a" }
     }
+    // (las bibliotecas nativas, comprimidas en el APK: la del motor ocupa unos 6 MB en vez de 16)
+    packaging { jniLibs { useLegacyPackaging = true } }
     buildTypes {
         getByName("release") {
             isDebuggable = false
@@ -53,6 +57,8 @@ val media3 = "1.9.4"
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
     implementation(project(":familia"))
+    // El motor de torrents de la familia (libtorrent4j): ver un torrent mientras se baja
+    implementation(project(":torrent"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")

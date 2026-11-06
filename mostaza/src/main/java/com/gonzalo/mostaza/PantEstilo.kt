@@ -151,7 +151,7 @@ private fun SeccionFuentes(alAddons: () -> Unit) {
     Text("Lo de la conexión es de este dispositivo (no viaja): se mide al ver, por wifi y por datos aparte, y baja en cuanto algo se corta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Torrents", Modifier.padding(bottom = 4.dp))
-    Text(if (Torrents.disponible) "Con el motor de torrents de la familia." else "Los torrents llegan en la próxima versión: mientras, se ven las fuentes directas o de tu debrid. Lo que elijas aquí ya viaja con tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+    Text(if (Torrents.disponible) "Con el motor de torrents de la familia." else "El motor de torrents no se ha podido poner en marcha en este dispositivo: se ven las fuentes directas o de tu debrid. Lo que elijas aquí viaja con tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     var t by remember { mutableStateOf(AjustesTorrents.ajustes(ctx)) }
     fun ponT(n: AjustesTorrent) { t = n; AjustesTorrents.pon(ctx, n) }
     Fila("Solo con wifi", "Con datos del móvil, los torrents no se bajan.") { Interruptor(t.soloWifi) { ponT(t.copy(soloWifi = it)) } }

@@ -14,6 +14,7 @@ data class Flujo(val url: String, val archivo: String, val tamano: Long, val mim
  *
  * - [soloWifi]: con datos móviles no se baja nada (prepara falla con un mensaje claro, y lo que está en marcha se para hasta la wifi).
  * - [subidaMaxKBs]: lo más que se sube a los demás, en KB/s (0 o menos: lo mínimo, 1 KB/s; nunca «sin límite»).
+ * - [bajadaMaxKBs]: lo más que se baja, en KB/s (0: sin límite).
  * - [cacheMaxMB]: lo que pueden ocupar los torrents viejos; al empezar uno nuevo se borran los más antiguos hasta que quepan.
  *   El que se está viendo nunca se borra, aunque él solo ocupe más.
  * - [seguirCompartiendoAlParar]: al parar, el torrent se queda compartiendo lo que tiene (sin bajar más) y no se borra hasta que
@@ -23,6 +24,7 @@ data class Flujo(val url: String, val archivo: String, val tamano: Long, val mim
 data class AjustesTorrent(
     val soloWifi: Boolean = false,
     val subidaMaxKBs: Int = 64,
+    val bajadaMaxKBs: Int = 0,
     val cacheMaxMB: Int = 4096,
     val seguirCompartiendoAlParar: Boolean = false,
     val carpeta: File? = null,

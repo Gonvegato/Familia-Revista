@@ -3,9 +3,9 @@ package com.gonzalo.mostaza
 import android.content.Context
 
 /*
- * Los torrents (`infoHash`) los pondrá el motor de la familia (el módulo `:torrent`, `com.gonzalo.torrent`), que llega en la próxima
- * versión. Mostaza solo habla con él por esta interfaz: le da el torrent y recibe una dirección local (http://127.0.0.1:…) que el
- * reproductor abre como cualquier otra. Conectarlo es una línea: `Torrents.fuente = <el motor>(contexto, Torrents.ajustes(contexto))`.
+ * Los torrents (`infoHash`) los pone el motor de la familia (el módulo `:torrent`, `com.gonzalo.torrent`, con libtorrent4j). Mostaza
+ * solo habla con él por esta interfaz: le da el torrent y recibe una dirección local (http://127.0.0.1:…) que el reproductor abre como
+ * cualquier otra. Lo conecta [FuenteMotor.conecta] al arrancar.
  */
 
 /** Lo que Mostaza le pide al motor de torrents. */
@@ -26,7 +26,7 @@ class SinTorrent(msg: String) : Exception(msg)
 
 /** Mientras no está el motor: lo dice, y propone una fuente directa o de tu debrid. */
 object SinTorrents : FuenteTorrent {
-    const val AVISO = "Los torrents llegan en la próxima versión de Mostaza. Mientras, elige una fuente directa o de tu debrid (las que no dicen «torrent»): con tu Real-Debrid puesto en tu addon, salen las mismas películas sin torrent."
+    const val AVISO = "No se ha podido poner en marcha el motor de torrents en este dispositivo. Elige una fuente directa o de tu debrid (las que no dicen «torrent»): con tu Real-Debrid puesto en tu addon, salen las mismas películas sin torrent."
     override suspend fun prepara(infoHash: String, fileIdx: Int?, fuentes: List<String>, nombre: String?): String = throw SinTorrent(AVISO)
     override fun para(infoHash: String) {}
 }
@@ -42,7 +42,7 @@ const val SUBIDA_POR_DEFECTO_KBS = 100
 data class AjustesTorrent(val soloWifi: Boolean = true, val subidaKBs: Int = SUBIDA_POR_DEFECTO_KBS, val bajadaKBs: Int = 0, val compartir: Boolean = true, val cacheMB: Int = 4096)
 
 object Torrents {
-    /** El motor (hasta la próxima versión, [SinTorrents]). */
+    /** El motor ([FuenteMotor]; [SinTorrents] si no se pudo poner en marcha). */
     @Volatile var fuente: FuenteTorrent = SinTorrents
 
     val disponible: Boolean get() = fuente !== SinTorrents

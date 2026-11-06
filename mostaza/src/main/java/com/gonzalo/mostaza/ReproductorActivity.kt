@@ -202,8 +202,10 @@ class ReproductorActivity : ComponentActivity() {
     }
 
     private fun empieza(u: String, subs: List<Subtitulo>, desde: Long) {
+        // (un torrent que empieza puede tardar en tener el trozo que se pide: el motor espera, y el reproductor tiene que esperarle)
+        val espera = if (torrentAbierto.isNotBlank()) com.gonzalo.torrent.MotorTorrent.ESPERA_LECTURA_MS else 30_000
         val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent("Mostaza/$VERSION").setDefaultRequestProperties(cabeceras)
-            .setConnectTimeoutMs(20_000).setReadTimeoutMs(30_000)
+            .setConnectTimeoutMs(20_000).setReadTimeoutMs(espera)
         val datos = DefaultDataSource.Factory(this, http)
         // Un reproductor nuevo para cada fuente (cada una con sus cabeceras)
         player?.let { viejo -> viejo.removeListener(oyente); viejo.release() }

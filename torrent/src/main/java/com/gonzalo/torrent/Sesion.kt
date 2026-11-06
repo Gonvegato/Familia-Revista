@@ -55,6 +55,7 @@ internal class Sesion(private val config: ConfigSesion, ajustes: AjustesTorrent,
             .alertQueueSize(5000)
             .stopTrackerTimeout(1)
             .uploadRateLimit(subida(ajustes))
+        sp.setInteger(settings_pack.int_types.download_rate_limit.swigValue(), bajada(ajustes))
         // Volver a llamar a un par al que ya se llamó: 10 s y no el minuto de libtorrent (tras un corte)
         sp.setInteger(settings_pack.int_types.min_reconnect_time.swigValue(), 10)
         // Con el archivo ya entero, libtorrent cuelga a las semillas (y les dice que ya no quiere nada, y ellas le cuelgan): si luego
@@ -133,7 +134,9 @@ internal class Sesion(private val config: ConfigSesion, ajustes: AjustesTorrent,
     }
 
     fun aplica(ajustes: AjustesTorrent) {
-        sm.applySettings(SettingsPack().uploadRateLimit(subida(ajustes)))
+        val sp = SettingsPack().uploadRateLimit(subida(ajustes))
+        sp.setInteger(settings_pack.int_types.download_rate_limit.swigValue(), bajada(ajustes))
+        sm.applySettings(sp)
     }
 
     fun pausa() = sm.pause()
@@ -155,5 +158,8 @@ internal class Sesion(private val config: ConfigSesion, ajustes: AjustesTorrent,
 
         /** Lo que se sube como mucho, en bytes/s: nunca 0, que para libtorrent es sin límite. */
         fun subida(a: AjustesTorrent): Int = maxOf(1, a.subidaMaxKBs) * 1024
+
+        /** Lo que se baja como mucho, en bytes/s (0: sin límite, como lo entiende libtorrent). */
+        fun bajada(a: AjustesTorrent): Int = if (a.bajadaMaxKBs <= 0) 0 else a.bajadaMaxKBs * 1024
     }
 }
