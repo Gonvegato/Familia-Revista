@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.0.1"
+val version = "1.1.0"
 val android = rootProject.file("cobalto/src")
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -26,9 +26,16 @@ val pruebasCompartidas = tasks.register<Sync>("pruebasDeAndroid") {
     from(File(android, "test/java/com/gonzalo/cobalto")) { include("EscribirMezclaTest.kt", "EscribirEstructuraTest.kt") }
     into(layout.buildDirectory.dir("compartido/test/com/gonzalo/cobalto"))
 }
+// El diccionario de sinónimos (RLA-ES, LGPL 2.1, sin cambios): el mismo archivo que lleva el móvil en sus assets
+val sinonimos = tasks.register<Sync>("sinonimosDeAndroid") {
+    from(File(android, "main/assets/sinonimos")) { include("th_es_v2.dat", "COPYING", "LEEME.txt") }
+    into(layout.buildDirectory.dir("compartido/recursos/sinonimos"))
+}
 sourceSets["main"].kotlin.srcDir(layout.buildDirectory.dir("compartido/main"))
+sourceSets["main"].resources.srcDir(layout.buildDirectory.dir("compartido/recursos"))
 sourceSets["test"].kotlin.srcDir(layout.buildDirectory.dir("compartido/test"))
 tasks.named("compileKotlin") { dependsOn(compartido) }
+tasks.named("processResources") { dependsOn(sinonimos) }
 tasks.named("compileTestKotlin") { dependsOn(pruebasCompartidas) }
 
 dependencies {

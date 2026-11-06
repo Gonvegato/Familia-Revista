@@ -60,7 +60,12 @@ fun PantPortada(nav: Nav) {
                 Text("${obra?.s("titulo").orEmpty()} · ${e.get(ultima.s("cid"))?.s("titulo").orEmpty()}", color = Muted, fontFamily = Body, fontSize = 13.sp)
                 val final = ultima.s("texto").trim().split('\n').lastOrNull { it.isNotBlank() && it.trim() != "***" }.orEmpty().replace("*", "")
                 if (final.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text("«…${final.takeLast(220)}»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 19.sp, lineHeight = 27.sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
-                Spacer(Modifier.height(8.dp)); EnlaceRevista("Seguir →", acento = true) { nav.ir(Pantalla.Obra(ultima.pid, ultima.id)) }
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+                    EnlaceRevista("Seguir →", acento = true) { nav.ir(Pantalla.Obra(ultima.pid, ultima.id)) }
+                    // (solo la página, sin nada alrededor: Esc para volver)
+                    EnlaceRevista("Seguir en concentración") { nav.ir(Pantalla.Obra(ultima.pid, ultima.id)); Estudio.concentracion = true }
+                }
             }
         }
         EstadoObra.values().forEach { est ->

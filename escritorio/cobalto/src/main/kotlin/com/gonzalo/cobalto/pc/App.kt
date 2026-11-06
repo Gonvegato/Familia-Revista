@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 /** Dónde estás en Cobalto. */
 sealed class Pantalla {
     data object Portada : Pantalla()
-    data class Obra(val pid: String, val eid: String? = null) : Pantalla()
+    data class Obra(val pid: String, val eid: String? = null, val pestana: Int = 0) : Pantalla()
     data object Papelera : Pantalla()
     data object Ajustes : Pantalla()
 }
@@ -32,7 +32,9 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
     var pantalla by remember { mutableStateOf(inicial) }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val nav = remember { Nav({ Editor.guardaYa(); pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
+    val nav = remember { Nav({ Editor.guardaYa(); Estudio.concentra(false); pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
+    // Los sprints siguen aunque cambies de pantalla
+    VigilaSprint(e)
     // La columna: la portada, tus obras por menú (como en el móvil) y lo demás
     val grupos = EstadoObra.values().map { it to e.obrasDe(it) }.filter { it.second.isNotEmpty() }
     val obras = grupos.flatMap { it.second }
@@ -48,20 +50,23 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
         Pantalla.Ajustes -> 2 + obras.size
     }
     Row(Modifier.fillMaxSize()) {
-        Lateral("Cobalto", entradas, sel) { i ->
-            nav.ir(when {
-                i == 0 -> Pantalla.Portada
-                i <= obras.size -> Pantalla.Obra(obras[i - 1].id)
-                i == obras.size + 1 -> Pantalla.Papelera
-                else -> Pantalla.Ajustes
-            })
+        // (en la concentración solo queda la página: ni la columna)
+        if (!Estudio.concentracion) {
+            Lateral("Cobalto", entradas, sel) { i ->
+                nav.ir(when {
+                    i == 0 -> Pantalla.Portada
+                    i <= obras.size -> Pantalla.Obra(obras[i - 1].id)
+                    i == obras.size + 1 -> Pantalla.Papelera
+                    else -> Pantalla.Ajustes
+                })
+            }
+            Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
         }
-        Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
         Box(Modifier.weight(1f).fillMaxHeight()) {
             Crossfade(pantalla, label = "pantalla") { p ->
                 when (p) {
                     Pantalla.Portada -> PantPortada(nav)
-                    is Pantalla.Obra -> PantObra(p.pid, p.eid, nav)
+                    is Pantalla.Obra -> PantObra(p.pid, p.eid, nav, p.pestana)
                     Pantalla.Papelera -> PantPapelera(nav)
                     Pantalla.Ajustes -> PantAjustes(nav)
                 }
