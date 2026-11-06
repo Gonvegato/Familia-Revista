@@ -201,6 +201,12 @@ private fun VistaLector(st: EstadoLector, volver: Pantalla, nav: Nav) {
     }
     LaunchedEffect(st.aviso) { val av = st.aviso ?: return@LaunchedEffect; delay((av.hasta - System.currentTimeMillis()).coerceAtLeast(0)); if (st.aviso === av) st.aviso = null }
     LaunchedEffect(st.destello) { if (st.destello != null) { delay(2600); st.destello = null } }
+    // Lo que significa una palabra (el Wikcionario, en el idioma del libro)
+    LaunchedEffect(st.definicion) {
+        val d = st.definicion ?: return@LaunchedEffect
+        withContext(Dispatchers.IO) { runCatching { Diccionario.define(d.palabra, Diccionario.lengua(st.epub.idioma)) } }
+            .onSuccess { d.resultado = it }.onFailure { d.fallo = "No se ha podido consultar el Wikcionario (¿sin conexión?)." }
+    }
 
     fun copia(t: String) { runCatching { java.awt.Toolkit.getDefaultToolkit().systemClipboard.setContents(java.awt.datatransfer.StringSelection(t), null) }; st.avisa("Copiado") }
     fun textoDe(sel: Seleccion): String {
@@ -249,6 +255,7 @@ private fun VistaLector(st: EstadoLector, volver: Pantalla, nav: Nav) {
     fun cierraTodo(): Boolean = when {
         st.editando != null -> { st.editando = null; true }
         st.nota != null -> { st.nota = null; true }
+        st.definicion != null -> { st.definicion = null; true }
         st.menu != null -> { st.menu = null; st.seleccion = null; true }
         st.seleccion != null -> { st.seleccion = null; true }
         st.panel != null -> { st.panel = null; true }
@@ -337,6 +344,7 @@ private fun VistaLector(st: EstadoLector, volver: Pantalla, nav: Nav) {
         }
         st.menu?.let { MenuDeTexto(st, it, c, onSubrayar = { s, n -> subraya(s, n) }, onCopiar = ::copia, onQuitar = ::quita, textoDe = ::textoDe) }
         st.nota?.let { NotaAlPieVista(st, it, c) }
+        st.definicion?.let { DefinicionVista(st, it, c) }
         PanelesLector(st, c, onQuitar = ::quita)
         st.editando?.let { EditorNota(st, it, c) }
         st.aviso?.let { av -> Box(Modifier.align(Alignment.BottomCenter).padding(bottom = if (st.inmersivo) 70.dp else 120.dp)) { AvisoVista(av, c) { st.aviso = null } } }
@@ -432,7 +440,7 @@ private fun AreaPaginada(st: EstadoLector, c: Colores, geo: Geometria, subSeccio
                         val ahora = System.currentTimeMillis()
                         val doble = ahora - ultimoClic < 420 && (ch.position - ultimoSitio).getDistance() < 8f
                         ultimoClic = ahora; ultimoSitio = ch.position
-                        if (st.menu != null || st.seleccion != null || st.nota != null) { st.menu = null; st.seleccion = null; st.nota = null; if (!doble) continue }
+                        if (st.menu != null || st.seleccion != null || st.nota != null || st.definicion != null) { st.menu = null; st.seleccion = null; st.nota = null; st.definicion = null; if (!doble) continue }
                         val g = golpe(st, geoA, ch.position)
                         if (doble && g?.capa != null && g.encima) {
                             // Doble clic: la palabra
@@ -611,7 +619,7 @@ private fun AreaContinua(st: EstadoLector, c: Colores, geo: Geometria, todos: Li
                         val b0 = bajada; bajada = null
                         if (arrastrando) { arrastrando = false; st.seleccion?.let { s -> st.seleccion = s.copy(terminada = true); st.menu = MenuTexto(null, s, ch.position.x, ch.position.y) }; ch.consume(); continue }
                         if (b0 == null || (ch.position - b0).getDistance() > 5f) continue
-                        if (st.menu != null || st.seleccion != null || st.nota != null) { st.menu = null; st.seleccion = null; st.nota = null; continue }
+                        if (st.menu != null || st.seleccion != null || st.nota != null || st.definicion != null) { st.menu = null; st.seleccion = null; st.nota = null; st.definicion = null; continue }
                         val g = golpeC(ch.position) ?: continue
                         if (!g.encima) continue
                         val b = st.libro.bloques(g.seccion).getOrNull(g.bloque) ?: continue

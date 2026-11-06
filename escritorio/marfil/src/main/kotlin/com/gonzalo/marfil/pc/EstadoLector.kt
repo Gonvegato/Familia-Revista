@@ -50,6 +50,12 @@ class MenuTexto(val marca: Marca?, val seleccion: Seleccion?, val x: Float, val 
 /** Un aviso del lector (abajo), con su botón si lo tiene. */
 class AvisoLector(val texto: String, val boton: String = "", val accion: (() -> Unit)? = null, val hasta: Long = System.currentTimeMillis() + (if (accion != null) 6000 else 2200))
 
+/** Una palabra que se busca en el diccionario (el Wikcionario), y lo que contesta. */
+class Definiendo(val palabra: String, val x: Float, val y: Float) {
+    var resultado by mutableStateOf<Diccionario.Definicion?>(null)
+    var fallo by mutableStateOf("")
+}
+
 /** Una nota al pie abierta: su tipo, su texto y adónde lleva. */
 class NotaAbierta(val nombre: String, val textos: List<AnnotatedString>, val enlace: Epub.Enlace, val x: Float, val y: Float)
 
@@ -71,6 +77,7 @@ class EstadoLector(val l: Libro, val libro: LibroAbierto, inicio: Sitio, val anc
     var menu by mutableStateOf<MenuTexto?>(null)
     var editando by mutableStateOf<Marca?>(null)
     var nota by mutableStateOf<NotaAbierta?>(null)
+    var definicion by mutableStateOf<Definiendo?>(null)
     /** Volver a donde estabas tras un salto (índice, búsqueda, notas, la barra…), mientras no pases unas cuantas páginas. */
     var vuelta by mutableStateOf<Pair<Sitio, Double>?>(null)
     var pasosDesdeSalto = 0

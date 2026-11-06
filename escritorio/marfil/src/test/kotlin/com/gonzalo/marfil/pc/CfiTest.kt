@@ -92,7 +92,7 @@ class CfiTest {
                 val desde = normal(e.bloques(l.seccion)[b].texto.text.substring(letra))
                 val foliate = r["texto"].comoTexto()
                 // (sin los blancos: cfi.js junta los textos sin el salto de un <br>)
-                val x = desde.replace(Regex("\\s"), ""); val y = foliate.replace(Regex("\\s"), "")
+                val x = desde.replace(Regex("[\\s\\u00A0]"), ""); val y = foliate.replace(Regex("[\\s\\u00A0]"), "")
                 assertTrue("$cfi: aquí «$desde», en el móvil «$foliate»", x.startsWith(y) || y.startsWith(x))
             }
             // Una posición a mitad de un párrafo, también

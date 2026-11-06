@@ -288,10 +288,9 @@ fun MenuDeTexto(st: EstadoLector, menu: MenuTexto, c: Colores, onSubrayar: (Sele
                     EnlaceL("Nota", c) { onSubrayar(s, true) }
                     EnlaceL("Copiar", c) { st.menu = null; onCopiar(t) }
                     EnlaceL("Buscar", c) { st.menu = null; st.seleccion = null; st.busqueda = t.take(80); st.hallazgos = null; st.panel = Panel.BUSCAR }
-                    if (!t.contains(' ') && t.length in 2..40) EnlaceL("RAE", c) {
-                        st.menu = null
-                        val w = t.trim { !it.isLetterOrDigit() }.lowercase()
-                        Thread { runCatching { java.awt.Desktop.getDesktop().browse(java.net.URI("https://dle.rae.es/" + java.net.URLEncoder.encode(w, "UTF-8").replace("+", "%20"))) } }.start()
+                    if (!t.contains(' ') && t.trim { !it.isLetterOrDigit() }.length in 2..40) EnlaceL("Definir", c) {
+                        st.menu = null; st.seleccion = null
+                        st.definicion = Definiendo(t.trim { !it.isLetterOrDigit() }, menu.x, menu.y)
                     }
                 }
             }
@@ -319,6 +318,42 @@ fun NotaAlPieVista(st: EstadoLector, n: NotaAbierta, c: Colores) {
                 }
             }
             EnlaceL("Ir a la nota →", c, acento = true) { st.nota = null; st.saltaA(st.libro.destino(n.enlace)) }
+        }
+    }
+}
+
+/** Lo que significa una palabra (como el del móvil): sus acepciones del Wikcionario y, para seguir, la RAE y el Wikcionario. */
+@Composable
+fun DefinicionVista(st: EstadoLector, d: Definiendo, c: Colores) {
+    val dens = LocalDensity.current
+    fun abre(u: String) { Thread { runCatching { java.awt.Desktop.getDesktop().browse(java.net.URI(u)) } }.start() }
+    val w = java.net.URLEncoder.encode(d.palabra.lowercase(), "UTF-8").replace("+", "%20")
+    Box(Modifier.fillMaxSize().junto(d.x + st.origenArea.x, d.y + st.origenArea.y, with(dens) { 16.dp.toPx() })) {
+        Column(Modifier.width(480.dp).heightIn(max = 400.dp).background(c.superficie).border(1.dp, c.linea).drawTop(c.tinta).padding(horizontal = 20.dp, vertical = 14.dp)) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(d.resultado?.palabra ?: d.palabra, Modifier.weight(1f), color = c.tinta, fontFamily = Display, fontSize = 28.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Versal(Diccionario.lengua(st.epub.idioma), c.acento, 10.sp)
+            }
+            Spacer(Modifier.height(6.dp))
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                val r = d.resultado
+                when {
+                    d.fallo.isNotBlank() -> Text(d.fallo, color = c.suave, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+                    r == null -> Text("Buscando el significado…", color = c.suave, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+                    r.defs.isEmpty() -> Text("El Wikcionario no tiene esta palabra. Prueba con la RAE.", color = c.suave, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+                    else -> {
+                        if (r.nota.isNotBlank()) Text(r.nota.trimEnd('.') + ":", color = c.suave, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, modifier = Modifier.padding(bottom = 4.dp))
+                        else if (!r.palabra.equals(d.palabra, true)) Text("De «${r.palabra}»:", color = c.suave, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, modifier = Modifier.padding(bottom = 4.dp))
+                        r.defs.forEachIndexed { i, x -> Row(Modifier.padding(vertical = 3.dp)) { Text("${i + 1}.", Modifier.width(22.dp), color = c.acento, fontFamily = Body, fontSize = 14.sp, fontWeight = FontWeight.Bold); Text(x, color = c.tinta, fontFamily = Body, fontSize = 14.5.sp, lineHeight = 20.sp) } }
+                    }
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                EnlaceL("RAE", c, acento = true) { abre("https://dle.rae.es/$w") }
+                EnlaceL("Wikcionario", c, acento = true) { abre("https://es.wiktionary.org/wiki/$w") }
+                Spacer(Modifier.weight(1f))
+                EnlaceL("Cerrar", c) { st.definicion = null }
+            }
         }
     }
 }

@@ -89,6 +89,16 @@ class LectorTest {
         }
     }
 
+    @Test fun elDiccionarioSacaLasAcepcionesComoElDelMovil() {
+        val ex = "== Español ==\n=== Etimología 1 ===\nDel latín mare.\n==== Sustantivo ambiguo ====\n1 \nMasa de agua salada que cubre la mayor parte de la superficie terrestre.\n" +
+            "2 Cada una de las partes en que se divide esa masa de agua.\nSinónimos: océano.\n== Inglés ==\n1 Something else entirely, in English."
+        assertEquals(listOf("Masa de agua salada que cubre la mayor parte de la superficie terrestre.", "Cada una de las partes en que se divide esa masa de agua."), Diccionario.parse(ex))
+        assertEquals(listOf("Something else entirely, in English."), Diccionario.parse(ex, "Inglés"))
+        assertEquals("falda", Diccionario.lemmaDe("Forma del plural de falda."))
+        assertTrue("acordar" in Diccionario.candidates("acordarme")); assertTrue("casa" in Diccionario.candidates("casas"))
+        assertEquals("Inglés", Diccionario.lengua("en")); assertEquals("Español", Diccionario.lengua("es-ES")); assertEquals("Español", Diccionario.lengua(""))
+    }
+
     @Test fun lasPaginasDeUnCapituloNoSeSaltanNiRepitenNada() {
         caso().use { e ->
             // Un capítulo largo: el texto del caso, muchas veces
