@@ -71,5 +71,14 @@
         <receiver android:name=".ActualizadorReabrir" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
+        <!-- Los widgets de la pantalla de inicio (Widgets.kt): «Seguir viendo» y «Pendientes» -->
+        <receiver android:name=".WSeguir" android:label="@string/w_seguir" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_seguir" />
+        </receiver>
+        <receiver android:name=".WPendientes" android:label="@string/w_pendientes" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_pendientes" />
+        </receiver>
     </application>
 </manifest>

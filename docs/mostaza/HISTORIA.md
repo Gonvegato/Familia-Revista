@@ -16,6 +16,15 @@ Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 
+## Widgets
+
+Dos widgets para la pantalla de inicio, como los de las hermanas (la misma revista: papel y tinta, los colores y las letras que tengas
+en Apariencia, en claro y en oscuro): **Seguir viendo** (lo último que has tocado de lo que estás viendo, con su póster, «T2 · E5 ·
+quedan 20 min» y su barra; un toque abre su ficha, y la esquina pasa a otro si ves varios) y **Pendientes** (tus pendientes en fila, lo
+último que añadiste primero; cada póster abre su ficha y la cabecera, la sección). Se repintan solos cuando cambia tu biblioteca o lo
+visto, aquí o desde otro dispositivo por la cuenta, y cuando cambia la apariencia; con el reproductor abierto esperan a que lo cierres.
+Dibujados en el ordenador en [widgets/](widgets/) (`WidgetsTest`, con `-Proborazzi.test.record=true`).
+
 ## 0.1.2
 
 Arreglo de un fallo de verdad: con tres películas, «Reproducir» eligió para una una fuente **sin ningún audio en español**, para otra

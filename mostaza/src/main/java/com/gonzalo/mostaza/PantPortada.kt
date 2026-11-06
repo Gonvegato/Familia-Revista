@@ -72,8 +72,9 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
     val hoy = remember { Calendar.getInstance() }
     val titulos = Biblioteca.titulos.toList()
     Biblioteca.version
-    val viendo = titulos.filter { it.estado == Estado.VIENDO }.sortedByDescending { maxOf(it.ultima, Biblioteca.ultimo(it.ref)?.ultima ?: 0L) }
-    val pendientes = titulos.filter { it.estado == Estado.PENDIENTE }.sortedByDescending { it.anadido }
+    // (el mismo orden que los widgets)
+    val viendo = Biblioteca.seguirViendo(titulos)
+    val pendientes = Biblioteca.pendientes(titulos)
     val filas by produceState<List<FilaCatalogo>?>(null, Addons.version) { value = runCatching { Catalogos.portada(ctx) }.getOrDefault(emptyList()) }
     val secciones = listOf("Viendo" to Destino.Viendo, "Pendiente" to Destino.Pendiente, "Visto" to Destino.Visto, "Abandonado" to Destino.Abandonado, "Explorar" to Destino.Explorar, "Addons" to Destino.Addons)
     val desplazado = rememberScrollState()

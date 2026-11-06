@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Con el tema «como el sistema», el widget lleva los dos dibujos y se ve el que toca (0 visible, 2 oculto: el orden del atributo visibility) -->
+    <integer name="w_dia">0</integer>
+    <integer name="w_noche">2</integer>
+    <string name="w_seguir">Seguir viendo</string>
+    <string name="w_seguir_d">Lo que estás viendo, con su póster, el episodio y lo que te queda. Un toque y estás en su ficha.</string>
+    <string name="w_pendientes">Pendientes</string>
+    <string name="w_pendientes_d">Tus películas y series pendientes en fila, lo último que añadiste primero. Toca una y se abre su ficha.</string>
+</resources>

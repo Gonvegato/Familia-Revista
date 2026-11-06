@@ -12,13 +12,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class MainActivity : ComponentActivity() {
-    /** La ficha que pide abrir otra app («ficha» = la ref del título: Azabache la manda con «Ver en Mostaza»). */
+    /** La ficha que pide abrir otra app o un widget («ficha» = la ref del título: Azabache la manda con «Ver en Mostaza»). */
     private var fichaPedida by mutableStateOf<String?>(null)
+    /** La sección que pide abrir un widget («seccion» = el nombre del [Destino]: la cabecera de «Pendientes»). */
+    private var seccionPedida by mutableStateOf<String?>(null)
     /** Un addon que instalar (el botón «Install» de su página: stremio://…/manifest.json). */
     private var addonPedido by mutableStateOf<String?>(null)
 
     private fun lee(i: Intent?) {
         fichaPedida = i?.getStringExtra("ficha")
+        seccionPedida = i?.getStringExtra("seccion")
         addonPedido = i?.data?.takeIf { it.scheme.equals("stremio", true) }?.toString()
     }
 
@@ -39,7 +42,7 @@ class MainActivity : ComponentActivity() {
                         navigationBarStyle = if (oscuro) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
                     )
                 }
-                MostazaApp(fichaPedida, addonPedido) { fichaPedida = null; addonPedido = null }
+                MostazaApp(fichaPedida, addonPedido, seccionPedida) { fichaPedida = null; addonPedido = null; seccionPedida = null }
             }
         }
     }

@@ -75,7 +75,8 @@ object Biblioteca {
         appCtx = c.applicationContext
         Cuenta.cargar(c)
         col = LaFamilia.coleccion("titulos").also { it.alCambiar { principal.post { refresca() } } }
-        prog = LaFamilia.coleccion("progreso").also { it.alCambiar { principal.post { version++ } } }
+        // Lo visto (de aquí o de otro dispositivo, por la cuenta) también cambia los widgets: «T2 · E5 · quedan 20 min» y su barra
+        prog = LaFamilia.coleccion("progreso").also { it.alCambiar { principal.post { version++; appCtx?.let { c -> Widgets.pedir(c) } } } }
         tiempo = LaFamilia.coleccion("tiempo")
         refresca()
         cargada = true
@@ -121,6 +122,8 @@ object Biblioteca {
         val nueva = cc.vivos().filter { it.texto("t").isNotBlank() }.map { deNodo(it) }.sortedByDescending { maxOf(it.ultima, it.anadido) }
         if (nueva != titulos.toList()) { titulos.clear(); titulos.addAll(nueva) }
         version++
+        // Los widgets, al día (venga el cambio de aquí o de otro dispositivo por la cuenta; también cuando llega un póster)
+        appCtx?.let { c -> Widgets.pedir(c) }
         appCtx?.let { c -> PortadasFamilia.baja(cc.vivos().filter { PortadasFamilia.archivo(c, it.texto("portada")).isBlank() }.map { it.texto("portada") }) { refresca() } }
     }
 
@@ -249,6 +252,13 @@ object Biblioteca {
     /** Lo visto de un título (sus episodios, o la película). */
     fun progresos(r: String): List<Progreso> = if (congelada) progresoFijo.values.filter { it.ref == r }
         else prog?.vivos()?.filter { it.texto("ref") == r }?.map { progresoDe(it) }.orEmpty()
+
+    /** «Seguir viendo» (la portada y su widget): lo que estás viendo, lo último que tocaste primero (el título o, si es más nuevo, su último vídeo). */
+    fun seguirViendo(l: List<Titulo> = titulos.toList(), ultimaDe: (Titulo) -> Long = { ultimo(it.ref)?.ultima ?: 0L }): List<Titulo> =
+        l.filter { it.estado == Estado.VIENDO }.map { it to maxOf(it.ultima, ultimaDe(it)) }.sortedByDescending { it.second }.map { it.first }
+
+    /** «Pendientes» (la portada y su widget): lo último que añadiste primero. */
+    fun pendientes(l: List<Titulo> = titulos.toList()): List<Titulo> = l.filter { it.estado == Estado.PENDIENTE }.sortedByDescending { it.anadido }
 
     /** El último vídeo que tocaste de un título (para «Seguir viendo»). */
     fun ultimo(r: String): Progreso? = progresos(r).maxByOrNull { it.ultima }
