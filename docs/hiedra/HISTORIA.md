@@ -15,6 +15,61 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.6.0 — veinticuatro consolas en Hiedra, y una cara nueva
+
+**El jugador de Hiedra ya no es solo de GBA.** Juega ella misma a Game Boy y Game Boy Color, NES (y Famicom Disk System), Super Nintendo,
+Mega Drive, Master System, Game Gear, PC Engine, Neo Geo Pocket (y Color), WonderSwan (y Color), Atari Lynx, 2600 y 7800 y, **en
+pruebas**, Nintendo DS, Nintendo 64, PlayStation, PSP, Mega-CD y arcade (Neo Geo y FinalBurn Neo). Con todo lo que ya tenía la GBA:
+guarda al salir y lo sube a tu nube, sigues en otro móvil, avance rápido, tres huecos de estado, mando físico y táctil.
+
+- **Los núcleos de Lemuroid**, uno por consola, comprobados en su código (los de la versión que usaba RadialGamePad 2.0, la misma que
+  Hiedra): Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle PCE Fast, Beetle NeoPop, Beetle Cygne, Handy, Stella, ProSystem,
+  FinalBurn Neo, Mupen64Plus-Next (GLES3), PCSX ReARMed, PPSSPP y melonDS; con sus mismas opciones de arranque (las paletas de la Game
+  Boy, la pantalla táctil de la DS, el «frame duping» de la N64…), comprobadas una a una en el código de cada núcleo del buildbot (los
+  nombres no siempre son los de Lemuroid, que compila los suyos: los de melonDS, por ejemplo). Se bajan del buildbot de libretro la
+  primera vez que juegas (de 50 KB a 17 MB; se dice antes de bajarlo).
+- **Un mando para cada consola**, en la pantalla y en el mando físico: los de Lemuroid (la cruceta y los botones donde van en cada una,
+  con su nombre: los I y II de la PC Engine, ○ △ □ ✕ en PlayStation y PSP, Z y los botones C de la N64, Option en la Neo Geo Pocket,
+  Moneda en arcade). La N64 y la PSP con su stick (en la pantalla y en el mando); la DS se toca en la pantalla de abajo, con el micrófono
+  (soplar) y la tapa en botones. R2 (el gatillo derecho) sigue acelerando en todas las que no lo usan (todas menos PlayStation).
+- **BIOS**: en la ficha («Emulador») cada núcleo dice qué BIOS busca, cuáles tienes y cuáles faltan; «Añadir BIOS» la reconoce por su
+  contenido (aunque se llame de otra manera) y la deja donde el núcleo la busca. Solo el Mega-CD (una de las tres regiones), la Neo Geo
+  (neogeo.zip: si está junto a tus ROMs, Hiedra la coge sola) y los discos de la Famicom no arrancan sin la suya; si falta al jugar,
+  se dice cuál y se elige ahí mismo.
+- **Juegos de varios archivos**: un .cue con sus pistas, un .m3u con sus discos (y el escaneo ya no los añade como juegos sueltos), un
+  .ccd. Los discos de PlayStation y PSP no se copian: el núcleo los abre donde están (como Lemuroid); si alguno no abre así, «Probar
+  copiándola». Las recreativas se abren tal cual, con el nombre de su .zip.
+- PPSSPP necesita sus archivos (letras, firmware): se bajan una vez con el núcleo, del buildbot de libretro (unos 10 MB).
+- **«Automático» no te quita tu emulador**: en las consolas nuevas, Hiedra solo es la automática si no tienes otro emulador instalado
+  para ella (RetroArch no cuenta: necesita sus núcleos). En GBA, como hasta ahora. En Sistemas o en la ficha se elige «Hiedra» con un toque.
+- **Opciones de la consola** en el menú del juego: los colores de la Game Boy, las pantallas de la DS (una encima de otra o al lado), la
+  resolución de N64 y PSP, el recompilador de PlayStation, el giro de la Lynx y la WonderSwan… Se aplican al momento.
+- El estado guardado se carga tras la primera imagen (PPSSPP y Mupen64 preparan cosas al dibujarla: lo que hace Lemuroid).
+- **Más emuladores de fuera**: el catálogo de ES-DE, al día (Vita3K y EmuCoreV para PS Vita, BachataS4 para PS4, aPS3e y ARMSX3 por
+  número de serie, ScummVM, GameNative y GameHub Lite), con lo que hacía falta para abrirlos (`%INJECT%`, las listas de texto). Se rehace
+  con `herramientas/hiedra/emuladores-es-de.py`.
+
+**La cara nueva**
+
+- **Sistemas**, en casillas: cada consola de Hiedra con su color, su nombre corto en grande, su núcleo y cómo está (bajada, se baja al
+  jugar, en pruebas, falta la BIOS); un toque abre su emulador.
+- **El mando se ve en toda la app**: lo que tiene el foco (con la cruceta del mando o el teclado) lleva un marco del acento, en todas las
+  pantallas, y las portadas enfocadas crecen un poco, con un rebote corto. A elige, B vuelve.
+- **El menú del juego, rehecho**: en apaisado, a la izquierda la imagen del momento en que pausaste y a la derecha el menú; la fila
+  enfocada se marca con una barra del acento. Con mando, abajo, qué hace cada botón. Entra con un fundido.
+- **La pantalla de carga** enseña la caja del juego y de qué consola es, con una barra que se mueve siempre (nunca parece colgada).
+- **Tablet** (la OPPO Pad Mini, de pie y tumbada): la portada con el destacado en doble página (la caja grande, el titular y «Jugar»),
+  portadas más grandes en los estantes, la ficha en dos columnas y las secciones a un ancho de revista.
+- **Transiciones**: entre páginas, un fundido corto con un poco de movimiento; la ficha entra frenando y se va más deprisa.
+
+Lo que no se ha podido probar (honesto): **nada de esto se ha probado en un móvil de verdad**. Las pruebas del ordenador comprueban el
+catálogo (cada núcleo existe en el buildbot con ese nombre y abre las extensiones que encuentra el escaneo), los mandos de cada consola
+(cada botón de la pantalla va a uno que el núcleo usa), las BIOS, los discos de varios archivos y el emulador automático; las capturas
+enseñan cada mando y las pantallas en el móvil y en la tablet. Pero los núcleos son código de ARM y no corren en el ordenador: si una
+consola «lista» falla, es un error; las «en pruebas» pueden ir lentas o no arrancar (N64 y PSP piden mucho; PlayStation va con el
+intérprete, como en Lemuroid). La DS guarda su partida dentro de Hiedra, no en la carpeta de guardados. No hay segundo jugador ni
+vibración.
+
 ## 0.5.4
 
 - **Los juegos del PC ya no se meten solos en «Pendiente».** Hasta ahora, todo lo que tenía horas en la biblioteca del PC entraba solo en
