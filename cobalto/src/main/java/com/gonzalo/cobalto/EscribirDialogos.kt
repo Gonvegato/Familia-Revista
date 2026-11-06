@@ -44,6 +44,8 @@ fun colorEscrito(hex: String, def: Color = ColGeneral): Color = runCatching { Co
 fun singularFicha(t: String) = when (t) { "personaje" -> "Personaje"; "lugar" -> "Lugar"; "objeto" -> "Objeto"; "mundo" -> "Mundo"; else -> "Otro" }
 
 val ESTADOS_ESCENA = listOf("Borrador", "Revisión", "Final")
+/** «4 borradores», «1 en revisión», «2 finales». */
+fun cuentaEstado(estado: Int, n: Int): String = "$n " + when (estado) { 0 -> if (n == 1) "borrador" else "borradores"; 1 -> "en revisión"; else -> if (n == 1) "final" else "finales" }
 fun colorEstado(e: Int): Color = when (e) { 0 -> Color(0xFFB8B2A6); 1 -> Color(0xFFD9A441); else -> Color(0xFF5B8C5A) }
 
 val TIPOS_FICHA = listOf("personaje" to "Personajes", "lugar" to "Lugares", "objeto" to "Objetos", "mundo" to "Mundo", "otro" to "Otros")
@@ -219,6 +221,8 @@ object EscribirHub {
     var listaManuscrito by mutableStateOf(false)
     /** Avisar abajo con «Deshacer» (lo pone la app). */
     var deshacer: ((String, () -> Unit) -> Unit)? = null
+    /** Buscar algo al abrir una escena (desde «Buscar en la obra»): la escena y lo buscado. */
+    var buscarAlAbrir by mutableStateOf<Pair<String, String>?>(null)
 }
 
 @Composable

@@ -130,6 +130,79 @@ object EdicionTexto {
         val r = rango(v); val sel = v.text.substring(r.start, r.end)
         return TextFieldValue(v.text.replaceRange(r.start, r.end, "«$sel»"), if (sel.isEmpty()) TextRange(r.start + 1) else TextRange(r.start + 1, r.end + 1))
     }
+
+    /** El párrafo (la línea) en que está [cursor]: desde su principio hasta su final, sin el salto de línea. */
+    fun parrafo(t: String, cursor: Int): IntRange {
+        val c = cursor.coerceIn(0, t.length)
+        val ini = t.lastIndexOf('\n', c - 1) + 1
+        var fin = t.indexOf('\n', c); if (fin < 0) fin = t.length
+        return ini until fin
+    }
+
+    /**
+     * Sube ([sentido] < 0) o baja el párrafo en que está el cursor por encima o por debajo del párrafo de al lado (el
+     * siguiente con texto: las líneas en blanco de entre medias se quedan donde estaban). El cursor va con su párrafo.
+     * Si no hay a dónde moverlo, devuelve [v] tal cual.
+     */
+    fun mueveParrafo(v: TextFieldValue, sentido: Int): TextFieldValue {
+        val t = v.text
+        val lineas = t.split('\n').toMutableList()
+        val c = v.selection.start.coerceIn(0, t.length)
+        // En qué línea está el cursor, y en qué columna
+        var l = 0; var ini = 0
+        while (l < lineas.size - 1 && ini + lineas[l].length < c) { ini += lineas[l].length + 1; l++ }
+        if (lineas[l].isBlank()) return v
+        val col = c - ini
+        var m = l + if (sentido < 0) -1 else 1
+        while (m in lineas.indices && lineas[m].isBlank()) m += if (sentido < 0) -1 else 1
+        if (m !in lineas.indices) return v
+        val x = lineas[l]; lineas[l] = lineas[m]; lineas[m] = x
+        val nuevo = lineas.joinToString("\n")
+        val inicioM = lineas.subList(0, m).sumOf { it.length + 1 }
+        val k = (inicioM + col).coerceIn(0, nuevo.length)
+        return TextFieldValue(nuevo, TextRange(k))
+    }
+}
+
+/**
+ * La página del editor: el formato de [formato] y, si se pide, la sangría de la primera línea de cada párrafo (como en un
+ * libro; los títulos, las citas y los saltos de escena no la llevan) y, en concentración, todo en [apagado] salvo el
+ * párrafo [vivo], el que escribes. Como [FormatoMarkdown], no cambia el texto (los desplazamientos son los mismos).
+ */
+class FormatoPagina(
+    private val formato: FormatoMarkdown,
+    private val sangria: androidx.compose.ui.unit.TextUnit = androidx.compose.ui.unit.TextUnit.Unspecified,
+    private val vivo: IntRange? = null,
+    private val apagado: Color = Color.Unspecified,
+) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText = TransformedText(estilo(text.text), OffsetMapping.Identity)
+
+    fun estilo(t: String): AnnotatedString {
+        val base = formato.estilo(t)
+        val conSangria = sangria != androidx.compose.ui.unit.TextUnit.Unspecified
+        val atenua = vivo != null && apagado != Color.Unspecified
+        if (!conSangria && !atenua) return base
+        return AnnotatedString.Builder(base).also { b ->
+            if (conSangria) {
+                var i = 0
+                while (i < t.length) {
+                    var fin = t.indexOf('\n', i); if (fin < 0) fin = t.length
+                    val l = t.substring(i, fin)
+                    val s = l.trim()
+                    // (los párrafos de verdad; los de formato propio y los saltos de escena, centrados, se quedan como estaban)
+                    if (s.isNotEmpty() && s != "***" && s != "* * *" && !l.startsWith("#") && !l.startsWith("> "))
+                        b.addStyle(androidx.compose.ui.text.ParagraphStyle(textIndent = androidx.compose.ui.text.style.TextIndent(firstLine = sangria)), i, minOf(t.length, fin + 1))
+                    i = fin + 1
+                }
+            }
+            if (atenua) {
+                val r = vivo!!
+                val a = r.first.coerceIn(0, t.length); val z = (r.last + 1).coerceIn(a, t.length)
+                if (a > 0) b.addStyle(SpanStyle(color = apagado), 0, a)
+                if (z < t.length) b.addStyle(SpanStyle(color = apagado), z, t.length)
+            }
+        }.toAnnotatedString()
+    }
 }
 
 /**

@@ -10,6 +10,45 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.4.0 — el modo escritor
+
+- **Concentración de verdad**: a pantalla completa (sin barra de estado ni de navegación; vuelven un momento si deslizas
+  desde el borde) y la pantalla no se apaga mientras escribes. Si quieres, todo se apaga salvo el párrafo que escribes, y
+  abajo quedan las cuentas, muy discretas. «Salir» arriba a la derecha, o Esc.
+- **Las cuentas siempre a la vista**: palabras (o las elegidas, «57 de 1.234»), minutos de lectura, lo de esta sesión, lo que
+  llevas de la meta de la escena y, a la derecha, lo de hoy frente a la meta del día, con su barrita.
+- **La página a tu gusto** (Aa en la barra de abajo): la letra (la de la revista, palo seco, máquina, Literata, Garamond, Lora,
+  Merriweather o Courier Prime), el tamaño, el interlineado (junto, normal, amplio, doble), el ancho en la tableta, la
+  **sangría de libro**, la máquina de escribir y la tipografía automática, viendo un párrafo de prueba al momento. Se guarda en
+  cada dispositivo (en la tableta puedes tener otra letra que en el móvil).
+- **Máquina de escribir** mejor: también las primeras líneas se quedan a media altura, y sin saltos al escribir deprisa. Sin
+  ella, el cursor ya no se esconde debajo de la barra o del teclado.
+- **Buscar y cambiar**, con «palabra entera» (para cambiar «Ana» sin tocar «Anabel») y cuántas veces sale en **toda la obra**:
+  la lista de escenas con cada vez resaltada, y al tocar una se abre esa escena justo ahí. «Todos en la obra» pregunta antes
+  y guarda una versión de cada escena que cambia. Desde «Buscar» de la obra, una escena se abre con lo buscado resaltado.
+- **La ficha que nombras**: con el cursor en un nombre subrayado sale su vista previa (qué es, la frase, unos datos, con quién
+  está unida); al tocarla se lee la ficha.
+- **Fichas y notas, primero para leer**: se abren como una página de revista (el nombre a lo grande, la frase en cursiva, la
+  letra capitular, los datos en su recuadro y, en la tableta, en una columna al lado) y al tocar lo escrito pasan a editarse.
+  Al guardar se vuelve a leerlas. Igual los sucesos de la línea y las uniones del árbol.
+- **Comparar borradores y versiones palabra a palabra**: lo que cambia va resaltado (lo que se va, tachado) y, en la tableta,
+  los dos textos uno al lado del otro.
+- **De escena en escena sin salir**: al final del texto, la anterior, la siguiente y «+ Escena nueva a continuación».
+- **Atajos con teclado físico** (en la tableta): Ctrl+B/I, deshacer y rehacer, Ctrl+F y Ctrl+H (buscar y cambiar), F3,
+  Ctrl+S (guardar una versión), Ctrl+1/2/3 (títulos), Ctrl+Intro (salto de escena), Ctrl+D (raya), Alt+↑/↓ (subir o bajar
+  el párrafo), Ctrl+RePág/AvPág (otra escena), F11 (concentración), Ctrl+T (máquina), Ctrl+P (panel), Ctrl++/− (letra),
+  Ctrl+K (sinónimos)… y Ctrl+/ los enseña todos.
+- **Arreglo importante**: al pasar de una escena a otra sin salir del editor (por ejemplo, desde «Sale en» de una ficha), la
+  escena de antes se guardaba con el texto de la nueva. Ya no (y una prueba lo vigila).
+- **Lo escrito, más a salvo**: si Android pausa la app (otra app, la pantalla apagada), lo último se guarda en el momento, sin
+  esperar al medio segundo de calma. Y si llega un cambio de otro dispositivo mientras escribes, se juntan los dos a tres bandas
+  (antes ganaba lo de aquí y lo de fuera se perdía); si chocan en la misma frase, lo de fuera se guarda como borrador.
+- **En la tableta**: la portada en dos columnas en horizontal («Ahora» y, al lado, lo que tienes sobre la mesa y en el cajón),
+  las barras de la semana finas (antes eran ladrillos), y los cuadrados del manuscrito del mismo alto (cada fila, pareja).
+- «4 borradores · 0 en revisión · 2 finales» (antes «4 borrador · 0 revisión · 2 final»).
+- La versión de debajo de la portada es la de verdad (la 0.3.3 decía 0.3.1).
+- Nada cambia en lo que se guarda en la cuenta: los mismos documentos y campos de siempre.
+
 ## 0.3.3
 
 - **Una pantalla que no dejaba de redibujarse**: los títulos que se encogen para caber (FitTitle) apuntaban su ancho desde dentro de la
