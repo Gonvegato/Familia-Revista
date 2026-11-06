@@ -1,5 +1,6 @@
 package com.gonzalo.hiedra.pc
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.OutlinedTextField
@@ -10,8 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gonzalo.familia.pc.KDrive
+import com.gonzalo.familia.pc.LaFamilia
 import com.gonzalo.familia.pc.Sitio
 import com.gonzalo.familia.pc.revista.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /** Elegir una carpeta con la ventana del sistema (en el Mac la suya; en Linux la de Java, que sí deja elegir carpetas). */
@@ -141,5 +147,65 @@ fun AjustesSalaMando(alSala: () -> Unit) {
         Spacer(Modifier.height(6.dp))
         listOf("Moverse" to "Flechas", "Abrir · jugar" to "Intro", "Volver" to "Esc o Retroceso", "Buscar" to "F o /", "Opciones" to "Espacio",
             "Sección anterior · siguiente" to "Q · E (o RePág · AvPág)", "Letra anterior · siguiente" to "Inicio · Fin", "Menú" to "S o F10", "Salir de la sala" to "F11").forEach { (a, b) -> MagFact(a, b) }
+    }
+}
+
+/** Ajustes → Este PC: lo que el móvil puede hacer con este ordenador (capturas y streaming), las capturas de aquí y hacer una ahora. */
+@Composable
+fun AjustesCapturasStreaming(nav: Nav) {
+    Capturas.version
+    val scope = rememberCoroutineScope()
+    var capturando by remember { mutableStateOf(false) }
+    val carpeta = remember { Capturas.carpeta() }
+    val metodos = remember { Captura.metodos(Captura.Entorno.deAqui()) }
+    val kdrive = remember(LaFamilia.cambios) { KDrive().activo }
+    val steam = remember { runCatching { SteamLink.info() }.getOrNull() }
+    Column {
+        Antetitulo("Capturas")
+        Spacer(Modifier.height(6.dp))
+        Cuerpo("Desde «Tu PC» del móvil puedes pedir una captura de esta pantalla: se hace aquí, a su resolución de verdad (PNG, sin pérdida), se guarda en ${carpeta.path} y llega al móvil tal cual." +
+            (if (Sitio.sistema == Sitio.Sistema.MAC) " La primera vez, el Mac pide permiso de «Grabación de pantalla» para Hiedra (Ajustes del Sistema → Privacidad y seguridad)." else ""), tam = 14)
+        Fila("Capturas desde el móvil", "Tu Hiedra del móvil puede pedir una captura de esta pantalla") { Interruptor(AjustesTuPc.capturasDesdeMovil) { AjustesTuPc.ponCapturasDesdeMovil(it) } }
+        Fila("Las de aquí, también al móvil", "Las que haces en este ordenador llegan también a tu Hiedra del móvil") { Interruptor(AjustesTuPc.capturasAlMovil) { AjustesTuPc.ponCapturasAlMovil(it) } }
+        if (kdrive) Fila("Una copia en tu kDrive", "En «Mi carpeta/Hiedra/Capturas», por juego") { Interruptor(AjustesTuPc.capturasAKDrive) { AjustesTuPc.ponCapturasAKDrive(it) } }
+        MagFact("Se captura con", metodos.joinToString(", ") { it.nombre }.ifBlank { "nada: falta Spectacle, grim o gnome-screenshot" })
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            BotonSuave(if (capturando) "Capturando…" else "Hacer una captura") {
+                if (capturando) return@BotonSuave
+                capturando = true
+                scope.launch {
+                    val r = withContext(Dispatchers.IO) { runCatching { Capturas.haz() } }
+                    capturando = false
+                    nav.aviso(r.fold({ "Captura de ${it.w}×${it.h}" + (it.archivo?.let { f -> " en ${f.parentFile.path}" } ?: "") }, { it.message ?: "No se ha podido capturar" }))
+                }
+            }
+            BotonSuave("Abrir la carpeta") { carpeta.mkdirs(); Sitio.abre(carpeta.path) }
+        }
+        val l = remember(Capturas.version) { Capturas.recientes(6) }
+        if (l.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                l.forEach { c ->
+                    val f = c.archivo ?: return@forEach
+                    Column(Modifier.weight(1f).clickable { Sitio.abre(f.path) }) {
+                        val img = rememberImagen(f.toURI().toString())
+                        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Sand)) {
+                            if (img != null) androidx.compose.foundation.Image(img, c.juego, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                        }
+                        Text(c.juego.ifBlank { "Escritorio" }, color = Charcoal, fontFamily = Display, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+                        Etiqueta("${c.w}×${c.h} · ${fecha(c.t)}")
+                    }
+                }
+                repeat(6 - l.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+        Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+        Antetitulo("Streaming")
+        Spacer(Modifier.height(6.dp))
+        Cuerpo("Para jugar a lo de este ordenador en el móvil, con Steam Link (la app de Valve). El streaming lo hace Steam (Remote Play): cuando eliges «Streaming» en el móvil, Hiedra abre Steam aquí (si no lo estaba) y el juego, y el móvil abre Steam Link. La primera vez, Steam Link te enseña un PIN que se escribe en Steam de este ordenador.", tam = 14)
+        Fila("Streaming desde el móvil", "Tu Hiedra del móvil puede abrir Steam y un juego aquí para jugarlo con Steam Link") { Interruptor(AjustesTuPc.streamingDesdeMovil) { AjustesTuPc.ponStreamingDesdeMovil(it) } }
+        MagFact("Steam", when { steam == null || !steam.instalado -> "no está instalado (Steam Link lo necesita)"; steam.abierto -> "instalado y abierto"; else -> "instalado (se abre al pedir el streaming)" })
+        if (steam != null && steam.ips.isNotEmpty()) MagFact("En la red", steam.ips.joinToString(", "))
     }
 }

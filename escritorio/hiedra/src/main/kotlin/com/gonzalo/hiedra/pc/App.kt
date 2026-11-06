@@ -411,7 +411,7 @@ fun PantAjustes(nav: Nav, alSala: () -> Unit = {}) {
             1 -> {
                 Antetitulo("Este ordenador para tu Hiedra del móvil")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Mientras Hiedra está abierta aquí, tu Hiedra del móvil ve este ordenador en «Tu PC»: su biblioteca (Steam, Heroic, Lutris, tus ROMs y tus programas), a qué juegas, y puede abrir un juego desde el móvil.", tam = 14)
+                Cuerpo("Mientras Hiedra está abierta aquí, tu Hiedra del móvil ve este ordenador en «Tu PC»: su biblioteca (Steam, Heroic, Lutris, tus ROMs y tus programas), a qué juegas, y puede abrir un juego desde el móvil, pedir una captura de esta pantalla o prepararlo para jugar en streaming.", tam = 14)
                 MagFact("Nombre", Sitio.nombreEquipo)
                 MagFact("Dispositivo", Juegos.dispositivo())
                 MagFact("Steam", Pc.carpetasSteam().joinToString { it.path }.ifBlank { "no lo veo en este ordenador" })
@@ -420,6 +420,8 @@ fun PantAjustes(nav: Nav, alSala: () -> Unit = {}) {
                 MagFact("Lutris", lista.count { it.fuente == Fuente.LUTRIS }.let { if (it == 0) "nada (o no está instalado)" else "$it juegos" })
                 Spacer(Modifier.height(8.dp))
                 BotonSuave("Volver a publicar la biblioteca") { Thread { TuPc.publicaBiblioteca() }.start(); nav.aviso("Publicada") }
+                Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+                AjustesCapturasStreaming(nav)
             }
             2 -> AjustesEmulacion(nav)
             3 -> AjustesSalaMando(alSala)
