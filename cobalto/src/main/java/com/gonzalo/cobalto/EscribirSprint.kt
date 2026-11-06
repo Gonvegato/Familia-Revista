@@ -42,7 +42,7 @@ interface CuentaSprints {
  * pasa con todo cerrado, lo termina el dispositivo donde empezó al volver a abrirse (como antes).
  *
  * Sin nada de Android: es el MISMO archivo que compila Cobalto para Linux y Mac. Las pantallas, aparte (EscribirSprintUi.kt en el móvil,
- * escritorio/cobalto/…/pc/Sprint.kt en el ordenador). Hasta Cobalto 0.4.0 y 1.1.0 se guardaban en cada dispositivo («sprints»: pid,
+ * escritorio/cobalto/…/pc/Sprint.kt en el ordenador). Hasta Cobalto 0.4.1 y 1.1.0 se guardaban en cada dispositivo («sprints»: pid,
  * desde, min, pal, meta; «sprint»: el que estaba en marcha): [migra] los pasa a la cuenta, una vez, sin perder ni repetir ninguno.
  */
 open class MotorSprints {
@@ -164,7 +164,7 @@ open class MotorSprints {
     }
 
     /**
-     * Pasa a la cuenta los sprints que este dispositivo guardaba aparte (hasta Cobalto 0.4.0 / 1.1.0): [viejos] (pid, desde, min, pal, meta)
+     * Pasa a la cuenta los sprints que este dispositivo guardaba aparte (hasta Cobalto 0.4.1 / 1.1.0): [viejos] (pid, desde, min, pal, meta)
      * y [enMarcha] (el que estaba en marcha: pid, desde, hasta, base, dia, meta, min). Cada uno va a `sprints/<obra>~<desde>`: si ya está
      * (lo pasó otro dispositivo, o este otra vez), no se toca. Así se juntan los de todos tus dispositivos sin perder ni repetir ninguno.
      * Devuelve cuántos ha pasado.

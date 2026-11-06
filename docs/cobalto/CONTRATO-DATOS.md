@@ -40,7 +40,9 @@ En Cobalto no se valora. Azabache es la dueña de la valoración y de la reseña
 
 ## Lo que aún no está (se añadirá cuando Azabache lo pida)
 
-- Las copias de seguridad completas en el móvil (el PC las tiene en `escritos-copias`): por ahora, «Guardar copia de mis obras» en Ajustes.
+- (Las copias de seguridad completas en el móvil ya están, desde la 0.4.2: se quedan en el móvil, ver `nube/ESCRITOS.md`.)
+- Los sprints de escritura están en la cuenta desde la 0.4.2 (`familia/sprints/<obra>~<desde>`, ver `nube/ESQUEMA.md`), por si Azabache
+  quiere enseñarlos en su Diario: hoy no los lee.
 
 ## Verse entre hermanas
 

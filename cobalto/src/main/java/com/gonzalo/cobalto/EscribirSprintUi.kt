@@ -18,7 +18,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /*
- * Los sprints en Android: dónde viven (la cuenta de la familia de esta app), lo que este móvil guardaba aparte hasta la 0.4.0 y las
+ * Los sprints en Android: dónde viven (la cuenta de la familia de esta app), lo que este móvil guardaba aparte hasta la 0.4.1 y las
  * pantallas. Lo que es un sprint y cómo se cuenta está en EscribirSprint.kt (el mismo archivo que compila Cobalto para Linux y Mac).
  */
 
@@ -30,7 +30,7 @@ object CuentaSprintsMovil : CuentaSprints {
 }
 
 /**
- * Los sprints que este móvil guardaba aparte hasta Cobalto 0.4.0 (preferencias «escribir»: «sprints», los terminados, y «sprint», el que
+ * Los sprints que este móvil guardaba aparte hasta Cobalto 0.4.1 (preferencias «escribir»: «sprints», los terminados, y «sprint», el que
  * estaba en marcha): pasan a la cuenta una vez por cuenta, juntándose con los de tus otros dispositivos ([SprintEscribir.migra]). Se
  * quedan donde estaban, como copia.
  */

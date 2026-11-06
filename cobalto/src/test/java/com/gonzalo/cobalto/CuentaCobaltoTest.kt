@@ -65,7 +65,7 @@ class CuentaCobaltoTest {
     }
 
     @Test fun losSprintsQueGuardabaEsteMovilPasanALaCuentaUnaVez() {
-        // Lo que guardaba Cobalto 0.4.0 en sus preferencias («escribir»: «sprints», los terminados)
+        // Lo que guardaba Cobalto 0.4.1 en sus preferencias («escribir»: «sprints», los terminados)
         val ahora = System.currentTimeMillis()
         val p = ctx.getSharedPreferences("escribir", android.content.Context.MODE_PRIVATE)
         p.edit().putString("sprints", org.json.JSONArray()
