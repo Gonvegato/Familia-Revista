@@ -1,0 +1,48 @@
+# Las pruebas de las cuatro apps de Android (Hiedra, Marfil, Cobalto, Azabache), cada una en su máquina, contra el emulador de Firebase
+# con las reglas del repositorio: lo mismo que se pasa antes de cada versión, pero en GitHub en cada cambio. (Las versiones se firman y se
+# suben fuera: las claves de firma no salen nunca de su sitio.)
+name: Android (pruebas)
+
+on:
+  push:
+    branches: [main]
+    paths: ['hiedra/**', 'marfil/**', 'cobalto/**', 'azabache/**', 'familia/**', 'nucleo/**', 'nube/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [hiedra, marfil, cobalto, azabache]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: El emulador de Firebase (base de datos y cuentas, con nube/reglas.json)
+        run: |
+          cd nube
+          nohup npx --yes firebase-tools@14 emulators:start --only database,auth --project demo-familia > ../emulador.log 2>&1 &
+          for i in $(seq 1 120); do
+            if curl -s -o /dev/null http://127.0.0.1:9000/ && curl -s -o /dev/null http://127.0.0.1:9099/; then echo "Encendido"; exit 0; fi
+            sleep 2
+          done
+          cat ../emulador.log; exit 1
+      - name: Pruebas de ${{ matrix.app }}
+        run: ./gradlew :${{ matrix.app }}:testDebugUnitTest --console=plain
+      - name: Qué pruebas se han hecho (y cuáles se han saltado)
+        if: always()
+        run: python3 herramientas/escritorio/resumen-pruebas.py ${{ matrix.app }}
+      - name: Y que la app compila entera
+        run: ./gradlew :${{ matrix.app }}:assembleDebug --console=plain
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: 'pruebas-${{ matrix.app }}', path: '${{ matrix.app }}/build/test-results/', retention-days: 14 }

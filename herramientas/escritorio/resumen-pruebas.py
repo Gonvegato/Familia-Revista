@@ -6,7 +6,7 @@ import glob, os, sys, xml.etree.ElementTree as ET
 
 raiz = sys.argv[1] if len(sys.argv) > 1 else "."
 total = [0, 0, 0]
-for f in sorted(glob.glob(os.path.join(raiz, "**/build/test-results/test/TEST-*.xml"), recursive=True)):
+for f in sorted(glob.glob(os.path.join(raiz, "**/build/test-results/*/TEST-*.xml"), recursive=True)):
     s = ET.parse(f).getroot()
     n, salt, mal = int(s.get("tests", 0)), int(s.get("skipped", 0)), int(s.get("failures", 0)) + int(s.get("errors", 0))
     total[0] += n; total[1] += salt; total[2] += mal
