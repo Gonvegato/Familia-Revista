@@ -36,7 +36,10 @@ object SinTorrents : FuenteTorrent {
  * compartiendo mientras ves ([compartir]) viajan con tu cuenta (`ajustes/mostaza_torrent`); [cacheMB], lo que puede ocupar en este
  * dispositivo, es de cada uno.
  */
-data class AjustesTorrent(val soloWifi: Boolean = true, val subidaKBs: Int = 0, val bajadaKBs: Int = 0, val compartir: Boolean = true, val cacheMB: Int = 4096)
+/** La subida por defecto, limitada (lo justo para que los demás te sigan enviando trozos sin gastarte la conexión). */
+const val SUBIDA_POR_DEFECTO_KBS = 100
+
+data class AjustesTorrent(val soloWifi: Boolean = true, val subidaKBs: Int = SUBIDA_POR_DEFECTO_KBS, val bajadaKBs: Int = 0, val compartir: Boolean = true, val cacheMB: Int = 4096)
 
 object Torrents {
     /** El motor (hasta la próxima versión, [SinTorrents]). */

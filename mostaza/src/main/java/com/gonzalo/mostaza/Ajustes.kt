@@ -70,7 +70,7 @@ object AjustesTorrents {
     private fun p(c: Context) = EspejoCuenta.prefs(c, GRUPO)
     private fun local(c: Context) = c.getSharedPreferences("mostaza_torrent_local", Context.MODE_PRIVATE)
     fun ajustes(c: Context): AjustesTorrent = p(c).let { x ->
-        AjustesTorrent(x.getBoolean("soloWifi", true), x.getInt("subida", 0).coerceAtLeast(0), x.getInt("bajada", 0).coerceAtLeast(0), x.getBoolean("compartir", true),
+        AjustesTorrent(x.getBoolean("soloWifi", true), x.getInt("subida", SUBIDA_POR_DEFECTO_KBS).coerceAtLeast(0), x.getInt("bajada", 0).coerceAtLeast(0), x.getBoolean("compartir", true),
             local(c).getInt("cacheMB", 4096).coerceIn(512, 65536))
     }
     fun pon(c: Context, a: AjustesTorrent) {
