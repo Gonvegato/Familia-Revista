@@ -103,6 +103,8 @@ class ReproductorActivity : ComponentActivity() {
     private val cortes = ArrayList<Long>()
     private var cargandoDesde = 0L
     private var subsDecididos = false
+    /** Lo abierto es un vídeo de aviso de tu debrid ([esAvisoDelDebrid]): ya se ha pasado a otra. */
+    private var avisoDelDebrid = false
     /** Probando fuentes hasta dar con una en tu idioma (solo si la eligió el elector solo). */
     private var tanteo: Tanteo? = null
     private val tanteando: Boolean get() = tanteo?.terminado == false
@@ -182,7 +184,7 @@ class ReproductorActivity : ComponentActivity() {
         val (t, s) = nombreDe(e); estado.titulo = t; estado.subtitulo = s
         estado.fuente = e.elegida.analisis.resumen().ifBlank { e.elegida.addon }
         estado.cargando = true; estado.aviso = null; estado.corte = null; estado.siguiente = null; estado.cuentaAtras = -1
-        listo = false; cortes.clear(); cargandoDesde = 0L; subsDecididos = false; avisadoEntrada = false
+        listo = false; cortes.clear(); cargandoDesde = 0L; subsDecididos = false; avisadoEntrada = false; avisoDelDebrid = false
         val v = visionado
         visionado = if (v != null && v.breve.id == e.breve.id && e.video != null && v.videoId != e.video.id) v.siguiente(e.video, e.meta)
             else Visionado(applicationContext, e.breve, e.meta, e.video, previo = e.previo, pendiente = e.pendiente)
@@ -256,6 +258,7 @@ class ReproductorActivity : ComponentActivity() {
             estado.cargando = s == Player.STATE_BUFFERING || s == Player.STATE_IDLE
             when (s) {
                 Player.STATE_READY -> {
+                    if (esAvisoDelDebrid(p)) return
                     listo = true; cargandoDesde = 0L; estado.dur = p.duration.coerceAtLeast(0L)
                     if (!subsDecididos) { subsDecididos = true; alVerPistas(p.currentTracks) }
                 }
@@ -264,7 +267,7 @@ class ReproductorActivity : ComponentActivity() {
                     cargandoDesde = ahora; cortes += ahora; cortes.removeAll { ahora - it > 120_000L }
                     if (cortes.size >= 3 && estado.corte == null) seCorta()
                 }
-                Player.STATE_ENDED -> { visionado?.guarda(estado.dur, estado.dur, forzar = true); alTerminar() }
+                Player.STATE_ENDED -> { if (esAvisoDelDebrid(p)) return; visionado?.guarda(estado.dur, estado.dur, forzar = true); alTerminar() }
                 else -> {}
             }
         }
@@ -287,7 +290,47 @@ class ReproductorActivity : ComponentActivity() {
         }
     }
 
-    private fun nuevoTanteo(e: Encargo) = Tanteo(AjustesElector.prefs(applicationContext), e.candidatas.filter { Reproducir.accion(it.fuente) is Accion.Reproductor }, SystemClock.elapsedRealtime())
+    private fun nuevoTanteo(e: Encargo): Tanteo {
+        val rotas = FuentesRotas.busca(applicationContext)
+        return Tanteo(AjustesElector.prefs(applicationContext), e.candidatas.filter { Reproducir.accion(it.fuente) is Accion.Reproductor && (it === e.elegida || !rotas(Elector.clave(it.fuente))) },
+            SystemClock.elapsedRealtime())
+    }
+
+    /**
+     * ¿Lo que se ha abierto es un vídeo de aviso de tu debrid ([FuentesRotas]) y no lo que querías ver? Entonces no cuenta para nada (ni
+     * la posición, ni el tiempo, ni «Visto»): se apunta en tu cuenta que esta fuente no vale y se pasa sola a la siguiente.
+     */
+    private fun esAvisoDelDebrid(p: Player): Boolean {
+        if (avisoDelDebrid) return true
+        val dur = p.duration.takeIf { it != C.TIME_UNSET } ?: 0L
+        if (!FuentesRotas.esAviso(dur, encargo.meta?.minutos ?: 0)) return false
+        avisoDelDebrid = true
+        FuentesRotas.apunta(applicationContext, Elector.clave(encargo.elegida.fuente))
+        // (lo de esta sesión sigue con la otra fuente; de este vídeo, nada)
+        val v = visionado
+        visionado = null
+        p.playWhenReady = false
+        estado.reproduciendo = false
+        val previo = v?.sesion?.vistoMs ?: encargo.previo
+        val pendiente = v?.takeIf { !it.enCuenta }?.pendiente() ?: encargo.pendiente
+        val t = tanteo
+        val otra = if (t != null && !t.terminado) {
+            when (val d = t.trasFallo(encargo.elegida, SystemClock.elapsedRealtime())) { is Decision.Prueba -> d.candidata; is Decision.Vuelve -> d.candidata; else -> null }
+        } else null
+        val sig = otra ?: siguienteCandidata()
+        if (sig == null) {
+            tanteo?.cancela()
+            estado.cargando = false; estado.mensaje = null
+            estado.aviso = "Tu debrid no da este archivo: en vez de la película, el addon manda un vídeo de aviso. No queda otra fuente que probar sola; mira en «Fuente»."
+            return true
+        }
+        estado.mensaje = "Tu debrid no da este archivo: probando otra…"
+        principal.post {
+            cierraTorrent()
+            abre(Encargo(encargo.breve, encargo.meta, encargo.video, sig, encargo.candidatas, previo, pendiente, encargo.automatica))
+        }
+        return true
+    }
 
     private fun pistasDe(tracks: Tracks, tipo: Int) = tracks.groups.filter { it.type == tipo }.flatMap { g -> (0 until g.length).map { g to it } }
 
@@ -296,6 +339,8 @@ class ReproductorActivity : ComponentActivity() {
      * subtítulos en español si el audio no lo es y aceptas la original con subtítulos) y, si se están probando fuentes, se decide si esta vale.
      */
     private fun alVerPistas(tracks: Tracks) {
+        // (las pistas de un vídeo de aviso no dicen nada de la fuente)
+        player?.let { if (esAvisoDelDebrid(it)) return }
         val prefs = AjustesElector.prefs(applicationContext)
         val audios = pistasDe(tracks, C.TRACK_TYPE_AUDIO)
         val textos = pistasDe(tracks, C.TRACK_TYPE_TEXT)
@@ -438,7 +483,8 @@ class ReproductorActivity : ComponentActivity() {
     private fun siguienteCandidata(): Candidata? {
         val cs = encargo.candidatas.filter { Reproducir.accion(it.fuente) is Accion.Reproductor }
         val i = cs.indexOfFirst { it === encargo.elegida }
-        return cs.drop(i + 1).firstOrNull()
+        val rotas = FuentesRotas.busca(applicationContext)
+        return cs.drop(i + 1).firstOrNull { !rotas(Elector.clave(it.fuente)) }
     }
 
     private fun siguienteFuente() { estado.corte = null; siguienteCandidata()?.let { cambiaA(it) } }
@@ -485,7 +531,7 @@ class ReproductorActivity : ComponentActivity() {
             val m = encargo.meta
             val red = Conexion.red(applicationContext)
             val e = Elector.elige(cs, AjustesElector.prefs(applicationContext), red, Conexion.capacidades(applicationContext), m?.minutos ?: 0, Torrents.usables(applicationContext, red), grupo,
-                MemoriaPistas.busca(applicationContext))
+                MemoriaPistas.busca(applicationContext), FuentesRotas.busca(applicationContext))
             val c = e.elegida ?: run { estado.cargando = false; estado.aviso = "No hay fuentes para el episodio siguiente."; return@launch }
             visionado?.termina(estado.dur, estado.dur)
             cierraTorrent()

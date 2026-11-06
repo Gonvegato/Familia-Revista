@@ -22,7 +22,7 @@ object SincroP {
     private fun ajustes() = LaFamilia.coleccion("ajustes")
 
     /** Lo que eliges en Mostaza, grupo a grupo (`ajustes/<nodo>`). */
-    val GRUPOS: List<EspejoCuenta.Grupo> get() = listOf(AjustesReproductor.GRUPO, AjustesElector.GRUPO, AjustesTorrents.GRUPO, OrdenGuardado.GRUPO, AjustesPortada.GRUPO, Actualizador.GRUPO)
+    val GRUPOS: List<EspejoCuenta.Grupo> get() = listOf(AjustesReproductor.GRUPO, AjustesElector.GRUPO, AjustesTorrents.GRUPO, OrdenGuardado.GRUPO, AjustesPortada.GRUPO, FuentesRotas.GRUPO, Actualizador.GRUPO)
 
     fun iniciar(c: Context) {
         app = c.applicationContext

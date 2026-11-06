@@ -346,9 +346,10 @@ object Elector {
      * el mismo). [torrents]: si hay motor de torrents (sin él, los torrents nunca se eligen solos).
      */
     fun elige(cs: List<Candidata>, p: PrefsElector, red: Red, cap: Capacidades, minutos: Int, torrents: Boolean, grupoAnterior: String = "",
-              verificados: (String) -> Verificacion? = { null }): Eleccion {
-        val ord = ordena(conVerificados(cs, verificados), p, red, cap, minutos, torrents)
-        val jugables = ord.filter { reproducible(it, torrents) }
+              verificados: (String) -> Verificacion? = { null }, rotas: (String) -> Boolean = { false }): Eleccion {
+        // (las que dan un vídeo de aviso en vez de la película, [FuentesRotas]: al final, y no se eligen solas)
+        val ord = ordena(conVerificados(cs, verificados), p, red, cap, minutos, torrents).let { o -> o.partition { !rotas(clave(it.fuente)) }.let { (b, r) -> b + r } }
+        val jugables = ord.filter { reproducible(it, torrents) && !rotas(clave(it.fuente)) }
         val delGrupo = if (grupoAnterior.isNotBlank()) jugables.firstOrNull { it.fuente.grupo == grupoAnterior && cap.reproduce(it.analisis) } else null
         val e = delGrupo ?: jugables.firstOrNull()
         val fuera = e != null && puesto(e, p) >= ordenEfectivo(p).size
