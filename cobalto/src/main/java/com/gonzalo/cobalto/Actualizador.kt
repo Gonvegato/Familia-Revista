@@ -37,6 +37,39 @@ object Actualizador {
     var faltaPermiso by mutableStateOf(false)
     /** La app está delante (si no, un aviso en lugar de abrir pantallas). */
     @Volatile var primerPlano = false
+
+    /**
+     * ¿Se ve ahora alguna pantalla de la app? Lo dice Android (el ciclo de vida de todo el proceso), además de lo apuntado al arrancar.
+     * Si se entraba directamente a otra pantalla (el lector desde el widget, o cuando Android la vuelve a abrir tras cerrar la app por
+     * detrás), no se había apuntado nada, se creía que no la estabas usando y la versión nueva se instalaba en silencio contigo dentro
+     * (Android cierra la app al instalarla: te sacaba del libro).
+     */
+    fun seVe(): Boolean = primerPlano || runCatching {
+        androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+    }.getOrDefault(false)
+
+    /** Cuántas pantallas que no se deben cortar hay abiertas (un libro, un juego): las apuntan ellas mismas mientras existen. */
+    @Volatile var ocupada = 0
+    /** Desde cuándo no se ve ninguna pantalla de la app (0: se ve). */
+    @Volatile private var dejoDeVerseEn = 0L
+    /** Con un libro o un juego abierto, lo que se espera desde que te vas antes de instalar (por si solo has ido un momento a otra cosa). */
+    private const val CON_ALGO_ABIERTO = 15 * 60_000L
+
+    /**
+     * Cuánto esperar para instalar sin cortarte nada (0: ya). Nunca con la pantalla apagada o bloqueada: quizá solo la has dejado un
+     * momento leyendo una página, y al volver el libro ya no estaría. Con un libro o un juego abierto, hasta [CON_ALGO_ABIERTO] después
+     * de irte. (Si se ve la app no se llega aquí: al dejar de verse se vuelve a programar.)
+     */
+    private fun esperaParaInstalar(ctx: Context): Long {
+        val pantalla = ctx.getSystemService(android.os.PowerManager::class.java)?.isInteractive != false
+        val bloqueada = ctx.getSystemService(android.app.KeyguardManager::class.java)?.isKeyguardLocked == true
+        if (!pantalla || bloqueada) return 30 * 60_000L
+        if (ocupada > 0) {
+            val fuera = if (dejoDeVerseEn == 0L) 0L else System.currentTimeMillis() - dejoDeVerseEn
+            if (fuera < CON_ALGO_ABIERTO) return (CON_ALGO_ABIERTO - fuera).coerceAtLeast(60_000L)
+        }
+        return 0L
+    }
     /** Qué pasó en la última comprobación (se enseña en Perfil, para saber por qué no se actualiza si no lo hace). */
     var estado by mutableStateOf("")
         private set
@@ -125,14 +158,14 @@ object Actualizador {
                 androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.addObserver(androidx.lifecycle.LifecycleEventObserver { _, ev ->
                     when (ev) {
                         androidx.lifecycle.Lifecycle.Event.ON_START -> {
-                            primerPlano = true
+                            primerPlano = true; dejoDeVerseEn = 0L
                             runCatching { androidx.work.WorkManager.getInstance(app).cancelUniqueWork("actualizar-al-salir") }
                             quitaAviso(app)
                             bucle?.cancel()
                             bucle = scope.launch { while (true) { runCatching { comprueba(app) }; kotlinx.coroutines.delay(60_000) } }
                         }
                         androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
-                            primerPlano = false
+                            primerPlano = false; dejoDeVerseEn = System.currentTimeMillis()
                             bucle?.cancel(); bucle = null
                             // Se espera un poco: si solo has ido a la galería o al selector de archivos (otra app encima),
                             // al volver se cancela; instalar ahí cerraría Cobalto a mitad de elegir una foto. (Con WorkManager y
@@ -148,9 +181,9 @@ object Actualizador {
     }
 
     /** La instalación sin preguntar, un poco después de dejar de verse la app (se cancela si vuelves antes). */
-    private fun programaAlSalir(ctx: Context) = runCatching {
+    private fun programaAlSalir(ctx: Context, espera: Long = DESPUES_DE_SALIR) = runCatching {
         val req = androidx.work.OneTimeWorkRequestBuilder<ActualizadorWorker>()
-            .setInitialDelay(DESPUES_DE_SALIR, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .setInitialDelay(espera, java.util.concurrent.TimeUnit.MILLISECONDS)
             .setConstraints(androidx.work.Constraints.Builder().setRequiredNetworkType(androidx.work.NetworkType.CONNECTED).build())
             .build()
         androidx.work.WorkManager.getInstance(ctx).enqueueUniqueWork("actualizar-al-salir", androidx.work.ExistingWorkPolicy.REPLACE, req)
@@ -215,7 +248,7 @@ object Actualizador {
         val silenciosa = puedeSilenciosa(ctx)
         nueva = Nueva(ult.first, code, f, silenciosa)
         // Si mientras se bajaba dejaste la app, se instala en cuanto pase un momento
-        if (silenciosa && !primerPlano && iniciado) programaAlSalir(ctx)
+        if (silenciosa && !seVe()) programaAlSalir(ctx)
         anota(ctx, "lista la ${ult.third.joinToString(".")}" + if (silenciosa) " (se instala al salir de la app)" else " (te pregunto para instalarla)")
     }
 
@@ -226,7 +259,13 @@ object Actualizador {
     }
 
     /** Al salir de la app (y en segundo plano): si se puede instalar sin preguntar, se instala ahora (no interrumpe nada). */
-    fun alSalir(ctx: Context) { if (!primerPlano) nueva?.takeIf { it.silenciosa }?.let { instala(ctx, it) } }
+    fun alSalir(ctx: Context) {
+        val n = nueva?.takeIf { it.silenciosa } ?: return
+        if (seVe()) return
+        val espera = esperaParaInstalar(ctx)
+        if (espera > 0) { programaAlSalir(ctx, espera); return }
+        instala(ctx, n)
+    }
 
     /** Si instalas con la app delante, al terminar se vuelve a abrir (Android cierra la app al actualizarla). */
     private fun marcaReabrir(ctx: Context, si: Boolean) {
@@ -255,7 +294,7 @@ object Actualizador {
     fun quitaAviso(ctx: Context) { runCatching { ctx.getSystemService(NotificationManager::class.java).cancel(AVISO_REABRIR) } }
 
     fun instala(ctx: Context, n: Nueva) {
-        marcaReabrir(ctx, primerPlano)
+        marcaReabrir(ctx, seVe())
         val pi = ctx.packageManager.packageInstaller
         val p = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(ctx.packageName)
@@ -282,7 +321,7 @@ class ActualizadorReceiver : BroadcastReceiver() {
         }
         @Suppress("DEPRECATION") val conf = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return
         conf.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (Actualizador.primerPlano) { runCatching { ctx.startActivity(conf) }; return }
+        if (Actualizador.seVe()) { runCatching { ctx.startActivity(conf) }; return }
         val nm = ctx.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel("actualizar", "Actualizaciones de Cobalto", NotificationManager.IMPORTANCE_DEFAULT))
         val pi = PendingIntent.getActivity(ctx, 2005, conf, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)

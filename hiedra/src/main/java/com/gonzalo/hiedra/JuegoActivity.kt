@@ -131,6 +131,8 @@ class JuegoActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Jugando, la versión nueva no se instala (Android cerraría la app con la partida a medias)
+        Actualizador.ocupada++; Actualizador.init(applicationContext)
         iniciar(this); AjustesJuego.cargar(this)
         val j = intent.getStringExtra("id")?.let { Biblioteca.por(it) }
         if (j == null) { Lanzar.aviso(this, "Ese juego ya no está en Hiedra"); finish(); return }
@@ -172,6 +174,7 @@ class JuegoActivity : ComponentActivity() {
 
     override fun onDestroy() {
         runCatching { (getSystemService(Context.INPUT_SERVICE) as InputManager).unregisterInputDeviceListener(oyenteMandos) }
+        Actualizador.ocupada = (Actualizador.ocupada - 1).coerceAtLeast(0)
         super.onDestroy()
     }
 
