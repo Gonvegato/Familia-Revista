@@ -23,7 +23,8 @@ aquí tal cual (con su «Añadir»).
 - Quitar una película o una serie aquí la quita en Mostaza (queda borrada: no vuelve sola aunque la veas). Quitar la categoría entera no
   borra nada de Mostaza.
 - Hasta que Mostaza no ha pasado por tu cuenta, todo sigue como siempre. Lo de antes no se borra: tus fichas de antes se quedan donde
-  estaban, como copia (las lee aún Azabache de Linux y Mac, que en su próxima versión leerá también las de Mostaza).
+  estaban, como copia. Azabache de Linux y Mac (1.2.1) hace lo mismo: desde que Mostaza ha pasado por tu cuenta, sus películas y series
+  son las de Mostaza, y lo que cambies allí llega aquí y al revés.
 - Entrar una vez: Mostaza puede pedirle la cuenta a Azabache (y al revés).
 
 ## 1.6.2 — lo que eliges, en todos tus dispositivos

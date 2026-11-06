@@ -211,8 +211,8 @@ es un nodo con `o` = el elemento tal cual (como texto JSON); lo que no es una li
 con `v`. Un elemento borrado lleva `b`. Los juegos y los libros no van aquí (`games`, `plays`, `books`, `bplays`: son `juegos` y
 `libros`); si quedó alguno de la 1.3, no se lee. Las películas y las series de las categorías de TMDB y TVmaze (`items_<categoría>` y
 `iplays_<categoría>`) pasaron a `titulos` (Mostaza, una vez en cada dispositivo, sin perder nada: estado, fechas, nota, criterios,
-reseña, lo de Azabache en `az`, el tiempo y los episodios marcados); los nodos de antes **se quedan como estaban** (los lee aún
-Azabache de escritorio) y Azabache del móvil deja de leerlos en cuanto existe `azabache/a_mostaza` (`v` = `[<hora>]`, `por`, `cuantas`:
+reseña, lo de Azabache en `az`, el tiempo y los episodios marcados); los nodos de antes **se quedan como estaban** (como copia) y
+Azabache (el del móvil desde la 1.6.3 y el del ordenador desde la 1.2.1) deja de leerlos en cuanto existe `azabache/a_mostaza` (`v` = `[<hora>]`, `por`, `cuantas`:
 la marca de que Mostaza ya los trajo).
 
 ### `ajustes/<nombre>`
