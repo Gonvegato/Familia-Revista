@@ -59,8 +59,9 @@ object MandoTactil {
     private val CUADRADO = ButtonConfig(id = Mandos.Boton.Y.tecla, label = "□", contentDescription = "Cuadrado")
     private val EQUIS = ButtonConfig(id = Mandos.Boton.B.tecla, label = "✕", contentDescription = "Equis")
 
-    private val CRUZ = PrimaryDialConfig.Cross(CrossConfig(ID_CRUZ, shape = CrossConfig.Shape.CIRCLE, useDiagonals = true))
-    private val PALANCA = PrimaryDialConfig.Cross(CrossConfig(ID_CRUZ_Y_STICK, shape = CrossConfig.Shape.CIRCLE, useDiagonals = true))
+    // La cruceta con su forma de cruz (la de círculos de Lemuroid lleva un dibujo de flechas encima que aquí no hay: sin él parecían cuatro botones)
+    private val CRUZ = PrimaryDialConfig.Cross(CrossConfig(ID_CRUZ, useDiagonals = true))
+    private val PALANCA = PrimaryDialConfig.Cross(CrossConfig(ID_CRUZ_Y_STICK, useDiagonals = true))
 
     /** Los sticks de Lemuroid se giran un poco hacia fuera (8°) para que caigan bajo el pulgar. */
     private fun giro(grados: Float) = object : SecondaryDialConfig.RotationProcessor() { override fun getRotation(rotation: Float) = rotation + grados }

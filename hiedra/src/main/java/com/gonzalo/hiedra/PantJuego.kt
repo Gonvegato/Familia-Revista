@@ -138,7 +138,9 @@ private fun Jugando(a: JuegoActivity) {
         if (!tactil && AjustesJuego.tactil == AjustesJuego.Tactil.AUTO && !a.nucleoDef.tactil)
             Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { a.tactilForzado = true } })
         if (tactil) {
-            val lado = (if (vertical) (conf.screenWidthDp * 0.5f).dp else minOf(conf.screenHeightDp * 0.62f, 270f).dp) * AjustesJuego.tamano
+            // Los mandos con stick (N64, PSP) tienen más cosas alrededor de la cruceta: más grandes, para que la cruceta y los botones no encojan
+            val conStick = a.nucleoDef.pad.analogico
+            val lado = (if (vertical) (conf.screenWidthDp * 0.5f).dp else minOf(conf.screenHeightDp * (if (conStick) 0.8f else 0.62f), if (conStick) 340f else 270f).dp) * AjustesJuego.tamano
             val abajo = if (vertical) 28.dp else 8.dp
             key(AjustesJuego.opacidad, AjustesJuego.vibracion, AjustesJuego.tamano) {
                 AndroidView(factory = { a.crearPad(MandoTactil.Lado.IZQUIERDO) }, modifier = Modifier.align(Alignment.BottomStart).padding(bottom = abajo).size(lado))
@@ -206,8 +208,17 @@ private fun MenuJuego(a: JuegoActivity) {
         }
         @Composable
         fun Foto(modifier: Modifier = Modifier) {
-            val f = a.fotoPausa ?: return
-            Box(modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)).border(1.dp, Raya, androidx.compose.foundation.shape.RoundedCornerShape(6.dp))) {
+            val forma = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+            val f = a.fotoPausa
+            // Sin la foto del momento (aún no ha llegado, o el núcleo no la da), la caja del juego
+            if (f == null) {
+                val j = a.juego ?: return
+                Box(modifier.fillMaxWidth(0.55f).aspectRatio(PROPORCION_PORTADA).clip(forma).border(1.dp, Raya, forma)) {
+                    PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 72)
+                }
+                return
+            }
+            Box(modifier.clip(forma).border(1.dp, Raya, forma)) {
                 Image(f, null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxWidth().aspectRatio(f.width.toFloat() / f.height.coerceAtLeast(1)))
             }
         }

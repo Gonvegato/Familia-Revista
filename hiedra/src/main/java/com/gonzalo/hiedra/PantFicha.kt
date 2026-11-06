@@ -117,8 +117,8 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
 
     val anchoFicha = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
     // En la tablet tumbada (o un móvil grande apaisado), en dos columnas: la portada, las horas y «Jugar» a la izquierda; las casillas a la derecha
-    val dosColumnas = anchoFicha >= 840
-    val anchoPortada = if (dosColumnas) 200.dp else 150.dp
+    val dosColumnas = anchoFicha >= 1000
+    val anchoPortada = if (dosColumnas) 200.dp else if (anchoFicha >= 700) 180.dp else 150.dp
     Column(Modifier.fillMaxSize().atrapaFoco().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = if (anchoFicha >= 700) 40.dp else 20.dp)) {
         // Arriba: favorito y editar (el nombre, la plataforma, las horas, quitar)
         RevistaTopBar(alCerrar, "Volver") {
@@ -155,7 +155,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                         Text("${tiempoDe(j.msJugados)} / ${tiempoDe(j.durHistoria * 60_000L)}", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(bottom = 12.dp))
                     }
                     Barra(avance)
-                    Text("de la historia (lo que suele durar)".uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
+                    Text("de la historia (lo que suele durar)".uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp, modifier = Modifier.padding(top = 6.dp))
                 } else {
                     FitTitle(if (j.msJugados >= 60_000) tiempoDe(j.msJugados) else "0 h", 56.sp, 58.sp, color = Acento, letterSpacing = (-1.5).sp, unaLinea = true, maxLines = 1)
                     Text("TUS HORAS", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)

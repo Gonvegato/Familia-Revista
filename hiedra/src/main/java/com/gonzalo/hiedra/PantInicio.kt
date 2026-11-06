@@ -245,7 +245,8 @@ fun PantInicio(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: (Ti
             Icon(Icons.Filled.Settings, "Ajustes", tint = Charcoal, modifier = Modifier.padding(start = 6.dp).tocable { alIr(Destino.Ajustes) }.padding(8.dp).size(22.dp))
         }
         val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
-        Cabecera(if (ancho >= 700) 132.sp else 92.sp, Modifier.padding(top = 8.dp))
+        // La cabecera, a lo ancho de la página (en la tablet tumbada, enorme: como la de una revista de verdad)
+        Cabecera(if (ancho >= 1000) 200.sp else if (ancho >= 700) 150.sp else 92.sp, Modifier.padding(top = 8.dp))
         FileteCabecera(3.dp)
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             Text("Nº ${hoy.get(Calendar.DAY_OF_YEAR)}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
@@ -320,7 +321,7 @@ fun PantInicio(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: (Ti
             Filete(1.dp)
             Text("Un toque juega · mantén pulsado para ver la ficha · con mando: A juega, X abre la ficha", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp))
         }
-        Column(Modifier.padding(top = 10.dp)) {
+        Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
             if (atrio != null) {
                 Spacer(Modifier.height(10.dp))
                 Filete(1.dp, Line)

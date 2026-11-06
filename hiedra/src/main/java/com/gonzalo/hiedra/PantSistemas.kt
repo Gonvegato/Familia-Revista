@@ -69,7 +69,8 @@ fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit) {
     val anchoPantalla = LocalConfiguration.current.screenWidthDp
     // Las casillas: dos por fila en el móvil, más en la tablet (sin pasar de 190 dp de ancho cada una)
     val margen = if (anchoPantalla >= 700) 40.dp else 20.dp
-    val util = (minOf(anchoPantalla, 1180).dp - margen * 2)
+    // (2 dp de holgura: al redondear a píxeles, dos casillas justas no cabían y bajaba una)
+    val util = minOf(anchoPantalla.dp - margen * 2, 1180.dp) - 2.dp
     val porFila = maxOf(2, (util / 190.dp).toInt())
     val anchoCasilla = (util - 12.dp * (porFila - 1)) / porFila
     LazyColumn(Modifier.fillMaxSize().background(Paper).statusBarsPadding(), contentPadding = PaddingValues(start = margen, end = margen, bottom = 40.dp)) {
