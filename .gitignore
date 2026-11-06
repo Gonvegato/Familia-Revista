@@ -20,3 +20,4 @@ firebase-debug.log
 
 # Las copias de trabajo de los asistentes (git worktree)
 .claude/
+__pycache__/
