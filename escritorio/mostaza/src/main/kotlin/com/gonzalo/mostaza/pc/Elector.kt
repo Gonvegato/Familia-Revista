@@ -360,6 +360,8 @@ object Elector {
         val maxima = if (red.movil && p.ahorroDatos) minOf(p.maxima, 720) else p.maxima
         return cs.sortedWith(
             compareBy<Candidata> { if (reproducible(it, torrents)) 0 else 1 }
+                // Lo de tu kDrive, lo primero: es lo que tú has puesto ahí
+                .thenBy { if (it.ordenAddon < 0) 0 else 1 }
                 // Tu idioma (el puesto en tu orden); dentro del mismo, nunca una grabada en el cine (CAM, TS…) ni una reescalada si hay otra
                 .thenBy { floor(puesto(it, p)) }
                 .thenBy { if (it.analisis.mala) 2 else if (it.analisis.reescalada) 1 else 0 }

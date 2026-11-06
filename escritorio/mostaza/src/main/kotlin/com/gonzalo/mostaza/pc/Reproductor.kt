@@ -230,6 +230,7 @@ object Reproductor {
         visionado = if (v != null && v.breve.id == e.breve.id && e.video != null && v.videoId != e.video.id) v.siguiente(e.video, e.meta, ::reloj)
             else Visionado(e.breve, e.meta, e.video, ::reloj, ::ahora, previo = e.previo, pendiente = e.pendiente)
         val f = e.elegida.fuente
+        fuenteSubs = f
         try {
             url = if (f.tipo == TipoFuente.TORRENT) {
                 estado.mensaje = "Preparando el torrent…"
@@ -437,12 +438,16 @@ object Reproductor {
      * Los subtítulos de tus addons, como pistas más del archivo (después de decidir el audio y si se prueba otra fuente: bajarlos tarda, y
      * no se bajan para una fuente que se va a dejar). Si hacen falta en español y el archivo no los traía, se pone uno de estos.
      */
+    @Volatile private var fuenteSubs: Fuente? = null
+
     private fun anadeSubtitulos() {
         val c = cliente ?: return
         val l = subsPendientes.take(6); subsPendientes = emptyList()
         if (l.isEmpty()) return
         val g = generacion
-        l.forEach { x -> if (g == generacion) c.manda("sub-add", x.url, "auto", x.etiqueta.ifBlank { PistaMpv.nombreIdioma(x.idioma).ifBlank { "Subtítulos" } }, x.idioma, espera = 8_000) }
+        // (se bajan aquí y se le da a mpv el archivo: así las cabeceras de la fuente —tu debrid, tu token de kDrive— no van a otros servidores)
+        val fuente = fuenteSubs
+        l.forEach { x -> if (g == generacion) c.manda("sub-add", Subs.local(x, fuente)?.absolutePath ?: return@forEach, "auto", x.etiqueta.ifBlank { PistaMpv.nombreIdioma(x.idioma).ifBlank { "Subtítulos" } }, x.idioma, espera = 8_000) }
         if (g != generacion) return
         val pistas = PistaMpv.deLista(c.lee("track-list"))
         val subs = PistasDeMpv.subtitulos(pistas)

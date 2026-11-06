@@ -125,6 +125,8 @@ data class Fuente(
     val subtitulos: List<Subtitulo> = emptyList(),
     val noWeb: Boolean = false, val grupo: String = "", val cabeceras: Map<String, String> = emptyMap(),
     val tamano: Long = 0L, val archivo: String = "", val hashVideo: String = "", val paises: List<String> = emptyList(),
+    /** Sus [cabeceras] llevan un secreto tuyo (tu token de kDrive): solo van a su servidor y no se dan a otro programa. */
+    val privada: Boolean = false,
 ) {
     val tipo: TipoFuente get() = when {
         url.isNotBlank() -> TipoFuente.DIRECTA

@@ -54,6 +54,7 @@ class Nav(val ir: (Pantalla) -> Unit, val volver: () -> Unit, val aviso: (String
 @Composable
 fun AppMostaza(inicial: Pantalla = Pantalla.Portada) {
     LaFamilia.cambios
+    remember { CineKDrive.engancha() }
     var pantalla by remember { mutableStateOf(inicial) }
     val historia = remember { mutableStateListOf<Pantalla>() }
     val snack = remember { SnackbarHostState() }

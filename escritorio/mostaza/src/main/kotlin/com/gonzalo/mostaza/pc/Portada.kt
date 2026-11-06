@@ -22,6 +22,8 @@ import com.gonzalo.familia.pc.Actualizador
 import com.gonzalo.familia.pc.revista.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -45,6 +47,13 @@ fun PantPortada(nav: Nav) {
         if (PortadaFija.addons != null) return@produceState
         value = if (conTmdb) emptyList() else withContext(Dispatchers.IO) { runCatching { Catalogos.portada() }.getOrDefault(emptyList()) }
     }
+    // Lo que tienes en tu kDrive («Mi carpeta/Mostaza»), con su ficha
+    val enKDrive by produceState(emptyList<MetaBreve>(), CineKDrive.version, conTmdb) {
+        value = withContext(Dispatchers.IO) { runCatching {
+            CineKDrive.indice()
+            kotlinx.coroutines.coroutineScope { CineKDrive.titulos().take(40).map { (id, tipo) -> async { Fichas.carga(tipo, id)?.first?.breve() } }.awaitAll().filterNotNull() }
+        }.getOrDefault(emptyList()) }
+    }
     val hoy = remember { LocalDate.now() }
     Pagina {
         Cabecera(132.sp, texto = "MOSTAZA")
@@ -63,6 +72,7 @@ fun PantPortada(nav: Nav) {
             portada = { b -> viendo.firstOrNull { it.idStremio == b.id }?.portada.orEmpty() })
         if (pendientes.isNotEmpty()) FilaPosters("Pendientes", pendientes.take(20).map { it.breve() }, { nav.abre(it) }, verTodo = { nav.ir(Pantalla.Seccion(Estado.PENDIENTE)) },
             sub = { b -> tipoNombre(b.tipo) + if (b.ano.isNotBlank()) " · ${b.ano}" else "" }, portada = { b -> pendientes.firstOrNull { it.idStremio == b.id }?.portada.orEmpty() })
+        if (enKDrive.isNotEmpty()) FilaPosters("En tu kDrive", enKDrive, { nav.abre(it) })
         if (conTmdb) when (val f = filasTmdb) {
             null -> Nota("Mirando el catálogo…", Modifier.padding(top = 26.dp))
             else -> {

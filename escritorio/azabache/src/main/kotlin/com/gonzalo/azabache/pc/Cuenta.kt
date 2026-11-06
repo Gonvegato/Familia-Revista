@@ -343,11 +343,11 @@ object Cuenta {
 
     // ================================================================ las recomendaciones a tu pareja (`azabache/recs~<id>`)
 
-    /** Lo que le has recomendado a tu pareja (lo tuyo, de la cuenta), lo último primero. */
-    fun misRecs(): List<Rec> = cacheado("recs") { lista("recs").mapNotNull { recDeMapa(it) }.sortedByDescending { it.hora } }
+    /** Lo que le has recomendado a tu pareja (lo tuyo, de la cuenta), lo último primero (dos en el mismo milisegundo: la de número mayor, que los números solo crecen). */
+    fun misRecs(): List<Rec> = cacheado("recs") { lista("recs").mapNotNull { recDeMapa(it) }.sortedWith(compareByDescending<Rec> { it.hora }.thenByDescending { it.id }) }
 
     /** Lo que te recomienda tu pareja (de su cuenta), lo último primero. */
-    fun recsDe(uid: String): List<Rec> = cacheado("recs_$uid") { lista("recs", ajena(uid, "azabache")).mapNotNull { recDeMapa(it) }.sortedByDescending { it.hora } }
+    fun recsDe(uid: String): List<Rec> = cacheado("recs_$uid") { lista("recs", ajena(uid, "azabache")).mapNotNull { recDeMapa(it) }.sortedWith(compareByDescending<Rec> { it.hora }.thenByDescending { it.id }) }
 
     /**
      * Le recomiendas algo a tu pareja: un elemento nuevo en tu lista `recs` (el mismo que crea el móvil con «Recomendar»: un número

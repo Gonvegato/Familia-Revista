@@ -47,7 +47,10 @@ pistas, TMDB y las tres reglas son el mismo código que aquí, con las mismas pr
 - **Torrents** con el mismo motor que el del móvil (`escritorio/torrent`, que compila `torrent/src/main` tal cual, con libtorrent4j y su
   biblioteca de Linux x86-64 o del Mac con Apple Silicon); con tu debrid (TorBox, Real-Debrid…), las directas van antes.
 - **Teclado y mando**: las flechas (o la cruceta) mueven el foco, Intro (o A) pulsa, Esc (o B) vuelve.
-- Lo que aún no: «Tu kDrive» (el sitio donde entrará está en `Addons.fuentesExtra`), los widgets y traer lo de Azabache (lo hace el móvil).
+- **Tu kDrive**, como en el móvil: lo de «Mi carpeta/Mostaza/Películas» y «…/Series» sale como la fuente «Tu kDrive», la primera, y en
+  la portada («En tu kDrive»). Tu token solo va a kDrive: a mpv por su socket, y los subtítulos de fuera se bajan antes en Mostaza (sin
+  las cabeceras de la fuente) para que mpv no se las mande a otros servidores; el reproductor del sistema no se ofrece con estas fuentes.
+- Lo que aún no: los widgets y traer lo de Azabache (lo hace el móvil).
 - Capturas: `CapturasTest` (con `-Dcapturas=<carpeta>`): portada (clara y oscura), Viendo, Visto, la ficha de una película y la de una
   serie, las fuentes, los addons, Ajustes (fuentes y reproductor) y la banda de mpv.
 
