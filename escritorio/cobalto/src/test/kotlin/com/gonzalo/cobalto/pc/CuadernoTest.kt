@@ -2,6 +2,8 @@ package com.gonzalo.cobalto.pc
 
 import com.gonzalo.cobalto.Escritos
 import com.gonzalo.cobalto.NubeEscritos
+import com.gonzalo.cobalto.SprintEscribir
+import org.json.JSONObject
 import com.gonzalo.familia.nucleo.Emulador
 import com.gonzalo.familia.nucleo.Familia
 import com.gonzalo.familia.nucleo.Red
@@ -136,6 +138,39 @@ class CuadernoTest {
         assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otra.sincroniza().ok)
         val c = otra.coleccion("capitulos").nodo("${obra.id}~${cap.id}")!!
         assertEquals("Llovía sobre el lago.", c.texto("x")); assertEquals(obra.id, c.texto("ref")); assertEquals(1L, c.entero("n")); assertEquals(4L, c.entero("p"))
+    }
+
+    @Test fun losSprintsQueGuardabaEsteOrdenadorPasanALaCuentaUnaVez() {
+        // Lo que guardaba Cobalto 1.1.0 en sprints.json (el formato del móvil): dos terminados y uno en marcha
+        val ahora = System.currentTimeMillis()
+        Local.graba(SprintsDeAntes.ARCHIVO, JSONObject()
+            .put("sprints", org.json.JSONArray().put(JSONObject().put("pid", "p_a").put("desde", ahora - 86_400_000L).put("min", 25).put("pal", 640).put("meta", 500))
+                .put(JSONObject().put("pid", "p_a").put("desde", ahora - 3 * 86_400_000L).put("min", 15).put("pal", 310).put("meta", 0)))
+            .put("sprint", JSONObject().put("pid", "p_a").put("desde", ahora - 60_000L).put("hasta", ahora + 600_000L).put("base", 0).put("dia", Escritos.hoy()).put("meta", 0).put("min", 11)))
+        SprintEscribir.reiniciaParaPruebas(); SprintsDeAntes.reiniciaParaPruebas(); SprintEscribir.cuenta = CuentaSprintsPC
+        try {
+            // Hasta que no se ha bajado lo que ya había en la cuenta, se espera
+            assertEquals(0, SprintsDeAntes.migra())
+            LaFamilia.coleccion("sprints"); assertTrue(LaFamilia.sincronizaYa().ok)
+            assertEquals(3, SprintsDeAntes.migra())
+            assertEquals(0, SprintsDeAntes.migra())
+            assertTrue(LaFamilia.sincronizaYa().ok)
+            // El móvil (el otro dispositivo de la cuenta) los tiene: los dos terminados en su historial y el que está en marcha
+            otra.coleccion("sprints"); assertTrue(otra.sincroniza().ok)
+            val enLaCuenta = otra.coleccion("sprints").vivos()
+            assertEquals(3, enLaCuenta.size)
+            assertEquals(setOf(640L, 310L, 0L), enLaCuenta.map { it.entero("pal") }.toSet())
+            assertTrue(enLaCuenta.all { it.texto("dev") == "cobalto-pc1" && it.texto("ref") == "p_a" })
+            // Y aquí sigue en marcha el de antes, ahora desde la cuenta
+            SprintEscribir.mira(pc)
+            assertTrue(SprintEscribir.activo("p_a")); assertEquals(11, SprintEscribir.minutos)
+            assertEquals(2, SprintEscribir.historial("p_a").size)
+            // El archivo se queda como copia, apuntando a qué cuenta pasó: al volver a abrir la app no se repite nada
+            assertEquals(LaFamilia.uid, Local.lee(SprintsDeAntes.ARCHIVO).optString("enCuenta"))
+            assertTrue(Local.lee(SprintsDeAntes.ARCHIVO).has("sprints"))
+            SprintsDeAntes.reiniciaParaPruebas()
+            assertEquals(0, SprintsDeAntes.migra())
+        } finally { SprintEscribir.reiniciaParaPruebas(); SprintEscribir.cuenta = com.gonzalo.cobalto.CuentaSprints.Ninguna }
     }
 
     @Test fun lasCopiasDeSeguridadLlevanTodo() {

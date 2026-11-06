@@ -12,102 +12,67 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gonzalo.cobalto.CuentaSprints
 import com.gonzalo.cobalto.Escritos
 import com.gonzalo.cobalto.Formato
+import com.gonzalo.cobalto.Sprint
+import com.gonzalo.cobalto.SprintEscribir
+import com.gonzalo.familia.nucleo.Coleccion
+import com.gonzalo.familia.pc.LaFamilia
 import com.gonzalo.familia.pc.revista.*
 import kotlinx.coroutines.delay
-import org.json.JSONArray
-import org.json.JSONObject
 
-/** Un sprint ya terminado: cuándo empezó, cuántos minutos, cuántas palabras y la meta (0 si no había). */
-class Sprint(val pid: String, val desde: Long, val minutos: Int, val palabras: Int, val meta: Int) {
-    val porMinuto: Int get() = if (minutos > 0) palabras / minutos else 0
+/** La cuenta de los sprints en el ordenador: la colección `sprints` de [LaFamilia] y este ordenador (el de sus palabras de cada día). */
+object CuentaSprintsPC : CuentaSprints {
+    override fun coleccion(): Coleccion? = if (LaFamilia.iniciada) runCatching { LaFamilia.coleccion(SprintEscribir.COLECCION) }.getOrNull() else null
+    override val dentro: Boolean get() = NubePC.vinculada
+    override val dispositivo: String get() = Cuaderno.dispositivo()
 }
 
 /**
- * Sprints de escritura: escribir sin parar durante un rato (10, 25, 45 min…), con una meta de palabras si quieres. Cuentan las
- * palabras nuevas de la obra (en cualquier escena: las que apunta [Escritos.escribe], así no se cuenta nada dos veces). Sigue
- * aunque cambies de pantalla o cierres la app, y lo hecho se guarda en este ordenador. Lo mismo que EscribirSprint.kt del móvil,
- * con lo mismo guardado igual: el sprint en marcha («sprint»: pid, desde, hasta, base, dia, meta, min) y los terminados
- * («sprints»: pid, desde, min, pal, meta; los últimos 200), en `sprints.json` de la carpeta de Cobalto.
+ * Los sprints que este ordenador guardaba aparte hasta Cobalto 1.1.0 (`sprints.json` de la carpeta de Cobalto: «sprints», los
+ * terminados, y «sprint», el que estaba en marcha, con el formato del móvil): pasan a la cuenta una vez por cuenta, juntándose con los de
+ * tus otros dispositivos ([SprintEscribir.migra]). El archivo se queda como estaba, como copia (con «enCuenta»: la cuenta a la que ya pasó).
  */
-object SprintEscribir {
+object SprintsDeAntes {
     const val ARCHIVO = "sprints.json"
-    var pid by mutableStateOf("")
-        private set
-    var hasta by mutableLongStateOf(0L)
-        private set
-    private var desde = 0L
-    private var base = 0
-    private var dia = 0L
-    var meta by mutableIntStateOf(0)
-        private set
-    var minutos = 0
-        private set
-    /** El último que terminó (para enseñarlo); se pone a null al verlo. */
-    var terminado by mutableStateOf<Sprint?>(null)
-    /** La hora (para las pruebas). */
-    var reloj: () -> Long = { System.currentTimeMillis() }
-    var hoy: () -> Long = { Escritos.hoy() }
+    /** La cuenta para la que ya se ha hecho en esta sesión de la app ("" = sin cuenta). */
+    @Volatile private var hechaPara: String? = null
 
-    private fun lee() = Local.lee(ARCHIVO)
-    private fun graba(o: JSONObject) = Local.graba(ARCHIVO, o)
+    private fun uid() = if (NubePC.vinculada) NubePC.uid else ""
 
-    /** Lo recupera si se cerró la app con uno en marcha (y lo termina si ya pasó su hora). */
-    fun recupera(e: Escritos) {
-        if (hasta > 0L) return
-        val o = lee().optJSONObject("sprint") ?: return
-        pid = o.optString("pid"); desde = o.optLong("desde"); hasta = o.optLong("hasta"); base = o.optInt("base"); dia = o.optLong("dia")
-        meta = o.optInt("meta"); minutos = o.optInt("min")
-        if (hasta in 1..reloj()) termina(e)
+    fun hecha(): Boolean { val uid = uid(); return hechaPara == uid || (uid.isNotBlank() && Local.lee(ARCHIVO).optString("enCuenta") == uid) }
+
+    /** Los pasa si aún no están (al abrir y cada vez que cambia la cuenta). Devuelve cuántos ha pasado. */
+    @Synchronized
+    fun migra(): Int {
+        if (hecha()) return 0
+        val uid = uid()
+        val o = Local.lee(ARCHIVO)
+        val hay = o.has("sprints") || o.has("sprint")
+        if (hay && !SprintEscribir.listoParaMigrar()) return 0
+        val n = if (!hay) 0 else SprintEscribir.migra(o.optJSONArray("sprints"), o.optJSONObject("sprint"))
+        if (hay && uid.isNotBlank()) Local.graba(ARCHIVO, o.put("enCuenta", uid))
+        hechaPara = uid
+        return n
     }
 
-    fun activo(p: String? = null) = hasta > reloj() && (p == null || p == pid)
-
-    fun empieza(e: Escritos, obra: String, min: Int, metaPalabras: Int) {
-        pid = obra; minutos = min; meta = metaPalabras
-        desde = reloj(); hasta = desde + min * 60_000L
-        dia = hoy(); base = e.escritas(dia, obra)
-        graba(lee().put("sprint", JSONObject().put("pid", pid).put("desde", desde).put("hasta", hasta).put("base", base).put("dia", dia).put("meta", meta).put("min", minutos)))
-    }
-
-    /** Palabras escritas en la obra desde que empezó. */
-    fun llevas(e: Escritos): Int {
-        if (hasta == 0L) return 0
-        val h = hoy()
-        return ((e.escritas(dia, pid) + if (h != dia) e.escritas(h, pid) else 0) - base).coerceAtLeast(0)
-    }
-
-    /** Lo da por terminado (antes de tiempo si [ya]) y lo guarda en el historial. */
-    fun termina(e: Escritos, ya: Boolean = false) {
-        if (hasta == 0L) return
-        val fin = if (ya) reloj().coerceAtMost(hasta) else hasta
-        val min = (((fin - desde) + 30_000L) / 60_000L).toInt().coerceAtLeast(if (ya) 0 else minutos)
-        val s = Sprint(pid, desde, min, llevas(e), meta)
-        hasta = 0L
-        val o = lee(); o.remove("sprint")
-        if (s.minutos >= 1) {
-            val a = o.optJSONArray("sprints") ?: JSONArray()
-            a.put(JSONObject().put("pid", s.pid).put("desde", s.desde).put("min", s.minutos).put("pal", s.palabras).put("meta", s.meta))
-            o.put("sprints", JSONArray().also { n -> (maxOf(0, a.length() - 200) until a.length()).forEach { n.put(a.get(it)) } })
-        }
-        graba(o)
-        if (s.minutos >= 1 || s.palabras > 0) terminado = s
-    }
-
-    fun historial(obra: String? = null): List<Sprint> = runCatching {
-        val a = lee().optJSONArray("sprints") ?: JSONArray()
-        (0 until a.length()).map { a.getJSONObject(it) }.map { Sprint(it.optString("pid"), it.optLong("desde"), it.optInt("min"), it.optInt("pal"), it.optInt("meta")) }
-            .filter { obra == null || it.pid == obra }.sortedByDescending { it.desde }
-    }.getOrDefault(emptyList())
-
-    fun reiniciaParaPruebas() { hasta = 0L; pid = ""; terminado = null; reloj = { System.currentTimeMillis() }; hoy = { Escritos.hoy() } }
+    fun reiniciaParaPruebas() { hechaPara = null }
 }
 
-/** Vigila el sprint en marcha (va en la raíz de la app, para que siga fuera del editor) y enseña el resultado al acabar. */
+/*
+ * Los sprints en el ordenador: dónde viven (la cuenta de la familia de esta app), lo que este ordenador guardaba aparte hasta la 1.1.0 y
+ * las pantallas. Lo que es un sprint y cómo se cuenta es lo del móvil: EscribirSprint.kt, el mismo archivo, copiado al compilar.
+ */
+
+/**
+ * Vigila el sprint en marcha (va en la raíz de la app, para que siga fuera del editor) y enseña el resultado al acabar. Cada vez que
+ * cambia la cuenta se pone al día con ella (un sprint empezado o terminado en otro dispositivo).
+ */
 @Composable
 fun VigilaSprint(e: Escritos) {
-    LaunchedEffect(Unit) { SprintEscribir.recupera(e) }
+    val cambios = LaFamilia.cambios
+    LaunchedEffect(cambios) { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { SprintsDeAntes.migra() } }; SprintEscribir.mira(e) }
     val hasta = SprintEscribir.hasta
     LaunchedEffect(hasta) {
         if (hasta == 0L) return@LaunchedEffect
@@ -170,11 +135,12 @@ private fun ResultadoSprint(s: Sprint, e: Escritos, onCerrar: () -> Unit) {
 /** Los sprints de la obra (para las cifras). */
 @Composable
 fun SprintsObra(pid: String) {
-    val l = remember(SprintEscribir.terminado, SprintEscribir.hasta) { SprintEscribir.historial(pid) }
+    val cambios = LaFamilia.cambios
+    val l = remember(SprintEscribir.terminado, SprintEscribir.hasta, cambios) { SprintEscribir.historial(pid) }
     if (l.isEmpty()) return
     val f = java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.forLanguageTag("es-ES"))
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Antetitulo("Sprints (en este ordenador)", tam = 12.sp)
+        Antetitulo("Sprints", tam = 12.sp)
         Text("${l.size} · ${Formato.cifra(l.sumOf { it.palabras })} palabras en ${l.sumOf { it.minutos }} min · mejor ritmo ${l.maxOf { it.porMinuto }} por minuto",
             color = Muted, fontFamily = Display, fontSize = 15.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
         l.take(8).forEach { s ->

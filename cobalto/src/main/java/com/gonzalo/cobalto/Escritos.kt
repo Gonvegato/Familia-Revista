@@ -217,6 +217,14 @@ class Escritos(private val dir: File, private val nube: NubeEscritos = NubeEscri
         return d
     }
 
+    /** Pone varios documentos de una vez (sacar una obra de una copia de seguridad): un solo aviso y una sola subida. */
+    fun ponVarios(lista: List<JSONObject>) {
+        if (lista.isEmpty()) return
+        synchronized(lock) { lista.forEach { ponSin(it) } }
+        avisa()
+        alCambiar?.invoke()
+    }
+
     /** Crea un documento nuevo del tipo [t] en la obra [pid] (con orden al final si no se dice). */
     fun nuevo(t: String, pid: String, campos: JSONObject.() -> Unit = {}): Doc {
         val id = nuevoId(t)

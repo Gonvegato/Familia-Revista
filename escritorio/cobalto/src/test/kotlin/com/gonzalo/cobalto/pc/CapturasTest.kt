@@ -13,6 +13,7 @@ import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.unit.Density
 import com.gonzalo.cobalto.Escritos
+import com.gonzalo.cobalto.SprintEscribir
 import com.gonzalo.familia.nucleo.Emulador
 import com.gonzalo.familia.pc.LaFamilia
 import com.gonzalo.familia.pc.LlaveroMemoria
@@ -73,8 +74,9 @@ class CapturasTest {
         listOf(420, 0, 960, 1210, 640, 300, 880, 1500, 0, 720, 1020, 560, 830, 760).forEachIndexed { i, n ->
             if (n > 0) e.pon(JSONObject().put("id", "l_${obra.id}_${hoy - 13 + i}").put("t", Escritos.T_LOG).put("pid", obra.id).put("dia", hoy - 13 + i).put("dev", JSONObject().put("cobalto-pc1", n)))
         }
-        Local.graba(SprintEscribir.ARCHIVO, JSONObject().put("sprints", JSONArray().put(JSONObject().put("pid", obra.id).put("desde", System.currentTimeMillis() - 86_400_000L).put("min", 25).put("pal", 640).put("meta", 500))
-            .put(JSONObject().put("pid", obra.id).put("desde", System.currentTimeMillis() - 3 * 86_400_000L).put("min", 15).put("pal", 310).put("meta", 0))))
+        SprintEscribir.cuenta = CuentaSprintsPC
+        SprintEscribir.migra(JSONArray().put(JSONObject().put("pid", obra.id).put("desde", System.currentTimeMillis() - 86_400_000L).put("min", 25).put("pal", 640).put("meta", 500))
+            .put(JSONObject().put("pid", obra.id).put("desde", System.currentTimeMillis() - 3 * 86_400_000L).put("min", 15).put("pal", 310).put("meta", 0)), null)
         val otra = e.nuevo(Escritos.T_OBRA, "") { put("titulo", "Cuentos del faro"); put("est", "pausa") }
         e.nuevo(Escritos.T_CAP, otra.id) { put("titulo", "El farero") }
 

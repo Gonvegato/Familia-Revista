@@ -10,6 +10,29 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.4.2 — lo tuyo, en tu cuenta
+
+- **Los sprints están en tu cuenta.** Hasta ahora cada sprint se quedaba en el dispositivo donde lo hacías: en las cifras de la obra el
+  móvil enseñaba los suyos y el ordenador los suyos. Ahora están todos en todos (también en Cobalto para Linux y Mac 1.1.1). La primera
+  vez que abras cada uno, lo que guardaba pasa a la cuenta y se junta con lo de los demás, sin perder ni repetir ninguno; lo de antes se
+  queda donde estaba, como copia.
+- **Un sprint empezado en un sitio sigue en el otro**: lo empiezas en el móvil y en el ordenador también corre el tiempo y cuentan las
+  palabras que escribas allí; lo terminas en cualquiera de los dos. Si la hora se cumple con todo cerrado, lo da por terminado el
+  dispositivo donde lo empezaste, al volver a abrirlo (como antes).
+- **Tu pareja es la de tu cuenta**: la que pones en Cobalto es la misma que en Azabache y está en todos tus dispositivos (antes se quedaba
+  en este móvil). Si ya la tenías puesta aquí y la cuenta no tenía ninguna, **no pasa sola**: ponerla en la cuenta deja a esa persona
+  leer tu cuenta, así que Ajustes → Cuenta te pregunta («Ponerla en mi cuenta» u «Olvidarla»). Quitarla aquí la quita en todas.
+- **Copias de seguridad también en el móvil**, como en el ordenador: copias completas de todo lo que escribes (también la papelera),
+  cada 15 minutos mientras Cobalto está abierto y al salir de la app, si algo ha cambiado. Se quedan las últimas 40, comprimidas, dentro de
+  la app: no ocupan tus archivos, pero se irían si desinstalas Cobalto, así que puedes guardar una fuera del móvil. En Ajustes → Avanzado →
+  Copias se ven, se hace una a mano, se guarda una fuera y de cualquiera se saca una obra como **obra nueva** («… (copia)», con todo lo
+  suyo y sin tocar lo que tienes). En el ordenador, lo mismo en Ajustes → Copias.
+- Lo que se queda en cada dispositivo, a propósito: cómo se ve la página del editor (letra, tamaño, interlineado, ancho, sangría, máquina
+  de escribir, tipografía automática y lo de la concentración), el historial de versiones de cada escena, las copias de seguridad, los
+  widgets y lo de las actualizaciones.
+- Por dentro: el árbol (sus medidas y «Ordenar»), la guía de la novela, los sinónimos, los sprints y las copias son el mismo código en el
+  móvil y en el ordenador (antes el ordenador tenía copias que podían separarse), con pruebas que pasan los dos.
+
 ## 0.4.1
 
 - **Una versión nueva ya no te saca de lo que estás haciendo.** El actualizador instala en silencio cuando no usas la app, y Android la cierra para instalarla. Pero no siempre sabía que la estabas usando: si se entraba directamente a una pantalla que no es la portada (desde un widget, o cuando Android vuelve a abrir la app tras cerrarla por detrás), creía que no estabas; y con la pantalla apagada un momento, también. Ahora se lo pregunta a Android, nunca instala con la pantalla apagada o bloqueada.

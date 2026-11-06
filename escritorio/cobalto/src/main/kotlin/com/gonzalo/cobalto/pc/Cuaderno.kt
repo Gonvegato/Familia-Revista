@@ -1,9 +1,11 @@
 package com.gonzalo.cobalto.pc
 
+import com.gonzalo.cobalto.CopiasEscritos
 import com.gonzalo.cobalto.Doc
 import com.gonzalo.cobalto.EstadoObra
 import com.gonzalo.cobalto.Escritos
 import com.gonzalo.cobalto.NubeEscritos
+import com.gonzalo.cobalto.SprintEscribir
 import com.gonzalo.cobalto.estadoDe
 import com.gonzalo.cobalto.ultimaEdicion
 import com.gonzalo.familia.nucleo.Red
@@ -69,6 +71,9 @@ object Cuaderno {
     /** Al arrancar la app (después de LaFamilia.inicia). */
     fun inicia() {
         val x = escritos
+        // Los sprints, en la cuenta (los de este ordenador de antes pasan a ella en cuanto se ha bajado lo que ya había: [VigilaSprint])
+        SprintEscribir.cuenta = CuentaSprintsPC
+        runCatching { LaFamilia.coleccion(SprintEscribir.COLECCION) }
         LaFamilia.alEntrar { x.cuenta(LaFamilia.uid); pronto(0) }
         if (NubePC.vinculada) { x.cuenta(LaFamilia.uid); pronto(0) }
         escucha()
@@ -207,12 +212,13 @@ object Publica {
 /**
  * Copias de seguridad completas en este ordenador (una novela no se puede volver a escribir): la primera a los 20 s de abrir, luego cada
  * 15 minutos si algo ha cambiado y al cerrar. Se guardan las últimas 40, con todos los documentos (también la papelera). Como las de Atrio
- * del PC (nube/ESCRITOS.md → «Copias de seguridad»).
+ * del PC (nube/ESCRITOS.md → «Copias de seguridad»), y las mismas que las del móvil: la lógica es la de EscribirCopias.kt (el mismo
+ * archivo), y de cualquiera se saca una obra como obra nueva (Ajustes → Copias).
  */
 object Copias {
     const val GUARDA = 40
-    @Volatile private var ultimaVersion = -1
-    fun carpeta(): File = File(Sitio.de("cobalto"), "copias").also { it.mkdirs() }
+    fun carpeta(): File = File(Cuaderno.dirPruebas ?: Sitio.de("cobalto"), "copias").also { it.mkdirs() }
+    private val copias = CopiasEscritos({ carpeta() }, GUARDA)
 
     fun inicia(e: Escritos) {
         Thread({
@@ -223,22 +229,10 @@ object Copias {
         }, "cobalto-copias").apply { isDaemon = true; start() }
     }
 
-    /** Hace una copia si algo ha cambiado desde la última. Devuelve el archivo (o null si no hacía falta). */
-    @Synchronized
-    fun haz(e: Escritos, porque: String): File? {
-        if (e.version == ultimaVersion && porque.isEmpty()) return null
-        ultimaVersion = e.version
-        val docs = e.volcado()
-        val obras = e.obras().size; val palabras = e.obras().sumOf { e.palabrasObra(it.id) }
-        if (docs.length() == 0) return null
-        val nombre = "copia-" + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss")) + "-${obras}obras-${palabras}pal.json"
-        val f = File(carpeta(), nombre)
-        val tmp = File(carpeta(), "$nombre.tmp")
-        java.io.FileOutputStream(tmp).use { o -> o.write(JSONObject().put("app", "cobalto").put("hecha", System.currentTimeMillis()).put("docs", docs).toString().toByteArray()); o.fd.sync() }
-        tmp.renameTo(f)
-        carpeta().listFiles { x -> x.name.startsWith("copia-") && x.name.endsWith(".json") }?.sortedByDescending { it.name }?.drop(GUARDA)?.forEach { it.delete() }
-        return f
-    }
+    /** Hace una copia si algo ha cambiado desde la última ([porque] no vacío: aunque no). Devuelve el archivo (o null si no hacía falta). */
+    fun haz(e: Escritos, porque: String): File? = copias.haz(e, forzar = porque.isNotEmpty())
 
-    fun lista(): List<File> = carpeta().listFiles { x -> x.name.startsWith("copia-") && x.name.endsWith(".json") }?.sortedByDescending { it.name }.orEmpty()
+    fun lista(): List<File> = copias.lista().map { it.archivo }
+    fun copias(): List<CopiasEscritos.Copia> = copias.lista()
+    fun lee(f: File): List<JSONObject> = copias.lee(f)
 }

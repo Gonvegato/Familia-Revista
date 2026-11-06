@@ -18,6 +18,7 @@ object SincroP {
     @Volatile private var app: Context? = null
     @Volatile private var de: Any? = null
     private var escuchaEscritos: FbStream? = null
+    private val parejaMirando = java.util.concurrent.atomic.AtomicBoolean(false)
 
     val estado: String get() = LaFamilia.estado
     val ultima: Long get() { LaFamilia.cambios; return app?.getSharedPreferences("cobalto_sync", Context.MODE_PRIVATE)?.getLong("ultima", 0L) ?: 0L }
@@ -36,7 +37,13 @@ object SincroP {
             aplicaAjustes()
             // Lo que leen Azabache y Marfil: que estén abiertas para que se suban y se bajen solas
             listOf("obras", "capitulos", "palabras").forEach { LaFamilia.coleccion(it) }
+            // Los sprints, en la cuenta (los de este móvil de antes pasan a ella en cuanto se ha bajado lo que ya había)
+            SprintEscribir.cuenta = CuentaSprintsMovil
+            LaFamilia.coleccion(SprintEscribir.COLECCION).alCambiar { app?.let { SprintsDeAntes.pronto(it) } }
         }
+        SprintsDeAntes.pronto(c)
+        // Tu pareja, la de la cuenta (la de este móvil, si la cuenta no tenía, pasa a ella una vez)
+        if (Cuenta.vinculada && parejaMirando.compareAndSet(false, true)) kotlin.concurrent.thread(name = "cobalto-pareja") { try { runCatching { Cuenta.sincronizaPareja() } } finally { parejaMirando.set(false) } }
         Migracion.siHaceFalta(c)
     }
 

@@ -52,6 +52,8 @@ class MainActivity : ComponentActivity() {
         val c = applicationContext
         kotlin.concurrent.thread { TemaAtrio.refrescar(c) }
         SincroP.escuchar(c)
+        // Las copias de seguridad de este móvil: cada 15 minutos mientras se ve (si algo ha cambiado)
+        CopiasMovil.alVerse(c)
     }
 
     override fun onStop() {
@@ -59,6 +61,8 @@ class MainActivity : ComponentActivity() {
         SincroP.parar()
         // Lo escrito, a disco (y los widgets, al día)
         runCatching { Escritos.get(applicationContext).vacia() }
+        // Y una copia de seguridad, si algo ha cambiado desde la última
+        CopiasMovil.alOcultarse(applicationContext)
         Widgets.pedir(applicationContext)
         // Android congela la app al poco de dejar de verse: lo que quede por subir (y el capítulo diferido por los 20 s de calma) lo sube
         // un trabajo de fondo, que corre aunque la app esté congelada. Si la app ya lo subió antes, el trabajo no encuentra nada que hacer.

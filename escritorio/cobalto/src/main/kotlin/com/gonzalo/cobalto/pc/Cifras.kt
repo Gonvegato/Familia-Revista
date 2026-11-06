@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 import com.gonzalo.cobalto.Doc
 import com.gonzalo.cobalto.Escritos
 import com.gonzalo.cobalto.Formato
+import com.gonzalo.cobalto.SprintEscribir
+import com.gonzalo.familia.pc.LaFamilia
 import com.gonzalo.familia.pc.revista.*
 import java.time.LocalDate
 
@@ -83,7 +85,7 @@ fun CifrasObra(obra: Doc, abrirEscena: (String) -> Unit) {
                 ESTADOS_ESCENA.forEachIndexed { i, n -> Row(verticalAlignment = Alignment.CenterVertically) { Punto(colorEstado(i), 10.dp); Spacer(Modifier.width(6.dp)); Text("${estados[i] ?: 0} ${n.lowercase()}", color = Charcoal, fontFamily = Body, fontSize = 13.sp) } }
             }
         }
-        val sprints = remember(SprintEscribir.terminado, SprintEscribir.hasta) { SprintEscribir.historial(pid) }
+        val sprints = remember(SprintEscribir.terminado, SprintEscribir.hasta, LaFamilia.cambios) { SprintEscribir.historial(pid) }
         if (sprints.isNotEmpty()) { Spacer(Modifier.height(26.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp)); SprintsObra(pid) }
         if (caps.isNotEmpty()) {
             Spacer(Modifier.height(26.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))

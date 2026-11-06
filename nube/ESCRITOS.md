@@ -65,6 +65,10 @@ El historial de versiones **no viaja**: se guarda en cada dispositivo (cada esce
 
 ## Compartir con tu pareja (móvil 1.0.6 y PC/Mac 1.0.3)
 
+- Tu pareja es la de la cuenta: `/users/<tú>/partner` = su uid (la misma que pone Azabache, y la que le deja leer tu cuenta). Desde
+  Cobalto 0.4.2 el móvil la lee y la escribe ahí, así está en todos tus dispositivos (hasta entonces la guardaba solo en el móvil: la
+  de antes no pasa sola a la cuenta: si la cuenta no tiene ninguna, Ajustes pregunta si ponerla, porque eso le deja leer tu cuenta). Quitarla es poner `""` (nunca null). Su nombre sale de su
+  `/users/<ella>/name` (o `user`) si te deja leerlo.
 - En el capítulo (`c`) y la parte (`a`): `hecho` (1 = terminado) y `comp` (1 = compartido con tu pareja). Compartir una
   parte comparte todos sus capítulos (también los que se añadan); igual con terminado.
 - Tu pareja lee `/users/<tú>/escritos` (las reglas de siempre dejan a cada uno leer la cuenta de su pareja) y se queda
@@ -112,8 +116,15 @@ versión se guarda aparte (las 3 últimas, en `b/<id>.json`, solo en el disposit
 | PDF | `EscribirPdf.kt` (PdfDocument) | `escritorio/src/main/escritos-pdf.js` (Chromium) |
 | Tipografía automática | `EscribirTexto.kt` (Tipografia) | `revista/js/escribir-texto.js` (ET.tipografia) |
 | Sinónimos (tesauro RLA-ES, LGPL 2.1) | `EscribirSinonimos.kt` + `assets/sinonimos` | `escritorio/src/main/sinonimos.js` |
-| Sprints | `EscribirSprint.kt` | `revista/js/escribir.js` (E.sprint) |
-| Guía de la novela (pasos, textos y qué se da por hecho) | `EscribirGuia.kt` | `revista/js/escribir-guia.js` (la lógica) y `escribir.js` (las pantallas) |
+| Sprints (en la cuenta: `sprints/<obra>~<desde>`, ver `ESQUEMA.md`) | `EscribirSprint.kt` (la lógica) y `EscribirSprintUi.kt` (las pantallas) | `revista/js/escribir.js` (E.sprint, en este PC) |
+| Guía de la novela (pasos, textos y qué se da por hecho) | `EscribirGuia.kt` (la lógica) y `EscribirGuiaUi.kt` (las pantallas) | `revista/js/escribir-guia.js` (la lógica) y `escribir.js` (las pantallas) |
+| Árbol (medidas y «Ordenar») | `EscribirArbol.kt` (la lógica) y `EscribirArbolUi.kt` (el lienzo) | `revista/js/escribir-arbol.js` |
+| Copias de seguridad en el dispositivo | `EscribirCopias.kt` (la lógica) y `CopiasMovil.kt` | `escritorio/src/main/escritos-copias.js` |
+
+**Cobalto para Linux y Mac** (`escritorio/cobalto`) compila los MISMOS archivos de Kotlin que el móvil para todo lo que no es pantalla (se
+copian de `cobalto/src/main` al compilar, ver su `build.gradle.kts`): el núcleo, la mezcla, la estructura, el texto, exportar, el árbol, la
+guía, los sinónimos, los sprints y las copias de seguridad. Sus pruebas compartidas también (`EscribirMezclaTest`,
+`EscribirEstructuraTest`, `EscribirArbolGuiaTest`, `EscribirSprintTest`, `EscribirCopiasTest`).
 
 Casos compartidos (los pasan el móvil y el PC): `herramientas/casos/mezcla.json`, `tipografia.json`, `sinonimos.json` y `guia.json`.
 
@@ -129,4 +140,16 @@ conservan las últimas 40. Cada archivo (`copia-AAAA-MM-DD_HHMMSS-<n>obras-<p>pa
 papelera. En Escribir → «Copias de seguridad» se ven, se abre la carpeta y de cualquier copia se saca una obra como **obra
 nueva** (ids nuevos y enlaces entre capítulos, escenas, fichas, hitos y borradores intactos; nunca pisa lo que hay).
 Los archivos se escriben con `fsync` (guardado durable). Código: `escritos-copias.js`; pruebas: `prueba-escribir-copias.js` y
-`prueba-escribir-cierre.js` (Atrio de verdad: teclear y cerrar al momento, ⌘W y ⌘Q). Pendiente: el móvil no tiene aún estas copias.
+`prueba-escribir-cierre.js` (Atrio de verdad: teclear y cerrar al momento, ⌘W y ⌘Q).
+
+**Cobalto para Linux y Mac** (1.1.0) hace las mismas, en `<datos de Cobalto>/copias` (la primera a los 20 s, cada 15 minutos si algo
+ha cambiado y al cerrar; las últimas 40) y, desde la 1.1.1, en Ajustes → Copias se saca una obra de cualquiera como obra nueva.
+
+**El móvil** (Cobalto 0.4.2) también: en la memoria de la app (`files/copias`, no sale del móvil), comprimidas
+(`copia-…json.gz`: el mismo JSON), la primera a los 20 s de abrir, cada 15 minutos mientras Cobalto se ve y al salir de la app, siempre
+que algo haya cambiado (cuántos documentos y la última edición: se apunta en `ultima-copia.txt`, así no se repite al volver a abrir). Se
+quedan las últimas 40 y nunca más de 100 MB entre todas (se van las más viejas; siempre quedan las tres últimas). En Ajustes → Avanzado
+→ Copias se ven, se hace una a mano, se guarda una fuera del móvil (sin comprimir, como las del ordenador) y de cualquiera se saca una
+obra como obra nueva: «título (copia)», con ids nuevos y sus enlaces (parte, capítulo, escena, punto de vista y lugar, uniones del árbol,
+fichas y notas vinculadas, ramas, sucesos y borradores) puestos a los nuevos; sin las palabras de cada día (ya están contadas). La
+lógica es la misma en los dos (`EscribirCopias.kt`); pruebas: `EscribirCopiasTest` (las pasan los dos) y `CopiasMovilTest`.

@@ -1,6 +1,7 @@
 // Cobalto para Linux y Mac: lo que escribes, en la cuenta (nube/ESCRITOS.md). El núcleo de los escritos (formato, sincronización y
 // mezcla a tres bandas), el texto, exportar e importar son LOS MISMOS archivos que compila Cobalto de Android: se copian de
-// cobalto/src/main al compilar (no hay dos versiones que puedan separarse). Las pruebas de la mezcla y de la estructura, también.
+// cobalto/src/main al compilar (no hay dos versiones que puedan separarse): también el árbol, la guía, los sinónimos y los sprints, sin sus
+// pantallas, y las copias de seguridad. Las pruebas de la mezcla, la estructura, el árbol y la guía, los sprints en la cuenta y las copias, también.
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -9,7 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.1.0"
+val version = "1.1.1"
 val android = rootProject.file("cobalto/src")
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -18,12 +19,16 @@ kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarg
 // Lo que es igual en el móvil y en el ordenador (Kotlin sin nada de Android: org.json y Compose, que existen en los dos)
 val compartido = tasks.register<Sync>("compartidoDeAndroid") {
     from(File(android, "main/java/com/gonzalo/cobalto")) {
-        include("Escritos.kt", "EscribirMezcla.kt", "EscribirEstructura.kt", "EscribirTexto.kt", "EscribirExport.kt", "EscribirDiff.kt", "Racha.kt", "Formato.kt", "Obras.kt")
+        include("Escritos.kt", "EscribirMezcla.kt", "EscribirEstructura.kt", "EscribirTexto.kt", "EscribirExport.kt", "EscribirDiff.kt", "Racha.kt", "Formato.kt", "Obras.kt",
+            // El árbol (medidas y «Ordenar»), la guía de la novela, los sinónimos y los sprints (en la cuenta), sin sus pantallas
+            "EscribirArbol.kt", "EscribirGuia.kt", "EscribirSinonimos.kt", "EscribirSprint.kt",
+            // Las copias de seguridad en el dispositivo (y sacar una obra de una)
+            "EscribirCopias.kt")
     }
     into(layout.buildDirectory.dir("compartido/main/com/gonzalo/cobalto"))
 }
 val pruebasCompartidas = tasks.register<Sync>("pruebasDeAndroid") {
-    from(File(android, "test/java/com/gonzalo/cobalto")) { include("EscribirMezclaTest.kt", "EscribirEstructuraTest.kt") }
+    from(File(android, "test/java/com/gonzalo/cobalto")) { include("EscribirMezclaTest.kt", "EscribirEstructuraTest.kt", "EscribirArbolGuiaTest.kt", "EscribirSprintTest.kt", "EscribirCopiasTest.kt") }
     into(layout.buildDirectory.dir("compartido/test/com/gonzalo/cobalto"))
 }
 // El diccionario de sinónimos (RLA-ES, LGPL 2.1, sin cambios): el mismo archivo que lleva el móvil en sus assets
