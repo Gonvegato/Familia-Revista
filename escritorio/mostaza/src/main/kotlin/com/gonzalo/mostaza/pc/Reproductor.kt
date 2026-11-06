@@ -83,6 +83,10 @@ object Reproductor {
     private var url = ""
     private var torrentAbierto = ""
     private var subsPendientes: List<Subtitulo> = emptyList()
+    /** Sube con cada archivo que se abre (lo de uno no se aplica a otro que se ha abierto mientras). */
+    private var generacion = 0L
+    /** Lo que se decidió con las pistas: ¿hacen falta subtítulos en español? */
+    private var quiereSubs = false
     private var listo = false
     private var subsDecididos = false
     private var avisoDelDebrid = false
@@ -215,6 +219,7 @@ object Reproductor {
 
     private fun abre(e: Encargo) {
         encargo = e
+        generacion++; quiereSubs = false
         val (t, s) = nombreDe(e)
         estado.activo = true; estado.titulo = t; estado.subtitulo = s
         estado.fuente = e.elegida.analisis.resumen().ifBlank { e.elegida.addon }
@@ -262,20 +267,17 @@ object Reproductor {
         when (s.nombre) {
             "start-file" -> if (entrada < 0 || s.entrada == entrada) { entrada = s.entrada; empezado = true }
             "file-loaded" -> {
-                // Los subtítulos de tus addons, como pistas más (sin ponerlos: lo decide [decidePistas])
-                subsPendientes.forEach { x -> c.manda("sub-add", x.url, "auto", x.etiqueta.ifBlank { PistaMpv.nombreIdioma(x.idioma).ifBlank { "Subtítulos" } }, x.idioma, espera = 8_000) }
-                subsPendientes = emptyList()
                 if (esAvisoDelDebrid()) return
                 val pistas = PistaMpv.deLista(c.lee("track-list"))
                 estado.pistas = pistas
-                if (!subsDecididos && PistasDeMpv.audios(pistas).isNotEmpty()) { subsDecididos = true; alVerPistas(pistas) }
+                if (!subsDecididos && PistasDeMpv.audios(pistas).isNotEmpty()) { subsDecididos = true; val g = generacion; alVerPistas(pistas); if (g == generacion) anadeSubtitulos() }
             }
             "playback-restart" -> {
                 if (esAvisoDelDebrid()) return
                 listo = true; cargandoDesde = 0L; estado.cargando = false
                 estado.dur = ((c.leeDouble("duration") ?: 0.0) * 1000).toLong()
                 reproduce(c.lee("core-idle")?.comoBool() == false)
-                if (!subsDecididos) { val pistas = PistaMpv.deLista(c.lee("track-list")); estado.pistas = pistas; subsDecididos = true; alVerPistas(pistas) }
+                if (!subsDecididos) { val pistas = PistaMpv.deLista(c.lee("track-list")); estado.pistas = pistas; subsDecididos = true; val g = generacion; alVerPistas(pistas); if (g == generacion) anadeSubtitulos() }
             }
             "seek" -> visionado?.sesion?.salto()
             "end-file" -> {
@@ -421,11 +423,32 @@ object Reproductor {
             if (!p.elegida) c.pon("aid", id)
         }
         val enMiIdioma = if (prefEspanol) audio?.espanol == true else audioSel != null && normal(audioSel!!) == normal(audioPref)
+        quiereSubs = !enMiIdioma && Pistas.quiereSubtitulos(audio, prefs)
         if (enMiIdioma) {
             if (!AjustesReproductor.subsSiempre()) c.pon("sid", "no")
         } else if (Pistas.quiereSubtitulos(audio, prefs)) {
             val subs = PistasDeMpv.subtitulos(pistas)
             if (subs.none { it.elegida && Pistas.subtituloEspanol(it.idioma, it.titulo) }) PistasDeMpv.subtituloEspanol(pistas, prefs)?.let { c.pon("sid", it) }
+        }
+        refrescaPistas()
+    }
+
+    /**
+     * Los subtítulos de tus addons, como pistas más del archivo (después de decidir el audio y si se prueba otra fuente: bajarlos tarda, y
+     * no se bajan para una fuente que se va a dejar). Si hacen falta en español y el archivo no los traía, se pone uno de estos.
+     */
+    private fun anadeSubtitulos() {
+        val c = cliente ?: return
+        val l = subsPendientes.take(6); subsPendientes = emptyList()
+        if (l.isEmpty()) return
+        val g = generacion
+        l.forEach { x -> if (g == generacion) c.manda("sub-add", x.url, "auto", x.etiqueta.ifBlank { PistaMpv.nombreIdioma(x.idioma).ifBlank { "Subtítulos" } }, x.idioma, espera = 8_000) }
+        if (g != generacion) return
+        val pistas = PistaMpv.deLista(c.lee("track-list"))
+        val subs = PistasDeMpv.subtitulos(pistas)
+        when {
+            quiereSubs && subs.none { it.elegida && Pistas.subtituloEspanol(it.idioma, it.titulo) } -> PistasDeMpv.subtituloEspanol(pistas, AjustesElector.prefs())?.let { c.pon("sid", it) }
+            !quiereSubs && !AjustesReproductor.subsSiempre() && subs.any { it.elegida } -> c.pon("sid", "no")
         }
         refrescaPistas()
     }

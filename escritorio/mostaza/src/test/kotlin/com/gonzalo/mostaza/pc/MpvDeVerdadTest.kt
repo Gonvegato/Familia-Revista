@@ -117,6 +117,20 @@ class MpvDeVerdadTest : ConCuenta() {
         assertTrue("al menos los diez minutos: ${ti.entero("total")}", ti.entero("total") >= 600_000L); assertEquals(1L, ti.entero("veces"))
     }
 
+    @Test fun sinAudioEnTuIdiomaPoneLosSubtitulosEnEspanolDeLaFuente() {
+        File(videos, "es.srt").writeText("1\n00:00:00,000 --> 00:15:00,000\nHola.\n")
+        val c = Candidata(fuente("ingles.mkv", "Peli [1080p] English").copy(subtitulos = listOf(Subtitulo("es", "${servidor.base}/es.srt", "spa", "Español"))), "Debrid", 0, 0)
+        val b = MetaBreve("tt7000003", "movie", "Una en inglés", ano = "2026")
+        assertEquals(null, Reproductor.pon(b, Meta("tt7000003", "movie", "Una en inglés", duracion = "15 min"), null, c, listOf(c)))
+        val e = Reproductor.estado
+        espera("con los subtítulos en español (los de la fuente, bajados con su cabecera)", 30, { "pistas=${e.pistas} peticiones=${servidor.peticiones}" }) {
+            e.pistas.any { it.tipo == "sub" && it.elegida && it.externa && it.idioma == "spa" }
+        }
+        assertTrue(servidor.peticiones.any { it.first == "/es.srt" && it.second })
+        Reproductor.para()
+        espera("se cierra", 15) { !Reproductor.estado.activo }
+    }
+
     /** Un servidor de vídeos de este ordenador, con saltos (Range), que solo responde con la cabecera pedida (si no, 403). */
     class Servidor(private val dir: File, private val cabecera: Pair<String, String>) {
         private val ss = ServerSocket(0, 50, InetAddress.getLoopbackAddress())

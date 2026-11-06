@@ -1,12 +1,12 @@
 # Las versiones de escritorio (Linux y Mac)
 
-**Azabache, Cobalto, Hiedra y Marfil para Linux y Mac**, en `escritorio/`. Son ventanas a la misma cuenta que las del móvil: todo lo
+**Azabache, Cobalto, Hiedra, Marfil y Mostaza para Linux y Mac**, en `escritorio/`. Son ventanas a la misma cuenta que las del móvil: todo lo
 tuyo está en la cuenta (Firebase, el proyecto de siempre) y en el ordenador solo hay una caché para funcionar sin conexión y lo que es
 de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo ves al momento en las demás, en el ordenador y en el móvil.
 
 ## Instalar
 
-- **Mac (Apple Silicon)**: `Azabache-1.0.1-mac.dmg` (y las otras tres). Abre el .dmg y arrastra la app a Aplicaciones. No está firmada por
+- **Mac (Apple Silicon)**: `Azabache-1.0.1-mac.dmg` (y las demás). Abre el .dmg y arrastra la app a Aplicaciones. No está firmada por
   Apple (esa firma es de pago), así que la primera vez macOS la bloquea: ábrela una vez (avisa y no la abre), ve a **Ajustes del Sistema →
   Privacidad y seguridad → Seguridad**, pulsa **«Abrir igualmente»** (sale durante una hora después del aviso) y pon tu contraseña. Desde
   entonces se abre con doble clic. En los macOS de ahora (Sequoia y los siguientes) el truco de clic derecho → Abrir ya no vale.
@@ -17,7 +17,9 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
     `./instalar.sh --quitar` la desinstala (lo tuyo está en la cuenta: no se toca).
   - **Ubuntu, Debian, Mint…**: también vale el `Azabache-1.0.1-linux.deb` (`sudo apt install ./Azabache-1.0.1-linux.deb`), pero así no
     se actualiza sola (la del .deb es del sistema): mejor el .tar.gz.
-- **Entrar una vez**: entras en cualquiera de las cuatro y las otras tres de ese ordenador entran solas. La contraseña no se guarda: queda
+- **Mostaza** ve las películas y las series con **mpv**, que se instala aparte: en CachyOS y Arch `sudo pacman -S mpv` (en Ubuntu o
+  Debian `sudo apt install mpv`); en el Mac `brew install mpv` (con [Homebrew](https://brew.sh)). Si no está, Mostaza lo dice.
+- **Entrar una vez**: entras en cualquiera de las cinco y las demás de ese ordenador entran solas. La contraseña no se guarda: queda
   la sesión, en el llavero del sistema (el Llavero del Mac; en Linux, el Secret Service —GNOME Keyring, KWallet— si hay `secret-tool`, y si
   no, un archivo que solo lee tu usuario).
 - **Se actualizan solas**: al abrirse y cada 6 horas, cada app mira tu kDrive («Mi carpeta/versiones»: `<App>-<versión>-mac.dmg` /
@@ -80,6 +82,27 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   y «Volver a donde estabas». Los ajustes de lectura viajan con las mismas claves que el móvil (los de cada libro y los de siempre; el
   brillo y lo del PDF, no). Las posiciones se escriben como las escribe foliate en el móvil, letra por letra (probado contra el lector
   del móvil de verdad): antes, desde el capítulo 2, el ordenador abría un párrafo antes de donde ibas en el móvil, y al revés.
+- **Mostaza** (desde la 1.0.0): tus películas y series de la cuenta, y verlas, como Mostaza del móvil (0.2.0) y con su misma lógica, letra
+  a letra (el protocolo de los addons de Stremio, el elector de fuentes, las pistas de verdad, TMDB y las tres reglas son el mismo código,
+  con las mismas pruebas): la portada (con tu clave de TMDB, la de una plataforma: destacado, «Seguir viendo», «Pendientes», tendencias,
+  «Porque viste…», estrenos, lo que hay en cada plataforma…; sin ella, los catálogos de tus addons), Viendo · Pendiente · Visto ·
+  Abandonado (con su orden y su filtro, que viajan), Explorar, Buscar, la ficha (a dos columnas: «Reproducir» con la mejor fuente para ti,
+  tu biblioteca, lo que dice Azabache, el reparto, dónde verla, los episodios con lo visto, «Más como esta») y todas sus fuentes, tus
+  addons (instalar por la dirección, ordenar, configurar en el navegador, quitar) y Ajustes (Catálogo, Fuentes, Reproductor, Cuenta,
+  Apariencia, Versión). Todo es de la cuenta: `titulos/<ref>`, `progreso/<vídeo>`, `tiempo/<ref>~<dispositivo>` (en el ordenador,
+  `mostaza-linux-…` o `mostaza-mac-…`), `ajustes/mostaza_*`; tus addons y tu clave de TMDB, solo en `/claves` (ni tu pareja los lee).
+  Lo que ves aquí lo sigues en el móvil y al revés. Con el teclado (las flechas mueven el foco, Intro pulsa, Esc vuelve, Ctrl/⌘+F busca,
+  Ctrl/⌘+1…8 las secciones) y con el mando (como en Hiedra: A pulsa, B vuelve, Y busca, los gatillos de arriba cambian de sección).
+  **Se ve con mpv** (en CachyOS y Arch, `sudo pacman -S mpv`; en el Mac, `brew install mpv`; si no está, Mostaza dice cómo ponerlo y
+  ofrece el reproductor del sistema, que no cuenta nada): Mostaza lo abre en su ventana y habla con él por su socket (su IPC de JSON),
+  así que cuenta lo visto de verdad (nada entra en tu biblioteca hasta 10 minutos en una sesión; visto al 90 %; el tiempo por día),
+  sigue donde lo dejaste (aquí o en el móvil), mira las pistas de verdad del archivo (pone el audio en tu idioma y, si hace falta,
+  subtítulos en español; si la que eligió sola no trae tu primer idioma, prueba otra), reconoce el vídeo de aviso del debrid y pasa sola a
+  otra, propone otra fuente si se corta y pone el episodio siguiente. Abajo, mientras mpv tiene algo puesto, una banda con lo que se ve, por
+  dónde va, pausa, saltar, el audio, los subtítulos, otra fuente y cerrar. La dirección de la fuente (que lleva la clave de tu debrid) y sus
+  cabeceras van a mpv por su socket, nunca por su línea de órdenes, y mpv no guarda nada (sin su «seguir donde lo dejé» y sin yt-dlp).
+  **Torrents**, con el motor de la familia (`escritorio/torrent`: los mismos archivos que el del móvil, con libtorrent4j y su biblioteca
+  de Linux x86-64 o del Mac con Apple Silicon): se ven mientras se bajan; si no se puede cargar, solo las fuentes directas o de tu debrid.
 - **Hiedra**: tus juegos de la cuenta (los mismos de Hiedra del móvil), los de Steam instalados en el ordenador (se abren con Steam: sus
   horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Hiedra cuenta el tiempo hasta que los cierras, en
   `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Hiedra del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil
@@ -99,7 +122,7 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 
 ## Lo que todavía no hacen (para no engañar)
 
-- **Azabache**: «Ver en Mostaza» (no hay Mostaza para el ordenador: la ficha lo dice) y, en la vista de tu pareja, sus películas y series
+- **Azabache**: «Ver en Mostaza» (ya hay Mostaza para el ordenador, pero la ficha de Azabache aún dice que no y no la abre) y, en la vista de tu pareja, sus películas y series
   son aún las de antes (como en el móvil). Las casillas de películas y series «Crítica» y «Dónde verla» (se colocan, pero se dibujan solo en el móvil), las
   imágenes de tus archivos en una maqueta, las reacciones de tu pareja y «Lo último de tu pareja», y los próximos episodios. («Descubrir»
   no está a propósito: se quitó de Azabache.)
@@ -111,6 +134,12 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   no. En el Mac, sin el permiso de «Grabación de pantalla», la captura sale solo con el fondo (y no hay forma de notarlo). En el Mac no se sabe con seguridad cuándo
   se cierra un juego de Steam (Hiedra no vuelve sola). Sin carpeta de instalación de Heroic o Lutris, ese juego no cuenta tiempo. Los
   emuladores de Flatpak necesitan permiso para leer tus carpetas de ROMs (Flatseal). El mando se ha probado sin un mando de verdad.
+- **Mostaza**: ver los archivos de tu kDrive («Tu kDrive», que está llegando al móvil; en `Addons.fuentesExtra` está el sitio donde
+  entrará como una fuente más), «Abrir con otro reproductor» con lo visto (solo mpv cuenta; con IINA en el Mac no se puede saber por dónde
+  vas), los widgets, «Valorar en Azabache» que abra su ficha (abre Azabache), traer lo de Azabache a Mostaza (lo hace Mostaza del móvil, una
+  vez: aquí se lee lo que ya está), la conexión medida a la vez que en el móvil (aquí se mide con lo que baja mpv) y los subtítulos de un
+  tamaño o color que se cambian con algo puesto (valen para lo siguiente). Los torrents en el Mac con procesador Intel y en Linux ARM.
+  mpv y el mando se han probado sin pantalla ni mando de verdad (mpv sí, de verdad, con `--vo=null`), y el Mac solo lo compila GitHub.
 - Las letras de Google Fonts que se eligen en el móvil: aquí van las de la app (Atrio y Vitrina) en su lugar.
 
 ## Por dentro
@@ -120,6 +149,8 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   (`Sesion.comparte()` / `adopta()` del núcleo: se comparte la sesión, nunca la contraseña), portadas con el mismo hash que en Android
   (Skia: 600×900, JPEG 85), kDrive, el actualizador, la ventana (tamaño y sitio recordados) y el aspecto de revista (las paletas, las
   formas y los componentes de Android; la apariencia de `ajustes/<app>`, la misma que la de la app en el móvil).
+- `escritorio/torrent`: el motor de torrents de Mostaza (los mismos archivos que `torrent/src/main`, copiados al compilar; lo de Android
+  —la red, el disco y su constructor con un Context— aquí es del ordenador). La biblioteca nativa sale de su .jar a la carpeta de Mostaza.
 - `escritorio/json`: el `org.json` de Android (AOSP, Apache 2.0), para que el núcleo de Cobalto se comporte igual en los dos.
 - Carpetas: en el Mac `~/Library/Application Support/Familia/<App>`; en Linux `~/.local/share/familia/<app>`.
 - Compilar sin el SDK de Android: `./gradlew -PsoloEscritorio test`, `… :escritorio:<app>:run`, `… packageDeb` (Linux, necesita `fakeroot`)
@@ -133,4 +164,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.3, Mostaza 0.1.0 (solo Android). De escritorio: Azabache 1.2.1; Cobalto y Hiedra 1.1.1; Marfil 1.1.0.
+Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.3, Mostaza 0.2.0. De escritorio: Azabache 1.2.1; Cobalto y Hiedra 1.1.1; Marfil 1.1.0; Mostaza 1.0.0 (las de escritorio empiezan en la 1.0.0 y llevan su propio número).

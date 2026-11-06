@@ -34,7 +34,7 @@ class CapturasTest : ConCuenta() {
     @After fun fin() { runCatching { ss?.close() }; Fichas.olvidaParaPruebas(); Busqueda.fijas = null; PortadaFija.tmdb = null; Tmdb.claveFija = null; suelta() }
 
     /** (la letra de los títulos de la revista, la que va dentro de la app: en un servidor puede no haber ninguna del sistema) */
-    private val letra by lazy { javaClass.classLoader.getResourceAsStream("fuentes/display_semibold.ttf")!!.use { org.jetbrains.skia.Typeface.makeFromData(org.jetbrains.skia.Data.makeFromBytes(it.readBytes())) } }
+    private val letra: org.jetbrains.skia.Typeface? by lazy { javaClass.classLoader.getResourceAsStream("fuentes/display_semibold.ttf")?.use { org.jetbrains.skia.FontMgr.default.makeFromData(org.jetbrains.skia.Data.makeFromBytes(it.readBytes())) } }
 
     /** Un póster hecho aquí: un color, un filete y el título. */
     private fun poster(titulo: String, color: Int, ancho: Int = 342, alto: Int = 513): ByteArray {
