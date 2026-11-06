@@ -164,7 +164,7 @@ fun HojaLectura(
             val ancha = maxWidth >= 760.dp
             Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 Row(Modifier.fillMaxWidth().widthIn(max = 1080.dp).align(Alignment.CenterHorizontally).padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically) {
-                    VolverRevista(onCerrar)
+                    EnlaceRevista("← Volver", Modifier.semantics { contentDescription = "Cerrar" }, onClick = onCerrar)
                     Spacer(Modifier.weight(1f))
                     EnlaceRevista("Editar", Modifier.semantics { contentDescription = "Editar" }, acento = true, onClick = onEditar)
                 }

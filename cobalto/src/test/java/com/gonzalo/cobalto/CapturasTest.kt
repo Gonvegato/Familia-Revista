@@ -155,7 +155,7 @@ open class CapturasTest {
         rule.onAllNodesWithText("SALE EN")[0].performScrollTo(); foto("8b_ficha_leer_abajo")
         rule.onNodeWithContentDescription("Editar").performClick(); foto("8c_ficha_editar")
         rule.onAllNodesWithText("GUARDAR")[0].performScrollTo().performClick(); rule.waitForIdle()
-        rule.onAllNodesWithText("← VOLVER")[0].performClick(); rule.waitForIdle()
+        rule.onNodeWithContentDescription("Cerrar").performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("NOTAS")[0].performScrollTo().performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("Cómo se afina un clavicordio")[0].performClick(); foto("8d_nota_leer")
     }

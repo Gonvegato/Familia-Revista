@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.isRoot
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Assert.assertTrue
@@ -38,7 +39,9 @@ open class PantallasQuietasTest {
 
     private fun cambios(): Long = Recomposer.runningRecomposers.value.sumOf { it.changeCount }
 
-    private fun pasa(frames: Int) = repeat(frames) { rule.mainClock.advanceTimeByFrame() }
+    // (cada fotograma, y luego que Android haga lo suyo —medir, colocar, abrir ventanas— sin adelantar el reloj: así no puede
+    // quedarse esperando a una animación)
+    private fun pasa(frames: Int) = repeat(frames) { rule.mainClock.advanceTimeByFrame(); rule.waitForIdle() }
 
     /** Deja que la pantalla se asiente (animaciones de entrada…) y cuenta lo que se recompone en el segundo siguiente. */
     private fun quieta(nombre: String, inquietas: MutableList<String>) {
@@ -52,6 +55,12 @@ open class PantallasQuietasTest {
     /** Pulsar (la acción de pulsar de lo que lleva ese texto o esa descripción): vale aunque no se vea entero en la pantalla. */
     private fun toca(texto: String, descripcion: Boolean = false) {
         val n = if (descripcion) rule.onAllNodesWithContentDescription(texto) else rule.onAllNodesWithText(texto)
+        // (si no está, lo que hay en la pantalla, para saber por qué)
+        if (n.fetchSemanticsNodes().isEmpty()) throw AssertionError("No encuentro «$texto». En la pantalla: " +
+            rule.onAllNodes(isRoot()).fetchSemanticsNodes().joinToString(" | ") { r ->
+                generateSequence(listOf(r)) { l -> l.flatMap { it.children }.takeIf { it.isNotEmpty() } }.flatten()
+                    .mapNotNull { x -> x.config.getOrElseNullable(androidx.compose.ui.semantics.SemanticsProperties.Text) { null }?.joinToString(" ") }.joinToString(" · ")
+            })
         n[0].performSemanticsAction(SemanticsActions.OnClick)
         pasa(20)
     }
@@ -66,6 +75,7 @@ open class PantallasQuietasTest {
         pasa(5)
         assertTrue("no hay recomposiciones que contar", Recomposer.runningRecomposers.value.isNotEmpty())
         val inquietas = mutableListOf<String>()
+        val alEmpezar = cambios()
         quieta("portada", inquietas)
         toca("ESCRIBIENDO"); quieta("Escribiendo", inquietas)
         toca("La ciudad de cristal"); quieta("manuscrito", inquietas)
@@ -73,12 +83,14 @@ open class PantallasQuietasTest {
         toca("FICHAS"); toca("Elena"); quieta("ficha de Elena (para leer)", inquietas)
         toca("Editar", descripcion = true); quieta("ficha de Elena (editando)", inquietas)
         toca("GUARDAR"); quieta("ficha de Elena (otra vez para leer)", inquietas)
-        toca("← VOLVER")
+        toca("Cerrar", descripcion = true)
         toca("MANUSCRITO"); toca("Donde empieza todo"); quieta("capítulo", inquietas)
         toca("El despertar"); quieta("editor", inquietas)
         toca("Concentración", descripcion = true); quieta("editor en concentración", inquietas)
         toca("SALIR")
         toca("La página", descripcion = true); quieta("la página (letra, tamaño…)", inquietas)
+        // (y la cuenta funciona: moverse por la app sí recompone)
+        assertTrue("no se ha contado ninguna composición", cambios() > alEmpezar + 20)
         assertTrue("se recomponen solas: $inquietas", inquietas.isEmpty())
     }
 }
