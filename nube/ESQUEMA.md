@@ -96,6 +96,10 @@ Dónde vas dentro del libro, para abrirlo en el mismo sitio en cualquier disposi
 (cuándo), `bestCfi`/`bestFrac`/`bestLabel`/`bestSet` (la posición marcada a mano), `settings` y `settingsAt` (los ajustes del
 lector para ese libro).
 
+Lo leído en un escrito de Cobalto (una obra que lees en Marfil) va igual en `lectura`, `marcas` y `tiempo`, con `escrito_<obra>` en lugar
+del `kid` (el libro en sí no está en `libros`: cada dispositivo lo rehace de `capitulos`). Quien suma lo leído de los libros, cuenta solo lo
+que está en `libros`.
+
 ### `marcas/<kid>~<id>` (Marfil)
 
 Un subrayado, una nota o un marcador: `ref` (el `kid`), `tipo` (`notes` / `marks`: el nombre de la lista del lector de donde sale), `n` (el objeto del lector tal cual: `value`,
@@ -143,6 +147,45 @@ con `v`. Un elemento borrado lleva `b`. Los juegos y los libros no van aquí (`g
 `ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
 del lector; Hiedra también `ini`, su portada), `ajustes/azabache` (`at` y `skin`: la apariencia de Azabache, que las demás pueden
 copiar) y `ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros del año, `anio` el año en que se fijó; los fija Marfil).
+Lo demás que eliges en cada app, en `ajustes/<app>_<grupo>` (abajo).
+
+### `ajustes/<app>_<grupo>`: lo demás que eliges, un campo por ajuste
+
+Lo que eliges en cada app y no es la apariencia (el orden de cada sección, cómo se juega, los filtros de Descubrir…) también es de la
+cuenta: un nodo por grupo de ajustes, **un campo por ajuste**, con el mismo nombre que tiene en las preferencias de Android (lo que
+Firebase no admite en un nombre va como `%XX`: `.` es `%2E`, `/` es `%2F`; y `m`, `u`, `b` serían `%6D`, `%75`, `%62`). De cada campo gana el
+cambio más reciente, como en todo lo demás: dos dispositivos que cambian ajustes distintos no se pisan. El valor es un sí/no, un número
+o un texto; `""` es «quitado» (vuelve a lo de por defecto). Lo que es una lista va como texto JSON (o separado por comas, como en Android).
+La primera vez en cada dispositivo, lo que tenía de antes pasa a la cuenta sin perder nada: lo que la cuenta no tenía, tal cual; lo que
+tenía distinto, con la hora a la que ese dispositivo cambió esos ajustes por última vez (gana lo más reciente); y las listas que solo crecen
+(marcadas abajo con «se juntan») se juntan. Lo de un solo dispositivo (abajo, «no viaja») no está en ningún nodo.
+
+| Nodo | Campos |
+|---|---|
+| `hiedra_orden` | `PENDIENTE`, `JUGANDO`, `PASADO`, `ABANDONADO` = el orden de esa sección: `Recientes`, `Nombre`, `Jugados`, `Anadidos`, `Pasados` (este, solo en Pasado) |
+| `hiedra_juego` | El jugador de Hiedra: `tactil` (`AUTO` / `SIEMPRE` / `NUNCA`), `opacidad`, `tamano`, `zona` (decimales), `vibracion`, `pequenos`, `etiqueta`, `avSilencio` (sí/no), `avModo` (`MANTENER` / `CONMUTAR`), `avVel` (2, 3, 4, 8), `autoguardado` (minutos; 0 = solo al salir), `orientacion` (`APAISADA` / `VERTICAL` / `MOVIL`), `filtro` (`NITIDO` / `SUAVE` / `LCD` / `CRT`) y `mapa:<descriptor del mando>` = lo que cambiaste de ese mando (`tecla=destino;…`, como lo guarda Hiedra) |
+| `hiedra_ajustes` | `libretro` (portadas automáticas) y `emu:<sistema>` = la etiqueta del emulador elegido para esa consola (sin campo o `""`: el automático; si ese emulador no está en un dispositivo, allí se usa el automático) |
+| `hiedra_nucleos` | `op:<sistema>:<opción del núcleo>` = el valor que elegiste |
+| `hiedra_suite` | `pc` (el PC de Atrio al que se mandan las órdenes), `galeria` (las capturas del PC también en la galería) |
+| `hiedra_nube_p` | `roms_solas` (subir tus ROMs a kDrive solas) |
+| `hiedra_internet`, `marfil_internet`, `azabache_internet` | `fuente`: la web de imágenes que usaste la última vez (`google`, `artstation`, `pinterest`…) |
+| `hiedra_actualizador`, `marfil_actualizador`, `azabache_actualizador` | `on`: «actualizar sola» |
+| `marfil_orden` | `LEYENDO`, `PENDIENTE`, `LEIDO`, `ABANDONADO` = `RECIENTES`, `ANADIDOS`, `TERMINADO` (solo en Leídos), `TITULO`, `AUTOR`, `PAGINAS` |
+| `marfil_nube` | `auto_bajar` (tener en cada dispositivo los libros de tu kDrive) |
+| `azabache_general` | `recsdone` (ids de las recomendaciones de tu pareja que ya añadiste o descartaste, con comas; se juntan), `suitepc` (el PC de Atrio elegido), `shotsgal`, `diario_todo`, `pnotify` (avisos de lo que hace tu pareja), `knows2tap`, `aviso_lectura` y `aviso_diario` (la hora del aviso, 0–23; −1 sin aviso), `goal_<categoría>_<año>` (el objetivo de ese año: 0 juegos, 1 libros…), `guides_<ficha>` (tus guías de ese juego, JSON `[{n, u}]`; se juntan), `guide_last` (dónde te quedaste en cada guía, JSON `{<dirección>: {u, t, at}}`; se juntan, de cada una la más reciente) y `myname` (tu nombre) |
+| `azabache_descubrir` | `recent_<0 juegos · 1 libros · 2 pelis y series>` (las preguntas que ya te han salido, con comas; se juntan), `f_years` (`AAAA-AAAA` o `""`) y `f_plats` (plataformas, con comas) |
+| `azabache_duelos` | Los duelos de libros a medias, como texto JSON: `pool` (`[ids]`), `duelos` (`[[a, b, resultado]]`), `saltados` (`[[a, b]]`), `copia` (`{id: [las cinco notas]}`, para deshacer) y `ordenados` (`[ids]`, los ya ordenados; se juntan). Los ids son el `azid` de cada ficha |
+| `azabache_escribir` | `tam` (tamaño de letra), `fuente` (0 con serifa, 1 de palo seco, 2 máquina), `maquina`, `tipografia` y `sprints` (tu historial, JSON `[{pid, desde, min, pal, meta}]`; se juntan) |
+| `azabache_nube` | `shots` (subir las capturas del PC a tu kDrive) |
+
+No viaja (es de cada dispositivo): dónde está cada ROM, las carpetas de ROMs y de guardados, lo ya sincronizado con kDrive, los núcleos y BIOS
+bajados, las capturas bajadas, el juego que está abierto ahora, «usar Hiedra como launcher» (es de Android), la configuración de cada widget,
+el brillo del lector, el sprint de Escribir que está corriendo, la copia en Google Drive de ese móvil, la sesión y las cachés (datos de
+juegos, páginas de libros, notas de Rotten Tomatoes, plataformas de RAWG, lo de las hermanas que se refleja en Azabache).
+
+### `/users/<uid>/name`
+
+Tu nombre, el que ve tu pareja (lo pone Azabache; un texto). Fuera de `familia`, como `user` y `partner`.
 
 ### `sagas/<id>`
 
