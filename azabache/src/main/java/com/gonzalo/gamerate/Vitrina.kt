@@ -533,7 +533,12 @@ fun FitTitle(
     // ya sale a su tamaño desde el primer fotograma
     val claveAncho = "$text|${fontSize.value}"
     var maxPx by remember { mutableStateOf(anchosFit[claveAncho] ?: 0) }
-    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    // (sin caché: la medida de antes de que llegue la letra no debe volver a servir)
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer(cacheSize = 0)
+    // La letra puede ser de Google Fonts (la de tu apariencia) y llegar un momento después de abrir la app: medido con la de mientras, más
+    // estrecha, el título salía cortado («Marfi» en vez de «Marfil») hasta volver a la pantalla. Cuando llega, se vuelve a medir.
+    val resolutor = androidx.compose.ui.platform.LocalFontFamilyResolver.current
+    val letra = remember(resolutor, family, fontWeight, fontStyle) { resolutor.resolve(family, fontWeight, fontStyle ?: androidx.compose.ui.text.font.FontStyle.Normal) }
     fun estilo(s: Float) = androidx.compose.ui.text.TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = s.sp, letterSpacing = letterSpacing, fontStyle = fontStyle)
     fun ajusta(ancho: Int): Float {
         if (ancho <= 0 || ancho == Constraints.Infinity) return fontSize.value
@@ -548,7 +553,7 @@ fun FitTitle(
         }
         return s
     }
-    val size = remember(text, fontSize, maxPx, family, fontWeight, letterSpacing, unaLinea) { ajusta(maxPx) }
+    val size = remember(text, fontSize, maxPx, family, fontWeight, letterSpacing, unaLinea, letra.value) { ajusta(maxPx) }
     fun alto(s: Float) = if (lineHeight.isSp) (lineHeight.value * s / fontSize.value).sp else lineHeight
     Text(
         text, color = color, fontFamily = family, fontWeight = fontWeight, fontStyle = fontStyle, fontSize = size.sp,

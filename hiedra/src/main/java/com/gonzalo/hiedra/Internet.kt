@@ -418,6 +418,8 @@ fun InternetPicker(initialQuery: String, idJuego: String, onPick: (String) -> Un
                         CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                         webChromeClient = WebChromeClient()
                         webViewClient = object : WebViewClient() {
+                            // (si Android cierra lo que dibuja la página, que no cierre la app entera: la búsqueda se queda en blanco y se vuelve a abrir)
+                            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean = true
                             // En cuanto la página empieza a verse (no hace falta esperar a sus imágenes): la rejilla, antes
                             override fun onPageCommitVisible(v: WebView, url: String?) {
                                 haEntrado(url)

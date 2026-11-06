@@ -184,11 +184,13 @@ class EscritorioTest {
         app(paquete, "nueva")
         val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
         File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
-            .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt"))
+            .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt").replace("__AL_INICIAR__", " --sala"))
         val targz = File(tmp.root, "Hiedra-9.9.9-linux.tar.gz")
         assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Hiedra", "instalar.sh").start().waitFor())
         val carpeta = Actualizador.descomprime(targz, File(tmp.root, "v9.9.9"))
         val entorno = mapOf("XDG_DATA_HOME" to File(tmp.root, "datos").absolutePath, "XDG_CONFIG_HOME" to File(tmp.root, "config").absolutePath)
+        // Ya se abría al entrar en la sesión (con la entrada de antes): al ponerse la nueva, esa entrada también se pone al día
+        val inicio = File(tmp.root, "config/autostart/familia-hiedra.desktop").apply { parentFile.mkdirs(); writeText("[Desktop Entry]\nExec=vieja\n") }
         val programa = Actualizador.ponLinux(carpeta, "hiedra", donde, entorno)
         assertEquals(File(donde, "bin/Hiedra"), programa)
         assertTrue(File(donde, "bin/Hiedra").readText().contains("nueva"))
@@ -196,6 +198,8 @@ class EscritorioTest {
         val menu = File(tmp.root, "datos/applications/familia-hiedra.desktop").readText()
         assertTrue(menu.contains("Exec=\"${donde.absolutePath}/bin/Hiedra\"")); assertTrue(menu.contains("Icon=${donde.absolutePath}/lib/Hiedra.png"))
         assertTrue(menu.contains("StartupWMClass=com-gonzalo-hiedra-pc-MainKt"))
+        assertFalse("desde el menú, en su ventana", menu.contains("--sala"))
+        assertTrue("al entrar en la sesión, ya en la sala", inicio.readText().contains("Exec=\"${donde.absolutePath}/bin/Hiedra\" --sala"))
     }
 
     /** El Mac de verdad (en GitHub): la app nueva sale de un .dmg montado sin enseñarlo y queda encima de la de ahora. */
@@ -217,9 +221,11 @@ class EscritorioTest {
         val dir = File(tmp.root, "cobalto")
         val llamada = java.util.concurrent.CountDownLatch(1)
         assertTrue(Instancia.unica(dir))
-        Instancia.alFrente = { llamada.countDown() }
-        assertFalse("ya hay una abierta", Instancia.unica(dir))
+        val pedido = java.util.concurrent.atomic.AtomicReference<List<String>>()
+        Instancia.alFrente = { pedido.set(it); llamada.countDown() }
+        assertFalse("ya hay una abierta", Instancia.unica(dir, listOf("--sala")))
         assertTrue("la abierta sale al frente", llamada.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        assertEquals("y le llega lo que se le pasó a la segunda", listOf("--sala"), pedido.get())
         Instancia.suelta()
         assertTrue("al cerrarse, se puede abrir otra", Instancia.unica(dir))
         Instancia.suelta()
@@ -263,7 +269,7 @@ class EscritorioTest {
             app(paquete, "9.9.9")
             val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
             File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
-                .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt"))
+                .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt").replace("__AL_INICIAR__", " --sala"))
             val targz = File(tmp.root, "Hiedra-9.9.9-linux.tar.gz")
             assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Hiedra", "instalar.sh").start().waitFor())
             kd.sube("versiones", targz.name, targz.length()) { targz.inputStream() }

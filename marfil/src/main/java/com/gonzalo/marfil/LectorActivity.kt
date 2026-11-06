@@ -33,6 +33,8 @@ import java.io.ByteArrayInputStream
 /** El lector: una página web propia (assets/lector) que pinta el libro a pantalla completa. */
 class LectorActivity : ComponentActivity() {
     companion object {
+        /** Cuándo se ha cerrado sola la página del lector en el último minuto (para no reabrirla sin fin). */
+        private val caidas = mutableListOf<Long>()
         /** [goto]: abrir directamente en ese punto (el de un subrayado). */
         fun abrir(ctx: Context, id: String, goto: String? = null) {
             ctx.startActivity(Intent(ctx, LectorActivity::class.java).putExtra("id", id).putExtra("goto", goto)
@@ -56,6 +58,8 @@ class LectorActivity : ComponentActivity() {
     }
 
     private lateinit var web: WebView
+    /** La página del lector se ha cerrado por su cuenta (ver onRenderProcessGone): ese WebView ya no sirve. */
+    private var webMuerta = false
     private var id = ""
     private var uri: Uri? = null
 
@@ -126,6 +130,9 @@ class LectorActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Con un libro abierto, la versión nueva no se instala (Android cerraría la app y te sacaría del libro); y el actualizador se pone
+        // en marcha también si se entra directamente aquí (desde el widget), sin pasar por la portada
+        Actualizador.ocupada++; Actualizador.init(applicationContext)
         // (si se abre desde un widget con la app cerrada, hay que cargar la biblioteca y la cuenta antes)
         iniciar(applicationContext)
         id = intent.getStringExtra("id").orEmpty()
@@ -181,6 +188,27 @@ class LectorActivity : ComponentActivity() {
         web.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? = loader.shouldInterceptRequest(request.url)
             override fun onPageFinished(view: WebView, url: String) { pushInsets(); pushBattery() }
+            // Android puede cerrar lo que dibuja la página del lector (con un libro grande o el móvil justo de memoria), o se le puede caer.
+            // Sin atenderlo, Android cierra la app entera: te sacaba del libro sin tocar nada. Ahora se vuelve a abrir el libro donde ibas.
+            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                android.util.Log.w("MarfilLector", "se ha cerrado la página del lector (" + (if (detail.didCrash()) "fallo" else "Android, por memoria") + ")")
+                webMuerta = true
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                runCatching { view.destroy() }
+                if (isFinishing || isDestroyed) return true
+                val ahora = android.os.SystemClock.uptimeMillis()
+                caidas.removeAll { ahora - it > 60_000L }; caidas.add(ahora)
+                if (caidas.size > 2) {
+                    // (si se cae una y otra vez al abrirlo, no se reintenta sin fin)
+                    caidas.clear()
+                    android.widget.Toast.makeText(applicationContext, "El lector se ha cerrado varias veces seguidas con este libro. Vuelve a abrirlo en un momento.", android.widget.Toast.LENGTH_LONG).show()
+                    finish()
+                } else {
+                    intent.removeExtra("goto")   // (a donde ibas, no al sitio al que te llevó el enlace al abrirlo)
+                    recreate()
+                }
+                return true
+            }
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val u = request.url
                 // Los capítulos se cargan en iframes con direcciones blob:/data:/about: — eso no se toca.
@@ -389,8 +417,8 @@ class LectorActivity : ComponentActivity() {
     override fun onDestroy() {
         ambito.coroutineContext[kotlinx.coroutines.Job]?.cancel()
         tts?.stop(); tts?.shutdown(); tts = null
-        (web.parent as? android.view.ViewGroup)?.removeView(web)
-        web.destroy()
+        if (!webMuerta) { (web.parent as? android.view.ViewGroup)?.removeView(web); web.destroy() }
+        Actualizador.ocupada = (Actualizador.ocupada - 1).coerceAtLeast(0)
         super.onDestroy()
     }
 

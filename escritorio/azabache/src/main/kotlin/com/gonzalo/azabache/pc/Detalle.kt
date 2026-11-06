@@ -22,7 +22,7 @@ import java.time.LocalDate
  * guarda con «Guardar»: a la cuenta va solo lo que has cambiado (lo que mientras haya cambiado Hiedra o Marfil no se pisa).
  */
 @Composable
-fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav) {
+fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav, disenar: Boolean = false) {
     LaFamilia.cambios
     val f = Cuenta.ficha(k.id, id)
     if (f == null) {
@@ -45,8 +45,14 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav) {
     var diario by remember { mutableStateOf(false) }
     var saga by remember { mutableStateOf(false) }
     var notaAbierta by remember { mutableStateOf<Nota?>(null) }
-    // Se abre en modo lectura (la página de revista, como en el móvil); «Editar» abre los datos y la nota
+    // Se abre en modo lectura (la página de revista, como en el móvil); «Editar» abre los datos y la nota, y «Diseñar», la maqueta
     var editando by remember(id) { mutableStateOf(false) }
+    var disenando by remember(id) { mutableStateOf(disenar) }
+    var recomendar by remember { mutableStateOf(false) }
+    // Tu pareja (para «Recomendar»: como en el móvil, los juegos y los libros)
+    val pareja = Cuenta.uidParejaSabido()
+    var nombrePareja by remember(pareja) { mutableStateOf("tu pareja") }
+    LaunchedEffect(pareja) { if (pareja.isNotBlank()) nombrePareja = withContext(Dispatchers.IO) { runCatching { Cuenta.nombreDe(pareja) }.getOrDefault("tu pareja") } }
     fun guarda() {
         val nueva = if (valorada && !conNota) LinkedHashMap(o).also { m -> NOTAS.forEach { m[it] = 0L } } else o
         Cuenta.guarda(k.id, base, nueva, valorada)
@@ -66,8 +72,13 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav) {
 
     if (!editando) PaginaDeFicha(
         k, f, volver, nav, sucio,
-        onEditar = { editando = true }, onValorar = { valora() }, onGuardar = { guarda() }, onDescartar = { descarta() },
-        onPortada = { portadaAbierta = true }, onDiario = { diario = true }, onSaga = { saga = true }, onNota = { notaAbierta = it }
+        AccionesFicha(
+            editar = { editando = true }, valorar = { valora() }, portada = { portadaAbierta = true }, diario = { diario = true },
+            saga = { saga = true }, nota = { notaAbierta = it },
+            recomendar = if (pareja.isNotBlank() && (k.isGame || k.isBook)) ({ recomendar = true }) else null, pareja = nombrePareja,
+        ),
+        onGuardar = { guarda() }, onDescartar = { descarta() },
+        disenando = disenando, onDisenar = { disenando = it },
     ) else Pagina {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) { VolverRevista({ editando = false }, texto = "La página") }
@@ -176,6 +187,7 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav) {
     if (diario) DialogoNota(null, listOf("${k.id}:$id"), nav) { diario = false }
     notaAbierta?.let { n0 -> DialogoNota(n0, n0.sobre, nav) { notaAbierta = null } }
     if (saga) DialogoSaga(k, f, nav) { saga = false }
+    if (recomendar) DialogoRecomendar(f, k, nombrePareja, nav) { recomendar = false }
     if (borrar) Dialogo("¿Borrar «${f.nombre}»?", { borrar = false }, botones = {
         BotonSuave("Cancelar") { borrar = false }
         BotonSuave("Borrar", peligro = true) {

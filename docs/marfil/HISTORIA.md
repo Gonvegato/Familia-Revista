@@ -79,6 +79,13 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.14.1
+
+- **El lector ya no se cierra solo.** Android puede cerrar lo que dibuja la página del libro (con un libro grande o el móvil justo de memoria), y si la app no lo atiende, Android cierra la app entera. Ahora se vuelve a abrir el libro donde ibas.
+- **Una versión nueva ya no te saca de lo que estás haciendo.** El actualizador instala en silencio cuando no usas la app, y Android la cierra para instalarla. Pero no siempre sabía que la estabas usando: si se entraba directamente a un libro (desde un widget, o cuando Android vuelve a abrir la app tras cerrarla por detrás), creía que no estabas; y con la pantalla apagada un momento, también. Ahora se lo pregunta a Android, nunca instala con la pantalla apagada o bloqueada, y con un libro abierto espera a que lleves un rato fuera.
+- **Los títulos grandes ya no salen cortados** (salía «Marfi» en vez de «Marfil» hasta entrar y salir de Ajustes). Si tu apariencia usa una letra de Google Fonts, llega un momento después de abrir la app; el título se medía con la de mientras, más estrecha, y no se volvía a medir. Ahora sí.
+- Si Android cierra lo que dibuja una página web de la app (la búsqueda de portadas), se cierra esa pantalla y no la app entera.
+
 ## 0.14.0
 
 - **Lo que subrayas en el ordenador sale en el móvil, y al revés.** Marfil para Linux y Mac (1.1.0) ya pinta tus subrayados y tus notas

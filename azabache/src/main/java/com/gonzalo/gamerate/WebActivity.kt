@@ -161,6 +161,12 @@ class WebActivity : Activity() {
         }
         web.apply {
             webViewClient = object : WebViewClient() {
+                // Android puede cerrar (o se le puede caer) lo que dibuja la página: sin atenderlo, cierra la app entera. Se cierra solo esta pantalla.
+                override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                    (view.parent as? android.view.ViewGroup)?.removeView(view)
+                    if (!isFinishing) { android.widget.Toast.makeText(applicationContext, "La página se ha cerrado (Android se quedó sin memoria). Vuelve a abrirla.", android.widget.Toast.LENGTH_LONG).show(); finish() }
+                    return true
+                }
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                     if (request.url.scheme == "http" || request.url.scheme == "https") return false
                     // Enlaces a apps (discord://, intent://…): fuera

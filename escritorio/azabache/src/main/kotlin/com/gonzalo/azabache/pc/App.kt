@@ -21,7 +21,8 @@ import kotlinx.coroutines.withContext
 sealed class Pantalla {
     data object Inicio : Pantalla()
     data class Lista(val kind: Int) : Pantalla()
-    data class Detalle(val kind: Int, val id: Long, val volver: Pantalla) : Pantalla()
+    /** [disenar]: se abre diseñando la página. */
+    data class Detalle(val kind: Int, val id: Long, val volver: Pantalla, val disenar: Boolean = false) : Pantalla()
     data object Diario : Pantalla()
     data object Sagas : Pantalla()
     data class UnaSaga(val id: Long) : Pantalla()
@@ -75,7 +76,7 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
                 when (p) {
                     Pantalla.Inicio -> PantInicio(nav)
                     is Pantalla.Lista -> PantLista(Cuenta.kind(p.kind), nav)
-                    is Pantalla.Detalle -> PantDetalle(Cuenta.kind(p.kind), p.id, p.volver, nav)
+                    is Pantalla.Detalle -> PantDetalle(Cuenta.kind(p.kind), p.id, p.volver, nav, p.disenar)
                     Pantalla.Diario -> PantDiario(nav)
                     Pantalla.Sagas -> PantSagas(nav)
                     is Pantalla.UnaSaga -> PantSaga(p.id, nav)

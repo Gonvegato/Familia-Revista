@@ -15,11 +15,12 @@ import java.nio.channels.OverlappingFileLockException
  * lo pendiente de subir), que podría estropearse.
  *
  * El cerrojo es un archivo de la carpeta de la app (`abierta.lock`, bloqueado mientras la app vive); el aviso va por una conexión local
- * (solo de este ordenador) al puerto que la app abierta apunta en `abierta.puerto`. Lo único que se puede pedir es «sal al frente».
+ * (solo de este ordenador) al puerto que la app abierta apunta en `abierta.puerto`. Lo único que se puede pedir es «sal al frente», con
+ * lo que se le pasó a la segunda al abrirla (p. ej. `--sala` en Hiedra), por si la abierta quiere hacer algo con ello.
  */
 object Instancia {
-    /** Lo que hace la app abierta cuando otra copia le pide salir al frente (lo pone la ventana). */
-    @Volatile var alFrente: () -> Unit = {}
+    /** Lo que hace la app abierta cuando otra copia le pide salir al frente (lo pone la ventana), con lo que se le pasó a esa otra. */
+    @Volatile var alFrente: (List<String>) -> Unit = {}
     private var canal: FileChannel? = null
     private var cerrojo: FileLock? = null
     private var servidor: ServerSocket? = null
@@ -29,27 +30,35 @@ object Instancia {
      * salir al frente; esta debe terminar sin abrir ventana.
      */
     @Synchronized
-    fun unica(dir: File): Boolean {
+    fun unica(dir: File, args: List<String> = emptyList()): Boolean {
         dir.mkdirs()
         val ch = RandomAccessFile(File(dir, "abierta.lock"), "rw").channel
         val lock = try { ch.tryLock() } catch (e: OverlappingFileLockException) { null } catch (e: Exception) { null }
-        if (lock == null) { runCatching { ch.close() }; pideFrente(dir); return false }
+        if (lock == null) { runCatching { ch.close() }; pideFrente(dir, args); return false }
         canal = ch; cerrojo = lock
         val s = ServerSocket(0, 10, InetAddress.getLoopbackAddress())
         servidor = s
         runCatching { File(dir, "abierta.puerto").writeText(s.localPort.toString()) }
         Thread({
             while (!s.isClosed) {
-                runCatching { s.accept().use { c -> c.soTimeout = 2_000; if (c.getInputStream().bufferedReader().readLine() == "frente") alFrente() } }
+                runCatching {
+                    s.accept().use { c ->
+                        c.soTimeout = 2_000
+                        // «frente» y, una por línea, lo que se le pasó a la otra copia (las de antes mandaban solo «frente»)
+                        val lineas = c.getInputStream().bufferedReader().readLines()
+                        if (lineas.firstOrNull() == "frente") alFrente(lineas.drop(1).filter { it.isNotEmpty() && it.length <= 4096 }.take(32))
+                    }
+                }
             }
         }, "familia-instancia").apply { isDaemon = true; start() }
         return true
     }
 
-    private fun pideFrente(dir: File) {
+    private fun pideFrente(dir: File, args: List<String>) {
         runCatching {
             val puerto = File(dir, "abierta.puerto").readText().trim().toInt()
-            Socket(InetAddress.getLoopbackAddress(), puerto).use { it.getOutputStream().write("frente\n".toByteArray()) }
+            val mensaje = (listOf("frente") + args.map { it.replace('\n', ' ') }).joinToString("\n", postfix = "\n")
+            Socket(InetAddress.getLoopbackAddress(), puerto).use { it.getOutputStream().write(mensaje.toByteArray()) }
         }
     }
 
