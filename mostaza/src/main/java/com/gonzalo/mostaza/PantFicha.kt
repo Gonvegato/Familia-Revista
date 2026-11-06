@@ -46,12 +46,35 @@ object Busqueda {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
+    // Lo que viene del catálogo de TMDB («tmdb:movie:…»): primero su ficha, para saber su id de IMDb (el de tus addons y tu biblioteca)
+    if (TmdbDatos.deId(b.id) == null) { PantFichaDe(b, alCerrar, alAbrir); return }
+    var hecho by remember(b.id) { mutableStateOf(Fichas.deCache(b.id) != null) }
+    val r by produceState(Fichas.deCache(b.id), b.id) { if (value == null) { value = runCatching { Fichas.carga(b.tipo, b.id) }.getOrNull() }; hecho = true }
+    val x = r
+    if (x == null) {
+        Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().padding(horizontal = margen())) {
+            RevistaTopBar(alCerrar, "Volver")
+            FitTitle(b.nombre, 38.sp, 41.sp, letterSpacing = (-1).sp, maxLines = 4, minSize = 18f, modifier = Modifier.padding(top = 18.dp))
+            Nota(if (hecho) "No se ha podido leer la ficha (¿sin conexión?)." else "Leyendo la ficha…", Modifier.padding(top = 12.dp))
+        }
+        return
+    }
+    PantFichaDe(b.copy(id = x.first.id, tipo = x.first.tipo), alCerrar, alAbrir)
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
     LaFamiliaCambios()
     Biblioteca.version
     val t = Biblioteca.por(b.id)
-    val meta by produceState<Meta?>(Fichas.fija(b.id), b.id) { if (value == null) value = runCatching { Addons.meta(b.tipo.ifBlank { t?.tipo ?: "movie" }, t?.idStremio ?: b.id) }.getOrNull() }
+    val carga by produceState(Fichas.deCache(t?.idStremio ?: b.id), b.id) {
+        if (value == null) value = runCatching { Fichas.carga(b.tipo.ifBlank { t?.tipo ?: "movie" }, t?.idStremio ?: b.id) }.getOrNull()
+    }
+    val meta = carga?.first
+    val extras = carga?.second
     LaunchedEffect(meta, t?.ref) { val m = meta; if (m != null && t != null) Biblioteca.completa(t, m) }
     val m = meta
     val nombre = m?.nombre ?: t?.nombre ?: b.nombre
@@ -165,13 +188,16 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) 
                 }
                 val derecha: @Composable ColumnScope.() -> Unit = {
                     if (m == null) Nota(if (b.id.startsWith("tt") || t?.imdb?.isNotBlank() == true) "Leyendo la ficha…" else "Ninguno de tus addons tiene la ficha de esto.", Modifier.padding(vertical = 8.dp))
+                    extras?.lema?.takeIf { it.isNotBlank() }?.let { Text("«$it»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 24.sp, modifier = Modifier.padding(bottom = 8.dp)) }
                     m?.descripcion?.takeIf { it.isNotBlank() }?.let { Text(it, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp, modifier = Modifier.padding(bottom = 10.dp)) }
+                    m?.trailers?.let { EnlaceTrailer(it) }
                     m?.let { x ->
                         if (x.generos.isNotEmpty()) MagFact("Género", x.generos.take(3).joinToString(", "))
                         if (x.direccion.isNotEmpty()) MagFact(if (x.direccion.size > 1) "Dirección" else "Dirección", x.direccion.take(2).joinToString(", "))
                         if (x.reparto.isNotEmpty()) MagFact("Reparto", x.reparto.take(3).joinToString(", "))
                         if (x.pais.isNotBlank()) MagFact("País", x.pais.split(',').first().trim())
                     }
+                    extras?.let { DondeVer(it.plataformas) }
                     if (serie && m != null && m.videos.isNotEmpty()) {
                         val temps = m.temporadas
                         val sel = if (temporada in temps) temporada else (t?.let { Biblioteca.siguiente(it, m)?.temporada } ?: temps.firstOrNull { it > 0 } ?: temps.first())
@@ -179,6 +205,10 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) 
                         Antetitulo("Episodios")
                         PestanasRevista(temps.map { if (it == 0) "Especiales" else "Temporada $it" }, temps.indexOf(sel)) { i -> temporada = temps[i] }
                         m.episodios(sel).forEach { v -> FilaEpisodio(v, t, m, alVer = { reproduce(v) }, alFuentes = { fuentesDe = v to true }) }
+                    }
+                    extras?.let { e ->
+                        RepartoFila(e.personas)
+                        if (e.similares.isNotEmpty()) FilaPosters("Más como esta", e.similares, alAbrir)
                     }
                 }
                 if (apaisada) Row(Modifier.fillMaxWidth()) {
@@ -205,10 +235,6 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit) 
 private fun LaFamiliaCambios() { com.gonzalo.familia.LaFamilia.cambios }
 
 /** Fichas fijas para las pruebas de pantallas (sin red). */
-object Fichas {
-    @Volatile var fijas: Map<String, Meta> = emptyMap()
-    fun fija(id: String): Meta? = fijas[id]
-}
 
 /** Un episodio: número y título, cuándo se estrenó, lo que llevas visto y la marca de visto (si la serie está en tu biblioteca). */
 @Composable

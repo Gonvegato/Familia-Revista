@@ -33,7 +33,7 @@ import kotlinx.coroutines.withContext
 
 const val VERSION = "0.1.3"
 
-/** «Ajustes» en pestañas, como las hermanas: Apariencia · Reproductor · Fuentes · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
+/** «Ajustes» en pestañas, como las hermanas: Apariencia · Catálogo · Reproductor · Fuentes · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
 fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}) {
     var pestana by rememberSaveable { mutableIntStateOf(0) }
@@ -44,14 +44,15 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}) {
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
-        PestanasRevista(listOf("Apariencia", "Reproductor", "Fuentes", "Cuenta", "Avanzado"), pestana) { pestana = it }
+        PestanasRevista(listOf("Apariencia", "Catálogo", "Reproductor", "Fuentes", "Cuenta", "Avanzado"), pestana) { pestana = it }
         Spacer(Modifier.height(14.dp))
         Column(Modifier.widthIn(max = 760.dp)) {
             when (pestana) {
                 0 -> SeccionApariencia()
-                1 -> SeccionReproductor()
-                2 -> SeccionFuentes(alAddons)
-                3 -> SeccionCuenta()
+                1 -> SeccionCatalogo()
+                2 -> SeccionReproductor()
+                3 -> SeccionFuentes(alAddons)
+                4 -> SeccionCuenta()
                 else -> SeccionAvanzado()
             }
         }
@@ -59,7 +60,7 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}) {
         Filete(3.dp)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Mostaza $VERSION")
-        Text("Mostaza es hermana de Azabache, Hiedra, Marfil y Cobalto. Habla el protocolo abierto de los addons de Stremio; reproduce con AndroidX Media3 (Apache 2.0).",
+        Text("Mostaza es hermana de Azabache, Hiedra, Marfil y Cobalto. Habla el protocolo abierto de los addons de Stremio; reproduce con AndroidX Media3 (Apache 2.0). " + Tmdb.AVISO_TMDB,
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
     }

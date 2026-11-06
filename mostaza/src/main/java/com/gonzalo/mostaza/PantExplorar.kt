@@ -36,6 +36,14 @@ private fun explorables(a: Addon) = a.manifiesto.catalogos.filter { !it.soloBusq
  */
 @Composable
 fun PantExplorar(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
+    Tmdb.version
+    if (Tmdb.activo) { PantExplorarTmdb(alVolver, alAbrir); return }
+    PantExplorarAddons(alVolver, alAbrir)
+}
+
+/** «Explorar» sin TMDB: los catálogos de tus addons. */
+@Composable
+private fun PantExplorarAddons(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
     val addons by produceState<List<Addon>?>(null, Addons.version) { value = runCatching { Addons.conManifiesto() }.getOrDefault(emptyList()) }
@@ -117,18 +125,23 @@ fun PantBuscar(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
     var q by remember { mutableStateOf("") }
     var buscando by remember { mutableStateOf(false) }
     var resultados by remember { mutableStateOf<List<Triple<Addon, Catalogo, List<MetaBreve>>>?>(null) }
+    var deTmdb by remember { mutableStateOf<List<MetaBreve>?>(null) }
     val enTu = Biblioteca.titulos.toList().filter { q.length >= 2 && it.nombre.contains(q.trim(), ignoreCase = true) }
     val foco = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { foco.requestFocus() } }
     fun busca() {
         val t = q.trim(); if (t.length < 2 || buscando) return
         buscando = true
-        ambito.launch { resultados = runCatching { Addons.busca(t) }.getOrDefault(emptyList()); buscando = false }
+        ambito.launch {
+            if (Tmdb.activo) { deTmdb = runCatching { Tmdb.busca(t) }.getOrDefault(emptyList()); resultados = emptyList() }
+            else resultados = runCatching { Addons.busca(t) }.getOrDefault(emptyList())
+            buscando = false
+        }
     }
     val m = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().padding(horizontal = m)) {
         RevistaTopBar(alVolver, "Mostaza")
-        Antetitulo("En tus addons", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
+        Antetitulo(if (Tmdb.activo) "Películas y series" else "En tus addons", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Buscar", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.Bottom) {
@@ -143,7 +156,13 @@ fun PantBuscar(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
         Filete(2.dp)
         if (enTu.isNotEmpty()) FilaPosters("En tu biblioteca", enTu.map { it.breve() }, alAbrir, sub = { b -> enTu.firstOrNull { it.idStremio == b.id }?.estado?.nombre.orEmpty() },
             imagen = { b -> enTu.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster })
-        resultados?.let { r ->
+        deTmdb?.let { l ->
+            if (l.isEmpty()) Nota("Nada con «${q.trim()}».", Modifier.padding(top = 18.dp))
+            val pelis = l.filter { it.tipo == "movie" }; val series = l.filter { it.tipo == "series" }
+            if (pelis.isNotEmpty()) FilaPosters("Películas", pelis, alAbrir)
+            if (series.isNotEmpty()) FilaPosters("Series", series, alAbrir)
+        }
+        resultados?.takeIf { deTmdb == null }?.let { r ->
             if (r.isEmpty()) Nota("Nada en tus addons con «${q.trim()}».", Modifier.padding(top = 18.dp))
             r.forEach { (a, c, l) -> FilaPosters("${tiposNombre(c.tipo)} · ${a.nombre}", l, alAbrir) }
         }

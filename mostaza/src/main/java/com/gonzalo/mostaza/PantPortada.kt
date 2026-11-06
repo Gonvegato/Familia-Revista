@@ -74,7 +74,14 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
     Biblioteca.version
     val viendo = titulos.filter { it.estado == Estado.VIENDO }.sortedByDescending { maxOf(it.ultima, Biblioteca.ultimo(it.ref)?.ultima ?: 0L) }
     val pendientes = titulos.filter { it.estado == Estado.PENDIENTE }.sortedByDescending { it.anadido }
-    val filas by produceState<List<FilaCatalogo>?>(null, Addons.version) { value = runCatching { Catalogos.portada(ctx) }.getOrDefault(emptyList()) }
+    Tmdb.version
+    val conTmdb = Tmdb.activo
+    // Con TMDB, la portada es la de una plataforma (sus filas); sin TMDB, los catálogos de tus addons
+    val porqueViste = titulos.filter { it.estado == Estado.VISTO || it.estado == Estado.VIENDO }.maxByOrNull { maxOf(it.ultima, it.fin) }?.breve()
+    val filasTmdb by produceState<List<FilaTmdb>?>(null, conTmdb, Tmdb.version, porqueViste?.id) {
+        value = if (!conTmdb) emptyList() else runCatching { Tmdb.portada(porqueViste) }.getOrDefault(emptyList())
+    }
+    val filas by produceState<List<FilaCatalogo>?>(null, Addons.version, conTmdb) { value = if (conTmdb) emptyList() else runCatching { Catalogos.portada(ctx) }.getOrDefault(emptyList()) }
     val secciones = listOf("Viendo" to Destino.Viendo, "Pendiente" to Destino.Pendiente, "Visto" to Destino.Visto, "Abandonado" to Destino.Abandonado, "Explorar" to Destino.Explorar, "Addons" to Destino.Addons)
     val desplazado = rememberScrollState()
     val umbral = with(LocalDensity.current) { 300.dp.toPx() }
@@ -112,15 +119,23 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
                 Spacer(Modifier.height(14.dp))
                 Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Azabache, y Mostaza entra sola). Tu biblioteca, lo que ves y tus addons van con tu cuenta.")
             }
+            if (conTmdb) filasTmdb?.firstOrNull()?.cosas?.firstOrNull { it.fondo.isNotBlank() }?.let { Destacado(it, alAbrir) }
             if (viendo.isNotEmpty()) FilaPosters("Seguir viendo", viendo.map { it.breve() }, alAbrir, verTodo = { alIr(Destino.Viendo) },
                 sub = { b -> viendo.firstOrNull { it.idStremio == b.id }?.let { seguirTexto(it) }.orEmpty() },
                 progreso = { b -> viendo.firstOrNull { it.idStremio == b.id }?.let { Biblioteca.ultimo(it.ref)?.takeIf { p -> !p.visto }?.fraccion } },
                 imagen = { b -> viendo.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster })
             if (pendientes.isNotEmpty()) FilaPosters("Pendientes", pendientes.take(20).map { it.breve() }, alAbrir, verTodo = { alIr(Destino.Pendiente) },
                 sub = { b -> tipoNombre(b.tipo) + if (b.ano.isNotBlank()) " · ${b.ano}" else "" }, imagen = { b -> pendientes.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster })
-            when (val f = filas) {
+            if (conTmdb) when (val f = filasTmdb) {
+                null -> Nota("Mirando el catálogo…", Modifier.padding(top = 26.dp))
+                else -> {
+                    if (f.isEmpty()) Nota("TMDB no responde ahora mismo (¿sin conexión?, ¿la clave ya no vale?). Mira en Ajustes → Catálogo.", Modifier.padding(top = 26.dp))
+                    f.forEach { fila -> FilaPosters(fila.titulo, fila.cosas.take(30), alAbrir, sub = { it.ano }) }
+                }
+            } else when (val f = filas) {
                 null -> Nota("Mirando tus catálogos…", Modifier.padding(top = 26.dp))
                 else -> {
+                    Nota("Para que Mostaza tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).tocable { alIr(Destino.Ajustes) })
                     if (f.isEmpty()) Nota("Tus addons no dan ningún catálogo ahora mismo (sin conexión, o no tienen). Añade addons en «Addons».", Modifier.padding(top = 26.dp))
                     f.forEach { fila -> FilaPosters(fila.titulo, fila.cosas.take(30), alAbrir, sub = { it.ano }) }
                 }
