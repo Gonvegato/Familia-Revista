@@ -213,7 +213,7 @@ private fun MenuJuego(a: JuegoActivity) {
             // Sin la foto del momento (aún no ha llegado, o el núcleo no la da), la caja del juego
             if (f == null) {
                 val j = a.juego ?: return
-                Box(modifier.fillMaxWidth(0.55f).aspectRatio(PROPORCION_PORTADA).clip(forma).border(1.dp, Raya, forma)) {
+                Box(Modifier.padding(vertical = 6.dp).height(200.dp).aspectRatio(PROPORCION_PORTADA).clip(forma).border(1.dp, Raya, forma)) {
                     PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 72)
                 }
                 return
