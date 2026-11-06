@@ -127,7 +127,8 @@ private fun ventanaDeLaFamilia(
             window.addWindowFocusListener(oyente)
             onDispose { window.removeWindowFocusListener(oyente) }
         }
-        TemaFamilia {
+        // (el menú del botón derecho de los textos, en español en las cuatro)
+        CompositionLocalProvider(androidx.compose.ui.platform.LocalLocalization provides MenuEnEspanol) { TemaFamilia {
             TextoAireado {
                 Column(Modifier.fillMaxSize().background(Paper)) {
                     Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -136,8 +137,16 @@ private fun ventanaDeLaFamilia(
                     Actualizador.preparada?.let { p -> BandaVersionNueva(titulo, p.version) { cierra(reiniciar = true) } }
                 }
             }
-        }
+        } }
     }
+}
+
+/** Cortar, copiar, pegar y seleccionar todo, en el menú del botón derecho de los textos (si no, salen en inglés). */
+private object MenuEnEspanol : androidx.compose.ui.platform.PlatformLocalization {
+    override val copy = "Copiar"
+    override val cut = "Cortar"
+    override val paste = "Pegar"
+    override val selectAll = "Seleccionar todo"
 }
 
 /** La ventana de la app, para lo que las pantallas necesiten de ella (de momento, la pantalla completa). */
