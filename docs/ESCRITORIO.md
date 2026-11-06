@@ -37,7 +37,8 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   series…—, el diario y las sagas en `azabache/<lista>~<id>`), con la misma lógica que `Cosas.kt` y `Propias.kt` del móvil. Portada,
   colección, ficha (estado, nota y criterios, reseña, fechas, tiempo jugado o leído), añadir (SteamGridDB, Open Library, TMDB, TVmaze),
   portadas (de un archivo, una dirección o internet), diario, sagas, cifras del año y ajustes (las claves de servicios de la cuenta y tus
-  categorías). Sin valorar nunca sale con un 0.
+  categorías). Sin valorar nunca sale con un 0. La ficha es la página de revista del móvil (a dos columnas), con tus maquetas del móvil
+  tal cual; la vista de tu pareja («Vosotros dos», sus fichas con «Y tú»), y las cifras, la portada y el diario como en Android.
 - **Cobalto**: el núcleo de los escritos (formato, sincronización, mezcla a tres bandas), la estructura, el texto (Markdown ligero,
   tipografía automática, deshacer), exportar e importar son **los mismos archivos** que compila Cobalto de Android (se copian de
   `cobalto/src` al compilar; las pruebas de la mezcla y de la estructura, también). Portada (palabras de hoy, racha, últimos días, seguir
@@ -55,7 +56,7 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 
 ## Lo que todavía no hacen (para no engañar)
 
-- **Azabache**: la vista de tu pareja, las recomendaciones, «Descubrir», las maquetas y las estadísticas más finas de Android.
+- **Azabache**: editar las maquetas (las del móvil se ven tal cual), las recomendaciones y «Descubrir».
 - **Cobalto**: el árbol de fichas, la línea temporal, la guía de la novela, los sprints, los sinónimos, el historial de versiones a la
   vista (se guarda igual) y compartir con tu pareja.
 - **Marfil**: subrayados y notas nuevos (los del móvil se conservan en la cuenta; aquí no se pintan), los diccionarios y los ajustes del
@@ -83,4 +84,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.5.4, Marfil 0.13.5, Cobalto 0.3.3, Azabache 1.5.2. De escritorio: las cuatro 1.0.1.
+Versiones de Android a día de hoy: Hiedra 0.5.4, Marfil 0.13.5, Cobalto 0.3.3, Azabache 1.6.0. De escritorio: Azabache 1.1.0; Cobalto, Hiedra y Marfil 1.0.1.
