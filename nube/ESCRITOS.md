@@ -67,7 +67,7 @@ El historial de versiones **no viaja**: se guarda en cada dispositivo (cada esce
 
 - Tu pareja es la de la cuenta: `/users/<tú>/partner` = su uid (la misma que pone Azabache, y la que le deja leer tu cuenta). Desde
   Cobalto 0.4.2 el móvil la lee y la escribe ahí, así está en todos tus dispositivos (hasta entonces la guardaba solo en el móvil: la
-  de antes pasa a la cuenta una vez, si la cuenta no tenía ninguna). Quitarla es poner `""` (nunca null). Su nombre sale de su
+  de antes no pasa sola a la cuenta: si la cuenta no tiene ninguna, Ajustes pregunta si ponerla, porque eso le deja leer tu cuenta). Quitarla es poner `""` (nunca null). Su nombre sale de su
   `/users/<ella>/name` (o `user`) si te deja leerlo.
 - En el capítulo (`c`) y la parte (`a`): `hecho` (1 = terminado) y `comp` (1 = compartido con tu pareja). Compartir una
   parte comparte todos sus capítulos (también los que se añadan); igual con terminado.

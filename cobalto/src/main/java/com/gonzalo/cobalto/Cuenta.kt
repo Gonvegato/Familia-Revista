@@ -39,6 +39,12 @@ object Cuenta {
         private set
     var parejaUid by mutableStateOf("")
         private set
+    /**
+     * Este móvil tiene una pareja de antes (hasta la 0.4.1 se guardaba solo aquí) y tu cuenta no tiene ninguna. No se pone sola en la
+     * cuenta: eso deja a esa persona leer tu cuenta. Ajustes te lo enseña y lo decides tú ([subeParejaDeAqui] o [olvidaParejaDeAqui]).
+     */
+    var parejaSoloAqui by mutableStateOf(false)
+        private set
 
     /**
      * Busca a tu pareja por su usuario (en /usernames) y la pone en tu cuenta: `/users/<tú>/partner` = su uid, la misma pareja de toda la
@@ -86,9 +92,23 @@ object Cuenta {
                 if (enCuenta != parejaUid || parejaUsuario.isBlank()) guardaPareja(nombreDe(enCuenta).ifBlank { if (enCuenta == parejaUid) parejaUsuario else "" }, enCuenta)
                 else p.edit().putString(PAREJA_EN_CUENTA, uid).apply()
             }
-            !yaPaso && parejaUid.isNotBlank() -> { db("PUT", "/users/$uid/partner", org.json.JSONObject.quote(parejaUid)); guardaPareja(parejaUsuario, parejaUid) }
+            // (la de antes de este móvil: se queda aquí, sin compartir nada, hasta que decidas)
+            !yaPaso && parejaUid.isNotBlank() -> { parejaSoloAqui = true; return }
             else -> { if (parejaUid.isNotBlank()) olvidaPareja(); p.edit().putString(PAREJA_EN_CUENTA, uid).apply() }
         }
+        parejaSoloAqui = false
+    }
+
+    /** «Ponerla en mi cuenta»: la pareja de antes de este móvil pasa a tu cuenta (desde ahí puede leerla, como la pareja de Azabache). */
+    fun subeParejaDeAqui() {
+        if (!vinculada || parejaUid.isBlank()) return
+        db("PUT", "/users/$uid/partner", org.json.JSONObject.quote(parejaUid))
+        guardaPareja(parejaUsuario, parejaUid); parejaSoloAqui = false
+    }
+
+    /** «Olvidarla»: la de este móvil se olvida y tu cuenta sigue sin pareja. */
+    fun olvidaParejaDeAqui() {
+        olvidaPareja(); if (::p.isInitialized) p.edit().putString(PAREJA_EN_CUENTA, uid).apply(); parejaSoloAqui = false
     }
 
     /** El nombre de alguien (el que puso en Azabache, o su usuario), si su cuenta te deja leerlo; "" si no. */

@@ -20,7 +20,8 @@ Lo que escribas en el PC aparece aquí al momento, y al revés.
   palabras que escribas allí; lo terminas en cualquiera de los dos. Si la hora se cumple con todo cerrado, lo da por terminado el
   dispositivo donde lo empezaste, al volver a abrirlo (como antes).
 - **Tu pareja es la de tu cuenta**: la que pones en Cobalto es la misma que en Azabache y está en todos tus dispositivos (antes se quedaba
-  en este móvil). Si ya la tenías puesta aquí y la cuenta no tenía ninguna, pasa a la cuenta sola. Quitarla aquí la quita en todas.
+  en este móvil). Si ya la tenías puesta aquí y la cuenta no tenía ninguna, **no pasa sola**: ponerla en la cuenta deja a esa persona
+  leer tu cuenta, así que Ajustes → Cuenta te pregunta («Ponerla en mi cuenta» u «Olvidarla»). Quitarla aquí la quita en todas.
 - **Copias de seguridad también en el móvil**, como en el ordenador: copias completas de todo lo que escribes (también la papelera),
   cada 15 minutos mientras Cobalto está abierto y al salir de la app, si algo ha cambiado. Se quedan las últimas 40, comprimidas, dentro de
   la app: no ocupan tus archivos, pero se irían si desinstalas Cobalto, así que puedes guardar una fuera del móvil. En Ajustes → Avanzado →

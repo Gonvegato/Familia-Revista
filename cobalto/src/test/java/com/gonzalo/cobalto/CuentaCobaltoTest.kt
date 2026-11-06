@@ -7,6 +7,7 @@ import com.gonzalo.familia.nucleo.Familia
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -97,12 +98,20 @@ class CuentaCobaltoTest {
         val ella = Emulador.cuenta("lucia")
         // (Lucía te deja leer su cuenta y tiene su nombre puesto en Azabache; su usuario es «lucia»)
         Emulador.escribe("/users/$ella/partner", yo); Emulador.escribe("/users/$ella/name", "Lucía"); Emulador.escribe("/usernames/lucia", ella)
-        // Hasta la 0.4.1 se guardaba solo en este móvil: si la cuenta no tenía ninguna, pasa a ella (una vez)
+        // Hasta la 0.4.1 se guardaba solo en este móvil. Si la cuenta no tiene ninguna, NO pasa sola (dejaría a esa persona leer tu
+        // cuenta): se queda aquí, pendiente, hasta que lo decides en Ajustes
         ctx.getSharedPreferences("cobalto_cuenta", android.content.Context.MODE_PRIVATE).edit()
             .putString("parejaUid", ella).putString("parejaUsuario", "lucia").remove("parejaEnCuenta").commit()
         Cuenta.cargar(ctx)
         assertEquals(ella, Cuenta.parejaUid)
         Cuenta.sincronizaPareja()
+        assertTrue(Cuenta.parejaSoloAqui)
+        assertTrue("la cuenta sigue sin pareja", Emulador.lee("/users/$yo/partner").let { it == null || it == "" })
+        Cuenta.sincronizaPareja()
+        assertTrue("sigue pendiente (no se decide sola)", Cuenta.parejaSoloAqui)
+        // «Ponerla en mi cuenta»
+        Cuenta.subeParejaDeAqui()
+        assertFalse(Cuenta.parejaSoloAqui)
         assertEquals(ella, Emulador.lee("/users/$yo/partner"))
         // Si se quita en otro sitio (Azabache, otro móvil), aquí también
         Emulador.escribe("/users/$yo/partner", "")

@@ -180,6 +180,22 @@ private fun SeccionCuenta() {
                     }
                 }
             }
+        } else if (Cuenta.parejaSoloAqui) {
+            // La de antes de este móvil, y tu cuenta sin pareja: no se pone sola (dejaría a esa persona leer tu cuenta)
+            Etiqueta("Tu pareja", Modifier.padding(top = 8.dp))
+            Text(Cuenta.parejaUsuario.ifBlank { "la de este móvil" }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+            Text("Estaba guardada solo en este móvil y tu cuenta no tiene pareja, así que ahora mismo no os compartís nada. Si la pones en tu cuenta, " +
+                "podrá leer tu cuenta (como la pareja de Azabache) y estará en todos tus dispositivos.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+            MagLink(if (ocupado) "Poniéndola…" else "Ponerla en mi cuenta", "Desde ahora la tendrás en todas tus apps") {
+                if (!ocupado) {
+                    ocupado = true; aviso = null
+                    ambito.launch {
+                        aviso = try { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Cuenta.subeParejaDeAqui() }; null } catch (x: Exception) { "No se pudo: ${x.message ?: "sin conexión"}" }
+                        ocupado = false
+                    }
+                }
+            }
+            MagLink("Olvidarla", "Tu cuenta sigue sin pareja") { ambito.launch { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Cuenta.olvidaParejaDeAqui() } } }
         } else {
             Etiqueta("Tu pareja", Modifier.padding(top = 8.dp))
             Text(Cuenta.parejaUsuario.ifBlank { "Enlazada en tu cuenta" }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
