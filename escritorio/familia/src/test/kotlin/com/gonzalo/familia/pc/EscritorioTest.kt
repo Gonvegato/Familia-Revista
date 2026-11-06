@@ -239,4 +239,60 @@ class EscritorioTest {
         assertEquals(File(aplicaciones, "Marfil.app"), HermanasPc.donde("marfil", File(aplicaciones, "Hiedra.app"), Sitio.Sistema.MAC, casa))
         assertEquals(listOf("azabache", "cobalto", "hiedra", "marfil"), HermanasPc.todas.map { it.first })
     }
+
+    /**
+     * De punta a punta, en Linux: hay una versión nueva en el kDrive (uno de mentira, con la misma API), la app la encuentra, la baja,
+     * la descomprime, y al cerrar queda puesta encima de la instalada (con su instalar.sh, como la de verdad).
+     */
+    @Test fun deUnaPuntaAOtraLaVersionNuevaLlegaDelKDriveYSePone() {
+        org.junit.Assume.assumeTrue("Solo en Linux", Sitio.sistema == Sitio.Sistema.LINUX)
+        val js = File(System.getProperty("user.dir"), "../../herramientas/azabache/fakekdrive.js")
+        org.junit.Assume.assumeTrue("falta node o fakekdrive.js", js.isFile && runCatching { ProcessBuilder("node", "--version").start().waitFor() == 0 }.getOrDefault(false))
+        val puerto = 8300 + (System.nanoTime() % 400).toInt().let { if (it < 0) -it else it }
+        val servidor = ProcessBuilder("node", js.absolutePath, puerto.toString()).redirectErrorStream(true).start()
+        val antes = listOf("compose.application.resources.dir", "familia.version", "familia.dir").associateWith { System.getProperty(it) }
+        try {
+            repeat(50) { try { java.net.URI("http://127.0.0.1:$puerto/").toURL().openConnection().apply { connectTimeout = 300 }.getInputStream().close(); return@repeat } catch (e: java.io.IOException) { if (e.message?.contains("Server returned") == true) return@repeat; Thread.sleep(100) } }
+            val kd = KDrive({ "tok" }, { "777" }).also { it.api = "http://127.0.0.1:$puerto" }
+            // La instalada (la 1.0.0) y la nueva (9.9.9) en un .tar.gz como el de GitHub, en «Mi carpeta/versiones»
+            fun app(dir: File, que: String) { val b = File(dir, "Hiedra/bin").also { it.mkdirs() }; File(b, "Hiedra").apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "Hiedra/lib/app/resources").mkdirs(); File(dir, "Hiedra/lib/Hiedra.png").writeText("png") }
+            val datos = File(tmp.root, "datos")
+            val donde = File(datos, "familia-apps/Hiedra")
+            app(donde.parentFile, "1.0.0")
+            val paquete = File(tmp.root, "paquete").also { it.mkdirs() }
+            app(paquete, "9.9.9")
+            val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
+            File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
+                .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt"))
+            val targz = File(tmp.root, "Hiedra-9.9.9-linux.tar.gz")
+            assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Hiedra", "instalar.sh").start().waitFor())
+            kd.sube("versiones", targz.name, targz.length()) { targz.inputStream() }
+            // (y otras que no le tocan: la de Mac, la de Android, una más vieja)
+            listOf("Hiedra-9.9.9-mac.dmg", "Hiedra-9.9.9.apk", "Hiedra-0.9.0-linux.tar.gz", "Marfil-9.9.9-linux.tar.gz").forEach { n -> kd.sube("versiones", n, 3) { "xyz".byteInputStream() } }
+            System.setProperty("compose.application.resources.dir", File(donde, "lib/app/resources").absolutePath)
+            System.setProperty("familia.version", "1.0.0")
+            System.setProperty("familia.dir", File(tmp.root, "familia").absolutePath)
+            Actualizador.entornoDeInstalar = mapOf("XDG_DATA_HOME" to datos.absolutePath, "XDG_CONFIG_HOME" to File(tmp.root, "config").absolutePath)
+            Actualizador.preparaParaPruebas(null)
+            assertEquals(donde.absoluteFile, Actualizador.instalada())
+            assertTrue(Actualizador.sePoneSola())
+            val lista = Actualizador.automatico("hiedra", kd)
+            assertNotNull(Actualizador.estado, lista)
+            assertEquals("9.9.9", lista!!.version)
+            assertTrue("sin tocar la de ahora hasta cerrar", File(donde, "bin/Hiedra").readText().contains("1.0.0"))
+            // Al cerrar
+            val programa = Actualizador.ponLaPreparada("hiedra")
+            assertEquals(File(donde, "bin/Hiedra"), programa)
+            assertTrue(File(donde, "bin/Hiedra").readText().contains("9.9.9"))
+            assertNull("ya no hay nada preparado", Actualizador.preparada)
+            assertTrue(File(datos, "applications/familia-hiedra.desktop").readText().contains("Exec=\"${donde.absolutePath}/bin/Hiedra\""))
+            // Y ya al día: no vuelve a bajar nada
+            System.setProperty("familia.version", "9.9.9")
+            assertNull(Actualizador.automatico("hiedra", kd))
+        } finally {
+            servidor.destroy()
+            Actualizador.entornoDeInstalar = emptyMap(); Actualizador.preparaParaPruebas(null)
+            antes.forEach { (k, v) -> if (v == null) System.clearProperty(k) else System.setProperty(k, v) }
+        }
+    }
 }

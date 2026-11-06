@@ -111,7 +111,7 @@ object Actualizador {
         val p = preparada ?: return null
         val donde = sitio ?: return null
         return runCatching {
-            val programa = if (Sitio.sistema == Sitio.Sistema.MAC) ponMac(p.archivo, donde) else ponLinux(p.carpeta ?: descomprime(p.archivo, File(carpetaDe(app), "v${p.version}")), app, donde)
+            val programa = if (Sitio.sistema == Sitio.Sistema.MAC) ponMac(p.archivo, donde) else ponLinux(p.carpeta ?: descomprime(p.archivo, File(carpetaDe(app), "v${p.version}")), app, donde, entornoDeInstalar)
             preparada = null
             carpetaDe(app).deleteRecursively()
             programa
@@ -176,4 +176,6 @@ object Actualizador {
 
     /** (Para las pruebas.) */
     fun preparaParaPruebas(p: Preparada?) { preparada = p }
+    /** (Para las pruebas: dónde deja instalar.sh la entrada del menú, en vez de las carpetas de tu usuario.) */
+    @Volatile var entornoDeInstalar: Map<String, String> = emptyMap()
 }
