@@ -11,6 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -65,8 +69,22 @@ private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alI
     }
     Window(
         onCloseRequest = { cierra() },
-        title = titulo, state = estado, icon = icono
+        title = titulo, state = estado, icon = icono,
+        // Pantalla completa: F11 (y en el Mac también ⌃⌘F, el de siempre allí); Esc no sale, que lo usan las apps
+        onPreviewKeyEvent = { k ->
+            val mac = Sitio.sistema == Sitio.Sistema.MAC
+            if (k.type == androidx.compose.ui.input.key.KeyEventType.KeyDown && (k.key == androidx.compose.ui.input.key.Key.F11 ||
+                    (mac && k.isCtrlPressed && k.isMetaPressed && k.key == androidx.compose.ui.input.key.Key.F))) {
+                VentanaFamilia.pantallaCompleta = !VentanaFamilia.pantallaCompleta; true
+            } else false
+        }
     ) {
+        // (lo pide el atajo o una app: el modo concentración de Cobalto, el lector de Marfil, la sala de Hiedra…)
+        LaunchedEffect(VentanaFamilia.pantallaCompleta) {
+            val quiere = VentanaFamilia.pantallaCompleta
+            if (quiere && estado.placement != WindowPlacement.Fullscreen) { VentanaFamilia.antes = estado.placement; estado.placement = WindowPlacement.Fullscreen }
+            else if (!quiere && estado.placement == WindowPlacement.Fullscreen) estado.placement = VentanaFamilia.antes
+        }
         // Actualizarse sola: al poco de abrir y luego cada 6 horas mira tu kDrive; lo nuevo se baja y se pone al cerrar
         LaunchedEffect(Unit) {
             kotlinx.coroutines.delay(20_000)
@@ -101,6 +119,13 @@ private fun ventanaDeLaFamilia(app: String, titulo: String, icono: Painter?, alI
             }
         }
     }
+}
+
+/** La ventana de la app, para lo que las pantallas necesiten de ella (de momento, la pantalla completa). */
+object VentanaFamilia {
+    /** Pantalla completa (F11; en el Mac también ⌃⌘F). Una app puede ponerla y quitarla (p. ej. un modo concentración). */
+    var pantallaCompleta by mutableStateOf(false)
+    internal var antes: WindowPlacement = WindowPlacement.Floating
 }
 
 /** El programa de una app instalada: `<App>/bin/<App>` en Linux; el `<App>.app` en el Mac. */
