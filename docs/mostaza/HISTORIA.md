@@ -17,7 +17,7 @@ tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar,
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 Y en la tele, la sala (`CapturasTeleTest`, 1920 × 1080 en modo de tele).
 
-## En la tele: la sala
+## 0.4.0 · En la tele: la sala
 
 **Mostaza también en Android TV y Google TV**, con el mismo APK que el móvil (en la tele sale en la fila de las apps, con su banner).
 Al abrirse en una tele no se ve la Mostaza del móvil sino **la sala**, como la de Hiedra en el ordenador (`--sala`): a pantalla completa,
