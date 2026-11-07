@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap
  * (una imagen pública de ESPN). Tu pareja puede leer `/users/<uid>`: aquí no hay nada que no pueda ver.
  */
 object AjustesFutbol {
-    val GRUPO = EspejoCuenta.Grupo("cobre_futbol", "cobre_futbol", { k -> when (k) { "equipos", "grupos", "asignacion", "calidad" -> Tipo.TEXTO; else -> null } },
+    val GRUPO = EspejoCuenta.Grupo("cobre_futbol", "cobre_futbol", { k -> when (k) { "equipos", "rivales", "grupos", "asignacion", "calidad" -> Tipo.TEXTO; else -> null } },
         alLlegar = { c -> Futbol.cambio(c) })
     private fun p(c: Context) = EspejoCuenta.prefs(c, GRUPO)
 
@@ -47,11 +47,23 @@ object AjustesFutbol {
     fun equipos(c: Context): List<Pair<Equipo, String>> { Futbol.fijo?.let { return it.equipos }; return CanalesFutbol.equiposDeTexto(p(c).getString("equipos", null)) }
     fun ponEquipos(c: Context, l: List<Pair<Equipo, String>>) { p(c).edit().putString("equipos", CanalesFutbol.equiposATexto(l)).apply(); Futbol.cambio(c) }
     fun esMio(c: Context, id: String) = equipos(c).any { it.first.id == id }
-    fun alterna(c: Context, e: Equipo, liga: String) = ponEquipos(c, if (esMio(c, e.id)) equipos(c).filter { it.first.id != e.id } else equipos(c) + (e to liga))
-    fun mueve(c: Context, id: String, d: Int) {
-        val l = equipos(c).toMutableList(); val i = l.indexOfFirst { it.first.id == id }; val j = i + d
+
+    /** Tus rivales (los «enemigos»): sus partidos también salen, marcados como de un rival. Un equipo no puede ser tuyo y rival a la vez. */
+    fun rivales(c: Context): List<Pair<Equipo, String>> { Futbol.fijo?.let { return it.rivales }; return CanalesFutbol.equiposDeTexto(p(c).getString("rivales", null)) }
+    fun esRival(c: Context, id: String) = rivales(c).any { it.first.id == id }
+
+    /** Pone o quita [e] en tus equipos ([rival] = false) o en tus rivales; si estaba en la otra lista, sale de ella. */
+    fun alterna(c: Context, e: Equipo, liga: String, rival: Boolean = false) {
+        val (m, r) = CanalesFutbol.alterna(equipos(c), rivales(c), e, liga, rival)
+        p(c).edit().putString("equipos", CanalesFutbol.equiposATexto(m)).putString("rivales", CanalesFutbol.equiposATexto(r)).apply()
+        Futbol.cambio(c)
+    }
+
+    fun mueve(c: Context, id: String, d: Int, rival: Boolean = false) {
+        val l = (if (rival) rivales(c) else equipos(c)).toMutableList(); val i = l.indexOfFirst { it.first.id == id }; val j = i + d
         if (i < 0 || j !in l.indices) return
-        l.add(j, l.removeAt(i)); ponEquipos(c, l)
+        l.add(j, l.removeAt(i))
+        if (rival) { p(c).edit().putString("rivales", CanalesFutbol.equiposATexto(l)).apply(); Futbol.cambio(c) } else ponEquipos(c, l)
     }
 
     /** Tus grupos de canales (de serie, los cinco vacíos). */
@@ -94,7 +106,7 @@ object Futbol {
     /** En las pruebas de pantallas y de widgets: los datos, fijos (sin red). */
     @Volatile var fijo: Fijo? = null
     class Fijo(
-        val equipos: List<Pair<Equipo, String>> = emptyList(), val grupos: List<GrupoCanales> = CanalesFutbol.GRUPOS, val partidos: List<Partido> = emptyList(),
+        val equipos: List<Pair<Equipo, String>> = emptyList(), val rivales: List<Pair<Equipo, String>> = emptyList(), val grupos: List<GrupoCanales> = CanalesFutbol.GRUPOS, val partidos: List<Partido> = emptyList(),
         val fichas: Map<String, FichaPartido> = emptyMap(), val clasificaciones: Map<String, Clasificacion> = emptyMap(), val lideres: Map<String, Lideres> = emptyMap(),
         val equiposDe: Map<String, List<Equipo>> = emptyMap(),
     )
@@ -131,10 +143,11 @@ object Futbol {
     fun partidos(c: Context, fresco: Boolean = true, vivoCada: Long = MIN): List<Partido> {
         fijo?.let { return Orden.ordena(it.partidos, System.currentTimeMillis()) }
         cargar(c)
-        val eqs = AjustesFutbol.equipos(c)
+        // (tus equipos y tus rivales; de cada uno, las competiciones de clubes o las de selecciones)
+        val eqs = AjustesFutbol.equipos(c) + AjustesFutbol.rivales(c)
         if (eqs.isEmpty()) return emptyList()
         val porId = LinkedHashMap<String, Partido>()
-        for ((e, _) in eqs) for (comp in Competiciones.TODAS) for (prox in listOf(true, false)) {
+        for ((e, liga) in eqs) for (comp in Competiciones.para(liga)) for (prox in listOf(true, false)) {
             val edad = if (!fresco) NUNCA else if (prox) 3 * HORA else 6 * HORA
             runCatching { fuente.calendario(comp.slug, e.id, prox, edad) }.getOrNull()?.forEach { p -> porId[p.id] = mejor(porId[p.id], p) }
         }
@@ -154,7 +167,7 @@ object Futbol {
 
     /** ¿Hay algo que pedir? (para el widget: si los calendarios tienen más de unas horas, o hay un partido en juego). Bloquea y avisa. */
     fun refrescaSiToca(c: Context): Boolean {
-        if (fijo != null || AjustesFutbol.equipos(c).isEmpty()) return false
+        if (fijo != null || (AjustesFutbol.equipos(c).isEmpty() && AjustesFutbol.rivales(c).isEmpty())) return false
         val antes = partidos(c, fresco = false)
         val despues = partidos(c, fresco = true, vivoCada = 2 * MIN)
         if (antes != despues) { avisa(); return true }

@@ -123,14 +123,18 @@ object CanalesFutbol {
     /** Los de serie, vacíos: los rellenas tú (Ajustes → Fútbol). */
     val GRUPOS = listOf(
         GrupoCanales("movistar", "Movistar LaLiga"), GrupoCanales("dazn", "DAZN LaLiga"), GrupoCanales("champions", "Champions"),
-        GrupoCanales("copa", "Copa"), GrupoCanales("europa", "Europa League"),
+        GrupoCanales("copa", "Copa"), GrupoCanales("europa", "Europa League"), GrupoCanales(SELECCION, "Selección"),
     )
+
+    /** Los grupos de serie que llegaron después (si no los tienes, aparecen; si los borras, no vuelven: queda su marca `x`). */
+    const val SELECCION = "seleccion"
+    private val NUEVOS = listOf(SELECCION)
 
     /** Qué grupos tiene cada competición, de serie: LaLiga, dos (Movistar y DAZN); las demás, uno. */
     val ASIGNACION: Map<String, List<String>> = mapOf(
         Competiciones.LALIGA.slug to listOf("movistar", "dazn"), Competiciones.CHAMPIONS.slug to listOf("champions"),
         Competiciones.COPA.slug to listOf("copa"), Competiciones.SUPERCOPA.slug to listOf("copa"), Competiciones.EUROPA.slug to listOf("europa"),
-    )
+    ) + Competiciones.SELECCIONES.associate { it.slug to listOf(SELECCION) }
 
     /** Tu equipo de serie (sugerido: lo eliges tú). */
     val SUGERIDO = Equipo("83", "Barcelona", "Barcelona", "BAR", "https://a.espncdn.com/i/teamlogos/soccer/500/83.png")
@@ -206,20 +210,23 @@ object CanalesFutbol {
 
     /** `[{"id","n","c":[{"u":{"l","k","n"},"h":{…},"s":{…}}]}]` (cada entrada, sus calidades: `u` Ultra HD, `h` HD, `s` SD). */
     fun gruposATexto(l: List<GrupoCanales>): String = JsonFlujo.escribe(l.map { g ->
-        linkedMapOf("id" to g.id, "n" to g.nombre, "c" to g.canales.map { e -> Calidad.entries.mapNotNull { q -> e.en(q)?.takeIf { claveValida(it.canal) }?.let { q.clave to ref(it) } }.toMap(LinkedHashMap()) }.filter { it.isNotEmpty() })
-    })
+        linkedMapOf<String, Any?>("id" to g.id, "n" to g.nombre, "c" to g.canales.map { e -> Calidad.entries.mapNotNull { q -> e.en(q)?.takeIf { claveValida(it.canal) }?.let { q.clave to ref(it) } }.toMap(LinkedHashMap()) }.filter { it.isNotEmpty() })
+    } + NUEVOS.filter { id -> l.none { it.id == id } }.map { linkedMapOf("id" to it, "x" to true) })
 
     /** Los grupos de un texto (sin texto o si no se entiende, los de serie). */
     fun gruposDeTexto(t: String?): List<GrupoCanales> {
         if (t.isNullOrBlank()) return GRUPOS
         val v = runCatching { JsonFlujo.lee(t) }.getOrNull() as? List<*> ?: return GRUPOS
+        val ids = v.lista().map { it.mapa()["id"].txt() }.toSet()
+        // (los de serie que llegaron después y aún no tenías: al final)
+        val faltan = GRUPOS.filter { it.id in NUEVOS && it.id !in ids }
         return v.lista().map { it.mapa() }.mapNotNull { m ->
-            val id = m["id"].txt(); if (id.isBlank()) return@mapNotNull null
+            val id = m["id"].txt(); if (id.isBlank() || m["x"] == true) return@mapNotNull null
             GrupoCanales(id, m["n"].txt().ifBlank { id }, m["c"].lista().map { it.mapa() }.map { x ->
                 // (una entrada de antes, con un solo canal: como HD)
                 if (x.containsKey("k")) Entrada(hd = refDe(x)) else Entrada(refDe(x["u"]), refDe(x["h"]), refDe(x["s"]))
             }.filter { !it.vacia })
-        }.distinctBy { it.id }
+        }.distinctBy { it.id } + faltan
     }
 
     /** `{"esp.1":["movistar","dazn"],…}`. */
@@ -235,6 +242,16 @@ object CanalesFutbol {
     fun equiposATexto(l: List<Pair<Equipo, String>>): String = JsonFlujo.escribe(l.distinctBy { it.first.id }.map { (e, liga) ->
         linkedMapOf("id" to e.id, "n" to e.nombre, "c" to e.corto, "s" to e.siglas, "e" to e.escudo, "l" to liga)
     })
+
+    /**
+     * Un equipo, a tus equipos ([rival] = false) o a tus rivales (true): si ya estaba en esa lista, sale; si estaba en la otra, se
+     * cambia (un equipo no puede ser tuyo y rival a la vez). Devuelve (tus equipos, tus rivales).
+     */
+    fun alterna(mios: List<Pair<Equipo, String>>, rivales: List<Pair<Equipo, String>>, e: Equipo, liga: String, rival: Boolean): Pair<List<Pair<Equipo, String>>, List<Pair<Equipo, String>>> {
+        val enMios = mios.any { it.first.id == e.id }; val enRivales = rivales.any { it.first.id == e.id }
+        val m = mios.filter { it.first.id != e.id }; val r = rivales.filter { it.first.id != e.id }
+        return if (rival) (m to if (enRivales) r else r + (e to liga)) else ((if (enMios) m else m + (e to liga)) to r)
+    }
 
     fun equiposDeTexto(t: String?): List<Pair<Equipo, String>> {
         if (t.isNullOrBlank()) return emptyList()

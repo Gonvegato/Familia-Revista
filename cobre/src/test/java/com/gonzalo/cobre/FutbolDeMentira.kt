@@ -50,13 +50,17 @@ object FutbolDeMentira {
         val atm = escudo(ctx, Equipo("1068", "Atlético Madrid", "Atlético", "ATM"))
         val val_ = escudo(ctx, Equipo("94", "Valencia", "Valencia", "VAL"))
         val ala = escudo(ctx, Equipo("96", "Alavés", "Alavés", "ALA"))
+        val esp = escudo(ctx, Equipo("164", "España", "España", "ESP"))
+        val ing = escudo(ctx, Equipo("448", "Inglaterra", "Inglaterra", "ENG"))
         val mañana21 = java.time.LocalDate.now(com.gonzalo.iptv.futbol.Hora.ESPANA).plusDays(1).atTime(21, 0).atZone(com.gonzalo.iptv.futbol.Hora.ESPANA).toInstant().toEpochMilli()
         val clasico = if (vivo) Partido("901", "esp.1", ahora - 67 * 60_000L, atm, bar, Estado.EN_JUEGO, 1, 2, "67'", estadio = "Riyadh Air Metropolitano")
             else Partido("901", "esp.1", mañana21, atm, bar, estadio = "Riyadh Air Metropolitano")
         val jugados = Espn.partidos(json("calendario_jugados.json"), "esp.1").map { p -> p.copy(local = if (p.local.id == "83") bar else p.local, visitante = if (p.visitante.id == "83") bar else p.visitante) }
         val partidos = listOf(
             clasico,
-            Partido("902", "esp.1", mañana21 + 24 * h - 2 * h, rma, val_, estadio = "Santiago Bernabéu"),
+            // (tu rival juega hoy: sale también en la portada)
+            Partido("902", "esp.1", (ahora / (15 * 60_000L) + 6) * 15 * 60_000L, rma, val_, estadio = "Santiago Bernabéu"),
+            Partido("905", "uefa.nations", mañana21 + 7 * 24 * h - 15 * 60_000L, esp, ing, estadio = "La Cartuja"),
             Partido("903", "uefa.champions", mañana21 + 17 * 24 * h, Equipo("21524", "Sabah FK", "Sabah", "SAB"), bar),
             Partido("904", "esp.1", mañana21 + 14 * 24 * h - 2 * h, bar, Equipo("102", "Villarreal", "Villarreal", "VIL")),
         ) + jugados
@@ -72,15 +76,16 @@ object FutbolDeMentira {
                 "movistar" -> g.copy(canales = listOf(Entrada(r("x201", "M+ LaLiga UHD"), r("x202", "M+ LaLiga HD"), r("x203", "M+ LaLiga SD")), Entrada(hd = r("x204", "M+ LaLiga 2 HD")), Entrada(hd = r("x205", "M+ LaLiga 3 HD"))))
                 "dazn" -> g.copy(canales = listOf(Entrada(r("x113", "ES: DAZN LA LIGA UHD"), r("x114", "ES: DAZN LA LIGA HD"), null)))
                 "champions" -> g.copy(canales = listOf(Entrada(hd = r("x301", "M+ Liga de Campeones HD"))))
+                "seleccion" -> g.copy(canales = listOf(Entrada(hd = r("x101", "La 1 HD")), Entrada(hd = r("x112", "Teledeporte HD"))))
                 else -> g
             }
         }
         return Futbol.Fijo(
-            equipos = listOf(bar to "esp.1", rma to "esp.1"), grupos = grupos, partidos = partidos,
+            equipos = listOf(bar to "esp.1", esp to "uefa.nations"), rivales = listOf(rma to "esp.1"), grupos = grupos, partidos = partidos,
             fichas = mapOf("901" to fichaVivo) + jugados.associate { it.id to ficha.copy(partido = it) },
             clasificaciones = mapOf("esp.1" to Espn.clasificacion(json("clasificacion.json"), "esp.1").let { c -> c.copy(tablas = c.tablas.map { (n, fs) -> n to fs.map { f -> when (f.equipo.id) { "83" -> f.copy(equipo = bar); "86" -> f.copy(equipo = rma); "1068" -> f.copy(equipo = atm); else -> f } } }) }),
             lideres = mapOf("esp.1" to Espn.lideres(json("goleadores.json"), "esp.1")),
-            equiposDe = mapOf("esp.1" to Espn.equipos(json("equipos.json"))),
+            equiposDe = mapOf("esp.1" to Espn.equipos(json("equipos.json")), "uefa.nations" to Espn.equipos(json("selecciones_equipos.json"))),
         )
     }
 }

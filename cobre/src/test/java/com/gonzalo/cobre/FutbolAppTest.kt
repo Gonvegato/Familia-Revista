@@ -35,12 +35,17 @@ class FutbolAppTest {
     private fun recurso(n: String) = javaClass.classLoader!!.getResourceAsStream(n)!!.readBytes()
     private var pedidas = 0
     private var hayRed = true
+    private val urls = java.util.Collections.synchronizedList(ArrayList<String>())
     private val espn = Red { url, _ ->
-        pedidas++
+        pedidas++; urls += url
         if (!hayRed) throw IptvError("sin red")
         val cuerpo = when {
-            url.endsWith("/esp.1/teams/83/schedule?fixture=true") -> recurso("espn/calendario_proximos.json")
-            url.endsWith("/esp.1/teams/83/schedule") -> recurso("espn/calendario_jugados.json")
+            url.contains("/esp.1/teams/83/schedule?fixture=true") -> recurso("espn/calendario_proximos.json")
+            url.contains("/esp.1/teams/83/schedule?lang") -> recurso("espn/calendario_jugados.json")
+            url.contains("/uefa.nations/teams/164/schedule?fixture=true") -> recurso("espn/selecciones_proximos.json")
+            url.contains("/fifa.world/teams/164/schedule?lang") -> recurso("espn/selecciones_mundial.json")
+            url.contains("/esp.1/teams/164/") -> error("a una selección no se le piden las ligas de clubes")
+            url.contains("/uefa.nations/teams/83/") -> error("a un club no se le piden las de selecciones")
             url.contains("/schedule") -> """{"events":[]}""".toByteArray()
             url.contains("/scoreboard") -> recurso("espn/marcadores.json")
             else -> return@Red Respuesta(404, ByteArrayInputStream(ByteArray(0)))
@@ -108,5 +113,28 @@ class FutbolAppTest {
         assertTrue("un grupo vacío lo dice", Futbol.pon(ctx, GrupoCanales("copa", "Copa"))!!.contains("no tiene canales"))
         // La conexión de Android se lee sin fallar (en las pruebas, sin red)
         Futbol.conexion(ctx)
+    }
+
+    @Test fun rivalesYSelecciones() {
+        val esp = com.gonzalo.iptv.futbol.Equipo("164", "Spain", "Spain", "ESP")
+        AjustesFutbol.alterna(ctx, CanalesFutbol.SUGERIDO, "esp.1")
+        AjustesFutbol.alterna(ctx, esp, "uefa.nations")
+        val rma = com.gonzalo.iptv.futbol.Equipo("86", "Real Madrid")
+        AjustesFutbol.alterna(ctx, rma, "esp.1", rival = true)
+        assertEquals(listOf("83", "164"), AjustesFutbol.equipos(ctx).map { it.first.id }); assertEquals(listOf("86"), AjustesFutbol.rivales(ctx).map { it.first.id })
+        // Al hacer rival a uno tuyo, deja de ser tuyo
+        AjustesFutbol.alterna(ctx, CanalesFutbol.SUGERIDO, "esp.1", rival = true)
+        assertEquals(listOf("164"), AjustesFutbol.equipos(ctx).map { it.first.id }); assertEquals(listOf("86", "83"), AjustesFutbol.rivales(ctx).map { it.first.id })
+        AjustesFutbol.mueve(ctx, "83", -1, rival = true)
+        assertEquals(listOf("83", "86"), AjustesFutbol.rivales(ctx).map { it.first.id })
+        // Los partidos: los de la selección (de sus competiciones) y los de los rivales
+        val l = Futbol.partidos(ctx)
+        assertTrue("España en la Liga de Naciones", l.any { it.liga == "uefa.nations" && it.visitante.id == "164" })
+        assertTrue("y en el Mundial", l.any { it.liga == "fifa.world" && it.estado == com.gonzalo.iptv.futbol.Estado.FINAL_PRORROGA })
+        assertTrue("los del Barça, ahora rival", l.any { it.id == "401882822" })
+        assertTrue("a una selección no se le piden las ligas de clubes", urls.none { it.contains("/esp.1/teams/164/") })
+        assertTrue("a un club no se le piden las de selecciones", urls.none { it.contains("/uefa.nations/teams/83/") })
+        assertEquals(listOf("seleccion"), AjustesFutbol.gruposDe(ctx, "uefa.nations").map { it.id })
+        assertTrue(AjustesFutbol.grupos(ctx).any { it.id == "seleccion" && it.nombre == "Selección" })
     }
 }

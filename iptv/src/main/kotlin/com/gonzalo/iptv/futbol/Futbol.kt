@@ -21,11 +21,25 @@ object Competiciones {
     val COPA = Competicion("esp.copa_del_rey", "Copa del Rey", "Copa")
     val SUPERCOPA = Competicion("esp.super_cup", "Supercopa de España", "Supercopa")
     val EUROPA = Competicion("uefa.europa", "Europa League", "Europa League")
-    /** En este orden se enseñan (las clasificaciones, los goleadores, los equipos para elegir). */
-    val TODAS = listOf(LALIGA, CHAMPIONS, COPA, SUPERCOPA, EUROPA)
+    // Las de selecciones (en ESPN, el mismo id de equipo en todas: España es 164)
+    val NACIONES = Competicion("uefa.nations", "Liga de Naciones", "Nations League")
+    val MUNDIAL = Competicion("fifa.world", "Mundial", "Mundial")
+    val CLASIF_MUNDIAL = Competicion("fifa.worldq.uefa", "Clasificación del Mundial", "Clasif. Mundial")
+    val EURO = Competicion("uefa.euro", "Eurocopa", "Eurocopa")
+    val CLASIF_EURO = Competicion("uefa.euroq", "Clasificación de la Eurocopa", "Clasif. Eurocopa")
+    val AMISTOSOS = Competicion("fifa.friendly", "Amistosos", "Amistoso")
+
+    /** Las de clubes, en este orden se enseñan (las clasificaciones, los goleadores, los equipos para elegir). */
+    val CLUBES = listOf(LALIGA, CHAMPIONS, COPA, SUPERCOPA, EUROPA)
+    /** Las de selecciones: de un equipo de selecciones se piden estas. */
+    val SELECCIONES = listOf(NACIONES, MUNDIAL, CLASIF_MUNDIAL, EURO, CLASIF_EURO, AMISTOSOS)
+    val TODAS = CLUBES + SELECCIONES
     /** Las que tienen clasificación (las de eliminatorias, no). */
     val CON_TABLA = listOf(LALIGA, CHAMPIONS, EUROPA)
     fun de(slug: String): Competicion = TODAS.firstOrNull { it.slug == slug } ?: Competicion(slug, slug)
+    fun esDeSelecciones(slug: String) = SELECCIONES.any { it.slug == slug }
+    /** Las competiciones donde se buscan los partidos de un equipo elegido en [liga] (de clubes o de selecciones). */
+    fun para(equipoElegidoEn: String): List<Competicion> = if (esDeSelecciones(equipoElegidoEn)) SELECCIONES else CLUBES
 }
 
 /** Un equipo: su id en la fuente, su nombre, el corto (para lo estrecho), las siglas y su escudo (una imagen pública). */
@@ -316,4 +330,18 @@ object Orden {
         val r = equipos.mapNotNull { e -> proximos(l, e, ahora).firstOrNull() }.distinctBy { it.id }
         return r.sortedWith(compareBy({ !it.estado.enDirecto }, { it.inicio }))
     }
+
+    /**
+     * Los partidos de tus rivales que no son contra uno de los tuyos (esos ya salen como tuyos, «contra tu rival»): de cada rival, el
+     * que se juega o el siguiente. Con [soloHoy] (la portada), solo los que se juegan ahora o hoy (en España).
+     */
+    fun deRivales(l: Collection<Partido>, rivales: List<String>, mios: List<String>, ahora: Long, soloHoy: Boolean = false): List<Partido> {
+        val hoy = Hora.diaDe(ahora)
+        return tusPartidos(l.filter { p -> mios.none { p.juega(it) } }, rivales, ahora)
+            .filter { !soloHoy || it.estado.enDirecto || (Hora.diaDe(it.inicio) == hoy && !it.estado.terminado) }
+    }
+
+    /** ¿Es un partido de uno de los tuyos contra uno de tus rivales? */
+    fun contraRival(p: Partido, mios: Collection<String>, rivales: Collection<String>) =
+        (p.local.id in mios && p.visitante.id in rivales) || (p.visitante.id in mios && p.local.id in rivales)
 }

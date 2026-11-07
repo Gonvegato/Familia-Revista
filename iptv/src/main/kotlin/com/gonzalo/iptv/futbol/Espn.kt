@@ -33,12 +33,14 @@ class Espn(private val pedir: (url: String, edad: Long) -> String) : FuenteFutbo
         const val SITIO = "https://site.api.espn.com/apis/site/v2/sports/soccer"
         const val TABLAS = "https://site.api.espn.com/apis/v2/sports/soccer"
 
-        fun urlCalendario(liga: String, equipo: String, proximos: Boolean) = "$SITIO/$liga/teams/$equipo/schedule" + if (proximos) "?fixture=true" else ""
-        fun urlMarcadores(liga: String, dia: LocalDate) = "$SITIO/$liga/scoreboard?dates=%04d%02d%02d".format(dia.year, dia.monthValue, dia.dayOfMonth)
-        fun urlClasificacion(liga: String) = "$TABLAS/$liga/standings"
-        fun urlLideres(liga: String) = "$SITIO/$liga/statistics"
-        fun urlFicha(liga: String, partido: String) = "$SITIO/$liga/summary?event=$partido"
-        fun urlEquipos(liga: String) = "$SITIO/$liga/teams"
+        /** En español de España: los nombres de las selecciones («España», «Chequia») y de algunos clubes («Atlético de Madrid»). */
+        const val IDIOMA = "lang=es&region=es"
+        fun urlCalendario(liga: String, equipo: String, proximos: Boolean) = "$SITIO/$liga/teams/$equipo/schedule?" + (if (proximos) "fixture=true&" else "") + IDIOMA
+        fun urlMarcadores(liga: String, dia: LocalDate) = "$SITIO/$liga/scoreboard?dates=%04d%02d%02d&$IDIOMA".format(dia.year, dia.monthValue, dia.dayOfMonth)
+        fun urlClasificacion(liga: String) = "$TABLAS/$liga/standings?$IDIOMA"
+        fun urlLideres(liga: String) = "$SITIO/$liga/statistics?$IDIOMA"
+        fun urlFicha(liga: String, partido: String) = "$SITIO/$liga/summary?event=$partido&$IDIOMA"
+        fun urlEquipos(liga: String) = "$SITIO/$liga/teams?$IDIOMA"
 
         // ------------------------------------------------------------ leer las respuestas (sin red: se prueban con respuestas de verdad)
 
@@ -105,7 +107,7 @@ class Espn(private val pedir: (url: String, edad: Long) -> String) : FuenteFutbo
             val st = json.m()["stats"].l().map { it.m() }
             fun de(nombre: String) = st.firstOrNull { it["name"] == nombre }?.get("leaders").l().map { it.m() }.orEmpty().map { x ->
                 val a = x["athlete"].m()
-                val partidos = Regex("Matches: (\\d+)").find(x["displayValue"].txt())?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                val partidos = Regex("(?:Matches|Partidos|Juegos): (\\d+)").find(x["displayValue"].txt())?.groupValues?.get(1)?.toIntOrNull() ?: 0
                 Lider(a["displayName"].txt(), equipo(a["team"].m()), entero(x["value"]) ?: 0, partidos)
             }
             return Lideres(liga, de("goalsLeaders"), de("assistsLeaders"))

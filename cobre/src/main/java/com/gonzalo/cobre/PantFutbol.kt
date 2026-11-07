@@ -66,7 +66,7 @@ fun rememberPartidos(): List<Partido>? {
     val ctx = LocalContext.current
     val v = Futbol.version
     EspejoCuenta.version
-    val eqs = AjustesFutbol.equipos(ctx).map { it.first.id }
+    val eqs = (AjustesFutbol.equipos(ctx) + AjustesFutbol.rivales(ctx)).map { it.first.id }
     val r by produceState<List<Partido>?>(null, eqs, v) {
         value = withContext(Dispatchers.IO) { Futbol.partidos(ctx, fresco = false) }
         val nuevos = withContext(Dispatchers.IO) { Futbol.partidos(ctx, fresco = true) }
@@ -116,13 +116,31 @@ private fun LineaPartido(p: Partido, ahora: Long, modifier: Modifier = Modifier)
     }
 }
 
-/** Un equipo y sus goles, en una línea (el nombre, en hasta dos líneas: con la letra grande no se corta). */
+/** La marca de lo que es de un rival: «RIVAL» o «CONTRA TU RIVAL», en un recuadro de tinta (sin el acento de lo tuyo). */
 @Composable
-private fun LineaEquipo(e: Equipo, goles: Int?, tam: Dp, letra: Int, ganador: Boolean, mio: Boolean) {
+fun MarcaRival(texto: String, modifier: Modifier = Modifier) =
+    Text(texto.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, softWrap = false,
+        modifier = modifier.border(1.dp, Charcoal, esquina(2.dp)).padding(horizontal = 5.dp, vertical = 1.dp))
+
+/** Lo que dice un partido de tus rivales: «Contra tu rival» (uno tuyo contra un rival), «Rival» (un rival sin los tuyos) o nada. */
+@Composable
+fun marcaDe(p: Partido): String? {
+    val ctx = LocalContext.current
+    val mios = AjustesFutbol.equipos(ctx).map { it.first.id }; val riv = AjustesFutbol.rivales(ctx).map { it.first.id }
+    return when {
+        Orden.contraRival(p, mios, riv) -> "Contra tu rival"
+        riv.any { p.juega(it) } && mios.none { p.juega(it) } -> "Rival"
+        else -> null
+    }
+}
+
+/** Un equipo y sus goles, en una línea (el nombre, en hasta dos líneas: con la letra grande no se corta). Un rival, en cursiva. */
+@Composable
+private fun LineaEquipo(e: Equipo, goles: Int?, tam: Dp, letra: Int, ganador: Boolean, mio: Boolean, rival: Boolean = false) {
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Escudo(e, tam)
         Spacer(Modifier.width(10.dp))
-        Text(e.nombre, color = if (mio) Charcoal else Charcoal.copy(alpha = 0.88f), fontFamily = Display, fontWeight = if (ganador || mio) FontWeight.Bold else FontWeight.SemiBold,
+        Text(e.nombre, color = if (mio) Charcoal else Charcoal.copy(alpha = 0.88f), fontFamily = Display, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = if (ganador || mio) FontWeight.Bold else FontWeight.SemiBold,
             fontSize = letra.sp, lineHeight = (letra * 1.15f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         if (goles != null) Text("$goles", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (letra + 6).sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
     }
@@ -136,13 +154,16 @@ private fun LineaEquipo(e: Equipo, goles: Int?, tam: Dp, letra: Int, ganador: Bo
 fun TarjetaPartido(p: Partido, ahora: Long, alAbrir: () -> Unit, alConfigurar: () -> Unit) {
     val ctx = LocalContext.current
     val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()
+    val riv = AjustesFutbol.rivales(ctx).map { it.first.id }.toSet()
+    val marca = marcaDe(p)
     val vivo = p.estado.enDirecto
     Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
-        Column(Modifier.fillMaxWidth().tocable(onClick = alAbrir).semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" }.padding(vertical = 4.dp)) {
+        Column(Modifier.fillMaxWidth().tocable(onClick = alAbrir).semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" + (marca?.let { ", ${it.lowercase()}" } ?: "") }.padding(vertical = 4.dp)) {
+            if (marca != null) MarcaRival(marca, Modifier.padding(bottom = 6.dp))
             LineaPartido(p, ahora, Modifier.padding(bottom = 6.dp))
             val gl = p.golesLocal; val gv = p.golesVisitante
-            LineaEquipo(p.local, gl, if (vivo) 38.dp else 32.dp, if (vivo) 22 else 20, gl != null && gv != null && gl > gv && p.estado.terminado, p.local.id in mios)
-            LineaEquipo(p.visitante, gv, if (vivo) 38.dp else 32.dp, if (vivo) 22 else 20, gl != null && gv != null && gv > gl && p.estado.terminado, p.visitante.id in mios)
+            LineaEquipo(p.local, gl, if (vivo) 38.dp else 32.dp, if (vivo) 22 else 20, gl != null && gv != null && gl > gv && p.estado.terminado, p.local.id in mios, p.local.id in riv)
+            LineaEquipo(p.visitante, gv, if (vivo) 38.dp else 32.dp, if (vivo) 22 else 20, gl != null && gv != null && gv > gl && p.estado.terminado, p.visitante.id in mios, p.visitante.id in riv)
             if (p.penaltis.isNotBlank()) Etiqueta("Penaltis: ${p.penaltis}", Modifier.padding(top = 2.dp))
         }
         if (!p.estado.terminado && p.estado != Estado.CANCELADO) BotonesCanal(p, alConfigurar, Modifier.padding(top = 8.dp))
@@ -153,7 +174,7 @@ fun TarjetaPartido(p: Partido, ahora: Long, alAbrir: () -> Unit, alConfigurar: (
 
 /** Un partido en una línea (las listas de «Fútbol»): a la izquierda, el día y la hora (o «Final»); los dos equipos con sus goles. */
 @Composable
-fun FilaPartido(p: Partido, ahora: Long, mios: Set<String>, alAbrir: () -> Unit) {
+fun FilaPartido(p: Partido, ahora: Long, mios: Set<String>, rivales: Set<String> = emptySet(), alAbrir: () -> Unit) {
     Row(Modifier.fillMaxWidth().tocable(onClick = alAbrir).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.widthIn(min = 78.dp).padding(end = 10.dp)) {
             val (a, b) = when {
@@ -164,11 +185,12 @@ fun FilaPartido(p: Partido, ahora: Long, mios: Set<String>, alAbrir: () -> Unit)
             Text(a.uppercase(), color = if (p.estado.enDirecto) Acento else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false)
             Text(b, color = if (p.estado.enDirecto) Acento else Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
             Text(p.competicion.corto.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false)
+            marcaDe(p)?.let { MarcaRival(if (it == "Rival") it else "Tu rival", Modifier.padding(top = 3.dp)) }
         }
         Column(Modifier.weight(1f)) {
             val gl = p.golesLocal; val gv = p.golesVisitante
-            LineaEquipo(p.local, gl, 22.dp, 16, gl != null && gv != null && gl > gv, p.local.id in mios)
-            LineaEquipo(p.visitante, gv, 22.dp, 16, gl != null && gv != null && gv > gl, p.visitante.id in mios)
+            LineaEquipo(p.local, gl, 22.dp, 16, gl != null && gv != null && gl > gv, p.local.id in mios, p.local.id in rivales)
+            LineaEquipo(p.visitante, gv, 22.dp, 16, gl != null && gv != null && gv > gl, p.visitante.id in mios, p.visitante.id in rivales)
         }
     }
     Filete(1.dp, Line)
@@ -241,6 +263,8 @@ fun TusPartidos(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
         }
         val ahora = System.currentTimeMillis()
         val tus = todos?.let { Orden.tusPartidos(it, eqs.map { e -> e.first.id }, ahora) }
+        // Y los de tus rivales, solo si se juegan ahora o hoy
+        val deRivales = todos?.let { Orden.deRivales(it, AjustesFutbol.rivales(ctx).map { e -> e.first.id }, eqs.map { e -> e.first.id }, ahora, soloHoy = true) }.orEmpty()
         when {
             tus == null -> Nota("Mirando el calendario…", Modifier.padding(top = 10.dp))
             tus.isEmpty() -> Nota("Sin partidos a la vista (o sin conexión con los datos del fútbol).", Modifier.padding(top = 10.dp))
@@ -254,6 +278,7 @@ fun TusPartidos(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
                 }
             }
         }
+        deRivales.forEach { p -> TarjetaPartido(p, ahora, { alFicha(Ficha.DePartido(p)) }, { alIr(Destino.AjustesFutbol) }) }
     }
 }
 
@@ -294,6 +319,7 @@ private fun SeccionPartidos(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     val ahora = System.currentTimeMillis()
     val ids = eqs.map { it.first.id }
     val mios = ids.toSet()
+    val riv = AjustesFutbol.rivales(ctx).map { it.first.id }
     val tus = Orden.tusPartidos(todos, ids, ahora)
     val vienen = todos.filter { p -> ids.any { p.juega(it) } && !p.estado.terminado && p.estado != Estado.CANCELADO && tus.none { it.id == p.id } && p.inicio >= ahora - Orden.DURACION }.take(12)
     val jugados = todos.filter { p -> ids.any { p.juega(it) } && p.estado.terminado }.sortedByDescending { it.inicio }.take(12)
@@ -304,11 +330,20 @@ private fun SeccionPartidos(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     }
     if (vienen.isNotEmpty()) {
         Antetitulo("Más adelante", Modifier.padding(top = 22.dp)); Filete(1.dp)
-        vienen.forEach { p -> FilaPartido(p, ahora, mios) { alFicha(Ficha.DePartido(p)) } }
+        vienen.forEach { p -> FilaPartido(p, ahora, mios, riv.toSet()) { alFicha(Ficha.DePartido(p)) } }
     }
     if (jugados.isNotEmpty()) {
         Antetitulo("Los últimos", Modifier.padding(top = 22.dp)); Filete(1.dp)
-        jugados.forEach { p -> FilaPartido(p, ahora, mios) { alFicha(Ficha.DePartido(p)) } }
+        jugados.forEach { p -> FilaPartido(p, ahora, mios, riv.toSet()) { alFicha(Ficha.DePartido(p)) } }
+    }
+    // Tus rivales: lo suyo que no es contra los tuyos (eso ya está arriba, «contra tu rival»)
+    if (riv.isNotEmpty()) {
+        val suyos = Orden.deRivales(todos, riv, ids, ahora)
+        val suyosJugados = todos.filter { p -> riv.any { p.juega(it) } && ids.none { p.juega(it) } && p.estado.terminado }.sortedByDescending { it.inicio }.take(6)
+        Antetitulo("Tus rivales", Modifier.padding(top = 26.dp)); Filete(1.dp)
+        if (suyos.isEmpty() && suyosJugados.isEmpty()) Nota("Sin partidos de tus rivales a la vista.", Modifier.padding(top = 10.dp))
+        suyos.forEach { p -> TarjetaPartido(p, ahora, { alFicha(Ficha.DePartido(p)) }, { alIr(Destino.AjustesFutbol) }) }
+        suyosJugados.forEach { p -> FilaPartido(p, ahora, mios, riv.toSet()) { alFicha(Ficha.DePartido(p)) } }
     }
 }
 
@@ -322,12 +357,14 @@ private fun SeccionClasificacion() {
     val liga = comps[i].slug
     val c = rememberDato(liga) { f -> Futbol.clasificacion(ctx, liga, f) }
     val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()
+    val riv = AjustesFutbol.rivales(ctx).map { it.first.id }.toSet()
     if (c == null) { Nota("Leyendo la clasificación…", Modifier.padding(top = 12.dp)); return }
-    TablaClasificacion(c, mios)
+    TablaClasificacion(c, mios, riv)
 }
 
+/** La tabla: los tuyos en acento; tus rivales, en cursiva con su marca «RIVAL». */
 @Composable
-private fun TablaClasificacion(c: Clasificacion, mios: Set<String>) {
+private fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set<String> = emptySet()) {
     if (c.tablas.isEmpty()) { Nota("Esta competición aún no tiene clasificación.", Modifier.padding(top = 12.dp)); return }
     @Composable fun Num(t: String, w: Dp, negrita: Boolean = false, color: Color = Charcoal) =
         Text(t, color = color, fontFamily = Body, fontSize = 14.sp, fontWeight = if (negrita) FontWeight.Black else FontWeight.Medium, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(w))
@@ -348,8 +385,12 @@ private fun TablaClasificacion(c: Clasificacion, mios: Set<String>) {
                 Text("${f.puesto}", color = if (mio) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(28.dp))
                 Escudo(f.equipo, 22.dp)
                 Spacer(Modifier.width(8.dp))
-                Text(f.equipo.nombre, color = if (mio) Acento else Charcoal, fontFamily = Display, fontWeight = if (mio) FontWeight.Bold else FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 18.sp,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                val rival = f.equipo.id in rivales
+                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(f.equipo.nombre, color = if (mio) Acento else Charcoal, fontFamily = Display, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = if (mio || rival) FontWeight.Bold else FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 18.sp,
+                        maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    if (rival) MarcaRival("Rival", Modifier.padding(start = 6.dp))
+                }
                 Num("${f.jugados}", 40.dp)
                 Num(if (f.diferencia > 0) "+${f.diferencia}" else "${f.diferencia}", 54.dp, color = Muted)
                 Num("${f.puntos}", 48.dp, negrita = true)

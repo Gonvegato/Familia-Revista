@@ -16,6 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -194,6 +196,7 @@ abstract class CapturasBase {
                         20 -> PantFutbol(alVolver = {}, alIr = {}, alFicha = {})
                         21 -> PantFichaPartido(futbol.partidos.first(), alCerrar = {}, alConfigurar = {})
                         22 -> PantAjustes(alVolver = {}, inicial = PESTANA_FUTBOL)
+                        23 -> SelectorCanalContenido("Un canal para «DAZN LaLiga»", "Sus otras calidades se buscan solas", {}, { _, _, _ -> })
                         else -> Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF2F3E4A), Color(0xFF0E1014))))) {
                             ControlesReproductor(if (cual == 11) repVod else rep, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
                         }
@@ -209,6 +212,12 @@ abstract class CapturasBase {
         rule.onAllNodesWithText("ALINEACIONES")[0].performClick(); esperaTexto("Joan García"); foto("21-ficha-alineaciones")
         rule.onAllNodesWithText("CIFRAS")[0].performClick(); esperaTexto("Posesión"); foto("22-ficha-cifras")
         cual = 22; esperaTexto("Tus equipos"); foto("23-ajustes-futbol")
+        rule.onAllNodesWithText("+ AÑADIR UN EQUIPO")[0].performClick(); esperaTexto("SELECCIONES")
+        rule.onAllNodesWithText("EUROPA")[0].performClick(); esperaTexto("Spain"); foto("23b-ajustes-futbol-selecciones")
+        cual = 23; esperaTexto("Tus favoritos"); foto("24-elegir-canal")
+        // (en la tele, apaisada, «Deportes» queda por debajo: la lista solo pinta lo que se ve; se baja hasta ella como con el mando)
+        rule.onAllNodes(androidx.compose.ui.test.hasScrollToNodeAction()).onFirst().performScrollToNode(androidx.compose.ui.test.hasText("Deportes"))
+        rule.onAllNodesWithText("Deportes")[0].performClick(); esperaTexto("Teledeporte"); foto("25-elegir-canal-categoria")
         cual = 1; esperaTexto("Telediario"); foto("2-directo")
         cual = 99; esperaTexto("Telediario"); foto("2b-favoritos")
         cual = 2; esperaTexto("Ahora"); foto("3-guia")
