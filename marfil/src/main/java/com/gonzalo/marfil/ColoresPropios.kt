@@ -28,7 +28,7 @@ private fun largo(c: Color) = c.toArgb().toLong() and 0xFFFFFFFFL
 
 /** Un color elegido a mano: la muestra y su código; al tocarlo se abren el tono, la saturación, el brillo y el código. */
 @Composable
-fun SelectorColor(nombre: String, valor: Long, actual: Color, onCambia: (Long) -> Unit, onGuarda: () -> Unit, copiar: (() -> Unit)? = null) {
+fun SelectorColor(nombre: String, valor: Long, actual: Color, onCambia: (Long) -> Unit, onGuarda: () -> Unit) {
     var abierto by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().clickable { abierto = !abierto }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(36.dp).background(actual).border(1.dp, Charcoal))
@@ -37,7 +37,6 @@ fun SelectorColor(nombre: String, valor: Long, actual: Color, onCambia: (Long) -
             Text(nombre, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
             Text(if (valor == 0L) "Automático" else hexDe(Color(valor)), color = Muted, fontFamily = Body, fontSize = 12.sp)
         }
-        if (copiar != null) EnlaceRevista("Copiar de Azabache", Modifier.padding(end = 12.dp)) { copiar() }
         if (valor != 0L) EnlaceRevista("Quitar", Modifier.padding(end = 12.dp)) { onCambia(0L); onGuarda(); abierto = false }
         Text(if (abierto) "▴" else "▾", color = Muted, fontSize = 16.sp)
     }
