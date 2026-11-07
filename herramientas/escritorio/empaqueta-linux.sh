@@ -15,6 +15,7 @@ case "$a" in
   cobalto)  gen="Escritura";        desc="Lo que escribes: obras, fichas y notas";                cat="Office;WordProcessor;" ;;
   azabache) gen="Revista";          desc="La revista de la familia: lo que juegas, lees, ves y escribes"; cat="Utility;" ;;
   mostaza)  gen="Películas y series"; desc="Tus películas y series: biblioteca y verlas (con mpv)"; cat="AudioVideo;Video;Player;" ;;
+  cobre)    gen="Televisión";       desc="La tele (IPTV): tus listas y tus canales, con su guía (con mpv)"; cat="AudioVideo;Video;TV;Player;" ;;
   *) echo "No sé qué app es $a" >&2; exit 1 ;;
 esac
 app="$d/build/compose/binaries/main/app"

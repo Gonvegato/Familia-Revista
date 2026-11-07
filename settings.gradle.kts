@@ -19,7 +19,8 @@ if (!soloEscritorio) {
     // El motor de torrents de Mostaza (libtorrent4j): ver un torrent mientras se baja
     include(":torrent")
 }
-// Las versiones de escritorio (Linux y Mac), con Compose Multiplatform: lo común y las cinco apps (ver docs/ESCRITORIO.md); y el motor
-// de torrents de Mostaza para el ordenador (los mismos archivos que el del móvil)
-include(":escritorio:json", ":escritorio:familia", ":escritorio:azabache", ":escritorio:cobalto", ":escritorio:marfil", ":escritorio:hiedra", ":escritorio:mostaza")
+// Las versiones de escritorio (Linux y Mac), con Compose Multiplatform: lo común y las seis apps (ver docs/ESCRITORIO.md); y el motor
+// de torrents de Mostaza para el ordenador (los mismos archivos que el del móvil). Cobre del ordenador usa `iptv` tal cual (va siempre, también
+// con -PsoloEscritorio: es Kotlin puro)
+include(":escritorio:json", ":escritorio:familia", ":escritorio:azabache", ":escritorio:cobalto", ":escritorio:marfil", ":escritorio:hiedra", ":escritorio:mostaza", ":escritorio:cobre")
 include(":escritorio:torrent")

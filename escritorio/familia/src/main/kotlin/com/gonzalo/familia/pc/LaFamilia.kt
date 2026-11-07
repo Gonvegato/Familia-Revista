@@ -27,8 +27,8 @@ import javax.swing.SwingUtilities
  *  - [cambios] cambia con cada cambio de la cuenta: leerlo desde Compose repinta.
  */
 object LaFamilia {
-    /** Las cinco apps de la familia en el ordenador. */
-    val APPS = listOf("azabache", "cobalto", "hiedra", "marfil", "mostaza")
+    /** Las seis apps de la familia en el ordenador. */
+    val APPS = listOf("azabache", "cobalto", "hiedra", "marfil", "mostaza", "cobre")
     private const val SESION_COMUN = "sesion"
 
     @Volatile private var f: Familia? = null

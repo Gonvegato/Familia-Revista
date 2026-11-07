@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Los iconos de escritorio (Linux .png y Mac .icns) a partir de los de Android: el fondo y el dibujo de cada app (PNG en Hiedra, Mostaza,
-Marfil y Cobalto; el vector de la piedra en Azabache), recortados a la zona visible del icono adaptable y con las esquinas
+Cobre, Marfil y Cobalto; el vector de la piedra en Azabache), recortados a la zona visible del icono adaptable y con las esquinas
 redondeadas de los iconos del Mac. Uso: python3 herramientas/escritorio/iconos.py   (escribe escritorio/<app>/icono/)
 """
 import os, re, struct, io
@@ -106,7 +106,7 @@ def icns(img):
         trozos += tipo + struct.pack('>I', len(d) + 8) + d
     return b'icns' + struct.pack('>I', len(trozos) + 8) + trozos
 
-for app in ('azabache', 'cobalto', 'hiedra', 'marfil', 'mostaza'):
+for app in ('azabache', 'cobalto', 'hiedra', 'marfil', 'mostaza', 'cobre'):
     dest = os.path.join(RAIZ, 'escritorio', app, 'icono'); os.makedirs(dest, exist_ok=True)
     img = icono(app)
     img.resize((512, 512), Image.LANCZOS).save(os.path.join(dest, f'{app}.png'))

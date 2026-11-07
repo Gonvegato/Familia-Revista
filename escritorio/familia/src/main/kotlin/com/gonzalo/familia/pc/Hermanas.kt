@@ -73,12 +73,12 @@ object Instancia {
 }
 
 /**
- * Las cinco apps de la familia en este ordenador: dónde está instalada cada una y abrirla (desde la columna de cualquiera, como en el
+ * Las seis apps de la familia en este ordenador: dónde está instalada cada una y abrirla (desde la columna de cualquiera, como en el
  * móvil). Si ya estaba abierta, sale al frente ([Instancia]).
  */
 object HermanasPc {
-    /** Las cinco, por orden: el nombre de la carpeta de datos y el que se ve. */
-    val todas = listOf("azabache" to "Azabache", "cobalto" to "Cobalto", "hiedra" to "Hiedra", "marfil" to "Marfil", "mostaza" to "Mostaza")
+    /** Las seis, por orden: el nombre de la carpeta de datos y el que se ve. */
+    val todas = listOf("azabache" to "Azabache", "cobalto" to "Cobalto", "hiedra" to "Hiedra", "marfil" to "Marfil", "mostaza" to "Mostaza", "cobre" to "Cobre")
 
     private fun nombre(app: String) = app.replaceFirstChar { it.uppercase() }
 
