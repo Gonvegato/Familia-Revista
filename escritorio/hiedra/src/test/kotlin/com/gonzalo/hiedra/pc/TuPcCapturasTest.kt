@@ -123,8 +123,8 @@ class TuPcCapturasTest {
         assertTrue(o["name"].comoTexto().matches(Regex("Escritorio \\d{4}-\\d\\d-\\d\\d \\d\\d\\.\\d\\d\\.\\d\\d\\.png")))
         // El móvil la baja tal cual: byte a byte la misma
         assertArrayEquals(png, bajaComoElMovil(id))
-        // Y aquí, en Imágenes/Hiedra/Escritorio
-        val f = File(tmp.root, "Imágenes/Hiedra/Escritorio/${o["name"]}")
+        // Y aquí, en Imágenes/Bastet/Escritorio
+        val f = File(tmp.root, "Imágenes/Bastet/Escritorio/${o["name"]}")
         assertArrayEquals(png, f.readBytes())
         assertEquals(id, Capturas.recientes().single().id)
         // El móvil apunta que ya la tiene: aquí se borran los trozos (la ficha queda, con «gone»), y la ficha al mes
@@ -149,7 +149,7 @@ class TuPcCapturasTest {
         assertFalse(h.subida)
         assertNull("las de aquí no van al móvil si no se quiere", Emulador.lee("/users/$uid/suite/shots/${h.id}"))
         assertEquals("Hades", h.juego)
-        assertTrue(h.archivo!!.path.contains("/Hiedra/Hades/Hades "))
+        assertTrue(h.archivo!!.path.contains("/Bastet/Hades/Hades "))
         // En trozos pequeños (unos veinte, múltiplos de 4), para que sean muchos y en varias tandas
         val trozo = maxOf(4, Base64.getEncoder().encodeToString(png).length / 20 / 4 * 4)
         Capturas.sube(h.id, imagen!!, h.archivo!!.name, "Bastet", Pc.ahora, trozo = trozo, tanda = 3)
