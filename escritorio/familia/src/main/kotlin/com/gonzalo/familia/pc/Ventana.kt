@@ -212,7 +212,7 @@ fun PantallaEntrar(titulo: String) {
             Antetitulo("La cuenta de la familia")
             Spacer(Modifier.height(10.dp))
             Cuerpo("La misma que en el móvil. Todo lo tuyo está en la cuenta: lo que hagas aquí lo verás en tus otros dispositivos y en tus otras apps. " +
-                "Entra una vez: Azabache, Cobalto, Hiedra, Marfil y Mostaza de este ordenador entran solas.", tam = 15)
+                "Entra una vez: Azabache, Cobalto, Hiedra, Marfil, Mostaza y Cobre de este ordenador entran solas.", tam = 15)
             Spacer(Modifier.height(22.dp))
             OutlinedTextField(usuario, { usuario = it }, label = { Text("Usuario") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next))
@@ -229,7 +229,7 @@ fun PantallaEntrar(titulo: String) {
     }
 }
 
-/** Ajustes → Cuenta: quién eres, cómo va la sincronización y salir. Lo mismo en las cinco apps. */
+/** Ajustes → Cuenta: quién eres, cómo va la sincronización y salir. Lo mismo en las seis apps. */
 @Composable
 fun AjustesCuenta(app: String) {
     LaFamilia.cambios

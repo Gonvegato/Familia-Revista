@@ -1,4 +1,4 @@
-# Las versiones de escritorio (Linux y Mac) de Azabache, Cobalto, Hiedra, Marfil y Mostaza: pruebas contra el emulador de Firebase (con las
+# Las versiones de escritorio (Linux y Mac) de Azabache, Cobalto, Hiedra, Marfil, Mostaza y Cobre: pruebas contra el emulador de Firebase (con las
 # reglas del repositorio) y los paquetes de cada sistema. El de Mac se hace en un Mac de GitHub (Apple Silicon): un .dmg solo se
 # puede hacer en un Mac; allí, además, se abre cada app y se hace una captura. Los paquetes quedan como artefactos de cada ejecución.
 name: Escritorio (Linux y Mac)
@@ -6,8 +6,9 @@ name: Escritorio (Linux y Mac)
 on:
   push:
     branches: [main]
-    # cobalto/src y torrent/src: Cobalto y el motor de torrents de Mostaza del ordenador compilan los mismos archivos que los de Android
-    paths: ['escritorio/**', 'nucleo/**', 'nube/**', 'cobalto/src/**', 'torrent/src/**', 'herramientas/escritorio/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/escritorio.yml']
+    # cobalto/src y torrent/src: Cobalto y el motor de torrents de Mostaza del ordenador compilan los mismos archivos que los de Android;
+    # iptv: lo de Cobre que no es pantalla (el mismo módulo en el móvil y en el ordenador)
+    paths: ['escritorio/**', 'nucleo/**', 'nube/**', 'cobalto/src/**', 'torrent/src/**', 'iptv/**', 'herramientas/escritorio/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/escritorio.yml']
   workflow_dispatch:
 
 permissions:
@@ -33,7 +34,7 @@ jobs:
             sleep 2
           done
           cat ../emulador.log; exit 1
-      - name: "mpv (el reproductor de Mostaza del ordenador: sus pruebas lo abren de verdad, sin pantalla ni sonido)"
+      - name: "mpv (el reproductor de Mostaza y de Cobre del ordenador: sus pruebas lo abren de verdad, sin pantalla ni sonido)"
         run: sudo apt-get update -qq && sudo apt-get install -y -qq mpv ffmpeg > /dev/null
       - name: Pruebas
         run: ./gradlew -PsoloEscritorio test --continue --console=plain

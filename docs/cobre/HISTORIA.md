@@ -24,6 +24,52 @@ portada, Directo, Guía, Películas, Series, la ficha de una película y la de u
 Ajustes y el reproductor (en directo, la lista de canales encima del vídeo, «Abrir con otro reproductor», una serie y el episodio
 siguiente).
 
+## En el ordenador (Linux y Mac): Cobre 1.0.0
+
+**Cobre también en el ordenador**, como sus hermanas (`escritorio/cobre`, ver [ESCRITORIO](../ESCRITORIO.md)): la misma cuenta (entra sola
+si otra app de la familia de ese ordenador ya ha entrado), la apariencia de tu Cobre del móvil (con el acento cobre si aún no has elegido
+otra), se actualiza sola desde tu kDrive (`Cobre-<versión>-linux.tar.gz` / `-linux.deb` / `-mac.dmg`) y su icono es el mismo (la tele de
+cobre de `herramientas/cobre/icono-cobre.py`, recortada para el ordenador por `herramientas/escritorio/iconos.py`). Las versiones del
+ordenador llevan su propio número: empieza en la 1.0.0.
+
+- **El mismo código para lo que no es pantalla**: el módulo `iptv/` tal cual (sin copiarlo): las listas M3U, Xtream Codes, la guía XMLTV a
+  trozos, emparejar canales y guía, el almacén de cada lista, lo visto (`Visto`: el 90 %, por dónde seguir, «Seguir viendo») y lo que va a
+  la cuenta (`DatosCuenta`). Así el ordenador escribe lo mismo que el móvil, campo a campo: tus favoritos y su orden (`cobre_favoritos`),
+  los grupos escondidos (`cobre_grupos`), el último canal (`cobre_estado/ultimo`, y «al abrir, el último canal» también aquí), lo visto
+  (`cobre_progreso`), lo que eliges (`ajustes/cobre_reproductor`, `cobre_guia`, `cobre_directo`, con los mismos nombres y valores; lo que es
+  solo del móvil —`ahorro`, `soloWifi`, `externo`— ni se lee ni se toca) y la apariencia (`ajustes/cobre`). Tus listas, solo en
+  `/claves/<uid>/cobre_listas`. Probado contra la cuenta de verdad con «el móvil» escribiendo con su formato (`CuentaTest`).
+- **En el ordenador, caché cifrada**: los canales (y el archivo de una lista de archivo, y las guías que dice la lista) van cifrados con
+  AES (CTR, a trozos, como en el móvil) con una clave al azar de este ordenador, guardada a su vez con la del llavero del sistema (el
+  Llavero del Mac; el Secret Service en Linux o, si no hay, un archivo que solo lee tu usuario). Sin tu llavero, no se leen. Las listas de
+  archivo son del ordenador donde elegiste el archivo (`cobre-linux-…` / `cobre-mac-…`); en los demás, «en otro dispositivo».
+- **Directo, Guía, Películas, Series, Buscar y Ajustes**, como en la tablet y en la tele: los grupos a la izquierda y los canales con su
+  logo, lo de ahora (con lo que va) y lo siguiente; la parrilla de tres horas; el videoclub con «Seguir viendo», «Lo último» y las
+  categorías del servidor; las fichas; Listas (Xtream —se comprueba antes de guardarlo, y «Comprobar» dice si está activa, cuándo caduca y
+  cuántas conexiones lleva—, una dirección M3U —con «añadirlo como login» si es la de un servidor de Xtream— o un archivo M3U de este
+  ordenador; la guía XMLTV y el user-agent de cada una; contraseñas y direcciones tapadas, con «Ver»), la guía (cada cuánto y cuántos días,
+  y bajarla ya), el reproductor, la cuenta, la apariencia y la versión. Con el teclado y el mando (como Mostaza del ordenador).
+- **Se ve con mpv** (`sudo pacman -S mpv` en CachyOS y Arch, `brew install mpv` en el Mac), con el mismo código de hablar con mpv que
+  Mostaza del ordenador (copiado: lo de Mostaza que no sirve aquí, sus pistas y su elector, se queda en Mostaza). La dirección (con tu
+  usuario y tu contraseña) y las cabeceras van por su socket, en una carpeta que solo abre tu usuario, nunca en su línea de órdenes; sin
+  yt-dlp y sin que mpv guarde nada. En la ventana de mpv, Cobre pone sus teclas (su `input.conf`, que mpv le cuenta por el socket como
+  `client-message`): ↑ ↓, Re Pág / Av Pág, los botones de canal y la cruceta del mando cambian de canal (se puede dar la vuelta: arriba el
+  anterior), los números van al canal por su número, Intro o A abre la lista de canales encima (con lo que echan en cada uno), «i» dice
+  qué se emite y qué viene después (y sale solo al cambiar de canal), Esc sale de la pantalla completa. Si un canal se corta, vuelve a
+  conectar solo (hasta seis veces, esperando cada vez el doble; si nunca llegó a verse, dos). En las películas y los episodios, sigue donde
+  lo dejaste (lo más reciente entre lo de aquí y lo de la cuenta), apunta por dónde vas cada 10 segundos y al parar, visto al 90 % y el
+  episodio siguiente en 8 segundos. La imagen como la elegiste (ajustar, llenar, zoom, 16:9, 4:3), el audio y los subtítulos en tu idioma.
+  Un canal con DRM, no (lo dice). Probado con mpv de verdad (`MpvDeVerdadTest`: canales y vídeos hechos con ffmpeg, un servidor con las
+  direcciones de Xtream, las teclas pulsadas en la ventana de mpv, el corte y la vuelta a conectar, seguir donde lo dejaste en el móvil y
+  el episodio siguiente).
+- Capturas: `CapturasTest` (con `-Dcapturas=<carpeta>`), con un servidor de Xtream de mentira: Directo (claro y oscuro), la Guía,
+  Películas, Series, las fichas, Listas (y añadir una, con la contraseña tapada), el reproductor y la banda de mpv con la lista de canales.
+  Unas cuantas en `capturas/` (`cobre-escritorio-*`).
+- Lo que aún no, en el ordenador: lo ya emitido y grabar (como en el móvil), «Abrir con otro reproductor» (aquí todo va con mpv) y la sala
+  a pantalla completa. Las cabeceras de un canal van a todo lo que mpv pide para ese canal (en el móvil, solo a su servidor). Con un canal
+  que no se ve, mpv no dice el código del error: el aviso es uno para todo. `cobre_actualizador` no se usa (en el ordenador, como en sus
+  hermanas, se actualiza sola siempre). El mando y un proveedor de IPTV de verdad, sin probar; el Mac solo lo compila GitHub.
+
 ## 0.1.0
 
 La primera.
@@ -73,7 +119,7 @@ Se queda en los nodos de Cobre.
 
 ### Por dentro
 
-- `iptv/` (Kotlin puro, sin Android, para Cobre del ordenador): las listas M3U (`#EXTINF` con `tvg-id`, `tvg-name`, `tvg-logo`,
+- `iptv/` (Kotlin puro, sin Android: lo usa tal cual Cobre del ordenador): las listas M3U (`#EXTINF` con `tvg-id`, `tvg-name`, `tvg-logo`,
   `group-title`, `tvg-chno`, `tvg-shift`, `catchup`, `catchup-days`, `catchup-source`, `radio`; `#EXTGRP`; `#EXTVLCOPT`; `#KODIPROP`; las
   cabeceras detrás de la barra), el cliente de la API de Xtream (`player_api.php`: la cuenta, `get_live_categories`, `get_live_streams`,
   `get_vod_categories`, `get_vod_streams`, `get_vod_info`, `get_series_categories`, `get_series`, `get_series_info`, `get_short_epg`; las

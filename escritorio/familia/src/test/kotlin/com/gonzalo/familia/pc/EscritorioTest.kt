@@ -243,7 +243,7 @@ class EscritorioTest {
         // Mac: <App>.app al lado
         val aplicaciones = File(tmp.root, "Applications").also { File(it, "Hiedra.app/Contents").mkdirs(); File(it, "Marfil.app/Contents").mkdirs() }
         assertEquals(File(aplicaciones, "Marfil.app"), HermanasPc.donde("marfil", File(aplicaciones, "Hiedra.app"), Sitio.Sistema.MAC, casa))
-        assertEquals(listOf("azabache", "cobalto", "hiedra", "marfil", "mostaza"), HermanasPc.todas.map { it.first })
+        assertEquals(listOf("azabache", "cobalto", "hiedra", "marfil", "mostaza", "cobre"), HermanasPc.todas.map { it.first })
     }
 
     /**

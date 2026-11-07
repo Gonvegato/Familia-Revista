@@ -1,6 +1,6 @@
 # Las versiones de escritorio (Linux y Mac)
 
-**Azabache, Cobalto, Hiedra, Marfil y Mostaza para Linux y Mac**, en `escritorio/`. Son ventanas a la misma cuenta que las del móvil: todo lo
+**Azabache, Cobalto, Hiedra, Marfil, Mostaza y Cobre para Linux y Mac**, en `escritorio/`. Son ventanas a la misma cuenta que las del móvil: todo lo
 tuyo está en la cuenta (Firebase, el proyecto de siempre) y en el ordenador solo hay una caché para funcionar sin conexión y lo que es
 de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo ves al momento en las demás, en el ordenador y en el móvil.
 
@@ -17,9 +17,9 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
     `./instalar.sh --quitar` la desinstala (lo tuyo está en la cuenta: no se toca).
   - **Ubuntu, Debian, Mint…**: también vale el `Azabache-1.0.1-linux.deb` (`sudo apt install ./Azabache-1.0.1-linux.deb`), pero así no
     se actualiza sola (la del .deb es del sistema): mejor el .tar.gz.
-- **Mostaza** ve las películas y las series con **mpv**, que se instala aparte: en CachyOS y Arch `sudo pacman -S mpv` (en Ubuntu o
-  Debian `sudo apt install mpv`); en el Mac `brew install mpv` (con [Homebrew](https://brew.sh)). Si no está, Mostaza lo dice.
-- **Entrar una vez**: entras en cualquiera de las cinco y las demás de ese ordenador entran solas. La contraseña no se guarda: queda
+- **Mostaza** y **Cobre** ven las películas, las series y los canales con **mpv**, que se instala aparte: en CachyOS y Arch `sudo pacman -S mpv` (en Ubuntu o
+  Debian `sudo apt install mpv`); en el Mac `brew install mpv` (con [Homebrew](https://brew.sh)). Si no está, lo dicen.
+- **Entrar una vez**: entras en cualquiera de las seis y las demás de ese ordenador entran solas. La contraseña no se guarda: queda
   la sesión, en el llavero del sistema (el Llavero del Mac; en Linux, el Secret Service —GNOME Keyring, KWallet— si hay `secret-tool`, y si
   no, un archivo que solo lee tu usuario).
 - **Se actualizan solas**: al abrirse y cada 6 horas, cada app mira tu kDrive («Mi carpeta/versiones»: `<App>-<versión>-mac.dmg` /
@@ -103,6 +103,28 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   cabeceras van a mpv por su socket, nunca por su línea de órdenes, y mpv no guarda nada (sin su «seguir donde lo dejé» y sin yt-dlp).
   **Torrents**, con el motor de la familia (`escritorio/torrent`: los mismos archivos que el del móvil, con libtorrent4j y su biblioteca
   de Linux x86-64 o del Mac con Apple Silicon): se ven mientras se bajan; si no se puede cargar, solo las fuentes directas o de tu debrid.
+- **Cobre** (desde la 1.0.0): la tele de la familia (IPTV) en el ordenador, como Cobre del móvil (0.1.0) y con su mismo código para todo lo
+  que no es pantalla: **el módulo `iptv/` tal cual** (las listas M3U, el cliente de Xtream Codes, la guía XMLTV a trozos, emparejar canales y
+  guía, el almacén de cada lista y lo que va a la cuenta). Cobre no trae ningún canal ni ninguna lista: pones tú la tuya (Ajustes → Listas:
+  un login de Xtream Codes —se comprueba antes de guardarlo, y «Comprobar» dice si la cuenta está activa y cuándo caduca—, una dirección
+  M3U —si es la de un servidor de Xtream, ofrece ponerla como login— o un archivo M3U de este ordenador; a cada una, su guía XMLTV y el
+  user-agent que pida tu proveedor; las contraseñas y las direcciones, tapadas, con «Ver»). **Directo** (los grupos, con tus favoritos
+  primero, y cada canal con su número, su logo, lo que echan ahora con lo que va y lo siguiente; ★, subir y bajar favoritos, esconder
+  grupos), **Guía** (la parrilla de tres horas, media hora a media hora), **Películas** y **Series** (con Xtream: «Seguir viendo», «Lo
+  último», las categorías del servidor, la ficha, las temporadas con lo visto de cada episodio), **Buscar** (canales, películas y series) y
+  Ajustes (Listas, Guía, Reproductor, Cuenta, Apariencia, Versión). Todo es de la cuenta, campo a campo, con los nombres del móvil
+  (`cobre_favoritos`, `cobre_grupos`, `cobre_estado/ultimo`, `cobre_progreso`, `ajustes/cobre_reproductor`, `cobre_guia`, `cobre_directo` y
+  la apariencia en `ajustes/cobre`); tus listas, **solo en `/claves/<uid>/cobre_listas`** (ni tu pareja las lee). En el ordenador, los
+  canales, el videoclub y la guía son caché, y lo que lleva direcciones va **cifrado** (AES, con una clave de este ordenador guardada con
+  la del llavero del sistema). Las listas de archivo son del ordenador donde está el archivo (`cobre-linux-…` / `cobre-mac-…`).
+  **Se ve con mpv**, como en Mostaza (la dirección —que lleva tu usuario y tu contraseña— y las cabeceras del canal van por su socket, nunca
+  por su línea de órdenes; sin yt-dlp, y mpv no guarda nada). En la ventana de mpv, Cobre pone sus teclas: ↑ ↓ (y Re Pág / Av Pág, y la
+  cruceta del mando) cambian de canal, los números van a un canal, Intro (o A) abre la lista de canales con lo que echan en cada uno, «i»
+  dice qué se emite y qué viene después (sale solo al cambiar de canal). Si un canal se corta, vuelve a conectar solo (hasta seis veces,
+  esperando cada vez un poco más). En las películas y los episodios, sigue donde lo dejaste (aquí o en otro dispositivo), apunta por dónde
+  vas en la cuenta, visto al 90 % y el episodio siguiente en 8 segundos. Abajo, la banda del reproductor (el canal, cambiar, la lista de
+  canales, volver a conectar, audio, subtítulos, cerrar). Con el teclado y el mando como Mostaza (Ctrl/⌘+1…6 las secciones; con un canal
+  puesto, Re Pág / Av Pág cambian de canal también desde la ventana de Cobre).
 - **Hiedra**: tus juegos de la cuenta (los mismos de Hiedra del móvil), los de Steam instalados en el ordenador (se abren con Steam: sus
   horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Hiedra cuenta el tiempo hasta que los cierras, en
   `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Hiedra del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil
@@ -140,9 +162,11 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   vez: aquí se lee lo que ya está), la conexión medida a la vez que en el móvil (aquí se mide con lo que baja mpv) y los subtítulos de un
   tamaño o color que se cambian con algo puesto (valen para lo siguiente). Los torrents en el Mac con procesador Intel y en Linux ARM.
   mpv y el mando se han probado sin pantalla ni mando de verdad (mpv sí, de verdad, con `--vo=null`), y el Mac solo lo compila GitHub.
-- **Cobre** (la tele, IPTV) aún no tiene versión de escritorio. Lo que no es pantalla ya está en Kotlin puro en `iptv/` (listas M3U, el
-  cliente de Xtream Codes, la guía XMLTV a trozos, emparejar canales y guía, el almacén de cada lista y lo que va a la cuenta, con sus
-  pruebas): la del ordenador lo usará tal cual, con los mismos nodos de la cuenta (`cobre_*`, ver `nube/ESQUEMA.md`) y mpv para ver.
+- **Cobre**: lo ya emitido (catchup) y grabar, como en el móvil; «Abrir con otro reproductor» (aquí todo va con mpv); la sala a pantalla
+  completa para la tele (Cobre es una ventana con la columna, como Mostaza). Las cabeceras de un canal van a todo lo que pide mpv para ese
+  canal (en el móvil, solo a su servidor). Con un canal que no se ve, mpv no dice el código del error (401, 404…): el aviso es uno para
+  todo. Probado con mpv de verdad (sin pantalla, con canales y vídeos hechos aquí) y contra la cuenta de verdad, no con un proveedor de
+  IPTV de verdad ni con un mando de verdad; el Mac solo lo compila GitHub.
 - Las letras de Google Fonts que se eligen en el móvil: aquí van las de la app (Atrio y Vitrina) en su lugar.
 
 ## Por dentro
@@ -154,6 +178,8 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   formas y los componentes de Android; la apariencia de `ajustes/<app>`, la misma que la de la app en el móvil).
 - `escritorio/torrent`: el motor de torrents de Mostaza (los mismos archivos que `torrent/src/main`, copiados al compilar; lo de Android
   —la red, el disco y su constructor con un Context— aquí es del ordenador). La biblioteca nativa sale de su .jar a la carpeta de Mostaza.
+- `iptv/` (fuera de `escritorio/`: es el mismo módulo del móvil): lo de Cobre que no es pantalla, en Kotlin puro. Va también con
+  `-PsoloEscritorio`.
 - `escritorio/json`: el `org.json` de Android (AOSP, Apache 2.0), para que el núcleo de Cobalto se comporte igual en los dos.
 - Carpetas: en el Mac `~/Library/Application Support/Familia/<App>`; en Linux `~/.local/share/familia/<app>`.
 - Compilar sin el SDK de Android: `./gradlew -PsoloEscritorio test`, `… :escritorio:<app>:run`, `… packageDeb` (Linux, necesita `fakeroot`)
@@ -167,4 +193,4 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.3, Mostaza 0.2.0. De escritorio: Azabache 1.2.1; Cobalto y Hiedra 1.1.1; Marfil 1.1.0; Mostaza 1.0.0 (las de escritorio empiezan en la 1.0.0 y llevan su propio número).
+Versiones de Android a día de hoy: Hiedra 0.6.2, Marfil 0.14.2, Cobalto 0.4.2, Azabache 1.6.3, Mostaza 0.2.0, Cobre 0.1.0. De escritorio: Azabache 1.2.1; Cobalto y Hiedra 1.1.1; Marfil 1.1.0; Mostaza 1.0.0; Cobre 1.0.0 (las de escritorio empiezan en la 1.0.0 y llevan su propio número).
