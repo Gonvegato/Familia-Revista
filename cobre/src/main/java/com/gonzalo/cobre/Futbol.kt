@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap
  * (una imagen pública de ESPN). Tu pareja puede leer `/users/<uid>`: aquí no hay nada que no pueda ver.
  */
 object AjustesFutbol {
-    val GRUPO = EspejoCuenta.Grupo("cobre_futbol", "cobre_futbol", { k -> when (k) { "equipos", "rivales", "grupos", "asignacion", "calidad" -> Tipo.TEXTO; else -> null } },
+    val GRUPO = EspejoCuenta.Grupo("cobre_futbol", "cobre_futbol", { k -> when (k) { "equipos", "rivales", "grupos", "asignacion", "calidad", "competiciones", "ocultas" -> Tipo.TEXTO; else -> null } },
         alLlegar = { c -> Futbol.cambio(c) })
     private fun p(c: Context) = EspejoCuenta.prefs(c, GRUPO)
 
@@ -83,6 +83,37 @@ object AjustesFutbol {
     fun calidad(c: Context): Calidad? = Calidad.de(p(c).getString("calidad", "").orEmpty())
     fun ponCalidad(c: Context, q: Calidad?) = p(c).edit().putString("calidad", q?.name ?: "").apply()
 
+    /** Las competiciones de los partidos del día, en tu orden (`competiciones`: sus claves con comas; las que falten, detrás). */
+    fun competiciones(c: Context): List<com.gonzalo.iptv.futbol.Competicion> =
+        Competiciones.ordenadas(p(c).getString("competiciones", "").orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() })
+    fun mueveCompeticion(c: Context, slug: String, d: Int) {
+        val l = competiciones(c).map { it.slug }.toMutableList(); val i = l.indexOf(slug); val j = i + d
+        if (i < 0 || j !in l.indices) return
+        l.add(j, l.removeAt(i)); p(c).edit().putString("competiciones", l.joinToString(",")).apply(); Futbol.cambio(c)
+    }
+    /** Las que escondes de los partidos del día (y no se piden). */
+    fun ocultas(c: Context): Set<String> = p(c).getString("ocultas", "").orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+    fun alternaOculta(c: Context, slug: String) {
+        val o = ocultas(c); p(c).edit().putString("ocultas", (if (slug in o) o - slug else o + slug).sorted().joinToString(",")).apply(); Futbol.cambio(c)
+    }
+
+    /** «Dónde verlo» de un partido de [liga] ([DondeVer.opciones]). */
+    fun donde(c: Context, liga: String): List<com.gonzalo.iptv.futbol.Donde> = com.gonzalo.iptv.futbol.DondeVer.opciones(liga, grupos(c), asignacion(c))
+
+    /** La competición no tiene grupo: se crea uno con su nombre, con [e] dentro, y se le asigna. Devuelve el grupo. */
+    fun creaGrupoPara(c: Context, liga: String, e: Entrada?): GrupoCanales {
+        val (g, a, id) = com.gonzalo.iptv.futbol.DondeVer.crea(liga, Competiciones.de(liga).nombre, e, grupos(c), asignacion(c))
+        p(c).edit().putString("grupos", CanalesFutbol.gruposATexto(g)).putString("asignacion", CanalesFutbol.asignacionATexto(a)).apply()
+        Futbol.cambio(c)
+        return g.first { it.id == id }
+    }
+
+    /** Guarda [e] en el grupo [id] (el que estaba vacío). Devuelve el grupo. */
+    fun guardaEn(c: Context, id: String, e: Entrada): GrupoCanales? {
+        ponGrupos(c, com.gonzalo.iptv.futbol.DondeVer.guarda(id, e, grupos(c)))
+        return grupos(c).firstOrNull { it.id == id }
+    }
+
     /** Los grupos de una competición, en su orden. */
     fun gruposDe(c: Context, liga: String): List<GrupoCanales> = CanalesFutbol.gruposDe(liga, grupos(c), asignacion(c))
 }
@@ -109,6 +140,9 @@ object Futbol {
         val equipos: List<Pair<Equipo, String>> = emptyList(), val rivales: List<Pair<Equipo, String>> = emptyList(), val grupos: List<GrupoCanales> = CanalesFutbol.GRUPOS, val partidos: List<Partido> = emptyList(),
         val fichas: Map<String, FichaPartido> = emptyMap(), val clasificaciones: Map<String, Clasificacion> = emptyMap(), val lideres: Map<String, Lideres> = emptyMap(),
         val equiposDe: Map<String, List<Equipo>> = emptyMap(),
+        /** Los partidos de todas las competiciones, de cualquier día (los del día se sacan de aquí). */
+        val partidosDia: List<Partido> = emptyList(),
+        val plantillas: Map<String, List<com.gonzalo.iptv.futbol.Jugador>> = emptyMap(),
     )
 
     const val MIN = 60_000L
@@ -163,6 +197,74 @@ object Futbol {
         a == null -> b
         b.estado.enDirecto || b.estado.terminado && !a.estado.terminado -> b
         else -> a
+    }
+
+    // ---------------------------------------------------------------- los partidos de un día
+
+    /** Como mucho, cuatro peticiones a la vez (un día con muchas competiciones son muchas). */
+    private val hilos = java.util.concurrent.Executors.newFixedThreadPool(4) { r -> Thread(r, "nut-futbol").apply { isDaemon = true } }
+
+    /**
+     * Los partidos de un día: un marcador por cada competición que no escondes ([AjustesFutbol.ocultas]), de cuatro en cuatro, con la caché
+     * del día ([com.gonzalo.iptv.futbol.Dia.edad]); y los de tus equipos ese día aunque sean de otra competición (de sus calendarios ya
+     * guardados). [fresco] = false: solo lo guardado (lo que no se tenga, se pide). Bloquea.
+     */
+    fun dia(c: Context, dia: java.time.LocalDate, fresco: Boolean = true, vivoCada: Long = MIN): List<Partido> {
+        val ahora = System.currentTimeMillis()
+        fijo?.let { f -> return (f.partidosDia + f.partidos).filter { Hora.diaDe(it.inicio) == dia } }
+        cargar(c)
+        val ocultas = AjustesFutbol.ocultas(c)
+        val comps = AjustesFutbol.competiciones(c).filter { it.slug !in ocultas }
+        fun pide(edad: (Boolean) -> Long): List<Partido> {
+            val tareas = comps.map { comp -> java.util.concurrent.Callable { runCatching { fuente.marcadores(comp.slug, dia, edad(false)) }.getOrDefault(emptyList()) } }
+            return hilos.invokeAll(tareas).flatMap { runCatching { it.get() }.getOrDefault(emptyList()) }
+        }
+        var l = pide { if (fresco) com.gonzalo.iptv.futbol.Dia.edad(dia, ahora, false) else NUNCA }
+        // Si hay algo en juego, lo de las competiciones con partidos en juego, más al día
+        if (fresco && l.any { Orden.quizaEnDirecto(it, ahora) }) {
+            val conVivo = l.filter { Orden.quizaEnDirecto(it, ahora) }.map { it.liga }.toSet()
+            val nuevos = conVivo.map { liga -> java.util.concurrent.Callable { runCatching { fuente.marcadores(liga, dia, vivoCada) }.getOrDefault(emptyList()) } }
+            val vivos = hilos.invokeAll(nuevos).flatMap { runCatching { it.get() }.getOrDefault(emptyList()) }.associateBy { it.id }
+            l = l.map { vivos[it.id] ?: it }
+        }
+        val deTusEquipos = runCatching { partidos(c, fresco = false) }.getOrDefault(emptyList()).filter { Hora.diaDe(it.inicio) == dia }
+        val ids = l.map { it.id }.toSet()
+        return l + deTusEquipos.filter { it.id !in ids }
+    }
+
+    /** Los partidos de un día, solo de lo ya guardado (sin red: para el widget). */
+    fun diaGuardado(c: Context, dia: java.time.LocalDate): List<Partido> {
+        fijo?.let { f -> return (f.partidosDia + f.partidos).filter { Hora.diaDe(it.inicio) == dia }.distinctBy { it.id } }
+        cargar(c)
+        val ocultas = AjustesFutbol.ocultas(c)
+        return AjustesFutbol.competiciones(c).filter { it.slug !in ocultas }.flatMap { comp ->
+            cache.guardado(Espn.urlMarcadores(comp.slug, dia))?.let { (t, _) -> runCatching { Espn.partidos(com.gonzalo.iptv.JsonFlujo.lee(t), comp.slug) }.getOrNull() }.orEmpty()
+        }
+    }
+
+    /** Los partidos de una competición un día (su página). */
+    fun marcadoresDe(c: Context, liga: String, dia: java.time.LocalDate, fresco: Boolean = true): List<Partido>? {
+        fijo?.let { f -> return (f.partidosDia + f.partidos).filter { it.liga == liga && Hora.diaDe(it.inicio) == dia }.distinctBy { it.id }.sortedBy { it.inicio } }
+        cargar(c)
+        val ahora = System.currentTimeMillis()
+        return runCatching { fuente.marcadores(liga, dia, if (fresco) com.gonzalo.iptv.futbol.Dia.edad(dia, ahora, false) else NUNCA) }.getOrNull()?.sortedBy { it.inicio }
+    }
+
+    /** Los partidos de un solo equipo (los que vienen y los jugados, de sus competiciones), ordenados. */
+    fun deEquipo(c: Context, e: Equipo, liga: String, fresco: Boolean = true): List<Partido> {
+        fijo?.let { f -> return Orden.ordena((f.partidos + f.partidosDia).filter { it.juega(e.id) }, System.currentTimeMillis()) }
+        cargar(c)
+        val r = LinkedHashMap<String, Partido>()
+        for (comp in Competiciones.para(liga)) for (prox in listOf(true, false))
+            runCatching { fuente.calendario(comp.slug, e.id, prox, if (!fresco) NUNCA else if (prox) 3 * HORA else 6 * HORA) }.getOrNull()?.forEach { p -> r[p.id] = mejor(r[p.id], p) }
+        return Orden.ordena(r.values, System.currentTimeMillis())
+    }
+
+    fun plantilla(c: Context, e: Equipo, liga: String): List<com.gonzalo.iptv.futbol.Jugador>? {
+        fijo?.let { return it.plantillas[e.id] }
+        cargar(c)
+        val l = Competiciones.para(liga).first().slug
+        return runCatching { fuente.plantilla(l, e.id, 24 * HORA) }.getOrNull()
     }
 
     /** ¿Hay algo que pedir? (para el widget: si los calendarios tienen más de unas horas, o hay un partido en juego). Bloquea y avisa. */

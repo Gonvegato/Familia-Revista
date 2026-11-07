@@ -30,7 +30,7 @@ class WidgetsTest {
 
     @After fun limpia() { Skin.fondoId = ""; Skin.invertido = false; Skin.display = "Atrio"; Skin.body = "Atrio"; Futbol.fijo = null }
 
-    private val tamanos = mapOf(WTipo.MARCA to (256f to 64f), WTipo.MARCA_PAPEL to (264f to 132f), WTipo.PROXIMO to (300f to 150f))
+    private val tamanos = mapOf(WTipo.MARCA to (256f to 64f), WTipo.MARCA_PAPEL to (264f to 132f), WTipo.PROXIMO to (300f to 150f), WTipo.HOY to (300f to 230f))
     private val otros = listOf(330f to 165f, 160f to 160f, 150f to 260f, 330f to 80f, 400f to 200f, 110f to 40f, 330f to 100f)
 
     @Test fun laCabeceraAbreNut() = runBlocking {
@@ -101,6 +101,8 @@ class WidgetsTest {
         Futbol.fijo = FutbolDeMentira.datos(ctx, vivo = true)
         foto("vivo_proximo", WTipo.PROXIMO, 330f, 170f, false)
         foto("vivo_oscuro_proximo", WTipo.PROXIMO, 330f, 170f, true)
+        foto("vivo_hoy", WTipo.HOY, 330f, 250f, false)
+        foto("bajo_hoy", WTipo.HOY, 300f, 140f, false)
         Futbol.fijo = FutbolDeMentira.datos(ctx, vivo = false)
         for ((t, s) in tamanos) foto("oscuro_${t.name.lowercase()}", t, s.first, s.second, true)
         foto("ancho_marca", WTipo.MARCA, 330f, 100f, false)

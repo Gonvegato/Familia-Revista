@@ -60,7 +60,7 @@ fun FileteCabecera(alto: Dp = 3.dp) = Filete(alto)
 fun Antetitulo(texto: String, modifier: Modifier = Modifier, tam: TextUnit = 13.sp, color: Color = Charcoal, conCuadro: Boolean = true) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         if (conCuadro) { Box(Modifier.size((tam.value * 0.77f).dp).background(Acento)); Spacer(Modifier.width(8.dp)) }
-        Text(texto.uppercase(), color = color, fontFamily = Body, fontSize = tam, fontWeight = FontWeight.Black, letterSpacing = (tam.value * 0.15f).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(texto.uppercase(), color = color, fontFamily = Body, fontSize = tam, fontWeight = FontWeight.Black, letterSpacing = (tam.value * 0.15f).sp, lineHeight = (tam.value * 1.35f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis)  // (dos líneas antes que cortar)
     }
 }
 

@@ -37,13 +37,23 @@ fun iniciar(c: Context) {
 }
 
 /** Dónde estás: la portada y sus secciones (se llega a ellas desde el menú de la portada, como en las hermanas). */
-enum class Destino(val nombre: String) { Portada("Portada"), Directo("Directo"), Guia("Guía"), Peliculas("Películas"), Series("Series"), Buscar("Buscar"), Listas("Listas"), Ajustes("Ajustes"), Favoritos("Favoritos"), Futbol("Fútbol"), AjustesFutbol("Ajustes del fútbol") }
+enum class Destino(val nombre: String) {
+    Portada("Partidos"), Directo("Directo"), Guia("Guía"), Peliculas("Películas"), Series("Series"), Buscar("Buscar"), Listas("Listas"), Ajustes("Ajustes"), Favoritos("Favoritos"),
+    /** «Tus equipos». */
+    Futbol("Tus equipos"), AjustesFutbol("Ajustes del fútbol"), Tele("Tele"), Competiciones("Competiciones");
+    /** Lo de la tele (IPTV): al volver, a «Tele». */
+    val deLaTele: Boolean get() = this in setOf(Directo, Guia, Peliculas, Series, Buscar, Listas, Favoritos)
+}
 
 /** Una ficha abierta por encima de la página (una película o una serie de una lista, o un partido). */
 sealed class Ficha {
     class DePelicula(val lista: Lista, val pelicula: Pelicula) : Ficha()
     class DeSerie(val lista: Lista, val serie: Serie) : Ficha()
     class DePartido(val partido: com.gonzalo.iptv.futbol.Partido) : Ficha()
+    /** La página de una competición (sus partidos por día, la clasificación, los goleadores). */
+    class DeCompeticion(val liga: String) : Ficha()
+    /** La página de un equipo (próximos, últimos, plantilla, su clasificación). */
+    class DeEquipo(val equipo: com.gonzalo.iptv.futbol.Equipo, val liga: String) : Ficha()
 }
 
 private val entraHoja = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it / 10 } + fadeIn(tween(220))
@@ -74,45 +84,58 @@ fun rememberCargadas(l: List<Lista>): Map<String, Cargada?> {
     return r
 }
 
-/** La app: portada de revista, sus secciones y, por encima, la ficha de una película o de una serie. */
+/**
+ * La app: la portada son los partidos del día; el menú lleva a «Competiciones», «Tus equipos» y «Tele» (lo de antes: directo, favoritos,
+ * guía, listas). Por encima, las fichas (un partido, una competición, un equipo, una película…), unas sobre otras: atrás cierra la de arriba.
+ */
 @Composable
 fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
-    val ctx = LocalContext.current
     var destino by rememberSaveable { mutableIntStateOf(inicial.ordinal) }
-    var ficha by remember { mutableStateOf<Ficha?>(null) }
+    var fichas by remember { mutableStateOf(listOf<Ficha>()) }
     val d = Destino.entries[destino]
-    fun ir(x: Destino) { destino = x.ordinal }
+    fun ir(x: Destino) { fichas = emptyList(); destino = x.ordinal }
+    val abre: (Ficha) -> Unit = { fichas = fichas + it }
+    val cierra: () -> Unit = { fichas = fichas.dropLast(1) }
     // (lo que pide un widget: abrir una página)
-    LaunchedEffect(pedido) { pedido?.destino?.let { ficha = null; ir(it) } }
+    LaunchedEffect(pedido) { pedido?.destino?.let { ir(it) } }
     AvisoActualizacion()
-    BackHandler(enabled = ficha != null) { ficha = null }
-    BackHandler(enabled = ficha == null && d != Destino.Portada) { destino = 0 }
+    BackHandler(enabled = fichas.isNotEmpty()) { cierra() }
+    BackHandler(enabled = fichas.isEmpty() && d != Destino.Portada) { destino = if (d.deLaTele) Destino.Tele.ordinal else 0 }
     Box(Modifier.fillMaxSize().background(Paper)) {
         AnimatedContent(d, transitionSpec = {
             val ida = targetState != Destino.Portada
             (fadeIn(tween(220, delayMillis = 40)) + slideInVertically(tween(300, easing = FastOutSlowInEasing)) { if (ida) it / 24 else -it / 24 }) togetherWith fadeOut(tween(140))
         }, label = "pagina") { x ->
             val volver = { destino = 0 }
+            val aTele = { destino = Destino.Tele.ordinal }
             when (x) {
-                Destino.Portada -> PantPortada(alIr = ::ir, alFicha = { ficha = it })
-                Destino.Directo -> PantDirecto(alVolver = volver, alIr = ::ir)
-                Destino.Favoritos -> PantFavoritos(alVolver = volver, alIr = ::ir)
-                Destino.Guia -> PantGuia(alVolver = volver, alIr = ::ir)
-                Destino.Peliculas -> PantVideoclub(false, alVolver = volver, alIr = ::ir, alFicha = { ficha = it })
-                Destino.Series -> PantVideoclub(true, alVolver = volver, alIr = ::ir, alFicha = { ficha = it })
-                Destino.Buscar -> PantBuscar(alVolver = volver, alFicha = { ficha = it })
-                Destino.Listas -> PantListas(alVolver = volver)
+                Destino.Portada -> PantDia(alIr = ::ir, alFicha = abre)
+                Destino.Tele -> PantPortada(alIr = ::ir, alFicha = abre, alVolver = volver)
+                Destino.Directo -> PantDirecto(alVolver = aTele, alIr = ::ir)
+                Destino.Favoritos -> PantFavoritos(alVolver = aTele, alIr = ::ir)
+                Destino.Guia -> PantGuia(alVolver = aTele, alIr = ::ir)
+                Destino.Peliculas -> PantVideoclub(false, alVolver = aTele, alIr = ::ir, alFicha = abre)
+                Destino.Series -> PantVideoclub(true, alVolver = aTele, alIr = ::ir, alFicha = abre)
+                Destino.Buscar -> PantBuscar(alVolver = aTele, alFicha = abre)
+                Destino.Listas -> PantListas(alVolver = aTele)
                 Destino.Ajustes -> PantAjustes(alVolver = volver, alListas = { ir(Destino.Listas) })
                 Destino.AjustesFutbol -> PantAjustes(alVolver = volver, alListas = { ir(Destino.Listas) }, inicial = PESTANA_FUTBOL)
-                Destino.Futbol -> PantFutbol(alVolver = volver, alIr = ::ir, alFicha = { ficha = it })
+                Destino.Futbol -> PantFutbol(alVolver = volver, alIr = ::ir, alFicha = abre)
+                Destino.Competiciones -> PantCompeticiones(alVolver = volver, alFicha = abre)
             }
         }
-        AnimatedVisibility(ficha != null, enter = entraHoja, exit = saleHoja) {
-            when (val f = ficha) {
-                is Ficha.DePelicula -> PantFichaPelicula(f.lista, f.pelicula, alCerrar = { ficha = null })
-                is Ficha.DeSerie -> PantFichaSerie(f.lista, f.serie, alCerrar = { ficha = null })
-                is Ficha.DePartido -> PantFichaPartido(f.partido, alCerrar = { ficha = null }, alConfigurar = { ficha = null; ir(Destino.AjustesFutbol) })
-                null -> {}
+        // Las fichas, unas encima de otras (se pinta la de arriba)
+        AnimatedVisibility(fichas.isNotEmpty(), enter = entraHoja, exit = saleHoja) {
+            val f = fichas.lastOrNull()
+            androidx.compose.runtime.key(fichas.size) {
+                when (f) {
+                    is Ficha.DePelicula -> PantFichaPelicula(f.lista, f.pelicula, alCerrar = cierra)
+                    is Ficha.DeSerie -> PantFichaSerie(f.lista, f.serie, alCerrar = cierra)
+                    is Ficha.DePartido -> PantFichaPartido(f.partido, alCerrar = cierra, alConfigurar = { ir(Destino.AjustesFutbol) }, alFicha = abre)
+                    is Ficha.DeCompeticion -> PantCompeticion(f.liga, alCerrar = cierra, alFicha = abre)
+                    is Ficha.DeEquipo -> PantEquipo(f.equipo, f.liga, alCerrar = cierra, alFicha = abre)
+                    null -> {}
+                }
             }
         }
     }

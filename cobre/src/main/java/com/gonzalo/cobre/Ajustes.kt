@@ -83,7 +83,11 @@ object AjustesDirecto {
     fun ponVideoclub(c: Context, v: Boolean) = p(c).edit().putBoolean("videoclub", v).apply()
 }
 
-/** Las secciones del menú de la portada, en su orden: el fútbol lo primero; el videoclub, solo con Xtream y si lo enciendes. */
-fun seccionesMenu(hayXtream: Boolean, videoclub: Boolean): List<Pair<String, Destino>> =
-    listOf("Fútbol" to Destino.Futbol, "Favoritos" to Destino.Favoritos, "Directo" to Destino.Directo, "Guía" to Destino.Guia) +
-        (if (hayXtream && videoclub) listOf("Películas" to Destino.Peliculas, "Series" to Destino.Series) else emptyList()) + listOf("Listas" to Destino.Listas)
+/** El menú de la portada (los partidos del día): Partidos, Competiciones, Tus equipos y Tele (lo de la IPTV, completo). */
+fun seccionesMenu(): List<Pair<String, Destino>> =
+    listOf("Partidos" to Destino.Portada, "Competiciones" to Destino.Competiciones, "Tus equipos" to Destino.Futbol, "Tele" to Destino.Tele)
+
+/** El menú de «Tele»: Favoritos, Directo, Guía, (el videoclub, solo con Xtream y si lo enciendes), Listas y Buscar. */
+fun seccionesTele(hayXtream: Boolean, videoclub: Boolean): List<Pair<String, Destino>> =
+    listOf("Favoritos" to Destino.Favoritos, "Directo" to Destino.Directo, "Guía" to Destino.Guia) +
+        (if (hayXtream && videoclub) listOf("Películas" to Destino.Peliculas, "Series" to Destino.Series) else emptyList()) + listOf("Listas" to Destino.Listas, "Buscar" to Destino.Buscar)

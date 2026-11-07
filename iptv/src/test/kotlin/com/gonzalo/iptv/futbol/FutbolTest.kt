@@ -319,7 +319,9 @@ class FutbolTest {
         val eq = Espn.equipos(json("selecciones_equipos.json"))
         assertEquals(54, eq.size); assertTrue(eq.any { it.id == "164" && it.nombre == "Spain" })
         assertTrue(Competiciones.esDeSelecciones("fifa.friendly")); assertFalse(Competiciones.esDeSelecciones("esp.1"))
-        assertEquals(Competiciones.SELECCIONES, Competiciones.para("uefa.nations")); assertEquals(Competiciones.CLUBES, Competiciones.para("esp.1"))
+        assertEquals(Competiciones.SELECCIONES, Competiciones.para("uefa.nations"))
+        assertEquals("de un club: su liga, las copas y las europeas", listOf("esp.1", "uefa.champions", "uefa.europa", "uefa.europa.conf", "esp.copa_del_rey", "esp.super_cup"), Competiciones.para("esp.1").map { it.slug })
+        assertEquals("eng.1", Competiciones.para("eng.1").first().slug)
         // Sus partidos van con el grupo «Selección»
         assertEquals(listOf("seleccion"), CanalesFutbol.gruposDe("fifa.world", CanalesFutbol.GRUPOS, CanalesFutbol.ASIGNACION).map { it.id })
         assertEquals(listOf("seleccion"), CanalesFutbol.gruposDe("uefa.nations", CanalesFutbol.GRUPOS, CanalesFutbol.ASIGNACION).map { it.id })
@@ -361,5 +363,97 @@ class FutbolTest {
         assertEquals("el del Atlético que no es hoy, fuera de la portada", listOf<String>(), Orden.deRivales(l.filter { it.id == "luego" }, listOf("1068"), listOf("83"), ahoraMad, soloHoy = true).map { it.id })
         assertEquals("el clásico es tuyo, no del rival", listOf("clasico"), Orden.tusPartidos(l, listOf("83"), ahoraMad).map { it.id })
         assertEquals(listOf<String>(), Orden.deRivales(l.take(1), listOf("86"), listOf("83"), ahoraMad).map { it.id })
+    }
+
+    // ---------------------------------------------------------------- los partidos del día
+
+    @Test fun losMarcadoresDeCadaCompeticion() {
+        val laliga = Espn.partidos(json("dia_laliga_vivo.json"), "esp.1")
+        val vivo = laliga.first { it.id == "401882808" }
+        assertEquals("Valencia", vivo.local.nombre); assertEquals(Estado.EN_JUEGO, vivo.estado); assertEquals("0-2", vivo.marcador); assertEquals("65'", vivo.reloj)
+        assertEquals("65'", Dia.cuando(vivo)); assertEquals("FINAL", Dia.cuando(laliga.first { it.id == "401882812" }))
+        assertEquals("Deportivo La Coruña", laliga.first { it.id == "401882813" }.visitante.nombre)
+        val premier = Espn.partidos(json("dia_premier.json"), "eng.1")
+        assertEquals(5, premier.size); assertEquals("eng.1", premier[0].liga); assertEquals("15:00", Dia.cuando(premier[0]))
+        assertEquals("Crystal Palace", premier.first { it.id == "401879243" }.local.nombre)
+        val ucl = Espn.partidos(json("dia_champions.json"), "uefa.champions")
+        assertEquals(4, ucl.size); assertTrue(ucl.any { it.visitante.id == "83" || it.local.id == "83" })
+        val unl = Espn.partidos(json("dia_naciones.json"), "uefa.nations")
+        assertTrue("España en español", unl.any { it.local.nombre == "Chequia" && it.visitante.nombre == "España" })
+        val hyper = Espn.partidos(json("dia_hypermotion.json"), "esp.2")
+        assertEquals(4, hyper.size); assertEquals("LaLiga Hypermotion", Competiciones.de("esp.2").nombre)
+        assertEquals("https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261108&lang=es&region=es", Espn.urlMarcadores("eng.1", LocalDate.of(2026, 11, 8)))
+    }
+
+    @Test fun elDiaAgrupadoPorCompeticion() {
+        val laliga = Espn.partidos(json("dia_laliga_vivo.json"), "esp.1")
+        val premier = Espn.partidos(json("dia_premier.json"), "eng.1")
+        val hoy = LocalDate.of(2026, 11, 7)
+        val bar = Equipo("83", "Barcelona"); val otro = Equipo("1", "Otro")
+        val nuestro = Partido("x", "uefa.europa.conf", Hora.lee("2026-11-07T18:00Z"), bar, otro)
+        val todo = laliga + premier + nuestro
+        val s = Dia.agrupa(todo, hoy, listOf("83", "86"), Competiciones.DEL_DIA)
+        assertEquals("primero tus equipos (el del Madrid y el del Barça, por hora), luego LaLiga; la Premier es de mañana", listOf("tus", "esp.1"), s.map { it.clave })
+        assertEquals(listOf("x", "401882808"), s[0].partidos.map { it.id })
+        assertEquals("los tuyos no se repiten en su competición", 3, s[1].partidos.size)
+        assertEquals(listOf("401882812", "401882813", "401882811"), s[1].partidos.map { it.id })
+        val manana = Dia.agrupa(todo, hoy.plusDays(1), emptyList(), Competiciones.DEL_DIA)
+        assertEquals(listOf("eng.1"), manana.map { it.clave })
+        // Escondida, no sale (salvo lo de tus equipos); tu orden manda
+        assertTrue(Dia.agrupa(todo, hoy.plusDays(1), emptyList(), Competiciones.DEL_DIA, setOf("eng.1")).isEmpty())
+        assertEquals(listOf("tus"), Dia.agrupa(todo, hoy, listOf("83", "86"), Competiciones.DEL_DIA, setOf("esp.1")).map { it.clave })
+        val orden = Competiciones.ordenadas(listOf("eng.1", "nada", "esp.1"))
+        assertEquals(listOf("eng.1", "esp.1", "uefa.champions"), orden.take(3).map { it.slug })
+        assertEquals("todas, sin repetir", Competiciones.DEL_DIA.size, orden.size)
+        assertEquals("esp.2", Competiciones.DEL_DIA.last().slug)
+    }
+
+    @Test fun laTiraDeDiasYLoQueDuraLoGuardado() {
+        val ahora = Hora.lee("2026-11-07T10:00:00Z")
+        val t = Hora.tira(ahora, 1, 3)
+        assertEquals(listOf("Ayer", "Hoy", "Mañana", "Lun 9", "Mar 10"), t.map { Hora.nombreDia(it, ahora) })
+        assertEquals("Sábado 7 de noviembre", Hora.largo(LocalDate.of(2026, 11, 7)))
+        val hoy = LocalDate.of(2026, 11, 7)
+        assertTrue(Dia.edad(hoy.minusDays(5), ahora, false) > 86_400_000L)
+        assertEquals(60_000L, Dia.edad(hoy, ahora, true)); assertEquals(600_000L, Dia.edad(hoy, ahora, false))
+        assertEquals(3_600_000L, Dia.edad(hoy.plusDays(2), ahora, false))
+    }
+
+    @Test fun caraACaraUltimosYPlantilla() {
+        val f = Espn.ficha(json("ficha_cara_a_cara.json"), "esp.1")
+        assertEquals(5, f.caraACara.size)
+        assertTrue(f.caraACara.all { it.juega("83") && it.juega("96") && it.estado.terminado && it.golesLocal != null })
+        assertTrue("el más reciente primero", f.caraACara.zipWithNext().all { (a, b) -> a.inicio >= b.inicio })
+        assertEquals(setOf("83", "96"), f.ultimos.keys)
+        val ult = f.ultimos["83"]!!
+        assertTrue(ult.isNotEmpty()); assertTrue(ult.all { it.juega("83") })
+        val get = ult.first { it.id == "401882853" }
+        assertEquals("Barcelona", get.local.nombre); assertEquals("Getafe", get.visitante.nombre); assertEquals("3-0", get.marcador); assertEquals("esp.1", get.liga)
+        val pl = Espn.plantilla(json("plantilla.json"))
+        assertEquals(34, pl.size)
+        assertEquals("los porteros primero, por dorsal", "Joan García", pl.first().nombre); assertEquals("POR", pl.first().posicion)
+        assertEquals(listOf("POR", "DEF", "MED", "DEL"), pl.map { it.posicion }.distinct())
+    }
+
+    @Test fun dondeVerloEnLosTresCasos() {
+        val dazn = GrupoCanales("dazn", "DAZN LaLiga", listOf(Entrada(hd = RefCanal("l1", "x1", "DAZN LaLiga HD"))))
+        val grupos = CanalesFutbol.GRUPOS.map { if (it.id == "dazn") dazn else it }
+        val a = CanalesFutbol.ASIGNACION
+        // LaLiga: Movistar sin canal (elegir) y DAZN con canal (ver)
+        assertEquals(listOf(Donde.Elegir(grupos[0]), Donde.Ver(dazn)), DondeVer.opciones("esp.1", grupos, a))
+        // La Premier no tiene grupo: crear el suyo
+        assertEquals(listOf(Donde.Crear("eng.1", "Premier League")), DondeVer.opciones("eng.1", grupos, a))
+        val e = Entrada(hd = RefCanal("l1", "x9", "M+ Premier HD"))
+        val (g2, a2, id) = DondeVer.crea("eng.1", "Premier League", e, grupos, a)
+        assertEquals("gpremierleague", id)
+        assertEquals(listOf(Donde.Ver(GrupoCanales(id, "Premier League", listOf(e)))), DondeVer.opciones("eng.1", g2, a2))
+        assertEquals("lo demás, igual", a["esp.1"], a2["esp.1"])
+        // Otra vez (ya existe un grupo con ese nombre): se usa ese, no se duplica
+        val (g3, _, id3) = DondeVer.crea("eng.1", "Premier League", null, g2, a2)
+        assertEquals(id, id3); assertEquals(g2.size, g3.size)
+        // Elegir para un grupo vacío lo guarda en él
+        val g4 = DondeVer.guarda("movistar", Entrada(hd = RefCanal("l1", "x2", "M+ LaLiga HD")), grupos)
+        assertTrue(DondeVer.opciones("esp.1", g4, a).all { it is Donde.Ver })
+        assertEquals("Tus canales para LaLiga", DondeVer.titulo("esp.1"))
     }
 }

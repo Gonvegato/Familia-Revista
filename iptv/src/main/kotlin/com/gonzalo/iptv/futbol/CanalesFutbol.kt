@@ -261,3 +261,42 @@ object CanalesFutbol {
         }.distinctBy { it.first.id }
     }
 }
+
+/** Lo que se ofrece en «Dónde verlo» de un partido. */
+sealed class Donde {
+    /** Un grupo con canales: «▶ VER EN …». */
+    data class Ver(val grupo: GrupoCanales) : Donde()
+    /** Un grupo sin canales: «ELEGIR CANAL» (al elegir se guarda en él y se pone). */
+    data class Elegir(val grupo: GrupoCanales) : Donde()
+    /** La competición no tiene grupo: «ELEGIR CANAL» crea uno con su nombre ([nombre]), se lo asigna y guarda el canal. */
+    data class Crear(val liga: String, val nombre: String) : Donde()
+}
+
+object DondeVer {
+    /** Lo que se ofrece para un partido de [liga]: un botón por cada grupo de la competición o, si no tiene ninguno, crear el suyo. */
+    fun opciones(liga: String, grupos: List<GrupoCanales>, asignacion: Map<String, List<String>>): List<Donde> {
+        val gs = CanalesFutbol.gruposDe(liga, grupos, asignacion)
+        if (gs.isEmpty()) return listOf(Donde.Crear(liga, Competiciones.de(liga).nombre))
+        return gs.map { if (it.canales.isEmpty()) Donde.Elegir(it) else Donde.Ver(it) }
+    }
+
+    /**
+     * Crea el grupo de una competición que no tiene ninguno (con su nombre y, si ya lo das, [r] como primer canal) y se lo asigna. Si ya
+     * hay un grupo que se llama igual, se usa ese. Devuelve (los grupos, la asignación, el id del grupo).
+     */
+    fun crea(liga: String, nombre: String, r: Entrada?, grupos: List<GrupoCanales>, asignacion: Map<String, List<String>>): Triple<List<GrupoCanales>, Map<String, List<String>>, String> {
+        val hay = grupos.firstOrNull { it.nombre.equals(nombre, true) }
+        val id = hay?.id ?: CanalesFutbol.idNuevo(nombre, grupos.map { it.id })
+        val g0 = hay ?: GrupoCanales(id, nombre)
+        val g = if (r != null) CanalesFutbol.anade(g0, r) else g0
+        val nuevos = if (hay != null) grupos.map { if (it.id == id) g else it } else grupos + g
+        val a = asignacion + (liga to ((asignacion[liga] ?: CanalesFutbol.ASIGNACION[liga]).orEmpty() + id).distinct())
+        return Triple(nuevos, a, id)
+    }
+
+    /** Guarda [r] (con sus otras calidades) en el grupo [id] si aún no tiene canales. */
+    fun guarda(id: String, r: Entrada, grupos: List<GrupoCanales>): List<GrupoCanales> = grupos.map { if (it.id == id) CanalesFutbol.anade(it, r) else it }
+
+    /** El texto del bloque, honesto: «Tus canales para LaLiga» (no se sabe si lo dan ahí). */
+    fun titulo(liga: String) = "Tus canales para ${Competiciones.de(liga).nombre}"
+}

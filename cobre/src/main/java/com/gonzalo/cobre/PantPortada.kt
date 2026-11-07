@@ -41,7 +41,7 @@ import java.util.Locale
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
+fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () -> Unit = {}) {
     val ctx = LocalContext.current
     val hoy = remember { Calendar.getInstance() }
     Listas.version; Tele.version
@@ -51,32 +51,20 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     val ultimo = MiCuenta.ultimo()
     // Las listas de los favoritos, leídas (para sus logos y lo que echan)
     val cargadas = rememberCargadas(usables)
-    // (el fútbol lo primero; luego Favoritos, que es donde se está casi todo el rato)
+    // (Favoritos lo primero: es donde se está casi todo el rato)
     EspejoCuenta.version
-    val secciones = seccionesMenu(usables.any { it.esXtream }, AjustesDirecto.videoclub(ctx))
+    val secciones = seccionesTele(usables.any { it.esXtream }, AjustesDirecto.videoclub(ctx))
     val desplazado = rememberScrollState()
     val umbral = with(LocalDensity.current) { 300.dp.toPx() }
     val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
     val m = margen()
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(Paper).verticalScroll(desplazado).statusBarsPadding().padding(horizontal = m)) {
-            Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            CabeceraSeccion("Tele", "Tus canales", alVolver) {
                 EnlaceRevista("Buscar") { alIr(Destino.Buscar) }
-                EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) }
-                Spacer(Modifier.weight(1f))
-                Icon(Icons.Filled.Settings, "Ajustes", tint = Charcoal, modifier = Modifier.padding(start = 6.dp).tocable { alIr(Destino.Ajustes) }.padding(8.dp).size(22.dp))
+                EnlaceRevista("Guía", acento = true) { alIr(Destino.Guia) }
             }
-            val ancho = minOf(LocalConfiguration.current.screenWidthDp, 1080)
-            Cabecera(if (ancho >= 700) 132.sp else 84.sp, Modifier.padding(top = 8.dp))
-            FileteCabecera(3.dp)
-            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                Text("Nº ${hoy.get(Calendar.DAY_OF_YEAR)}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Spacer(Modifier.weight(1f))
-                Text(SimpleDateFormat("EEEE d 'de' MMMM", Locale("es", "ES")).format(hoy.time).uppercase(), color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            }
-            Filete(1.dp)
-            Column(Modifier.fillMaxWidth().padding(top = 18.dp)) {
-                Filete(1.dp)
+            Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
                 FlowRow(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                     secciones.forEachIndexed { i, (t, x) ->
                         Text(t.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
@@ -85,8 +73,6 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
                 }
                 Filete(1.dp)
             }
-            // Lo primero: el próximo partido de tus equipos (y el que se juega ahora), con sus canales
-            TusPartidos(alIr, alFicha)
             if (!Cuenta.vinculada) {
                 Spacer(Modifier.height(14.dp))
                 Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Nut entra sola). Tus listas, tus favoritos y lo que ves van con tu cuenta.")
@@ -142,7 +128,7 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
-        BarraPlegada("Nut", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) } }
+        BarraPlegada("Tele", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) } }
     }
 }
 

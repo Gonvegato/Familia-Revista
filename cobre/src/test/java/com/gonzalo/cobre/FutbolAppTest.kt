@@ -34,6 +34,8 @@ class FutbolAppTest {
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
     private fun recurso(n: String) = javaClass.classLoader!!.getResourceAsStream(n)!!.readBytes()
     private var pedidas = 0
+    private val enVuelo = java.util.concurrent.atomic.AtomicInteger(0)
+    private val maxVuelo = java.util.concurrent.atomic.AtomicInteger(0)
     private var hayRed = true
     private val urls = java.util.Collections.synchronizedList(ArrayList<String>())
     private val espn = Red { url, _ ->
@@ -47,6 +49,9 @@ class FutbolAppTest {
             url.contains("/esp.1/teams/164/") -> error("a una selección no se le piden las ligas de clubes")
             url.contains("/uefa.nations/teams/83/") -> error("a un club no se le piden las de selecciones")
             url.contains("/schedule") -> """{"events":[]}""".toByteArray()
+            url.contains("/esp.1/scoreboard?dates=20261107") -> { val n = enVuelo.incrementAndGet(); maxVuelo.accumulateAndGet(n, ::maxOf); Thread.sleep(40); enVuelo.decrementAndGet(); recurso("espn/dia_laliga_vivo.json") }
+            url.contains("/eng.1/scoreboard") -> recurso("espn/dia_premier.json")
+            url.contains("/scoreboard?dates=20261107") -> { val n = enVuelo.incrementAndGet(); maxVuelo.accumulateAndGet(n, ::maxOf); Thread.sleep(40); enVuelo.decrementAndGet(); """{"events":[]}""".toByteArray() }
             url.contains("/scoreboard") -> recurso("espn/marcadores.json")
             else -> return@Red Respuesta(404, ByteArrayInputStream(ByteArray(0)))
         }
@@ -58,13 +63,13 @@ class FutbolAppTest {
 
     @Test fun lasPelisYSeriesEscondidasDeSerie() {
         assertFalse("apagado de serie", AjustesDirecto.videoclub(ctx))
-        val sin = seccionesMenu(hayXtream = true, videoclub = false).map { it.second }
-        assertEquals(Destino.Futbol, sin.first())
-        assertFalse(Destino.Peliculas in sin); assertFalse(Destino.Series in sin)
+        assertEquals("el menú: Partidos, Competiciones, Tus equipos y Tele", listOf(Destino.Portada, Destino.Competiciones, Destino.Futbol, Destino.Tele), seccionesMenu().map { it.second })
+        val sin = seccionesTele(hayXtream = true, videoclub = false).map { it.second }
+        assertFalse(Destino.Peliculas in sin); assertFalse(Destino.Series in sin); assertTrue(Destino.Directo in sin)
         AjustesDirecto.ponVideoclub(ctx, true)
-        val con = seccionesMenu(hayXtream = true, videoclub = AjustesDirecto.videoclub(ctx)).map { it.second }
+        val con = seccionesTele(hayXtream = true, videoclub = AjustesDirecto.videoclub(ctx)).map { it.second }
         assertTrue(Destino.Peliculas in con); assertTrue(Destino.Series in con)
-        assertFalse("sin Xtream, no hay videoclub", Destino.Peliculas in seccionesMenu(hayXtream = false, videoclub = true).map { it.second })
+        assertFalse("sin Xtream, no hay videoclub", Destino.Peliculas in seccionesTele(hayXtream = false, videoclub = true).map { it.second })
         AjustesDirecto.ponVideoclub(ctx, false)
     }
 
@@ -136,5 +141,42 @@ class FutbolAppTest {
         assertTrue("a un club no se le piden las de selecciones", urls.none { it.contains("/uefa.nations/teams/83/") })
         assertEquals(listOf("seleccion"), AjustesFutbol.gruposDe(ctx, "uefa.nations").map { it.id })
         assertTrue(AjustesFutbol.grupos(ctx).any { it.id == "seleccion" && it.nombre == "Selección" })
+    }
+
+    @Test fun elDiaDeCuatroEnCuatroSinLasOcultasYConCache() {
+        val dia = java.time.LocalDate.of(2026, 11, 7)
+        AjustesFutbol.alternaOculta(ctx, "eng.1")
+        urls.clear()
+        val l = Futbol.dia(ctx, dia)
+        val pedidosDia = urls.filter { it.contains("/scoreboard") }
+        assertEquals("una petición por competición visible", com.gonzalo.iptv.futbol.Competiciones.DEL_DIA.size - 1, pedidosDia.map { it.substringBefore("/scoreboard") }.distinct().size)
+        assertTrue("la escondida no se pide", pedidosDia.none { it.contains("/eng.1/") })
+        assertTrue("como mucho cuatro a la vez", maxVuelo.get() in 1..4)
+        assertTrue(l.any { it.id == "401882808" && it.estado.enDirecto })
+        val s = com.gonzalo.iptv.futbol.Dia.agrupa(l, null, emptyList(), AjustesFutbol.competiciones(ctx), AjustesFutbol.ocultas(ctx))
+        assertEquals(listOf("esp.1"), s.map { it.clave })
+        // Otra vez: de la caché
+        urls.clear(); Futbol.dia(ctx, dia)
+        assertTrue("nada se vuelve a pedir", urls.none { it.contains("/scoreboard") && !it.contains("/esp.1/") })
+        // Y sin red, lo guardado
+        hayRed = false
+        assertTrue(Futbol.dia(ctx, dia, fresco = false).any { it.id == "401882808" })
+        assertTrue(Futbol.diaGuardado(ctx, dia).any { it.id == "401882808" })
+        // El orden de las competiciones lo eliges tú
+        AjustesFutbol.mueveCompeticion(ctx, "uefa.champions", -1)
+        assertEquals(listOf("uefa.champions", "esp.1"), AjustesFutbol.competiciones(ctx).take(2).map { it.slug })
+    }
+
+    @Test fun dondeVerloCreaElGrupoDeUnaCompeticionSinGrupo() {
+        assertEquals(listOf(com.gonzalo.iptv.futbol.Donde.Crear("eng.1", "Premier League")), AjustesFutbol.donde(ctx, "eng.1"))
+        val e = com.gonzalo.iptv.futbol.Entrada(hd = RefCanal("l1", "x9", "M+ Premier HD"))
+        val g = AjustesFutbol.creaGrupoPara(ctx, "eng.1", e)
+        assertEquals("Premier League", g.nombre)
+        assertEquals(listOf(com.gonzalo.iptv.futbol.Donde.Ver(g)), AjustesFutbol.donde(ctx, "eng.1"))
+        assertEquals("guardado en tu cuenta (en las preferencias que viajan)", listOf(g.id), AjustesFutbol.asignacion(ctx)["eng.1"])
+        // Un grupo vacío: al elegir, se guarda en él
+        val m = AjustesFutbol.donde(ctx, "esp.1").first() as com.gonzalo.iptv.futbol.Donde.Elegir
+        AjustesFutbol.guardaEn(ctx, m.grupo.id, com.gonzalo.iptv.futbol.Entrada(hd = RefCanal("l1", "x2", "M+ LaLiga HD")))
+        assertTrue(AjustesFutbol.donde(ctx, "esp.1").first() is com.gonzalo.iptv.futbol.Donde.Ver)
     }
 }

@@ -65,6 +65,12 @@ object FutbolDeMentira {
             Partido("904", "esp.1", mañana21 + 14 * 24 * h - 2 * h, bar, Equipo("102", "Villarreal", "Villarreal", "VIL")),
         ) + jugados
         val ficha = Espn.ficha(json("ficha_final.json"), "esp.1")
+        // Los partidos del día (de verdad, de ESPN, movidos a hoy): LaLiga (con uno en juego), la Premier; y uno de Europa League; la Champions, mañana
+        val hoy = com.gonzalo.iptv.futbol.Hora.diaDe(ahora)
+        fun aHoy(l: List<Partido>, mas: Long = 0) = l.map { p -> val d = hoy.toEpochDay() - com.gonzalo.iptv.futbol.Hora.diaDe(p.inicio).toEpochDay() + mas; p.copy(inicio = p.inicio + d * 24 * h) }
+        val delDia = aHoy(Espn.partidos(json("dia_laliga_vivo.json"), "esp.1").filter { it.visitante.id != "86" }) + aHoy(Espn.partidos(json("dia_premier.json"), "eng.1")) +
+            aHoy(Espn.partidos(json("dia_champions.json"), "uefa.champions"), 1) + aHoy(Espn.partidos(json("dia_naciones.json"), "uefa.nations"), 2) +
+            Partido("906", "uefa.europa", hoy.atTime(18, 45).atZone(com.gonzalo.iptv.futbol.Hora.ESPANA).toInstant().toEpochMilli(), escudo(ctx, Equipo("244", "Real Betis", "Betis", "BET")), Equipo("167", "Olympique Lyon", "Lyon", "LYO"), estadio = "La Cartuja")
         val fichaVivo = ficha.copy(partido = clasico, eventos = ficha.eventos.filter { e -> (e.minuto.takeWhile { it.isDigit() }.toIntOrNull() ?: 0) <= 67 && e.tipo != com.gonzalo.iptv.futbol.TipoEvento.FINAL }.map { e ->
             when (e.equipo) { "83" -> e; "96" -> e.copy(equipo = "1068"); else -> e }
         }, alineaciones = ficha.alineaciones.map { a -> if (a.equipo.id == "83") a.copy(equipo = bar) else a.copy(equipo = atm) }.sortedBy { if (it.equipo.id == atm.id) 0 else 1 },
@@ -82,7 +88,10 @@ object FutbolDeMentira {
         }
         return Futbol.Fijo(
             equipos = listOf(bar to "esp.1", esp to "uefa.nations"), rivales = listOf(rma to "esp.1"), grupos = grupos, partidos = partidos,
-            fichas = mapOf("901" to fichaVivo) + jugados.associate { it.id to ficha.copy(partido = it) },
+            fichas = mapOf("901" to fichaVivo.copy(caraACara = Espn.ficha(json("ficha_cara_a_cara.json"), "esp.1").caraACara.map { q -> q.copy(local = if (q.local.id == "83") bar else atm, visitante = if (q.visitante.id == "83") bar else atm) })) +
+                jugados.associate { it.id to ficha.copy(partido = it) },
+            partidosDia = delDia,
+            plantillas = mapOf("83" to Espn.plantilla(json("plantilla.json"))),
             clasificaciones = mapOf("esp.1" to Espn.clasificacion(json("clasificacion.json"), "esp.1").let { c -> c.copy(tablas = c.tablas.map { (n, fs) -> n to fs.map { f -> when (f.equipo.id) { "83" -> f.copy(equipo = bar); "86" -> f.copy(equipo = rma); "1068" -> f.copy(equipo = atm); else -> f } } }) }),
             lideres = mapOf("esp.1" to Espn.lideres(json("goleadores.json"), "esp.1")),
             equiposDe = mapOf("esp.1" to Espn.equipos(json("equipos.json")), "uefa.nations" to Espn.equipos(json("selecciones_equipos.json"))),

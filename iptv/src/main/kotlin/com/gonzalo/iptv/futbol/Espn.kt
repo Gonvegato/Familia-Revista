@@ -41,6 +41,7 @@ class Espn(private val pedir: (url: String, edad: Long) -> String) : FuenteFutbo
         fun urlLideres(liga: String) = "$SITIO/$liga/statistics?$IDIOMA"
         fun urlFicha(liga: String, partido: String) = "$SITIO/$liga/summary?event=$partido&$IDIOMA"
         fun urlEquipos(liga: String) = "$SITIO/$liga/teams?$IDIOMA"
+        fun urlPlantilla(liga: String, equipo: String) = "$SITIO/$liga/teams/$equipo/roster?$IDIOMA"
 
         // ------------------------------------------------------------ leer las respuestas (sin red: se prueban con respuestas de verdad)
 
@@ -113,6 +114,33 @@ class Espn(private val pedir: (url: String, edad: Long) -> String) : FuenteFutbo
             return Lideres(liga, de("goalsLeaders"), de("assistsLeaders"))
         }
 
+        /** Un partido de la serie entre los dos (`seasonseries[].events[]`): sus equipos, el marcador y cómo acabó. */
+        private fun deSerie(e: Map<String, Any?>, liga: String): Partido? {
+            val cs = e["competitors"].l().map { it.m() }
+            val loc = cs.firstOrNull { it["homeAway"] == "home" } ?: return null
+            val vis = cs.firstOrNull { it["homeAway"] == "away" } ?: return null
+            val st = e["statusType"].m()
+            val estado = Textos.estado(st["name"].txt(), st["state"].txt())
+            return Partido(e["id"].txt(), e["league"].m()["slug"].txt().ifBlank { liga }, Hora.lee(e["date"].txt()), equipo(loc["team"].m()), equipo(vis["team"].m()), estado,
+                if (estado.terminado) entero(loc["score"]) else null, if (estado.terminado) entero(vis["score"]) else null)
+        }
+
+        /** Uno de los últimos de [eq] (`lastFiveGames[].events[]`: el rival, quién jugó en casa y el marcador). */
+        private fun deUltimo(e: Map<String, Any?>, eq: Equipo, liga: String): Partido? {
+            val rival = equipo(e["opponent"].m())
+            val enCasa = e["homeTeamId"].txt() == eq.id
+            val gl = entero(e["homeTeamScore"]); val gv = entero(e["awayTeamScore"])
+            // (la competición no viene con su clave, solo con su nombre: «LALIGA», «UEFA Champions League»)
+            val comp = Competiciones.TODAS.firstOrNull { it.nombre.equals(e["leagueName"].txt(), true) || it.corto.equals(e["leagueAbbreviation"].txt(), true) }?.slug ?: liga
+            return Partido(e["id"].txt(), comp, Hora.lee(e["gameDate"].txt()), if (enCasa) eq else rival, if (enCasa) rival else eq, Estado.FINAL, gl, gv)
+        }
+
+        /** La plantilla de un equipo (`…/teams/{id}/roster`): nombre, dorsal y posición (en español: «POR», «DEF», «MED», «DEL»). */
+        fun plantilla(json: Any?): List<Jugador> = json.m()["athletes"].l().map { it.m() }.map { a ->
+            val pos = when (a["position"].m()["name"].txt().lowercase()) { "goalkeeper" -> "POR"; "defender" -> "DEF"; "midfielder" -> "MED"; "forward" -> "DEL"; else -> "" }
+            Jugador(a["displayName"].txt(), a["jersey"].txt(), pos)
+        }.filter { it.nombre.isNotBlank() }.sortedWith(compareBy({ listOf("POR", "DEF", "MED", "DEL", "").indexOf(it.posicion) }, { it.dorsal.toIntOrNull() ?: 99 }))
+
         fun equipos(json: Any?): List<Equipo> = json.m()["sports"].l().flatMap { s -> s.m()["leagues"].l().flatMap { lg -> lg.m()["teams"].l().map { equipo(it.m()["team"].m()) } } }
             .filter { it.id.isNotBlank() }.sortedBy { java.text.Normalizer.normalize(it.nombre, java.text.Normalizer.Form.NFD).lowercase() }
 
@@ -147,7 +175,14 @@ class Espn(private val pedir: (url: String, edad: Long) -> String) : FuenteFutbo
                 val a = sl[k]; val b = sv[k]
                 if (a == null && b == null) null else Cifra(nombre, Textos.cifra(k, a.orEmpty()), Textos.cifra(k, b.orEmpty()))
             }
-            return FichaPartido(p, eventos, alineaciones, cifras)
+            // Cara a cara (la serie «head-to-head») y los últimos de cada uno («lastFiveGames»)
+            val h2h = r["seasonseries"].l().map { it.m() }.filter { it["type"] == "head-to-head" }.flatMap { it["events"].l() }.mapNotNull { runCatching { deSerie(it.m(), p.liga) }.getOrNull() }
+                .distinctBy { it.id }.sortedByDescending { it.inicio }
+            val ultimos = r["lastFiveGames"].l().map { it.m() }.associate { x ->
+                val eq = equipo(x["team"].m())
+                eq.id to x["events"].l().mapNotNull { runCatching { deUltimo(it.m(), eq, p.liga) }.getOrNull() }.sortedByDescending { it.inicio }
+            }.filterKeys { it.isNotBlank() }
+            return FichaPartido(p, eventos, alineaciones, cifras, h2h, ultimos)
         }
 
         /** Pide [url] a [red] y devuelve el texto (JSON). Lanza [IptvError] sin la dirección si no se puede. */
@@ -175,4 +210,5 @@ class Espn(private val pedir: (url: String, edad: Long) -> String) : FuenteFutbo
     override fun lideres(liga: String, edad: Long) = lideres(json(urlLideres(liga), edad), liga)
     override fun ficha(liga: String, partido: String, edad: Long) = ficha(json(urlFicha(liga, partido), edad), liga)
     override fun equipos(liga: String, edad: Long) = equipos(json(urlEquipos(liga), edad))
+    override fun plantilla(liga: String, equipo: String, edad: Long) = plantilla(json(urlPlantilla(liga, equipo), edad))
 }

@@ -21,6 +21,12 @@ object Competiciones {
     val COPA = Competicion("esp.copa_del_rey", "Copa del Rey", "Copa")
     val SUPERCOPA = Competicion("esp.super_cup", "Supercopa de España", "Supercopa")
     val EUROPA = Competicion("uefa.europa", "Europa League", "Europa League")
+    val CONFERENCE = Competicion("uefa.europa.conf", "Conference League", "Conference")
+    val PREMIER = Competicion("eng.1", "Premier League", "Premier")
+    val SERIE_A = Competicion("ita.1", "Serie A", "Serie A")
+    val BUNDESLIGA = Competicion("ger.1", "Bundesliga", "Bundesliga")
+    val LIGUE1 = Competicion("fra.1", "Ligue 1", "Ligue 1")
+    val HYPERMOTION = Competicion("esp.2", "LaLiga Hypermotion", "Hypermotion")
     // Las de selecciones (en ESPN, el mismo id de equipo en todas: España es 164)
     val NACIONES = Competicion("uefa.nations", "Liga de Naciones", "Nations League")
     val MUNDIAL = Competicion("fifa.world", "Mundial", "Mundial")
@@ -30,16 +36,29 @@ object Competiciones {
     val AMISTOSOS = Competicion("fifa.friendly", "Amistosos", "Amistoso")
 
     /** Las de clubes, en este orden se enseñan (las clasificaciones, los goleadores, los equipos para elegir). */
-    val CLUBES = listOf(LALIGA, CHAMPIONS, COPA, SUPERCOPA, EUROPA)
+    val CLUBES = listOf(LALIGA, CHAMPIONS, EUROPA, CONFERENCE, PREMIER, SERIE_A, BUNDESLIGA, LIGUE1, COPA, SUPERCOPA, HYPERMOTION)
+    /** Las ligas (de cada equipo de club se pide la suya y, además, las copas y las europeas: [para]). */
+    val LIGAS = listOf(LALIGA, PREMIER, SERIE_A, BUNDESLIGA, LIGUE1, HYPERMOTION)
+    private val COPAS_Y_EUROPA = listOf(CHAMPIONS, EUROPA, CONFERENCE, COPA, SUPERCOPA)
     /** Las de selecciones: de un equipo de selecciones se piden estas. */
     val SELECCIONES = listOf(NACIONES, MUNDIAL, CLASIF_MUNDIAL, EURO, CLASIF_EURO, AMISTOSOS)
     val TODAS = CLUBES + SELECCIONES
+    /**
+     * El orden de serie de los partidos del día (todas las que se piden, comprobadas en ESPN): LaLiga, las europeas, las grandes ligas,
+     * las copas de aquí, las de selecciones y, al final, LaLiga Hypermotion. Tú lo cambias y escondes las que quieras (Ajustes → Fútbol).
+     */
+    val DEL_DIA = listOf(LALIGA, CHAMPIONS, EUROPA, CONFERENCE, PREMIER, SERIE_A, BUNDESLIGA, LIGUE1, COPA, SUPERCOPA, NACIONES, CLASIF_MUNDIAL, CLASIF_EURO, MUNDIAL, EURO, AMISTOSOS, HYPERMOTION)
     /** Las que tienen clasificación (las de eliminatorias, no). */
-    val CON_TABLA = listOf(LALIGA, CHAMPIONS, EUROPA)
+    val CON_TABLA = listOf(LALIGA, CHAMPIONS, EUROPA, CONFERENCE, PREMIER, SERIE_A, BUNDESLIGA, LIGUE1, HYPERMOTION, NACIONES)
+    fun tieneTabla(slug: String) = CON_TABLA.any { it.slug == slug }
     fun de(slug: String): Competicion = TODAS.firstOrNull { it.slug == slug } ?: Competicion(slug, slug)
     fun esDeSelecciones(slug: String) = SELECCIONES.any { it.slug == slug }
     /** Las competiciones donde se buscan los partidos de un equipo elegido en [liga] (de clubes o de selecciones). */
-    fun para(equipoElegidoEn: String): List<Competicion> = if (esDeSelecciones(equipoElegidoEn)) SELECCIONES else CLUBES
+    fun para(equipoElegidoEn: String): List<Competicion> = if (esDeSelecciones(equipoElegidoEn)) SELECCIONES
+        else (listOf(de(equipoElegidoEn)).filter { c -> LIGAS.any { it.slug == c.slug } }.ifEmpty { listOf(LALIGA) } + COPAS_Y_EUROPA).distinct()
+
+    /** Tu orden de las competiciones del día ([guardado], slugs) con las que falten detrás, en el de serie. */
+    fun ordenadas(guardado: List<String>): List<Competicion> = (guardado.mapNotNull { g -> DEL_DIA.firstOrNull { it.slug == g } } + DEL_DIA).distinct()
 }
 
 /** Un equipo: su id en la fuente, su nombre, el corto (para lo estrecho), las siglas y su escudo (una imagen pública). */
@@ -115,7 +134,13 @@ data class Alineacion(val equipo: Equipo, val formacion: String, val titulares: 
 data class Cifra(val nombre: String, val local: String, val visitante: String)
 
 /** La ficha de un partido: el partido (con el marcador al día), lo que ha pasado, las alineaciones y las cifras. */
-data class FichaPartido(val partido: Partido, val eventos: List<Evento>, val alineaciones: List<Alineacion>, val cifras: List<Cifra>)
+data class FichaPartido(
+    val partido: Partido, val eventos: List<Evento>, val alineaciones: List<Alineacion>, val cifras: List<Cifra>,
+    /** Los últimos enfrentamientos entre los dos (el más reciente primero). */
+    val caraACara: List<Partido> = emptyList(),
+    /** Los últimos partidos de cada uno (id del equipo → partidos, el más reciente primero). */
+    val ultimos: Map<String, List<Partido>> = emptyMap(),
+)
 
 /** Una fila de la clasificación. [nota]: lo que da ese puesto («Liga de Campeones», «Descenso»), si lo dice la fuente. */
 data class Fila(val puesto: Int, val equipo: Equipo, val jugados: Int, val ganados: Int, val empatados: Int, val perdidos: Int, val aFavor: Int, val enContra: Int, val diferencia: Int, val puntos: Int, val nota: String = "")
@@ -140,6 +165,7 @@ interface FuenteFutbol {
     fun lideres(liga: String, edad: Long = 0L): Lideres
     fun ficha(liga: String, partido: String, edad: Long = 0L): FichaPartido
     fun equipos(liga: String, edad: Long = 0L): List<Equipo>
+    fun plantilla(liga: String, equipo: String, edad: Long = 0L): List<Jugador>
 }
 
 /** Las horas, siempre en la de España (Europe/Madrid), como las dicen las teles: «Hoy · 21:00», «Mañana · 18:30», «Dom 8 nov · 21:00». */
@@ -166,6 +192,22 @@ object Hora {
     }
 
     fun diaYHora(ms: Long, ahora: Long): String = "${diaRelativo(ms, ahora)} · ${reloj(ms)}"
+
+    /** La tira de días de la portada: desde [antes] días antes de hoy hasta [despues] después (en España). */
+    fun tira(ahora: Long, antes: Int = 2, despues: Int = 7): List<LocalDate> { val hoy = diaDe(ahora); return (-antes..despues).map { hoy.plusDays(it.toLong()) } }
+
+    /** «Ayer», «Hoy», «Mañana» o «Dom 8» (para la tira de días). */
+    fun nombreDia(d: LocalDate, ahora: Long): String {
+        val hoy = diaDe(ahora)
+        return when (d) { hoy -> "Hoy"; hoy.plusDays(1) -> "Mañana"; hoy.minusDays(1) -> "Ayer"; else -> "${DIAS[d.dayOfWeek.value - 1]} ${d.dayOfMonth}" }
+    }
+
+    /** «Sábado 7 de noviembre». */
+    fun largo(d: LocalDate): String {
+        val dias = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+        val meses = listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+        return "${dias[d.dayOfWeek.value - 1]} ${d.dayOfMonth} de ${meses[d.monthValue - 1]}"
+    }
 
     /** El día de España de [ms] (para pedir los marcadores de ese día). */
     fun diaDe(ms: Long): LocalDate = enEspana(ms).toLocalDate()
@@ -344,4 +386,55 @@ object Orden {
     /** ¿Es un partido de uno de los tuyos contra uno de tus rivales? */
     fun contraRival(p: Partido, mios: Collection<String>, rivales: Collection<String>) =
         (p.local.id in mios && p.visitante.id in rivales) || (p.visitante.id in mios && p.local.id in rivales)
+}
+
+/** Una sección de los partidos del día: «Tus equipos» ([competicion] null) o una competición. */
+data class Seccion(val competicion: Competicion?, val partidos: List<Partido>) {
+    val titulo: String get() = competicion?.nombre ?: "Tus equipos"
+    val clave: String get() = competicion?.slug ?: "tus"
+}
+
+/** Los partidos de un día, como se enseñan. */
+object Dia {
+    /**
+     * Agrupa los partidos de un día: primero «Tus equipos» (los de tus equipos y tus selecciones, aunque sean de una competición que
+     * escondes), luego cada competición en tu [orden] (sin las [ocultas] ni las vacías); dentro, por hora. Un partido sale una vez: si es
+     * de los tuyos, en «Tus equipos». [dia]: solo los de ese día (en España); null, todos (los de un marcador del día de ESPN, que
+     * cuenta los días a su manera: un amistoso a las 2 de la madrugada de aquí sale en el día de antes, y no se pierde).
+     */
+    fun agrupa(l: Collection<Partido>, dia: LocalDate?, mios: Collection<String>, orden: List<Competicion>, ocultas: Set<String> = emptySet()): List<Seccion> {
+        val delDia = l.filter { (dia == null || Hora.diaDe(it.inicio) == dia) && it.estado != Estado.CANCELADO }.groupBy { it.id }.map { (_, v) -> v.maxBy { if (it.estado.enDirecto) 3 else if (it.estado.terminado) 2 else 0 } }
+        val tuyos = delDia.filter { p -> mios.any { p.juega(it) } }.sortedBy { it.inicio }
+        val resto = delDia - tuyos.toSet()
+        val r = ArrayList<Seccion>()
+        if (tuyos.isNotEmpty()) r += Seccion(null, tuyos)
+        for (c in orden) {
+            if (c.slug in ocultas) continue
+            val ps = resto.filter { it.liga == c.slug }.sortedWith(compareBy({ it.inicio }, { it.local.nombre }))
+            if (ps.isNotEmpty()) r += Seccion(c, ps)
+        }
+        return r
+    }
+
+    /** Lo que se pone en la columna de la hora: «21:00», el minuto («67'»), «DESC», «FINAL», «APLAZ.». */
+    fun cuando(p: Partido): String = when {
+        p.estado == Estado.DESCANSO -> "DESC"
+        p.estado.enDirecto -> p.reloj.ifBlank { "EN JUEGO" }
+        p.estado.terminado -> "FINAL"
+        p.estado == Estado.APLAZADO -> "APLAZ."
+        p.estado == Estado.SUSPENDIDO -> "SUSP."
+        else -> Hora.reloj(p.inicio)
+    }
+
+    /** Cuánto puede tener lo guardado de un día: lo pasado casi no cambia; hoy, al minuto si hay algo en juego; lo que viene, cada hora. */
+    fun edad(dia: LocalDate, ahora: Long, hayEnJuego: Boolean): Long {
+        val hoy = Hora.diaDe(ahora)
+        return when {
+            dia.isBefore(hoy.minusDays(1)) -> 30L * 86_400_000L
+            dia.isBefore(hoy) -> 6L * 3_600_000L
+            dia == hoy && hayEnJuego -> 60_000L
+            dia == hoy -> 10L * 60_000L
+            else -> 3_600_000L
+        }
+    }
 }

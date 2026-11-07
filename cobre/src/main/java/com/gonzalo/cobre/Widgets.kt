@@ -63,7 +63,7 @@ import kotlin.math.sqrt
  */
 
 /** Los widgets que hay. */
-enum class WTipo { MARCA, MARCA_PAPEL, PROXIMO }
+enum class WTipo { MARCA, MARCA_PAPEL, PROXIMO, HOY }
 
 abstract class WBase(private val tipo: WTipo) : AppWidgetProvider() {
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) = Widgets.pintar(ctx, tipo, ids, goAsync())
@@ -82,6 +82,7 @@ abstract class WBase(private val tipo: WTipo) : AppWidgetProvider() {
 class WMarca : WBase(WTipo.MARCA)
 class WMarcaPapel : WBase(WTipo.MARCA_PAPEL)
 class WProximo : WBase(WTipo.PROXIMO)
+class WHoy : WBase(WTipo.HOY)
 
 /** Una zona que se puede tocar (en dp, desde la esquina de arriba a la izquierda); con [celdas], una rejilla. */
 class Zona(
@@ -259,6 +260,13 @@ class WDatos(val ctx: Context) {
         return p to AjustesFutbol.gruposDe(ctx, p.liga)
     }
     val hayEquipos: Boolean get() = AjustesFutbol.equipos(ctx).isNotEmpty()
+
+    /** Los partidos de hoy (de lo guardado), por secciones: tus equipos y tus competiciones, en tu orden. */
+    fun hoy(): List<com.gonzalo.iptv.futbol.Seccion> {
+        Futbol.cargar(ctx)
+        val hoy = com.gonzalo.iptv.futbol.Hora.diaDe(System.currentTimeMillis())
+        return com.gonzalo.iptv.futbol.Dia.agrupa(Futbol.diaGuardado(ctx, hoy), null, AjustesFutbol.equipos(ctx).map { it.first.id }, AjustesFutbol.competiciones(ctx), AjustesFutbol.ocultas(ctx))
+    }
 }
 
 object Widgets {
@@ -275,6 +283,7 @@ object Widgets {
         WTipo.MARCA -> WMarca::class.java
         WTipo.MARCA_PAPEL -> WMarcaPapel::class.java
         WTipo.PROXIMO -> WProximo::class.java
+        WTipo.HOY -> WHoy::class.java
     }
 
     @Synchronized fun fuente(ctx: Context, id: Int): Typeface =
@@ -383,6 +392,11 @@ object Widgets {
             } finally { res?.finish() }
             // «Próximo partido»: después de pintar lo guardado, se pide lo que haya caducado (y si cambia algo, se vuelve a pintar)
             if (tipo == WTipo.PROXIMO) runCatching { if (Futbol.refrescaSiToca(app)) ids.forEach { id -> runCatching { pintarUno(app, tipo, id) } } }
+            // «Hoy»: lo mismo con los partidos de hoy
+            if (tipo == WTipo.HOY) runCatching {
+                val hoy = com.gonzalo.iptv.futbol.Hora.diaDe(System.currentTimeMillis())
+                if (Futbol.fijo == null && Futbol.dia(app, hoy, fresco = true) != Futbol.diaGuardado(app, hoy)) ids.forEach { id -> runCatching { pintarUno(app, tipo, id) } }
+            }
         }
     }
 
@@ -423,6 +437,7 @@ object Widgets {
         WTipo.MARCA -> 330f to 80f
         WTipo.MARCA_PAPEL -> 330f to 165f
         WTipo.PROXIMO -> 330f to 170f
+        WTipo.HOY -> 330f to 250f
     }
 
     /** Píxeles por dp del dibujo: los de la pantalla, sin pasarse de memoria (Android limita lo que pesa un widget). */
@@ -454,6 +469,7 @@ object Widgets {
             WTipo.MARCA -> marca(d, w, h)
             WTipo.MARCA_PAPEL -> marcaPapel(d, w, h)
             WTipo.PROXIMO -> proximo(d, id, w, h)
+            WTipo.HOY -> hoy(d, w, h)
         }
     }
 
@@ -589,6 +605,51 @@ object Widgets {
                 val t = capa(txt.uppercase(ES), tp(fNegrita, 9.5f, if (lleno0) papel else tinta, 0.1f), anchoB - 10f, 1, 1f, Layout.Alignment.ALIGN_CENTER)
                 pon(t, bx + 5f, by + (altoBoton - t.height) / 2)
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ Hoy
+
+    /**
+     * «Hoy»: los partidos de hoy de tus equipos y de tus competiciones (en tu orden), en líneas: la hora (o el minuto, en acento), los
+     * equipos y el marcador; el nombre de cada competición encima de los suyos. Los que no caben, «y n más». Un toque abre la portada.
+     */
+    private fun hoy(d: WDatos, w: Float, h: Float): Pagina {
+        val ctx = d.ctx
+        val secs = d.hoy()
+        val zona = listOf(Zona(0f, 0f, w, h, abrirEn(ctx, Destino.Portada, 5), "Abrir los partidos de hoy"))
+        if (secs.isEmpty()) return Pagina(zona, vacio(ctx, "Hoy", "Sin partidos hoy", "En tus competiciones no se juega nada hoy (o aún no se ha mirado: abre Nut).", w, h).dibujo)
+        val ahora = System.currentTimeMillis()
+        val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()
+        return Pagina(zona) {
+            fondo()
+            val pad = 14f
+            val dia = com.gonzalo.iptv.futbol.Hora.diaRelativo(ahora, ahora) + " · " + com.gonzalo.iptv.futbol.Hora.dia(ahora)
+            seccion(dia, pad, pad, w - 2 * pad)
+            var y = pad + 20f
+            val fila = 17f
+            val total = secs.sumOf { it.partidos.size }
+            var puestos = 0
+            loop@ for (s in secs) {
+                if (y + 12f + fila > h - pad - 12f) break
+                y += 4f
+                ante(s.titulo, pad, y, w - 2 * pad, if (s.competicion == null) acento else gris, 8f)
+                y += 12f
+                for (p in s.partidos) {
+                    if (y + fila > h - pad - (if (total - puestos > 1) 12f else 0f)) break@loop
+                    val vivo = p.estado.enDirecto
+                    val t = capa(com.gonzalo.iptv.futbol.Dia.cuando(p), tp(fNegrita, 9.5f, if (vivo) acento else if (p.estado.terminado) gris else tinta), 40f, 1)
+                    pon(t, pad, y + 3f)
+                    val marcador = if (p.golesLocal != null && p.golesVisitante != null) "${p.golesLocal}-${p.golesVisitante}" else ""
+                    val anchoM = if (marcador.isBlank()) 0f else 30f
+                    val mio = mios.any { p.juega(it) }
+                    val n = capa("${p.local.corto} – ${p.visitante.corto}", tp(if (mio) fNegrita else fTexto, 11.5f, tinta), w - 2 * pad - 44f - anchoM, 1)
+                    pon(n, pad + 44f, y + 1.5f)
+                    if (marcador.isNotBlank()) pon(capa(marcador, tp(fTitular, 13f, if (vivo) acento else tinta), anchoM, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - anchoM, y)
+                    y += fila; puestos++
+                }
+            }
+            if (total > puestos) ante("y ${total - puestos} más", pad, h - pad - 10f, w - 2 * pad, gris, 8f, Layout.Alignment.ALIGN_OPPOSITE)
         }
     }
 

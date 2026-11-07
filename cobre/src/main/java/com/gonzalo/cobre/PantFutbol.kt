@@ -82,7 +82,7 @@ fun rememberPartidos(): List<Partido>? {
 
 /** Algo que se lee una vez (de lo guardado) y luego se pone al día ([leer] con `fresco`). */
 @Composable
-private fun <T> rememberDato(vararg claves: Any?, leer: (Boolean) -> T?): T? {
+fun <T> rememberDato(vararg claves: Any?, leer: (Boolean) -> T?): T? {
     val r by produceState<T?>(null, *claves, Futbol.version) {
         value = withContext(Dispatchers.IO) { leer(false) }
         withContext(Dispatchers.IO) { leer(true) }?.let { value = it }
@@ -136,7 +136,7 @@ fun marcaDe(p: Partido): String? {
 
 /** Un equipo y sus goles, en una línea (el nombre, en hasta dos líneas: con la letra grande no se corta). Un rival, en cursiva. */
 @Composable
-private fun LineaEquipo(e: Equipo, goles: Int?, tam: Dp, letra: Int, ganador: Boolean, mio: Boolean, rival: Boolean = false) {
+fun LineaEquipo(e: Equipo, goles: Int?, tam: Dp, letra: Int, ganador: Boolean, mio: Boolean, rival: Boolean = false) {
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Escudo(e, tam)
         Spacer(Modifier.width(10.dp))
@@ -291,13 +291,12 @@ fun PantFutbol(alVolver: () -> Unit, alIr: (Destino) -> Unit, alFicha: (Ficha) -
     var pestana by rememberSaveable { mutableIntStateOf(0) }
     val m = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = m)) {
-        CabeceraSeccion("Fútbol", "Tus equipos", alVolver) { EnlaceRevista("Ajustes", acento = true) { alIr(Destino.AjustesFutbol) } }
-        PestanasRevista(listOf("Partidos", "Clasificación", "Goleadores"), pestana) { pestana = it }
+        CabeceraSeccion("Tus equipos", "Fútbol", alVolver) { EnlaceRevista("Ajustes", acento = true) { alIr(Destino.AjustesFutbol) } }
+        PestanasRevista(listOf("Partidos", "Equipos"), pestana) { pestana = it }
         Column(Modifier.widthIn(max = 900.dp)) {
             when (pestana) {
                 0 -> SeccionPartidos(alIr, alFicha)
-                1 -> SeccionClasificacion()
-                else -> SeccionGoleadores()
+                else -> SeccionEquipos(alIr, alFicha)
             }
         }
         PieFuente()
@@ -347,24 +346,44 @@ private fun SeccionPartidos(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     }
 }
 
+/** «Equipos»: los tuyos y tus rivales; un toque abre su página. */
 @Composable
-private fun SeccionClasificacion() {
+private fun SeccionEquipos(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     val ctx = LocalContext.current
-    val comps = Competiciones.CON_TABLA
-    var i by rememberSaveable { mutableIntStateOf(0) }
-    Spacer(Modifier.height(8.dp))
-    FiltrosRevista(comps.map { it.corto }, i) { i = it }
-    val liga = comps[i].slug
+    EspejoCuenta.version
+    listOf("Tus equipos" to AjustesFutbol.equipos(ctx), "Tus rivales" to AjustesFutbol.rivales(ctx)).forEach { (t, l) ->
+        Antetitulo(t, Modifier.padding(top = 18.dp, bottom = 4.dp)); Filete(1.dp)
+        if (l.isEmpty()) Nota(if (t == "Tus rivales") "Sin rivales todavía." else "Aún no sigues a ningún equipo.", Modifier.padding(top = 8.dp))
+        l.forEach { (e, liga) ->
+            Row(Modifier.fillMaxWidth().tocable { alFicha(Ficha.DeEquipo(e, liga)) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Escudo(e, 34.dp); Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(e.nombre, color = Charcoal, fontFamily = Display, fontStyle = if (t == "Tus rivales") FontStyle.Italic else null, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 23.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Etiqueta(if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(liga).nombre)
+                }
+                Text("→", color = Acento, fontFamily = Display, fontSize = 20.sp)
+            }
+            Filete(1.dp, Line)
+        }
+    }
+    MagLink("Elegir equipos y rivales", accent = true, modifier = Modifier.padding(top = 10.dp)) { alIr(Destino.AjustesFutbol) }
+}
+
+/** La clasificación de [liga] (leída de lo guardado y luego al día): tus equipos en acento, tus rivales marcados y [resaltar] destacados. */
+@Composable
+fun ClasificacionDe(liga: String, resaltar: Set<String> = emptySet()) {
+    val ctx = LocalContext.current
     val c = rememberDato(liga) { f -> Futbol.clasificacion(ctx, liga, f) }
     val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()
     val riv = AjustesFutbol.rivales(ctx).map { it.first.id }.toSet()
+    if (!Competiciones.tieneTabla(liga)) { Nota("Esta competición se juega por eliminatorias: no tiene clasificación.", Modifier.padding(top = 12.dp)); return }
     if (c == null) { Nota("Leyendo la clasificación…", Modifier.padding(top = 12.dp)); return }
-    TablaClasificacion(c, mios, riv)
+    TablaClasificacion(c, mios, riv, resaltar)
 }
 
 /** La tabla: los tuyos en acento; tus rivales, en cursiva con su marca «RIVAL». */
 @Composable
-private fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set<String> = emptySet()) {
+fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set<String> = emptySet(), resaltar: Set<String> = emptySet()) {
     if (c.tablas.isEmpty()) { Nota("Esta competición aún no tiene clasificación.", Modifier.padding(top = 12.dp)); return }
     @Composable fun Num(t: String, w: Dp, negrita: Boolean = false, color: Color = Charcoal) =
         Text(t, color = color, fontFamily = Body, fontSize = 14.sp, fontWeight = if (negrita) FontWeight.Black else FontWeight.Medium, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(w))
@@ -381,7 +400,7 @@ private fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set
             // (una raya fina donde cambia lo que da el puesto: Champions, Europa, descenso…)
             if (f.nota != nota && nota.isNotEmpty()) Filete(1.dp, Charcoal)
             nota = f.nota
-            Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().let { if (f.equipo.id in resaltar) it.background(Sand) else it }.padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("${f.puesto}", color = if (mio) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(28.dp))
                 Escudo(f.equipo, 22.dp)
                 Spacer(Modifier.width(8.dp))
@@ -402,14 +421,10 @@ private fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set
     }
 }
 
+/** Goleadores y asistentes de [liga]. */
 @Composable
-private fun SeccionGoleadores() {
+fun GoleadoresDe(liga: String) {
     val ctx = LocalContext.current
-    val comps = Competiciones.CON_TABLA + Competiciones.COPA
-    var i by rememberSaveable { mutableIntStateOf(0) }
-    Spacer(Modifier.height(8.dp))
-    FiltrosRevista(comps.map { it.corto }, i) { i = it }
-    val liga = comps[i].slug
     val l: Lideres? = rememberDato(liga) { f -> Futbol.lideres(ctx, liga, f) }
     val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()
     if (l == null) { Nota("Leyendo los goleadores…", Modifier.padding(top = 12.dp)); return }
@@ -441,7 +456,7 @@ private fun SeccionGoleadores() {
  * día sola (cada 40 segundos, solo mientras está abierta).
  */
 @Composable
-fun PantFichaPartido(p0: Partido, alCerrar: () -> Unit, alConfigurar: () -> Unit) {
+fun PantFichaPartido(p0: Partido, alCerrar: () -> Unit, alConfigurar: () -> Unit, alFicha: (Ficha) -> Unit = {}) {
     val ctx = LocalContext.current
     val f by produceState<FichaPartido?>(null, p0.id) {
         value = withContext(Dispatchers.IO) { Futbol.ficha(ctx, p0, fresco = false) }
@@ -461,17 +476,21 @@ fun PantFichaPartido(p0: Partido, alCerrar: () -> Unit, alConfigurar: () -> Unit
             Column(Modifier.widthIn(max = 900.dp)) {
                 Text(p.competicion.nombre.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
                 Filete(3.dp, modifier = Modifier.padding(top = 4.dp))
-                Marcador(p, ahora)
+                Marcador(p, ahora) { e -> alFicha(Ficha.DeEquipo(e, p.liga)) }
                 Filete(1.dp)
-                if (!p.estado.terminado && p.estado != Estado.CANCELADO) BotonesCanal(p, alConfigurar, Modifier.padding(top = 14.dp).focoInicial(p.id))
+                // Dónde verlo: justo debajo del marcador, bien visible
+                DondeVerlo(p)
                 Spacer(Modifier.height(10.dp))
-                PestanasRevista(listOf("Lo que pasa", "Alineaciones", "Cifras"), pestana) { pestana = it }
+                val pestanas = listOf("Lo que pasa", "Alineaciones", "Cifras", "Clasificación", "Cara a cara")
+                PestanasRevista(pestanas, pestana) { pestana = it }
                 val x = f
                 when {
+                    pestana == 3 -> ClasificacionDe(p.liga, setOf(p.local.id, p.visitante.id))
                     x == null -> Nota(if (p.estado == Estado.POR_JUGAR) "Aún no ha empezado." else "Leyendo la ficha…", Modifier.padding(top = 14.dp))
                     pestana == 0 -> Eventos(x)
                     pestana == 1 -> Alineaciones(x)
-                    else -> Cifras(x)
+                    pestana == 2 -> Cifras(x)
+                    else -> CaraACara(x) { q -> alFicha(Ficha.DePartido(q)) }
                 }
                 PieFuente()
             }
@@ -482,10 +501,10 @@ fun PantFichaPartido(p0: Partido, alCerrar: () -> Unit, alConfigurar: () -> Unit
 
 /** Los dos equipos, grandes, con el marcador (o la hora) en medio; debajo, cómo va y dónde se juega. */
 @Composable
-private fun Marcador(p: Partido, ahora: Long) {
+private fun Marcador(p: Partido, ahora: Long, alEquipo: (Equipo) -> Unit = {}) {
     val grande = esAncha()
     Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.Top) {
-        @Composable fun Lado(e: Equipo, mod: Modifier) = Column(mod, horizontalAlignment = Alignment.CenterHorizontally) {
+        @Composable fun Lado(e: Equipo, mod: Modifier) = Column(mod.tocable { alEquipo(e) }, horizontalAlignment = Alignment.CenterHorizontally) {
             Escudo(e, if (grande) 84.dp else 60.dp)
             Text(e.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
         }
@@ -614,6 +633,92 @@ private fun Cifras(f: FichaPartido) {
                 Spacer(Modifier.width(3.dp))
                 Box(Modifier.weight(maxOf(b, 0.001f)).fillMaxHeight().background(if (b > a) Acento else Line))
             }
+        }
+    }
+}
+
+/** «Cara a cara»: los últimos entre los dos y los últimos de cada uno. Un toque abre su ficha. */
+@Composable
+private fun CaraACara(f: FichaPartido, alAbrir: (Partido) -> Unit) {
+    val ctx = LocalContext.current
+    val ahora = System.currentTimeMillis()
+    val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()
+    val riv = AjustesFutbol.rivales(ctx).map { it.first.id }.toSet()
+    if (f.caraACara.isEmpty() && f.ultimos.isEmpty()) { Nota("Sin partidos anteriores entre los dos.", Modifier.padding(top = 14.dp)); return }
+    if (f.caraACara.isNotEmpty()) {
+        val p = f.partido
+        val gl = f.caraACara.count { q -> val g = q.golesLocal ?: 0; val v = q.golesVisitante ?: 0; (q.local.id == p.local.id && g > v) || (q.visitante.id == p.local.id && v > g) }
+        val gv = f.caraACara.count { q -> val g = q.golesLocal ?: 0; val v = q.golesVisitante ?: 0; (q.local.id == p.visitante.id && g > v) || (q.visitante.id == p.visitante.id && v > g) }
+        Antetitulo("Entre los dos", Modifier.padding(top = 18.dp, bottom = 2.dp))
+        Etiqueta("${p.local.corto} $gl · empates ${f.caraACara.size - gl - gv} · ${p.visitante.corto} $gv", Modifier.padding(bottom = 4.dp))
+        Filete(1.dp)
+        f.caraACara.forEach { q -> FilaPartido(q, ahora, mios, riv) { alAbrir(q) } }
+    }
+    f.ultimos.forEach { (id, l) ->
+        val e = if (id == f.partido.local.id) f.partido.local else if (id == f.partido.visitante.id) f.partido.visitante else return@forEach
+        if (l.isEmpty()) return@forEach
+        Antetitulo("Lo último de ${e.nombre}", Modifier.padding(top = 18.dp, bottom = 4.dp)); Filete(1.dp)
+        l.forEach { q -> FilaPartido(q, ahora, mios, riv) { alAbrir(q) } }
+    }
+}
+
+/**
+ * «Dónde verlo»: tus canales para la competición del partido (honesto: no se sabe si lo dan ahí; son los que tú has puesto). Por cada
+ * grupo con canal, «▶ VER EN MOVISTAR» (en la calidad que toque); un grupo sin canal, «ELEGIR CANAL» (se guarda en él y se pone); si la
+ * competición no tiene ningún grupo, «ELEGIR CANAL» crea el suyo con su nombre, se lo asigna, lo guarda y lo pone.
+ */
+@Composable
+fun DondeVerlo(p: Partido) {
+    val ctx = LocalContext.current
+    var v by remember { mutableIntStateOf(0) }
+    v; EspejoCuenta.version; Futbol.version
+    val ambito = rememberCoroutineScope()
+    val ops = AjustesFutbol.donde(ctx, p.liga)
+    var eligiendo by remember { mutableStateOf<com.gonzalo.iptv.futbol.Donde?>(null) }
+    fun pon(g: GrupoCanales, i: Int) = ambito.launch {
+        val aviso = withContext(Dispatchers.IO) { Futbol.pon(ctx, g, i) }
+        if (aviso != null) Toast.makeText(ctx, aviso, Toast.LENGTH_LONG).show()
+    }
+    Column(Modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Antetitulo("Dónde verlo")
+        Text(com.gonzalo.iptv.futbol.DondeVer.titulo(p.liga), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+        if (p.estado.terminado) { Nota("El partido ya ha terminado."); return@Column }
+        ops.forEachIndexed { k, o ->
+            val mod = Modifier.fillMaxWidth().padding(top = if (k == 0) 0.dp else 8.dp).let { if (k == 0) it.focoInicial(p.id) else it }
+            when (o) {
+                is com.gonzalo.iptv.futbol.Donde.Ver -> {
+                    AccionGrande(Icons.Rounded.PlayArrow, "Ver en ${o.grupo.boton}", mod, acento = k == 0 || ops.none { it is com.gonzalo.iptv.futbol.Donde.Ver && ops.indexOf(it) < k }) { pon(o.grupo, 0) }
+                    if (o.grupo.canales.size > 1) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Etiqueta("Otros canales de ${o.grupo.boton}:")
+                        (2..minOf(o.grupo.canales.size, 5)).forEach { n ->
+                            Text("$n", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false,
+                                modifier = Modifier.semantics { contentDescription = "${o.grupo.boton}, canal $n" }.tocable { pon(o.grupo, n - 1) }.padding(horizontal = 10.dp, vertical = 10.dp))
+                        }
+                    }
+                }
+                is com.gonzalo.iptv.futbol.Donde.Elegir -> {
+                    AccionGrande(null, "Elegir canal · ${o.grupo.boton}", mod, acento = false) { eligiendo = o }
+                    Etiqueta("«${o.grupo.nombre}» aún no tiene canales", Modifier.padding(top = 3.dp))
+                }
+                is com.gonzalo.iptv.futbol.Donde.Crear -> {
+                    AccionGrande(null, "Elegir canal", mod, acento = false) { eligiendo = o }
+                    Nota("Aún no tienes canales para ${o.nombre}: elige uno de tu lista y se queda guardado para sus partidos.", Modifier.padding(top = 6.dp))
+                }
+            }
+        }
+    }
+    eligiendo?.let { o ->
+        val nombre = when (o) { is com.gonzalo.iptv.futbol.Donde.Elegir -> o.grupo.nombre; is com.gonzalo.iptv.futbol.Donde.Crear -> o.nombre; else -> "" }
+        SelectorCanal("Un canal para «$nombre»", "Se queda guardado y se pone ya", alCerrar = { eligiendo = null }) { l, c, todos ->
+            val r = com.gonzalo.iptv.futbol.RefCanal(l.id, c.clave, c.nombre)
+            val e = com.gonzalo.iptv.futbol.CanalesFutbol.entradaCon(r, todos.map { com.gonzalo.iptv.futbol.RefCanal(l.id, it.clave, it.nombre) })
+            val g = when (o) {
+                is com.gonzalo.iptv.futbol.Donde.Elegir -> AjustesFutbol.guardaEn(ctx, o.grupo.id, e)
+                is com.gonzalo.iptv.futbol.Donde.Crear -> AjustesFutbol.creaGrupoPara(ctx, o.liga, e)
+                else -> null
+            }
+            eligiendo = null; v++
+            if (g != null) pon(g, 0)
         }
     }
 }

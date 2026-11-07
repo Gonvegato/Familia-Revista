@@ -48,6 +48,21 @@ fun SeccionFutbol() {
     ListaEquipos(rival = false) { v++ }
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     ListaEquipos(rival = true) { v++ }
+    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+
+    // ------------------------------------------------ las competiciones de los partidos del día
+    Antetitulo("Las competiciones del día", Modifier.padding(bottom = 4.dp))
+    Text("En este orden salen en la portada (después de tus equipos). Las que escondes no se piden ni salen, salvo los partidos de los tuyos.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+    val ocultas = AjustesFutbol.ocultas(ctx)
+    AjustesFutbol.competiciones(ctx).forEachIndexed { i, c ->
+        val oculta = c.slug in ocultas
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(c.nombre, color = if (oculta) Muted else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            if (i > 0) EnlaceRevista("↑", Modifier.padding(horizontal = 8.dp)) { cambia { AjustesFutbol.mueveCompeticion(ctx, c.slug, -1) } }
+            Interruptor(!oculta) { cambia { AjustesFutbol.alternaOculta(ctx, c.slug) } }
+        }
+        Filete(1.dp, Line)
+    }
 
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
 

@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.cobre"
         minSdk = 29
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.6.0"
+        versionCode = 9
+        versionName = "0.7.0"
         // Móviles, tabletas y teles: muchas teles y cajas de Android TV (también algunas con Google TV) van con Android de 32 bits, así que
         // además del de 64 va el de 32 (la única biblioteca nativa es la del sonido, FFmpeg, que trae las dos)
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
