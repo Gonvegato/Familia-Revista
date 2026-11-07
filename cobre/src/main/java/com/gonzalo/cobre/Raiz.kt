@@ -35,7 +35,7 @@ fun iniciar(c: Context) {
 }
 
 /** Dónde estás: la portada y sus secciones (se llega a ellas desde el menú de la portada, como en las hermanas). */
-enum class Destino(val nombre: String) { Portada("Portada"), Directo("Directo"), Guia("Guía"), Peliculas("Películas"), Series("Series"), Buscar("Buscar"), Listas("Listas"), Ajustes("Ajustes") }
+enum class Destino(val nombre: String) { Portada("Portada"), Directo("Directo"), Guia("Guía"), Peliculas("Películas"), Series("Series"), Buscar("Buscar"), Listas("Listas"), Ajustes("Ajustes"), Favoritos("Favoritos") }
 
 /** Una ficha abierta por encima de la página (una película o una serie de una lista). */
 sealed class Ficha {
@@ -88,6 +88,7 @@ fun CobreApp(inicial: Destino = Destino.Portada) {
             when (x) {
                 Destino.Portada -> PantPortada(alIr = ::ir, alFicha = { ficha = it })
                 Destino.Directo -> PantDirecto(alVolver = volver, alIr = ::ir)
+                Destino.Favoritos -> PantFavoritos(alVolver = volver, alIr = ::ir)
                 Destino.Guia -> PantGuia(alVolver = volver, alIr = ::ir)
                 Destino.Peliculas -> PantVideoclub(false, alVolver = volver, alIr = ::ir, alFicha = { ficha = it })
                 Destino.Series -> PantVideoclub(true, alVolver = volver, alIr = ::ir, alFicha = { ficha = it })

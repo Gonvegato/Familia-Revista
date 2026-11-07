@@ -180,6 +180,7 @@ abstract class CapturasBase {
                     when (cual) {
                         0 -> PantPortada(alIr = {}, alFicha = {})
                         1 -> PantDirecto(alVolver = {}, alIr = {})
+                        99 -> PantFavoritos(alVolver = {}, alIr = {})
                         2 -> PantGuia(alVolver = {}, alIr = {})
                         3 -> PantVideoclub(false, alVolver = {}, alIr = {}, alFicha = {})
                         4 -> PantFichaPelicula(e.lista, Tele.almacen.pelicula(e.lista, 5000)!!, alCerrar = {})
@@ -194,8 +195,9 @@ abstract class CapturasBase {
                 }
             }
         }
-        esperaTexto("Seguir viendo"); foto("1-portada")
+        esperaTexto("Tus favoritos"); foto("1-portada")
         cual = 1; esperaTexto("Telediario"); foto("2-directo")
+        cual = 99; esperaTexto("Telediario"); foto("2b-favoritos")
         cual = 2; esperaTexto("Ahora"); foto("3-guia")
         cual = 3; esperaTexto("Oppenheimer"); foto("4-peliculas")
         cual = 8; esperaTexto("The Bear"); foto("5-series")

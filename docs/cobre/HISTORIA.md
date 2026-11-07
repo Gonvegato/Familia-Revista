@@ -9,6 +9,13 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.2.0
+
+Los favoritos, lo primero: es donde se está casi todo el rato. Una página propia, «Favoritos» (la primera del menú), con solo tus
+canales favoritos de todas tus listas, uno debajo de otro y en grande (lo que echan ahora, con lo que va, y lo siguiente; a dos
+columnas en la tablet y en la tele). En la portada, tus favoritos también así, todos y deslizando hacia abajo, en vez de la fila de
+tarjetas; «Seguir viendo» ya no sale en la portada (lo empezado de películas y series sigue en sus páginas) y tus listas quedan al final.
+
 ## 0.1.1
 
 Con el texto grande del móvil no se leía el nombre de ningún canal: salía en una sola línea, enorme y cortado («ES: MOVISTAR LA…»), y

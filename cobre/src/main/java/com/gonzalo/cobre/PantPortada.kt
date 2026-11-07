@@ -47,11 +47,11 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     val listas = Listas.lista()
     val usables = Listas.usables()
     val favs = MiCuenta.favoritos()
-    val seguir = MiCuenta.seguir()
     val ultimo = MiCuenta.ultimo()
     // Las listas de los favoritos, leídas (para sus logos y lo que echan)
     val cargadas = rememberCargadas(usables)
-    val secciones = listOf("Directo" to Destino.Directo, "Guía" to Destino.Guia) +
+    // (Favoritos lo primero: es donde se está casi todo el rato)
+    val secciones = listOf("Favoritos" to Destino.Favoritos, "Directo" to Destino.Directo, "Guía" to Destino.Guia) +
         (if (usables.any { it.esXtream }) listOf("Películas" to Destino.Peliculas, "Series" to Destino.Series) else emptyList()) + listOf("Listas" to Destino.Listas)
     val desplazado = rememberScrollState()
     val umbral = with(LocalDensity.current) { 300.dp.toPx() }
@@ -110,20 +110,16 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
                     }
                 }
             }
-            if (seguir.isNotEmpty()) FilaSeguir(seguir, usables, alFicha)
+            // Tus favoritos, todos y en grande (con lo que echan ahora y lo siguiente): es lo que más se mira. Sin «Seguir viendo» aquí:
+            // lo empezado del videoclub está en «Películas» y «Series».
             val favVivos = favs.mapNotNull { f -> usables.firstOrNull { it.id == f.lista }?.let { l -> cargadas[l.id]?.porClave?.get(f.canal)?.let { Triple(l, it, f) } } }
             if (favVivos.isNotEmpty()) {
                 Column(Modifier.fillMaxWidth().padding(top = 26.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) { Antetitulo("Tus favoritos", Modifier.weight(1f)); EnlaceRevista("Todos →", acento = true) { alIr(Destino.Directo) } }
+                    Row(verticalAlignment = Alignment.CenterVertically) { Antetitulo("Tus favoritos", Modifier.weight(1f)); EnlaceRevista("Abrir →", Modifier.padding(start = 12.dp), acento = true) { alIr(Destino.Favoritos) } }
                     Filete(1.dp)
-                    Spacer(Modifier.height(12.dp))
-                    LazyRow(Modifier.fillMaxWidth().sangrado(8.dp), contentPadding = PaddingValues(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        items(favVivos, key = { it.third.ref }) { (l, c, _) ->
-                            TarjetaCanal(l, c, cargadas[l.id]) { Reproducir.canal(ctx, l, favVivos.filter { it.first.id == l.id }.map { it.second }, c) }
-                        }
-                    }
+                    ListaFavoritos(favVivos, cargadas)
                 }
-            } else if (favs.isEmpty() && usables.isNotEmpty()) Nota("Tus canales favoritos saldrán aquí: márcalos con ★ en «Directo».", Modifier.padding(top = 22.dp))
+            } else if (favs.isEmpty() && usables.isNotEmpty()) Nota("Tus canales favoritos saldrán aquí, en grande: márcalos con ★ en «Directo».", Modifier.padding(top = 22.dp))
             // Cómo van tus listas
             if (listas.isNotEmpty()) {
                 Spacer(Modifier.height(26.dp)); Antetitulo("Tus listas"); Filete(1.dp)
