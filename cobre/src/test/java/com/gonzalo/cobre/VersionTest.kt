@@ -15,7 +15,6 @@ class VersionTest {
     @Test fun laVersionQueSeVeEsLaInstalada() {
         val nombre = Regex("versionName\\s*=\\s*\"([^\"]+)\"").find(archivo("build.gradle.kts").readText())!!.groupValues[1]
         assertEquals(nombre, VERSION)
-        assertEquals("0.1.0", VERSION)
     }
 
     @Test fun elActualizadorSoloCogeLasDeCobre() {
