@@ -237,3 +237,7 @@ class CapturasTeleOscuroTest : CapturasBase() { override val aparato = "tele"; o
 
 @RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = "w960dp-h540dp-land-television-xhdpi")
 class CapturasTeleClaroTest : CapturasBase() { override val aparato = "tele"; override val oscuro = false }
+
+/** Con la letra grande (el tamaño de texto del móvil al 130 %): los nombres de los canales y sus números se tienen que leer. */
+@RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f)
+class CapturasMovilLetraGrandeTest : CapturasBase() { override val aparato = "movil-letra-grande"; override val oscuro = true }

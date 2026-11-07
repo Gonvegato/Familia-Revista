@@ -565,7 +565,7 @@ fun ControlesReproductor(
                         Logo(e.logo, e.titulo, Modifier.padding(end = 14.dp), 48.dp)
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
                     }
                 }
@@ -664,10 +664,10 @@ private fun ListaRapida(canales: List<Canal>, actual: Int, guia: (Canal) -> Pair
             itemsIndexed(canales, key = { _, c -> c.clave }) { i, c ->
                 val (ahora, _) = remember(c.clave) { guia(c) }
                 Row(Modifier.fillMaxWidth().let { if (i == actual) it.focoInicial(actual) else it }.tocable { alElegir(i) }.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("${if (c.numero > 0) c.numero else i + 1}", color = if (i == actual) Acento else Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.width(44.dp))
+                    Text("${if (c.numero > 0) c.numero else i + 1}", color = if (i == actual) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 34.dp).padding(end = 8.dp))
                     Logo(c.logo, c.nombre, Modifier.padding(end = 12.dp), 36.dp)
                     Column(Modifier.weight(1f)) {
-                        Text(c.nombre, color = if (i == actual) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(c.nombre, color = if (i == actual) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         if (ahora != null) Text(ahora.titulo, color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }

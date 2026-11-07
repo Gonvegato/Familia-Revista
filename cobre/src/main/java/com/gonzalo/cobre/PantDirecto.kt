@@ -127,10 +127,13 @@ fun FilaCanal(l: Lista, cg: Cargada, c: Canal, i: Int, ahora: Long, alVer: () ->
     val fav = MiCuenta.esFavorito(l.id, c.clave)
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).tocable { alVer() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("${if (c.numero > 0) c.numero else i + 1}", color = Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.width(46.dp))
-            Logo(c.logo, c.nombre, Modifier.padding(end = 14.dp), 46.dp)
+            // (el número, en una línea y tan ancho como haga falta: con el texto grande, «21698» se partía en dos; el nombre del canal, en
+            // hasta tres líneas: en una sola, con letra grande, no se leía ninguno)
+            Text("${if (c.numero > 0) c.numero else i + 1}", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, softWrap = false,
+                modifier = Modifier.widthIn(min = 34.dp).padding(end = 8.dp))
+            Logo(c.logo, c.nombre, Modifier.padding(end = 12.dp), 40.dp)
             Column(Modifier.weight(1f)) {
-                Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 if (ya != null) {
                     Text("${hora(ya.inicio)} · ${ya.titulo}", color = Charcoal.copy(alpha = 0.85f), fontFamily = Body, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Barra(ya.avance(ahora), Modifier.padding(top = 4.dp, end = 40.dp).widthIn(max = 360.dp))
@@ -139,8 +142,8 @@ fun FilaCanal(l: Lista, cg: Cargada, c: Canal, i: Int, ahora: Long, alVer: () ->
                 if (ya == null && luego == null && c.grupo.isNotBlank()) Text(c.grupo.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1)
             }
         }
-        Text(if (fav) "★" else "☆", color = if (fav) Acento else Muted, fontSize = 24.sp,
-            modifier = Modifier.tocable { MiCuenta.alternaFavorito(l.id, c) }.padding(horizontal = 12.dp, vertical = 8.dp))
+        Text(if (fav) "★" else "☆", color = if (fav) Acento else Muted, fontSize = 22.sp,
+            modifier = Modifier.tocable { MiCuenta.alternaFavorito(l.id, c) }.padding(horizontal = 8.dp, vertical = 8.dp))
     }
     Filete(1.dp, Line)
 }

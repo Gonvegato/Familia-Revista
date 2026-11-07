@@ -8,6 +8,13 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 **Cobre no trae ningún canal ni ninguna lista**: es un reproductor. Pones tú tu lista M3U (una dirección o un archivo) o el login de tu
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
+
+## 0.1.1
+
+Con el texto grande del móvil no se leía el nombre de ningún canal: salía en una sola línea, enorme y cortado («ES: MOVISTAR LA…»), y
+el número se partía en dos («2169» / «8»). Ahora el nombre ocupa hasta tres líneas, el número va en una sola y tan ancho como haga
+falta, el logo es algo más pequeño; lo mismo en la lista de canales del reproductor y en su título. Captura nueva con la letra al 130 %.
+
 ## Capturas
 
 Hechas en el ordenador con listas, canales, guía y videoclub de mentira (`CapturasTest`, solo con `-Proborazzi.test.record=true`), en el
