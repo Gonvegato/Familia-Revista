@@ -288,7 +288,7 @@ juegos, páginas de libros, notas de Rotten Tomatoes, plataformas de RAWG, lo de
 que mide la conexión de ese dispositivo (por wifi y por datos) y lo que sabe decodificar, lo que puede ocupar su caché de torrents, el punto
 para seguir de lo que aún no está en tu biblioteca (antes de los 10 minutos), los manifiestos de los addons (se vuelven a pedir) y su id. En Cobre:
 los canales, el videoclub y la guía de cada lista (caché, cifrada la que lleva direcciones), el archivo de una lista de archivo, el punto para
-seguir sin cuenta y su id (`cobre-…`).
+seguir sin cuenta y su id (`cobre-…`; en el ordenador, `cobre-linux-…` o `cobre-mac-…`: es el `dev` de las listas de archivo).
 
 ### `/users/<uid>/name`
 

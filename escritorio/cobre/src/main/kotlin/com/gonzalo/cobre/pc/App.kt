@@ -42,7 +42,8 @@ sealed class Pantalla {
     data object Peliculas : Pantalla()
     data object Series : Pantalla()
     data object Buscar : Pantalla()
-    data class Ajustes(val pestana: Int = 0) : Pantalla()
+    /** [editar]: abre ya el formulario de esa lista (en las capturas, una nueva). */
+    data class Ajustes(val pestana: Int = 0, val editar: Lista? = null) : Pantalla()
     data class FichaPelicula(val lista: Lista, val pelicula: Pelicula, val volver: Pantalla) : Pantalla()
     data class FichaSerie(val lista: Lista, val serie: Serie, val volver: Pantalla) : Pantalla()
 }
@@ -131,7 +132,7 @@ fun AppCobre(inicial: Pantalla = Pantalla.Directo) {
                         Pantalla.Peliculas -> PantPeliculas(nav, hayVideoclub)
                         Pantalla.Series -> PantSeries(nav, hayVideoclub)
                         Pantalla.Buscar -> PantBuscar(nav)
-                        is Pantalla.Ajustes -> PantAjustes(nav, p.pestana)
+                        is Pantalla.Ajustes -> PantAjustes(nav, p.pestana, p.editar)
                         is Pantalla.FichaPelicula -> PantFichaPelicula(p.lista, p.pelicula, nav)
                         is Pantalla.FichaSerie -> PantFichaSerie(p.lista, p.serie, nav)
                     }
@@ -217,8 +218,7 @@ private fun ListaRapida(canales: List<com.gonzalo.iptv.Canal>, actual: Int) {
     Tele.version
     val estado = rememberLazyListState(initialFirstVisibleItemIndex = (actual - 3).coerceAtLeast(0))
     LaunchedEffect(actual) { runCatching { estado.animateScrollToItem((actual - 3).coerceAtLeast(0)) } }
-    val l = (Reproductor.encargoParaPruebas() as? Encargo.Directo)?.lista
-    val cg = l?.let { Tele.enMemoria(it.id) }
+    val cg = Tele.enMemoria(Reproductor.estado.listaId)
     val ahora = System.currentTimeMillis()
     Filete(1.dp, Line)
     LazyColumn(Modifier.fillMaxWidth().heightIn(max = 300.dp).padding(horizontal = 24.dp, vertical = 6.dp), state = estado) {

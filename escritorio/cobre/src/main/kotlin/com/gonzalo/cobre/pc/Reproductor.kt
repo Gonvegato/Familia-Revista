@@ -52,6 +52,8 @@ class EstadoReproductor {
     var pistas by mutableStateOf<List<PistaMpv>>(emptyList())
     /** La lista de canales encima (la rápida), con el que está marcado; null = cerrada. */
     var lista by mutableStateOf<List<Canal>?>(null); var enLista by mutableStateOf(0)
+    /** La lista (tuya) de lo que se ve: su id (para la guía de la lista de canales). */
+    var listaId by mutableStateOf("")
     /** Lo que llevas tecleado de un número de canal. */
     var tecleado by mutableStateOf("")
 }
@@ -175,6 +177,7 @@ object Reproductor {
         estado.pistas = emptyList(); estado.pos = 0L
         listo = false; guardadoEn = 0L
         val l = e.lista
+        estado.listaId = l.id
         val url: String; val cab: Map<String, String>; val desde: Long
         when (e) {
             is Encargo.Directo -> {

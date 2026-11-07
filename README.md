@@ -38,15 +38,15 @@ mando). No trae ningún canal: pones tu lista M3U (una dirección o un archivo) 
 en directo con su guía (XMLTV, o la del propio servidor) y, con Xtream, sus películas y sus series. Tus listas van solo en la parte secreta
 de tu cuenta (`/claves`: llevan tus contraseñas); tus favoritos, los grupos que escondes, el último canal, lo visto y «Seguir viendo», en la
 cuenta como todo lo demás. Los canales y la guía son caché de cada dispositivo (se bajan a trozos: listas y guías enormes no se tienen
-enteras en memoria). Lo que no es pantalla está en `iptv/`, en Kotlin puro, para la versión del ordenador. Todo en `docs/cobre/HISTORIA.md`.
+enteras en memoria). Lo que no es pantalla está en `iptv/`, en Kotlin puro, y lo usa también Cobre del ordenador (1.0.0, en `escritorio/cobre`). Todo en `docs/cobre/HISTORIA.md`.
 
 ## En el ordenador (Linux y Mac)
 
-Azabache, Cobalto, Hiedra, Marfil y Mostaza también son apps de escritorio, en tu kDrive («Mi carpeta/versiones»): `.dmg` para el Mac (Apple
+Azabache, Cobalto, Hiedra, Marfil, Mostaza y Cobre también son apps de escritorio, en tu kDrive («Mi carpeta/versiones»): `.dmg` para el Mac (Apple
 Silicon) y `.tar.gz` para Linux (CachyOS, Arch y cualquier otro: se descomprime y `./instalar.sh`, sin sudo; `--al-iniciar` para que
 Hiedra se abra al entrar en la sesión). No guardan nada suyo: leen y escriben la misma cuenta, así que lo que haces en el ordenador está al
 momento en el móvil y al revés. **Se actualizan solas** desde tu kDrive (la versión nueva se pone al cerrar la app). Una sola copia de cada
-una abierta a la vez, y desde cualquiera se abren las otras. Mostaza ve las películas y las series con mpv (se instala aparte). Todo en
+una abierta a la vez, y desde cualquiera se abren las otras. Mostaza y Cobre ven con mpv (se instala aparte). Todo en
 `docs/ESCRITORIO.md`.
 
 ## Pasar a la familia (una sola vez)
@@ -69,7 +69,7 @@ una abierta a la vez, y desde cualquiera se abren las otras. Mostaza ve las pel�
 - `familia/`: lo común de Android (la cuenta en cada app, entrar una vez, los trabajos de fondo, las portadas).
 - `hiedra/`, `marfil/`, `cobalto/`, `azabache/`, `mostaza/`, `cobre/`: las apps de Android.
 - `iptv/`: lo de Cobre que no es pantalla (listas M3U, Xtream Codes, la guía XMLTV), en Kotlin puro (sirve también para el PC).
-- `escritorio/`: las cinco para **Linux y Mac** (Compose Multiplatform), contra la misma cuenta (`docs/ESCRITORIO.md`), y el motor de
+- `escritorio/`: las seis para **Linux y Mac** (Compose Multiplatform), contra la misma cuenta (`docs/ESCRITORIO.md`), y el motor de
   torrents de Mostaza para el ordenador (`escritorio/torrent`, los mismos archivos que `torrent/`).
 - `nube/`: las reglas (`reglas.json`), el esquema de la cuenta (`ESQUEMA.md`) y el de los escritos (`ESCRITOS.md`): el contrato que
   cumple cualquier app de la familia, en el sistema que sea.

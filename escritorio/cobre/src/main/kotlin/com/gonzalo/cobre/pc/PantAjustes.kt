@@ -32,7 +32,7 @@ import java.io.File
  * este ordenador (mpv a pantalla completa) se dice que es de aquí.
  */
 @Composable
-fun PantAjustes(nav: Nav, inicial: Int = 0) {
+fun PantAjustes(nav: Nav, inicial: Int = 0, editar: Lista? = null) {
     var pestana by remember { mutableStateOf(inicial) }
     Pagina(ancho = 900.dp) {
         Cabecera(84.sp, texto = "AJUSTES")
@@ -41,7 +41,7 @@ fun PantAjustes(nav: Nav, inicial: Int = 0) {
         PestanasRevista(listOf("Listas", "Guía", "Reproductor", "Cuenta", "Apariencia", "Versión"), pestana) { pestana = it }
         Spacer(Modifier.height(22.dp))
         when (pestana) {
-            0 -> AjustesListas(nav)
+            0 -> AjustesListas(nav, editar)
             1 -> AjustesDeLaGuia(nav)
             2 -> AjustesDelReproductor()
             3 -> {
@@ -77,9 +77,9 @@ fun descripcion(l: Lista): String = Tele.tipoNombre(l.tipo) + when (l.tipo) {
 
 /** «Listas»: las tuyas, cómo van, ponerlas al día, cambiarlas, ordenarlas y quitarlas; y añadir otra. */
 @Composable
-private fun AjustesListas(nav: Nav) {
+private fun AjustesListas(nav: Nav, editar: Lista?) {
     Tele.version
-    var editando by remember { mutableStateOf<Lista?>(null) }
+    var editando by remember { mutableStateOf(editar) }
     var quitar by remember { mutableStateOf<Lista?>(null) }
     val listas = Listas.lista()
     val e = editando
