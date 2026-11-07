@@ -55,7 +55,7 @@ class MigracionTest : ConCuenta() {
         az.pon("items_$pelis~550", mapOf("b" to 0L, "o" to """{"id":550,"name":"El club de la lucha","cover":"https://image.tmdb.org/t/p/w500/club.jpg","general":85,"gfx":80,"story":90,"music":70,"gameplay":88,
             "review":"La primera regla.","hero":"https://image.tmdb.org/t/p/w1280/club.jpg","start":19000,"end":19005,"creator":"David Fincher","fav":true,"platform":"Netflix","pages":0,"minutes":139,
             "updated":1700000000000,"ttbMain":0,"ttbExtra":0,"ttbFull":0,"ttbSrc":"","logo":""}"""))
-        az.pon("items_$pelis~551", mapOf("b" to 1_600_000_000_000L, "o" to """{"id":551,"name":"Borrada en Azabache","cover":"","general":50}"""))
+        az.pon("items_$pelis~551", mapOf("b" to 1_600_000_000_000L, "o" to """{"id":551,"name":"Borrada en Jonsu","cover":"","general":50}"""))
         az.pon("iplays_$pelis~999", mapOf("b" to 0L, "o" to """{"id":999,"name":"Película rara","cover":"","hero":"","status":0,"entries":[],"chapter":0,"every":3,"start":0,"end":0,"updated":1700000100000}"""))
         az.pon("iplays_$pelis~123456789012345", mapOf("b" to 0L, "o" to """{"id":123456789012345,"name":"Corto casero","cover":"file:///no/existe.jpg","hero":"","status":2,"entries":[],"end":19100,"updated":1700000200000}"""))
         az.pon("iplays_$series~82", mapOf("b" to 0L, "o" to """{"id":82,"name":"Juego de tronos","cover":"https://static.tvmaze.com/82.jpg","hero":"","status":1,"start":19200,"updated":1700000300000,
@@ -78,7 +78,7 @@ class MigracionTest : ConCuenta() {
         assertEquals("El club de la lucha", club.texto("t")); assertEquals("movie", club.texto("tipo")); assertEquals("terminado", club.texto("estado")); assertTrue(club.si("fav"))
         assertEquals("tt0137523", club.texto("id")); assertEquals("tt0137523", club.texto("imdb")); assertEquals("y el id de antes", 550L, club.entero("tmdb"))
         assertEquals(85L, club.entero("nota")); assertEquals(listOf(80L, 90L, 70L, 88L), club.lista("crit").map { (it as Number).toLong() }); assertEquals("La primera regla.", club.texto("resena"))
-        assertEquals("su número de siempre en Azabache (sagas, diario, maquetas)", 550L, club.entero("azid")); assertEquals(pelis.toLong(), club.entero("azk"))
+        assertEquals("su número de siempre en Jonsu (sagas, diario, maquetas)", 550L, club.entero("azid")); assertEquals(pelis.toLong(), club.entero("azk"))
         assertEquals(Fechas.ms(19000), club.entero("an")); assertEquals(Fechas.ms(19005), club.entero("fin"))
         assertEquals("https://image.tmdb.org/t/p/w500/club.jpg", club.texto("pu")); assertEquals("https://image.tmdb.org/t/p/w1280/club.jpg", club.texto("fondo"))
         val az = Json.lee(club.texto("az")).comoMapa()
@@ -94,7 +94,7 @@ class MigracionTest : ConCuenta() {
         val p = otro.coleccion("progreso")
         assertTrue(p.nodo("tt0944947:1:1")!!.si("visto")); assertTrue(p.nodo("tt0944947:1:2")!!.si("visto")); assertNull(p.nodo("tt0944947:1:3"))
         assertEquals("tt0944947", p.nodo("tt0944947:1:1")!!.texto("ref"))
-        assertNull("lo borrado en Azabache no pasa", t.todos().values.firstOrNull { it.texto("t") == "Borrada en Azabache" })
+        assertNull("lo borrado en Jonsu no pasa", t.todos().values.firstOrNull { it.texto("t") == "Borrada en Jonsu" })
         assertNull("ni lo de otras categorías", t.todos().values.firstOrNull { it.texto("t") == "Un disco" })
         // Los nodos de Azabache, intactos (solo se añade la marca de que ya está hecho)
         val despues = azabacheEnLaCuenta()
@@ -127,7 +127,7 @@ class MigracionTest : ConCuenta() {
         sincroniza()
         val t = otro.coleccion("titulos")
         assertEquals("ni una de más", 4, t.todos().size)
-        assertEquals("lo que cambiaste en Mostaza manda", "en_curso", t.nodo("tt0137523")!!.texto("estado"))
+        assertEquals("lo que cambiaste en Hathor manda", "en_curso", t.nodo("tt0137523")!!.texto("estado"))
         assertTrue("lo que borraste no vuelve", t.nodo("tmdb:999")!!.borrado)
         assertEquals(2, otro.coleccion("progreso").vivos().size)
         assertEquals(1, otro.coleccion("tiempo").vivos().count { it.texto("fuente") == "azabache" })

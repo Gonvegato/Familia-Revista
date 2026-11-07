@@ -193,7 +193,7 @@ class AjustesCuentaTest {
         assertTrue(otro.sincroniza().ok)
         az.borra("negra~2")
         assertTrue(otro.sincroniza().ok)
-        assertEquals("lo que se quitó en Azabache ya no está vetado", listOf("Wallpaper Engine"), Negra.bajaDeCuenta())
+        assertEquals("lo que se quitó en Jonsu ya no está vetado", listOf("Wallpaper Engine"), Negra.bajaDeCuenta())
     }
 
     @Test fun losNombresDeLosCamposSonLosDeLasPreferencias() {

@@ -80,7 +80,7 @@ fun SeccionCopias(e: Escritos, aviso: (String) -> Unit) {
     LaunchedEffect(ver) { lista = withContext(Dispatchers.IO) { copias.lista() } }
     var abierta by remember { mutableStateOf<CopiasEscritos.Copia?>(null) }
     val scope = rememberCoroutineScope()
-    Text("Además de la cuenta, este móvil guarda copias completas de todo lo que escribes, también la papelera: cada 15 minutos mientras Cobalto está abierto y al salir, si algo ha cambiado. Se quedan las últimas ${CopiasMovil.GUARDA}, dentro de la app (no salen del móvil). De cualquiera se saca una obra como obra nueva.",
+    Text("Además de la cuenta, este móvil guarda copias completas de todo lo que escribes, también la papelera: cada 15 minutos mientras Thot está abierto y al salir, si algo ha cambiado. Se quedan las últimas ${CopiasMovil.GUARDA}, dentro de la app (no salen del móvil). De cualquiera se saca una obra como obra nueva.",
         color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 4.dp))
     MagLink("Hacer una copia ahora", "Aunque no haya cambiado nada") {
         scope.launch {

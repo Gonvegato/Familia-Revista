@@ -31,8 +31,8 @@ fun PantEscritos(nav: Nav) {
         Cabecera(84.sp, texto = "ESCRITOS")
         FileteCabecera()
         Spacer(Modifier.height(8.dp))
-        Text("Los capítulos que das por terminados en Cobalto, para leerlos aquí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
-        if (obras.isEmpty()) Vacio("Nada todavía", "En Cobalto, marca un capítulo como terminado y aparece aquí.")
+        Text("Los capítulos que das por terminados en Thot, para leerlos aquí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
+        if (obras.isEmpty()) Vacio("Nada todavía", "En Thot, marca un capítulo como terminado y aparece aquí.")
         obras.forEach { (_, l) ->
             val o = l.first()
             Spacer(Modifier.height(20.dp)); Filete(2.dp)
@@ -55,7 +55,7 @@ fun PantCapitulo(ref: String, nav: Nav) {
     val c: Nodo? = LaFamilia.coleccion("capitulos").nodo(ref)
     Pagina(ancho = 820.dp) {
         VolverRevista({ nav.ir(Pantalla.Escritos) }, "Escritos")
-        if (c == null || c.borrado) { Vacio("Este capítulo ya no está terminado en Cobalto"); return@Pagina }
+        if (c == null || c.borrado) { Vacio("Este capítulo ya no está terminado en Thot"); return@Pagina }
         Spacer(Modifier.height(20.dp))
         Text(c.texto("t").uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
         Text(c.texto("c"), color = Charcoal, fontFamily = Display, fontSize = 40.sp, fontWeight = FontWeight.SemiBold)

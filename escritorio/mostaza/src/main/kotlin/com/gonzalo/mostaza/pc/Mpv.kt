@@ -37,7 +37,7 @@ object Mpv {
     /** Lo que se le pide a mpv para empezar (lo demás va por el socket, archivo a archivo). */
     data class Opciones(
         val audio: List<String> = listOf("spa", "es"), val subs: List<String> = listOf("spa", "es"), val subTam: Int = 100, val subFondo: Boolean = false,
-        val pantallaCompleta: Boolean = true, val espera: Int = 30, val agente: String = "Mostaza",
+        val pantallaCompleta: Boolean = true, val espera: Int = 30, val agente: String = "Hathor",
     )
 
     /** Dónde puede estar mpv: lo que diga el PATH y, como las apps del Mac no ven el PATH de la terminal, los sitios de Homebrew y del .app. */
@@ -57,8 +57,8 @@ object Mpv {
 
     /** Cómo se instala aquí (lo que se enseña si no está). */
     fun comoInstalar(sistema: Sitio.Sistema = Sitio.sistema): String = if (sistema == Sitio.Sistema.MAC)
-        "Mostaza reproduce con mpv. En el Mac se instala con Homebrew: abre la Terminal y escribe «brew install mpv» (si no tienes Homebrew, primero brew.sh). Después vuelve a pulsar «Reproducir»."
-        else "Mostaza reproduce con mpv. En CachyOS y Arch: «sudo pacman -S mpv» en una terminal (en Ubuntu, Debian o Mint: «sudo apt install mpv»; en Fedora: «sudo dnf install mpv»). Después vuelve a pulsar «Reproducir»."
+        "Hathor reproduce con mpv. En el Mac se instala con Homebrew: abre la Terminal y escribe «brew install mpv» (si no tienes Homebrew, primero brew.sh). Después vuelve a pulsar «Reproducir»."
+        else "Hathor reproduce con mpv. En CachyOS y Arch: «sudo pacman -S mpv» en una terminal (en Ubuntu, Debian o Mint: «sudo apt install mpv»; en Fedora: «sudo dnf install mpv»). Después vuelve a pulsar «Reproducir»."
 
     /**
      * La línea de órdenes de mpv. Sin la dirección ni las cabeceras (van por el socket). [socket]: dónde escucha su IPC. Lo de los
@@ -78,7 +78,7 @@ object Mpv {
         add("--hwdec=auto-safe")
         add("--network-timeout=${o.espera}")
         add("--user-agent=${o.agente}")
-        add("--title=\${media-title} · Mostaza")
+        add("--title=\${media-title} · Hathor")
         if (o.audio.isNotEmpty()) add("--alang=" + o.audio.joinToString(","))
         if (o.subs.isNotEmpty()) add("--slang=" + o.subs.joinToString(","))
         if (o.subTam != 100) add("--sub-scale=" + String.format(java.util.Locale.ROOT, "%.2f", o.subTam / 100.0))

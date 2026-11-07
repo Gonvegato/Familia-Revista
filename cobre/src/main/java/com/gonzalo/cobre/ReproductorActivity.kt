@@ -198,7 +198,7 @@ class ReproductorActivity : ComponentActivity() {
                 val c = e.canales[e.indice]
                 estado.directo = true; estado.titulo = c.nombre; estado.numero = if (c.numero > 0) c.numero else e.indice + 1; estado.logo = c.logo; estado.subtitulo = c.grupo
                 estado.dur = 0L; estado.ahora = null; estado.despues = null
-                if (c.conDrm) { estado.cargando = false; estado.aviso = "Este canal va cifrado con DRM (Widevine o parecido): Cobre no lo puede abrir. Prueba con otro reproductor."; return }
+                if (c.conDrm) { estado.cargando = false; estado.aviso = "Este canal va cifrado con DRM (Widevine o parecido): Nut no lo puede abrir. Prueba con otro reproductor."; return }
                 url = Tele.url(l, c); cabeceras = Tele.cabeceras(l, c)
                 MiCuenta.ponUltimo(l.id, c)
                 refrescaGuia()
@@ -624,7 +624,7 @@ fun ControlesReproductor(
         }
         if (e.confirmaOtro) Column(Modifier.align(Alignment.Center).widthIn(max = 560.dp).padding(24.dp).background(Paper).padding(22.dp)) {
             Antetitulo("Abrir con otro reproductor", Modifier.padding(bottom = 8.dp))
-            Text("Se le pasa a esa app la dirección de lo que ves, que lleva tu usuario y tu contraseña de la lista. Hazlo solo con un reproductor de confianza (VLC, Just Player, mpv…). Lo que veas allí no cuenta en Cobre.",
+            Text("Se le pasa a esa app la dirección de lo que ves, que lleva tu usuario y tu contraseña de la lista. Hazlo solo con un reproductor de confianza (VLC, Just Player, mpv…). Lo que veas allí no cuenta en Nut.",
                 color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp)
             Spacer(Modifier.height(10.dp))
             MagLink("Sí, abrirlo allí", accent = true) { alOtroSi() }

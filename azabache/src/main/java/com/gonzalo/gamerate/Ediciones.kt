@@ -110,7 +110,7 @@ data class Edicion(
 // cereza, azul eléctrico, ocre, marrón tabaco, fucsia y el amarillo del marco.
 private val P_ATRIO = PALETTES.first { it.id == "revista" }
 val EDICIONES: List<Edicion> = listOf(
-    Edicion("atrio", "Azabache", "La de siempre: papel crema, serif cálida y rojo de imprenta", "AZABACHE", "Azabache · hecho en casa",
+    Edicion("atrio", "Jonsu", "La de siempre: papel crema, serif cálida y rojo de imprenta", "JONSU", "Jonsu · hecho en casa",
         P_ATRIO, AtrioDisplay, AtrioBody),
 )
 

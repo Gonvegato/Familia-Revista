@@ -329,7 +329,7 @@ private fun BarraSala(est: EstadoSala, bib: Biblioteca) {
     LaunchedEffect(Unit) { while (true) { delay(1000L * (60 - LocalTime.now().second).coerceAtLeast(1)); hora = LocalTime.now() } }
     Column(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(tinta.fondo, tinta.fondo.copy(alpha = 0.92f))))) {
         Row(Modifier.fillMaxWidth().height(96.dp).padding(horizontal = 72.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("HIEDRA", color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, letterSpacing = 3.sp)
+            Text("BASTET", color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, letterSpacing = 3.sp)
             Spacer(Modifier.width(56.dp))
             Glifo(Accion.LB, 30.dp)
             Spacer(Modifier.width(22.dp))
@@ -425,7 +425,7 @@ private fun Escaparate(filas: List<Hilera>, bib: Biblioteca, est: EstadoSala, ct
                 Column(Modifier.padding(horizontal = 72.dp, vertical = 40.dp)) {
                     Text(if (cual == "PC") "No he encontrado juegos en este ordenador" else "Todavía no hay nada aquí", color = tinta.tinta, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 40.sp)
                     Spacer(Modifier.height(12.dp))
-                    Text("Hiedra mira Steam, Heroic (Epic, GOG, Amazon), Lutris, tus carpetas de ROMs y tus programas. Las carpetas de ROMs y los emuladores se eligen en la ventana: Ajustes → Emulación.",
+                    Text("Bastet mira Steam, Heroic (Epic, GOG, Amazon), Lutris, tus carpetas de ROMs y tus programas. Las carpetas de ROMs y los emuladores se eligen en la ventana: Ajustes → Emulación.",
                         color = tinta.gris, fontFamily = Body, fontSize = 20.sp, lineHeight = 30.sp, modifier = Modifier.widthIn(max = 1100.dp))
                     Spacer(Modifier.height(24.dp))
                     BotonSala("Volver a mirar", "remirar", principal = true) { Pc.refresca(escanear = true) { est.avisa("Mirado de nuevo") } }
@@ -624,7 +624,7 @@ private fun PaginaJuego(f: Ficha?, est: EstadoSala, ctl: ControlSala) {
                         f.juego?.let { j ->
                             if (j.fin > 0) DatoSala("Lo pasaste", fecha(j.fin))
                             if (j.anadido > 0) DatoSala("En tu biblioteca desde", fecha(j.anadido))
-                            j.nota?.let { DatoSala("En Azabache", it.toString()) }
+                            j.nota?.let { DatoSala("En Jonsu", it.toString()) }
                         }
                     }
                 }
@@ -709,7 +709,7 @@ private fun PanelOpciones(f: Ficha?, est: EstadoSala, ctl: ControlSala) {
             Estado.entries.forEach { e -> OpcionSala(e.nombre, id(), marcada = j.estado == e) { Juegos.ponEstado(j, e); est.avisa("${f.titulo}: ${e.nombre.lowercase()}") } }
             Spacer(Modifier.height(12.dp))
             OpcionSala(if (j.fav) "Quitar de favoritos" else "Añadir a favoritos", id()) { Juegos.cambia(j.id, mapOf("fav" to !j.fav)) }
-            OpcionSala("Quitar de Hiedra", id(), "Se queda en este PC; en tu biblioteca no", peligro = true) {
+            OpcionSala("Quitar de Bastet", id(), "Se queda en este PC; en tu biblioteca no", peligro = true) {
                 ctl.cierra("opciones")
                 ctl.confirma(Confirmacion("¿Quitar «${f.titulo}»?", "Sale de tu biblioteca (en todos tus dispositivos). Si lo tienes instalado aquí, sigue en «En este PC»; si lo vuelves a jugar o a añadir, vuelve con sus horas y su nota.", "Quitar") {
                     Juegos.quita(j.id); est.pila.remove(f.clave); est.avisa("Quitado de tu biblioteca")
@@ -721,7 +721,7 @@ private fun PanelOpciones(f: Ficha?, est: EstadoSala, ctl: ControlSala) {
 
 @Composable
 private fun PanelMenu(est: EstadoSala, ctl: ControlSala) {
-    Lateral("Menú", "Hiedra · ${Sitio.nombreEquipo}", { ctl.cierra("menu") }) {
+    Lateral("Menú", "Bastet · ${Sitio.nombreEquipo}", { ctl.cierra("menu") }) {
         OpcionSala("Volver a la ventana", "op:0", "⧉ o F11") { ctl.cierra("menu"); ctl.alSalir() }
         OpcionSala(if (Pc.mirando) "Mirando…" else "Volver a mirar este PC", "op:1", "Steam, Heroic, Lutris, tus ROMs y tus programas") { Pc.refresca(escanear = true) { est.avisa("Mirado de nuevo: ${Pc.yaMirado().orEmpty().size} juegos aquí") }; ctl.cierra("menu") }
         OpcionSala("Hacer una captura", "op:7", "De esta pantalla, a Imágenes/Hiedra" + if (AjustesTuPc.capturasAlMovil) " y al móvil" else "") {
@@ -733,12 +733,12 @@ private fun PanelMenu(est: EstadoSala, ctl: ControlSala) {
                 javax.swing.SwingUtilities.invokeLater { est.avisa(r.fold({ "Captura de ${it.w}×${it.h}" + if (it.subida) ", también en el móvil" else "" }, { it.message ?: "No se ha podido capturar" })) }
             }, "hiedra-captura").apply { isDaemon = true; start() }
         }
-        OpcionSala(if (AjustesSala.oscura) "Sala clara" else "Sala oscura", "op:2", "Los colores de tu Hiedra") { AjustesSala.ponOscura(!AjustesSala.oscura) }
-        OpcionSala(if (AjustesSala.apartar) "Al jugar: Hiedra se aparta" else "Al jugar: Hiedra se queda", "op:3", "Cambiar") { AjustesSala.ponApartar(!AjustesSala.apartar) }
+        OpcionSala(if (AjustesSala.oscura) "Sala clara" else "Sala oscura", "op:2", "Los colores de tu Bastet") { AjustesSala.ponOscura(!AjustesSala.oscura) }
+        OpcionSala(if (AjustesSala.apartar) "Al jugar: Bastet se aparta" else "Al jugar: Bastet se queda", "op:3", "Cambiar") { AjustesSala.ponApartar(!AjustesSala.apartar) }
         Spacer(Modifier.height(14.dp)); AnteSala("El ordenador", tam = 14.sp); Spacer(Modifier.height(6.dp))
         OpcionSala("Suspender", "op:4") { ctl.cierra("menu"); ctl.confirma(Confirmacion("¿Suspender el ordenador?", "Lo que tengas abierto se queda como está.", "Suspender") { Energia.suspende() }) }
         OpcionSala("Apagar", "op:5", peligro = true) { ctl.cierra("menu"); ctl.confirma(Confirmacion("¿Apagar el ordenador?", "Guarda antes lo que estés jugando.", "Apagar") { Energia.apaga() }) }
-        OpcionSala("Cerrar Hiedra", "op:6") { ctl.cierra("menu"); VentanaHiedra.cerrar() }
+        OpcionSala("Cerrar Bastet", "op:6") { ctl.cierra("menu"); VentanaHiedra.cerrar() }
     }
 }
 

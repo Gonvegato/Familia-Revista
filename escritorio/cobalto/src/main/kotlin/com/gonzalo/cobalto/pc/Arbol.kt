@@ -445,5 +445,5 @@ fun ArbolObra(obra: Doc, nav: Nav, abre: AbreDoc, foco: String?, abrirEscena: (S
     if (ordenar) Dialogo("¿Ordenar el árbol?", { ordenar = false }, botones = {
         BotonSuave("Cancelar") { ordenar = false }
         BotonAcento("Ordenar", alto = 44.dp, modifier = Modifier.width(130.dp)) { ordenar = false; ordenarAhora() }
-    }) { Cuerpo("Cobalto colocará todas las fichas solas (lo unido, cerca). Después puedes moverlas a mano.", tam = 14) }
+    }) { Cuerpo("Thot colocará todas las fichas solas (lo unido, cerca). Después puedes moverlas a mano.", tam = 14) }
 }

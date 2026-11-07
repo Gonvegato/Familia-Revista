@@ -230,7 +230,7 @@ class CapturasTest {
         Cuenta.olvidaParaPruebas(); CosasMostaza.olvidaParaPruebas()
         listOf("juegos", "libros", "tiempo", "azabache", "ajustes", "titulos", "progreso").forEach { LaFamilia.coleccion(it) }
         check(aqui.sincroniza().ok)
-        check(CosasMostaza.activa()) { "sin la marca de Mostaza" }
+        check(CosasMostaza.activa()) { "sin la marca de Hathor" }
         check(Cuenta.fichas(2).none { it.nombre == "Solo en lo de antes" }) { "se lee lo de antes" }
         Apariencia.inicia("azabache")
         Local.dirPruebas = File(LaFamilia.dirPruebas, "local"); Local.olvidaParaPruebas()

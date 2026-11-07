@@ -286,7 +286,7 @@ fun PantSecciones(inicial: Destino, alVolver: () -> Unit, alAbrir: (Juego) -> Un
     val tablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700
     Box(Modifier.fillMaxSize().background(Paper), contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 960.dp).fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = if (tablet) 44.dp else 28.dp)) {
-        RevistaTopBar(alVolver, "Hiedra") {
+        RevistaTopBar(alVolver, "Bastet") {
             EnlaceRevista("Buscar", acento = buscando) { buscando = !buscando; if (!buscando) busca = "" }
             EnlaceRevista("+ Añadir", acento = true) { alAnadir() }
         }

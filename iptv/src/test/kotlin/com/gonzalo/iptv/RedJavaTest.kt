@@ -40,7 +40,7 @@ class RedJavaTest {
         assertEquals(11, canales)
         assertEquals("Cobre/0.1.0", agenteVisto)
         // El user-agent de la lista manda
-        RedJava("Cobre").abre("$base/lista.m3u", mapOf("User-Agent" to "Otro/2")).close()
+        RedJava("Nut").abre("$base/lista.m3u", mapOf("User-Agent" to "Otro/2")).close()
         assertEquals("Otro/2", agenteVisto)
         RedJava().abre("$base/prohibido", emptyMap()).use { assertEquals(403, it.codigo) }
     }

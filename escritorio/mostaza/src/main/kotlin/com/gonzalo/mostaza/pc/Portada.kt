@@ -56,7 +56,7 @@ fun PantPortada(nav: Nav) {
     }
     val hoy = remember { LocalDate.now() }
     Pagina {
-        Cabecera(132.sp, texto = "MOSTAZA")
+        Cabecera(132.sp, texto = "HATHOR")
         FileteCabecera()
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             Text("Nº ${hoy.dayOfYear}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
@@ -82,12 +82,12 @@ fun PantPortada(nav: Nav) {
         } else when (val f = filas) {
             null -> Nota("Mirando tus catálogos…", Modifier.padding(top = 26.dp))
             else -> {
-                Nota("Para que Mostaza tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).pulsable { nav.ir(Pantalla.Ajustes()) })
+                Nota("Para que Hathor tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).pulsable { nav.ir(Pantalla.Ajustes()) })
                 if (f.isEmpty()) Nota("Tus addons no dan ningún catálogo ahora mismo (sin conexión, o no tienen). Añade addons en «Addons».", Modifier.padding(top = 26.dp))
                 f.forEach { fila -> FilaPosters(fila.titulo, fila.cosas.take(30), { nav.abre(it) }) }
             }
         }
-        Text("Mostaza · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
+        Text("Hathor · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
         Text("versión ${Actualizador.version}", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
     }
 }

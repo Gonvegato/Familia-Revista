@@ -47,8 +47,8 @@ def carpeta_privada(d):
 
 def subir(ruta):
     nombre = os.path.basename(ruta)
-    if not re.fullmatch(r"Mostaza-\d+(\.\d+)*\.apk", nombre):
-        raise SystemExit("El archivo debe llamarse Mostaza-<versión>.apk")
+    if not re.fullmatch(r"(?:Hathor|Mostaza)-\d+(\.\d+)*\.apk", nombre):
+        raise SystemExit("El archivo debe llamarse Hathor-<versión>.apk")
     datos = open(ruta, "rb").read()
     d = kdrive()
     home = carpeta_privada(d)

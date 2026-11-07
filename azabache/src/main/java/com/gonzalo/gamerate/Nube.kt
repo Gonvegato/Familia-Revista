@@ -166,7 +166,7 @@ object KDrive {
     suspend fun test(ctx: Context): String = withContext(Dispatchers.IO) {
         prefs(ctx).edit().remove("home").apply()
         home(ctx)
-        "Conectado: Azabache guardará todo en «Mi carpeta/Atrio» de tu kDrive (la misma carpeta que Atrio del PC)"
+        "Conectado: Jonsu guardará todo en «Mi carpeta/Atrio» de tu kDrive (la misma carpeta que Atrio del PC)"
     }
 
     private class Item(val name: String, val id: Long, val dir: Boolean, val visibility: String)
@@ -843,7 +843,7 @@ fun NubeSettings(say: (String) -> Unit) {
         Plegado(
             "En el Manager de Infomaniak: Desarrollador → Tokens de API → Crear un token, con la aplicación «kDrive». " +
                 "El número de tu kDrive es el que sale en la dirección al abrirlo en el navegador, después de «/drive/». " +
-                "El token se guarda en tu cuenta, en una parte que solo tú puedes leer (tu pareja no), y lo usan también Hiedra, Marfil y Cobalto."
+                "El token se guarda en tu cuenta, en una parte que solo tú puedes leer (tu pareja no), y lo usan también Bastet, Seshat y Thot."
         )
         OutlinedTextField(token, { token = it }, label = { Text("Token de API") }, singleLine = true, shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))

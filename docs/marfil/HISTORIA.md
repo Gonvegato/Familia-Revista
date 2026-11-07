@@ -1,9 +1,9 @@
-# Marfil
+# Seshat
 
-La app de leer del móvil. Hermana de [Azabache](https://github.com/Gonvegato/azabache) (la revista: valorar), [Hiedra](https://github.com/Gonvegato/hiedra)
-(juegos) y [Cobalto](https://github.com/Gonvegato/cobalto) (escribir): misma interfaz «Revista» de Atrio, mismos temas, otro paquete
-(`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Azabache los
-refleja para valorarlos, y los escritos de Cobalto se leen aquí.
+La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azabache) (la revista: valorar), [Bastet](https://github.com/Gonvegato/hiedra)
+(juegos) y [Thot](https://github.com/Gonvegato/cobalto) (escribir): misma interfaz «Revista» de Atrio, mismos temas, otro paquete
+(`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
+refleja para valorarlos, y los escritos de Thot se leen aquí.
 
 ## Capturas
 
@@ -23,13 +23,13 @@ Generadas en el ordenador con libros de ejemplo (`CapturasTest`, solo con `-Prob
   estante se ordena (Recientes, Añadidos, Título, Autor, Páginas, Terminado) y se recuerda; «Buscar» mira en todos.
 - **Ficha** con la estética de Atrio: estado arriba (Pendiente · Leyendo · Leído · Abandonado), saga y favorito, la casilla de lectura
   («Seguir leyendo», «Bajar de tu kDrive», «Elegir archivo»), portada, tiempo y páginas, subrayados y notas, fecha de terminado (y «2.ª vez»),
-  y «En Azabache» (la valoración, solo se ve, y «Abrir en Azabache →»).
+  y «En Jonsu» (la valoración, solo se ve, y «Abrir en Jonsu →»).
 - **Lector** (foliate-js para EPUB y cómics, pdf.js para PDF): páginas o desplazamiento continuo, letra, tamaño, tema y márgenes (iguales en
   todos tus dispositivos), subrayados, notas y marcadores, diccionario (Wikcionario), botones de capítulo siguiente y anterior al deslizar.
 - **Portadas**: de la galería, de internet (iTunes Libros, Open Library y el buscador de imágenes de Atrio) o ninguna (una tapa de tela con el
-  título). Marfil no saca portadas de los archivos. Las que eliges viajan: las de internet por su dirección, las tuyas por kDrive.
+  título). Seshat no saca portadas de los archivos. Las que eliges viajan: las de internet por su dirección, las tuyas por kDrive.
 - **Sagas**: en las listas los libros de una saga salen juntos; su página dice qué toca leer ahora, y se ordenan, añaden y quitan libros.
-- **Escritos**: las obras de Cobalto con capítulos terminados, convertidas en EPUB, para leerlas con el lector (no salen en los estantes ni viajan).
+- **Escritos**: las obras de Thot con capítulos terminados, convertidas en EPUB, para leerlas con el lector (no salen en los estantes ni viajan).
 - **Páginas** de cada libro, de la fuente más fiable: lo que escribes tú → Atrio / el PDF → Open Library → calculadas por el texto del EPUB.
 - **Widgets** (los de Atrio, con libros): Sigue leyendo, En la mesilla, En portada, ¿Y ahora qué?, Lectura de la semana, Una cita y la cabecera.
   Eligen libro al ponerlos («el que toque» o uno fijo) y se repintan con el tema.
@@ -44,26 +44,26 @@ subir a kDrive ahora) · **Avanzado** (actualizarse sola, el token y el número 
 
 ## Cuenta de Atrio y sincronización entre tus Marfiles
 
-Entras con el mismo usuario y contraseña que en Atrio (Firebase Authentication por REST; se guarda el pase de acceso, no la contraseña). Marfil no
+Entras con el mismo usuario y contraseña que en Atrio (Firebase Authentication por REST; se guarda el pase de acceso, no la contraseña). Seshat no
 crea cuentas. Cada dispositivo escribe en su hueco bajo `/users/<uid>/marfil/` con sellos de hora y escucha en directo: libros (por clave:
 título + autor), estado, favorito, saga, portada, páginas, fechas de terminado y los ajustes del lector. Gana el cambio más reciente; lo que
 quitas viaja como «borrado»; el **tiempo leído se suma** por dispositivo. Un libro que viene de otro móvil aparece «sin archivo» hasta que se baja
 de kDrive o eliges su archivo. Tu pareja de Atrio puede leer esa parte de la cuenta (las reglas de Atrio dejan leer a la pareja todo `/users/<uid>`).
-Lo que lee Azabache está en `docs/CONTRATO-DATOS.md`. Probado en el ordenador contra el Firebase de mentira (`MezclaTest`, `MezclaLecturaTest`,
+Lo que lee Jonsu está en `docs/CONTRATO-DATOS.md`. Probado en el ordenador contra el Firebase de mentira (`MezclaTest`, `MezclaLecturaTest`,
 `ImportarAtrioTest`); no con tu cuenta real.
 
 ## Actualizaciones automáticas (kDrive, como Atrio)
 
-Cada versión se sube a **«Mi carpeta/versiones»** de tu kDrive como `Marfil-<versión>.apk` (`python3 herramientas/subir-version.py`). Marfil mira
-al abrir, cada minuto mientras se ve y, cerrada, cada 4 horas (WorkManager); si hay una más nueva se baja, se comprueba que es Marfil con la misma
+Cada versión se sube a **«Mi carpeta/versiones»** de tu kDrive como `Seshat-<versión>.apk` (`python3 herramientas/subir-version.py`). Seshat mira
+al abrir, cada minuto mientras se ve y, cerrada, cada 4 horas (WorkManager); si hay una más nueva se baja, se comprueba que es Seshat con la misma
 firma y se instala sin preguntar cuando no la usas (Android 12+, con el permiso de instalar apps); si Android no lo deja, te pregunta. El token
-de kDrive es de tu cuenta (se pone una vez en Azabache → Ajustes → Avanzado → Tu nube) y lo usan las cuatro apps; tu pareja no lo ve.
+de kDrive es de tu cuenta (se pone una vez en Jonsu → Ajustes → Avanzado → Tu nube) y lo usan las cuatro apps; tu pareja no lo ve.
 
 ## Compilar
 
 ```
 gradle :app:assembleDebug
-gradle :app:testDebugUnitTest                                                   # 0 fallos; ContratoTest deja en app/build/outputs/contrato/marfil.json lo que sube Marfil, para la prueba ContratoHermanasTest de Azabache; NotaAzabacheContratoTest lee herramientas/casos/azabache.json (lo que sube Azabache)
+gradle :app:testDebugUnitTest                                                   # 0 fallos; ContratoTest deja en app/build/outputs/contrato/marfil.json lo que sube Seshat, para la prueba ContratoHermanasTest de Jonsu; NotaAzabacheContratoTest lee herramientas/casos/azabache.json (lo que sube Jonsu)
 gradle :app:testDebugUnitTest --tests '*CapturasTest*' -Proborazzi.test.record=true   # capturas en app/build/outputs/roborazzi
 gradle :app:assembleRelease                                                     # firmado con app/marfil.keystore
 ```
@@ -85,21 +85,21 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
   solo en cada dispositivo (la apariencia, los ajustes del lector y los objetivos ya viajaban). La primera vez, lo que ya tenías pasa sin
   perder nada: lo que solo tenía uno, tal cual; lo que tenían distinto, el del dispositivo donde lo cambiaste más tarde. Después, de cada
   ajuste gana el último cambio, venga de donde venga.
-- **Lo que lees de Cobalto sigue donde lo dejaste, en cualquier dispositivo.** Por dónde vas en una obra, sus subrayados, notas y
+- **Lo que lees de Thot sigue donde lo dejaste, en cualquier dispositivo.** Por dónde vas en una obra, sus subrayados, notas y
   marcadores, sus ajustes y el tiempo leído se quedaban en el móvil donde la leías; ahora van con tu cuenta, como los de cualquier libro. La
-  obra sigue sin ser un libro de tu biblioteca (ni va a Azabache). Lo que ya habías leído en cada móvil sube la próxima vez que la abras ahí.
-- Marfil de Linux y Mac todavía no lee el orden de los estantes ni lo leído en los escritos: llegará en su próxima versión.
+  obra sigue sin ser un libro de tu biblioteca (ni va a Jonsu). Lo que ya habías leído en cada móvil sube la próxima vez que la abras ahí.
+- Seshat de Linux y Mac todavía no lee el orden de los estantes ni lo leído en los escritos: llegará en su próxima versión.
 
 ## 0.14.1
 
 - **El lector ya no se cierra solo.** Android puede cerrar lo que dibuja la página del libro (con un libro grande o el móvil justo de memoria), y si la app no lo atiende, Android cierra la app entera. Ahora se vuelve a abrir el libro donde ibas.
 - **Una versión nueva ya no te saca de lo que estás haciendo.** El actualizador instala en silencio cuando no usas la app, y Android la cierra para instalarla. Pero no siempre sabía que la estabas usando: si se entraba directamente a un libro (desde un widget, o cuando Android vuelve a abrir la app tras cerrarla por detrás), creía que no estabas; y con la pantalla apagada un momento, también. Ahora se lo pregunta a Android, nunca instala con la pantalla apagada o bloqueada, y con un libro abierto espera a que lleves un rato fuera.
-- **Los títulos grandes ya no salen cortados** (salía «Marfi» en vez de «Marfil» hasta entrar y salir de Ajustes). Si tu apariencia usa una letra de Google Fonts, llega un momento después de abrir la app; el título se medía con la de mientras, más estrecha, y no se volvía a medir. Ahora sí.
+- **Los títulos grandes ya no salen cortados** (salía «Marfi» en vez de «Seshat» hasta entrar y salir de Ajustes). Si tu apariencia usa una letra de Google Fonts, llega un momento después de abrir la app; el título se medía con la de mientras, más estrecha, y no se volvía a medir. Ahora sí.
 - Si Android cierra lo que dibuja una página web de la app (la búsqueda de portadas), se cierra esa pantalla y no la app entera.
 
 ## 0.14.0
 
-- **Lo que subrayas en el ordenador sale en el móvil, y al revés.** Marfil para Linux y Mac (1.1.0) ya pinta tus subrayados y tus notas
+- **Lo que subrayas en el ordenador sale en el móvil, y al revés.** Seshat para Linux y Mac (1.1.0) ya pinta tus subrayados y tus notas
   y los crea (seleccionas con el ratón y eliges Subrayar, Nota o, para una palabra, Definir: el mismo Wikcionario que aquí), con marcadores,
   y todo va a la cuenta exactamente como lo guarda el lector
   del móvil (`marcas/<kid>~<id>`, el mismo id, la misma hora de edición): una nota editada en los dos sitios es la misma nota, y lo que
@@ -127,11 +127,11 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 - **Una pantalla que no dejaba de redibujarse**: los títulos que se encogen para caber (FitTitle) apuntaban su ancho desde dentro de la
   medida; en una fila de dos casillas Compose mide dos veces (para saber el alto y para pintar) y, si los dos anchos diferían en un píxel
   por redondeo, se pisaban en cada fotograma: la pantalla se recomponía sin parar (CPU y batería) mientras estaba abierta. Pasaba en la
-  tablet en la ficha de un juego «Jugando» de Azabache; la misma pieza está en las cuatro apps y en las de escritorio, y se arregla en todas.
+  tablet en la ficha de un juego «Jugando» de Jonsu; la misma pieza está en las cuatro apps y en las de escritorio, y se arregla en todas.
 
 ## 0.13.4
 
-- Los capítulos de Cobalto llegan con su hora de edición (`ue`; antes llegaba vacía y «capítulos nuevos desde la última vez» no
+- Los capítulos de Thot llegan con su hora de edición (`ue`; antes llegaba vacía y «capítulos nuevos desde la última vez» no
   contaba ninguno).
 
 ## 0.13.3
@@ -139,7 +139,7 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 - **Las fechas que llegaron de Atrio estaban en 1970.** Atrio guarda el día de empezar y de terminar como número de día, y al
   traerlo se tomó por milisegundos: los libros terminados en Atrio quedaron terminados el 1 de enero de 1970, y por eso el reto del año
   no los contaba. Ahora se leen
-  bien, se corrigen una vez en tu cuenta (así las ven igual Azabache y tus otros dispositivos) y lo que se traiga de Atrio llega bien.
+  bien, se corrigen una vez en tu cuenta (así las ven igual Jonsu y tus otros dispositivos) y lo que se traiga de Atrio llega bien.
 
 ## 0.13.2
 
@@ -158,8 +158,8 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 - **Los libros vuelven a subirse solos a tu kDrive, como en Atrio.** En la 0.13.0 se había perdido: solo se subían con «Subir a tu
   kDrive ahora». Ahora, en cuanto añades un libro (o le cambias el archivo), se sube solo a «Mi carpeta/Marfil/Libros/<título>/» con la
-  conexión que haya, aunque cierres Marfil, y tus otros dispositivos lo bajan al abrirlo. «Tener todos mis libros aquí» vuelve a
-  bajarlos solos, con Wi-Fi. También se mira al abrir Marfil y tras cada sincronización. Si una subida falla, se reintenta sola a la
+  conexión que haya, aunque cierres Seshat, y tus otros dispositivos lo bajan al abrirlo. «Tener todos mis libros aquí» vuelve a
+  bajarlos solos, con Wi-Fi. También se mira al abrir Seshat y tras cada sincronización. Si una subida falla, se reintenta sola a la
   media hora (a mano, cuando quieras).
 
 ## 0.13.0 — la familia
@@ -168,33 +168,33 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
   tocan campos distintos nunca se pisan, y un móvil que vuelve a tener red después de días no pisa lo que cambiaste luego en otro
   (las reglas del servidor lo comprueban). Funciona sin conexión: lo que cambias se ve al momento y se sube solo en cuanto hay red.
   Ver `nube/ESQUEMA.md`.
-- **Entrar una vez.** Entras en Azabache (o en cualquiera de la familia) y las demás entran solas en ese móvil.
+- **Entrar una vez.** Entras en Jonsu (o en cualquiera de la familia) y las demás entran solas en ese móvil.
 - **Las claves, una vez.** El token de kDrive y las de los servicios se ponen una vez y las tienen todas las apps (si ya las tenías
-  en este móvil, se suben solas a la cuenta). Se gestionan en Azabache (Ajustes → Avanzado); un token mal pegado en
+  en este móvil, se suben solas a la cuenta). Se gestionan en Jonsu (Ajustes → Avanzado); un token mal pegado en
   cualquier app nunca pisa el bueno de la cuenta.
 - **Actualizaciones sin preguntar** también en Android 17 (la app apunta a Android 15 y declara el permiso de actualizarse sola).
 - **Una sola firma para las cuatro.** Esta versión se instala encima de la anterior, sin desinstalar, pero **a mano esta vez**: el
   actualizador de antes no acepta la firma nueva. A partir de aquí, se actualiza sola.
 - **La primera vez** (en cada móvil), lo de antes pasa a la cuenta nueva con la hora real de cada cambio. Lo de antes no se borra.
-- **Las portadas viajan con la cuenta** (no por kDrive): las mismas en todos tus dispositivos y en Azabache.
+- **Las portadas viajan con la cuenta** (no por kDrive): las mismas en todos tus dispositivos y en Jonsu.
 - **Lo leído de cada libro** (por dónde vas, subrayados, notas, marcadores y tiempo) viaja por separado: un subrayado hecho en la tablet
   y otro en el móvil se juntan siempre.
-- Los objetivos de lectura son de la cuenta; los Escritos de Cobalto llegan de la cuenta.
+- Los objetivos de lectura son de la cuenta; los Escritos de Thot llegan de la cuenta.
 
 ## 0.12.20
 
 - **Fechas y cifras como en las otras tres** (`Formato.kt`, con las mismas pruebas en las cuatro): «16 oct 2026» en fichas y textos, «16/10/2026» en las tablas de datos y siempre con punto de millar («4.010»). Los meses van escritos en la app (Android, según la versión, les ponía punto: «oct.»).
-- **Escritos: «N capítulos nuevos»** en el acento cuando Cobalto ha publicado capítulos desde la última vez que abriste la obra, y debajo, por dónde vas («vas por el 34 % · Capítulo 5»).
-- «En Azabache» sin nota: una línea, «Sin valorar aún · Valorar en Azabache →».
+- **Escritos: «N capítulos nuevos»** en el acento cuando Thot ha publicado capítulos desde la última vez que abriste la obra, y debajo, por dónde vas («vas por el 34 % · Capítulo 5»).
+- «En Jonsu» sin nota: una línea, «Sin valorar aún · Valorar en Jonsu →».
 - Al elegir el libro de un widget, los terminados dicen «TERMINADO».
 - Los contadores de las pestañas van en tinta (más oscura la de la pestaña elegida), no en rojo: el rojo queda para lo que se toca.
 - En las listas, la línea de debajo del título un punto más grande y más legible.
 - **La cabecera de la portada se pliega al bajar**: arriba solo se quedan el nombre y «Buscar · + Añadir»; el número, la fecha, las barras y el menú se van con la página.
-- Debajo de «Marfil · hecho en casa», en gris, la versión instalada.
+- Debajo de «Seshat · hecho en casa», en gris, la versión instalada.
 
 ## 0.12.19
 
-- **El lector, más fluido.** Mientras leías, cada poco (cada 0,4 % avanzado) Marfil reescribía la biblioteca entera y, un segundo
+- **El lector, más fluido.** Mientras leías, cada poco (cada 0,4 % avanzado) Seshat reescribía la biblioteca entera y, un segundo
   después, repintaba todos los widgets (decodificando portadas) justo mientras pasabas página o abrías el menú. Ahora, con el libro
   abierto, los widgets no se repintan (se hace al cerrarlo) y la ficha se pone al día cada 2 % o cada 20 s, y siempre al cerrar. Las
   barras del menú van en su propia capa: aparecer ya no obliga a repintar la página que hay debajo.
@@ -206,31 +206,31 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## 0.12.18
 
-- **Arreglo de las portadas que se perdían.** Al abrir Marfil se mezcla tu biblioteca con la de tus otros dispositivos y, a la vez, se bajan
+- **Arreglo de las portadas que se perdían.** Al abrir Seshat se mezcla tu biblioteca con la de tus otros dispositivos y, a la vez, se bajan
   las portadas. La mezcla se hacía con una copia de la biblioteca de unos segundos antes y, al aplicarla, quitaba la portada que acababa
   de llegar (y el archivo de un libro recién bajado). Ahora la portada y el archivo se toman de como están en ese momento.
 - Las portadas que ya estaban bajadas en el móvil pero el libro había dejado de apuntar a ellas **se vuelven a poner solas** al abrir
-  Marfil (sin bajar nada). Las que no estén en el móvil se bajan de tu kDrive como siempre.
+  Seshat (sin bajar nada). Las que no estén en el móvil se bajan de tu kDrive como siempre.
 - **«¿Vas por aquí?» tras un salto largo** en el lector (un cuarto del libro o más de golpe: del 98 % al 2 %, o al revés, con la barra o el
   índice): sale un aviso con «Voy por aquí». Si lo pulsas, esa es tu posición de verdad aunque sea menos de lo que llegaste: el libro
-  abre ahí, el porcentaje de la ficha baja (y vuelve a crecer al leer) y lo mismo en tus otros dispositivos y en Azabache. Marcar el
+  abre ahí, el porcentaje de la ficha baja (y vuelve a crecer al leer) y lo mismo en tus otros dispositivos y en Jonsu. Marcar el
   principio deja el libro en Pendientes; marcar antes del final uno que salía Leído lo pasa a Leyendo.
 - Mientras no lo confirmes, un salto largo **ya no cuenta como leído**: mirar el final no sube el porcentaje ni se queda como «lo más lejos».
 
 ## 0.12.17
 
-- Los «días seguidos» leyendo siguen la misma regla en Hiedra, Marfil, Cobalto y Azabache (`Racha.kt`, con las mismas pruebas en las cuatro, y en el contrato): cuenta un día con al menos un minuto leído; si hoy aún no, desde ayer. Para ti no cambia nada (era la misma).
+- Los «días seguidos» leyendo siguen la misma regla en Bastet, Seshat, Thot y Jonsu (`Racha.kt`, con las mismas pruebas en las cuatro, y en el contrato): cuenta un día con al menos un minuto leído; si hoy aún no, desde ayer. Para ti no cambia nada (era la misma).
 
 ## 0.12.16
 
-- **Un solo objetivo de lectura**: los minutos al día y los libros del año los fija Marfil (Ajustes → Lectura) y viajan con tu cuenta
-  (`marfil/objetivos`) a tus otros Marfil y a Azabache, que los enseña sin poder cambiarlos. Antes cada Marfil tenía el suyo y Azabache
-  otro, y podían no coincidir. La primera vez, si Marfil no tenía ninguno, se traen los que tenías puestos en Azabache.
+- **Un solo objetivo de lectura**: los minutos al día y los libros del año los fija Seshat (Ajustes → Lectura) y viajan con tu cuenta
+  (`marfil/objetivos`) a tus otros Seshat y a Jonsu, que los enseña sin poder cambiarlos. Antes cada Seshat tenía el suyo y Jonsu
+  otro, y podían no coincidir. La primera vez, si Seshat no tenía ninguno, se traen los que tenías puestos en Jonsu.
 
 ## 0.12.15
 
 - En las filas de datos (etiqueta · puntos · cifra), si no cabe todo en una línea, la etiqueta va entera arriba y la cifra debajo, en vez
-  de cortar la etiqueta con puntos suspensivos (como en Azabache 1.2.8).
+  de cortar la etiqueta con puntos suspensivos (como en Jonsu 1.2.8).
 
 ## 0.12.14
 
@@ -248,74 +248,74 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## 0.12.11
 
-- Lo leído llega a tu cuenta aunque no haya red al cerrar el libro o Android congele Marfil nada más salir: queda un trabajo de fondo
-  (SubidaWorker) que sube lo pendiente en cuanto hay red, aunque la app siga congelada. Si Marfil ya lo subió, no hace nada.
+- Lo leído llega a tu cuenta aunque no haya red al cerrar el libro o Android congele Seshat nada más salir: queda un trabajo de fondo
+  (SubidaWorker) que sube lo pendiente en cuanto hay red, aunque la app siga congelada. Si Seshat ya lo subió, no hace nada.
 
 ## 0.12.10
 
 - Textos al día: lo que seguía diciendo «Atrio» para hablar del móvil (seguir sus colores en directo, copiar su apariencia de tu cuenta,
-  «los mismos que en Atrio») dice ahora Azabache, que es quien está en el móvil. La cuenta sigue siendo la cuenta de Atrio.
+  «los mismos que en Atrio») dice ahora Jonsu, que es quien está en el móvil. La cuenta sigue siendo la cuenta de Atrio.
 
 ## 0.12.9
 
-- **Arreglo**: en Android 13 o más, los avisos del actualizador («Marfil tiene una versión nueva», «Marfil se ha actualizado, toca para abrirla»)
+- **Arreglo**: en Android 13 o más, los avisos del actualizador («Seshat tiene una versión nueva», «Seshat se ha actualizado, toca para abrirla»)
   no se veían nunca: faltaba el permiso de avisos. Ahora se declara y se concede desde Ajustes → Avanzado («Avisos de actualización»).
-- **Arreglo**: en Android 11 o más, «Escribir en Cobalto» no salía nunca (Marfil no declaraba que puede ver a Cobalto; los tests no lo
-  detectan porque Robolectric no filtra paquetes). Ahora el manifiesto declara a Hiedra y Cobalto, y un test lo vigila.
+- **Arreglo**: en Android 11 o más, «Escribir en Thot» no salía nunca (Seshat no declaraba que puede ver a Thot; los tests no lo
+  detectan porque Robolectric no filtra paquetes). Ahora el manifiesto declara a Bastet y Thot, y un test lo vigila.
 - Un subrayado o una nota hechos en otro dispositivo repintan los widgets («La cita») en cuanto llegan, no solo cuando cambia la biblioteca.
 
 ## 0.12.8
 
 - Mientras lees, lo leído (posición, tiempo, subrayados) sube a tu cuenta como mucho una vez por minuto, no cada pocos segundos; al salir del
-  lector sube al momento, como antes. Azabache y tus otros Marfiles lo escuchan, así que con eso basta y se gasta mucho menos.
+  lector sube al momento, como antes. Jonsu y tus otros Marfiles lo escuchan, así que con eso basta y se gasta mucho menos.
 
 ## 0.12.7
 
-- Lo que Azabache sube (sus fichas, para «En Azabache» y para traer libros) no se vuelve a bajar si sus sellos no han cambiado.
+- Lo que Jonsu sube (sus fichas, para «En Jonsu» y para traer libros) no se vuelve a bajar si sus sellos no han cambiado.
 
 ## 0.12.6: la ficha de un escrito
 
-- La ficha de una obra de Cobalto (Escritos) no ofrece portada, editar, borrar, estante, saga, favorito ni «En Azabache» (nada de eso es
-  suyo): arriba lleva «Escribir en Cobalto». Y quitarla de la biblioteca no deja rastro en lo que viaja a tus otros dispositivos.
+- La ficha de una obra de Thot (Escritos) no ofrece portada, editar, borrar, estante, saga, favorito ni «En Jonsu» (nada de eso es
+  suyo): arriba lleva «Escribir en Thot». Y quitarla de la biblioteca no deja rastro en lo que viaja a tus otros dispositivos.
 
-## 0.12.5: la nota de Azabache, al momento
+## 0.12.5: la nota de Jonsu, al momento
 
-- Marfil escucha el sello de Azabache: en cuanto valoras un libro allí, «En Azabache» en su ficha cambia sin salir ni esperar los 15 minutos.
+- Seshat escucha el sello de Jonsu: en cuanto valoras un libro allí, «En Jonsu» en su ficha cambia sin salir ni esperar los 15 minutos.
 - Las fechas de la ficha salen siempre en español.
 
 ## 0.12.4
 
-- En la portada, «+ Añadir» en el acento, como en las listas y como en Hiedra y Cobalto; el pie de Ajustes dice de quién es hermana.
+- En la portada, «+ Añadir» en el acento, como en las listas y como en Bastet y Thot; el pie de Ajustes dice de quién es hermana.
 
-## 0.12.3: Azabache abre el libro exacto, y la obra exacta de Cobalto
+## 0.12.3: Jonsu abre el libro exacto, y la obra exacta de Thot
 
-- Marfil entiende el extra `clave` (la clave del libro, la misma en todos tus Marfiles): «Leer» en Azabache abre Marfil en la ficha de ese libro.
+- Seshat entiende el extra `clave` (la clave del libro, la misma en todos tus Marfiles): «Leer» en Jonsu abre Seshat en la ficha de ese libro.
   Los widgets siguen usando `ficha` (por id) y `leer` (directo al lector).
-- En Escritos, «Escribir en Cobalto» abre Cobalto **en esa obra** (no en su portada). Y al revés: Azabache y Cobalto pueden pedir
-  «lee esta obra» (`go=escritos` + `obra`), y Marfil la prepara y la abre en el lector.
+- En Escritos, «Escribir en Thot» abre Thot **en esa obra** (no en su portada). Y al revés: Jonsu y Thot pueden pedir
+  «lee esta obra» (`go=escritos` + `obra`), y Seshat la prepara y la abre en el lector.
 
 ## 0.12.1: los Escritos llegan solos
 
-- Marfil escucha el sello de Cobalto: en cuanto das un capítulo por terminado allí (y Cobalto sincroniza), aquí se traen los Escritos y se
-  rehace su EPUB, sin entrar en la pantalla (Cobalto 0.2.1 o más nueva).
-- Al subir lo leído de un libro, los nodos ligeros que lee Azabache (`tiempo`, `subrayados`) van antes del sello: el Diario de Azabache ya no
+- Seshat escucha el sello de Thot: en cuanto das un capítulo por terminado allí (y Thot sincroniza), aquí se traen los Escritos y se
+  rehace su EPUB, sin entrar en la pantalla (Thot 0.2.1 o más nueva).
+- Al subir lo leído de un libro, los nodos ligeros que lee Jonsu (`tiempo`, `subrayados`) van antes del sello: el Diario de Jonsu ya no
   puede leerlos viejos.
 
-## 0.12.0: los Escritos de Cobalto, portadas para Azabache y ajustes en pestañas
+## 0.12.0: los Escritos de Thot, portadas para Jonsu y ajustes en pestañas
 
-- **Escritos** (en el menú): las obras de Cobalto con capítulos terminados se leen aquí, con el lector de Marfil. Cada obra se convierte
-  en un EPUB (portada, partes y capítulos, con las cursivas, negritas, citas y saltos de escena de Cobalto) que se rehace solo cuando
-  Cobalto cambia algo. Son libros «de casa»: no salen en las listas, ni en los estantes, ni viajan a otros dispositivos ni a la nube.
-  «Escribir en Cobalto» abre Cobalto si está en el móvil; Azabache abre esta pantalla desde su «Escritos».
-- **Portadas**: la dirección de la portada que elegiste de internet viaja con el libro (`pu`), así Azabache (y tus otros móviles)
+- **Escritos** (en el menú): las obras de Thot con capítulos terminados se leen aquí, con el lector de Seshat. Cada obra se convierte
+  en un EPUB (portada, partes y capítulos, con las cursivas, negritas, citas y saltos de escena de Thot) que se rehace solo cuando
+  Thot cambia algo. Son libros «de casa»: no salen en las listas, ni en los estantes, ni viajan a otros dispositivos ni a la nube.
+  «Escribir en Thot» abre Thot si está en el móvil; Jonsu abre esta pantalla desde su «Escritos».
+- **Portadas**: la dirección de la portada que elegiste de internet viaja con el libro (`pu`), así Jonsu (y tus otros móviles)
   enseñan la misma portada que tienes aquí. Las que subiste de tu galería siguen yendo por kDrive.
 - **Ajustes** en pestañas, como Atrio: Apariencia · Lectura (objetivos y el lector) · Cuenta (Atrio y los libros en la nube) ·
   Avanzado (actualizaciones y copias). Lo mismo, pero sin tenerlo todo a la vista.
 
 ## 0.11.1
 
-- **Azabache**: una ficha que Azabache refleja de Marfil y que aún no has valorado (todas las notas a 0, sin reseña) ya no sale en «En
-  Azabache» como un 0: sigue «sin valorar».
+- **Jonsu**: una ficha que Jonsu refleja de Seshat y que aún no has valorado (todas las notas a 0, sin reseña) ya no sale en «En
+  Jonsu» como un 0: sigue «sin valorar».
 
 ## 0.11.0: el estado arriba y los widgets eligen libro
 
@@ -337,7 +337,7 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## 0.9.2: portadas solo las tuyas
 
-- Marfil ya no saca portadas de los archivos (ni de los EPUB ni la primera página de un PDF). Si no has puesto tú una portada,
+- Seshat ya no saca portadas de los archivos (ni de los EPUB ni la primera página de un PDF). Si no has puesto tú una portada,
   el libro se queda con la «tela» generada (color según el título, con la letra o el título en crema).
 - Solo se sincronizan por kDrive las portadas que pones tú; «Quitar portada» también se propaga a tus otros dispositivos.
 - Al actualizar, las portadas automáticas que había se limpian una sola vez; las que pusiste tú se conservan.
@@ -358,7 +358,7 @@ Además de la biblioteca, cada libro sincroniza su estado de lectura por la cuen
 - **Tus libros en todos tus dispositivos**: un trabajo en segundo plano (WorkManager, con Wi-Fi) sube libros y portadas y, si lo dejas activo (Ajustes → Libros), baja los que faltan.
 - **Widgets** (los mismos de Atrio y Carmesí, con libros): Sigue leyendo, En la mesilla, En portada, ¿Y ahora qué?, Lectura de la semana (con tu objetivo), Una cita (de tus subrayados; un toque abre el libro en esa frase) y la cabecera (sola o en papel). Vista previa en `docs/widgets/hoja.png`.
 
-## Marfil 0.8
+## Seshat 0.8
 
 - **Secciones como páginas**: Leyendo, Pendientes, Leídos, Abandonados y Autores se recorren con el dedo (o con las pestañas); Buscar mira en todos los estantes.
 - **Sagas** (las de Atrio, de vuelta): en las listas los libros de una saga salen juntos (un toque los abre; «Ver la saga →» va a su página, con lo que toca leer ahora, ordenar, añadir y quitar libros). Se crean desde la ficha («Saga →»), viajan con tu cuenta y se traen de Atrio al importar.
@@ -369,29 +369,29 @@ Además de la biblioteca, cada libro sincroniza su estado de lectura por la cuen
 - **Abandonados** como estado propio (y un abandonado que vuelves a leer pasa a Leyendo).
 - **Widgets**: las etiquetas llevan siempre la negrita de la app, como en Atrio.
 
-## Marfil 0.8.1: leer deslizando
+## Seshat 0.8.1: leer deslizando
 
 - Deslizando (PDF o cómic «hacia abajo», o «Desplazamiento continuo»): en vez de mantener pulsado, **dos toques seguidos** seleccionan la palabra (subrayar, nota, diccionario); un toque suelto espera una fracción de segundo por si es el primero de dos.
 - La línea de abajo (lo que queda y el %) no se enseña en ese modo: se solapaba con el texto.
 - Al llegar al final de un capítulo se puede **seguir deslizando**: arrastrar o el impulso del dedo pasa al siguiente capítulo (y al principio, al anterior). Probado con un navegador con pantalla táctil: `herramientas/lector-prueba`.
 
-## Marfil 0.8.2
+## Seshat 0.8.2
 
 - **Ordenar** cada estante (Recientes, Añadidos, Título, Autor, Páginas); se recuerda por estante.
 - **Atajo «Seguir leyendo»** al mantener pulsado el icono de la app: abre el libro que estás leyendo en tu página.
 - **APK más pequeño**: solo arm64 y x86_64 (el traductor del diccionario se copiaba para cuatro procesadores).
 
-## Marfil 0.9.0
+## Seshat 0.9.0
 
 - **Fecha de terminado** (y «2.ª vez» si lo relees): se apunta sola cuando un libro pasa a Leído, viaja entre dispositivos, sale en la ficha y es el orden «Terminado» de Leídos. De Atrio se trae la fecha en que lo terminaste.
 - **Reto anual** (Ajustes → Lectura → «Libros al año»): en la portada («RETO 2026 · 7 DE 12 LIBROS») y en el widget de la semana.
 - **Ajustes del lector iguales en todos tus dispositivos** (letra, tamaño, tema, márgenes…); el brillo y lo propio de los PDF son de cada dispositivo.
-- **Subrayados en un nodo ligero** de tu cuenta (`/marfil/subrayados`) para la cita del Diario de Azabache.
-- **«En Azabache»** en la ficha: la valoración (solo se ve) y «Abrir en Azabache →».
+- **Subrayados en un nodo ligero** de tu cuenta (`/marfil/subrayados`) para la cita del Diario de Jonsu.
+- **«En Jonsu»** en la ficha: la valoración (solo se ve) y «Abrir en Jonsu →».
 - **Portadas que en Atrio eran fotos tuyas**: al importar se enlazan con su archivo de tu kDrive y se bajan a todos tus dispositivos.
 - El botón de un libro ya leído dice «Volver a leer».
 
-## Marfil 0.9.1: pasar de capítulo con un botón
+## Seshat 0.9.1: pasar de capítulo con un botón
 
 - Leyendo deslizando («Desplazamiento continuo», EPUB y PDF adaptado), **ya no se pasa de capítulo solo** (el salto parpadeaba y no se sabía dónde se llegaba). Al final de cada capítulo hay un botón **«Siguiente capítulo → nombre del capítulo»** y al principio **«← Capítulo anterior»** (que lleva al final del anterior). Al pasar, un aviso dice el capítulo al que se llega.
 - En el modo de páginas los botones no se ven. En el último capítulo no hay botón de siguiente.

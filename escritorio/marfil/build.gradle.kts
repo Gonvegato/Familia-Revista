@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.1.0"
+val version = "1.2.0"
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
@@ -31,7 +31,7 @@ compose.desktop {
         jvmArgs += listOf("-Dfamilia.version=$version")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Deb)
-            packageName = "Marfil"
+            packageName = "Seshat"
             packageVersion = version
             description = "Tus libros, en la cuenta de la familia"
             vendor = "Gonzalo"

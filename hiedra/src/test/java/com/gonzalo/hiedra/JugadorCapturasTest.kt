@@ -71,7 +71,7 @@ class JugadorCapturasTest {
             foto(n)
             // La pantalla de carga y la de la BIOS que falta
             if (id == "s1") { c.get().fase = FaseJuego.Preparando("Bajando el núcleo Snes9x…", 0.4f); foto("48b_jugador_cargando") }
-            if (id == "a1") { c.get().fase = FaseJuego.Error("FinalBurn Neo necesita la BIOS neogeo.zip (Neo Geo). Elige el archivo: Hiedra lo reconoce y lo deja donde lo busca.", "Elegir la BIOS" to {}); foto("52b_jugador_falta_bios") }
+            if (id == "a1") { c.get().fase = FaseJuego.Error("FinalBurn Neo necesita la BIOS neogeo.zip (Neo Geo). Elige el archivo: Bastet lo reconoce y lo deja donde lo busca.", "Elegir la BIOS" to {}); foto("52b_jugador_falta_bios") }
             c.pause().stop().destroy()
         }
     }

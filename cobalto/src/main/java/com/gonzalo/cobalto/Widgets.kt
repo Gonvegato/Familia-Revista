@@ -468,11 +468,11 @@ object Widgets {
         val r = d.resumen
         val sem = r.dias.takeLast(14)
         val hoyDia = LocalDate.now()
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Cobalto"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Thot"))) {
             fondo()
             val pad = if (h < 90f) 12f else 16f
             seccion("Escritura", pad, pad, w - 2 * pad, tinta, acento)
-            pon(capa("Cobalto", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa("Thot", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
             val top = pad + 26f
             val ancho = w - 2 * pad
@@ -512,7 +512,7 @@ object Widgets {
     private fun obra(d: WDatos, id: Int, w: Float, h: Float, fijo: Doc? = null): Pagina {
         val ctx = d.ctx
         val lista = if (fijo != null) listOf(fijo) else listOfNotNull(d.actual) + d.enMarcha.filter { it.id != d.actual?.id }
-        if (lista.isEmpty()) return vacio(ctx, "Sigue escribiendo", "Nada entre manos", "Crea una obra en Cobalto y la tendrás aquí, a un toque de seguir.", w, h)
+        if (lista.isEmpty()) return vacio(ctx, "Sigue escribiendo", "Nada entre manos", "Crea una obra en Thot y la tendrás aquí, a un toque de seguir.", w, h)
         val i = Math.floorMod(estado(ctx, id, "i", 0), lista.size)
         val o = lista[i]
         val e = d.e
@@ -592,24 +592,24 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Cobalto"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Thot"))) {
             // Solo la palabra, sobre el fondo de pantalla (con una sombra suave para que se lea en cualquiera)
             val color = if (noche) 0xFFF6F1E7.toInt() else tinta
             val sombra = if (noche) 0x99000000.toInt() else 0x55FFFFFF
             val pie = if (h >= 84f) 16f else 0f
             val p = tp(fTitular, 10f, color, -0.03f)
-            val ancho = p.measureText("COBALTO")
+            val ancho = p.measureText("THOT")
             val cuadro = 0.16f
             var s = min((w - 8f) / (ancho / 10f * (1f + cuadro)), (h - pie - 4f) / 0.95f)
             s = s.coerceAtLeast(10f)
             val tpa = tp(fTitular, s, color, -0.03f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
             val fm = tpa.fontMetrics
-            val tw = tpa.measureText("COBALTO")
+            val tw = tpa.measureText("THOT")
             val total = tw + s * cuadro
             val x = (w - total) / 2
             val capH = s * 0.72f
             val base = (h - pie) / 2 + capH / 2
-            c.drawText("COBALTO", x, base, tpa)
+            c.drawText("THOT", x, base, tpa)
             // El punto de la revista: un cuadradito de acento
             val q = s * 0.12f
             c.drawRect(x + tw + s * 0.03f, base - q, x + tw + s * 0.03f + q, base, lleno(acento).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
@@ -625,7 +625,7 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Cobalto"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Thot"))) {
             fondo()
             val pad = if (h < 90f) 12f else 16f
             val conLinea = h >= 70f
@@ -633,13 +633,13 @@ object Widgets {
             val bajo = (if (conLinea) 22f else 0f) + (if (conEntradilla) 24f else 0f)
             val alto = h - 2 * pad - bajo
             val p = tp(fTitular, 10f, tinta, -0.03f)
-            val s = min((w - 2 * pad) / (p.measureText("COBALTO") / 10f), alto / 0.78f).coerceAtLeast(10f)
+            val s = min((w - 2 * pad) / (p.measureText("THOT") / 10f), alto / 0.78f).coerceAtLeast(10f)
             val tpa = tp(fTitular, s, tinta, -0.03f)
             val capH = s * 0.72f
             val bloque = capH + s * 0.08f + 4f + bajo
             val base = max(pad, (h - bloque) / 2) + capH
-            val tw = tpa.measureText("COBALTO")
-            c.drawText("COBALTO", (w - tw) / 2, base, tpa)
+            val tw = tpa.measureText("THOT")
+            c.drawText("THOT", (w - tw) / 2, base, tpa)
             var y = base + s * 0.08f + 4f
             if (conLinea) {
                 c.drawRect(pad, y, w - pad, y + 1.6f, lleno(tinta))

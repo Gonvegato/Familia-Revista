@@ -40,7 +40,7 @@ fun MarcasCompartir(e: Escritos, d: Doc) {
             parte?.b("comp") == true && !comp -> Text("Compartido con $nombre porque lo está la parte.", color = Muted, fontSize = 12.sp)
             parte?.b("hecho") == true && !hecho -> Text("Terminado porque lo está la parte.", color = Muted, fontSize = 12.sp)
             d.t == Escritos.T_PARTE && comp -> Text("$nombre puede leer todos los capítulos de esta parte (también los que añadas) y anotarlos.", color = Muted, fontSize = 12.sp)
-            comp -> Text("$nombre puede leerlo en su Cobalto (o en Atrio) y anotarlo.", color = Muted, fontSize = 12.sp)
+            comp -> Text("$nombre puede leerlo en su Thot (o en Atrio) y anotarlo.", color = Muted, fontSize = 12.sp)
             !Pareja.hay(ctx) -> Text("Para compartirlo, enlaza tu cuenta con la de tu pareja (Ajustes → Cuenta).", color = Muted, fontSize = 12.sp)
         }
     }
@@ -139,7 +139,7 @@ private fun LeerYAnotar(pe: Escritos, c: Doc, notas: List<NotaLectura>, onNotas:
     var error by remember { mutableStateOf("") }
     val esc = pe.escenas(c.id)
     HojaEscribir(c.s("titulo").ifBlank { "Sin título" }, onCerrar) {
-        Text("Toca un párrafo para anotarlo. Tus notas las ve ${Pareja.nombre(ctx)} en su Cobalto (o en Atrio).", color = Muted, fontSize = 13.sp)
+        Text("Toca un párrafo para anotarlo. Tus notas las ve ${Pareja.nombre(ctx)} en su Thot (o en Atrio).", color = Muted, fontSize = 13.sp)
         if (error.isNotEmpty()) Text(error, color = ColGeneral, fontSize = 13.sp)
         if (esc.all { it.s("texto").isBlank() }) Text("Todavía no hay nada escrito.", color = Muted, fontSize = 14.sp)
         esc.forEachIndexed { i, s ->

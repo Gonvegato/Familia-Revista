@@ -49,7 +49,7 @@ fun PantAjustes(nav: Nav) {
             1 -> AjustesServicios(nav)
             2 -> AjustesCategorias(nav)
             3 -> AjustesApariencia()
-            else -> AjustesVersion("azabache", "Azabache")
+            else -> AjustesVersion("azabache", "Jonsu")
         }
     }
 }
@@ -61,7 +61,7 @@ fun AjustesServicios(nav: Nav) {
     var prueba by remember { mutableStateOf("") }
     Antetitulo("Las claves de la cuenta")
     Spacer(Modifier.height(6.dp))
-    Cuerpo("Se ponen una vez y las usan todas: Hiedra, Marfil, Cobalto y Azabache, en el móvil y en el ordenador. Solo las puede leer tu sesión (ni tu pareja).", tam = 14)
+    Cuerpo("Se ponen una vez y las usan todas: Bastet, Seshat, Thot y Jonsu, en el móvil y en el ordenador. Solo las puede leer tu sesión (ni tu pareja).", tam = 14)
     Spacer(Modifier.height(14.dp))
     CLAVES.forEach { c ->
         var v by remember(c.nombre, LaFamilia.cambios) { mutableStateOf(LaFamilia.clave(c.nombre)) }
@@ -97,7 +97,7 @@ fun AjustesCategorias(nav: Nav) {
     Spacer(Modifier.height(10.dp))
     Cuenta.propias().forEach { k ->
         Fila(k.title, (k.labels.drop(1).joinToString(" · ") + " · «${k.statuses[1]}»" + when { k.isMovie -> " · busca en TMDB"; k.isTv -> " · busca en TVmaze"; else -> "" } +
-            if (CosasMostaza.de(k)) " · las de Mostaza" else ""), alHacer = { editar = k }) {
+            if (CosasMostaza.de(k)) " · las de Hathor" else ""), alHacer = { editar = k }) {
             Text("${Cuenta.fichas(k.id).size}", color = Muted, fontFamily = Body, fontSize = 13.sp)
         }
         Filete(1.dp, Line)
@@ -130,7 +130,7 @@ fun DialogoCategoria(k: Kind?, nav: Nav, onCerrar: () -> Unit) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { (0 until 4).forEach { i -> Campo("Criterio ${i + 1}", crit[i], Modifier.weight(1f)) { crit[i] = it } } }
         Campo("«En curso» se dice…", progreso) { progreso = it }
         MagChoice(listOf("A mano", "Películas (TMDB)", "Series (TVmaze)"), fuente, "Dónde se busca") { fuente = it }
-        if (CosasMostaza.activa() && (fuente == 1 || fuente == 2)) Cuerpo("Sus fichas son las de tu biblioteca de Mostaza (las mismas que en el móvil).", tam = 12)
+        if (CosasMostaza.activa() && (fuente == 1 || fuente == 2)) Cuerpo("Sus fichas son las de tu biblioteca de Hathor (las mismas que en el móvil).", tam = 12)
     }
 }
 
@@ -138,7 +138,7 @@ fun DialogoCategoria(k: Kind?, nav: Nav, onCerrar: () -> Unit) {
 fun AjustesApariencia() {
     Antetitulo("Apariencia")
     Spacer(Modifier.height(6.dp))
-    Cuerpo("Azabache del ordenador lleva los colores de tu Azabache del móvil (tema, fondo y acento), que vienen de la cuenta. Aquí eliges si quieres verlo claro u oscuro en este ordenador.", tam = 14)
+    Cuerpo("Jonsu del ordenador lleva los colores de tu Jonsu del móvil (tema, fondo y acento), que vienen de la cuenta. Aquí eliges si quieres verlo claro u oscuro en este ordenador.", tam = 14)
     Spacer(Modifier.height(12.dp))
-    MagChoice(listOf("Como Azabache del móvil", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
+    MagChoice(listOf("Como Jonsu del móvil", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
 }

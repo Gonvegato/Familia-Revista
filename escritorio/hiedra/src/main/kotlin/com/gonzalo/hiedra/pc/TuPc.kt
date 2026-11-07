@@ -33,7 +33,7 @@ object TuPc {
     /** Lo que publica de sí mismo (lo que lee el móvil: `app`, `name`, `dn`, `os`, `on`, `at`, `game`, `shot`, `st`, `tiempo`). */
     fun presencia(on: Boolean): Map<String, Any?> {
         val p = Pc.ahora
-        val m = linkedMapOf<String, Any?>("app" to "atrio", "cliente" to "hiedra", "name" to "Hiedra · ${Sitio.nombreEquipo}", "dn" to Sitio.nombreEquipo,
+        val m = linkedMapOf<String, Any?>("app" to "atrio", "cliente" to "hiedra", "name" to "Bastet · ${Sitio.nombreEquipo}", "dn" to Sitio.nombreEquipo,
             "os" to if (Sitio.sistema == Sitio.Sistema.MAC) "mac" else "linux", "on" to on, "at" to ahora(), "shot" to AjustesTuPc.capturasDesdeMovil, "tiempo" to true,
             "st" to runCatching { SteamLink.presencia() }.getOrNull())
         if (p != null && on) m["game"] = mapOf("key" to p.clave, "name" to p.nombre, "s" to p.desde, "cover" to p.portada, "sg" to 0L, "hero" to "", "logo" to "")
@@ -41,7 +41,7 @@ object TuPc {
     }
 
     /** La biblioteca de este PC tal como la lee el móvil (`k`, `n`, `c`, `lp`, `m`, `f`, `s`). Los minutos van a 0: las horas ya están en la cuenta. */
-    fun biblioteca(): Map<String, Any?> = mapOf("name" to "Hiedra · ${Sitio.nombreEquipo}",
+    fun biblioteca(): Map<String, Any?> = mapOf("name" to "Bastet · ${Sitio.nombreEquipo}",
         "games" to Pc.lista().map { j -> mapOf("k" to j.clave, "n" to j.nombre, "c" to j.portada.takeIf { it.startsWith("http") }.orEmpty(), "lp" to 0L, "m" to 0L, "f" to 0L, "s" to j.fuente.id, "sg" to 0L) })
 
     fun publica(on: Boolean = true) {
@@ -51,7 +51,7 @@ object TuPc {
 
     /** Atiende una orden del móvil. */
     fun atiende(id: String, c: Map<String, Any?>): Map<String, Any?> = when (c["op"].comoTexto()) {
-        "ping" -> mapOf("ok" to true, "msg" to "Hiedra en ${Sitio.nombreEquipo}")
+        "ping" -> mapOf("ok" to true, "msg" to "Bastet en ${Sitio.nombreEquipo}")
         "launch" -> {
             val key = c["a"].comoMapa()["key"].comoTexto()
             val j = Pc.por(key)
@@ -59,7 +59,7 @@ object TuPc {
             else { val jid = Juegos.mete(j, jugando = true); mapOf("ok" to true, "msg" to Pc.juega(j, jid)) }
         }
         "shot" -> {
-            if (!AjustesTuPc.capturasDesdeMovil) mapOf("ok" to false, "msg" to "En ${Sitio.nombreEquipo} no se pueden pedir capturas desde el móvil (se cambia en Hiedra del ordenador: Ajustes → Este PC).")
+            if (!AjustesTuPc.capturasDesdeMovil) mapOf("ok" to false, "msg" to "En ${Sitio.nombreEquipo} no se pueden pedir capturas desde el móvil (se cambia en Bastet del ordenador: Ajustes → Este PC).")
             else {
                 // (las que pide el móvil van siempre al móvil, aunque las de aquí no vayan)
                 val h = Capturas.haz(por = c["by"].comoTexto().ifBlank { "Móvil" }, alMovil = true)
@@ -68,7 +68,7 @@ object TuPc {
             }
         }
         "stream" -> streaming(c["a"].comoMapa()["key"].comoTexto())
-        else -> mapOf("ok" to false, "msg" to "Hiedra del ordenador no hace eso todavía (${c["op"].comoTexto()}).")
+        else -> mapOf("ok" to false, "msg" to "Bastet del ordenador no hace eso todavía (${c["op"].comoTexto()}).")
     }
 
     /**
@@ -76,7 +76,7 @@ object TuPc {
      * Atrio, también con un juego que no es de Steam (Steam Link enseña el escritorio).
      */
     private fun streaming(key: String): Map<String, Any?> {
-        if (!AjustesTuPc.streamingDesdeMovil) return mapOf("ok" to false, "msg" to "En ${Sitio.nombreEquipo} no está permitido preparar el streaming desde el móvil (se cambia en Hiedra del ordenador: Ajustes → Este PC).")
+        if (!AjustesTuPc.streamingDesdeMovil) return mapOf("ok" to false, "msg" to "En ${Sitio.nombreEquipo} no está permitido preparar el streaming desde el móvil (se cambia en Bastet del ordenador: Ajustes → Este PC).")
         SteamLink.abreSteam()
         var msg = "Steam listo"
         if (key.isNotBlank()) {

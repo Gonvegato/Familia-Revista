@@ -87,7 +87,7 @@ internal fun creaTorrent(ruta: File, tamPieza: Int, relleno: Boolean = false): T
     }
     if (enPieza > 0) piezas.write(sha.digest())
     info["pieces"] = piezas.toByteArray()
-    return TorrentInfo.bdecode(bencode(mapOf("info" to info, "created by" to "pruebas de Mostaza")))
+    return TorrentInfo.bdecode(bencode(mapOf("info" to info, "created by" to "pruebas de Hathor")))
 }
 
 /** Bencode, lo justo para un .torrent: números, textos, bytes, listas y diccionarios (con las claves en orden). */

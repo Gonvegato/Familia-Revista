@@ -268,9 +268,9 @@ fun PantInicio(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: (Ti
 
         if (editando) EditorInicio(juegos) { editando = false }
         else if (juegos.isEmpty()) {
-            Text("Hiedra es la puerta a todos tus juegos: los de consola (muchos los juega ella misma, y los demás con los emuladores que ya tienes), los de Android, los de navegador y los de tu PC.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp)
+            Text("Bastet es la puerta a todos tus juegos: los de consola (muchos los juega ella misma, y los demás con los emuladores que ya tienes), los de Android, los de navegador y los de tu PC.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp)
             Spacer(Modifier.height(6.dp))
-            MagLink("ROMs y emuladores", "GBA, SNES, Mega Drive, DS, PlayStation… en la propia Hiedra o con el emulador que elijas", accent = true) { alAnadir(TipoLanzador.ROM) }
+            MagLink("ROMs y emuladores", "GBA, SNES, Mega Drive, DS, PlayStation… en la propia Bastet o con el emulador que elijas", accent = true) { alAnadir(TipoLanzador.ROM) }
             Filete(1.dp, Line)
             MagLink("Juegos de Android", "Los que ya tienes instalados") { alAnadir(TipoLanzador.APP) }
             Filete(1.dp, Line)
@@ -325,9 +325,9 @@ fun PantInicio(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: (Ti
             if (atrio != null) {
                 Spacer(Modifier.height(10.dp))
                 Filete(1.dp, Line)
-                MagLink("Abrir Azabache", "Valora lo que acabas de jugar") { ctx.startActivity(atrio.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                MagLink("Abrir Jonsu", "Valora lo que acabas de jugar") { ctx.startActivity(atrio.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
-            Text("Hiedra · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
+            Text("Bastet · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
             // La versión instalada, debajo (para no tener que entrar en Ajustes a mirarla)
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
@@ -336,7 +336,7 @@ fun PantInicio(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: (Ti
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre y lo de siempre (Buscar · + Añadir…)
     // (derivedStateOf: la portada entera no se vuelve a componer a cada píxel que se desliza, solo cuando la barra aparece o se va)
     val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
-    BarraPlegada("Hiedra", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), acento = true) { alAnadir(null) } }
+    BarraPlegada("Bastet", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), acento = true) { alAnadir(null) } }
     }
 }
 

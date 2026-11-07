@@ -57,7 +57,7 @@ fun PantListas(alVolver: () -> Unit) {
             Spacer(Modifier.height(10.dp))
             BotonAcento("Añadir una lista", modifier = Modifier.focoInicial("listas")) { editando = Lista(DatosCuenta.idNuevo(), "", TipoLista.XTREAM, creada = System.currentTimeMillis()) }
             Spacer(Modifier.height(18.dp))
-            if (listas.isEmpty()) Nota("Aún no tienes ninguna. Cobre no trae ninguna lista ni ningún canal: los pones tú.")
+            if (listas.isEmpty()) Nota("Aún no tienes ninguna. Nut no trae ninguna lista ni ningún canal: los pones tú.")
             listas.forEachIndexed { i, l ->
                 Panel {
                     Row(verticalAlignment = Alignment.CenterVertically) {

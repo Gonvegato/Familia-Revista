@@ -71,7 +71,7 @@ fun AccionGuia(id: Int, e: Escritos, obra: Doc, abrir: (String) -> Unit, irManus
                 Text("Elige una cantidad que te parezca casi demasiado fácil. Mejor cumplirla todos los días que abandonar una grande.", color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
                 Row(Modifier.horizontalScrollSafe(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("150", "300", "500", "1000").forEach { v -> SoftChip(v, dia == v) { dia = v } } }
                 CampoEscribir(dia, { dia = it.filter(Char::isDigit).take(6) }, "Palabras al día", numero = true)
-                Text("Para empezar, unas 300 (una sugerencia de Cobalto). Siempre puedes subirla.", color = Muted, fontSize = 12.sp)
+                Text("Para empezar, unas 300 (una sugerencia de Thot). Siempre puedes subirla.", color = Muted, fontSize = 12.sp)
                 BotonEscribir("Guardar") { e.edita(pid) { put("diaria", dia.toIntOrNull() ?: 0) }; onCerrar() }
             }
         }

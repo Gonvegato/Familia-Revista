@@ -1,7 +1,7 @@
-# Hiedra
+# Bastet
 
 El lanzador de juegos del móvil, hecho de nuevo. Hermana de [Atrio](https://github.com/gvegagato-prog/Atrio-Suite-2.0),
-[Marfil](https://github.com/Gonvegato/lectura-app) y [Cobalto](https://github.com/Gonvegato/cobalto): mismo sistema de temas (paletas, letras,
+[Seshat](https://github.com/Gonvegato/lectura-app) y [Thot](https://github.com/Gonvegato/cobalto): mismo sistema de temas (paletas, letras,
 «estilos»), la misma cuenta de Atrio y el mismo kDrive; otro paquete (`com.gonzalo.hiedra`) y otro hueco en la cuenta (`/users/<uid>/hiedra`), así
 que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. Sustituye a [Carmesí](https://github.com/gvegagato-prog/Android-Launcher)
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
@@ -10,15 +10,15 @@ de una sola vez.
 ## La idea
 
 En Carmesí un juego **era** su lanzador (su ROM, su app, su web, su clave del PC), y por eso hacían falta fichas sin lanzador, alias, gemelas y
-«unir». En Hiedra **un juego es una cosa con identidad propia** (un `id` que viaja con la cuenta) y **cómo se abre es una lista**: la ROM en el
+«unir». En Bastet **un juego es una cosa con identidad propia** (un `id` que viaja con la cuenta) y **cómo se abre es una lista**: la ROM en el
 móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los menús pequeños que toquen (Emulación y PC a la vez). Las horas se
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
 ## 0.6.2 — lo que eliges, en todos tus dispositivos
 
-- **Lo que eliges en Hiedra ya está en tu cuenta, no solo en este móvil.** Hasta ahora viajaban los juegos, las horas, la apariencia y la
-  portada; lo demás se quedaba en cada móvil. Ahora también: el orden de cada sección, cómo se juega con el jugador de Hiedra (los botones
+- **Lo que eliges en Bastet ya está en tu cuenta, no solo en este móvil.** Hasta ahora viajaban los juegos, las horas, la apariencia y la
+  portada; lo demás se quedaba en cada móvil. Ahora también: el orden de cada sección, cómo se juega con el jugador de Bastet (los botones
   en pantalla, el avance rápido, el filtro, la orientación, cada cuánto guarda) y lo que cambiaste de cada mando, el emulador que elegiste
   para cada consola, las portadas automáticas, las opciones de los núcleos, el PC al que mandas las órdenes, si las capturas del PC van a la
   galería, si tus ROMs suben solas a kDrive, la web de imágenes que usaste la última vez y «Actualizar sola». Lo cambias en un móvil y está
@@ -27,26 +27,26 @@ Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está c
   opciones de los núcleos y los emuladores de cada consola de los dos); lo que tenían distinto, el del móvil donde lo cambiaste más tarde.
 - Si eliges un emulador que en otro móvil no está instalado, allí se usa el automático hasta que lo instales.
 - Lo que es de cada móvil sigue en él: dónde están tus ROMs y sus carpetas, los guardados ya sincronizados, los núcleos y BIOS bajados,
-  «usar Hiedra como launcher» y los widgets.
-- **La lista negra de Azabache vuelve a llegar a Hiedra.** Hiedra la leía de lo que subía Atrio, que ya no cambia desde que Azabache la
-  guarda en la cuenta: un juego que vetabas (o que quitabas de la lista) en Azabache no se enteraba aquí. Ahora la lee de la cuenta.
-- Hiedra de Linux y Mac todavía no lee estos ajustes: llegará en su próxima versión.
+  «usar Bastet como launcher» y los widgets.
+- **La lista negra de Jonsu vuelve a llegar a Bastet.** Bastet la leía de lo que subía Atrio, que ya no cambia desde que Jonsu la
+  guarda en la cuenta: un juego que vetabas (o que quitabas de la lista) en Jonsu no se enteraba aquí. Ahora la lee de la cuenta.
+- Bastet de Linux y Mac todavía no lee estos ajustes: llegará en su próxima versión.
 
 ## 0.6.1
 
-- **Una versión nueva ya no te saca de lo que estás haciendo.** El actualizador instala en silencio cuando no usas la app, y Android la cierra para instalarla. Pero no siempre sabía que la estabas usando: si se entraba directamente a un juego del jugador de Hiedra (desde un widget, o cuando Android vuelve a abrir la app tras cerrarla por detrás), creía que no estabas; y con la pantalla apagada un momento, también. Ahora se lo pregunta a Android, nunca instala con la pantalla apagada o bloqueada, y con un juego abierto espera a que lleves un rato fuera.
-- **Los títulos grandes ya no salen cortados** (se cortaban por el final hasta cambiar de pantalla y volver; en Marfil salía «Marfi»). Si tu apariencia usa una letra de Google Fonts, llega un momento después de abrir la app; el título se medía con la de mientras, más estrecha, y no se volvía a medir. Ahora sí.
+- **Una versión nueva ya no te saca de lo que estás haciendo.** El actualizador instala en silencio cuando no usas la app, y Android la cierra para instalarla. Pero no siempre sabía que la estabas usando: si se entraba directamente a un juego del jugador de Bastet (desde un widget, o cuando Android vuelve a abrir la app tras cerrarla por detrás), creía que no estabas; y con la pantalla apagada un momento, también. Ahora se lo pregunta a Android, nunca instala con la pantalla apagada o bloqueada, y con un juego abierto espera a que lleves un rato fuera.
+- **Los títulos grandes ya no salen cortados** (se cortaban por el final hasta cambiar de pantalla y volver; en Seshat salía «Marfi»). Si tu apariencia usa una letra de Google Fonts, llega un momento después de abrir la app; el título se medía con la de mientras, más estrecha, y no se volvía a medir. Ahora sí.
 - Si Android cierra lo que dibuja una página web de la app (los juegos web, la búsqueda de portadas), se cierra esa pantalla y no la app entera.
 
-## 0.6.0 — veinticuatro consolas en Hiedra, y una cara nueva
+## 0.6.0 — veinticuatro consolas en Bastet, y una cara nueva
 
-**El jugador de Hiedra ya no es solo de GBA.** Juega ella misma a Game Boy y Game Boy Color, NES (y Famicom Disk System), Super Nintendo,
+**El jugador de Bastet ya no es solo de GBA.** Juega ella misma a Game Boy y Game Boy Color, NES (y Famicom Disk System), Super Nintendo,
 Mega Drive, Master System, Game Gear, PC Engine, Neo Geo Pocket (y Color), WonderSwan (y Color), Atari Lynx, 2600 y 7800 y, **en
 pruebas**, Nintendo DS, Nintendo 64, PlayStation, PSP, Mega-CD y arcade (Neo Geo y FinalBurn Neo). Con todo lo que ya tenía la GBA:
 guarda al salir y lo sube a tu nube, sigues en otro móvil, avance rápido, tres huecos de estado, mando físico y táctil.
 
 - **Los núcleos de Lemuroid**, uno por consola, comprobados en su código (los de la versión que usaba RadialGamePad 2.0, la misma que
-  Hiedra): Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle PCE Fast, Beetle NeoPop, Beetle Cygne, Handy, Stella, ProSystem,
+  Bastet): Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle PCE Fast, Beetle NeoPop, Beetle Cygne, Handy, Stella, ProSystem,
   FinalBurn Neo, Mupen64Plus-Next (GLES3), PCSX ReARMed, PPSSPP y melonDS; con sus mismas opciones de arranque (las paletas de la Game
   Boy, la pantalla táctil de la DS, el «frame duping» de la N64…), comprobadas una a una en el código de cada núcleo del buildbot (los
   nombres no siempre son los de Lemuroid, que compila los suyos: los de melonDS, por ejemplo). Se bajan del buildbot de libretro la
@@ -57,14 +57,14 @@ guarda al salir y lo sube a tu nube, sigues en otro móvil, avance rápido, tres
   (soplar) y la tapa en botones. R2 (el gatillo derecho) sigue acelerando en todas las que no lo usan (todas menos PlayStation).
 - **BIOS**: en la ficha («Emulador») cada núcleo dice qué BIOS busca, cuáles tienes y cuáles faltan; «Añadir BIOS» la reconoce por su
   contenido (aunque se llame de otra manera) y la deja donde el núcleo la busca. Solo el Mega-CD (una de las tres regiones), la Neo Geo
-  (neogeo.zip: si está junto a tus ROMs, Hiedra la coge sola) y los discos de la Famicom no arrancan sin la suya; si falta al jugar,
+  (neogeo.zip: si está junto a tus ROMs, Bastet la coge sola) y los discos de la Famicom no arrancan sin la suya; si falta al jugar,
   se dice cuál y se elige ahí mismo.
 - **Juegos de varios archivos**: un .cue con sus pistas, un .m3u con sus discos (y el escaneo ya no los añade como juegos sueltos), un
   .ccd. Los discos de PlayStation y PSP no se copian: el núcleo los abre donde están (como Lemuroid); si alguno no abre así, «Probar
   copiándola». Las recreativas se abren tal cual, con el nombre de su .zip.
 - PPSSPP necesita sus archivos (letras, firmware): se bajan una vez con el núcleo, del buildbot de libretro (unos 10 MB).
-- **«Automático» no te quita tu emulador**: en las consolas nuevas, Hiedra solo es la automática si no tienes otro emulador instalado
-  para ella (RetroArch no cuenta: necesita sus núcleos). En GBA, como hasta ahora. En Sistemas o en la ficha se elige «Hiedra» con un toque.
+- **«Automático» no te quita tu emulador**: en las consolas nuevas, Bastet solo es la automática si no tienes otro emulador instalado
+  para ella (RetroArch no cuenta: necesita sus núcleos). En GBA, como hasta ahora. En Sistemas o en la ficha se elige «Bastet» con un toque.
 - **Opciones de la consola** en el menú del juego: los colores de la Game Boy, las pantallas de la DS (una encima de otra o al lado), la
   resolución de N64 y PSP, el recompilador de PlayStation, el giro de la Lynx y la WonderSwan… Se aplican al momento.
 - El estado guardado se carga tras la primera imagen (PPSSPP y Mupen64 preparan cosas al dibujarla: lo que hace Lemuroid).
@@ -74,7 +74,7 @@ guarda al salir y lo sube a tu nube, sigues en otro móvil, avance rápido, tres
 
 **La cara nueva**
 
-- **Sistemas**, en casillas: cada consola de Hiedra con su color, su nombre corto en grande, su núcleo y cómo está (bajada, se baja al
+- **Sistemas**, en casillas: cada consola de Bastet con su color, su nombre corto en grande, su núcleo y cómo está (bajada, se baja al
   jugar, en pruebas, falta la BIOS); un toque abre su emulador.
 - **El mando se ve en toda la app**: lo que tiene el foco (con la cruceta del mando o el teclado) lleva un marco del acento, en todas las
   pantallas, y las portadas enfocadas crecen un poco, con un rebote corto. A elige, B vuelve.
@@ -90,29 +90,29 @@ catálogo (cada núcleo existe en el buildbot con ese nombre y abre las extensio
 (cada botón de la pantalla va a uno que el núcleo usa), las BIOS, los discos de varios archivos y el emulador automático; las capturas
 enseñan cada mando y las pantallas en el móvil y en la tablet. Pero los núcleos son código de ARM y no corren en el ordenador: si una
 consola «lista» falla, es un error; las «en pruebas» pueden ir lentas o no arrancar (N64 y PSP piden mucho; PlayStation va con el
-intérprete, como en Lemuroid). La DS guarda su partida dentro de Hiedra, no en la carpeta de guardados. No hay segundo jugador ni
+intérprete, como en Lemuroid). La DS guarda su partida dentro de Bastet, no en la carpeta de guardados. No hay segundo jugador ni
 vibración.
 
 ## 0.5.4
 
 - **Los juegos del PC ya no se meten solos en «Pendiente».** Hasta ahora, todo lo que tenía horas en la biblioteca del PC entraba solo en
-  Hiedra (y en Azabache), y si no lo habías jugado en dos semanas iba a «Pendiente»; al borrarlo, el PC volvía a mandar su biblioteca y
+  Bastet (y en Jonsu), y si no lo habías jugado en dos semanas iba a «Pendiente»; al borrarlo, el PC volvía a mandar su biblioteca y
   se creaba otra vez, con otro id. Ahora en tus secciones solo entra solo lo que juegas en el PC (lo que está ejecutando o lo jugado en
-  los últimos 14 días), y en «Jugando». Lo demás está en «Tu PC» y entra cuando lo añades («Añadir a Hiedra»).
-- **Lo que borras no vuelve solo**: un juego borrado sigue en la cuenta como borrado, con su lanzador del PC, y Hiedra lo mira antes de
+  los últimos 14 días), y en «Jugando». Lo demás está en «Tu PC» y entra cuando lo añades («Añadir a Bastet»).
+- **Lo que borras no vuelve solo**: un juego borrado sigue en la cuenta como borrado, con su lanzador del PC, y Bastet lo mira antes de
   meter nada (ni aunque lo estés jugando). Si lo añades a mano desde «Tu PC», vuelve el de antes (el mismo juego, con su estado y su nota).
 - **«Tu PC» → Biblioteca → «Quitarlos»**: los que entraron solos en «Pendiente» y nadie ha tocado (ni estado, ni nombre, ni portada, ni
-  nota en Azabache; solo con el lanzador del PC y fuera de sagas) se quitan de una vez, con la lista delante antes de confirmar. Siguen
+  nota en Jonsu; solo con el lanzador del PC y fuera de sagas) se quitan de una vez, con la lista delante antes de confirmar. Siguen
   en la biblioteca del PC.
 
 - **Una pantalla que no dejaba de redibujarse**: los títulos que se encogen para caber (FitTitle) apuntaban su ancho desde dentro de la
   medida; en una fila de dos casillas Compose mide dos veces (para saber el alto y para pintar) y, si los dos anchos diferían en un píxel
   por redondeo, se pisaban en cada fotograma: la pantalla se recomponía sin parar (CPU y batería) mientras estaba abierta. Pasaba en la
-  tablet en la ficha de un juego «Jugando» de Azabache; la misma pieza está en las cuatro apps y en las de escritorio, y se arregla en todas.
+  tablet en la ficha de un juego «Jugando» de Jonsu; la misma pieza está en las cuatro apps y en las de escritorio, y se arregla en todas.
 
 ## 0.5.3
 
-- **Hiedra del ordenador (Linux y Mac) sale en «Tu PC»** como un PC más: su biblioteca (Steam y tus programas), a qué juegas y abrir
+- **Bastet del ordenador (Linux y Mac) sale en «Tu PC»** como un PC más: su biblioteca (Steam y tus programas), a qué juegas y abrir
   un juego desde el móvil. Ese PC cuenta él mismo su tiempo (lo dice en su presencia, `tiempo: true`): el móvil ya no lo vuelve a apuntar,
   así sus horas no salen dobles.
 
@@ -120,7 +120,7 @@ vibración.
 
 - **Las fechas que llegaron de Atrio estaban en 1970.** Atrio guarda el día de empezar y de terminar como número de día, y al
   traerlo se tomó por milisegundos: los juegos terminados en Atrio quedaron terminados el 1 de enero de 1970. Ahora se leen
-  bien, se corrigen una vez en tu cuenta (así las ven igual Azabache y tus otros dispositivos) y lo que se traiga de Atrio llega bien.
+  bien, se corrigen una vez en tu cuenta (así las ven igual Jonsu y tus otros dispositivos) y lo que se traiga de Atrio llega bien.
 
 ## 0.5.1
 
@@ -140,37 +140,37 @@ vibración.
   tocan campos distintos nunca se pisan, y un móvil que vuelve a tener red después de días no pisa lo que cambiaste luego en otro
   (las reglas del servidor lo comprueban). Funciona sin conexión: lo que cambias se ve al momento y se sube solo en cuanto hay red.
   Ver `nube/ESQUEMA.md`.
-- **Entrar una vez.** Entras en Azabache (o en cualquiera de la familia) y las demás entran solas en ese móvil.
+- **Entrar una vez.** Entras en Jonsu (o en cualquiera de la familia) y las demás entran solas en ese móvil.
 - **Las claves, una vez.** El token de kDrive y las de los servicios se ponen una vez y las tienen todas las apps (si ya las tenías
-  en este móvil, se suben solas a la cuenta). Se gestionan en Azabache (Ajustes → Avanzado); un token mal pegado en
+  en este móvil, se suben solas a la cuenta). Se gestionan en Jonsu (Ajustes → Avanzado); un token mal pegado en
   cualquier app nunca pisa el bueno de la cuenta.
 - **Actualizaciones sin preguntar** también en Android 17 (la app apunta a Android 15 y declara el permiso de actualizarse sola).
 - **Una sola firma para las cuatro.** Esta versión se instala encima de la anterior, sin desinstalar, pero **a mano esta vez**: el
   actualizador de antes no acepta la firma nueva. A partir de aquí, se actualiza sola.
 - **La primera vez** (en cada móvil), lo de antes pasa a la cuenta nueva con la hora real de cada cambio. Lo de antes no se borra.
-- **Las portadas viajan con la cuenta** (no por kDrive): la que pones en un móvil sale igual en los demás y en Azabache, y quitarla la quita en todos.
+- **Las portadas viajan con la cuenta** (no por kDrive): la que pones en un móvil sale igual en los demás y en Jonsu, y quitarla la quita en todos.
 - **Las horas**, por fuente (este móvil, tus otros móviles, Steam, cada PC) y sumadas.
 - **Los juegos repetidos** (el mismo importado en dos móviles con dos ids, como el Baldur's Gate 3) quedan en uno, con sus horas.
-- La nota de Azabache se lee del propio juego.
+- La nota de Jonsu se lee del propio juego.
 
 ## 0.4.5
 
 - **Juegos repetidos, juntados solos.** Al importar de Atrio o de Carmesí en dos móviles, cada uno creaba su copia del mismo juego (con
   su propio id): al quitar una, volvía la del otro móvil (pasaba, por ejemplo, con Baldur's Gate 3). Ahora, dos fichas con una clave en común
   (la misma ROM, app, juego de Steam o del PC, o el mismo título) y la misma plataforma se juntan en una (horas sumadas, el estado más
-  avanzado) al abrir Hiedra y al sincronizar, y la copia sobrante se quita también en tus otros móviles.
+  avanzado) al abrir Bastet y al sincronizar, y la copia sobrante se quita también en tus otros móviles.
 - **La misma proporción de portada en toda la app (2:3)**, la de las carátulas verticales de SteamGridDB (600×900): la pantalla de inicio y
   las listas usaban 3:4 y la ficha 2:3, por eso en el inicio se cortaban arriba y abajo.
 - El orden «Pasado» salía en todas las secciones: ahora se llama «Cuándo lo pasaste» y solo está en Pasados.
 - **Fechas y cifras como en las otras tres** (`Formato.kt`, con las mismas pruebas en las cuatro): «16 oct 2026» en fichas y textos, «16/10/2026» en las tablas de datos y siempre con punto de millar («4.010»). Los meses van escritos en la app (Android, según la versión, les ponía punto: «oct.»).
-- **«Jugar» es un botón grande** en la ficha, como «Seguir leyendo» en Marfil y «Seguir escribiendo» en Cobalto (la saga, al lado, en pequeño).
-- Ajustes: la pestaña «Servicios» se llama **«Cuenta»**, como en Marfil y Cobalto (Servicios sigue dentro, como sección).
-- «En Azabache» sin nota: una línea, «Sin valorar aún · Valorar en Azabache →» (antes eran dos que decían lo mismo).
+- **«Jugar» es un botón grande** en la ficha, como «Seguir leyendo» en Seshat y «Seguir escribiendo» en Thot (la saga, al lado, en pequeño).
+- Ajustes: la pestaña «Servicios» se llama **«Cuenta»**, como en Seshat y Thot (Servicios sigue dentro, como sección).
+- «En Jonsu» sin nota: una línea, «Sin valorar aún · Valorar en Jonsu →» (antes eran dos que decían lo mismo).
 - Los contadores de las pestañas van en tinta (más oscura la de la pestaña elegida), no en rojo: el rojo queda para lo que se toca.
 - En las listas, la línea de debajo del título (plataforma, horas…) un punto más grande y más legible.
-- **Las portadas de letra, con las telas de Marfil**: la misma paleta en las cuatro apps (un título, siempre el mismo color) y la inicial en la letra de los títulos. Antes cada sistema tenía su color.
+- **Las portadas de letra, con las telas de Seshat**: la misma paleta en las cuatro apps (un título, siempre el mismo color) y la inicial en la letra de los títulos. Antes cada sistema tenía su color.
 - **La cabecera de la portada se pliega al bajar**: arriba solo se quedan el nombre y «Buscar · + Añadir»; el número, la fecha, las barras y el menú se van con la página.
-- Debajo de «Hiedra · hecho en casa», en gris, la versión instalada.
+- Debajo de «Bastet · hecho en casa», en gris, la versión instalada.
 
 ## 0.4.4
 
@@ -182,7 +182,7 @@ vibración.
 
 - **Las portadas que eliges, de verdad en todos tus móviles** (como los libros en Atrio). Antes solo se miraban cuando cambiaba la
   biblioteca de este móvil (y elegir una portada no contaba como cambio), un móvil que ya tenía una no recibía la nueva, y quitar una no
-  llegaba a los demás. Ahora se miran cada vez que se sincroniza (al abrir Hiedra, al llegar algo de otro móvil y al cambiar algo aquí) y
+  llegaba a los demás. Ahora se miran cada vez que se sincroniza (al abrir Bastet, al llegar algo de otro móvil y al cambiar algo aquí) y
   manda el cambio más reciente: la pones o la cambias en un móvil y llega a los demás; vuelves a la automática y se quita en todos.
 - **Las que se habían «perdido» vuelven solas**: si el juego dejó de apuntar a su portada pero esa portada sigue en tu kDrive, se vuelve a
   poner (del archivo que aún está en el móvil, sin bajar nada, o bajándola). Si el archivo de una portada ya no está, se ve la de internet
@@ -196,16 +196,16 @@ vibración.
 
 ## 0.4.1 — las ROMs, de un móvil a otro
 
-- **Al añadir una ROM** (sueltas o al recorrer una carpeta) se sube sola a tu kDrive, con wifi, sin esperar a volver a abrir Hiedra. Si
+- **Al añadir una ROM** (sueltas o al recorrer una carpeta) se sube sola a tu kDrive, con wifi, sin esperar a volver a abrir Bastet. Si
   añades más mientras sube, también. Desde su ficha se puede subir ya, también con datos.
 - **En tu otro móvil, «Jugar» la baja**: si la ROM de un juego está en tu kDrive y no en ese móvil, «Jugar» (o su acceso directo)
   enseña de qué archivo se trata y cuánto pesa, la baja con su progreso a tu carpeta de ROMs (en la subcarpeta del sistema, «gba»,
   «snes»…, donde la encuentran tus emuladores), comprueba que ha llegado entera, la deja apuntada y abre el juego. La primera vez, si
   no tienes carpeta de ROMs en la que se pueda escribir, te pide una y se queda.
-- **El jugador de Hiedra (GBA) la baja él solo** al abrir el juego, con su progreso en la pantalla de carga; sin carpeta de ROMs, la
-  guarda dentro de Hiedra.
+- **El jugador de Bastet (GBA) la baja él solo** al abrir el juego, con su progreso en la pantalla de carga; sin carpeta de ROMs, la
+  guarda dentro de Bastet.
 - **Ajustes → Avanzado → «Bajar las ROMs que faltan en este móvil»**: todas las que están en tu kDrive y aquí no, con wifi y en segundo
-  plano (sigue aunque cierres Hiedra; si se corta, sigue por donde iba).
+  plano (sigue aunque cierres Bastet; si se corta, sigue por donde iba).
 - Las carpetas de ROMs se guardan ahora con permiso de escritura (para dejar ahí las que bajas). Las que ya tenías solo con lectura:
   la primera bajada te pide elegirla otra vez.
 - Los «días seguidos» siguen la regla común de la familia (`Racha.kt`, documentada en el contrato): un minuto jugado cuenta. Sin
@@ -216,10 +216,10 @@ las ROMs desde la ficha; lo nuevo es cuándo se lanza y dónde se deja).
 
 ## 0.4.0 — el jugador interno (Fase A: Game Boy Advance)
 
-Hiedra juega ella misma a los juegos de **GBA**, sin otra app: con el núcleo **mGBA** de libretro (vía LibretroDroid), y con lo que un
+Bastet juega ella misma a los juegos de **GBA**, sin otra app: con el núcleo **mGBA** de libretro (vía LibretroDroid), y con lo que un
 emulador de fuera no puede darle: sabe cuándo acabas, guarda donde estás al salir y lo sube a tu nube para seguir en otro móvil.
 
-- **Hiedra es un emulador más** en la lista del sistema («Hiedra», el primero) y el automático para GBA. Si prefieres otro, se elige como
+- **Bastet es un emulador más** en la lista del sistema («Bastet», el primero) y el automático para GBA. Si prefieres otro, se elige como
   siempre en la ficha o en Sistemas. En la ficha, en «Emulador», está el núcleo: cuál es, de cuándo, cuánto ocupa, y **Descargar ahora**,
   **Actualizar** (avisa de que los estados de la versión vieja pueden no cargar; la anterior se guarda) y **Quitar**. Si no lo tienes, se
   baja solo la primera vez que juegas (del buildbot de libretro, unos 400 KB).
@@ -228,7 +228,7 @@ emulador de fuera no puede darle: sabe cuándo acabas, guarda donde estás al sa
   juegas, también cada pocos minutos. Al volver a jugar, aquí o en otro móvil, se carga el más reciente; si el de la nube lo hizo otra
   versión del núcleo, te pregunta. Además, tres huecos a mano en el menú (con miniatura).
 - **La partida del cartucho** (.sav) se deja en la carpeta de guardados del sistema, con el nombre de la ROM: la misma que ya sincroniza
-  Hiedra y que entienden los demás emuladores.
+  Bastet y que entienden los demás emuladores.
 - **Avance rápido**: ×2, ×3, ×4 u ×8, mientras lo pulsas o con un toque para encender y otro para apagar, con o sin sonido. En el mando,
   R2 o el gatillo derecho (GBA no los usa); en la pantalla, el botón ▶▶. Arriba se ve a cuánto va y, si el móvil no llega, la velocidad
   real («▶▶ ×8 · real ×5,3»).
@@ -241,7 +241,7 @@ emulador de fuera no puede darle: sabe cuándo acabas, guarda donde estás al sa
 - **Menú en pausa**: continuar, guardar y cargar estado, avance rápido, mando y controles, imagen (Nítido, Suave, LCD, CRT; apaisada,
   vertical o la del móvil), captura (a Imágenes/Hiedra), reiniciar y salir.
 - **Diagnóstico de mando**: el nombre, los ids y las últimas teclas y ejes que manda tu mando, para copiarlos y pegarlos si algo no va.
-- Licencia: LibretroDroid y RadialGamePad son GPL-3.0, así que **Hiedra pasa a ser GPL-3.0** (archivo `LICENSE`). mGBA es MPL-2.0.
+- Licencia: LibretroDroid y RadialGamePad son GPL-3.0, así que **Bastet pasa a ser GPL-3.0** (archivo `LICENSE`). mGBA es MPL-2.0.
 
 Lo que falta y lo que no se ha podido probar (honesto):
 
@@ -256,7 +256,7 @@ Lo que falta y lo que no se ha podido probar (honesto):
 ## 0.3.14
 
 - En las filas de datos (etiqueta · puntos · cifra), si no cabe todo en una línea, la etiqueta va entera arriba y la cifra debajo, en vez
-  de cortar la etiqueta con puntos suspensivos (como en Azabache 1.2.8).
+  de cortar la etiqueta con puntos suspensivos (como en Jonsu 1.2.8).
 
 ## 0.3.13
 
@@ -270,7 +270,7 @@ Lo que falta y lo que no se ha podido probar (honesto):
 
 ## 0.3.11
 
-- Las secciones se llaman en plural, como en Marfil y Azabache: Jugando · Pendientes · Pasados · Abandonados · Sagas (también los estantes
+- Las secciones se llaman en plural, como en Seshat y Jonsu: Jugando · Pendientes · Pasados · Abandonados · Sagas (también los estantes
   de la pantalla de inicio). El estado de cada juego en su ficha sigue en singular (Pendiente, Pasado…).
 - Las pestañas (secciones, Ajustes) se desplazan solas solo cuando la elegida no se ve entera, y entonces la centran: antes se
   pegaba al borde izquierdo y la de al lado salía cortada.
@@ -283,11 +283,11 @@ Lo que falta y lo que no se ha podido probar (honesto):
 
 ## 0.3.9
 
-- Lo que no llegó a subirse (sin red al volver de jugar, o Android congeló Hiedra antes de acabar) lo sube un trabajo de fondo
-  (SubidaWorker) en cuanto hay red. Si Hiedra ya lo subió, no hace nada.
+- Lo que no llegó a subirse (sin red al volver de jugar, o Android congeló Bastet antes de acabar) lo sube un trabajo de fondo
+  (SubidaWorker) en cuanto hay red. Si Bastet ya lo subió, no hace nada.
 - Con el permiso de uso, la sesión de juego se cierra sola cuando el emulador (o el juego) deja de estar delante, aunque no vuelvas a
-  Hiedra: cada cuarto de hora se mira (SesionWorker) y, al cerrarla, las horas se apuntan y suben a tu cuenta al momento (Azabache las
-  ve en su Diario). Antes solo se apuntaban al abrir Hiedra otra vez.
+  Bastet: cada cuarto de hora se mira (SesionWorker) y, al cerrarla, las horas se apuntan y suben a tu cuenta al momento (Jonsu las
+  ve en su Diario). Antes solo se apuntaban al abrir Bastet otra vez.
 
 ## 0.3.8
 
@@ -298,59 +298,59 @@ Lo que falta y lo que no se ha podido probar (honesto):
 ## 0.3.7
 
 - Textos al día: lo que seguía diciendo «Atrio» para hablar del móvil (seguir sus colores en directo, copiar su apariencia de tu cuenta,
-  «los mismos que en Atrio») dice ahora Azabache, que es quien está en el móvil. La cuenta sigue siendo la cuenta de Atrio.
+  «los mismos que en Atrio») dice ahora Jonsu, que es quien está en el móvil. La cuenta sigue siendo la cuenta de Atrio.
 
 ## 0.3.6
 
-- **Arreglo**: en Android 13 o más, los avisos del actualizador («Hiedra tiene una versión nueva», «Hiedra se ha actualizado, toca para abrirla»)
+- **Arreglo**: en Android 13 o más, los avisos del actualizador («Bastet tiene una versión nueva», «Bastet se ha actualizado, toca para abrirla»)
   no se veían nunca: faltaba el permiso de avisos. Ahora se declara y se concede desde Ajustes → Avanzado («Avisos de actualización»).
 
 ## 0.3.5
 
-- Lo que Azabache sube (sus fichas, para las claves de los servicios y «En Azabache») no se vuelve a bajar si sus sellos no han cambiado:
-  menos datos cada vez que Hiedra sincroniza.
+- Lo que Jonsu sube (sus fichas, para las claves de los servicios y «En Jonsu») no se vuelve a bajar si sus sellos no han cambiado:
+  menos datos cada vez que Bastet sincroniza.
 
-## 0.3.4: la nota de Azabache, al momento
+## 0.3.4: la nota de Jonsu, al momento
 
-- Hiedra escucha el sello de Azabache: en cuanto valoras un juego allí, «En Azabache» en su ficha cambia sin salir ni esperar los 15 minutos.
+- Bastet escucha el sello de Jonsu: en cuanto valoras un juego allí, «En Jonsu» en su ficha cambia sin salir ni esperar los 15 minutos.
 
 ## 0.3.3
 
-- En la portada, «+ Añadir» en el acento, como en las listas y como en Marfil y Cobalto; el pie de Ajustes dice de quién es hermana.
+- En la portada, «+ Añadir» en el acento, como en las listas y como en Seshat y Thot; el pie de Ajustes dice de quién es hermana.
 
 ## 0.3.2: el tiempo de juego exacto
 
-- **Ajustes → Juegos → Tiempo de juego**: con el permiso «acceso al uso» de Android (se da desde ahí), al volver a Hiedra se cuenta solo lo
+- **Ajustes → Juegos → Tiempo de juego**: con el permiso «acceso al uso» de Android (se da desde ahí), al volver a Bastet se cuenta solo lo
   que el emulador o el juego **estuvo delante**, y la sesión se reparte entre días según cuándo acabó de verdad. Sin el permiso, como siempre:
-  todo el rato hasta volver (tope de 12 horas). Los juegos web ya se contaban dentro de Hiedra. `UsoTest`.
+  todo el rato hasta volver (tope de 12 horas). Los juegos web ya se contaban dentro de Bastet. `UsoTest`.
 
 ## 0.3.1
 
-- El nodo ligero `tiempo` (lo que lee el Diario de Azabache) se sube **antes** del sello `stamps`: Azabache refresca al oír el sello y antes
+- El nodo ligero `tiempo` (lo que lee el Diario de Jonsu) se sube **antes** del sello `stamps`: Jonsu refresca al oír el sello y antes
   podía leer las horas viejas.
 
-## 0.3.0: Ajustes en pestañas y la caja automática para Azabache
+## 0.3.0: Ajustes en pestañas y la caja automática para Jonsu
 
 - **Ajustes** en pestañas, como Atrio: Apariencia · Juegos (sistemas y emuladores, portadas automáticas, pantalla de inicio, capturas del PC) ·
   Servicios (la cuenta de Atrio, traer de Carmesí y de Atrio, las claves) · Avanzado (kDrive y actualizaciones, copias). Lo mismo, sin tenerlo todo a la vista.
-- **Portadas para Azabache**: si un juego no tiene portada tuya y «Portadas automáticas» está encendido, la dirección de su caja de libretro viaja
-  en la biblioteca (`pa`), así Azabache enseña la misma caja que ves aquí. Las tuyas siguen viajando por `pu` (internet) o kDrive (galería).
+- **Portadas para Jonsu**: si un juego no tiene portada tuya y «Portadas automáticas» está encendido, la dirección de su caja de libretro viaja
+  en la biblioteca (`pa`), así Jonsu enseña la misma caja que ves aquí. Las tuyas siguen viajando por `pu` (internet) o kDrive (galería).
 
 ## 0.2.1
 
-- **Azabache**: una ficha que Azabache refleja de Hiedra y que aún no has valorado (todas las notas a 0, sin reseña) ya no sale en «En
-  Azabache» como un 0: sigue «sin valorar».
+- **Jonsu**: una ficha que Jonsu refleja de Bastet y que aún no has valorado (todas las notas a 0, sin reseña) ya no sale en «En
+  Jonsu» como un 0: sigue «sin valorar».
 
 ## 0.2.0: la ficha cuenta más, y las claves se ven
 
-- **Datos** en cada ficha, como en Marfil: cuándo salió, el estudio, el editor, los géneros, la nota de Metacritic y un resumen, más lo de aquí
+- **Datos** en cada ficha, como en Seshat: cuándo salió, el estudio, el editor, los géneros, la nota de Metacritic y un resumen, más lo de aquí
   (plataforma, ROM, app, web, PC, saga, añadido, pasado, partidas). Vienen de la **tienda de Steam** (sin clave: por el appid si es un juego de
   Steam en tu PC, o buscándolo por nombre si coincide) y, si no está ahí, de **RAWG** (con tu clave; tiene también los juegos de consola de
   siempre). Se guardan dos semanas en el móvil; «Buscar de nuevo» los pide otra vez.
 - **Lo que suele durar** se rellena solo en los juegos que no lo tengan: de **IGDB** (lo que registran sus jugadores: historia, con extras y al
   completo; con tu Client ID y secreto de Twitch) o, si no, la media de horas de RAWG. Se dice de dónde salió. Solo sale en los juegos que lo tienen.
 - **Servicios**, en Ajustes: ahora se ve qué clave hay de cada servicio (la tuya, la de Atrio o ninguna) y el estado del kDrive. Y se arregla lo
-  que fallaba: Hiedra no leía las claves de Atrio nunca (la función existía pero no se llamaba); ahora se traen al vincular la cuenta, en cada
+  que fallaba: Bastet no leía las claves de Atrio nunca (la función existía pero no se llamaba); ahora se traen al vincular la cuenta, en cada
   «Sincronizar ahora» y al abrir Ajustes. Hay campos para RAWG e IGDB.
 - El **token de kDrive no viene de la cuenta**, a propósito: todo lo que hay en `/users/<uid>` lo puede leer tu pareja (modo pareja), y el token
   da acceso a todos tus archivos. Atrio tiene una prueba que lo prohíbe expresamente. Se pega en Ajustes → Actualizaciones, como en Atrio.
@@ -359,29 +359,29 @@ Lo que falta y lo que no se ha podido probar (honesto):
 
 - **Icono nuevo**: una hoja de hiedra rellena (sus cinco lóbulos, el tallo y los nervios vaciados) en verde claro sobre verde muy oscuro, dibujada
   por `herramientas/icono-hiedra.py`.
-- **La importación de Carmesí trae también la nube**: los guardados y las ROMs que Carmesí subió a tu kDrive pasan a ser los de Hiedra (se copia
-  su índice de la cuenta al de Hiedra, por el id de cada juego; los archivos de kDrive son los mismos), sin volver a subir nada. Probado de punta a
+- **La importación de Carmesí trae también la nube**: los guardados y las ROMs que Carmesí subió a tu kDrive pasan a ser los de Bastet (se copia
+  su índice de la cuenta al de Bastet, por el id de cada juego; los archivos de kDrive son los mismos), sin volver a subir nada. Probado de punta a
   punta contra el Firebase de mentira (`SincroTest`).
 
 ## 0.1.0: la primera
 
 - **Lo de Carmesí, entero, sobre el modelo nuevo**: portada de revista con el destacado, los estantes (orden, tamaño, a la vista, «Mis elegidos»)
   y el mando; las secciones Jugando · Pendientes · Pasados · Abandonados · Sagas como páginas, con los menús pequeños PC · Emulación · Android · Web
-  y los órdenes; la ficha (estado, favorito, portada propia o de internet con su encuadre, lo que suele durar, la saga, «En Azabache» de solo
+  y los órdenes; la ficha (estado, favorito, portada propia o de internet con su encuadre, lo que suele durar, la saga, «En Jonsu» de solo
   lectura, la nube); añadir (carpetas de ROMs con escaneo, apps, webs, el PC); sistemas y emuladores; **Tu PC** (en directo, biblioteca, capturas,
   equipo; jugar en el PC o en streaming); las horas de Steam; guardados, ROMs y portadas por tu kDrive; el buscador de portadas; la apariencia;
-  los widgets (*Sigue jugando*, *Estante*, *Portada*, *El siguiente*, *HIEDRA*, *HIEDRA en papel*).
+  los widgets (*Sigue jugando*, *Estante*, *Portada*, *El siguiente*, *BASTET*, *BASTET en papel*).
 - **La ficha enseña cada manera de abrirse** («Cómo se abre»: cada lanzador con su emulador, quitar, «+ Añadir») y el desglose de las horas por
   fuente (este móvil, otros móviles, Steam, el PC, Carmesí).
 - **Traer mi biblioteca de Carmesí** (Ajustes → Cuenta): lee lo que Carmesí subió a tu cuenta (en Carmesí no cambia nada) y hace de cada juego un
-  juego de Hiedra con su lanzador, sus claves, estado, favorito, plataforma, portada de internet, encuadre y duraciones; las horas de cada
+  juego de Bastet con su lanzador, sus claves, estado, favorito, plataforma, portada de internet, encuadre y duraciones; las horas de cada
   dispositivo de Carmesí quedan como fuente `carmesi:<dispositivo>`; las sagas, la portada de inicio y la apariencia se traducen; tus portadas se
   bajan de kDrive. Lo que ya tengas aquí se completa sin duplicarse. Se puede repetir. **Traer mis juegos de Atrio** sigue estando, para lo que no
   estuviera en Carmesí.
-- **Para Azabache** (`docs/CONTRATO-DATOS.md`): el nodo ligero `tiempo/<id>/<fuente>` con las claves del juego (para enlazar lo valorado por la
+- **Para Jonsu** (`docs/CONTRATO-DATOS.md`): el nodo ligero `tiempo/<id>/<fuente>` con las claves del juego (para enlazar lo valorado por la
   clave antigua), un solo nodo por fuente.
 - **Icono**: una hoja de hiedra sobre verde muy oscuro, adaptable (`herramientas/icono-hiedra.py`).
-- **Se actualiza sola** desde la carpeta «versiones» de tu kDrive (`Hiedra-<versión>.apk`).
+- **Se actualiza sola** desde la carpeta «versiones» de tu kDrive (`Bastet-<versión>.apk`).
 
 ## Capturas
 
@@ -397,12 +397,12 @@ Los widgets, en `docs/widgets/`.
 
 ## Cómo se trabaja
 
-- `ContratoTest` deja en `app/build/outputs/contrato/hiedra.json` lo que Hiedra sube a la cuenta tal cual; se copia a
-  `azabache/herramientas/casos/hermanas/` y la prueba `ContratoHermanasTest` de Azabache comprueba que lo lee entero. Al revés,
-  `herramientas/casos/azabache.json` es lo que sube Azabache (su `ContratoTest`) y `NotaAzabacheContratoTest` comprueba que «En Azabache» lo lee.
+- `ContratoTest` deja en `app/build/outputs/contrato/hiedra.json` lo que Bastet sube a la cuenta tal cual; se copia a
+  `azabache/herramientas/casos/hermanas/` y la prueba `ContratoHermanasTest` de Jonsu comprueba que lo lee entero. Al revés,
+  `herramientas/casos/azabache.json` es lo que sube Jonsu (su `ContratoTest`) y `NotaAzabacheContratoTest` comprueba que «En Jonsu» lo lee.
 - Pruebas: `gradle :app:testDebugUnitTest` (0 fallos). Con `-Proborazzi.test.record=true` se graban las capturas (`app/build/outputs/roborazzi/`)
   y los widgets (`app/build/outputs/widgets/`, de donde salen las vistas previas `w_prev_*.png`). Las de sincronización y nube usan los servidores
   de mentira de Atrio (`Atrio-Suite-2.0/herramientas/fakefirebase.js` y `fakekdrive.js`, con `node`); sin ellos se saltan.
 - Versión nueva: subir `versionCode`/`versionName` (`app/build.gradle.kts`) y `VERSION` (`PantEstilo.kt`), `gradle :app:assembleRelease`, y
-  `python3 herramientas/subir-version.py Hiedra-<versión>.apk` la deja en tu kDrive para que los móviles se actualicen solos.
-- El modelo y lo que viaja: `docs/MODELO.md`; lo que Azabache lee: `docs/CONTRATO-DATOS.md`.
+  `python3 herramientas/subir-version.py Bastet-<versión>.apk` la deja en tu kDrive para que los móviles se actualicen solos.
+- El modelo y lo que viaja: `docs/MODELO.md`; lo que Jonsu lee: `docs/CONTRATO-DATOS.md`.

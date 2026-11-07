@@ -87,7 +87,7 @@ class AjustesCuentaTest {
         enLaCuenta("azabache_general")!!.let { n ->
             assertEquals("11,12", n.texto("recsdone")); assertEquals(30L, n.entero("goal_0_2026")); assertEquals(21L, n.entero("aviso_diario"))
             assertEquals(true, n["pnotify"]); assertEquals("Gonzalo", n.texto("myname"))
-            assertTrue("las guías se quitaron de Azabache: no viajan", n["guides_42"] == null)
+            assertTrue("las guías se quitaron de Jonsu: no viajan", n["guides_42"] == null)
             assertTrue("lo de la sesión y lo ya subido no viajan", n["accuid"] == null && n["dirtyAt"] == null && n["devid"] == null)
         }
         assertTrue("Descubrir, los duelos y Escribir no viajan", listOf("azabache_descubrir", "azabache_duelos", "azabache_escribir").all { enLaCuenta(it)?.let { n -> n["f_years"] == null && n["recent_0"] == null && n["pool"] == null && n["tam"] == null } ?: true })

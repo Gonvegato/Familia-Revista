@@ -148,7 +148,7 @@ private fun BibliotecaEscribir(e: Escritos, ver: Int, onBack: () -> Unit, abrirO
     Column(Modifier.fillMaxSize().wrapContentWidth().widthIn(max = 880.dp).statusBarsPadding().padding(horizontal = if (Skin.revista) 18.dp else 14.dp)) {
         // Volver a Inicio
         Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            VolverRevista(onBack, "Cobalto")
+            VolverRevista(onBack, "Thot")
             Spacer(Modifier.weight(1f))
             EnlaceRevista("Importar", Modifier.semantics { contentDescription = "Importar un texto (Word, Markdown o texto)" }) { importar.launch(arrayOf("text/*", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream")) }
             EnlaceRevista("+ Nueva obra", Modifier.semantics { contentDescription = "Nueva obra" }, acento = true) { nueva = true }

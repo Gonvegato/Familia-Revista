@@ -122,18 +122,18 @@ class CapturasTest {
         rule.onAllNodesWithText("The Legend of Zelda", useUnmergedTree = true).onLast().performClick(); rule.waitForIdle(); foto("3f_saga_abierta")
         rule.onNodeWithText("VER LA SAGA →", useUnmergedTree = true).performClick(); foto("3g_pagina_saga")
         pulsar("← VOLVER")
-        pulsar("← HIEDRA"); rule.onNodeWithContentDescription("Ajustes").performClick(); foto("5_ajustes")
+        pulsar("← BASTET"); rule.onNodeWithContentDescription("Ajustes").performClick(); foto("5_ajustes")
         rule.onNodeWithText("JUEGOS").performClick(); rule.waitForIdle(); foto("5b_ajustes_juegos")
         rule.onNodeWithText("CUENTA").performClick(); rule.waitForIdle(); foto("5c_ajustes_servicios")
         rule.onNodeWithText("AVANZADO").performClick(); rule.waitForIdle(); foto("5d_ajustes_avanzado")
         rule.onNodeWithText("JUEGOS").performClick(); rule.waitForIdle()
         rule.onNodeWithText("Sistemas y emuladores", substring = true).performScrollTo().performClick(); foto("4_sistemas")
-        pulsar("← HIEDRA"); pulsar("← HIEDRA"); ir("PASADOS")
+        pulsar("← BASTET"); pulsar("← BASTET"); ir("PASADOS")
         rule.onAllNodesWithText("Pokémon Esmeralda", substring = true, useUnmergedTree = true)[0].performClick(); foto("6_ficha")
         pulsar("← VOLVER")
         rule.onAllNodesWithText("Hades", substring = true, useUnmergedTree = true)[0].performClick(); foto("6b_ficha_sin_lanzador")
         pulsar("← VOLVER")
-        rule.onAllNodesWithText("Hollow Knight", substring = true, useUnmergedTree = true)[0].performClick(); rule.onNodeWithText("EN AZABACHE").performScrollTo(); foto("6c_ficha_dos_lanzadores")
+        rule.onAllNodesWithText("Hollow Knight", substring = true, useUnmergedTree = true)[0].performClick(); rule.onNodeWithText("EN JONSU").performScrollTo(); foto("6c_ficha_dos_lanzadores")
     }
 
     @Test
@@ -158,7 +158,7 @@ class CapturasTest {
         rule.onAllNodesWithText("EQUIPO", substring = true)[0].performClick(); rule.waitForIdle(); foto("25_tu_pc_equipo")
         rule.onAllNodesWithText("AHORA", substring = true)[0].performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("FICHA →", substring = true)[0].performClick(); rule.waitForIdle(); foto("26_ficha_pc")
-        rule.onNodeWithText("EN AZABACHE").performScrollTo(); foto("26b_ficha_pc_abajo")
+        rule.onNodeWithText("EN JONSU").performScrollTo(); foto("26b_ficha_pc_abajo")
     }
 
     @Test
@@ -206,7 +206,7 @@ class CapturasTest {
         montar(oscuro = false)
         ir("PASADOS")
         rule.onAllNodesWithText("Pokémon Esmeralda", substring = true, useUnmergedTree = true)[0].performClick()
-        rule.onNodeWithText("EN AZABACHE").performScrollTo(); foto("12_ficha_casillas")
+        rule.onNodeWithText("EN JONSU").performScrollTo(); foto("12_ficha_casillas")
         rule.onNodeWithText("Datos de").performScrollTo(); foto("12b_ficha_datos")
         pulsar("← VOLVER")
         tocarVisible("Hades")
@@ -254,7 +254,7 @@ class CapturasTest {
         foto("15_invertido_portada")
         ir("PASADOS"); foto("16_invertido_juegos")
         rule.onAllNodesWithText("Pokémon Esmeralda", substring = true, useUnmergedTree = true)[0].performClick()
-        rule.onNodeWithText("EN AZABACHE").performScrollTo(); foto("17_invertido_ficha")
+        rule.onNodeWithText("EN JONSU").performScrollTo(); foto("17_invertido_ficha")
     }
 
     @Test
@@ -276,6 +276,6 @@ class CapturasTest {
         montar(oscuro = false)
         foto("19_atrio_invertido_portada")
         rule.onNodeWithContentDescription("Ajustes").performClick()
-        rule.onNodeWithText("COLORES DE AZABACHE", substring = true).performScrollTo(); foto("20_ajustes_colores_atrio")
+        rule.onNodeWithText("COLORES DE JONSU", substring = true).performScrollTo(); foto("20_ajustes_colores_atrio")
     }
 }

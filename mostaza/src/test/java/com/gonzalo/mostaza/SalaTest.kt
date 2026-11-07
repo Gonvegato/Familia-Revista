@@ -234,7 +234,7 @@ class CapturasTeleTest {
         val jdt = Biblioteca.titulos.first { it.id == e.series[0].id }.breve()
         rule.runOnUiThread { ctl.abreFicha(jdt) }; esperaTexto("Temporada 2"); foto("9-ficha-serie")
         rule.runOnUiThread { ctl.abreMenu() }; esperaTexto("Addons"); foto("10-menu")
-        rule.runOnUiThread { ctl.cierra("menu"); ctl.confirma(Confirmacion("¿Quitar «Juego de tronos»?", "Se quita de tu biblioteca en todos tus dispositivos y en Azabache. Es para siempre.", "Quitar") {}) }
+        rule.runOnUiThread { ctl.cierra("menu"); ctl.confirma(Confirmacion("¿Quitar «Juego de tronos»?", "Se quita de tu biblioteca en todos tus dispositivos y en Jonsu. Es para siempre.", "Quitar") {}) }
         foto("11-quitar")
         rule.runOnUiThread { ctl.cierra("confirmar"); ctl.atras() }; espera { est.pila.isEmpty() }
         // Con el catálogo de TMDB (como si tuvieras tu clave puesta)

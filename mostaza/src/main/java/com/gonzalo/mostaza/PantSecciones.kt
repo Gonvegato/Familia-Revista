@@ -51,7 +51,7 @@ fun PantSecciones(d: Destino, alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit
         horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column(Modifier.fillMaxWidth().statusBarsPadding()) {
-                RevistaTopBar(alVolver, "Mostaza")
+                RevistaTopBar(alVolver, "Hathor")
                 Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
                 FitTitle(estado.nombre, 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
                 Filete(3.dp)

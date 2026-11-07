@@ -37,7 +37,7 @@ fun PantPortada(nav: Nav) {
     Pagina {
         Text(("Número de " + LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ES))).uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(96.sp, texto = "COBALTO") }
+            Box(Modifier.weight(1f)) { Cabecera(96.sp, texto = "THOT") }
             BotonAcento("+ Nueva obra", alto = 44.dp, modifier = Modifier.width(170.dp)) { nueva = true }
         }
         FileteCabecera()
@@ -87,7 +87,7 @@ fun PantPortada(nav: Nav) {
                 Filete(1.dp, Line)
             }
         }
-        if (e.obras().isEmpty()) Vacio("Aún no hay ninguna obra", "Empieza una con «+ Nueva obra»: estará también en Cobalto del móvil.")
+        if (e.obras().isEmpty()) Vacio("Aún no hay ninguna obra", "Empieza una con «+ Nueva obra»: estará también en Thot del móvil.")
     }
     if (nueva) DialogoObra(null, nav) { nueva = false }
 }

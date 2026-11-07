@@ -136,7 +136,7 @@ fun PantInicio(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -
                 modifier = Modifier.clickable { alIr(Destino.Pendientes) }.padding(vertical = 12.dp))
         }
 
-        Text("Marfil · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 18.dp))
+        Text("Seshat · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 18.dp))
 
         // La versión instalada, debajo (para no tener que entrar en Ajustes a mirarla)
 
@@ -144,7 +144,7 @@ fun PantInicio(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -
         Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
     }
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre y lo de siempre (Buscar · + Añadir…)
-    BarraPlegada("Marfil", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), acento = true) { alAnadir() } }
+    BarraPlegada("Seshat", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), acento = true) { alAnadir() } }
     }
 }
 

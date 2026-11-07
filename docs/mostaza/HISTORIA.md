@@ -1,13 +1,13 @@
-# Mostaza
+# Hathor
 
-Las películas y las series de la familia, y verlas. Como Hiedra es tu biblioteca de juegos y además juegas en ella, Mostaza es tu
-biblioteca de películas y series y además las ves en ella. Hermana de [Azabache](../azabache/HISTORIA.md) (la revista: valorar),
-[Hiedra](../hiedra/HISTORIA.md) (juegos), [Marfil](../marfil/HISTORIA.md) (libros) y [Cobalto](../cobalto/HISTORIA.md) (escribir): la misma
+Las películas y las series de la familia, y verlas. Como Bastet es tu biblioteca de juegos y además juegas en ella, Hathor es tu
+biblioteca de películas y series y además las ves en ella. Hermana de [Jonsu](../azabache/HISTORIA.md) (la revista: valorar),
+[Bastet](../hiedra/HISTORIA.md) (juegos), [Seshat](../marfil/HISTORIA.md) (libros) y [Thot](../cobalto/HISTORIA.md) (escribir): la misma
 interfaz «Revista», la misma cuenta y la misma firma; su paquete es `com.gonzalo.mostaza`.
 
 Funciona como Stremio: habla el protocolo abierto de los **addons de Stremio** (catálogos, fichas, fuentes y subtítulos). Los catálogos y
 las fichas salen de Cinemeta (el oficial de Stremio, el único que viene puesto) y de los que pongas tú; las fuentes, de tus addons de
-fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, que Mostaza reproduce al momento). Mostaza no trae ningún
+fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, que Hathor reproduce al momento). Hathor no trae ningún
 addon de fuentes ni de torrents: los pones tú.
 
 ## Capturas
@@ -19,9 +19,9 @@ Y en la tele, la sala (`CapturasTeleTest`, 1920 × 1080 en modo de tele).
 
 ## 0.4.0 · En la tele: la sala
 
-**Mostaza también en Android TV y Google TV**, con el mismo APK que el móvil (en la tele sale en la fila de las apps, con su banner).
-Al abrirse en una tele no se ve la Mostaza del móvil sino **la sala**, como la de Hiedra en el ordenador (`--sala`): a pantalla completa,
-oscura, con portadas grandes y todo con la cruceta del mando a distancia, sin nada que haya que tocar. Es la misma Mostaza: la misma
+**Hathor también en Android TV y Google TV**, con el mismo APK que el móvil (en la tele sale en la fila de las apps, con su banner).
+Al abrirse en una tele no se ve la Hathor del móvil sino **la sala**, como la de Bastet en el ordenador (`--sala`): a pantalla completa,
+oscura, con portadas grandes y todo con la cruceta del mando a distancia, sin nada que haya que tocar. Es la misma Hathor: la misma
 biblioteca, los mismos addons, el mismo elector y el mismo reproductor; solo cambia la cara (`Sala.kt`, `SalaFoco.kt`, `SalaPiezas.kt`,
 `SalaSecciones.kt`, `SalaFicha.kt`).
 
@@ -33,13 +33,13 @@ biblioteca, los mismos addons, el mismo elector y el mismo reproductor; solo cam
 - **Explorar**: el de TMDB (películas o series, orden, plataforma y género) o el de tus addons (catálogo y género), en rejilla y por páginas.
 - **Buscar**: el campo se escribe con el teclado de la tele (OK en él; el de Android TV trae también el micrófono) o con «Hablar», el
   reconocimiento de voz del sistema si la tele lo tiene.
-- **La ficha**: «Reproducir» (o «Seguir · T2·E5») pone la fuente que elige Mostaza sola, igual que en el móvil (`Busqueda.reproduce`, la
+- **La ficha**: «Reproducir» (o «Seguir · T2·E5») pone la fuente que elige Hathor sola, igual que en el móvil (`Busqueda.reproduce`, la
   misma función para los dos), y dice cuál ha sido; «Todas las fuentes», en un panel a la derecha con la mejor para ti marcada y
   enfocada; dónde está en tu biblioteca (y cambiarlo, favorita, o quitarla, con la misma pregunta de siempre: quitar es para siempre); en
   una serie, las temporadas y los episodios (OK pone uno; al lado, sus fuentes y la marca de visto); y «Más como esta».
 - **El foco** se ve desde el sofá: lo enfocado crece y un marco del acento se desliza de una cosa a otra. Lo que se abre encima (la ficha,
   las fuentes, el menú, una pregunta) se queda el foco, y al cerrarlo vuelves a donde estabas. ATRÁS vuelve (de la ficha a donde
-  estabas; de una sección a Inicio; en Inicio sale de Mostaza); MENÚ abre el menú (Ajustes y Addons, las páginas de siempre; Biblioteca;
+  estabas; de una sección a Inicio; en Inicio sale de Hathor); MENÚ abre el menú (Ajustes y Addons, las páginas de siempre; Biblioteca;
   Buscar); la tecla de buscar va a Buscar; con un mando de juegos, L1 y R1 cambian de sección.
 - **A salvo del borde**: se compone sobre 1080 líneas y se escala a cualquier tele, con los márgenes del 5 % que pide Google para el
   «overscan» (48 × 27 dp de 960 × 540).
@@ -70,7 +70,7 @@ motor o tu conexión, que no consigue conectar) frente a «1 par · el tracker d
 ## 0.3.2
 
 - **El sonido AC3, E-AC3, DTS o TrueHD en cualquier aparato.** Hay tablets (una OPPO, por ejemplo) que no traen la licencia de Dolby
-  y no saben decodificar el AC3 que llevan muchas fuentes en castellano. Mostaza lleva ahora su propio decodificador (FFmpeg, el que
+  y no saben decodificar el AC3 que llevan muchas fuentes en castellano. Hathor lleva ahora su propio decodificador (FFmpeg, el que
   precompila Jellyfin para Media3, `org.jellyfin.media3:media3-ffmpeg-decoder`, GPL-3.0), que solo se usa si el aparato no puede.
 - **Torrents con más gente.** A un torrent público (con `dht:`) se le suman los trackers públicos de siempre además de los suyos:
   con los pocos que traía la fuente a veces solo se encontraba un par. Uno privado (sin `dht:`) sigue solo con los suyos.
@@ -82,30 +82,30 @@ motor o tu conexión, que no consigue conectar) frente a «1 par · el tracker d
 
 Un torrent ya no puede quedarse en «Preparando el torrent…» sin decir nada: mientras arranca enseña los segundos, cuánta gente hay, a
 qué velocidad baja y cuánto lleva («Preparando el torrent… 23 s · 4 pares · 1,2 MB/s»), y si en 2 minutos y medio no ha empezado, se
-deja y se pasa a otra fuente (si la eligió Mostaza sola) o te propone otra. Lo mismo en el ordenador (1.0.1).
+deja y se pasa a otra fuente (si la eligió Hathor sola) o te propone otra. Lo mismo en el ordenador (1.0.1).
 
 ## 0.3.0
 
 **Tus películas y series en tu kDrive.** Lo que subas a «Mi carpeta/Mostaza/Películas» y «Mi carpeta/Mostaza/Series» (las crea la
 familia, con un LEEME.txt que dice cómo llamar a los archivos) sale como una fuente más, «Tu kDrive», la primera de la lista, y en la
-portada, en «En tu kDrive». Mostaza averigua qué es cada archivo por su nombre (título y año; en las series, la carpeta de la serie y
+portada, en «En tu kDrive». Hathor averigua qué es cada archivo por su nombre (título y año; en las series, la carpeta de la serie y
 S01E02 o 1x02; si el nombre lleva su número de IMDb, manda ese), con TMDB si tienes la clave y si no con tus addons. Se ve desde kDrive
 mientras se baja (a trozos), con los subtítulos .srt que tenga al lado. Tu token de kDrive solo va a kDrive: el reproductor ya no manda
 las cabeceras de una fuente a otros servidores (tampoco las de tu debrid a los de los subtítulos), y «Abrir con otro reproductor» no se
 ofrece con lo de tu kDrive.
 
-## En el ordenador (Linux y Mac): Mostaza 1.0.0
+## En el ordenador (Linux y Mac): Hathor 1.0.0
 
-**Mostaza también en el ordenador**, como sus hermanas (`escritorio/mostaza`, ver [ESCRITORIO](../ESCRITORIO.md)): la misma cuenta (entra
-sola si otra app de la familia de ese ordenador ya ha entrado), la apariencia de tu Mostaza del móvil, se actualiza sola desde tu kDrive
-(`Mostaza-<versión>-linux.tar.gz` / `-linux.deb` / `-mac.dmg`) y lo mismo de la cuenta, campo a campo: tu biblioteca (`titulos`), lo
+**Hathor también en el ordenador**, como sus hermanas (`escritorio/mostaza`, ver [ESCRITORIO](../ESCRITORIO.md)): la misma cuenta (entra
+sola si otra app de la familia de ese ordenador ya ha entrado), la apariencia de tu Hathor del móvil, se actualiza sola desde tu kDrive
+(`Hathor-<versión>-linux.tar.gz` / `-linux.deb` / `-mac.dmg`) y lo mismo de la cuenta, campo a campo: tu biblioteca (`titulos`), lo
 visto de cada película y episodio (`progreso`), el tiempo por día y dispositivo (`tiempo/<ref>~mostaza-linux-…`), lo que eliges
 (`ajustes/mostaza_*`: el elector, el reproductor, el orden de cada sección, la portada, los torrents y las fuentes rotas) y tus addons y tu
 clave de TMDB en `/claves`. Lo que ves en el ordenador lo sigues en el móvil, y al revés. El protocolo de los addons, el elector, las
 pistas, TMDB y las tres reglas son el mismo código que aquí, con las mismas pruebas (`ElectorTest`, `PistasTest`, `ProtocoloTest`,
 `TmdbTest`, `RotasTest` y `ReglasTest`, esta contra la cuenta de verdad).
 
-- **Se ve con mpv** (`sudo pacman -S mpv` en CachyOS y Arch, `brew install mpv` en el Mac). Mostaza lo abre en su ventana y le habla por su
+- **Se ve con mpv** (`sudo pacman -S mpv` en CachyOS y Arch, `brew install mpv` en el Mac). Hathor lo abre en su ventana y le habla por su
   socket: la dirección de la fuente y sus cabeceras van por ahí, nunca en la línea de órdenes (que cualquier programa puede leer), y mpv no
   guarda nada suyo (ni «seguir donde lo dejé» ni yt-dlp). Le pregunta cada segundo por dónde va y si está reproduciendo de verdad, así
   que las tres reglas funcionan como en el móvil; y lee sus pistas (`track-list`): pone el audio en tu idioma, los subtítulos en español
@@ -116,9 +116,9 @@ pistas, TMDB y las tres reglas son el mismo código que aquí, con las mismas pr
   biblioteca de Linux x86-64 o del Mac con Apple Silicon); con tu debrid (TorBox, Real-Debrid…), las directas van antes.
 - **Teclado y mando**: las flechas (o la cruceta) mueven el foco, Intro (o A) pulsa, Esc (o B) vuelve.
 - **Tu kDrive**, como en el móvil: lo de «Mi carpeta/Mostaza/Películas» y «…/Series» sale como la fuente «Tu kDrive», la primera, y en
-  la portada («En tu kDrive»). Tu token solo va a kDrive: a mpv por su socket, y los subtítulos de fuera se bajan antes en Mostaza (sin
+  la portada («En tu kDrive»). Tu token solo va a kDrive: a mpv por su socket, y los subtítulos de fuera se bajan antes en Hathor (sin
   las cabeceras de la fuente) para que mpv no se las mande a otros servidores; el reproductor del sistema no se ofrece con estas fuentes.
-- Lo que aún no: los widgets y traer lo de Azabache (lo hace el móvil).
+- Lo que aún no: los widgets y traer lo de Jonsu (lo hace el móvil).
 - Capturas: `CapturasTest` (con `-Dcapturas=<carpeta>`): portada (clara y oscura), Viendo, Visto, la ficha de una película y la de una
   serie, las fuentes, los addons, Ajustes (fuentes y reproductor) y la banda de mpv.
 
@@ -136,7 +136,7 @@ Y los dos widgets de abajo.
 ## 0.1.3
 
 Cuando tu debrid no da un archivo (Real-Debrid con «infringing_file»), algunos addons mandan un vídeo de aviso de unos dos minutos en vez
-de un error: Mostaza lo reconoce (menos de 4 minutos para algo que dura más de 10), no lo cuenta para nada y pasa sola a otra fuente; la
+de un error: Hathor lo reconoce (menos de 4 minutos para algo que dura más de 10), no lo cuenta para nada y pasa sola a otra fuente; la
 rota se apunta en tu cuenta (`ajustes/mostaza_rotas`) y no se elige sola en 30 días.
 
 ## Widgets
@@ -182,7 +182,7 @@ una sola pista sin idioma sigue dependiendo de lo que diga su texto.
 ## 0.1.1
 
 - **Con datos del móvil se ve igual.** Las fuentes directas y las de tu Real-Debrid no tienen ningún límite con datos (con «Ahorrar
-  datos del móvil», Mostaza prefiere hasta 720p y lo que menos pese; si quieres la mejor calidad también con datos, apágalo en Ajustes →
+  datos del móvil», Hathor prefiere hasta 720p y lo que menos pese; si quieres la mejor calidad también con datos, apágalo en Ajustes →
   Elector). Arreglo: con «Solo con wifi» puesto y yendo con datos, «Reproducir» podía elegir un torrent que el motor no iba a abrir; ahora
   elige la mejor fuente directa o de tu debrid. Si quieres torrents con datos, quita «Solo con wifi» en Ajustes → Torrent.
 
@@ -201,12 +201,12 @@ una sola pista sin idioma sigue dependiendo de lo que diga su texto.
 - **La ficha**: el fondo, el póster, el titular, el año, la duración, la nota de IMDb, los géneros, la dirección, el reparto y la
   descripción; dónde está en tu biblioteca (Pendiente · Viendo · Visto · Abandonado, favorita, quitar) o «+ Añadir»; **«Reproducir»** (o
   «Seguir viendo», o «Ver · T2·E6» en una serie: el episodio que toca); y en una serie, sus **temporadas y episodios** con lo que llevas y
-  la marca de visto (que se pone y se quita a mano). «En Azabache»: la nota y la reseña que le has puesto allí, y «Valorar en Azabache».
+  la marca de visto (que se pone y se quita a mano). «En Jonsu»: la nota y la reseña que le has puesto allí, y «Valorar en Jonsu».
 - **Las fuentes** de una película o un episodio: todas las de tus addons, agrupadas por addon (en tu orden), con sus líneas tal como las
-  da el addon, lo que Mostaza entiende de cada una («1080p · Castellano · 4,4 GB») y si es **directa**, **torrent**, YouTube, una web,
-  Usenet o un comprimido. La que pondría Mostaza va marcada («La mejor para ti»). Tocar una la pone.
+  da el addon, lo que Hathor entiende de cada una («1080p · Castellano · 4,4 GB») y si es **directa**, **torrent**, YouTube, una web,
+  Usenet o un comprimido. La que pondría Hathor va marcada («La mejor para ti»). Tocar una la pone.
 - **El elector de fuentes** (lo que hace «Reproducir»): de todas las fuentes de todos tus addons, la mejor para ti. El protocolo no dice
-  ni el idioma, ni la calidad, ni las semillas: Mostaza lo lee del texto de cada fuente (la resolución, el HDR o Dolby Vision, el códec, el
+  ni el idioma, ni la calidad, ni las semillas: Hathor lo lee del texto de cada fuente (la resolución, el HDR o Dolby Vision, el códec, el
   idioma del audio —por las palabras y por las banderas: 🇪🇸 es castellano; 🇲🇽 o 🇦🇷, latino—, si lleva subtítulos en español, el tamaño,
   las semillas de un torrent y si tu debrid ya la tiene). Y elige así:
   1. **tu idioma primero**: una en un idioma que prefieres gana a cualquier calidad. El orden lo pones tú (de serie: castellano, latino,
@@ -217,13 +217,13 @@ una sola pista sin idioma sigue dependiendo de lo que diga su texto.
   3. luego las **directas o de tu debrid** antes que los torrents;
   4. y al final, el orden de tus addons.
   Al pulsar, se pone la elegida y se dice cuál ha sido («1080p · Castellano · 4,4 GB · Fuentes de casa · Cambiar»); la lista entera está a
-  un toque. Si se corta una y otra vez, Mostaza apunta que la conexión da menos y te ofrece la siguiente. En el episodio siguiente prefiere
+  un toque. Si se corta una y otra vez, Hathor apunta que la conexión da menos y te ofrece la siguiente. En el episodio siguiente prefiere
   la fuente de la misma clase que la del anterior (el «bingeGroup» del addon, como Stremio).
 - **El reproductor** (AndroidX Media3): los enlaces directos (también HLS y DASH), con las cabeceras que pida la fuente; subtítulos de tus
   addons de subtítulos y los que trae el vídeo (sin subtítulos si el audio ya está en tu idioma, salvo que los quieras siempre; el tamaño y
   la banda, a tu gusto); elegir audio, subtítulos y fuente; sigue donde lo dejaste (aquí o en otro dispositivo); el **episodio siguiente**,
   solo, con una cuenta atrás; y **«Abrir con otro reproductor»** (VLC, Just Player, mpv, MX…, con el título, por dónde ibas y las
-  cabeceras) para lo que este dispositivo no sabe decodificar: Mostaza lo dice cuando pasa (también si es solo el sonido: DTS, TrueHD…).
+  cabeceras) para lo que este dispositivo no sabe decodificar: Hathor lo dice cuando pasa (también si es solo el sonido: DTS, TrueHD…).
   Con el mando: la cruceta salta adelante y atrás, OK enseña los controles.
 - Las fuentes de **YouTube** (los tráileres) se abren en YouTube y las de una **web**, en el navegador. Las de **Usenet** (NZB) y las de
   **comprimidos** dicen, con la verdad, que todavía no.
@@ -239,10 +239,10 @@ una sola pista sin idioma sigue dependiendo de lo que diga su texto.
   Stremio para los subtítulos) se pone con un toque, si quieres.
 - **Ajustes** en pestañas: Apariencia (la de la familia, con el acento mostaza de serie) · Reproductor · Fuentes (el elector, tu
   conexión, lo que sabe este dispositivo y los torrents) · Cuenta (y las hermanas) · Avanzado (actualizarse sola y la portada).
-- **Se actualiza sola** desde tu kDrive («Mi carpeta/versiones», `Mostaza-<versión>.apk`), como las hermanas: nunca con algo en marcha
+- **Se actualiza sola** desde tu kDrive («Mi carpeta/versiones», `Hathor-<versión>.apk`), como las hermanas: nunca con algo en marcha
   (el reproductor abierto) ni con la pantalla apagada.
-- **Entrar una vez**: si ya has entrado en Azabache o en otra hermana, Mostaza entra sola (y al revés, con Azabache 1.6.3; Hiedra,
-  Marfil y Cobalto, desde su próxima versión).
+- **Entrar una vez**: si ya has entrado en Jonsu o en otra hermana, Hathor entra sola (y al revés, con Jonsu 1.6.3; Bastet,
+  Seshat y Thot, desde su próxima versión).
 - En la tablet (tumbada y de pie) y en la tele: la ficha a dos columnas, los estantes más grandes, y todo se mueve con el mando
   (lo que tiene el foco lleva el marco del acento).
 
@@ -253,27 +253,27 @@ una sola pista sin idioma sigue dependiendo de lo que diga su texto.
    empieza otra). Hasta entonces **no se escribe nada en tu cuenta** (solo un punto para seguir en ese dispositivo). A los 10 minutos entra
    en «Viendo» (o pasa a «Viendo» si estaba pendiente o abandonada), con todo lo de esa sesión; si en esa misma sesión llega al final,
    queda en «Visto».
-2. **El tiempo que ves se apunta** por día y por dispositivo (lo lee Azabache para su diario, como lo de Hiedra y Marfil), y **por dónde
+2. **El tiempo que ves se apunta** por día y por dispositivo (lo lee Jonsu para su diario, como lo de Bastet y Seshat), y **por dónde
    vas** en cada película y cada episodio viaja (sigues en otro dispositivo). Una película o un episodio está visto al 90 %; una serie
    pasa a «Visto» cuando tienes vistos todos sus episodios estrenados (los especiales no cuentan) y, si no, sigue en «Viendo».
-3. **Borrar es para siempre**: queda borrada en tu cuenta (en todos tus dispositivos y en Azabache) y lo que entra solo **nunca** la
+3. **Borrar es para siempre**: queda borrada en tu cuenta (en todos tus dispositivos y en Jonsu) y lo que entra solo **nunca** la
    devuelve, ni aunque la vuelvas a ver entera (y de lo que ves de ella no se apunta nada). Solo «Añadir» la recupera: la misma, con lo
-   suyo (su estado, sus fechas, su nota, lo visto). Es lo que se aprendió en Hiedra 0.5.4.
+   suyo (su estado, sus fechas, su nota, lo visto). Es lo que se aprendió en Bastet 0.5.4.
 
-**Lo que tenía Azabache de películas y series ya es de Mostaza**
+**Lo que tenía Jonsu de películas y series ya es de Hathor**
 
-Azabache guardaba tus películas y tus series en sus categorías (las de TMDB y TVmaze). Ahora son de Mostaza, como los juegos pasaron a
-Hiedra y los libros a Marfil: la primera vez que abres Mostaza con tu cuenta, cada ficha pasa a tu biblioteca con todo lo suyo (el estado,
+Jonsu guardaba tus películas y tus series en sus categorías (las de TMDB y TVmaze). Ahora son de Hathor, como los juegos pasaron a
+Bastet y los libros a Seshat: la primera vez que abres Hathor con tu cuenta, cada ficha pasa a tu biblioteca con todo lo suyo (el estado,
 cuándo la añadiste y cuándo la terminaste, la favorita, el póster y el fondo, la nota con sus criterios, la reseña, tus apuntes y lo demás
 de la ficha, el tiempo que tenía apuntado y, en las series, los episodios marcados), con su código de IMDb (el que usan los addons de
-Stremio: sale de TMDB con la clave de TMDB de tu cuenta, o de TVmaze) y con sus ids de antes. Nada se borra ni se cambia en Azabache (sus
-fichas de antes se quedan donde estaban, como copia), y desde ese momento **Azabache valora las de Mostaza**: la misma ficha, sin copia, con
+Stremio: sale de TMDB con la clave de TMDB de tu cuenta, o de TVmaze) y con sus ids de antes. Nada se borra ni se cambia en Jonsu (sus
+fichas de antes se quedan donde estaban, como copia), y desde ese momento **Jonsu valora las de Hathor**: la misma ficha, sin copia, con
 su número de siempre (tus sagas, tu diario y tus maquetas la siguen encontrando). En otro dispositivo no se repite nada, y lo que
-hayas cambiado o borrado en Mostaza no se pisa.
+hayas cambiado o borrado en Hathor no se pisa.
 
 **Todo en tu cuenta** (lo que viaja y lo que no)
 
-| Lo que hay en Mostaza | ¿Viaja? | Dónde / por qué |
+| Lo que hay en Hathor | ¿Viaja? | Dónde / por qué |
 |---|---|---|
 | Tu biblioteca (películas, series, su estado, fechas, favoritas) | Sí | `titulos` |
 | Por dónde vas en cada película y episodio, y lo visto | Sí | `progreso` (de lo que está en tu biblioteca) |
@@ -291,21 +291,21 @@ hayas cambiado o borrado en Mostaza no se pisa.
 | Lo que mide la conexión, lo que sabe decodificar | No | es de cada aparato (y de cada red) |
 | El punto para seguir de lo que aún no está en tu biblioteca | No | la regla 1: antes de los 10 minutos, nada a la cuenta |
 | Los manifiestos y catálogos de los addons | No | es lo que dice cada addon: se vuelve a pedir |
-| El id del dispositivo, la sesión, lo pendiente de subir, lo de la última comprobación del actualizador, los colores de Azabache leídos | No | es lo que lleva cada dispositivo de la cuenta (la sesión, cifrada) |
+| El id del dispositivo, la sesión, lo pendiente de subir, lo de la última comprobación del actualizador, los colores de Jonsu leídos | No | es lo que lleva cada dispositivo de la cuenta (la sesión, cifrada) |
 
 **Lo que no se ha podido probar (honesto)**
 
 - **Nada de esto se ha probado en un móvil, una tablet ni una tele de verdad.** Las pruebas del ordenador comprueban las tres reglas con la
   cuenta de verdad (el emulador de Firebase), el protocolo contra un addon de mentira, el elector con títulos como los de verdad, que las
-  direcciones de tus addons no salen de `/claves`, el paso de lo de Azabache en dos dispositivos, que Azabache lee lo que escribe Mostaza
+  direcciones de tus addons no salen de `/claves`, el paso de lo de Jonsu en dos dispositivos, que Jonsu lee lo que escribe Hathor
   y que lo que eliges viaja. Las capturas enseñan las pantallas. Pero el reproductor no se ha probado con vídeos de verdad: qué formatos
   abre depende de cada dispositivo (para eso está «Abrir con otro reproductor»).
 - El elector lee texto libre: un addon que escriba de otra manera puede confundirlo (la lista entera siempre está a un toque).
 - La página de configurar de cada addon es la suya: si en vez de su botón de instalar te da la dirección para copiarla, pégala en
   «Instalar un addon» (sustituye a la de antes si es el mismo addon… o se añade otro: quita el viejo).
-- Sin TMDB en tu cuenta, lo que venía de Azabache como película entra sin código de IMDb (`tmdb:<id>`) hasta que pongas la clave: su ficha
+- Sin TMDB en tu cuenta, lo que venía de Jonsu como película entra sin código de IMDb (`tmdb:<id>`) hasta que pongas la clave: su ficha
   no sale de Cinemeta hasta entonces.
-- Hiedra, Marfil y Cobalto aún no le dan la cuenta a Mostaza (lo hará su próxima versión): entra con Azabache 1.6.3, o con tu usuario.
+- Bastet, Seshat y Thot aún no le dan la cuenta a Hathor (lo hará su próxima versión): entra con Jonsu 1.6.3, o con tu usuario.
 - Usenet y los comprimidos: más adelante. Los torrents están probados de verdad (un torrent compartido en el mismo ordenador, visto
   entero y saltando, byte a byte), pero todavía no en un móvil de verdad ni con gente de internet.
 
@@ -320,6 +320,6 @@ python3 herramientas/mostaza/subir-version.py mostaza/build/outputs/apk/release/
 ```
 
 El reproductor es AndroidX Media3 1.9.4: la última que se compila con el SDK 35 de la familia (desde la 1.10 pide el 36). El contrato con
-Azabache: `ContratoTest` deja en `build/outputs/contrato/mostaza.json` lo que escribe Mostaza, y Azabache lo lee en su `ContratoHermanasTest`
+Jonsu: `ContratoTest` deja en `build/outputs/contrato/mostaza.json` lo que escribe Hathor, y Jonsu lo lee en su `ContratoHermanasTest`
 (copia en `herramientas/casos/hermanas/mostaza.json`). Al sacar versión: `versionCode`/`versionName` (`build.gradle.kts`), `VERSION`
 (`PantEstilo.kt`) y esto.

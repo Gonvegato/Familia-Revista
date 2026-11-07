@@ -377,7 +377,7 @@ fun ArbolObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir, foco: String?) 
     })
     union?.let { (x, y) -> RelacionDialogo(e, pid, null, onCerrar = { union = null }, aNueva = x, bNueva = y) }
     if (ordenar) HojaEscribir("¿Ordenar el árbol?", { ordenar = false }) {
-        Text("Cobalto colocará todas las fichas solas (lo unido, cerca). Después puedes moverlas a mano.", color = Muted, fontSize = 14.sp)
+        Text("Thot colocará todas las fichas solas (lo unido, cerca). Después puedes moverlas a mano.", color = Muted, fontSize = 14.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             BotonEscribir("Ordenar") { ordenar = false; ordenarAhora() }
             BotonEscribir("No", suave = true) { ordenar = false }

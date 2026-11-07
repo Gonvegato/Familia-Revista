@@ -130,7 +130,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         // Arriba, como en Atrio: Portada · Editar · Borrar
         RevistaTopBar(alCerrar, "Volver") {
             // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
-            if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Cobalto", acento = true) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
+            if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", acento = true) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
             else {
                 EnlaceRevista("Portada") { portada = true }
                 EnlaceRevista("Editar") { renombrar = true }
@@ -256,18 +256,18 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
                 if (NotaAzabache.vieja(ctx)) withContext(Dispatchers.IO) { NotaAzabache.refrescar(ctx) }.let { nota = NotaAzabache.cargar(ctx)[l.clave] }
             }
             Column(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp)) {
-                CabezaCasilla("En Azabache")
+                CabezaCasilla("En Jonsu")
                 if (nota != null) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         FitTitle("${nota!!.general}", 48.sp, 50.sp, unaLinea = true, maxLines = 1)
                         Text(" /100", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp))
                     }
                     if (nota!!.resena.isNotBlank()) Text(nota!!.resena, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Abrir en Azabache →", acento = true) { NotaAzabache.abrir(ctx, nota) }
+                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Abrir en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, nota) }
                 } else Row(verticalAlignment = Alignment.CenterVertically) {
                     // Una línea: lo que hay y qué hacer
                     Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
-                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Azabache →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(l.id, 0, "")) }
+                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(l.id, 0, "")) }
                 }
             }
             Filete(2.dp)

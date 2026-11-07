@@ -1,4 +1,4 @@
-# Guía: terminar Marfil (de la 0.8.1 a la 0.9.x)
+# Guía: terminar Seshat (de la 0.8.1 a la 0.9.x)
 
 Escrita para que la ejecute otro modelo, paso a paso. **Sigue el orden.** Cada tarea dice qué archivos tocar, qué hacer
 exactamente, cómo probarlo y cuándo está terminada. Si algo de aquí no cuadra con el código que tienes delante, **para y
@@ -34,7 +34,7 @@ gradle testDebugUnitTest assembleRelease --offline           # tests + APK firma
 - Responde en español, directo y honesto. Si algo no se ha podido probar, dilo.
 - Comprueba en internet cualquier dato externo (APIs, formatos) antes de usarlo; no inventes.
 - Cada versión: subir a la rama `desarrollo`, **mandar el APK** con `SendUserFile` y **subirlo a kDrive «versiones»**:
-  `python3 herramientas/subir-version.py /ruta/Marfil-X.Y.Z.apk` (el nombre del archivo debe ser `Marfil-X.Y.Z.apk`;
+  `python3 herramientas/subir-version.py /ruta/Marfil-X.Y.Z.apk` (el nombre del archivo debe ser `Seshat-X.Y.Z.apk`;
   la autenticación la pone el entorno, no pidas tokens).
 - Commits con las líneas de atribución que te indique el sistema. No crees PR si no lo pide.
 - Nada de borrar datos del usuario.
@@ -48,7 +48,7 @@ En `app/build.gradle.kts` sube `versionCode` (+1) y `versionName`; en `PantEstil
 
 ### 0.5 Versiones previstas
 - **0.8.2**: tareas 1–4 (orden, atajo, tamaño del APK, icono si hay PNG).
-- **0.9.0**: tareas 5–9 (terminado y reto, ajustes del lector, subrayados ligeros, nota de Azabache, fotos de Atrio).
+- **0.9.0**: tareas 5–9 (terminado y reto, ajustes del lector, subrayados ligeros, nota de Jonsu, fotos de Atrio).
 - Al final de cada una: tests, capturas revisadas, APK, kDrive, commit, push, mensaje al usuario.
 
 ---
@@ -110,7 +110,7 @@ el filtro debe verse debajo del título.
 **Dato medido:** casi todo es `libtranslate_jni.so` de ML Kit (el traductor del diccionario), repetido para cuatro
 arquitecturas: x86_64 17,4 MB, x86 17,3 MB, arm64-v8a 16,4 MB, armeabi-v7a 11,6 MB.
 
-1. **Pregunta antes al usuario** (con `AskUserQuestion`): «¿Usas Marfil en algún dispositivo de 32 bits o en un
+1. **Pregunta antes al usuario** (con `AskUserQuestion`): «¿Usas Seshat en algún dispositivo de 32 bits o en un
    ordenador con Waydroid? (Atrio se usaba en Waydroid.)». Opciones: «Solo móvil y tablet modernos» /
    «También Waydroid en el PC» / «No lo sé».
 2. Según la respuesta, en `app/build.gradle.kts`, dentro de `defaultConfig`:
@@ -122,7 +122,7 @@ arquitecturas: x86_64 17,4 MB, x86 17,3 MB, arm64-v8a 16,4 MB, armeabi-v7a 11,6 
 
 ---
 
-## 4. Icono de Marfil (solo si ya está el PNG)
+## 4. Icono de Seshat (solo si ya está el PNG)
 
 El usuario mandó los iconos en el chat, pero **no como archivo**. Si en el repo existe `docs/iconos/marfil.png`, hazlo;
 si no, sáltatelo y recuérdaselo al final.
@@ -201,7 +201,7 @@ Hoy los ajustes por defecto del lector (letra, tamaño, tema, márgenes…) se g
 
 ---
 
-## 7. Subrayados en un nodo ligero (para la cita del Diario de Azabache)
+## 7. Subrayados en un nodo ligero (para la cita del Diario de Jonsu)
 
 1. En `SincroP.subirLectura`, junto al `PUT` de `tiempo`, escribe
    `${Cuenta.raiz}/subrayados/<kid>/<dispositivo>` con
@@ -211,9 +211,9 @@ Hoy los ajustes por defecto del lector (letra, tamaño, tema, márgenes…) se g
 
 ---
 
-## 8. La nota de Azabache en la ficha (solo lectura)
+## 8. La nota de Jonsu en la ficha (solo lectura)
 
-Mientras Azabache no exista, lee la de Atrio (mismo formato que usa `ImportarAtrio`).
+Mientras Jonsu no exista, lee la de Atrio (mismo formato que usa `ImportarAtrio`).
 
 1. Nuevo archivo `NotaAzabache.kt`:
    - `data class Nota(val atrioId: Long, val general: Int, val resena: String)`.
@@ -223,10 +223,10 @@ Mientras Azabache no exista, lee la de Atrio (mismo formato que usa `ImportarAtr
    - Caché en `SharedPreferences("marfil_azabache")`: el mapa en JSON y la hora. Se refresca en segundo plano al abrir
      una ficha si la caché tiene más de 15 minutos, y a mano.
 2. Ficha: entre la pareja de casillas Tiempo/Páginas y «Subrayados y notas», una casilla a todo lo ancho
-   `CabezaCasilla("En Azabache")`:
+   `CabezaCasilla("En Jonsu")`:
    - Con nota: el número grande (`FitTitle`, 48 sp) + `/100` pequeño, y la reseña en cursiva (3 líneas como mucho).
    - Sin nota: «Sin valorar todavía» en cursiva.
-   - Enlace «Abrir en Azabache →» (o «Valorar en Azabache →»): solo si Atrio está instalado
+   - Enlace «Abrir en Jonsu →» (o «Valorar en Jonsu →»): solo si Atrio está instalado
      (`packageManager.getLaunchIntentForPackage("com.gonzalo.gamerate") != null`). El intent: ese, con
      `putExtra("go", "item:1:<atrioId>")` y `FLAG_ACTIVITY_NEW_TASK` (Atrio ya entiende `go=item:<categoría>:<id>`;
      los libros son la categoría 1). Sin `atrioId`, abre Atrio sin más.
@@ -246,7 +246,7 @@ en la lista `nube` hay una entrada `{"k": "foto:foto_1700000000000.jpg", "f": <i
    `file:`, su nombre es `Uri.parse(cover).lastPathSegment`; busca `foto:<nombre>` y guárdalo en el `Candidato` como
    `val foto: NubeLibro? = null` (`f`, `n`, `s`).
 2. `ImportarAtrio.importar`: si el libro no tiene portada y el candidato trae `foto`, **no la bajes ahí**: regístrala en el
-   índice de portadas de Marfil con el id de kDrive de Atrio:
+   índice de portadas de Seshat con el id de kDrive de Atrio:
    `Cuenta.db("PUT", "${Cuenta.raiz}/portadas/<kid>", {"f": foto.f, "u": ahora})`. La sincronización de portadas
    (`NubeLibros.sincronizarPortadas`) ya la baja en todos tus dispositivos cuando hay kDrive.
 3. Después de importar, llama a `NubeLibros.programar(ctx)`.
@@ -261,7 +261,7 @@ en la lista `nube` hay una entrada `{"k": "foto:foto_1700000000000.jpg", "f": <i
 2. Capturas con `-Proborazzi.test.record=true` y **revísalas una a una** (portada, secciones, ficha arriba y abajo, ajustes,
    widgets). Si tocaste la ficha o la portada, añade la captura que lo enseñe.
 3. Versión (0.4), `README.md`, `docs/CONTRATO-DATOS.md`.
-4. `gradle testDebugUnitTest assembleRelease --offline`; copia el APK a `Marfil-X.Y.Z.apk`.
+4. `gradle testDebugUnitTest assembleRelease --offline`; copia el APK a `Seshat-X.Y.Z.apk`.
 5. `python3 herramientas/subir-version.py …/Marfil-X.Y.Z.apk`.
 6. Commit y `git push -u origin desarrollo`.
 7. `SendUserFile` con el APK y un mensaje corto: qué hay nuevo, qué está probado y cómo, qué **no** se ha podido probar
@@ -273,5 +273,5 @@ en la lista `nube` hay una entrada `{"k": "foto:foto_1700000000000.jpg", "f": <i
 - Atajo «Seguir leyendo» manteniendo pulsado el icono.
 - Reto anual y fecha de terminado al acabar un libro.
 - Que los ajustes del lector cambiados en un dispositivo lleguen al otro.
-- La nota de Azabache en la ficha y «Abrir en Azabache».
+- La nota de Jonsu en la ficha y «Abrir en Jonsu».
 - Que las portadas que eran fotos suyas en Atrio aparezcan tras importar (con kDrive conectado).

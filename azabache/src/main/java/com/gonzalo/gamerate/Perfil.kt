@@ -135,7 +135,7 @@ fun ProfileScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(BOOKS.title, fontWeight = FontWeight.Medium)
-                    Text("lo fija Marfil", color = Muted, fontSize = 12.sp)
+                    Text("lo fija Seshat", color = Muted, fontSize = 12.sp)
                 }
                 Text(if (goalBooks > 0) "$goalBooks" else "sin reto", fontFamily = if (Skin.revista) Display else null, fontSize = 18.sp)
             }
@@ -143,14 +143,14 @@ fun ProfileScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Lectura al día", fontWeight = FontWeight.Medium)
-                    Text("lo fija Marfil", color = Muted, fontSize = 12.sp)
+                    Text("lo fija Seshat", color = Muted, fontSize = 12.sp)
                 }
                 Text(if (meta > 0) "$meta min" else "sin objetivo", fontFamily = if (Skin.revista) Display else null, fontSize = 18.sp)
             }
             if (Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL)) {
-                Text("Cambiarlos en Marfil\u00A0→", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 13.sp,
+                Text("Cambiarlos en Seshat\u00A0→", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 13.sp,
                     modifier = Modifier.padding(top = 6.dp).clickable { Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL, "ajustes") })
-            } else Text("Se cambian en Marfil (Ajustes → Lectura).", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+            } else Text("Se cambian en Seshat (Ajustes → Lectura).", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
             if (meta > 0) {
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -209,7 +209,7 @@ fun ProfileScreen(
                     val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(actx) }
                     vida.addObserver(ob); onDispose { vida.removeObserver(ob) }
                 }
-                Text(if (sobre) "Tras actualizar, Azabache se vuelve a abrir sola" else "Tras actualizar, Azabache se cierra y te avisa para abrirla. Para que se reabra sola hace falta el permiso «Mostrar sobre otras apps»",
+                Text(if (sobre) "Tras actualizar, Jonsu se vuelve a abrir sola" else "Tras actualizar, Jonsu se cierra y te avisa para abrirla. Para que se reabra sola hace falta el permiso «Mostrar sobre otras apps»",
                     color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
                 if (!sobre) MagLink("Dar permiso", accent = true) {
                     runCatching { actx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${actx.packageName}")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
@@ -249,8 +249,8 @@ fun ProfileScreen(
         Spacer(Modifier.height(20.dp))
         val ver = remember { try { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName } catch (e: Exception) { null } ?: "" }
         // El pie, como en sus hermanas: la versión como etiqueta y una línea en cursiva
-        Text("AZABACHE $ver", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
-        Text("Azabache es hermana de Hiedra (juegos), Marfil (libros) y Cobalto (escribir): lo que juegas, lees y escribes allí aparece aquí para valorarlo.",
+        Text("JONSU $ver", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+        Text("Jonsu es hermana de Bastet (juegos), Seshat (libros) y Thot (escribir): lo que juegas, lees y escribes allí aparece aquí para valorarlo.",
             color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp))
     }
 }

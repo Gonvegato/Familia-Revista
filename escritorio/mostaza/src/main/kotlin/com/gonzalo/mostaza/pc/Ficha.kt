@@ -48,7 +48,7 @@ fun DialogoSinMpv(p: Poner) {
     }) {
         Cuerpo(Mpv.comoInstalar(), color = Charcoal, tam = 15)
         Spacer(Modifier.height(10.dp))
-        Cuerpo("También puedes abrirla ahora con el reproductor de vídeo que tenga el sistema, pero así Mostaza no sabe por dónde vas: no entra en tu biblioteca, ni se apunta lo visto ni el tiempo, y no se pasa sola a otra fuente si falla.", tam = 13)
+        Cuerpo("También puedes abrirla ahora con el reproductor de vídeo que tenga el sistema, pero así Hathor no sabe por dónde vas: no entra en tu biblioteca, ni se apunta lo visto ni el tiempo, y no se pasa sola a otra fuente si falla.", tam = 13)
     }
 }
 
@@ -163,7 +163,7 @@ private fun FichaDe(b: MetaBreve, nav: Nav) {
                     MagChoice(estados.map { it.nombre }, estados.indexOf(t.estado)) { i -> Biblioteca.cambiaEstado(t.ref, estados[i]) }
                     Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                         EnlaceRevista(if (t.fav) "★ Favorita" else "☆ Favorita", acento = t.fav) { Biblioteca.ponFavorito(t.ref, !t.fav) }
-                        EnlaceRevista("Quitar de Mostaza") { quitar = true }
+                        EnlaceRevista("Quitar de Hathor") { quitar = true }
                     }
                     val ms = Biblioteca.msVistos(t.ref)
                     if (ms >= 60_000L) MagFact("Visto en total", duracion((ms / 60_000L).toInt()))
@@ -171,13 +171,13 @@ private fun FichaDe(b: MetaBreve, nav: Nav) {
                     if (t.anadido > 0) MagFact("Añadida", Formato.fecha(t.anadido))
                     val (nota, resena) = Biblioteca.valoracion(t.ref)
                     Spacer(Modifier.height(16.dp))
-                    Antetitulo("En Azabache", Modifier.padding(bottom = 4.dp))
+                    Antetitulo("En Jonsu", Modifier.padding(bottom = 4.dp))
                     if (nota > 0) Row(verticalAlignment = Alignment.Bottom) {
                         Text("$nota", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
                         Text(" / 100", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
                     } else Nota("Sin valorar todavía.")
                     if (resena.isNotBlank()) Text("«$resena»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
-                    if (HermanasPc.esta("azabache")) EnlaceRevista("Valorar en Azabache →", acento = true) { HermanasPc.abre("azabache") }
+                    if (HermanasPc.esta("azabache")) EnlaceRevista("Valorar en Jonsu →", acento = true) { HermanasPc.abre("azabache") }
                 } else {
                     val borrada = Biblioteca.loBorraste(b.id)
                     AccionGrande(null, "+ Añadir a Pendiente", Modifier.fillMaxWidth(), acento = false) { Biblioteca.anade(b, m) }
@@ -233,7 +233,7 @@ private fun FichaDe(b: MetaBreve, nav: Nav) {
         BotonSuave("Cancelar") { quitar = false }
         BotonAcento("Quitar", alto = 44.dp) { quitar = false; Biblioteca.quita(t.ref) }
     }) {
-        Cuerpo("Se quita de tu biblioteca en todos tus dispositivos y en Azabache. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).", tam = 14)
+        Cuerpo("Se quita de tu biblioteca en todos tus dispositivos y en Jonsu. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).", tam = 14)
     }
 }
 
@@ -281,7 +281,7 @@ fun PantFuentes(b: MetaBreve, m: Meta?, v: Video?, nav: Nav) {
         if (terminado && todas.isEmpty()) Nota("Ninguno de tus addons da fuentes para esto. Los addons de fuentes los pones tú en «Addons» (con tu debrid configurado en el suyo).", Modifier.padding(top = 10.dp))
         if (!Torrents.disponible && todas.any { it.fuente.tipo == TipoFuente.TORRENT }) Cuerpo("Los torrents no se pueden poner en este ordenador (no se ha podido cargar su motor): elige una directa o de tu debrid.", Modifier.padding(top = 8.dp), tam = 12)
         e.elegida?.let { c ->
-            Cuerpo("Mostaza pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.porGrupo) " (la misma clase que el episodio anterior)" else "") + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
+            Cuerpo("Hathor pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.porGrupo) " (la misma clase que el episodio anterior)" else "") + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
                 Modifier.padding(top = 10.dp), tam = 12)
         }
         todas.groupBy { it.ordenAddon to it.addon }.toSortedMap(compareBy { it.first }).forEach { (k, cs) ->

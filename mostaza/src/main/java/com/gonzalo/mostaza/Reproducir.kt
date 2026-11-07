@@ -35,9 +35,9 @@ object Reproducir {
         TipoFuente.TORRENT -> if (Torrents.disponible) Accion.Reproductor else Accion.Aviso(SinTorrents.AVISO)
         TipoFuente.YOUTUBE -> Accion.Fuera(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + Uri.encode(f.ytId))))
         TipoFuente.EXTERNA -> if (f.externalUrl.startsWith("http://") || f.externalUrl.startsWith("https://")) Accion.Fuera(Intent(Intent.ACTION_VIEW, Uri.parse(f.externalUrl)))
-            else Accion.Aviso("Es un enlace para la app de Stremio («${f.externalUrl.substringBefore('/').take(20)}…»): Mostaza no lo puede abrir.")
-        TipoFuente.NZB -> Accion.Aviso("Todavía no: Mostaza aún no sabe abrir fuentes de Usenet (NZB). Elige otra fuente.")
-        TipoFuente.ARCHIVO -> Accion.Aviso("Todavía no: Mostaza aún no sabe abrir vídeos dentro de archivos comprimidos (RAR, ZIP, 7z…). Elige otra fuente.")
+            else Accion.Aviso("Es un enlace para la app de Stremio («${f.externalUrl.substringBefore('/').take(20)}…»): Hathor no lo puede abrir.")
+        TipoFuente.NZB -> Accion.Aviso("Todavía no: Hathor aún no sabe abrir fuentes de Usenet (NZB). Elige otra fuente.")
+        TipoFuente.ARCHIVO -> Accion.Aviso("Todavía no: Hathor aún no sabe abrir vídeos dentro de archivos comprimidos (RAR, ZIP, 7z…). Elige otra fuente.")
         TipoFuente.NADA -> Accion.Aviso("Esta fuente no trae nada que se pueda ver.")
     }
 

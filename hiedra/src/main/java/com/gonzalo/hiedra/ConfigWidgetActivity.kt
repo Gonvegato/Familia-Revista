@@ -54,7 +54,7 @@ fun ElegirJuegoWidget(alElegir: (String?) -> Unit) {
         Filete(2.dp)
         CampoRevista("Buscar", busca, "un juego fijo") { busca = it }
         LazyColumn(Modifier.fillMaxSize()) {
-            if (lista.isEmpty()) item { Text("Todavía no hay juegos en Hiedra.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
+            if (lista.isEmpty()) item { Text("Todavía no hay juegos en Bastet.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
             items(lista, key = { it.id }) { j ->
                 Row(Modifier.fillMaxWidth().clickable { alElegir(j.id) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.width(40.dp).aspectRatio(PROPORCION_PORTADA).clip(esquina(3.dp))) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 18) }

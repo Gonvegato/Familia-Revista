@@ -123,7 +123,7 @@ object Datos {
 
     // ---------------------------------------------------------------- la red
 
-    private const val UA = "Mozilla/5.0 (Linux; Android 14) Hiedra"
+    private const val UA = "Mozilla/5.0 (Linux; Android 14) Bastet"
     private fun enc(s: String) = URLEncoder.encode(s.trim(), "UTF-8")
 
     private fun get(url: String, headers: Map<String, String> = emptyMap()): String {

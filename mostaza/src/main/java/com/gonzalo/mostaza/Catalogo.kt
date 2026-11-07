@@ -158,7 +158,7 @@ fun PantExplorarTmdb(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column(Modifier.fillMaxWidth().statusBarsPadding()) {
-                RevistaTopBar(alVolver, "Mostaza")
+                RevistaTopBar(alVolver, "Hathor")
                 Antetitulo("El catálogo", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
                 FitTitle("Explorar", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
                 Filete(3.dp)
@@ -208,9 +208,9 @@ fun SeccionCatalogo() {
     var texto by remember { mutableStateOf("") }
     var aviso by remember { mutableStateOf<String?>(null) }
     var probando by remember { mutableStateOf(false) }
-    Antetitulo("El catálogo de Mostaza", Modifier.padding(bottom = 4.dp))
+    Antetitulo("El catálogo de Hathor", Modifier.padding(bottom = 4.dp))
     Text(if (puesta) "Con TMDB: la portada, «Explorar», «Buscar» y las fichas son las de una plataforma (tendencias, estrenos, géneros, lo que hay en cada plataforma, reparto, tráileres, en castellano). Tus addons quedan para las fuentes."
-        else "Sin TMDB, lo que ves es lo de los catálogos de tus addons. Con tu clave de TMDB (gratis), Mostaza tiene su propio catálogo, como una plataforma.",
+        else "Sin TMDB, lo que ves es lo de los catálogos de tus addons. Con tu clave de TMDB (gratis), Hathor tiene su propio catálogo, como una plataforma.",
         color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
     Spacer(Modifier.height(8.dp))
     Etiqueta(if (puesta) "Tu clave está puesta (en tu cuenta, solo la puedes leer tú)" else "Cómo sacar tu clave")

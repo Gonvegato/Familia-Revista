@@ -90,8 +90,8 @@ class CuentaAzabacheTest {
         assertTrue(otra.sincroniza().ok)
         // Entra la hermana (lo que hace Acceso.pideAHermanas con la cuenta de Marfil): Azabache la adopta y trae lo de la cuenta sin tocar nada
         kotlin.concurrent.thread { LaFamilia.entrar("gonzalo", "secreto1") }.join()
-        espera("Azabache dentro") { Store(ctx).paired }
-        espera("y con lo de Marfil") { Store(ctx).loadPlays(BOOKS.id).any { it.name == "Dune" && it.status == 1 } }
+        espera("Jonsu dentro") { Store(ctx).paired }
+        espera("y con lo de Seshat") { Store(ctx).loadPlays(BOOKS.id).any { it.name == "Dune" && it.status == 1 } }
     }
 
     @Test fun unaListaViejaEnPantallaNoDeshaceLoQueCambioMarfil() {
@@ -108,7 +108,7 @@ class CuentaAzabacheTest {
         // Y en Azabache apuntas algo en Dune, sobre la lista que tenías (con Hyperion aún «leyendo»)
         store.savePlays(antes.map { if (it.name == "Dune") it.copy(memos = it.memos + Memo(1L, "Arrakis")) else it }, BOOKS.id, antes)
         sincroniza()
-        assertEquals("lo que hizo Marfil se queda", "terminado", libro(kidB).texto("estado"))
+        assertEquals("lo que hizo Seshat se queda", "terminado", libro(kidB).texto("estado"))
         assertTrue("y lo tuyo llega", libro(kidA).texto("az").contains("Arrakis"))
         assertEquals("en_curso", libro(kidA).texto("estado"))
         assertTrue(store.load(BOOKS.id).any { it.name == "Hyperion" })
@@ -131,7 +131,7 @@ class CuentaAzabacheTest {
         assertEquals(java.time.LocalDate.of(2025, 3, 1), java.time.Instant.ofEpochMilli(j.entero("fin")).atZone(java.time.ZoneId.systemDefault()).toLocalDate())
         val l = otra.coleccion("libros").nodo(Hermanas.kidDe(Cosas.claveLibro("Solaris", "Stanisław Lem")))!!
         assertEquals("Stanisław Lem", l.texto("a")); assertEquals(90L, l.entero("nota")); assertEquals("terminado", l.texto("estado"))
-        assertEquals("la clave, como la de Marfil (la ł no es una tilde: se queda)", "libro:solaris:stanisław lem", l.texto("clave"))
+        assertEquals("la clave, como la de Seshat (la ł no es una tilde: se queda)", "libro:solaris:stanisław lem", l.texto("clave"))
         // Y en Azabache es la misma ficha, con su número de siempre (el que usan tus sagas y tu diario)
         assertEquals("libro:cien anos de soledad:gabriel garcia marquez", Cosas.claveLibro("Cien años de soledad", "Gabriel García Márquez"))
         assertEquals(97, store.load(GAMES.id).single { it.id == 501L }.general)
@@ -185,7 +185,7 @@ class CuentaAzabacheTest {
         val h = otra.imagenes.guarda(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), "image/jpeg")
         otra.coleccion("juegos").pon("j_cccccccccccc", mapOf("t" to "Hades", "pl" to "PC", "estado" to "en_curso", "portada" to h))
         llega()
-        espera("con la portada de Hiedra") { store.loadPlays(GAMES.id).singleOrNull { it.name == "Hades" }?.cover?.let { it.isNotBlank() && java.io.File(it).isFile } == true }
+        espera("con la portada de Bastet") { store.loadPlays(GAMES.id).singleOrNull { it.name == "Hades" }?.cover?.let { it.isNotBlank() && java.io.File(it).isFile } == true }
     }
 
     @Test fun unLibroQueEstasLeyendoNuncaSaleLeidoConUnCero() {
@@ -239,8 +239,8 @@ class CuentaAzabacheTest {
         store.savePlays(store.loadPlays(GAMES.id).map { if (it.name == "Celeste") it.copy(memos = it.memos + Memo(1L, "El capítulo 7 es durísimo")) else it }, GAMES.id)
         AzabacheNube.sube(ctx, store)
         sincroniza()
-        assertEquals("el estado de Hiedra no se pisa", "terminado", otra.coleccion("juegos").nodo(id)!!.texto("estado"))
-        assertTrue("el apunte de Azabache viaja en el propio juego", otra.coleccion("juegos").nodo(id)!!.texto("az").contains("durísimo"))
+        assertEquals("el estado de Bastet no se pisa", "terminado", otra.coleccion("juegos").nodo(id)!!.texto("estado"))
+        assertTrue("el apunte de Jonsu viaja en el propio juego", otra.coleccion("juegos").nodo(id)!!.texto("az").contains("durísimo"))
     }
 
     @Test fun unTokenMaloQueSePegaNoPisaElBuenoDeLaCuenta() {
@@ -261,7 +261,7 @@ class CuentaAzabacheTest {
     @Test fun unaClaveCambiadaEnOtraAppNoVuelveALaVieja() {
         store.key = "sg1"
         sincroniza()
-        assertEquals("la que pones en Azabache va a la cuenta al momento", "sg1", otra.clave("steamgriddb"))
+        assertEquals("la que pones en Jonsu va a la cuenta al momento", "sg1", otra.clave("steamgriddb"))
         // La cambias en Hiedra; este Azabache sube lo suyo antes de haberla bajado
         otra.ponClave("steamgriddb", "sg2"); assertTrue(otra.sincroniza().ok)
         assertTrue(LaFamilia.sincronizaYa().ok)

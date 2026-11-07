@@ -101,7 +101,7 @@ fun PantInicio(nav: Nav) {
         EnlaceRevista("Buscar en todo") { buscando = true }
         // La cabecera: el nombre de lado a lado, el número (el día del año) y la fecha
         // (grande: encoge hasta llegar justo de lado a lado, como en el quiosco)
-        Cabecera(240.sp, texto = "AZABACHE")
+        Cabecera(240.sp, texto = "JONSU")
         FileteCabecera()
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             Text("Nº ${hoy.dayOfYear}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
@@ -170,7 +170,7 @@ fun PantInicio(nav: Nav) {
             val (objetivo, deAno) = Cuenta.objetivoLibros()
             if (objetivo > 0 && (deAno == 0 || deAno == ano)) Cifra("${delAno.count { it.first.id == BOOKS.id }} / $objetivo", "reto de lectura")
         }
-        if (ahora.isEmpty()) { Seccion("Ahora"); Vacio("Nada entre manos", "Lo que empieces en Hiedra, Marfil o aquí sale en esta portada.") }
+        if (ahora.isEmpty()) { Seccion("Ahora"); Vacio("Nada entre manos", "Lo que empieces en Bastet, Seshat o aquí sale en esta portada.") }
         Seccion("Lo último que has terminado")
         if (recientes.isEmpty()) Vacio("Aún nada terminado") else FilaDeTarjetas(recientes, nav, Pantalla.Inicio)
     }

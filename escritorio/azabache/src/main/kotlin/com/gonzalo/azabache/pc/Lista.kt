@@ -65,7 +65,7 @@ fun PantLista(k: Kind, nav: Nav) {
                         FiltrosRevista(listOf("Portadas", "Índice"), if (indice) 1 else 0, Modifier.width(220.dp)) { ListaPrefs.indice = it == 1 }
                     }
                     Spacer(Modifier.height(6.dp))
-                    if (vistas.isEmpty()) Vacio(if (q.isNotEmpty()) "Nada con «$buscar»" else "Aún no hay nada aquí", if (q.isNotEmpty()) "" else if (CosasMostaza.de(k)) "Añade una con «+ Añadir» o desde Mostaza." else "Añade uno con «+ Añadir» o desde Hiedra y Marfil.")
+                    if (vistas.isEmpty()) Vacio(if (q.isNotEmpty()) "Nada con «$buscar»" else "Aún no hay nada aquí", if (q.isNotEmpty()) "" else if (CosasMostaza.de(k)) "Añade una con «+ Añadir» o desde Hathor." else "Añade uno con «+ Añadir» o desde Bastet y Seshat.")
                 }
             }
             if (!indice) items(vistas, key = { it.id }) { f -> Tarjeta(f, k) { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Lista(k.id))) } }

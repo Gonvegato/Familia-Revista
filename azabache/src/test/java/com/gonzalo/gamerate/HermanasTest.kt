@@ -39,7 +39,7 @@ class HermanasTest {
         assertEquals(2, e.plays.first { it.name == "Celeste" }.status)
         val h = e.games.single()
         assertEquals("Hades sigue siendo el tuyo, con tu nota", 555L, h.id); assertEquals(93, h.general); assertEquals("Brutal", h.review); assertEquals("https://mia.jpg", h.cover)
-        assertEquals("y la fecha de pasado la manda Hiedra", LocalDate.of(2023, 11, 14).toEpochDay(), h.end)
+        assertEquals("y la fecha de pasado la manda Bastet", LocalDate.of(2023, 11, 14).toEpochDay(), h.end)
         assertEquals(555L, enl["j2"]); assertEquals(customItemId("Zelda"), enl["j1"])
         // Repetir no cambia nada
         assertFalse(Hermanas.reflejarJuegos(juegos, e.games, e.plays, enl, ahora = 2_000).cambio)

@@ -128,7 +128,7 @@ fun HojaAnadir(inicial: TipoLanzador?, vincularA: String? = null, alVincular: (J
                 FitTitle(paraFicha?.titulo ?: "Juegos", 44.sp, 46.sp, letterSpacing = (-1).sp, unaLinea = true)
                 Filete(3.dp)
                 Cuerpo(if (paraFicha != null) "Elige su ROM, su app o su web: el juego se queda con todo (horas, estado, saga) y gana una manera más de abrirse." else "Elige de dónde vienen.", tam = 13, modifier = Modifier.padding(vertical = 8.dp))
-                if (paraFicha == null) Entrada("Carpeta de ROMs", "Hiedra busca dentro y reconoce el sistema por la extensión o por el nombre de la carpeta") { carpeta.launch(null) }
+                if (paraFicha == null) Entrada("Carpeta de ROMs", "Bastet busca dentro y reconoce el sistema por la extensión o por el nombre de la carpeta") { carpeta.launch(null) }
                 Entrada(if (paraFicha != null) "Su ROM" else "ROMs sueltas", "Elige uno o varios archivos (.gba, .nds, .sfc…)") { archivos.launch(arrayOf("*/*")) }
                 Entrada(if (paraFicha != null) "Su app de Android" else "Juego de Android", "De los que ya tienes instalados") { paso = Paso.Apps }
                 Entrada(if (paraFicha != null) "Su web" else "Juego de navegador", "Una dirección web: PokéRogue y similares") { web = true }

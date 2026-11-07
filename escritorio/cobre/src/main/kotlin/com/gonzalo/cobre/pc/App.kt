@@ -119,7 +119,7 @@ fun AppCobre(inicial: Pantalla = Pantalla.Directo) {
         }
     }) {
         Row(Modifier.weight(1f).fillMaxWidth()) {
-            Lateral("Cobre", destinos.map { it.first }, sel) { i -> ir(destinos[i].second) }
+            Lateral("Nut", destinos.map { it.first }, sel) { i -> ir(destinos[i].second) }
             Box(Modifier.width(1.dp).fillMaxHeight()) { Filete(1.dp, Line, Modifier.fillMaxHeight()) }
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 AnimatedContent(pantalla, transitionSpec = {

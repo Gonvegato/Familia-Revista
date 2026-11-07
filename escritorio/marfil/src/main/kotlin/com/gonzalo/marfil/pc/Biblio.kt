@@ -74,7 +74,7 @@ fun PantPortada(nav: Nav) {
     Pagina {
         Text("Número de ${LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ES))}".uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(96.sp, texto = "MARFIL") }
+            Box(Modifier.weight(1f)) { Cabecera(96.sp, texto = "SESHAT") }
             BotonAcento("+ Añadir libro", alto = 44.dp, modifier = Modifier.width(180.dp)) { anadir = true }
         }
         FileteCabecera()
@@ -124,7 +124,7 @@ fun PantPortada(nav: Nav) {
         }
         if (leyendo.size > 1) { Spacer(Modifier.height(10.dp)); Filete(2.dp); Antetitulo("También estás leyendo", Modifier.padding(vertical = 10.dp)); Fila(leyendo.drop(1).take(6), nav) }
         if (delAno.isNotEmpty()) { Spacer(Modifier.height(10.dp)); Filete(2.dp); Antetitulo("Leídos en $ano", Modifier.padding(vertical = 10.dp)); Fila(delAno.sortedByDescending { it.terminados.lastOrNull() ?: 0L }.take(12), nav) }
-        if (libros.isEmpty()) Vacio("Tu biblioteca está vacía", "Añade un libro (EPUB, PDF o cómic) o ábrelo en Marfil del móvil: los de la cuenta salen aquí.")
+        if (libros.isEmpty()) Vacio("Tu biblioteca está vacía", "Añade un libro (EPUB, PDF o cómic) o ábrelo en Seshat del móvil: los de la cuenta salen aquí.")
     }
     if (anadir) DialogoAnadir(nav) { anadir = false }
 }
@@ -219,7 +219,7 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
                 if (l.formato.isNotBlank()) MagFact("Formato", l.formato.uppercase())
                 SubrayadosDeLaFicha(l, nav, volver, aqui != null || l.nube != null)
                 Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-                Antetitulo("En Azabache")
+                Antetitulo("En Jonsu")
                 Spacer(Modifier.height(6.dp))
                 Text(l.nota?.toString() ?: "Sin valorar", color = if (l.nota != null) Acento else Muted, fontFamily = Display, fontSize = if (l.nota != null) 44.sp else 26.sp, fontStyle = if (l.nota == null) FontStyle.Italic else FontStyle.Normal)
                 l.n.texto("resena").takeIf { it.isNotBlank() }?.let { Text("«$it»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 26.sp) }
@@ -231,7 +231,7 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
     if (borrar) Dialogo("¿Borrar «${l.titulo}»?", { borrar = false }, botones = {
         BotonSuave("Cancelar") { borrar = false }
         BotonSuave("Borrar", peligro = true) { Libros.quita(id); borrar = false; nav.ir(volver); nav.aviso("Borrado") }
-    }) { Cuerpo("Sale de tu biblioteca en todos tus dispositivos (y de Azabache). El archivo de tu kDrive no se borra.", tam = 14) }
+    }) { Cuerpo("Sale de tu biblioteca en todos tus dispositivos (y de Jonsu). El archivo de tu kDrive no se borra.", tam = 14) }
 }
 
 /**
@@ -289,7 +289,7 @@ fun DialogoAnadir(nav: Nav, onCerrar: () -> Unit) {
         BotonSuave("Cancelar") { onCerrar() }
         BotonAcento(trabajo.ifBlank { "Elegir el archivo…" }, modifier = Modifier.width(200.dp), alto = 44.dp) { if (trabajo.isBlank()) elige() }
     }) {
-        Cuerpo("EPUB, PDF o cómic (CBZ). El libro pasa a tu biblioteca (la de la cuenta: lo verás también en el móvil y en Azabache) y el archivo sube a tu kDrive, a «Marfil/Libros», para leerlo en cualquier dispositivo.", tam = 14)
+        Cuerpo("EPUB, PDF o cómic (CBZ). El libro pasa a tu biblioteca (la de la cuenta: lo verás también en el móvil y en Jonsu) y el archivo sube a tu kDrive, a «Marfil/Libros», para leerlo en cualquier dispositivo.", tam = 14)
     }
 }
 
@@ -301,7 +301,7 @@ fun anadeArchivo(f: File): String {
         "epub" -> Epub(f).use { e -> titulo = e.titulo; autor = e.autor; portada = runCatching { e.portada() }.getOrNull() }
         "pdf" -> Pdf(f).use { p -> titulo = p.titulo; autor = p.autor; paginas = p.total; portada = runCatching { p.primeraJpeg() }.getOrNull() }
         "cbz" -> Comic(f).use { c -> paginas = c.total }
-        else -> error("Marfil del ordenador lee EPUB, PDF y cómics (CBZ).")
+        else -> error("Seshat del ordenador lee EPUB, PDF y cómics (CBZ).")
     }
     if (titulo.isBlank()) {
         val base = f.nameWithoutExtension.replace('_', ' ').replace(Regex("\\s+"), " ").trim()
@@ -330,7 +330,7 @@ fun PantAjustes(nav: Nav) {
                 Antetitulo("Tus libros en este ordenador")
                 Spacer(Modifier.height(6.dp))
                 MagFact("Carpeta", Libros.carpeta().absolutePath)
-                MagFact("Tu kDrive", if (KDrive().activo) "conectado (las claves son de la cuenta)" else "sin poner (en Azabache: Ajustes → Servicios)")
+                MagFact("Tu kDrive", if (KDrive().activo) "conectado (las claves son de la cuenta)" else "sin poner (en Jonsu: Ajustes → Servicios)")
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     BotonSuave("Abrir la carpeta") { com.gonzalo.familia.pc.Sitio.abre(Libros.carpeta().absolutePath) }
@@ -341,11 +341,11 @@ fun PantAjustes(nav: Nav) {
             2 -> {
                 Antetitulo("Apariencia")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Marfil del ordenador tiene la apariencia de tu Marfil del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
+                Cuerpo("Seshat del ordenador tiene la apariencia de tu Seshat del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
                 Spacer(Modifier.height(10.dp))
                 MagChoice(listOf("Como el sistema", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
             }
-            else -> AjustesVersion("marfil", "Marfil")
+            else -> AjustesVersion("marfil", "Seshat")
         }
     }
 }

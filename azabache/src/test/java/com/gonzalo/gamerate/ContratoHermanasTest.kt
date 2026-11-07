@@ -87,17 +87,17 @@ class ContratoHermanasTest {
         fun nodos(col: String) = (c[col] as? Map<*, *>).orEmpty().map { (k, v) -> com.gonzalo.familia.nucleo.Nodo(k.toString(), (v as Map<*, *>).entries.associate { it.key.toString() to it.value }) }
         val titulos = nodos("titulos"); val progreso = nodos("progreso"); val tiempo = nodos("tiempo")
         val vivos = titulos.filter { !it.borrado }
-        assertTrue("lo que quitas en Mostaza queda borrado (y no se lee)", titulos.single { it.ref == c["borrada"] }.borrado)
+        assertTrue("lo que quitas en Hathor queda borrado (y no se lee)", titulos.single { it.ref == c["borrada"] }.borrado)
         val pelis = CosasMostaza.construye(vivos, tiempo.filter { !it.borrado }, progreso.filter { !it.borrado }, "movie", 4242)
         val peli = pelis.games.single()
-        assertEquals("Cadena perpetua", peli.name); assertEquals("su número de Azabache", 278L, peli.id); assertEquals(92, peli.general); assertEquals(95, peli.story)
+        assertEquals("Cadena perpetua", peli.name); assertEquals("su número de Jonsu", 278L, peli.id); assertEquals(92, peli.general); assertEquals(95, peli.story)
         assertEquals("La esperanza es algo bueno.", peli.review); assertTrue("vista: con su día", peli.end > 0); assertEquals("los 14 minutos que viste", 14, peli.minutes)
         assertEquals("https://images.metahub.space/poster/small/tt0111161/img", peli.cover)
         assertEquals("tt0111161", pelis.refPorId[278L])
         assertTrue(pelis.plays.isEmpty())
         val series = CosasMostaza.construye(vivos, tiempo, progreso, "series", 5151)
         val serie = series.plays.single()
-        assertEquals("Juego de tronos", serie.name); assertEquals("en curso (viendo)", 1, serie.status); assertEquals("sin número de Azabache: uno fijo de su ref", CosasMostaza.idDeRef("tt0944947"), serie.id)
+        assertEquals("Juego de tronos", serie.name); assertEquals("en curso (viendo)", 1, serie.status); assertEquals("sin número de Jonsu: uno fijo de su ref", CosasMostaza.idDeRef("tt0944947"), serie.id)
         assertEquals(12, serie.minutes)
         // Los episodios de Mostaza: `progreso/<tt>:<t>:<e>` con su título y lo visto
         val eps = progreso.filter { it.texto("ref") == c["serie"] }
@@ -118,6 +118,6 @@ class ContratoHermanasTest {
         assertEquals(6, cap.palabras); assertTrue(cap.texto.contains("**tarde**")); assertTrue(cap.u > 0)
         val p = Hermanas.palabrasPorDia(cuenta.getJSONObject("palabras"))
         assertEquals(500, p[dia1]); assertEquals(100, p[dia1 + 2])
-        assertEquals("y sella stamps para que Azabache se entere", "timestamp", cuenta.getJSONObject("stamps").getJSONObject("cobalto-A").getString(".sv"))
+        assertEquals("y sella stamps para que Jonsu se entere", "timestamp", cuenta.getJSONObject("stamps").getJSONObject("cobalto-A").getString(".sv"))
     }
 }

@@ -50,9 +50,9 @@ object Actualizador {
 
     /** Lo que vale para este sistema: `<App>-<versión>-mac.dmg`; en Linux el `.tar.gz` (o el `.deb` si se instaló con él). */
     fun patron(app: String, sistema: Sitio.Sistema = Sitio.sistema, deb: Boolean = conDeb(sistema = sistema)): Regex {
-        val nombre = Regex.escape(app.replaceFirstChar { it.uppercase() })
+        val nombre = NombresApp.ambos(app).joinToString("|") { Regex.escape(it) }
         val fin = when { sistema == Sitio.Sistema.MAC -> "mac\\.dmg"; deb -> "linux\\.deb"; else -> "linux\\.tar\\.gz" }
-        return Regex("^$nombre-(\\d+(?:\\.\\d+)*)-$fin$")
+        return Regex("^(?:$nombre)-(\\d+(?:\\.\\d+)*)-$fin$")
     }
 
     /** La versión más nueva que hay en tu kDrive para esta app y este sistema, si es más nueva que la de ahora. Bloquea (red). */
@@ -120,11 +120,33 @@ object Actualizador {
 
     /** Linux: el `instalar.sh` de la versión nueva la pone en [donde] (y pone al día la entrada del menú). */
     fun ponLinux(carpeta: File, app: String, donde: File, entorno: Map<String, String> = emptyMap()): File {
-        val nombre = app.replaceFirstChar { it.uppercase() }
+        val nombre = NombresApp.de(app)
         val script = File(carpeta, "instalar.sh")
         require(script.isFile) { "la versión nueva no trae instalar.sh" }
         corre(listOf("sh", script.absolutePath, "--destino=${donde.absolutePath}", "--callada"), "instalar la versión nueva", entorno)
-        return File(donde, "bin/$nombre")
+        // Si estaba con el nombre de antes, instalar.sh la ha puesto al lado con el nuevo (y deja en la vieja solo un atajo)
+        val nueva = if (donde.name == NombresApp.viejo(app) && NombresApp.de(app) != donde.name) File(donde.parentFile, NombresApp.de(app)) else donde
+        return File(nueva, "bin/$nombre")
+    }
+
+    /**
+     * Al abrirse con el nombre nuevo, recoge lo del viejo: en Linux quita la carpeta de antes (ya solo tiene el atajo que dejó
+     * instalar.sh para que la versión vieja pudiera volver a abrirla); en el Mac, si la versión de antes se puso encima de su
+     * `<Viejo>.app`, le pone el nombre nuevo. Nunca toca los datos (están en la carpeta de datos, que no cambia de nombre).
+     */
+    fun recogeNombreViejo(app: String, aqui: File? = instalada(), sistema: Sitio.Sistema = Sitio.sistema) {
+        val nuevo = NombresApp.de(app); val viejo = NombresApp.viejo(app)
+        if (aqui == null || nuevo == viejo) return
+        runCatching {
+            if (sistema == Sitio.Sistema.MAC) {
+                val destino = File(aqui.parentFile, "$nuevo.app")
+                if (aqui.name == "$viejo.app" && !destino.exists()) aqui.renameTo(destino)
+            } else if (aqui.name == nuevo) {
+                val antes = File(aqui.parentFile, viejo)
+                // Solo si es el atajo (bin/<Viejo> y nada más) o una instalación entera de antes; nunca otra cosa
+                if (antes.isDirectory && File(antes, "bin/$viejo").exists()) antes.deleteRecursively()
+            }
+        }
     }
 
     /** Mac: monta el .dmg sin enseñarlo, copia la app encima de [donde] (el `<App>.app` de ahora) y lo desmonta. */

@@ -101,7 +101,7 @@ fun PantInicio(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, a
             MesaPortada(e, mesa, pausa, alAbrir, alIr, arriba = true)
         }
 
-        Text("Cobalto · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 18.dp))
+        Text("Thot · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 18.dp))
 
         // La versión instalada, debajo (para no tener que entrar en Ajustes a mirarla)
 
@@ -109,7 +109,7 @@ fun PantInicio(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit, a
         Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
     }
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre y lo de siempre (Buscar · + Nueva…)
-    BarraPlegada("Cobalto", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Nueva", Modifier.padding(start = 14.dp), acento = true) { alNueva() } }
+    BarraPlegada("Thot", plegada) { EnlaceRevista("Buscar") { alBuscar() }; EnlaceRevista("+ Nueva", Modifier.padding(start = 14.dp), acento = true) { alNueva() } }
     }
 }
 

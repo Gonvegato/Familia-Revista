@@ -78,21 +78,22 @@ object Instancia {
  */
 object HermanasPc {
     /** Las seis, por orden: el nombre de la carpeta de datos y el que se ve. */
-    val todas = listOf("azabache" to "Azabache", "cobalto" to "Cobalto", "hiedra" to "Hiedra", "marfil" to "Marfil", "mostaza" to "Mostaza", "cobre" to "Cobre")
+    val todas = listOf("azabache" to "Jonsu", "cobalto" to "Thot", "hiedra" to "Bastet", "marfil" to "Seshat", "mostaza" to "Hathor", "cobre" to "Nut")
 
-    private fun nombre(app: String) = app.replaceFirstChar { it.uppercase() }
 
     /**
      * Dónde está instalada [app] (en el Mac el `<App>.app`; en Linux su programa `<App>/bin/<App>`), o null si no está en este ordenador.
      * Se mira al lado de esta (se instalan juntas), en las carpetas de siempre y, en Linux, la del .deb.
      */
     fun donde(app: String, aqui: File? = Actualizador.instalada(), sistema: Sitio.Sistema = Sitio.sistema, casa: File = File(System.getProperty("user.home"))): File? {
-        val A = nombre(app)
-        return if (sistema == Sitio.Sistema.MAC) {
-            listOfNotNull(aqui?.parentFile?.let { File(it, "$A.app") }, File("/Applications/$A.app"), File(casa, "Applications/$A.app")).firstOrNull { it.isDirectory }
-        } else {
-            val datos = System.getenv("XDG_DATA_HOME")?.takeIf { it.isNotBlank() }?.let { File(it) } ?: File(casa, ".local/share")
-            listOfNotNull(aqui?.parentFile?.let { File(it, "$A/bin/$A") }, File(datos, "familia-apps/$A/bin/$A"), File("/opt/$app/bin/$A")).firstOrNull { it.isFile && it.canExecute() }
+        // Con el nombre nuevo o, si aún no se ha puesto al día, con el de antes
+        return NombresApp.ambos(app).firstNotNullOfOrNull { A ->
+            if (sistema == Sitio.Sistema.MAC) {
+                listOfNotNull(aqui?.parentFile?.let { File(it, "$A.app") }, File("/Applications/$A.app"), File(casa, "Applications/$A.app")).firstOrNull { it.isDirectory }
+            } else {
+                val datos = System.getenv("XDG_DATA_HOME")?.takeIf { it.isNotBlank() }?.let { File(it) } ?: File(casa, ".local/share")
+                listOfNotNull(aqui?.parentFile?.let { File(it, "$A/bin/$A") }, File(datos, "familia-apps/$A/bin/$A"), File("/opt/$app/bin/$A")).firstOrNull { it.isFile && it.canExecute() }
+            }
         }
     }
 

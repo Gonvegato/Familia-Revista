@@ -176,17 +176,17 @@ class EscritorioTest {
     /** Linux de verdad: la versión nueva (un .tar.gz con su instalar.sh, como el de GitHub) se pone encima de la vieja, y el menú queda al día. */
     @Test fun enLinuxLaVersionNuevaSePoneEncimaConSuInstalar() {
         org.junit.Assume.assumeTrue("Solo en Linux", Sitio.sistema == Sitio.Sistema.LINUX)
-        fun app(dir: File, que: String) { val b = File(dir, "Hiedra/bin").also { it.mkdirs() }; File(b, "Hiedra").apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "Hiedra/lib").mkdirs(); File(dir, "Hiedra/lib/Hiedra.png").writeText("png") }
+        fun app(dir: File, que: String) { val b = File(dir, "Hiedra/bin").also { it.mkdirs() }; File(b, "Bastet").apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "Hiedra/lib").mkdirs(); File(dir, "Hiedra/lib/Hiedra.png").writeText("png") }
         val donde = File(tmp.root, "datos/familia-apps/Hiedra")
         app(donde.parentFile, "vieja")
         // El paquete nuevo: la app y su instalar.sh hecho con la plantilla, como hace herramientas/escritorio/empaqueta-linux.sh
         val paquete = File(tmp.root, "paquete").also { it.mkdirs() }
         app(paquete, "nueva")
         val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
-        File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
+        File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Bastet").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
             .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt").replace("__AL_INICIAR__", " --sala"))
         val targz = File(tmp.root, "Hiedra-9.9.9-linux.tar.gz")
-        assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Hiedra", "instalar.sh").start().waitFor())
+        assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Bastet", "instalar.sh").start().waitFor())
         val carpeta = Actualizador.descomprime(targz, File(tmp.root, "v9.9.9"))
         val entorno = mapOf("XDG_DATA_HOME" to File(tmp.root, "datos").absolutePath, "XDG_CONFIG_HOME" to File(tmp.root, "config").absolutePath)
         // Ya se abría al entrar en la sesión (con la entrada de antes): al ponerse la nueva, esa entrada también se pone al día
@@ -235,11 +235,11 @@ class EscritorioTest {
         // Linux: instaladas juntas (familia-apps/<App>/bin/<App>)
         val apps = File(tmp.root, "familia-apps")
         fun linux(a: String) = File(apps, "$a/bin/$a").apply { parentFile.mkdirs(); writeText("#!/bin/sh\n"); setExecutable(true) }
-        val hiedra = File(apps, "Hiedra").also { linux("Hiedra") }
-        val cobalto = linux("Cobalto")
+        val hiedra = File(apps, "Bastet").also { linux("Bastet") }
+        val cobalto = linux("Thot")
         val casa = File(tmp.root, "casa").also { it.mkdirs() }
         assertEquals(cobalto, HermanasPc.donde("cobalto", hiedra, Sitio.Sistema.LINUX, casa))
-        assertNull("Marfil no está", HermanasPc.donde("marfil", hiedra, Sitio.Sistema.LINUX, casa))
+        assertNull("Seshat no está", HermanasPc.donde("marfil", hiedra, Sitio.Sistema.LINUX, casa))
         // Mac: <App>.app al lado
         val aplicaciones = File(tmp.root, "Applications").also { File(it, "Hiedra.app/Contents").mkdirs(); File(it, "Marfil.app/Contents").mkdirs() }
         assertEquals(File(aplicaciones, "Marfil.app"), HermanasPc.donde("marfil", File(aplicaciones, "Hiedra.app"), Sitio.Sistema.MAC, casa))
@@ -261,17 +261,17 @@ class EscritorioTest {
             repeat(50) { try { java.net.URI("http://127.0.0.1:$puerto/").toURL().openConnection().apply { connectTimeout = 300 }.getInputStream().close(); return@repeat } catch (e: java.io.IOException) { if (e.message?.contains("Server returned") == true) return@repeat; Thread.sleep(100) } }
             val kd = KDrive({ "tok" }, { "777" }).also { it.api = "http://127.0.0.1:$puerto" }
             // La instalada (la 1.0.0) y la nueva (9.9.9) en un .tar.gz como el de GitHub, en «Mi carpeta/versiones»
-            fun app(dir: File, que: String) { val b = File(dir, "Hiedra/bin").also { it.mkdirs() }; File(b, "Hiedra").apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "Hiedra/lib/app/resources").mkdirs(); File(dir, "Hiedra/lib/Hiedra.png").writeText("png") }
+            fun app(dir: File, que: String) { val b = File(dir, "Hiedra/bin").also { it.mkdirs() }; File(b, "Bastet").apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "Hiedra/lib/app/resources").mkdirs(); File(dir, "Hiedra/lib/Hiedra.png").writeText("png") }
             val datos = File(tmp.root, "datos")
             val donde = File(datos, "familia-apps/Hiedra")
             app(donde.parentFile, "1.0.0")
             val paquete = File(tmp.root, "paquete").also { it.mkdirs() }
             app(paquete, "9.9.9")
             val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
-            File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
+            File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Bastet").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
                 .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt").replace("__AL_INICIAR__", " --sala"))
             val targz = File(tmp.root, "Hiedra-9.9.9-linux.tar.gz")
-            assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Hiedra", "instalar.sh").start().waitFor())
+            assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Bastet", "instalar.sh").start().waitFor())
             kd.sube("versiones", targz.name, targz.length()) { targz.inputStream() }
             // (y otras que no le tocan: la de Mac, la de Android, una más vieja)
             listOf("Hiedra-9.9.9-mac.dmg", "Hiedra-9.9.9.apk", "Hiedra-0.9.0-linux.tar.gz", "Marfil-9.9.9-linux.tar.gz").forEach { n -> kd.sube("versiones", n, 3) { "xyz".byteInputStream() } }

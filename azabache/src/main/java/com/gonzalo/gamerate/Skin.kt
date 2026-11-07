@@ -280,7 +280,7 @@ val STYLES: List<SkinStyle> = listOf(
     SkinStyle("everforest", "Everforest", "Bosque en calma", "everforest", "Young Serif", "Atkinson Hyperlegible", "minimal"),
     SkinStyle("brutalista", "Brutalista", "Negro puro y letra gorda", "oled", "Archivo Black", "Space Grotesk", "brutal"),
     SkinStyle("deportivo", "Deportivo", "Marcador de estadio", "pizarra", "Bebas Neue", "Barlow", "brutal"),
-    SkinStyle("lujo", "Lujo", "Cobre y Bodoni", "cobre", "Bodoni Moda", "Montserrat", "editorial"),
+    SkinStyle("lujo", "Lujo", "Nut y Bodoni", "cobre", "Bodoni Moda", "Montserrat", "editorial"),
     SkinStyle("minimal", "Minimal", "Nada que sobre", "hielo", "Inter", "Inter", "minimal"),
     SkinStyle("cuaderno", "Cuaderno", "Apuntes a mano", "lavanda", "Caveat", "Karla", "suave"),
     SkinStyle("militar", "Militar", "Caqui y plantilla", "bosque", "Black Ops One", "Saira", "militar"),

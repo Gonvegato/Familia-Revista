@@ -63,11 +63,11 @@ fun PantAddons(alVolver: () -> Unit, instalar: String? = null, alInstalado: () -
     }
     val mg = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
-        RevistaTopBar(alVolver, "Mostaza")
+        RevistaTopBar(alVolver, "Hathor")
         Antetitulo("De dónde sale todo", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Addons", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
-        Text("Mostaza habla con los addons de Stremio: los catálogos, las fichas, las fuentes y los subtítulos salen de ellos. El de arriba manda en las fichas y sale antes en las fuentes. Tus addons viajan con tu cuenta, pero en su parte secreta (la que solo puedes leer tú: ni siquiera tu pareja), porque sus direcciones pueden llevar la clave de tu debrid.",
+        Text("Hathor habla con los addons de Stremio: los catálogos, las fichas, las fuentes y los subtítulos salen de ellos. El de arriba manda en las fichas y sale antes en las fuentes. Tus addons viajan con tu cuenta, pero en su parte secreta (la que solo puedes leer tú: ni siquiera tu pareja), porque sus direcciones pueden llevar la clave de tu debrid.",
             color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 10.dp))
         if (!Cuenta.vinculada) Nota("Sin cuenta todavía: lo que instales se queda en este dispositivo y pasa a tu cuenta al entrar.", Modifier.padding(top = 6.dp))
         Spacer(Modifier.height(10.dp))

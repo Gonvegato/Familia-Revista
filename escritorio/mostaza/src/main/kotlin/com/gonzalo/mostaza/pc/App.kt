@@ -72,7 +72,7 @@ fun AppMostaza(inicial: Pantalla = Pantalla.Portada) {
     val nav = remember { Nav({ ir(it) }, { volver() }, { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } }, { pantalla }) }
     val titulos = Biblioteca.titulos()
     val destinos = buildList<Pair<Entrada, Pantalla>> {
-        add(Entrada("Portada", grupo = "Mostaza") to Pantalla.Portada)
+        add(Entrada("Portada", grupo = "Hathor") to Pantalla.Portada)
         listOf(Estado.VIENDO, Estado.PENDIENTE, Estado.VISTO, Estado.ABANDONADO).forEach { e -> add(Entrada(e.nombre, titulos.count { it.estado == e }, grupo = "Tu biblioteca") to Pantalla.Seccion(e)) }
         add(Entrada("Explorar", grupo = "El catálogo") to Pantalla.Explorar); add(Entrada("Buscar", grupo = "El catálogo") to Pantalla.Buscar)
         add(Entrada("Addons", grupo = "Más") to Pantalla.Addons); add(Entrada("Ajustes", grupo = "Más") to Pantalla.Ajustes())
@@ -106,7 +106,7 @@ fun AppMostaza(inicial: Pantalla = Pantalla.Portada) {
         }
     }) {
         Row(Modifier.weight(1f).fillMaxWidth()) {
-            Lateral("Mostaza", destinos.map { it.first }, sel) { i -> ir(destinos[i].second) }
+            Lateral("Hathor", destinos.map { it.first }, sel) { i -> ir(destinos[i].second) }
             Box(Modifier.width(1.dp).fillMaxHeight()) { Filete(1.dp, Line, Modifier.fillMaxHeight()) }
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 // Como en el móvil: abrir una ficha la sube un poco desde abajo; entre secciones, un fundido rápido

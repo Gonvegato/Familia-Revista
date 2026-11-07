@@ -49,7 +49,7 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
     LaunchedEffect(LaFamilia.dentro) { if (LaFamilia.dentro) pareja = withContext(Dispatchers.IO) { runCatching { Cuenta.uidPareja() }.getOrDefault("") } }
     // La columna de la izquierda: la portada, tus categorías, y lo demás
     val destinos = buildList<Pair<Entrada, Pantalla>> {
-        add(Entrada("Portada", grupo = "Azabache") to Pantalla.Inicio)
+        add(Entrada("Portada", grupo = "Jonsu") to Pantalla.Inicio)
         kinds.forEach { k -> add(Entrada(k.title, Cuenta.fichas(k.id).size, grupo = "Colección") to Pantalla.Lista(k.id)) }
         add(Entrada("Diario", grupo = "Tu año") to Pantalla.Diario); add(Entrada("Sagas", grupo = "Tu año") to Pantalla.Sagas); add(Entrada("Cifras", grupo = "Tu año") to Pantalla.Cifras)
         if (pareja.isNotBlank()) add(Entrada("Pareja", grupo = "Más") to Pantalla.Pareja)
@@ -64,7 +64,7 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
         }
     }.coerceAtLeast(0)
     Row(Modifier.fillMaxSize()) {
-        Lateral("Azabache", destinos.map { it.first }, sel) { i -> pantalla = destinos[i].second }
+        Lateral("Jonsu", destinos.map { it.first }, sel) { i -> pantalla = destinos[i].second }
         Box(Modifier.width(1.dp).fillMaxHeight().padding(vertical = 0.dp)) { Filete(1.dp, Line, Modifier.fillMaxHeight()) }
         Box(Modifier.weight(1f).fillMaxHeight()) {
             // Como en el móvil: abrir una ficha la sube un poco desde abajo; entre secciones, un fundido rápido
@@ -81,7 +81,7 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
                     Pantalla.Sagas -> PantSagas(nav)
                     is Pantalla.UnaSaga -> PantSaga(p.id, nav)
                     Pantalla.Cifras -> PantCifras(nav)
-                    Pantalla.Pareja -> if (pareja.isNotBlank()) PantPareja(pareja, nav) else Pagina { Vacio("Sin pareja", "Se pone en el Azabache del móvil (Ajustes → Cuenta).") }
+                    Pantalla.Pareja -> if (pareja.isNotBlank()) PantPareja(pareja, nav) else Pagina { Vacio("Sin pareja", "Se pone en el Jonsu del móvil (Ajustes → Cuenta).") }
                     is Pantalla.DeLaPareja -> PantDeLaPareja(p.uid, p.kind, p.id, nav)
                     Pantalla.Ajustes -> PantAjustes(nav)
                 }

@@ -194,7 +194,7 @@ object ImportarAtrio {
             return try { KDrive.download(ctx, foto.first, dest); if (dest.length() > 200) dest.absolutePath else { dest.delete(); null } } catch (e: Exception) { dest.delete(); null }
         }
         if (c.portadaUrl.isNotBlank()) {
-            val (bytes, _) = Internet.descargar(c.portadaUrl, "Mozilla/5.0 (Linux; Android 14) Hiedra")
+            val (bytes, _) = Internet.descargar(c.portadaUrl, "Mozilla/5.0 (Linux; Android 14) Bastet")
             val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
             android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
             if (o.outWidth <= 0) return null

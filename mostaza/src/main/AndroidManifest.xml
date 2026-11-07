@@ -41,7 +41,7 @@
     </queries>
     <!-- Hay fuentes que solo van por http (las marca «notWebReady») y el motor de torrents sirve en 127.0.0.1: sin esto, Android no las deja abrir -->
     <application
-        android:label="Mostaza"
+        android:label="Hathor"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:banner="@drawable/banner_mostaza"

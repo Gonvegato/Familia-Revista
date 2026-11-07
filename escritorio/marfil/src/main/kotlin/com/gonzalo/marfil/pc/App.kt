@@ -38,9 +38,9 @@ fun AppMarfil(inicial: Pantalla = Pantalla.Portada) {
     val libros = Libros.todos()
     val estados = listOf(Estado.LEYENDO, Estado.PENDIENTE, Estado.LEIDO, Estado.ABANDONADO)
     val entradas = buildList {
-        add(Entrada("Portada", grupo = "Marfil"))
+        add(Entrada("Portada", grupo = "Seshat"))
         estados.forEach { e -> add(Entrada(if (e == Estado.LEIDO) "Leídos" else if (e == Estado.LEYENDO) "Leyendo" else e.nombre + "s", libros.count { it.estado == e }, grupo = "Tus libros")) }
-        add(Entrada("Escritos de Cobalto", grupo = "Más")); add(Entrada("Ajustes", grupo = "Más"))
+        add(Entrada("Escritos de Thot", grupo = "Más")); add(Entrada("Ajustes", grupo = "Más"))
     }
     val sel = when (val p = pantalla) {
         Pantalla.Portada -> 0
@@ -51,7 +51,7 @@ fun AppMarfil(inicial: Pantalla = Pantalla.Portada) {
         else -> 0
     }
     Row(Modifier.fillMaxSize()) {
-        Lateral("Marfil", entradas, sel) { i -> pantalla = when (i) { 0 -> Pantalla.Portada; in 1..4 -> Pantalla.Lista(estados[i - 1]); 5 -> Pantalla.Escritos; else -> Pantalla.Ajustes } }
+        Lateral("Seshat", entradas, sel) { i -> pantalla = when (i) { 0 -> Pantalla.Portada; in 1..4 -> Pantalla.Lista(estados[i - 1]); 5 -> Pantalla.Escritos; else -> Pantalla.Ajustes } }
         Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
         Box(Modifier.weight(1f).fillMaxHeight()) {
             Crossfade(pantalla, label = "pantalla") { p ->

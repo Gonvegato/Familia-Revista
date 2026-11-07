@@ -124,7 +124,7 @@ private fun FichaSalaDe(b: MetaBreve, est: EstadoSala, ctl: ControlSala) {
                     }
                     elegida?.let { e ->
                         val texto = e.elegida?.let { c -> (if (e.fueraDeIdioma) "Ninguna en tus idiomas: " else "") + c.analisis.resumen().ifBlank { c.fuente.nombre.lineSequence().firstOrNull().orEmpty() } + " · " + c.addon } ?: "Ninguna fuente se puede poner sola"
-                        Text("Mostaza ha puesto: $texto", color = tinta.gris, fontFamily = Body, fontSize = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 14.dp))
+                        Text("Hathor ha puesto: $texto", color = tinta.gris, fontFamily = Body, fontSize = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 14.dp))
                     }
                     if (prog != null && prog.pos > 0 && !prog.visto && prog.dur > 0) {
                         Box(Modifier.padding(top = 18.dp).width(620.dp).height(6.dp).background(tinta.linea)) { Box(Modifier.fillMaxWidth(prog.fraccion).fillMaxHeight().background(tinta.acento)) }
@@ -160,7 +160,7 @@ private fun FichaSalaDe(b: MetaBreve, est: EstadoSala, ctl: ControlSala) {
                                 if (t.fin > 0 && t.estado == Estado.VISTO) DatoSala("La terminaste", Formato.fecha(t.fin))
                                 if (t.anadido > 0) DatoSala("Añadida", Formato.fecha(t.anadido))
                                 val (nota, _) = Biblioteca.valoracion(t.ref)
-                                if (nota > 0) DatoSala("En Azabache", "$nota / 100")
+                                if (nota > 0) DatoSala("En Jonsu", "$nota / 100")
                             } else NotaSala("Aún no está.", tam = 20.sp)
                         }
                     }
@@ -170,9 +170,9 @@ private fun FichaSalaDe(b: MetaBreve, est: EstadoSala, ctl: ControlSala) {
                             listOf(Estado.PENDIENTE, Estado.VIENDO, Estado.VISTO, Estado.ABANDONADO).forEach { e ->
                                 ChipSala(e.nombre, "f:e:${e.name}", t.estado == e) { if (t.estado != e) { Biblioteca.cambiaEstado(t.ref, e); est.avisa("«$nombre», en ${e.nombre}") } }
                             }
-                            ChipSala("Quitar de Mostaza", "f:quitar", false) {
+                            ChipSala("Quitar de Hathor", "f:quitar", false) {
                                 ctl.confirma(Confirmacion("¿Quitar «${t.nombre}»?",
-                                    "Se quita de tu biblioteca en todos tus dispositivos y en Azabache. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).",
+                                    "Se quita de tu biblioteca en todos tus dispositivos y en Jonsu. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).",
                                     "Quitar") { Biblioteca.quita(t.ref); est.avisa("Quitada de tu biblioteca") })
                             }
                         }
@@ -266,7 +266,7 @@ fun PanelFuentes(f: PideFuentes, est: EstadoSala, ctl: ControlSala) {
         if (!terminado) NotaSala("Preguntando a tus addons…", Modifier.padding(bottom = 12.dp), tam = 22.sp)
         if (terminado && todas.isEmpty()) NotaSala("Ninguno de tus addons da fuentes para esto. Los addons de fuentes los pones tú en Menú → Addons (con tu debrid configurado en el suyo).", tam = 22.sp)
         e.elegida?.let { c ->
-            Text("Mostaza pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
+            Text("Hathor pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
                 color = tinta.gris, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(bottom = 10.dp))
         }
         var i = 0

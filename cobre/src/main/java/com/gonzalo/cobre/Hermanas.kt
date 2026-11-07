@@ -6,7 +6,7 @@ import android.content.Intent
 /** Las hermanas de la familia: saber si están y abrirlas (desde Ajustes → Cuenta). */
 object Hermanas {
     const val AZABACHE = "com.gonzalo.gamerate"
-    val TODAS = listOf("Azabache" to AZABACHE, "Mostaza" to "com.gonzalo.mostaza", "Hiedra" to "com.gonzalo.hiedra", "Marfil" to "com.gonzalo.marfil", "Cobalto" to "com.gonzalo.cobalto")
+    val TODAS = listOf("Jonsu" to AZABACHE, "Hathor" to "com.gonzalo.mostaza", "Bastet" to "com.gonzalo.hiedra", "Seshat" to "com.gonzalo.marfil", "Thot" to "com.gonzalo.cobalto")
 
     fun instalada(c: Context, paquete: String) = runCatching { c.packageManager.getLaunchIntentForPackage(paquete) != null }.getOrDefault(false)
 

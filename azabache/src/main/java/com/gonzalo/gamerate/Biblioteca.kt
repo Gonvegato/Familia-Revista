@@ -285,7 +285,7 @@ private fun RevistaLibrary(l: LibUi) {
     ) {
         item {
             Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                if (l.onBack != null) TextLink("← AZABACHE", onClick = l.onBack)
+                if (l.onBack != null) TextLink("← JONSU", onClick = l.onBack)
                 Spacer(Modifier.weight(1f))
                 TextLink(if (l.searching) "CERRAR" else "BUSCAR") { l.setSearching(!l.searching); if (l.searching) l.setQuery("") }
                 TextLink("CIFRAS", onClick = l.onStats)

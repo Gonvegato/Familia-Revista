@@ -58,7 +58,7 @@ class TemaAtrioTest {
         Skin.invertido = false
         assertEquals("sin invertir, tal cual Atrio", PAPEL.toLong() and 0xFFFFFFFFL, Skin.tones.paper)
         Skin.origenAtrio = false
-        assertNotEquals("con los de Marfil ya no es el acento de Atrio", ACENTO.toLong() and 0xFFFFFFFFL, Skin.tones.general)
+        assertNotEquals("con los de Seshat ya no es el acento de Atrio", ACENTO.toLong() and 0xFFFFFFFFL, Skin.tones.general)
     }
 
     @Test fun sinAtrioAvisaYUsaLosDeLectura() {

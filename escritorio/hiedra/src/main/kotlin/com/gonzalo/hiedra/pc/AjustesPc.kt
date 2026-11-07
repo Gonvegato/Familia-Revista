@@ -49,7 +49,7 @@ fun AjustesEmulacion(nav: Nav) {
     Column {
         Antetitulo("Carpetas de ROMs")
         Spacer(Modifier.height(6.dp))
-        Cuerpo("Las carpetas de este ordenador donde guardas tus ROMs (no viajan con la cuenta: como en el móvil, cada dispositivo tiene las suyas). Hiedra las recorre (también las de dentro) y reconoce cada juego por su carpeta («gba», «PlayStation 2»…) o por su extensión. Una ROM que también tienes en el móvil es el mismo juego, con sus horas.", tam = 14)
+        Cuerpo("Las carpetas de este ordenador donde guardas tus ROMs (no viajan con la cuenta: como en el móvil, cada dispositivo tiene las suyas). Bastet las recorre (también las de dentro) y reconoce cada juego por su carpeta («gba», «PlayStation 2»…) o por su extensión. Una ROM que también tienes en el móvil es el mismo juego, con sus horas.", tam = 14)
         Spacer(Modifier.height(8.dp))
         if (carpetas.isEmpty()) Cuerpo("Todavía no has añadido ninguna.", tam = 13)
         carpetas.forEach { c ->
@@ -115,7 +115,7 @@ private fun DialogoPropio(sistema: String, alGuardar: () -> Unit, onCerrar: () -
         }
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(args, { args = it }, Modifier.fillMaxWidth(), label = { Text("Opciones ({rom} es el juego)") }, singleLine = true)
-        Cuerpo("Por ejemplo, «-f {rom}». Hiedra cuenta el tiempo hasta que el programa se cierra.", tam = 12)
+        Cuerpo("Por ejemplo, «-f {rom}». Bastet cuenta el tiempo hasta que el programa se cierra.", tam = 12)
     }
 }
 
@@ -125,13 +125,13 @@ fun AjustesSalaMando(alSala: () -> Unit) {
     Column {
         Antetitulo("La sala")
         Spacer(Modifier.height(6.dp))
-        Cuerpo("Hiedra para la tele: a pantalla completa, con portadas grandes y todo con el mando (también con el teclado y el ratón). LB y RB cambian de sección, A abre y juega, B vuelve, X busca, Y da las opciones de un juego, ☰ el menú (y desde él, suspender o apagar el ordenador) y ⧉ vuelve a la ventana.", tam = 14)
+        Cuerpo("Bastet para la tele: a pantalla completa, con portadas grandes y todo con el mando (también con el teclado y el ratón). LB y RB cambian de sección, A abre y juega, B vuelve, X busca, Y da las opciones de un juego, ☰ el menú (y desde él, suspender o apagar el ordenador) y ⧉ vuelve a la ventana.", tam = 14)
         Spacer(Modifier.height(10.dp))
         BotonAcento("▶  Entrar en la sala", alto = 48.dp) { alSala() }
         Spacer(Modifier.height(12.dp))
-        Fila("Abrir Hiedra ya en la sala", "Al encender el PC de jugar, directamente la sala (o abriéndola con «--sala», lo que va en el inicio de sesión)") { Interruptor(AjustesSala.alAbrir) { AjustesSala.ponAlAbrir(it) } }
-        Fila("Sala oscura", "Los colores de tu Hiedra, en su versión de noche (mejor para la tele). Si no, como la app") { Interruptor(AjustesSala.oscura) { AjustesSala.ponOscura(it) } }
-        Fila("Al jugar, Hiedra se aparta", "Se minimiza para que el juego quede delante, y vuelve sola al cerrarlo") { Interruptor(AjustesSala.apartar) { AjustesSala.ponApartar(it) } }
+        Fila("Abrir Bastet ya en la sala", "Al encender el PC de jugar, directamente la sala (o abriéndola con «--sala», lo que va en el inicio de sesión)") { Interruptor(AjustesSala.alAbrir) { AjustesSala.ponAlAbrir(it) } }
+        Fila("Sala oscura", "Los colores de tu Bastet, en su versión de noche (mejor para la tele). Si no, como la app") { Interruptor(AjustesSala.oscura) { AjustesSala.ponOscura(it) } }
+        Fila("Al jugar, Bastet se aparta", "Se minimiza para que el juego quede delante, y vuelve sola al cerrarlo") { Interruptor(AjustesSala.apartar) { AjustesSala.ponApartar(it) } }
         Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
         Antetitulo("Mandos")
         Spacer(Modifier.height(6.dp))
@@ -140,8 +140,8 @@ fun AjustesSalaMando(alSala: () -> Unit) {
         l.forEach { m -> MagFact(m.nombre, when (m.tipo) { Mando.Tipo.XBOX -> "Xbox"; Mando.Tipo.PLAYSTATION -> "PlayStation"; Mando.Tipo.NINTENDO -> "Nintendo"; else -> "Mando" }) }
         Spacer(Modifier.height(8.dp))
         Cuerpo("Los botones van por su sitio: el de abajo pulsa y el de la derecha vuelve (en el de Switch, B pulsa y A vuelve, como en Steam). " +
-            (if (Sitio.sistema == Sitio.Sistema.LINUX) "Si un mando de PlayStation o de Switch no aparece, le faltan permisos: vienen con Steam (o con el paquete game-devices-udev). Con Steam abierto, si Steam convierte el mando en teclado («configuración de escritorio»), Hiedra lo entiende igual y no cuenta dos veces cada pulsación."
-            else "En el Mac, si un mando que ya estaba conectado al abrir Hiedra no aparece, desconéctalo y vuelve a conectarlo."), tam = 12)
+            (if (Sitio.sistema == Sitio.Sistema.LINUX) "Si un mando de PlayStation o de Switch no aparece, le faltan permisos: vienen con Steam (o con el paquete game-devices-udev). Con Steam abierto, si Steam convierte el mando en teclado («configuración de escritorio»), Bastet lo entiende igual y no cuenta dos veces cada pulsación."
+            else "En el Mac, si un mando que ya estaba conectado al abrir Bastet no aparece, desconéctalo y vuelve a conectarlo."), tam = 12)
         Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
         Antetitulo("Con el teclado")
         Spacer(Modifier.height(6.dp))
@@ -164,9 +164,9 @@ fun AjustesCapturasStreaming(nav: Nav) {
         Antetitulo("Capturas")
         Spacer(Modifier.height(6.dp))
         Cuerpo("Desde «Tu PC» del móvil puedes pedir una captura de esta pantalla: se hace aquí, a su resolución de verdad (PNG, sin pérdida), se guarda en ${carpeta.path} y llega al móvil tal cual." +
-            (if (Sitio.sistema == Sitio.Sistema.MAC) " La primera vez, el Mac pide permiso de «Grabación de pantalla» para Hiedra (Ajustes del Sistema → Privacidad y seguridad)." else ""), tam = 14)
-        Fila("Capturas desde el móvil", "Tu Hiedra del móvil puede pedir una captura de esta pantalla") { Interruptor(AjustesTuPc.capturasDesdeMovil) { AjustesTuPc.ponCapturasDesdeMovil(it) } }
-        Fila("Las de aquí, también al móvil", "Las que haces en este ordenador llegan también a tu Hiedra del móvil") { Interruptor(AjustesTuPc.capturasAlMovil) { AjustesTuPc.ponCapturasAlMovil(it) } }
+            (if (Sitio.sistema == Sitio.Sistema.MAC) " La primera vez, el Mac pide permiso de «Grabación de pantalla» para Bastet (Ajustes del Sistema → Privacidad y seguridad)." else ""), tam = 14)
+        Fila("Capturas desde el móvil", "Tu Bastet del móvil puede pedir una captura de esta pantalla") { Interruptor(AjustesTuPc.capturasDesdeMovil) { AjustesTuPc.ponCapturasDesdeMovil(it) } }
+        Fila("Las de aquí, también al móvil", "Las que haces en este ordenador llegan también a tu Bastet del móvil") { Interruptor(AjustesTuPc.capturasAlMovil) { AjustesTuPc.ponCapturasAlMovil(it) } }
         if (kdrive) Fila("Una copia en tu kDrive", "En «Mi carpeta/Hiedra/Capturas», por juego") { Interruptor(AjustesTuPc.capturasAKDrive) { AjustesTuPc.ponCapturasAKDrive(it) } }
         MagFact("Se captura con", metodos.joinToString(", ") { it.nombre }.ifBlank { "nada: falta Spectacle, grim o gnome-screenshot" })
         Spacer(Modifier.height(10.dp))
@@ -203,8 +203,8 @@ fun AjustesCapturasStreaming(nav: Nav) {
         Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
         Antetitulo("Streaming")
         Spacer(Modifier.height(6.dp))
-        Cuerpo("Para jugar a lo de este ordenador en el móvil, con Steam Link (la app de Valve). El streaming lo hace Steam (Remote Play): cuando eliges «Streaming» en el móvil, Hiedra abre Steam aquí (si no lo estaba) y el juego, y el móvil abre Steam Link. La primera vez, Steam Link te enseña un PIN que se escribe en Steam de este ordenador.", tam = 14)
-        Fila("Streaming desde el móvil", "Tu Hiedra del móvil puede abrir Steam y un juego aquí para jugarlo con Steam Link") { Interruptor(AjustesTuPc.streamingDesdeMovil) { AjustesTuPc.ponStreamingDesdeMovil(it) } }
+        Cuerpo("Para jugar a lo de este ordenador en el móvil, con Steam Link (la app de Valve). El streaming lo hace Steam (Remote Play): cuando eliges «Streaming» en el móvil, Bastet abre Steam aquí (si no lo estaba) y el juego, y el móvil abre Steam Link. La primera vez, Steam Link te enseña un PIN que se escribe en Steam de este ordenador.", tam = 14)
+        Fila("Streaming desde el móvil", "Tu Bastet del móvil puede abrir Steam y un juego aquí para jugarlo con Steam Link") { Interruptor(AjustesTuPc.streamingDesdeMovil) { AjustesTuPc.ponStreamingDesdeMovil(it) } }
         MagFact("Steam", when { steam == null || !steam.instalado -> "no está instalado (Steam Link lo necesita)"; steam.abierto -> "instalado y abierto"; else -> "instalado (se abre al pedir el streaming)" })
         if (steam != null && steam.ips.isNotEmpty()) MagFact("En la red", steam.ips.joinToString(", "))
     }

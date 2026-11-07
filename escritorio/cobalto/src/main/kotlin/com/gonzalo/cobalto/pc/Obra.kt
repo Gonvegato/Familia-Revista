@@ -312,7 +312,7 @@ private fun DialogoNombre(d: Doc, nav: Nav, onCerrar: () -> Unit) {
         Muestras(color, conNinguno = true) { color = it }
         Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(if (esParte) "Terminada (sus capítulos llegan a Marfil)" else "Terminado (llega a Marfil, para leerlo)", Modifier.weight(1f), color = Charcoal, fontFamily = Body, fontSize = 14.sp)
+            Text(if (esParte) "Terminada (sus capítulos llegan a Seshat)" else "Terminado (llega a Seshat, para leerlo)", Modifier.weight(1f), color = Charcoal, fontFamily = Body, fontSize = 14.sp)
             Interruptor(d.b("hecho")) { on -> e.edita(d.id) { if (on) put("hecho", 1) else remove("hecho") } }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {

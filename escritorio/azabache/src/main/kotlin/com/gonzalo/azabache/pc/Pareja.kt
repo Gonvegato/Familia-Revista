@@ -48,7 +48,7 @@ fun PantPareja(uid: String, nav: Nav) {
         Cabecera(96.sp, texto = nombre.uppercase())
         FileteCabecera()
         if (todas.isEmpty()) {
-            Vacio("Aún no se ve nada de $nombre", "Sale en cuanto te ponga como pareja en su Azabache (Ajustes → Cuenta) y llegue lo suyo de su cuenta.")
+            Vacio("Aún no se ve nada de $nombre", "Sale en cuanto te ponga como pareja en su Jonsu (Ajustes → Cuenta) y llegue lo suyo de su cuenta.")
             return@Pagina
         }
         Seccion("Ahora")

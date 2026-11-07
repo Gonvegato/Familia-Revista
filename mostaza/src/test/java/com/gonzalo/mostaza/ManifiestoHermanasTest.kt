@@ -32,7 +32,7 @@ class ManifiestoHermanasTest {
         var d: File? = File("").absoluteFile
         while (d != null && !File(d, "familia/src/main/AndroidManifest.xml").exists()) d = d.parentFile
         val familia = File(d!!, "familia/src/main/AndroidManifest.xml").readText()
-        assertTrue("las hermanas tienen que ver a Mostaza para darle la cuenta (entrar una vez)", familia.contains("<package android:name=\"com.gonzalo.mostaza\" />"))
+        assertTrue("las hermanas tienen que ver a Hathor para darle la cuenta (entrar una vez)", familia.contains("<package android:name=\"com.gonzalo.mostaza\" />"))
         assertTrue(File(d, "familia/src/main/java/com/gonzalo/familia/LaFamilia.kt").readText().contains("\"com.gonzalo.mostaza\""))
     }
 }

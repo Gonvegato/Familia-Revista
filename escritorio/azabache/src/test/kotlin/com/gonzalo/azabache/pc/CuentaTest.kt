@@ -46,7 +46,7 @@ class CuentaTest {
 
     @Test fun loQueCambiasEnMarfilLlegaYUnLibroEnCursoNuncaSaleLeidoConUnCero() {
         val kid = Cuenta.kidDe("libro:dune:frank herbert")
-        assertEquals("el mismo nodo que Marfil", kid, Cuenta.kidDe(Cuenta.claveLibro("Dune", "Frank Herbert")))
+        assertEquals("el mismo nodo que Seshat", kid, Cuenta.kidDe(Cuenta.claveLibro("Dune", "Frank Herbert")))
         otra.coleccion("libros").pon(kid, mapOf("clave" to "libro:dune:frank herbert", "t" to "Dune", "a" to "Frank Herbert", "estado" to "en_curso", "fr" to 0.3))
         sincroniza()
         val f = Cuenta.fichas(Cuenta.LIBROS).single { it.nombre == "Dune" }
@@ -64,7 +64,7 @@ class CuentaTest {
         assertEquals(88L, n.entero("nota")); assertEquals(listOf(80L, 90L, 70L, 85L), n.lista("crit"))
         assertEquals("La especia.", n.texto("resena")); assertEquals("terminado", n.texto("estado"))
         assertEquals(0.3, n.decimal("fr"), 0.0001); assertEquals(1, n.lista("fin").size)
-        assertTrue("con su número de Azabache", n.entero("azid") > 0)
+        assertTrue("con su número de Jonsu", n.entero("azid") > 0)
         assertFalse(Cuenta.fichas(Cuenta.LIBROS).single { it.nombre == "Dune" }.sinValorar)
     }
 

@@ -73,7 +73,7 @@ class CopiaColoresTest {
         val manual = atrio("theme31" to 2, "skin_fondo_propio" to 0xFF101820L, "skin_tinta_propia" to 0xFFFFD166L)
         assertEquals(0xFF101820L, CopiaAtrio.colorEfectivo(manual, "fondo")); assertEquals(0xFFFFD166L, CopiaAtrio.colorEfectivo(manual, "texto"))
         CopiaAtrio.copiarColor(ctx, manual, "texto")
-        assertEquals(0xFFFFD166L, Skin.tintaPropia); assertEquals("el fondo sigue siendo el de Marfil", 0xFF222222L, Skin.fondoPropio)
+        assertEquals(0xFFFFD166L, Skin.tintaPropia); assertEquals("el fondo sigue siendo el de Seshat", 0xFF222222L, Skin.fondoPropio)
         // Con solo el fondo a mano, el texto que se ve sale solo (claro sobre fondo oscuro)
         val soloFondo = atrio("theme31" to 1, "skin_fondo_propio" to 0xFF101820L)
         assertTrue(Color(CopiaAtrio.colorEfectivo(soloFondo, "texto")).luminance2() > 0.5f)

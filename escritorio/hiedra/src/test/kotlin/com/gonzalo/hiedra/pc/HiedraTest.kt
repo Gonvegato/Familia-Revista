@@ -118,7 +118,7 @@ class HiedraTest {
         val lib = Emulador.lee("/users/$uid/suite/lib/hiedra-linux-pc1").comoMapa()["games"] as List<*>
         assertEquals("Hades", (lib.single() as Map<*, *>)["n"])
         // El móvil manda una orden (con su sesión) y el ordenador contesta
-        val r = RedJava().pedir("POST", otra.sesion.url("/users/$uid/suite/cmd/hiedra-linux-pc1", conPase = true), Json.escribe(mapOf("op" to "ping", "a" to emptyMap<String, Any?>(), "t" to mapOf(".sv" to "timestamp"), "by" to "Hiedra · móvil")))
+        val r = RedJava().pedir("POST", otra.sesion.url("/users/$uid/suite/cmd/hiedra-linux-pc1", conPase = true), Json.escribe(mapOf("op" to "ping", "a" to emptyMap<String, Any?>(), "t" to mapOf(".sv" to "timestamp"), "by" to "Bastet · móvil")))
         assertTrue(r.ok)
         val cid = Json.lee(r.cuerpo).comoMapa()["name"] as String
         val res = TuPc.atiende(cid, mapOf("op" to "ping"))

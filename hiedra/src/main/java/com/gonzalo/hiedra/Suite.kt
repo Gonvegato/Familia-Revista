@@ -151,7 +151,7 @@ object Suite {
 
     fun elegirPc(dev: String) { pcElegido = dev; appCtx?.let { prefs().edit().putString("pc", dev).apply() } }
 
-    /** Las capturas van también a la galería del móvil (Imágenes/Hiedra). */
+    /** Las capturas van también a la galería del móvil (Imágenes/Bastet). */
     fun aGaleria(): Boolean = appCtx?.let { prefs().getBoolean("galeria", true) } ?: true
     fun ponAGaleria(v: Boolean) { prefs().edit().putBoolean("galeria", v).apply() }
 
@@ -328,7 +328,7 @@ object Suite {
             val v = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, "$safe ${java.text.SimpleDateFormat("yyyy-MM-dd HH.mm.ss", java.util.Locale.ROOT).format(java.util.Date(s.time))}.$ext")
                 put(MediaStore.Images.Media.MIME_TYPE, s.mime)
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Hiedra/$safe")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Bastet/$safe")
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
             val r = c.contentResolver
@@ -389,7 +389,7 @@ object Suite {
     suspend fun sendRaw(op: String, args: JSONObject = JSONObject(), dev: String? = null, timeoutMs: Long = 45_000): JSONObject = withContext(Dispatchers.IO) {
         fun fail(m: String) = JSONObject().put("ok", false).put("msg", m)
         val to = dev ?: target()?.dev ?: return@withContext fail("No hay ningún PC con Atrio conectado.")
-        val body = JSONObject().put("op", op).put("a", args).put("t", JSONObject().put(".sv", "timestamp")).put("by", "Hiedra · " + Cuenta.nombreDispositivo)
+        val body = JSONObject().put("op", op).put("a", args).put("t", JSONObject().put(".sv", "timestamp")).put("by", "Bastet · " + Cuenta.nombreDispositivo)
         val r = try { Cuenta.db("POST", base() + "/suite/cmd/$to", body.toString()) } catch (e: Exception) { return@withContext fail(e.message ?: "sin conexión") }
         val id = try { JSONObject(r ?: "{}").optString("name") } catch (e: Exception) { "" }
         if (id.isBlank()) return@withContext fail("Firebase no ha aceptado la orden.")
@@ -406,8 +406,8 @@ object Suite {
 
     private suspend fun answer(id: String, c: JSONObject) {
         val res = when (c.optString("op")) {
-            "ping" -> JSONObject().put("ok", true).put("msg", "Hiedra en ${Cuenta.nombreDispositivo}")
-            else -> JSONObject().put("ok", false).put("msg", "Hiedra no atiende esa orden (${c.optString("op")}).")
+            "ping" -> JSONObject().put("ok", true).put("msg", "Bastet en ${Cuenta.nombreDispositivo}")
+            else -> JSONObject().put("ok", false).put("msg", "Bastet no atiende esa orden (${c.optString("op")}).")
         }
         try { Cuenta.db("PUT", base() + "/suite/cmd/${Cuenta.dispositivo}/$id/res", res.put("t", JSONObject().put(".sv", "timestamp")).toString(), "print=silent") } catch (e: Exception) { }
     }

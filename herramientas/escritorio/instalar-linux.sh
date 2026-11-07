@@ -10,6 +10,7 @@
 # (Plantilla: herramientas/escritorio/instalar-linux.sh; el empaquetado de GitHub pone el nombre de cada app.)
 set -e
 APP="__APP__"
+VIEJO="__VIEJO__"  # cómo se llamaba antes (las versiones de antes se instalaron con ese nombre)
 ID="familia-__ID__"
 ORIGEN="$(cd "$(dirname "$0")" && pwd)/$APP"
 DATOS="${XDG_DATA_HOME:-$HOME/.local/share}"
@@ -25,11 +26,19 @@ for a in "$@"; do
     --destino=*) DESTINO="${a#--destino=}" ;;
     --quitar)
       rm -rf "$DESTINO" "$MENU" "$INICIO"
+      if [ "$VIEJO" != "$APP" ]; then rm -rf "$DATOS/familia-apps/$VIEJO"; fi
       command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$DATOS/applications" >/dev/null 2>&1 || true
       echo "$APP quitada."; exit 0 ;;
     *) echo "No entiendo «$a». Mira las primeras líneas de este archivo." >&2; exit 2 ;;
   esac
 done
+
+# Si te la pide la versión de antes (que se instaló con el nombre viejo), va a su sitio con el nombre nuevo
+VIEJA_DIR=""
+if [ "$VIEJO" != "$APP" ]; then
+  if [ "$(basename "$DESTINO")" = "$VIEJO" ]; then VIEJA_DIR="$DESTINO"; DESTINO="$(dirname "$DESTINO")/$APP"
+  elif [ -d "$DATOS/familia-apps/$VIEJO" ]; then VIEJA_DIR="$DATOS/familia-apps/$VIEJO"; fi
+fi
 
 if [ ! -x "$ORIGEN/bin/$APP" ]; then
   echo "No encuentro $ORIGEN/bin/$APP: descomprime el .tar.gz entero y ejecuta instalar.sh desde su carpeta." >&2
@@ -43,6 +52,14 @@ cp -a "$ORIGEN" "$DESTINO.nueva"
 if [ -d "$DESTINO" ]; then mv "$DESTINO" "$DESTINO.vieja"; fi
 mv "$DESTINO.nueva" "$DESTINO"
 rm -rf "$DESTINO.vieja"
+# La de antes, fuera; en su sitio solo un atajo a la nueva (la versión vieja, al ponerse al día, vuelve a abrirse desde ahí).
+# La app nueva lo quita al abrirse.
+if [ -n "$VIEJA_DIR" ] && [ -d "$VIEJA_DIR" ] && [ "$VIEJA_DIR" != "$DESTINO" ]; then
+  rm -rf "$VIEJA_DIR"
+  mkdir -p "$VIEJA_DIR/bin"
+  printf '#!/bin/sh\nexec "%s/bin/%s" "$@"\n' "$DESTINO" "$APP" > "$VIEJA_DIR/bin/$VIEJO"
+  chmod +x "$VIEJA_DIR/bin/$VIEJO"
+fi
 
 entrada() {
   cat <<FIN

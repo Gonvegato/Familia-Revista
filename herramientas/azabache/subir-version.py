@@ -47,8 +47,8 @@ def carpeta_privada(d):
 
 def subir(ruta):
     nombre = os.path.basename(ruta)
-    if not re.fullmatch(r"Azabache-\d+(\.\d+)*\.apk", nombre):
-        raise SystemExit("El archivo debe llamarse Azabache-<versión>.apk (p. ej. Azabache-6.67.apk)")
+    if not re.fullmatch(r"(?:Jonsu|Azabache)-\d+(\.\d+)*\.apk", nombre):
+        raise SystemExit("El archivo debe llamarse Jonsu-<versión>.apk (p. ej. Azabache-6.67.apk)")
     datos = open(ruta, "rb").read()
     d = kdrive()
     home = carpeta_privada(d)

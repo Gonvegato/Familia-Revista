@@ -360,7 +360,7 @@ fun RevistaGameRead(
     defs["nota"] = MagDef("Nota") {
         if (Hermanas.sinValorar(g)) {
             Text("Sin valorar", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)
-            Text(if (kind.isBook) "Lo diste por leído en Marfil." else if (kind.isGame) "Lo diste por pasado en Hiedra." else "Aún sin nota.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+            Text(if (kind.isBook) "Lo diste por leído en Seshat." else if (kind.isGame) "Lo diste por pasado en Bastet." else "Aún sin nota.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
             MagLink("Valorar", accent = true, onClick = onEdit)
         } else MagScore(g.general, g.scores(), kind)
     }

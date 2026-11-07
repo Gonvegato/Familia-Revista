@@ -52,7 +52,7 @@ fun SelectorLista(actual: Lista?, soloXtream: Boolean = false, alCambiar: (Lista
 @Composable
 fun SinListas(nav: Nav) {
     Spacer(Modifier.height(24.dp))
-    Nota("Aún no tienes ninguna lista en este ordenador. Cobre no trae ningún canal ni ninguna lista: pones tú la tuya (una dirección M3U, un archivo M3U o el login de tu servidor de Xtream Codes).")
+    Nota("Aún no tienes ninguna lista en este ordenador. Nut no trae ningún canal ni ninguna lista: pones tú la tuya (una dirección M3U, un archivo M3U o el login de tu servidor de Xtream Codes).")
     Spacer(Modifier.height(10.dp))
     MagLink("Añadir una lista", "Ajustes → Listas", accent = true) { nav.ir(Pantalla.Ajustes(0)) }
 }

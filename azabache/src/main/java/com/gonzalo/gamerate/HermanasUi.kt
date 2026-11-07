@@ -27,8 +27,8 @@ fun LecturaMarfil(id: Long, nombre: String, paginas: Int, minutos: Int, enCurso:
     val min = maxOf(minutos.toLong(), leido / 60_000L)
     if (min > 0) {
         Text(readTime(min), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)
-        Text("LEYENDO, SEGÚN MARFIL", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-    } else Text("Marfil aún no ha contado tiempo de este libro.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+        Text("LEYENDO, SEGÚN SESHAT", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+    } else Text("Seshat aún no ha contado tiempo de este libro.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
     // Leyendo: por dónde vas (lo último que leíste, en cualquier dispositivo) y, con las páginas, en qué página
     val avance = remember(id, Hermanas.version) { Hermanas.avanceMarfil(ctx, id) }
     if (enCurso && avance != null && avance > 0f && avance < 1f) {
@@ -38,8 +38,8 @@ fun LecturaMarfil(id: Long, nombre: String, paginas: Int, minutos: Int, enCurso:
             fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp, modifier = Modifier.padding(top = 5.dp))
     } else if (paginas > 0) Text("$paginas páginas", color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
     Spacer(Modifier.height(6.dp))
-    if (Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL)) MagLink("Leer en Marfil", accent = true) { Hermanas.leerEnMarfil(ctx, id) }
-    else Text("Se lee en Marfil (no está en este móvil).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp)
+    if (Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL)) MagLink("Leer en Seshat", accent = true) { Hermanas.leerEnMarfil(ctx, id) }
+    else Text("Se lee en Seshat (no está en este móvil).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp)
 }
 
 /** «Jugar» en la ficha de un juego: abre Hiedra, que es quien lo lanza (en el móvil, en el PC o en streaming). */
@@ -47,8 +47,8 @@ fun LecturaMarfil(id: Long, nombre: String, paginas: Int, minutos: Int, enCurso:
 fun JugarHiedra(nombre: String) {
     val ctx = LocalContext.current
     if (Hermanas.instalada(ctx, Hermanas.PAQ_HIEDRA)) {
-        MagLink("Jugar en Hiedra", "en el móvil, en el PC o en streaming", accent = true) { Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) }
-    } else Text("Se juega desde Hiedra (no está en este móvil).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+        MagLink("Jugar en Bastet", "en el móvil, en el PC o en streaming", accent = true) { Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) }
+    } else Text("Se juega desde Bastet (no está en este móvil).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
 }
 
 /** «Ver en Mostaza» en la ficha de una película o una serie: Mostaza la pone (sus fuentes, lo visto, el episodio que toca). */
@@ -57,7 +57,7 @@ fun VerEnMostaza(kind: Kind, id: Long) {
     val ctx = LocalContext.current
     if (!Hermanas.instalada(ctx, Hermanas.PAQ_MOSTAZA)) return
     val ref = remember(kind.id, id, Hermanas.version) { if (CosasMostaza.de(ctx, kind)) CosasMostaza.refDe(ctx, kind, id) else null }
-    MagLink("Ver en Mostaza", if (ref != null) "con tus addons, por donde ibas" else null, accent = true) { Hermanas.verEnMostaza(ctx, ref) }
+    MagLink("Ver en Hathor", if (ref != null) "con tus addons, por donde ibas" else null, accent = true) { Hermanas.verEnMostaza(ctx, ref) }
 }
 
 /** «Escritos» en la portada: el último capítulo que diste por terminado en Cobalto, y cuántas palabras llevas esta semana. */
@@ -76,7 +76,7 @@ fun RevistaEscritos(irAEscritos: () -> Unit) {
         Text(listOfNotNull("último capítulo terminado: «${ultimo.nombre.ifBlank { "capítulo ${ultimo.numero}" }}»", if (semana > 0) "esta semana ${cifraE(semana)} palabras" else null).joinToString(" · "),
             color = Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
         val marfil = remember { Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL) }
-        Text(if (marfil) "Leer en Marfil →" else "Leer lo terminado →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+        Text(if (marfil) "Leer en Seshat →" else "Leer lo terminado →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 16.sp,
             modifier = Modifier.padding(top = 10.dp).clickable { if (!marfil || !Hermanas.leerEnMarfil(ctx, ultimo.obra)) irAEscritos() })
     }
 }
@@ -99,7 +99,7 @@ fun LecturaCobaltoScreen(onBack: () -> Unit) {
             TextoCapitulo(cap.texto)
             Spacer(Modifier.height(40.dp))
         } else {
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp)) { VolverRevista(if (obra == null) onBack else ({ obra = null }), if (obra == null) "Azabache" else "Escritos") }
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp)) { VolverRevista(if (obra == null) onBack else ({ obra = null }), if (obra == null) "Jonsu" else "Escritos") }
             Spacer(Modifier.height(14.dp))
             val o = obra
             if (o == null) {
@@ -108,19 +108,19 @@ fun LecturaCobaltoScreen(onBack: () -> Unit) {
                 FitTitle("Escritos", 44.sp, 46.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                 val marfil = remember { Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL) }
                 val cobalto = remember { Hermanas.instalada(ctx, Hermanas.PAQ_COBALTO) }
-                Text(if (marfil) "Los capítulos que diste por terminados en Cobalto. Se leen con el lector de Marfil; aquí, solo de un vistazo." else "Los capítulos que diste por terminados en Cobalto. Aquí solo se leen (con Marfil en el móvil, con su lector).",
+                Text(if (marfil) "Los capítulos que diste por terminados en Thot. Se leen con el lector de Seshat; aquí, solo de un vistazo." else "Los capítulos que diste por terminados en Thot. Aquí solo se leen (con Seshat en el móvil, con su lector).",
                     color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 6.dp, bottom = if (marfil) 8.dp else 16.dp))
-                if (marfil) Text("Leer en Marfil →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(bottom = 16.dp).clickable { Hermanas.leerEnMarfil(ctx) })
+                if (marfil) Text("Leer en Seshat →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(bottom = 16.dp).clickable { Hermanas.leerEnMarfil(ctx) })
                 val obras = caps.groupBy { it.obra }
-                if (obras.isEmpty()) Text(if (Hermanas.ultimaVez(ctx) == 0L) "Todavía no se ha leído tu cuenta: entra en Ajustes → Cuenta y pareja." else "Cobalto aún no ha publicado ningún capítulo terminado.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                if (obras.isEmpty()) Text(if (Hermanas.ultimaVez(ctx) == 0L) "Todavía no se ha leído tu cuenta: entra en Ajustes → Cuenta y pareja." else "Thot aún no ha publicado ningún capítulo terminado.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
                 obras.forEach { (id, cs) ->
                     val t = cs.first()
                     Column(Modifier.fillMaxWidth().clickable { obra = id }.padding(vertical = 10.dp)) {
                         Text(t.titulo.ifBlank { "Sin título" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                         Text(listOfNotNull(t.autor.ifBlank { null }, "${cs.size} ${if (cs.size == 1) "capítulo" else "capítulos"}", "${cifraE(cs.sumOf { it.palabras })} palabras").joinToString(" · "), color = Muted, fontSize = 13.sp)
                         Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                            if (marfil) Text("Leer en Marfil →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { Hermanas.leerEnMarfil(ctx, id) })
-                            if (cobalto) Text("Escribir en Cobalto →", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { Hermanas.escribirEnCobalto(ctx, id) })
+                            if (marfil) Text("Leer en Seshat →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { Hermanas.leerEnMarfil(ctx, id) })
+                            if (cobalto) Text("Escribir en Thot →", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { Hermanas.escribirEnCobalto(ctx, id) })
                         }
                     }
                     Filete()

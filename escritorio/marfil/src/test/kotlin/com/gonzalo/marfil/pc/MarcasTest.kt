@@ -116,7 +116,7 @@ class MarcasTest {
             System.getProperty("casos.escribe")?.let { dir ->
                 val nodos = Emulador.lee("/users/$uid/familia/marcas").comoMapa().filterKeys { it != idMovil(id, cfiMovil, creadaMovil) }
                 File(dir, "marfil-marcas.json").writeText(Json.escribe(linkedMapOf(
-                    "nota" to "Los subrayados, notas y marcadores que escribe Marfil del ordenador (MarcasTest de escritorio/marfil, con -Dcasos.escribe), tal cual quedan en la cuenta (familia/marcas). Los lee MarcasEscritorioTest de Marfil de Android con su propio código.",
+                    "nota" to "Los subrayados, notas y marcadores que escribe Seshat del ordenador (MarcasTest de escritorio/marfil, con -Dcasos.escribe), tal cual quedan en la cuenta (familia/marcas). Los lee MarcasEscritorioTest de Seshat de Android con su propio código.",
                     "kid" to id, "titulo" to "Dune", "autor" to "Frank Herbert", "nodos" to nodos,
                     "lectura" to Emulador.lee("/users/$uid/familia/lectura/$id"), "ajustes" to Emulador.lee("/users/$uid/familia/ajustes/marfil"))) + "\n")
             }

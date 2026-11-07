@@ -53,7 +53,7 @@ fun ElegirObraWidget(alElegir: (String?) -> Unit) {
         Filete(2.dp)
         CampoRevista("Buscar", busca, "una obra fija") { busca = it }
         LazyColumn(Modifier.fillMaxSize()) {
-            if (lista.isEmpty()) item { Text("Todavía no hay obras en Cobalto.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
+            if (lista.isEmpty()) item { Text("Todavía no hay obras en Thot.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
             items(lista, key = { it.id }) { o ->
                 Row(Modifier.fillMaxWidth().clickable { alElegir(o.id) }.padding(vertical = 10.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.width(8.dp).fillMaxHeight().background(colorEscrito(o.s("color"))))

@@ -226,7 +226,7 @@ object Couple {
      */
     suspend fun compruebaFamilia(store: Store): String = withContext(Dispatchers.IO) {
         val fam = com.gonzalo.familia.LaFamilia.familia
-        if (!fam.sesion.dentro) { com.gonzalo.familia.LaFamilia.pideSesion(); return@withContext "Azabache no ha entrado en la cuenta de la familia: lo que ves es lo de antes. Entra aquí arriba (o en Hiedra o Marfil y vuelve)." }
+        if (!fam.sesion.dentro) { com.gonzalo.familia.LaFamilia.pideSesion(); return@withContext "Jonsu no ha entrado en la cuenta de la familia: lo que ves es lo de antes. Entra aquí arriba (o en Bastet o Seshat y vuelve)." }
         if (!store.paired) Account.adoptaSesion(store)
         val inf = com.gonzalo.familia.LaFamilia.sincronizaYa()
         runCatching { Account.mergeOwn(store) }
@@ -241,8 +241,8 @@ object Couple {
             if (fam.pendientes > 0) append("Quedan ${fam.pendientes} cambios por subir. ")
             if (Cosas.activa(store.contexto)) {
                 val j = store.load(GAMES.id).size + store.loadPlays(GAMES.id).size; val l = store.load(BOOKS.id).size + store.loadPlays(BOOKS.id).size
-                append("Azabache lee de la cuenta (sin copia): $j juegos y $l libros, los mismos que Hiedra y Marfil. ")
-            } else append("En la cuenta: ${d.juegos} juegos de Hiedra y ${d.libros} libros de Marfil; aquí, $aquiJ y $aquiL. ")
+                append("Jonsu lee de la cuenta (sin copia): $j juegos y $l libros, los mismos que Bastet y Seshat. ")
+            } else append("En la cuenta: ${d.juegos} juegos de Bastet y ${d.libros} libros de Seshat; aquí, $aquiJ y $aquiL. ")
             append(if (d.error.isBlank()) "Último reflejo: ${if (d.hora > 0) f.format(Date(d.hora)) else "nunca"}, bien." else "El último reflejo falló: ${d.error}")
         }
     }
@@ -700,7 +700,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
                         partnerIn = ""
                         val p = refreshPartner()
                         if (p != null) "Ya compartís: ves lo de ${p.name}."
-                        else "Listo. Cuando ${store.partnerUser} ponga tu usuario (${store.accUser}) en su Azabache, veréis lo del otro."
+                        else "Listo. Cuando ${store.partnerUser} ponga tu usuario (${store.accUser}) en su Jonsu, veréis lo del otro."
                     }
                 }
             } else {
@@ -710,7 +710,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
                     when {
                         inf != null -> "Compartes con $who. Sus datos son de " +
                             DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(inf.updated)) + "."
-                        shares == false -> "Ya puede ver lo tuyo. Tú verás lo suyo cuando $who ponga tu usuario (${store.accUser}) en su Azabache."
+                        shares == false -> "Ya puede ver lo tuyo. Tú verás lo suyo cuando $who ponga tu usuario (${store.accUser}) en su Jonsu."
                         else -> "Compartes con $who. Aún no ha subido nada."
                     },
                     color = UiSoft, fontSize = 13.sp, modifier = Modifier.padding(vertical = 6.dp)

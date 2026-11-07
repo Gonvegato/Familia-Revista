@@ -86,7 +86,7 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
     val juegos = Juegos.todos()
     val estados = Estado.entries
     val entradas = buildList {
-        add(Entrada("Portada", grupo = "Hiedra"))
+        add(Entrada("Portada", grupo = "Bastet"))
         estados.forEach { e -> add(Entrada(if (e == Estado.JUGANDO) "Jugando" else e.nombre + "s", juegos.count { it.estado == e }, grupo = "Tus juegos")) }
         add(Entrada("En este ordenador", Pc.yaMirado()?.size, grupo = "Más")); add(Entrada("Ajustes", grupo = "Más")); add(Entrada("Modo sala", grupo = "Para la tele"))
     }
@@ -115,7 +115,7 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
         onDispose { if (Entrada.manejador === h) Entrada.manejador = null }
     }
     Row(Modifier.fillMaxSize()) {
-        Lateral("Hiedra", entradas, sel) { i -> ve(i) }
+        Lateral("Bastet", entradas, sel) { i -> ve(i) }
         Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
         Box(Modifier.weight(1f).fillMaxHeight()) {
             Crossfade(pantalla, label = "pantalla") { p ->
@@ -174,7 +174,7 @@ fun PantPortada(nav: Nav, alSala: () -> Unit = {}) {
     val p = Pc.ahora
     Pagina {
         Text("Número de ${LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ES))}".uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
-        Cabecera(96.sp, texto = "HIEDRA")
+        Cabecera(96.sp, texto = "BASTET")
         FileteCabecera()
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -197,7 +197,7 @@ fun PantPortada(nav: Nav, alSala: () -> Unit = {}) {
         }
         Spacer(Modifier.height(22.dp)); Filete(2.dp)
         Antetitulo("Jugando", Modifier.padding(vertical = 10.dp))
-        if (jugando.isEmpty()) Vacio("Nada entre manos", "Lo que empieces aquí, en Hiedra del móvil o en Steam sale en esta portada.") else Fila(jugando.take(12), nav, Pantalla.Portada)
+        if (jugando.isEmpty()) Vacio("Nada entre manos", "Lo que empieces aquí, en Bastet del móvil o en Steam sale en esta portada.") else Fila(jugando.take(12), nav, Pantalla.Portada)
         val pasados = juegos.filter { it.estado == Estado.PASADO }.sortedByDescending { it.fin }.take(6)
         if (pasados.isNotEmpty()) { Spacer(Modifier.height(10.dp)); Filete(2.dp); Antetitulo("Lo último que has pasado", Modifier.padding(vertical = 10.dp)); Fila(pasados, nav, Pantalla.Portada) }
     }
@@ -257,7 +257,7 @@ fun PantOrdenador(nav: Nav) {
         }
         FileteCabecera()
         Spacer(Modifier.height(8.dp))
-        Text("Lo que hay para jugar aquí: Steam, Heroic (Epic, GOG y Amazon), Lutris, las ROMs de tus carpetas (Ajustes → Emulación) y tus programas. Los de Steam se abren con Steam y sus horas las cuenta Steam; lo demás lo cuenta Hiedra mientras juegas, en la cuenta. Nada entra en tu biblioteca hasta que lo juegas o lo añades. Tu Hiedra del móvil lo ve en «Tu PC» y puede abrirlo desde allí.",
+        Text("Lo que hay para jugar aquí: Steam, Heroic (Epic, GOG y Amazon), Lutris, las ROMs de tus carpetas (Ajustes → Emulación) y tus programas. Los de Steam se abren con Steam y sus horas las cuenta Steam; lo demás lo cuenta Bastet mientras juegas, en la cuenta. Nada entra en tu biblioteca hasta que lo juegas o lo añades. Tu Bastet del móvil lo ve en «Tu PC» y puede abrirlo desde allí.",
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 24.sp)
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -280,7 +280,7 @@ fun PantOrdenador(nav: Nav) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             EnlaceRevista("Jugar", acento = true) { jugar(Ficha(h, j), enSala = false) { nav.aviso(it) } }
                             if (h != null) EnlaceRevista("Ficha") { nav.ir(Pantalla.Ficha(h.id, Pantalla.EsteOrdenador)) }
-                            else EnlaceRevista("A Hiedra") { scope.launch { val id = withContext(Dispatchers.IO) { Juegos.mete(j).also { id -> portadaDe(j, id) } }; nav.aviso("En tu biblioteca"); nav.ir(Pantalla.Ficha(id, Pantalla.EsteOrdenador)) } }
+                            else EnlaceRevista("A Bastet") { scope.launch { val id = withContext(Dispatchers.IO) { Juegos.mete(j).also { id -> portadaDe(j, id) } }; nav.aviso("En tu biblioteca"); nav.ir(Pantalla.Ficha(id, Pantalla.EsteOrdenador)) } }
                         }
                     }
                 }
@@ -337,7 +337,7 @@ private fun DialogoPrograma(nav: Nav, alAnadir: () -> Unit, onCerrar: () -> Unit
             Text(ruta?.path ?: "Ningún archivo elegido", Modifier.weight(1f), color = Muted, fontFamily = Body, fontSize = 13.sp, maxLines = 2)
             BotonSuave("Elegir…") { com.gonzalo.familia.pc.revista.eligeArchivo("Elige el juego (el ejecutable, el .AppImage, la app…)")?.let { ruta = it; if (nombre.isBlank()) nombre = it.nameWithoutExtension.removeSuffix(".app") } }
         }
-        Cuerpo("Al jugar desde aquí, Hiedra cuenta el tiempo hasta que lo cierras.", tam = 12)
+        Cuerpo("Al jugar desde aquí, Bastet cuenta el tiempo hasta que lo cierras.", tam = 12)
     }
 }
 
@@ -364,7 +364,7 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
                     BotonAcento("Jugar", modifier = Modifier.fillMaxWidth()) { scope.launch { nav.aviso(withContext(Dispatchers.IO) { Pc.juega(aqui, j.id) }) } }
                     Text("CON " + comoSeAbre(aqui).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
                 }
-                else Cuerpo(if (j.lanzadores.isEmpty()) "Sin lanzador: es una ficha (se juega fuera de Hiedra)." else "Se juega en " + j.lanzadores.joinToString(", ") { when (it.tipo) { "ROM" -> "emulación (${Emulacion.sistema(it.sistema)?.nombre ?: it.sistema}; la ROM no está en tus carpetas de aquí)"; "APP" -> "Android"; "WEB" -> "la web"; else -> "otro PC" } } + ".", tam = 13)
+                else Cuerpo(if (j.lanzadores.isEmpty()) "Sin lanzador: es una ficha (se juega fuera de Bastet)." else "Se juega en " + j.lanzadores.joinToString(", ") { when (it.tipo) { "ROM" -> "emulación (${Emulacion.sistema(it.sistema)?.nombre ?: it.sistema}; la ROM no está en tus carpetas de aquí)"; "APP" -> "Android"; "WEB" -> "la web"; else -> "otro PC" } } + ".", tam = 13)
             }
             Spacer(Modifier.width(40.dp))
             Column(Modifier.weight(1f)) {
@@ -390,7 +390,7 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
                 if (j.anadido > 0) MagFact("Añadido", fecha(j.anadido))
                 if (j.fin > 0) MagFact("Pasado", fecha(j.fin))
                 Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-                Antetitulo("En Azabache")
+                Antetitulo("En Jonsu")
                 Text(j.nota?.toString() ?: "Sin valorar", color = if (j.nota != null) Acento else Muted, fontFamily = Display, fontSize = if (j.nota != null) 44.sp else 26.sp, fontStyle = if (j.nota == null) FontStyle.Italic else FontStyle.Normal)
             }
         }
@@ -409,9 +409,9 @@ fun PantAjustes(nav: Nav, alSala: () -> Unit = {}) {
         when (pestana) {
             0 -> AjustesCuenta("hiedra")
             1 -> {
-                Antetitulo("Este ordenador para tu Hiedra del móvil")
+                Antetitulo("Este ordenador para tu Bastet del móvil")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Mientras Hiedra está abierta aquí, tu Hiedra del móvil ve este ordenador en «Tu PC»: su biblioteca (Steam, Heroic, Lutris, tus ROMs y tus programas), a qué juegas, y puede abrir un juego desde el móvil, pedir una captura de esta pantalla o prepararlo para jugar en streaming.", tam = 14)
+                Cuerpo("Mientras Bastet está abierta aquí, tu Bastet del móvil ve este ordenador en «Tu PC»: su biblioteca (Steam, Heroic, Lutris, tus ROMs y tus programas), a qué juegas, y puede abrir un juego desde el móvil, pedir una captura de esta pantalla o prepararlo para jugar en streaming.", tam = 14)
                 MagFact("Nombre", Sitio.nombreEquipo)
                 MagFact("Dispositivo", Juegos.dispositivo())
                 MagFact("Steam", Pc.carpetasSteam().joinToString { it.path }.ifBlank { "no lo veo en este ordenador" })
@@ -428,11 +428,11 @@ fun PantAjustes(nav: Nav, alSala: () -> Unit = {}) {
             4 -> {
                 Antetitulo("Apariencia")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Hiedra del ordenador tiene la apariencia de tu Hiedra del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
+                Cuerpo("Bastet del ordenador tiene la apariencia de tu Bastet del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
                 Spacer(Modifier.height(10.dp))
                 MagChoice(listOf("Como el sistema", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
             }
-            else -> AjustesVersion("hiedra", "Hiedra")
+            else -> AjustesVersion("hiedra", "Bastet")
         }
     }
 }

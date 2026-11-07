@@ -154,7 +154,7 @@ fun PantSecciones(inicial: Destino, alVolver: () -> Unit, alAbrir: (String) -> U
         }
     }
     Column(Modifier.fillMaxSize().background(Paper).navigationBarsPadding().padding(horizontal = 28.dp)) {
-        RevistaTopBar(alVolver, "Cobalto") {
+        RevistaTopBar(alVolver, "Thot") {
             EnlaceRevista("Buscar", acento = buscando) { buscando = !buscando; if (!buscando) busca = "" }
             EnlaceRevista("Importar") { importar.launch(arrayOf("text/*", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream")) }
             EnlaceRevista("+ Nueva", acento = true) { alNueva() }

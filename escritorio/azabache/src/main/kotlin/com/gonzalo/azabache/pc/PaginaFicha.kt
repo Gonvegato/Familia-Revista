@@ -162,7 +162,7 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
     if (!enCurso) casillas["nota"] = Casilla("Nota") {
         if (f.sinValorar) {
             Text("Sin valorar", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
-            MagVacio(if (soloLectura) "Aún no le ha puesto nota." else if (k.isBook) "Lo diste por leído en Marfil." else if (k.isGame) "Lo diste por pasado en Hiedra." else if (f.mostaza) "La viste entera en Mostaza." else "Aún sin nota.")
+            MagVacio(if (soloLectura) "Aún no le ha puesto nota." else if (k.isBook) "Lo diste por leído en Seshat." else if (k.isGame) "Lo diste por pasado en Bastet." else if (f.mostaza) "La viste entera en Hathor." else "Aún sin nota.")
             if (!soloLectura) MagLink("Valorar", accent = true) { a.valorar() }
         } else MagScore(f.general, f.notas, k)
     }
@@ -188,7 +188,7 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
         if (f.resena.isNotBlank()) MagBody(f.resena) else MagVacio(if (soloLectura) "No ha escrito nada." else "Aún no has escrito nada.", 18)
     }
     if (k.isGame) casillas["horas"] = Casilla("Horas") { MagHours(f.minutos, f.ttb.first, f.ttb.second, f.ttb.third, enCurso = enCurso && f.estado == 1) }
-    if (k.isGame && enCurso) casillas["jugar"] = Casilla("Jugar") { MagVacio("Se juega desde Hiedra: en este ordenador, en el móvil o en streaming.") }
+    if (k.isGame && enCurso) casillas["jugar"] = Casilla("Jugar") { MagVacio("Se juega desde Bastet: en este ordenador, en el móvil o en streaming.") }
     // Lo que llevas visto (los episodios, por dónde vas): de Mostaza y, si no, de los capítulos que marcaste en Azabache
     if ((k.isMovie || k.isTv) && enCurso) casillas["progreso"] = Casilla("Progreso") { CasillaProgreso(k, f, soloLectura) }
     if (k.isBook) casillas["lectura"] = Casilla("Lectura") { CasillaLectura(k, f, enCurso && !soloLectura) }
@@ -243,7 +243,7 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
         a.recomendar?.let { r -> MagLink("Recomendar", "a ${a.pareja}", accent = true) { r() } }
         if (f.ref != null) NotaCasilla(mismaQueEnSuApp(k, f))
         // «Ver en Mostaza» (en el móvil la abre allí): aquí no hay Mostaza, que aún no tiene versión para el ordenador
-        if (f.mostaza) NotaCasilla("Se ve en Mostaza, en el móvil o en la tele: aún no hay Mostaza para el ordenador.")
+        if (f.mostaza) NotaCasilla("Se ve en Hathor, en el móvil o en la tele: aún no hay Hathor para el ordenador.")
     }
 
     // De tu pareja: y tú, ¿qué le diste? (la misma cosa en tu colección, por su nombre)
@@ -263,9 +263,9 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
 
 /** «Es el mismo juego que en Hiedra…»: lo que se dice de una ficha que es la cosa de una hermana (sin copia). */
 fun mismaQueEnSuApp(k: Kind, f: Ficha): String = when {
-    f.mostaza -> "Es la misma ${k.unit} que en Mostaza: lo que valoras aquí lo ve allí, y lo que ves allí (${if (k.isTv) "los episodios" else "por dónde vas"}, el tiempo, si la terminas) llega aquí."
-    k.isGame -> "Es el mismo juego que en Hiedra: lo que cambies aquí lo ve allí, y al revés."
-    else -> "Es el mismo libro que en Marfil: lo que cambies aquí lo ve allí, y al revés."
+    f.mostaza -> "Es la misma ${k.unit} que en Hathor: lo que valoras aquí lo ve allí, y lo que ves allí (${if (k.isTv) "los episodios" else "por dónde vas"}, el tiempo, si la terminas) llega aquí."
+    k.isGame -> "Es el mismo juego que en Bastet: lo que cambies aquí lo ve allí, y al revés."
+    else -> "Es el mismo libro que en Seshat: lo que cambies aquí lo ve allí, y al revés."
 }
 
 /**
@@ -298,7 +298,7 @@ private fun CasillaProgreso(k: Kind, f: Ficha, soloLectura: Boolean) {
         k.isTv && vistos.any { it.episodio > 0 && it.visto } -> {
             val eps = vistos.filter { it.episodio > 0 && it.visto }
             Text("${eps.size}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 42.sp)
-            Pie(if (eps.size == 1) "episodio visto en Mostaza" else "episodios vistos en Mostaza")
+            Pie(if (eps.size == 1) "episodio visto en Hathor" else "episodios vistos en Hathor")
             val ultimo = vistos.filter { it.episodio > 0 }.maxByOrNull { it.cuando }
             if (ultimo != null) MagFact("El último", "T${ultimo.temporada} · E${ultimo.episodio}" + if (!ultimo.visto && ultimo.durMs > 0 && ultimo.posMs > 0) " (a medias)" else "")
         }
@@ -307,11 +307,11 @@ private fun CasillaProgreso(k: Kind, f: Ficha, soloLectura: Boolean) {
             val frac = (v.posMs.toFloat() / v.durMs).coerceIn(0f, 1f)
             Text("${(frac * 100).toInt()} %", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
             BarraAvance(frac, Modifier.padding(top = 8.dp))
-            Pie(if (v.visto) "Vista en Mostaza" else "Por ${duracion(v.posMs / 60_000L)} de ${duracion(v.durMs / 60_000L)} · quedan ${duracion(((v.durMs - v.posMs) / 60_000L).coerceAtLeast(1L))}", modifier = Modifier.padding(top = 5.dp))
+            Pie(if (v.visto) "Vista en Hathor" else "Por ${duracion(v.posMs / 60_000L)} de ${duracion(v.durMs / 60_000L)} · quedan ${duracion(((v.durMs - v.posMs) / 60_000L).coerceAtLeast(1L))}", modifier = Modifier.padding(top = 5.dp))
         }
-        else -> MagVacio(if (f.mostaza) "Lo que veas en Mostaza (los episodios, por dónde vas) sale aquí." else "Sin capítulos.")
+        else -> MagVacio(if (f.mostaza) "Lo que veas en Hathor (los episodios, por dónde vas) sale aquí." else "Sin capítulos.")
     }
-    if (f.mostaza && !soloLectura) NotaCasilla("Se marca en Mostaza, al verla.")
+    if (f.mostaza && !soloLectura) NotaCasilla("Se marca en Hathor, al verla.")
 }
 
 /** «Lectura» en la ficha de un libro: lo que Marfil cuenta (el tiempo, por dónde vas, las páginas). */
@@ -319,15 +319,15 @@ private fun CasillaProgreso(k: Kind, f: Ficha, soloLectura: Boolean) {
 private fun CasillaLectura(k: Kind, f: Ficha, enCurso: Boolean) {
     if (f.minutos > 0) {
         Text(duracion(f.minutos.toLong()), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
-        Pie("Leyendo, según Marfil")
-    } else MagVacio("Marfil aún no ha contado tiempo de este libro.")
+        Pie("Leyendo, según Seshat")
+    } else MagVacio("Seshat aún no ha contado tiempo de este libro.")
     val avance = remember(f.ref, LaFamilia.cambios) { Cuenta.nodo(k.id, f)?.decimal("fr")?.toFloat() ?: 0f }
     if (enCurso && f.estado == 1 && avance > 0f && avance < 1f) {
         val pct = (avance * 100).toInt().coerceIn(1, 99)
         BarraAvance(avance, Modifier.padding(top = 10.dp))
         Pie(if (f.paginas > 0) "Vas por el $pct % · página ${(avance * f.paginas).toInt().coerceAtLeast(1)} de ${f.paginas}" else "Vas por el $pct %", modifier = Modifier.padding(top = 5.dp))
     } else if (f.paginas > 0) Text("${Formato.cifra(f.paginas)} páginas", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
-    NotaCasilla("Se lee en Marfil (en este ordenador o en el móvil), por donde ibas.")
+    NotaCasilla("Se lee en Seshat (en este ordenador o en el móvil), por donde ibas.")
 }
 
 // ---------------------------------------------------------------- las imágenes de las casillas (como Maqueta.kt del móvil)

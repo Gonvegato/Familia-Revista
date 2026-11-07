@@ -72,7 +72,7 @@ fun DialogosGuia(e: Escritos, obra: Doc, frase: Boolean, meta: Boolean, onCerrar
             Text("Elige una cantidad que te parezca casi demasiado fácil. Mejor cumplirla todos los días que abandonar una grande.", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
             FilaOpciones { listOf("150", "300", "500", "1000").forEach { x -> Opcion(x, dia == x) { dia = x } } }
             CampoRevista(dia, { dia = it.filter(Char::isDigit).take(6) }, "Palabras al día")
-            Text("Para empezar, unas 300 (una sugerencia de Cobalto). Siempre puedes subirla.", color = Muted, fontFamily = Body, fontSize = 12.sp)
+            Text("Para empezar, unas 300 (una sugerencia de Thot). Siempre puedes subirla.", color = Muted, fontFamily = Body, fontSize = 12.sp)
         }
     }
 }

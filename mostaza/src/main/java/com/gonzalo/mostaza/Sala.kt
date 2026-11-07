@@ -278,7 +278,7 @@ private fun BarraSala(est: EstadoSala, ctl: ControlSala) {
     LaunchedEffect(Unit) { while (true) { delay(1000L * (60 - (System.currentTimeMillis() / 1000L % 60)).coerceAtLeast(1)); hora = Date() } }
     Column(Modifier.fillMaxWidth().padding(top = MARGEN_V - 20.dp)) {
         Row(Modifier.fillMaxWidth().height(96.dp).padding(horizontal = MARGEN_H).focusGroup(), verticalAlignment = Alignment.CenterVertically) {
-            Text("MOSTAZA", color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, letterSpacing = 3.sp, maxLines = 1)
+            Text("HATHOR", color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, letterSpacing = 3.sp, maxLines = 1)
             Spacer(Modifier.width(48.dp))
             SeccionSala.entries.forEach { s ->
                 val on = s == est.seccion
@@ -424,7 +424,7 @@ private fun InicioSala(est: EstadoSala, ctl: ControlSala) {
             CompositionLocalProvider(LocalBringIntoViewSpec provides remember { TraerAVista(80f, inicio = 60f) }) {
                 Column(Modifier.fillMaxSize().verticalScroll(est.pagina(est.vista)).padding(bottom = 40.dp)) {
                     filas.forEach { f -> FilaPostersSala(f, est, ctl) }
-                    if (!cargando && filas.isNotEmpty() && !d.conTmdb) NotaSala("Para que Mostaza tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Menú → Ajustes → Catálogo.",
+                    if (!cargando && filas.isNotEmpty() && !d.conTmdb) NotaSala("Para que Hathor tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Menú → Ajustes → Catálogo.",
                         Modifier.padding(horizontal = MARGEN_H, vertical = 24.dp).widthIn(max = 1300.dp), tam = 20.sp)
                 }
             }
@@ -460,12 +460,12 @@ private fun Cartel(b: MetaBreve?, modifier: Modifier) {
 @Composable
 private fun PanelMenu(est: EstadoSala, ctl: ControlSala, tele: Boolean) {
     val ctx = LocalContext.current
-    Lateral("Menú", "Mostaza · versión $VERSION", alCerrar = { ctl.cierra("menu") }) {
+    Lateral("Menú", "Hathor · versión $VERSION", alCerrar = { ctl.cierra("menu") }) {
         OpcionSala("Ajustes", "m:0", "La apariencia, el catálogo (TMDB), el reproductor, las fuentes y tu cuenta") { ctl.cierra("menu"); est.pagina = Destino.Ajustes }
         OpcionSala("Addons", "m:1", "Los addons de Stremio que usas: catálogos, fuentes y subtítulos") { ctl.cierra("menu"); est.pagina = Destino.Addons }
         OpcionSala("Biblioteca", "m:2", "Viendo, Pendiente, Visto y Abandonado") { ctl.cierra("menu"); est.pila.clear(); ctl.foco.cierra("ficha"); ctl.seccion(SeccionSala.BIBLIOTECA) }
         OpcionSala("Buscar", "m:3") { ctl.cierra("menu"); est.pila.clear(); ctl.foco.cierra("ficha"); ctl.seccion(SeccionSala.BUSCAR) }
-        if (!tele) OpcionSala("Salir de la sala", "m:4", "Volver a la Mostaza de siempre (en Ajustes → Avanzado se vuelve a la sala)") { ctl.cierra("menu"); Sala.ponEnTablet(ctx, false) }
+        if (!tele) OpcionSala("Salir de la sala", "m:4", "Volver a la Hathor de siempre (en Ajustes → Avanzado se vuelve a la sala)") { ctl.cierra("menu"); Sala.ponEnTablet(ctx, false) }
     }
 }
 

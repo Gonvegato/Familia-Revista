@@ -34,7 +34,7 @@ fun interface Red {
  * servidores de listas lo hacen, y Java no lo hace solo), pide el cuerpo comprimido y lo descomprime al leer, y traduce los fallos a
  * textos sin la dirección.
  */
-class RedJava(private val agente: String = "Cobre", private val conectar: Int = 20_000, private val leer: Int = 60_000) : Red {
+class RedJava(private val agente: String = "Nut", private val conectar: Int = 20_000, private val leer: Int = 60_000) : Red {
     override fun abre(url: String, cabeceras: Map<String, String>): Respuesta {
         var u = url
         repeat(8) {

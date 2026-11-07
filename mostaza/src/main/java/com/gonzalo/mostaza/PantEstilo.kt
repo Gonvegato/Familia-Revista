@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.4.2"
+const val VERSION = "0.5.0"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Catálogo · Reproductor · Fuentes · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
@@ -40,7 +40,7 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}) {
     EspejoCuenta.version
     val mg = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
-        RevistaTopBar(alVolver, "Mostaza")
+        RevistaTopBar(alVolver, "Hathor")
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
@@ -59,8 +59,8 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}) {
         Spacer(Modifier.height(26.dp))
         Filete(3.dp)
         Spacer(Modifier.height(10.dp))
-        Etiqueta("Mostaza $VERSION")
-        Text("Mostaza es hermana de Azabache, Hiedra, Marfil y Cobalto. Habla el protocolo abierto de los addons de Stremio; reproduce con AndroidX Media3 (Apache 2.0). " + Tmdb.AVISO_TMDB,
+        Etiqueta("Hathor $VERSION")
+        Text("Hathor es hermana de Jonsu, Bastet, Seshat y Thot. Habla el protocolo abierto de los addons de Stremio; reproduce con AndroidX Media3 (Apache 2.0). " + Tmdb.AVISO_TMDB,
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
     }
@@ -119,7 +119,7 @@ private fun SeccionFuentes(alAddons: () -> Unit) {
     var p by remember { mutableStateOf(AjustesElector.prefs(ctx)) }
     LaunchedEffect(EspejoCuenta.version) { p = AjustesElector.prefs(ctx) }
     fun pon(n: PrefsElector) { p = n; AjustesElector.pon(ctx, n) }
-    Text("Al pulsar «Reproducir», Mostaza mira las fuentes de todos tus addons y pone la mejor para ti: primero tu idioma (en el orden de abajo), luego la mejor calidad que cabe en tu conexión y que este dispositivo sabe reproducir, luego las directas o de tu debrid antes que los torrents, y por último el orden de tus addons. La lista entera está a un toque («Cambiar»).",
+    Text("Al pulsar «Reproducir», Hathor mira las fuentes de todos tus addons y pone la mejor para ti: primero tu idioma (en el orden de abajo), luego la mejor calidad que cabe en tu conexión y que este dispositivo sabe reproducir, luego las directas o de tu debrid antes que los torrents, y por último el orden de tus addons. La lista entera está a un toque («Cambiar»).",
         color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
     var auto by remember { mutableStateOf(AjustesElector.auto(ctx)) }
     Fila("Elegir sola", "Si no, «Reproducir» te enseña la lista.") { Interruptor(auto) { auto = it; AjustesElector.ponAuto(ctx, it) } }
@@ -178,7 +178,7 @@ private fun SeccionCuenta() {
     var aviso by remember { mutableStateOf<String?>(null) }
     Antetitulo("Tu cuenta", Modifier.padding(bottom = 4.dp))
     if (!Cuenta.vinculada) {
-        Text("La misma de Azabache y las demás: si ya has entrado en una, Mostaza entra sola. Tu biblioteca, lo que ves, tus addons y todo lo que eliges viajan con ella.",
+        Text("La misma de Jonsu y las demás: si ya has entrado en una, Hathor entra sola. Tu biblioteca, lo que ves, tus addons y todo lo que eliges viajan con ella.",
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Usuario", usuario, "tu usuario") { usuario = it }
         CampoRevista("Contraseña", clave, "••••••••", secreto = true) { clave = it }
@@ -202,12 +202,12 @@ private fun SeccionCuenta() {
             if (!ocupado) { ocupado = true; ambito.launch { SincroP.sincronizar(ctx); ocupado = false } }
         }
         Filete(1.dp, Line)
-        MagLink("Salir de la cuenta", "Solo en Mostaza y solo en este dispositivo") { Cuenta.salir() }
+        MagLink("Salir de la cuenta", "Solo en Hathor y solo en este dispositivo") { Cuenta.salir() }
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Las hermanas", Modifier.padding(bottom = 4.dp))
-    Text("Azabache valora lo que ves aquí (la nota y la reseña van en la misma ficha de tu cuenta). Lo que tenía Azabache de películas y series ya es de Mostaza.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+    Text("Jonsu valora lo que ves aquí (la nota y la reseña van en la misma ficha de tu cuenta). Lo que tenía Jonsu de películas y series ya es de Hathor.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     Hermanas.TODAS.forEach { (n, p) -> if (Hermanas.instalada(ctx, p)) MagLink("Abrir $n") { Hermanas.abre(ctx, p) } }
 }
 
@@ -226,7 +226,7 @@ private fun SeccionAvanzado() {
     if (!Sala.esTele(ctx)) {
         Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
         Antetitulo("La sala", Modifier.padding(bottom = 4.dp))
-        Fila("Modo sala", "Mostaza como en la tele: a pantalla completa, con portadas grandes y todo con la cruceta de un mando. Para una tablet con un mando o conectada a la tele. Solo en este dispositivo; se sale desde su menú.") {
+        Fila("Modo sala", "Hathor como en la tele: a pantalla completa, con portadas grandes y todo con la cruceta de un mando. Para una tablet con un mando o conectada a la tele. Solo en este dispositivo; se sale desde su menú.") {
             Interruptor(Sala.enTablet) { Sala.ponEnTablet(ctx, it) }
         }
     }
@@ -247,16 +247,16 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Mostaza-<versión>.apk) y se instala sin preguntar cuando no la usas (nunca con algo en marcha ni con la pantalla apagada).") {
+    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Hathor-<versión>.apk) y se instala sin preguntar cuando no la usas (nunca con algo en marcha ni con la pantalla apagada).") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     if (android.os.Build.VERSION.SDK_INT >= 33) {
         var avisos by remember { mutableStateOf(ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
         val pedirAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { avisos = it }
-        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte de una versión nueva que Android no deja instalar sola, y para volver a abrir Mostaza al terminar") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte de una versión nueva que Android no deja instalar sola, y para volver a abrir Hathor al terminar") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (!KDrive.on(ctx)) {
-        Text("El token de kDrive es de tu cuenta: se pone una vez en Azabache (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("El token de kDrive es de tu cuenta: se pone una vez en Jonsu (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     } else {
         val vers = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
         Text("Versión instalada: $vers" + if (estado.isNotBlank()) " · última comprobación: $estado" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
@@ -266,7 +266,7 @@ private fun SeccionActualizaciones() {
         Filete(1.dp, Line)
         MagLink("Solo comprobar") { if (!ocupado) { ocupado = true; ambito.launch { withContext(Dispatchers.IO) { Actualizador.comprueba(ctx, manual = true) }; ocupado = false } } }
         Filete(1.dp, Line)
-        MagLink(if (sobre) "Tras actualizar, Mostaza se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
+        MagLink(if (sobre) "Tras actualizar, Hathor se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
     }
@@ -282,8 +282,8 @@ fun AvisoActualizacion() {
     if (luego) return
     AlertDialog(
         onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Mostaza tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Mostaza instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
+        title = { Text("Hathor tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Hathor instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }

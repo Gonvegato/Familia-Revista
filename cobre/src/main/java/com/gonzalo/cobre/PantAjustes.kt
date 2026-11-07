@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.2.1"
+const val VERSION = "0.3.0"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Reproductor · Guía · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
@@ -33,7 +33,7 @@ fun PantAjustes(alVolver: () -> Unit, alListas: () -> Unit = {}) {
     EspejoCuenta.version
     val mg = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
-        RevistaTopBar(alVolver, "Cobre")
+        RevistaTopBar(alVolver, "Nut")
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
@@ -51,8 +51,8 @@ fun PantAjustes(alVolver: () -> Unit, alListas: () -> Unit = {}) {
         Spacer(Modifier.height(26.dp))
         Filete(3.dp)
         Spacer(Modifier.height(10.dp))
-        Etiqueta("Cobre $VERSION")
-        Text("Cobre es hermana de Azabache, Mostaza, Hiedra, Marfil y Cobalto. Es un reproductor: no trae canales ni listas, los pones tú. Reproduce con AndroidX Media3 (Apache 2.0) y, para el sonido que tu aparato no sepa, con FFmpeg (el decodificador de Jellyfin, GPL-3.0).",
+        Etiqueta("Nut $VERSION")
+        Text("Nut es hermana de Jonsu, Hathor, Bastet, Seshat y Thot. Es un reproductor: no trae canales ni listas, los pones tú. Reproduce con AndroidX Media3 (Apache 2.0) y, para el sonido que tu aparato no sepa, con FFmpeg (el decodificador de Jellyfin, GPL-3.0).",
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
     }
@@ -78,7 +78,7 @@ private fun SeccionReproductor() {
     Antetitulo("En directo", Modifier.padding(bottom = 4.dp))
     Fila("Volver a conectar solo", "Si un canal se corta, se vuelve a conectar (hasta seis veces, cada vez esperando un poco más).") { Interruptor(AjustesReproductor.reconectar(ctx)) { x -> cambia { AjustesReproductor.ponReconectar(ctx, x) } } }
     Fila("Arriba, el canal anterior", "Como en muchas teles. Si no, arriba en el mando es el siguiente.") { Interruptor(AjustesReproductor.invertirCanales(ctx)) { x -> cambia { AjustesReproductor.ponInvertirCanales(ctx, x) } } }
-    Fila("Al abrir, el último canal", "Cobre se abre con lo último que viste, como una tele.") { Interruptor(AjustesDirecto.alAbrir(ctx)) { x -> cambia { AjustesDirecto.ponAlAbrir(ctx, x) } } }
+    Fila("Al abrir, el último canal", "Nut se abre con lo último que viste, como una tele.") { Interruptor(AjustesDirecto.alAbrir(ctx)) { x -> cambia { AjustesDirecto.ponAlAbrir(ctx, x) } } }
     val ordenes = AjustesDirecto.Orden.entries
     MagChoice(ordenes.map { it.nombre }, ordenes.indexOf(AjustesDirecto.orden(ctx)), "El orden de los canales") { i -> cambia { AjustesDirecto.ponOrden(ctx, ordenes[i]) } }
     Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
@@ -89,7 +89,7 @@ private fun SeccionReproductor() {
     val otros = remember { Reproducir.otros(ctx) }
     val ops = listOf("" to "Preguntar") + otros
     MagChoice(ops.map { it.second }, ops.indexOfFirst { it.first == AjustesReproductor.externo(ctx) }.coerceAtLeast(0), "Abrir con otro reproductor") { i -> cambia { AjustesReproductor.ponExterno(ctx, ops[i].first) } }
-    Text("«Abrir con otro reproductor» le pasa a esa app la dirección de lo que ves, que lleva tu usuario y tu contraseña de la lista: Cobre te lo pregunta cada vez.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+    Text("«Abrir con otro reproductor» le pasa a esa app la dirección de lo que ves, que lleva tu usuario y tu contraseña de la lista: Nut te lo pregunta cada vez.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
 }
 
 @Composable
@@ -120,7 +120,7 @@ private fun SeccionCuenta() {
     var aviso by remember { mutableStateOf<String?>(null) }
     Antetitulo("Tu cuenta", Modifier.padding(bottom = 4.dp))
     if (!Cuenta.vinculada) {
-        Text("La misma de Azabache y las demás: si ya has entrado en una, Cobre entra sola. Tus listas, tus favoritos, lo que ves y todo lo que eliges viajan con ella.",
+        Text("La misma de Jonsu y las demás: si ya has entrado en una, Nut entra sola. Tus listas, tus favoritos, lo que ves y todo lo que eliges viajan con ella.",
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Usuario", usuario, "tu usuario", teclado = KeyboardType.Text) { usuario = it }
         CampoRevista("Contraseña", clave, "••••••••", secreto = true) { clave = it }
@@ -144,12 +144,12 @@ private fun SeccionCuenta() {
             if (!ocupado) { ocupado = true; ambito.launch { SincroP.sincronizar(ctx); ocupado = false } }
         }
         Filete(1.dp, Line)
-        MagLink("Salir de la cuenta", "Solo en Cobre y solo en este dispositivo") { Cuenta.salir() }
+        MagLink("Salir de la cuenta", "Solo en Nut y solo en este dispositivo") { Cuenta.salir() }
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Las hermanas", Modifier.padding(bottom = 4.dp))
-    Text("Lo que ves en Cobre se queda en Cobre (en tu cuenta): las películas y las series de tus listas no pasan a la biblioteca de Mostaza.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+    Text("Lo que ves en Nut se queda en Nut (en tu cuenta): las películas y las series de tus listas no pasan a la biblioteca de Hathor.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     Hermanas.TODAS.forEach { (n, p) -> if (Hermanas.instalada(ctx, p)) MagLink("Abrir $n") { Hermanas.abre(ctx, p) } }
 }
 
@@ -188,16 +188,16 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Cobre-<versión>.apk) y se instala sin preguntar cuando no la usas (nunca con algo en marcha ni con la pantalla apagada).") {
+    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Nut-<versión>.apk) y se instala sin preguntar cuando no la usas (nunca con algo en marcha ni con la pantalla apagada).") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     if (android.os.Build.VERSION.SDK_INT >= 33) {
         var avisos by remember { mutableStateOf(ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
         val pedirAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { avisos = it }
-        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte de una versión nueva que Android no deja instalar sola, y para volver a abrir Cobre al terminar") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte de una versión nueva que Android no deja instalar sola, y para volver a abrir Nut al terminar") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (!KDrive.on(ctx)) {
-        Text("El token de kDrive es de tu cuenta: se pone una vez en Azabache (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("El token de kDrive es de tu cuenta: se pone una vez en Jonsu (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     } else {
         val vers = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
         Text("Versión instalada: $vers" + if (estado.isNotBlank()) " · última comprobación: $estado" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
@@ -207,7 +207,7 @@ private fun SeccionActualizaciones() {
         Filete(1.dp, Line)
         MagLink("Solo comprobar") { if (!ocupado) { ocupado = true; ambito.launch { withContext(Dispatchers.IO) { Actualizador.comprueba(ctx, manual = true) }; ocupado = false } } }
         Filete(1.dp, Line)
-        MagLink(if (sobre) "Tras actualizar, Cobre se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
+        MagLink(if (sobre) "Tras actualizar, Nut se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
     }
@@ -223,8 +223,8 @@ fun AvisoActualizacion() {
     if (luego) return
     AlertDialog(
         onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Cobre tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Cobre instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
+        title = { Text("Nut tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Nut instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }

@@ -169,7 +169,7 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                             EnlaceRevista(if (t.fav) "★ Favorita" else "☆ Favorita", acento = t.fav) { Biblioteca.ponFavorito(t.ref, !t.fav) }
-                            EnlaceRevista("Quitar de Mostaza") { quitar = true }
+                            EnlaceRevista("Quitar de Hathor") { quitar = true }
                         }
                         val ms = Biblioteca.msVistos(t.ref)
                         if (ms >= 60_000L) MagFact("Visto en total", duracion((ms / 60_000L).toInt()))
@@ -186,13 +186,13 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                         val (nota, resena) = Biblioteca.valoracion(t.ref)
                         if (nota > 0 || resena.isNotBlank() || Hermanas.azabache(ctx)) {
                             Spacer(Modifier.height(14.dp))
-                            Antetitulo("En Azabache", Modifier.padding(bottom = 4.dp))
+                            Antetitulo("En Jonsu", Modifier.padding(bottom = 4.dp))
                             if (nota > 0) Row(verticalAlignment = Alignment.Bottom) {
                                 Text("$nota", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
                                 Text(" / 100", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
                             } else Nota("Sin valorar todavía.")
                             if (resena.isNotBlank()) Text("«$resena»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
-                            if (Hermanas.azabache(ctx)) MagLink("Valorar en Azabache") { Hermanas.abreEnAzabache(ctx, t.ref) }
+                            if (Hermanas.azabache(ctx)) MagLink("Valorar en Jonsu") { Hermanas.abreEnAzabache(ctx, t.ref) }
                         }
                     }
                 }
@@ -234,7 +234,7 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
     if (quitar && t != null) AlertDialog(
         onDismissRequest = { quitar = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Quitar «${t.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text("Se quita de tu biblioteca en todos tus dispositivos y en Azabache. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).", color = Muted, fontFamily = Body) },
+        text = { Text("Se quita de tu biblioteca en todos tus dispositivos y en Jonsu. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({ quitar = false; Biblioteca.quita(t.ref) }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
         dismissButton = { TextButton({ quitar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
     )
@@ -293,7 +293,7 @@ fun PantFuentes(b: MetaBreve, m: Meta?, v: Video?, alCerrar: () -> Unit) {
             if (!terminado) Nota("Preguntando a tus addons…", Modifier.padding(top = 10.dp))
             if (terminado && todas.isEmpty()) Nota("Ninguno de tus addons da fuentes para esto. Los addons de fuentes los pones tú en «Addons» (con tu debrid configurado en el suyo).", Modifier.padding(top = 10.dp))
             e.elegida?.let { c ->
-                Text("Mostaza pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.porGrupo) " (la misma clase que el episodio anterior)" else "") + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
+                Text("Hathor pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.porGrupo) " (la misma clase que el episodio anterior)" else "") + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
                     color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 10.dp))
             }
             val porAddon = todas.groupBy { it.ordenAddon to it.addon }.toSortedMap(compareBy { it.first })

@@ -18,7 +18,7 @@ android {
         minSdk = 29
         targetSdk = 35
         versionCode = 27
-        versionName = "0.4.4"
+        versionName = "0.5.0"
     }
     // Firma fija: cada versión nueva se instala encima de la anterior sin borrar tus obras.
     signingConfigs {

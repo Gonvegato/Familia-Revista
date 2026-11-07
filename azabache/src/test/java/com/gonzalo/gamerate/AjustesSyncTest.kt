@@ -29,7 +29,7 @@ class AjustesSyncTest {
         val data = s.syncData()
         assertTrue("una maqueta que no se ha guardado desde la pantalla no viaja sola", !data.contains("\"j\""))
         assertTrue("el brillo no viaja", !data.contains("\"brightness\""))
-        assertTrue("la letra sí viaja (como en Marfil)", data.contains("\"size\":120"))
+        assertTrue("la letra sí viaja (como en Seshat)", data.contains("\"size\":120"))
 
         // La tablet: otra cosa, con su brillo y su maqueta; llega lo del móvil (más nuevo)
         val g = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE)

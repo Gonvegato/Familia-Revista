@@ -110,9 +110,9 @@ object Reproductor {
         TipoFuente.TORRENT -> if (torrents) Accion.Reproductor else Accion.Aviso(Torrents.AVISO)
         TipoFuente.YOUTUBE -> Accion.Fuera("https://www.youtube.com/watch?v=" + java.net.URLEncoder.encode(f.ytId, "UTF-8"))
         TipoFuente.EXTERNA -> if (f.externalUrl.startsWith("http://") || f.externalUrl.startsWith("https://")) Accion.Fuera(f.externalUrl)
-            else Accion.Aviso("Es un enlace para la app de Stremio («${f.externalUrl.substringBefore('/').take(20)}…»): Mostaza no lo puede abrir.")
-        TipoFuente.NZB -> Accion.Aviso("Todavía no: Mostaza aún no sabe abrir fuentes de Usenet (NZB). Elige otra fuente.")
-        TipoFuente.ARCHIVO -> Accion.Aviso("Todavía no: Mostaza aún no sabe abrir vídeos dentro de archivos comprimidos (RAR, ZIP, 7z…). Elige otra fuente.")
+            else Accion.Aviso("Es un enlace para la app de Stremio («${f.externalUrl.substringBefore('/').take(20)}…»): Hathor no lo puede abrir.")
+        TipoFuente.NZB -> Accion.Aviso("Todavía no: Hathor aún no sabe abrir fuentes de Usenet (NZB). Elige otra fuente.")
+        TipoFuente.ARCHIVO -> Accion.Aviso("Todavía no: Hathor aún no sabe abrir vídeos dentro de archivos comprimidos (RAR, ZIP, 7z…). Elige otra fuente.")
         TipoFuente.NADA -> Accion.Aviso("Esta fuente no trae nada que se pueda ver.")
     }
 

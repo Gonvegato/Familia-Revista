@@ -146,7 +146,7 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
             }
             if (!Cuenta.vinculada) {
                 Spacer(Modifier.height(14.dp))
-                Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Azabache, y Mostaza entra sola). Tu biblioteca, lo que ves y tus addons van con tu cuenta.")
+                Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Hathor entra sola). Tu biblioteca, lo que ves y tus addons van con tu cuenta.")
             }
             d.destacado?.let { Destacado(it, alAbrir) }
             if (viendo.isNotEmpty()) FilaPosters("Seguir viendo", viendo.map { it.breve() }, alAbrir, verTodo = { alIr(Destino.Viendo) },
@@ -165,7 +165,7 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
             } else when (val f = filas) {
                 null -> Nota("Mirando tus catálogos…", Modifier.padding(top = 26.dp))
                 else -> {
-                    Nota("Para que Mostaza tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).tocable { alIr(Destino.Ajustes) })
+                    Nota("Para que Hathor tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).tocable { alIr(Destino.Ajustes) })
                     if (f.isEmpty()) Nota("Tus addons no dan ningún catálogo ahora mismo (sin conexión, o no tienen). Añade addons en «Addons».", Modifier.padding(top = 26.dp))
                     f.forEach { fila -> FilaPosters(fila.titulo, fila.cosas.take(30), alAbrir, sub = { it.ano }) }
                 }
@@ -174,11 +174,11 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
                 Spacer(Modifier.height(10.dp))
                 MagLink("Explorar los catálogos", "Películas y series de tus addons", accent = true) { alIr(Destino.Explorar) }
             }
-            Text("Mostaza · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
+            Text("Hathor · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
-        BarraPlegada("Mostaza", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Explorar", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Explorar) } }
+        BarraPlegada("Hathor", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Explorar", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Explorar) } }
     }
 }
 

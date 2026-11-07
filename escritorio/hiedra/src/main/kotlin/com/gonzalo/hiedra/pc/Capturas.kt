@@ -112,7 +112,7 @@ object Capturas {
     }
 
     /** Donde van las capturas de Hiedra: `Imágenes/Hiedra`. */
-    fun carpeta(): File = File(imagenes(), "Hiedra")
+    fun carpeta(): File = File(imagenes(), "Bastet")
 
     // ---------------------------------------------------------------- las de este ordenador
 
@@ -175,7 +175,7 @@ object Capturas {
         // A tu kDrive, en segundo plano
         if (AjustesTuPc.capturasAKDrive && LaFamilia.iniciada && LaFamilia.dentro) Thread({ runCatching { aKDrive(img.bytes, nombre, p?.nombre) } }, "hiedra-captura-kdrive").apply { isDaemon = true; start() }
         // A la cuenta, por trozos, para que el móvil la baje tal cual (sin recomprimir)
-        if (aLaCuenta) sube(id, img, nombre, por ?: "Hiedra", p)
+        if (aLaCuenta) sube(id, img, nombre, por ?: "Bastet", p)
         return h
     }
 

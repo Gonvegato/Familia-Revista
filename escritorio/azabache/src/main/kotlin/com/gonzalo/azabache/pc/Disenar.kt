@@ -305,7 +305,7 @@ private fun Inspector(
                 MagLink("Datos y nota", accent = true) { onDatos() }
                 if (aviso.isNotBlank()) Text(aviso, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 14.dp))
                 Spacer(Modifier.height(20.dp))
-                NotaCasilla("Se guarda solo, en tu cuenta: la página se ve igual en el Azabache del móvil. Esc o «Listo» vuelven a leerla.")
+                NotaCasilla("Se guarda solo, en tu cuenta: la página se ve igual en el Jonsu del móvil. Esc o «Listo» vuelven a leerla.")
                 return@Column
             }
             val (i, j) = p

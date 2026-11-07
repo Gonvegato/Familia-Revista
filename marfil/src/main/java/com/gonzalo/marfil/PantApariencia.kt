@@ -122,23 +122,23 @@ fun SeccionApariencia() {
     SelectorLetra("Letra del texto", Skin.body.takeIf { it != "Atrio" }.orEmpty(), remember { (BODY_FONTS + DISPLAY_FONTS).map { it.name }.distinct() }) { Skin.body = it.ifBlank { "Atrio" }; guarda() }
 
     // ---- Colores de Atrio (en directo)
-    Seccion("Colores de Azabache, en directo")
-    Text("Usa los colores que tienes ahora en Azabache en este móvil (los que cambies allí cambian aquí), con la opción de ponerlos del revés.", color = Muted, fontFamily = Body, fontSize = 13.sp)
-    Etiqueta("Seguir a Azabache", Modifier.padding(top = 10.dp))
+    Seccion("Colores de Jonsu, en directo")
+    Text("Usa los colores que tienes ahora en Jonsu en este móvil (los que cambies allí cambian aquí), con la opción de ponerlos del revés.", color = Muted, fontFamily = Body, fontSize = 13.sp)
+    Etiqueta("Seguir a Jonsu", Modifier.padding(top = 10.dp))
     MagChoice(listOf("No", "Sí"), if (Skin.origenAtrio) 1 else 0) { i -> Skin.origenAtrio = i == 1; if (i == 1) Skin.fondoId = ""; guarda() }
     if (Skin.origenAtrio) {
         Etiqueta("Invertir", Modifier.padding(top = 6.dp))
         MagChoice(listOf("No", "Sí"), if (Skin.invertido) 1 else 0) { i -> Skin.invertido = i == 1; guarda() }
         LaunchedEffect(Unit) { kotlin.concurrent.thread { TemaAtrio.refrescar(ctx.applicationContext) } }
         Text(
-            if (TemaAtrio.aviso.isNotBlank()) TemaAtrio.aviso + (if (TemaAtrio.tonos != null) " Se usan los últimos colores que se leyeron." else " Mientras tanto, los de Marfil.")
-            else "Marfil lee los colores que tienes ahora en Azabache" + (if (Skin.invertido) " y los pone del revés: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene." else "."),
+            if (TemaAtrio.aviso.isNotBlank()) TemaAtrio.aviso + (if (TemaAtrio.tonos != null) " Se usan los últimos colores que se leyeron." else " Mientras tanto, los de Seshat.")
+            else "Seshat lee los colores que tienes ahora en Jonsu" + (if (Skin.invertido) " y los pone del revés: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene." else "."),
             color = if (TemaAtrio.aviso.isNotBlank()) Acento else Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 4.dp)
         )
     }
 
     // ---- Copiar de Azabache (lo guardado en tu cuenta)
-    Seccion("Copiar de Azabache")
+    Seccion("Copiar de Jonsu")
     SeccionCopiar()
 }
 
@@ -151,12 +151,12 @@ private fun SeccionCopiar() {
     var aviso by remember { mutableStateOf<String?>(null) }
     var ajustes by remember { mutableStateOf<CopiaAtrio.Ajustes?>(null) }
     var marcadas by remember { mutableStateOf(setOf<String>()) }
-    Text("Azabache sube su apariencia a tu cuenta. Aquí la lees y copias solo lo que quieras (no se cambia nada en Azabache).", color = Muted, fontFamily = Body, fontSize = 13.sp)
+    Text("Jonsu sube su apariencia a tu cuenta. Aquí la lees y copias solo lo que quieras (no se cambia nada en Jonsu).", color = Muted, fontFamily = Body, fontSize = 13.sp)
     if (!Cuenta.vinculada) {
         Text("Primero vincula tu cuenta de Atrio (en «Cuenta de Atrio», más abajo).", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
         return
     }
-    MagLink(if (leyendo) "Leyendo…" else "Leer lo que tiene mi Azabache", accent = true) {
+    MagLink(if (leyendo) "Leyendo…" else "Leer lo que tiene mi Jonsu", accent = true) {
         if (!leyendo) {
             leyendo = true; aviso = null
             ambito.launch {
@@ -164,7 +164,7 @@ private fun SeccionCopiar() {
                     val r = withContext(Dispatchers.IO) { CopiaAtrio.leer() }
                     ajustes = r
                     marcadas = r?.let { CopiaAtrio.filas(it).map { f -> f.id }.toSet() } ?: emptySet()
-                    if (r == null) aviso = "Azabache todavía no ha subido su apariencia a tu cuenta (ábrelo y espera a que sincronice)."
+                    if (r == null) aviso = "Jonsu todavía no ha subido su apariencia a tu cuenta (ábrelo y espera a que sincronice)."
                 } catch (e: Exception) { aviso = (e.message ?: "No se pudo leer") }
                 leyendo = false
             }
@@ -182,8 +182,8 @@ private fun SeccionCopiar() {
             }
             Filete(1.dp, Line)
         }
-        MagLink("Copiar lo marcado", "Se aplica a Marfil ahora", accent = true) {
-            if (marcadas.isNotEmpty()) { CopiaAtrio.aplicar(ctx, a, marcadas); aviso = "Copiado a Marfil." }
+        MagLink("Copiar lo marcado", "Se aplica a Seshat ahora", accent = true) {
+            if (marcadas.isNotEmpty()) { CopiaAtrio.aplicar(ctx, a, marcadas); aviso = "Copiado a Seshat." }
         }
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
@@ -197,7 +197,7 @@ fun SelectorLetra(nombre: String, valor: String, opciones: List<String>, onCambi
         Text("Aa", fontFamily = valor.takeIf { it.isNotBlank() }?.let { Skin.family(it) } ?: Display, fontSize = 28.sp, color = Charcoal, modifier = Modifier.width(50.dp))
         Column(Modifier.weight(1f)) {
             Text(nombre, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
-            Text(valor.ifEmpty { "La de Marfil" }, color = Muted, fontFamily = Body, fontSize = 12.sp)
+            Text(valor.ifEmpty { "La de Seshat" }, color = Muted, fontFamily = Body, fontSize = 12.sp)
         }
         if (valor.isNotEmpty()) EnlaceRevista("Quitar", Modifier.padding(end = 12.dp)) { onCambia("") }
         Text("▾", color = Muted, fontSize = 16.sp)
@@ -208,7 +208,7 @@ fun SelectorLetra(nombre: String, valor: String, opciones: List<String>, onCambi
         text = {
             LazyColumn(Modifier.heightIn(max = 460.dp)) {
                 item {
-                    Text("La de Marfil", fontSize = 18.sp, color = if (valor.isEmpty()) Acento else Charcoal, modifier = Modifier.fillMaxWidth().clickable { onCambia(""); abierto = false }.padding(vertical = 10.dp))
+                    Text("La de Seshat", fontSize = 18.sp, color = if (valor.isEmpty()) Acento else Charcoal, modifier = Modifier.fillMaxWidth().clickable { onCambia(""); abierto = false }.padding(vertical = 10.dp))
                 }
                 items(opciones) { o ->
                     // (cada letra se baja de Google Fonts la primera vez: hasta entonces sale con la del sistema)

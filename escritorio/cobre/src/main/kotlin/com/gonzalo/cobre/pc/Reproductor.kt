@@ -184,7 +184,7 @@ object Reproductor {
                 val c = e.canal
                 estado.directo = true; estado.titulo = c.nombre; estado.numero = if (c.numero > 0) c.numero else e.indice + 1; estado.logo = c.logo; estado.subtitulo = c.grupo
                 estado.dur = 0L; estado.ahora = null; estado.despues = null
-                if (c.conDrm) { estado.cargando = false; estado.aviso = "Este canal va cifrado con DRM (Widevine o parecido): Cobre no lo puede abrir."; cliente?.manda("stop"); return }
+                if (c.conDrm) { estado.cargando = false; estado.aviso = "Este canal va cifrado con DRM (Widevine o parecido): Nut no lo puede abrir."; cliente?.manda("stop"); return }
                 url = Tele.url(l, c); cab = Tele.cabeceras(l, c); desde = 0L
                 MiCuenta.ponUltimo(l.id, c)
                 refrescaGuia(e)

@@ -9,7 +9,7 @@ import com.gonzalo.familia.pc.revista.Skin
 fun main(args: Array<String>) {
     val icono = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
         ?.let { runCatching { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }.getOrNull() }
-    appDeLaFamilia("cobre", "Cobre", icono, args = args,
+    appDeLaFamilia("cobre", "Nut", icono, args = args,
         alIniciar = {
             // (sin apariencia tuya todavía, el acento de Cobre, como en el móvil)
             if (Skin.ajustesAt == 0L) Skin.accentId = "cobre"

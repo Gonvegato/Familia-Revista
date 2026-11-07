@@ -92,7 +92,7 @@ fun PantLector(id: String, volver: Pantalla, nav: Nav, ir: String = "", panel: P
             f == null -> Column(Modifier.padding(40.dp)) { VolverRevista({ nav.ir(volver) }); Vacio("No se puede abrir", error) }
             f.extension.lowercase() == "epub" -> LectorEpub(l, f, volver, nav, ir, panel, busqueda)
             f.extension.lowercase() in setOf("pdf", "cbz") -> LectorPaginas(l, f, volver, nav)
-            else -> Column(Modifier.padding(40.dp)) { VolverRevista({ nav.ir(volver) }); Vacio("Este formato no se lee aquí", "Marfil del ordenador lee EPUB, PDF y cómics (CBZ). Ábrelo en el móvil.") }
+            else -> Column(Modifier.padding(40.dp)) { VolverRevista({ nav.ir(volver) }); Vacio("Este formato no se lee aquí", "Seshat del ordenador lee EPUB, PDF y cómics (CBZ). Ábrelo en el móvil.") }
         }
     }
 }

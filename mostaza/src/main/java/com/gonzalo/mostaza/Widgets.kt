@@ -524,7 +524,7 @@ object Widgets {
     private suspend fun seguir(d: WDatos, id: Int, w: Float, h: Float): Pagina {
         val ctx = d.ctx
         val lista = d.viendo
-        if (lista.isEmpty()) return vacio(ctx, "Seguir viendo", "Nada a medias", "Empieza una película o una serie en Mostaza y la tendrás aquí.", w, h)
+        if (lista.isEmpty()) return vacio(ctx, "Seguir viendo", "Nada a medias", "Empieza una película o una serie en Hathor y la tendrás aquí.", w, h)
         val i = Math.floorMod(estado(ctx, id, "i", 0), lista.size)
         val e = lista[i]
         val compacto = w < 200f && h < 200f
@@ -610,7 +610,7 @@ object Widgets {
         val ctx = d.ctx
         val pad = 14f
         val todas = d.pendientes
-        if (todas.isEmpty()) return vacio(ctx, "Pendientes", "Nada pendiente", "Lo que añadas a tu lista en Mostaza aparecerá aquí en fila, lo último primero.", w, h)
+        if (todas.isEmpty()) return vacio(ctx, "Pendientes", "Nada pendiente", "Lo que añadas a tu lista en Hathor aparecerá aquí en fila, lo último primero.", w, h)
         val bajo = h < 150f
         val n = ((w - 2 * pad) / (if (bajo) 140f else 78f)).toInt().coerceIn(1, 6).coerceAtMost(todas.size)
         val items = todas.take(n)
@@ -621,13 +621,13 @@ object Widgets {
         val imgs = items.map { imagen(ctx, it, px(ctx, ch)) }
         val zonas = listOf(
             // La cabecera lleva a la sección entera; cada póster, a su ficha
-            Zona(0f, 0f, w, top, abrirSeccion(ctx, Destino.Pendiente), "Abrir Pendientes en Mostaza"),
+            Zona(0f, 0f, w, top, abrirSeccion(ctx, Destino.Pendiente), "Abrir Pendientes en Hathor"),
             Zona(pad, top, w - 2 * pad, h - top, null, "", listOf(items.map { abrirFicha(ctx, it) to "Abrir ${it.nombre}" }))
         )
         return Pagina(zonas) {
             fondo()
             seccion("Pendientes", pad, pad, w - 2 * pad, tinta, acento)
-            pon(capa("Mostaza", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa("Hathor", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
             items.forEachIndexed { k, e ->
                 val gap = 5f

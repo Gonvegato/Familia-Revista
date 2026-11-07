@@ -368,7 +368,7 @@ private fun RevistaHome(m: ShellModel) {
     // Al bajar, la cabecera se pliega: arriba solo quedan el nombre, «Buscar» y Ajustes
     // (solo cambia al cruzar el umbral: comparar el desplazamiento aquí repintaba la portada entera a cada píxel)
     val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
-    BarraPlegada("Azabache", plegada, Paper2) {
+    BarraPlegada("Jonsu", plegada, Paper2) {
         EnlaceRevista("Buscar") { buscando = true }
         m.profile?.let { f -> IconoRevista(androidx.compose.material.icons.Icons.Rounded.Settings, "Ajustes", f) }
     }

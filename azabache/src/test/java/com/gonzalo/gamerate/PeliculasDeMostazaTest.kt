@@ -90,14 +90,14 @@ class PeliculasDeMostazaTest {
         mostaza.coleccion("progreso").pon("tt0944947:1:1", mapOf("ref" to "tt0944947", "v" to "tt0944947:1:1", "temp" to 1L, "ep" to 1L, "visto" to true))
         mostaza.coleccion("azabache").pon("a_mostaza", mapOf("v" to "[1]", "por" to "mostaza"))
         sincroniza()
-        espera("Azabache lee las de Mostaza") { CosasMostaza.activa(ctx) && store.load(pelis.id).any { it.id == 550L } && store.loadPlays(pelis.id).any { it.name == "Matrix" } }
+        espera("Jonsu lee las de Hathor") { CosasMostaza.activa(ctx) && store.load(pelis.id).any { it.id == 550L } && store.loadPlays(pelis.id).any { it.name == "Matrix" } }
         val club = store.load(pelis.id).single { it.id == 550L }
         assertEquals("El club de la lucha", club.name); assertEquals(85, club.general); assertEquals(90, club.story); assertEquals("La primera regla.", club.review)
         assertEquals("David Fincher", club.creator); assertEquals("Netflix", club.platform); assertEquals(19005L, club.end); assertEquals(139, club.minutes)
-        assertEquals("la de Mostaza: el número de TMDB", 603L, store.loadPlays(pelis.id).single { it.name == "Matrix" }.id)
+        assertEquals("la de Hathor: el número de TMDB", 603L, store.loadPlays(pelis.id).single { it.name == "Matrix" }.id)
         assertEquals(1, store.loadPlays(pelis.id).single { it.name == "Matrix" }.status)
         val got = store.loadPlays(series.id).single()
-        assertEquals(82L, got.id); assertEquals("lo visto en Mostaza manda", listOf(true, false), got.parts.map { it.done })
+        assertEquals(82L, got.id); assertEquals("lo visto en Hathor manda", listOf(true, false), got.parts.map { it.done })
         assertEquals(pelis to 550L, CosasMostaza.buscaRef(ctx, listOf(pelis, series), "tt0137523"))
         // Valoras «Matrix» al terminarla aquí: va al nodo de Mostaza
         val antes = store.loadPlays(pelis.id)

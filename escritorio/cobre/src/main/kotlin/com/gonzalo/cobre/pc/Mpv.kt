@@ -38,7 +38,7 @@ object Mpv {
     /** Lo que se le pide a mpv para empezar (lo demás va por el socket, canal a canal). */
     data class Opciones(
         val audio: List<String> = listOf("spa", "es"), val subs: List<String> = emptyList(),
-        val pantallaCompleta: Boolean = true, val espera: Int = 20, val agente: String = "Cobre",
+        val pantallaCompleta: Boolean = true, val espera: Int = 20, val agente: String = "Nut",
         /** El archivo con las teclas de Cobre para la ventana de mpv ([teclas]); null = las de mpv. */
         val teclas: File? = null,
     )
@@ -60,8 +60,8 @@ object Mpv {
 
     /** Cómo se instala aquí (lo que se enseña si no está). */
     fun comoInstalar(sistema: Sitio.Sistema = Sitio.sistema): String = if (sistema == Sitio.Sistema.MAC)
-        "Cobre ve los canales con mpv. En el Mac se instala con Homebrew: abre la Terminal y escribe «brew install mpv» (si no tienes Homebrew, primero brew.sh). Después vuelve a elegir el canal."
-        else "Cobre ve los canales con mpv. En CachyOS y Arch: «sudo pacman -S mpv» en una terminal (en Ubuntu, Debian o Mint: «sudo apt install mpv»; en Fedora: «sudo dnf install mpv»). Después vuelve a elegir el canal."
+        "Nut ve los canales con mpv. En el Mac se instala con Homebrew: abre la Terminal y escribe «brew install mpv» (si no tienes Homebrew, primero brew.sh). Después vuelve a elegir el canal."
+        else "Nut ve los canales con mpv. En CachyOS y Arch: «sudo pacman -S mpv» en una terminal (en Ubuntu, Debian o Mint: «sudo apt install mpv»; en Fedora: «sudo dnf install mpv»). Después vuelve a elegir el canal."
 
     /**
      * La línea de órdenes de mpv. Sin la dirección ni las cabeceras (van por el socket). [socket]: dónde escucha su IPC. Lo de los
@@ -81,7 +81,7 @@ object Mpv {
         add("--hwdec=auto-safe")
         add("--network-timeout=${o.espera}")
         add("--user-agent=${o.agente}")
-        add("--title=\${media-title} · Cobre")
+        add("--title=\${media-title} · Nut")
         add("--input-gamepad=yes")            // el mando en la ventana de mpv (cambiar de canal con la cruceta)
         o.teclas?.let { add("--input-conf=${it.absolutePath}") }
         if (o.audio.isNotEmpty()) add("--alang=" + o.audio.joinToString(","))
@@ -108,7 +108,7 @@ object Mpv {
         for (n in 0..9) { add("$n" to "numero $n"); add("KP$n" to "numero $n") }
     }
 
-    fun teclas(): String = "# Las teclas de Cobre en la ventana de mpv (lo escribe Cobre cada vez: no lo cambies aquí)\n" +
+    fun teclas(): String = "# Las teclas de Nut en la ventana de mpv (lo escribe Nut cada vez: no lo cambies aquí)\n" +
         TECLAS.joinToString("\n") { (k, que) -> "$k script-message cobre $que" } + "\n"
 
     /** Los idiomas para mpv a partir de tu preferencia (ISO 639: «spa» → «spa,es»; «eng» → «eng,en»). */

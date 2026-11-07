@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.6.4"
+const val VERSION = "0.7.0"
 
 private fun aliasInicio(c: Context) = ComponentName(c, "com.gonzalo.hiedra.InicioAlias")
 private fun esInicio(c: Context) = c.packageManager.getComponentEnabledSetting(aliasInicio(c)) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -54,11 +54,11 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
         if (u != null) mensaje = runCatching { ctx.contentResolver.openOutputStream(u)!!.use { it.write(Biblioteca.aTexto().toByteArray()) }; "Copia guardada" }.getOrElse { "No se pudo guardar la copia" }
     }
     val importar = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { u ->
-        if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Hiedra" }
+        if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Bastet" }
     }
     var pestana by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 20.dp)) {
-        RevistaTopBar(alVolver, "Hiedra")
+        RevistaTopBar(alVolver, "Bastet")
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
@@ -69,12 +69,12 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
             0 -> SeccionApariencia()
             1 -> {
                 Antetitulo("Sistemas", Modifier.padding(bottom = 4.dp))
-                MagLink("Sistemas y emuladores", "Las ${Nucleos.principales.size} consolas que juega Hiedra, el emulador de cada una, sus BIOS y las carpetas de ROMs", onClick = alSistemas)
+                MagLink("Sistemas y emuladores", "Las ${Nucleos.principales.size} consolas que juega Bastet, el emulador de cada una, sus BIOS y las carpetas de ROMs", onClick = alSistemas)
                 Spacer(Modifier.height(26.dp))
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Portadas", Modifier.padding(bottom = 4.dp))
-                Fila("Portadas automáticas", "Busca la caja de cada ROM en thumbnails.libretro.com (se envía el nombre del archivo). Si lo desactivas no sale nada a internet. Azabache enseña esa misma caja mientras no pongas otra portada.") {
+                Fila("Portadas automáticas", "Busca la caja de cada ROM en thumbnails.libretro.com (se envía el nombre del archivo). Si lo desactivas no sale nada a internet. Jonsu enseña esa misma caja mientras no pongas otra portada.") {
                     Interruptor(Ajustes.portadasLibretro) { Ajustes.portadasLibretro = it; Ajustes.guardar(ctx) }
                 }
                 Spacer(Modifier.height(14.dp))
@@ -88,12 +88,12 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
                     owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
                 }
                 MagLink(if (uso) "Tiempo exacto: activado" else "Tiempo exacto: dar permiso",
-                    if (uso) "Hiedra mira cuánto estuvo delante el emulador o el juego (permiso «acceso al uso» de Android). Lo demás no se mira. Al dejar de jugar, las horas se apuntan y suben solas, aunque no vuelvas a Hiedra." else "Sin él, se cuenta todo el rato desde que abres el juego hasta que vuelves a Hiedra (como mucho 12 horas). Con el permiso «acceso al uso» de Android se cuenta solo lo que el emulador o el juego estuvo delante.") { Uso.pedir(ctx) }
+                    if (uso) "Bastet mira cuánto estuvo delante el emulador o el juego (permiso «acceso al uso» de Android). Lo demás no se mira. Al dejar de jugar, las horas se apuntan y suben solas, aunque no vuelvas a Bastet." else "Sin él, se cuenta todo el rato desde que abres el juego hasta que vuelves a Bastet (como mucho 12 horas). Con el permiso «acceso al uso» de Android se cuenta solo lo que el emulador o el juego estuvo delante.") { Uso.pedir(ctx) }
                 Spacer(Modifier.height(14.dp))
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Pantalla de inicio", Modifier.padding(bottom = 4.dp))
-                Fila("Usar Hiedra como launcher", if (inicio) "Hiedra ya puede elegirse como pantalla de inicio del móvil." else "Permite elegir Hiedra como pantalla de inicio (Android te lo pregunta).") {
+                Fila("Usar Bastet como launcher", if (inicio) "Bastet ya puede elegirse como pantalla de inicio del móvil." else "Permite elegir Bastet como pantalla de inicio (Android te lo pregunta).") {
                     Interruptor(inicio) { on ->
                         ctx.packageManager.setComponentEnabledSetting(aliasInicio(ctx), if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
                         inicio = on
@@ -105,7 +105,7 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Tu PC", Modifier.padding(bottom = 4.dp))
                 var galeria by remember { mutableStateOf(Suite.aGaleria()) }
-                Fila("Capturas del PC en la galería", "Las capturas que pides al PC se guardan también en Imágenes/Hiedra (si no, solo dentro de la app).") {
+                Fila("Capturas del PC en la galería", "Las capturas que pides al PC se guardan también en Imágenes/Bastet (si no, solo dentro de la app).") {
                     Interruptor(galeria) { galeria = it; Suite.ponAGaleria(it) }
                 }
             }
@@ -139,8 +139,8 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
         Spacer(Modifier.height(26.dp))
         Filete(3.dp)
         Spacer(Modifier.height(10.dp))
-        Etiqueta("Hiedra $VERSION")
-        Text("Hiedra es hermana de Azabache, Marfil y Cobalto. Los comandos para abrir emuladores salen de ES-DE Frontend (licencia MIT, © Northwestern Software AB, Leon Styhre y Alec Lofquist). Las portadas, de libretro. El jugador interno usa LibretroDroid y RadialGamePad (GPL-3.0, Filippo Scognamiglio) y los núcleos de libretro (mGBA, Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle, Handy, Stella, ProSystem, FinalBurn Neo, Mupen64Plus-Next, PCSX ReARMed, PPSSPP y melonDS, cada uno con su licencia), que no van dentro de la app: se descargan del buildbot de libretro, como en RetroArch. Las consolas y sus mandos son los de Lemuroid. Por eso Hiedra es software libre (GPL-3.0).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Etiqueta("Bastet $VERSION")
+        Text("Bastet es hermana de Jonsu, Seshat y Thot. Los comandos para abrir emuladores salen de ES-DE Frontend (licencia MIT, © Northwestern Software AB, Leon Styhre y Alec Lofquist). Las portadas, de libretro. El jugador interno usa LibretroDroid y RadialGamePad (GPL-3.0, Filippo Scognamiglio) y los núcleos de libretro (mGBA, Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle, Handy, Stella, ProSystem, FinalBurn Neo, Mupen64Plus-Next, PCSX ReARMed, PPSSPP y melonDS, cada uno con su licencia), que no van dentro de la app: se descargan del buildbot de libretro, como en RetroArch. Las consolas y sus mandos son los de Lemuroid. Por eso Bastet es software libre (GPL-3.0).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.height(30.dp))
     }
 }
@@ -222,14 +222,14 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Hiedra-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
+    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Bastet-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     // Android 13 o más: sin el permiso de avisos, «tienes una versión nueva» y «se ha actualizado, toca para abrirla» no se ven nunca
     if (android.os.Build.VERSION.SDK_INT >= 33) {
         var avisos by remember { mutableStateOf(ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
         val pedirAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { avisos = it }
-        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir Hiedra al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir Bastet al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (conectado) {
         var solas by remember { mutableStateOf(NubeP.romsSolas(ctx)) }
@@ -249,12 +249,12 @@ private fun SeccionActualizaciones() {
         }
         val n = faltan
         if (n != null && n > 0) MagLink(if (pedido) "Bajando ${if (n == 1) "la ROM que falta" else "las $n ROMs que faltan"} (con wifi)…" else "Bajar ${if (n == 1) "la ROM que falta" else "las $n ROMs que faltan"} en este móvil",
-            "Las que tienes en tu kDrive y aquí no. A tu carpeta de ROMs, cada una en la de su sistema; solo con wifi, y sigue sola aunque cierres Hiedra.") {
+            "Las que tienes en tu kDrive y aquí no. A tu carpeta de ROMs, cada una en la de su sistema; solo con wifi, y sigue sola aunque cierres Bastet.") {
             if (!pedido) { if (NubeP.carpetaBajadas(ctx) != null) { BajarRomsWorker.programar(ctx); pedido = true } else carpetaRoms.launch(null) }
         }
     }
     if (!conectado) {
-        Text("El token de kDrive es de tu cuenta: se pone una vez en Azabache (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps. Si no lo has puesto aún, puedes pegarlo aquí: en cuanto funcione, pasa a tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("El token de kDrive es de tu cuenta: se pone una vez en Jonsu (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps. Si no lo has puesto aún, puedes pegarlo aquí: en cuanto funcione, pasa a tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Token", token, "token de kDrive", secreto = true) { token = it }
         CampoRevista("kDrive", unidad, "número o dirección") { unidad = it }
         MagLink(if (ocupado) "Comprobando…" else "Conectar", "Comprueba el token y busca tu «Mi carpeta»") {
@@ -279,11 +279,11 @@ private fun SeccionActualizaciones() {
             if (!ocupado) { ocupado = true; ambito.launch { withContext(Dispatchers.IO) { Actualizador.comprueba(ctx, manual = true) }; ocupado = false } }
         }
         Filete(1.dp, Line)
-        MagLink(if (sobre) "Tras actualizar, Hiedra se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
+        MagLink(if (sobre) "Tras actualizar, Bastet se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
-        Text("Para cambiar o quitar el token: Azabache → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
@@ -297,8 +297,8 @@ fun AvisoActualizacion() {
     if (luego) return
     AlertDialog(
         onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Hiedra tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Hiedra instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
+        title = { Text("Bastet tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Bastet instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { Lanzar.aviso(ctx, "No se pudo instalar: ${it.message}") }

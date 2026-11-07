@@ -55,6 +55,6 @@ fun main(args: Array<String>) {
         VentanaHiedra.cerrar()
         Thread.sleep(4000); System.exit(0)
     }, "probar").apply { isDaemon = true; start() }
-    appDeLaFamilia("hiedra", "Hiedra", icono(), alIniciar = { LaFamilia.entrar("gonzalo", "secreto1"); alIniciarHiedra() }, alCerrar = { alCerrarHiedra() }) { AppHiedra(sala = true) }
+    appDeLaFamilia("hiedra", "Bastet", icono(), alIniciar = { LaFamilia.entrar("gonzalo", "secreto1"); alIniciarHiedra() }, alCerrar = { alCerrarHiedra() }) { AppHiedra(sala = true) }
     System.exit(0)
 }

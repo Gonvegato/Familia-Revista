@@ -117,7 +117,7 @@ fun DiarioScreen(
     Column(Modifier.fillMaxSize().wrapContentWidth().widthIn(max = 880.dp).statusBarsPadding().padding(horizontal = if (Skin.revista) 18.dp else 14.dp)) {
         // Como las demás secciones: «← ATRIO» y las acciones arriba; debajo, el título
         Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (onBack != null) VolverRevista(onBack, "Azabache")
+            if (onBack != null) VolverRevista(onBack, "Jonsu")
             Spacer(Modifier.weight(1f))
             if (acc.aviso != null && !soloLectura) EnlaceRevista("Recordarme", Modifier.semantics { contentDescription = "Recordarme escribir" }, onClick = acc.aviso)
             if (onPareja != null) PartnerToggle(viendoPareja, onPareja)
@@ -207,7 +207,7 @@ private fun DiarioDias(
 private fun PalabrasFila(n: Int) {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Rounded.EditNote, null, tint = ColGeneral, modifier = Modifier.size(22.dp))
-        Text("${cifraE(n)} palabras escritas en Cobalto", fontFamily = Display, fontSize = 17.sp, modifier = Modifier.padding(start = 10.dp))
+        Text("${cifraE(n)} palabras escritas en Thot", fontFamily = Display, fontSize = 17.sp, modifier = Modifier.padding(start = 10.dp))
     }
 }
 

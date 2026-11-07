@@ -194,7 +194,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                         val aqui = Archivos.tiene(l.clave)
                         Text((Catalogo.sistema(l.sistema)?.nombre ?: l.sistema) + " · " + (e?.etiqueta ?: "sin emulador"), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
                         val r = e?.resultado
-                        Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Hiedra · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }).uppercase(),
+                        Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Bastet · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }).uppercase(),
                             color = if (aqui && r is Resultado.Ok) Muted else Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
                     TipoLanzador.APP -> { Text("App de Android", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp); Text(l.paquete, color = Muted, fontFamily = Body, fontSize = 12.sp) }
@@ -214,12 +214,12 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
         // Dónde lo dejaste en Hiedra: el estado automático y tus huecos, con su foto (solo si el jugador de Hiedra ya ha guardado alguno)
         if (j.rom != null && Nucleos.para(j.sistema) != null) EstadosDeFicha(j)
         val nota = NotaAzabache.de(notas, j)
-        Casilla("En Azabache", if (NotaAzabache.instalado(ctx)) "Abrir" to { NotaAzabache.abrir(ctx, nota) } else null) {
+        Casilla("En Jonsu", if (NotaAzabache.instalado(ctx)) "Abrir" to { NotaAzabache.abrir(ctx, nota) } else null) {
             if (nota == null) {
                 // Una línea: lo que hay y qué hacer (antes eran dos que decían lo mismo)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
-                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Azabache →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(j.id, 0, "")) }
+                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(j.id, 0, "")) }
                 }
             } else {
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -285,7 +285,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
     if (borrar) AlertDialog(
         onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Quitar «${j.titulo}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (j.rom != null) "Solo se quita de Hiedra: el archivo de la ROM no se toca." else "Solo se quita de Hiedra.", color = Muted, fontFamily = Body) },
+        text = { Text(if (j.rom != null) "Solo se quita de Bastet: el archivo de la ROM no se toca." else "Solo se quita de Bastet.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({ Biblioteca.quitar(j.id); borrar = false; alCerrar() }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
         dismissButton = { TextButton({ borrar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
     )
@@ -309,7 +309,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
     if (sgdb) DialogoSgdb(j, alCerrar = { sgdb = false }) { url ->
         sgdb = false
         scope.launch {
-            val ruta = withContext(Dispatchers.IO) { runCatching { guardarPortadaBytes(ctx, j.id, Internet.descargar(url, "Mozilla/5.0 (Linux; Android 14) Hiedra").first, original = true) }.getOrNull() }
+            val ruta = withContext(Dispatchers.IO) { runCatching { guardarPortadaBytes(ctx, j.id, Internet.descargar(url, "Mozilla/5.0 (Linux; Android 14) Bastet").first, original = true) }.getOrNull() }
             if (ruta == null) Lanzar.aviso(ctx, "No he podido bajar esa portada") else Biblioteca.cambiar(j.id) { it.copy(portada = ruta, zoom = 1f, ox = 0f, oy = 0f) }
         }
     }
@@ -361,8 +361,8 @@ fun SelectorEmulador(sistemaId: String, juego: Juego?, alCerrar: () -> Unit) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState())) {
             Antetitulo(if (juego != null) "Emulador de este juego" else "Emulador", Modifier.padding(bottom = 4.dp), color = Acento, conCuadro = false)
             FitTitle(sistema?.nombre ?: sistemaId, 34.sp, 36.sp, letterSpacing = (-1).sp, maxLines = 2)
-            Cuerpo(if (Nucleos.para(sistemaId)?.alFrente == true) "«Automático» usa Hiedra: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. Los demás emuladores siguen aquí; los que tienes instalados salen marcados."
-                else if (Nucleos.para(sistemaId) != null) "Hiedra juega a esta consola ella misma: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. «Automático» la usa si no tienes otro emulador instalado para ella; si lo tienes, sigue siendo ese hasta que elijas «Hiedra» aquí."
+            Cuerpo(if (Nucleos.para(sistemaId)?.alFrente == true) "«Automático» usa Bastet: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. Los demás emuladores siguen aquí; los que tienes instalados salen marcados."
+                else if (Nucleos.para(sistemaId) != null) "Bastet juega a esta consola ella misma: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. «Automático» la usa si no tienes otro emulador instalado para ella; si lo tienes, sigue siendo ese hasta que elijas «Bastet» aquí."
                 else "Los que ya tienes instalados salen marcados. «Automático» usa uno propio (sin núcleos que descargar) y, si no hay, RetroArch.", tam = 12, modifier = Modifier.padding(vertical = 8.dp))
             Nucleos.para(sistemaId)?.let { n -> BloqueNucleo(n) }
             Filete(2.dp)
@@ -372,11 +372,11 @@ fun SelectorEmulador(sistemaId: String, juego: Juego?, alCerrar: () -> Unit) {
                 else { if (l.isEmpty()) Ajustes.emuladorPorSistema.remove(sistemaId) else Ajustes.emuladorPorSistema[sistemaId] = l; Ajustes.guardar(ctx) }
             }
             Opcion("Automático", "Recomendado", actual.isEmpty(), true, null) { elegir("") }
-            if (evaluados.isEmpty()) Cuerpo("Hiedra todavía no sabe lanzar este sistema.", modifier = Modifier.padding(top = 12.dp))
+            if (evaluados.isEmpty()) Cuerpo("Bastet todavía no sabe lanzar este sistema.", modifier = Modifier.padding(top = 12.dp))
             evaluados.forEach { e ->
                 val r = e.resultado
                 val sub = when {
-                    Lanzar.esInterno(e) -> "El de Hiedra · " + (if (Nucleos.para(sistemaId)!!.pruebas) "en pruebas · " else "") + Nucleos.describir(Nucleos.para(sistemaId)!!, remember(Nucleos.version) { Nucleos.instalado(ctx, Nucleos.para(sistemaId)!!.id) })
+                    Lanzar.esInterno(e) -> "El de Bastet · " + (if (Nucleos.para(sistemaId)!!.pruebas) "en pruebas · " else "") + Nucleos.describir(Nucleos.para(sistemaId)!!, remember(Nucleos.version) { Nucleos.instalado(ctx, Nucleos.para(sistemaId)!!.id) })
                     r is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo en RetroArch" else "Instalado"
                     r is Resultado.Falta -> r.motivo
                     else -> ""
@@ -439,7 +439,7 @@ private fun BloqueNucleo(n: Nucleos.Nucleo) {
         }
     }
     Row(Modifier.padding(top = 6.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        Antetitulo("Núcleo de Hiedra")
+        Antetitulo("Núcleo de Bastet")
         if (n.pruebas) Text("EN PRUEBAS", color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
             modifier = Modifier.padding(start = 10.dp).border(1.dp, Acento, esquina(2.dp)).padding(horizontal = 5.dp, vertical = 1.dp))
     }
@@ -505,7 +505,7 @@ private fun EstadosDeFicha(j: Juego) {
         } }
     }
     if (estados.isEmpty()) return
-    Casilla("Tus partidas en Hiedra") {
+    Casilla("Tus partidas en Bastet") {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             estados.forEach { (h, m, mini) ->
                 Column(Modifier.width(132.dp)) {
@@ -537,7 +537,7 @@ fun DialogoHoras(ms: Long, alAceptar: (Long) -> Unit, alCerrar: () -> Unit) {
                     Column(Modifier.weight(1f)) { Etiqueta("Horas"); Campo(h, "0", { h = it.filter(Char::isDigit).take(5) }) }
                     Column(Modifier.weight(1f)) { Etiqueta("Minutos"); Campo(m, "0", { m = it.filter(Char::isDigit).take(2) }) }
                 }
-                Cuerpo("Hiedra suma solo el tiempo que pasas fuera cuando abres un juego (aproximado). Aquí lo corriges.", tam = 12)
+                Cuerpo("Bastet suma solo el tiempo que pasas fuera cuando abres un juego (aproximado). Aquí lo corriges.", tam = 12)
             }
         },
         confirmButton = { TextButton({ alAceptar((h.toLongOrNull() ?: 0L) * 3_600_000L + (m.toLongOrNull() ?: 0L).coerceAtMost(59L) * 60_000L) }) { Text("GUARDAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
@@ -601,9 +601,9 @@ fun DialogoEditarJuego(j: Juego, alCerrar: () -> Unit, alHoras: () -> Unit, alQu
                 CampoRevista("Nombre", nombre, "nombre del juego") { nombre = it }
                 if (j.sinLanzador) CampoRevista("Plataforma", plataforma, "PC, Switch, PS5…") { plataforma = it }
                 Spacer(Modifier.height(12.dp))
-                MagLink("Corregir las horas", "Hiedra las apunta al volver de jugar; aquí las ajustas", onClick = alHoras)
+                MagLink("Corregir las horas", "Bastet las apunta al volver de jugar; aquí las ajustas", onClick = alHoras)
                 Filete(1.dp, Line)
-                MagLink("Quitar de Hiedra", if (j.rom != null) "La ROM no se toca" else null, onClick = alQuitar)
+                MagLink("Quitar de Bastet", if (j.rom != null) "La ROM no se toca" else null, onClick = alQuitar)
             }
         },
         confirmButton = { TextButton({ if (nombre.isNotBlank()) Biblioteca.cambiar(j.id) { it.copy(titulo = nombre.trim(), plataforma = plataforma.trim()) }; alCerrar() }) { Text("GUARDAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
@@ -628,7 +628,7 @@ private fun SeccionNube(j: Juego) {
     Spacer(Modifier.height(16.dp))
     Antetitulo("En la nube", Modifier.padding(bottom = 8.dp), tam = 12.sp, conCuadro = false)
     if (!listo) {
-        Cuerpo("Para llevarte la partida a otro móvil: vincula tu cuenta de Atrio y conecta tu kDrive (Ajustes). Hiedra sube el guardado al volver de jugar y baja el último antes de jugar.", tam = 12)
+        Cuerpo("Para llevarte la partida a otro móvil: vincula tu cuenta de Atrio y conecta tu kDrive (Ajustes). Bastet sube el guardado al volver de jugar y baja el último antes de jugar.", tam = 12)
     } else {
         val car = NubeP.carpetas[j.sistema]
         MagLink(if (car == null) "Elegir la carpeta de guardados de ${sistema?.corto ?: j.sistema}" else "Carpeta de guardados elegida · cambiar",
@@ -636,7 +636,7 @@ private fun SeccionNube(j: Juego) {
         Filete(1.dp, Line)
         when {
             j.enOtroDispositivo && nube != null -> MagLink("Descargar la ROM de mi kDrive", "A la carpeta de ROMs de este móvil, en la de ${sistema?.corto ?: j.sistema} («Jugar» también la baja)") { bajar = true }
-            j.enOtroDispositivo -> Cuerpo("Esta ROM está en otro de tus móviles y todavía no ha llegado a tu kDrive: se sube sola, con wifi, al abrir Hiedra en ese móvil.", tam = 12)
+            j.enOtroDispositivo -> Cuerpo("Esta ROM está en otro de tus móviles y todavía no ha llegado a tu kDrive: se sube sola, con wifi, al abrir Bastet en ese móvil.", tam = 12)
             nube != null -> Cuerpo("La ROM ya está en tu kDrive: en tus otros móviles, «Jugar» la baja.", tam = 12)
             else -> MagLink(if (ocupado) "Subiendo…" else "Subir la ROM a mi kDrive ahora", if (NubeP.romsSolas(ctx)) "Se sube sola con wifi; esto la sube ya, también con datos" else "Solo a tu kDrive, para tenerla en tus otros móviles") {
                 if (!ocupado && j.uri.isNotBlank()) {

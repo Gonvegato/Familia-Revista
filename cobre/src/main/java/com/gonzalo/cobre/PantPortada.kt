@@ -86,14 +86,14 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
             }
             if (!Cuenta.vinculada) {
                 Spacer(Modifier.height(14.dp))
-                Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Azabache, y Cobre entra sola). Tus listas, tus favoritos y lo que ves van con tu cuenta.")
+                Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Nut entra sola). Tus listas, tus favoritos y lo que ves van con tu cuenta.")
             }
             if (listas.isEmpty()) {
                 Spacer(Modifier.height(26.dp))
                 Antetitulo("Para empezar")
                 Filete(1.dp)
                 Spacer(Modifier.height(10.dp))
-                Text("Cobre no trae canales: es tu reproductor. Pon tu lista M3U (una dirección o un archivo) o el login de tu servidor de Xtream Codes (servidor, usuario y contraseña) y aquí tendrás tus canales con su guía, y, con Xtream, sus películas y series.",
+                Text("Nut no trae canales: es tu reproductor. Pon tu lista M3U (una dirección o un archivo) o el login de tu servidor de Xtream Codes (servidor, usuario y contraseña) y aquí tendrás tus canales con su guía, y, con Xtream, sus películas y series.",
                     color = Charcoal, fontFamily = Display, fontSize = 19.sp, lineHeight = 26.sp)
                 Spacer(Modifier.height(14.dp))
                 BotonAcento("Añadir una lista", modifier = Modifier.focoInicial("vacia")) { alIr(Destino.Listas) }
@@ -135,11 +135,11 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
                     }
                 }
             }
-            Text("Cobre · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
+            Text("Nut · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
-        BarraPlegada("Cobre", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) } }
+        BarraPlegada("Nut", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) } }
     }
 }
 

@@ -45,7 +45,7 @@ fun PantAddons(nav: Nav) {
     }
     Pagina(ancho = 960.dp) {
         CabeceraPagina("De dónde sale todo", "Addons")
-        Cuerpo("Mostaza habla con los addons de Stremio: los catálogos, las fichas, las fuentes y los subtítulos salen de ellos. El de arriba manda en las fichas y sale antes en las fuentes. Tus addons viajan con tu cuenta (son los mismos que en el móvil), pero en su parte secreta (la que solo puedes leer tú: ni siquiera tu pareja), porque sus direcciones pueden llevar la clave de tu debrid.",
+        Cuerpo("Hathor habla con los addons de Stremio: los catálogos, las fichas, las fuentes y los subtítulos salen de ellos. El de arriba manda en las fichas y sale antes en las fuentes. Tus addons viajan con tu cuenta (son los mismos que en el móvil), pero en su parte secreta (la que solo puedes leer tú: ni siquiera tu pareja), porque sus direcciones pueden llevar la clave de tu debrid.",
             Modifier.padding(top = 10.dp), tam = 13)
         Spacer(Modifier.height(10.dp))
         lista.forEachIndexed { i, a ->

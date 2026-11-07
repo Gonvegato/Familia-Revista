@@ -370,16 +370,16 @@ fun SettingsScreen(
         }
 
         SettingsSection("Servicios", 380) {
-            Text("Las claves de aquí (SteamGridDB, Steam, RAWG, IGDB, TMDB y kDrive) son de tu cuenta, en una parte que solo tú puedes leer (tu pareja no): Hiedra, Marfil y Cobalto las usan sin pegarlas otra vez.", color = UiSoft, fontSize = 13.sp)
+            Text("Las claves de aquí (SteamGridDB, Steam, RAWG, IGDB, TMDB y kDrive) son de tu cuenta, en una parte que solo tú puedes leer (tu pareja no): Bastet, Seshat y Thot las usan sin pegarlas otra vez.", color = UiSoft, fontSize = 13.sp)
             Spacer(Modifier.height(10.dp))
-            Text("RAWG (datos de los juegos, en Hiedra)", fontWeight = FontWeight.SemiBold)
-            Plegado("Con una clave gratuita de rawg.io/apidocs, Hiedra saca de RAWG la fecha, el estudio y los géneros de los juegos de consola; aquí se detectan mejor los estudios.")
+            Text("RAWG (datos de los juegos, en Bastet)", fontWeight = FontWeight.SemiBold)
+            Plegado("Con una clave gratuita de rawg.io/apidocs, Bastet saca de RAWG la fecha, el estudio y los géneros de los juegos de consola; aquí se detectan mejor los estudios.")
             OutlinedTextField(rk, { rk = it }, label = { Text("Clave de RAWG") }, singleLine = true,
                 shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(12.dp))
-            Text("IGDB (cuánto dura cada juego, en Hiedra)", fontWeight = FontWeight.SemiBold)
+            Text("IGDB (cuánto dura cada juego, en Bastet)", fontWeight = FontWeight.SemiBold)
             Plegado(
-                "Da el tiempo que tardan sus jugadores en pasarse cada juego: deprisa, normal y al 100 %. Hiedra se lo pone a cada juego. Es gratis y va con una cuenta de Twitch " +
+                "Da el tiempo que tardan sus jugadores en pasarse cada juego: deprisa, normal y al 100 %. Bastet se lo pone a cada juego. Es gratis y va con una cuenta de Twitch " +
                     "(con verificación en dos pasos): en dev.twitch.tv/console registra una aplicación con cualquier nombre, " +
                     "URL de redirección «http://localhost», categoría «Application Integration» y tipo «Confidencial». Copia aquí su Client ID y un secreto nuevo. " +
                     "Sin esto se usa la media de horas de RAWG, o la pones a mano."
@@ -413,7 +413,7 @@ fun SettingsScreen(
         SettingsSection("Steam", 390) {
             Text("Horas de Steam", fontWeight = FontWeight.SemiBold)
             Plegado(
-                "La clave y el perfil de Steam los usa Hiedra para traer tus horas (viajan con tu cuenta). Aquí también se copian en tus juegos, solo si Steam tiene más. " +
+                "La clave y el perfil de Steam los usa Bastet para traer tus horas (viajan con tu cuenta). Aquí también se copian en tus juegos, solo si Steam tiene más. " +
                     "Necesitas una clave en steamcommunity.com/dev/apikey y que los detalles de juego de tu perfil sean públicos."
             )
             OutlinedTextField(sk, { sk = it }, label = { Text("Clave de Steam") }, singleLine = true,
@@ -479,7 +479,7 @@ fun SettingsScreen(
             // La versión sale del propio APK (antes estaba escrita a mano y se quedó en 3.6)
             val actx = androidx.compose.ui.platform.LocalContext.current
             val ver = remember { try { actx.packageManager.getPackageInfo(actx.packageName, 0).versionName } catch (e: Exception) { null } ?: "" }
-            Text("Azabache $ver", fontWeight = FontWeight.SemiBold)
+            Text("Jonsu $ver", fontWeight = FontWeight.SemiBold)
             Text(
                 "Portadas de juegos: SteamGridDB. Libros: Open Library y Google Books. Películas: TMDB (este producto usa la API de TMDB, pero TMDB no lo respalda ni lo certifica). Series: TVmaze (CC BY-SA). Recomendaciones: RAWG. Letras: Fraunces e Inter (SIL Open Font License).",
                 color = UiSoft, fontSize = 13.sp
@@ -867,7 +867,7 @@ private fun LocalArt(game: Game, hasHero: Boolean, hero: Boolean, onTarget: (Boo
             Text("ESTÁ EN OTRO DISPOSITIVO TUYO", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
             Spacer(Modifier.height(6.dp))
             val otros = Suite.phones()
-            if (otros.isEmpty()) Text("Abre Azabache en el móvil donde elegiste esta foto y podrás descargarla aquí, en su calidad original.", color = Muted, fontSize = 13.sp)
+            if (otros.isEmpty()) Text("Abre Jonsu en el móvil donde elegiste esta foto y podrás descargarla aquí, en su calidad original.", color = Muted, fontSize = 13.sp)
             otros.forEach { d ->
                 OutlinedButton({
                     if (bajando != null) return@OutlinedButton
@@ -887,7 +887,7 @@ private fun LocalArt(game: Game, hasHero: Boolean, hero: Boolean, onTarget: (Boo
         Spacer(Modifier.height(12.dp))
         Text(
             (if (hero) "Se recorta a lo ancho, como los fondos. " else "Se recorta en vertical, como las portadas. ") +
-                "La imagen se guarda en este dispositivo y no se sube a internet: tu pareja no la verá. Tus otros dispositivos (el PC, la tableta) pueden descargarla mientras tengas Azabache abierta aquí.",
+                "La imagen se guarda en este dispositivo y no se sube a internet: tu pareja no la verá. Tus otros dispositivos (el PC, la tableta) pueden descargarla mientras tengas Jonsu abierta aquí.",
             color = Muted, fontSize = 12.sp
         )
     }

@@ -231,7 +231,7 @@ fun VisorCaptura(shot: Shot, alCerrar: () -> Unit, alBorrar: () -> Unit) {
     if (ask) AlertDialog(
         onDismissRequest = { ask = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Borrar la captura?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text("Se borra de Hiedra. Si se guardó en la galería, allí se queda; y en el PC sigue en Imágenes/Atrio.", color = Muted, fontFamily = Body) },
+        text = { Text("Se borra de Bastet. Si se guardó en la galería, allí se queda; y en el PC sigue en Imágenes/Atrio.", color = Muted, fontFamily = Body) },
         confirmButton = { BotonDialogo("Borrar", true) { ask = false; alBorrar() } },
         dismissButton = { BotonDialogo("Cancelar") { ask = false } }
     )
@@ -252,8 +252,8 @@ fun HojaJuegoPc(dev: String, g: PcGame, alCerrar: () -> Unit, alAbrir: (Juego) -
                 BotonesJugarPc(g.key) { alCerrar() }
                 Spacer(Modifier.height(14.dp))
                 Filete(1.dp, Line)
-                if (enHiedra != null) MagLink("Ver su ficha en Hiedra", "Está en ${enHiedra.estado.nombre}") { alCerrar(); alAbrir(enHiedra) }
-                else MagLink("Añadir a Hiedra", "Para llevar su estado y verlo en tus secciones") { alCerrar(); alAbrir(JuegosPc.meter(g, dev, aMano = true)) }
+                if (enHiedra != null) MagLink("Ver su ficha en Bastet", "Está en ${enHiedra.estado.nombre}") { alCerrar(); alAbrir(enHiedra) }
+                else MagLink("Añadir a Bastet", "Para llevar su estado y verlo en tus secciones") { alCerrar(); alAbrir(JuegosPc.meter(g, dev, aMano = true)) }
             }
         },
         confirmButton = {}, dismissButton = { BotonDialogo("Cerrar") { alCerrar() } }
@@ -281,7 +281,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
         scope.launch { val (id, m) = Suite.shoot(pc?.dev); if (id == null) Lanzar.aviso(ctx, m) else Suite.awaitLocal(id)?.let { alCaptura(it) }; capturando = false }
     }
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
-        RevistaTopBar(alVolver, "Hiedra") {
+        RevistaTopBar(alVolver, "Bastet") {
             if (pc != null) Row(verticalAlignment = Alignment.CenterVertically) { PuntoDirecto(); Spacer(Modifier.width(6.dp)); Text("CONECTADO", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }
             else Text(Suite.state.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
@@ -339,7 +339,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                                     PortadaPc(g, Modifier.fillMaxWidth().aspectRatio(PROPORCION_PORTADA))
                                     // (todas las casillas miden lo mismo: dos líneas de nombre y dos de horas, quepan o no en una)
                                     Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                                    Text(listOfNotNull(if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (en) "en Hiedra" else null).joinToString(" · ").uppercase(), color = if (en) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, minLines = 2, maxLines = 2)
+                                    Text(listOfNotNull(if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (en) "en Bastet" else null).joinToString(" · ").uppercase(), color = if (en) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, minLines = 2, maxLines = 2)
                                 }
                             }
                         }
@@ -350,7 +350,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                         Text("${Suite.localShots.size} capturas en este móvil".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f))
                         if (pc != null) EnlaceRevista(if (capturando) "Capturando…" else "Capturar →", acento = true) { captura() }
                     }
-                    Cuerpo("Llegan a su resolución original (PNG, sin pérdida) y, si lo tienes activado en Ajustes, se guardan en Imágenes/Hiedra.", tam = 12)
+                    Cuerpo("Llegan a su resolución original (PNG, sin pérdida) y, si lo tienes activado en Ajustes, se guardan en Imágenes/Bastet.", tam = 12)
                     if (Suite.downloading.isNotEmpty()) { Spacer(Modifier.height(8.dp)); TiraCapturas(emptyList(), "Llegando") { } }
                     LazyVerticalGrid(GridCells.Adaptive(150.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                         items(Suite.localShots, key = { it.id }) { s ->
@@ -408,17 +408,17 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
         val solos = JuegosPc.entraronSolos()
         AlertDialog(
             onDismissRequest = { limpiar = false }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("¿Quitar ${solos.size} de Hiedra?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            title = { Text("¿Quitar ${solos.size} de Bastet?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
             text = {
                 Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
                     Cuerpo("Son juegos del PC que están en Pendiente tal como entraron: nadie les ha cambiado el estado, el nombre, la portada ni la nota. " +
-                        "Se quitan de Hiedra y de Azabache, en todos tus dispositivos. Siguen aquí, en la biblioteca del PC, y puedes volver a añadirlos cuando quieras. " +
+                        "Se quitan de Bastet y de Jonsu, en todos tus dispositivos. Siguen aquí, en la biblioteca del PC, y puedes volver a añadirlos cuando quieras. " +
                         "Lo que quites ya no vuelve solo.")
                     Spacer(Modifier.height(10.dp))
                     solos.sortedBy { Catalogo.norm(it.titulo) }.forEach { Text("· " + it.titulo, color = Charcoal, fontFamily = Body, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 }
             },
-            confirmButton = { BotonDialogo("Quitar", true) { limpiar = false; solos.forEach { Biblioteca.quitar(it.id) }; Lanzar.aviso(ctx, "Quitados de Hiedra: ${solos.size}") } },
+            confirmButton = { BotonDialogo("Quitar", true) { limpiar = false; solos.forEach { Biblioteca.quitar(it.id) }; Lanzar.aviso(ctx, "Quitados de Bastet: ${solos.size}") } },
             dismissButton = { BotonDialogo("Cancelar") { limpiar = false } }
         )
     }

@@ -76,26 +76,26 @@ fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit) {
     LazyColumn(Modifier.fillMaxSize().background(Paper).statusBarsPadding(), contentPadding = PaddingValues(start = margen, end = margen, bottom = 40.dp)) {
         item {
             Column(Modifier.widthIn(max = 1180.dp)) {
-                RevistaTopBar(alVolver, "Hiedra") { EnlaceRevista("+ Carpeta", acento = true, onClick = alAnadirCarpeta) }
+                RevistaTopBar(alVolver, "Bastet") { EnlaceRevista("+ Carpeta", acento = true, onClick = alAnadirCarpeta) }
                 Antetitulo("Sección · ${Catalogo.sistemas.size} sistemas", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
                 FitTitle("Sistemas", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
                 Filete(3.dp)
-                Text("Hiedra juega ella misma a ${Nucleos.principales.size} consolas: baja el núcleo la primera vez, guarda donde lo dejas al salir y lo sube a tu nube para seguir en otro móvil. " +
+                Text("Bastet juega ella misma a ${Nucleos.principales.size} consolas: baja el núcleo la primera vez, guarda donde lo dejas al salir y lo sube a tu nube para seguir en otro móvil. " +
                     "Para el resto, abre los emuladores que ya tienes instalados.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(vertical = 12.dp))
                 Filete(2.dp)
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.weight(1f)) { Antetitulo("Se juegan en Hiedra") }
+                    Box(Modifier.weight(1f)) { Antetitulo("Se juegan en Bastet") }
                     Text("${consolas.count { it.bajado }} BAJADAS", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
                 }
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     consolas.forEach { e -> CasillaConsola(e, anchoCasilla) { abierto = e.id } }
                 }
-                Text("«En pruebas»: núcleos que aún no se han podido probar en un móvil de verdad (3D, discos, arcade). Si tienes otro emulador para ese sistema, «Automático» sigue usándolo; Hiedra, cuando la elijas.",
+                Text("«En pruebas»: núcleos que aún no se han podido probar en un móvil de verdad (3D, discos, arcade). Si tienes otro emulador para ese sistema, «Automático» sigue usándolo; Bastet, cuando la elijas.",
                     color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 12.dp, bottom = 18.dp))
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Carpetas de ROMs", Modifier.padding(bottom = 6.dp))
-                if (Biblioteca.carpetas.isEmpty()) Text("Todavía no has añadido ninguna. Añade la carpeta donde guardas tus ROMs y Hiedra la recorre.", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
+                if (Biblioteca.carpetas.isEmpty()) Text("Todavía no has añadido ninguna. Añade la carpeta donde guardas tus ROMs y Bastet la recorre.", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
                 else Biblioteca.carpetas.forEach { c ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(c.nombre, color = Charcoal, fontFamily = Display, fontSize = 19.sp, modifier = Modifier.weight(1f))

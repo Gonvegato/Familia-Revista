@@ -17,7 +17,7 @@
         <provider android:authorities="com.gonzalo.gamerate.tema" />
     </queries>
     <application
-        android:label="Marfil"
+        android:label="Seshat"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Marfil"

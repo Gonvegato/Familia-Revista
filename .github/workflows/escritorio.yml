@@ -50,15 +50,20 @@ jobs:
             herramientas/escritorio/empaqueta-linux.sh "$d" dist
           done
           ls -la dist
-      - name: El instalar.sh de verdad (instala Hiedra en una carpeta de prueba y mira el menú)
+      - name: El instalar.sh de verdad (instala Bastet en una carpeta de prueba, encima de una de antes con el nombre viejo, y mira el menú)
         run: |
-          mkdir -p /tmp/prueba && tar -C /tmp/prueba -xzf dist/Hiedra-*-linux.tar.gz
-          XDG_DATA_HOME=/tmp/prueba/datos XDG_CONFIG_HOME=/tmp/prueba/config sh /tmp/prueba/instalar.sh --al-iniciar
-          test -x /tmp/prueba/datos/familia-apps/Hiedra/bin/Hiedra
+          mkdir -p /tmp/prueba && tar -C /tmp/prueba -xzf dist/Bastet-*-linux.tar.gz
+          # una instalación de antes (Hiedra): tiene que quedar solo el atajo a la nueva
+          mkdir -p /tmp/prueba/datos/familia-apps/Hiedra/bin /tmp/prueba/datos/familia-apps/Hiedra/lib && touch /tmp/prueba/datos/familia-apps/Hiedra/lib/vieja
+          XDG_DATA_HOME=/tmp/prueba/datos XDG_CONFIG_HOME=/tmp/prueba/config sh /tmp/prueba/instalar.sh --al-iniciar --destino=/tmp/prueba/datos/familia-apps/Hiedra
+          test -x /tmp/prueba/datos/familia-apps/Bastet/bin/Bastet
+          test ! -e /tmp/prueba/datos/familia-apps/Hiedra/lib/vieja
+          grep -q 'familia-apps/Bastet/bin/Bastet' /tmp/prueba/datos/familia-apps/Hiedra/bin/Hiedra
           cat /tmp/prueba/datos/applications/familia-hiedra.desktop
           test -f /tmp/prueba/config/autostart/familia-hiedra.desktop
           # al entrar en la sesión, Hiedra se abre ya en la sala; desde el menú, en su ventana
-          grep -q '^Exec=.*/bin/Hiedra" --sala$' /tmp/prueba/config/autostart/familia-hiedra.desktop
+          grep -q '^Exec=.*/bin/Bastet" --sala$' /tmp/prueba/config/autostart/familia-hiedra.desktop
+          grep -q '^Name=Bastet$' /tmp/prueba/datos/applications/familia-hiedra.desktop
           if grep -q -- '--sala' /tmp/prueba/datos/applications/familia-hiedra.desktop; then echo "el menú no debe llevar --sala"; exit 1; fi
       - name: Cada app se abre en Linux, instalada con su instalar.sh (y una captura de cada una)
         run: |
@@ -119,12 +124,13 @@ jobs:
       - name: Cada app se abre en el Mac (y una captura de cada una)
         run: |
           mkdir -p capturas-mac
+          nombre() { case "$1" in hiedra) echo Bastet ;; marfil) echo Seshat ;; cobalto) echo Thot ;; azabache) echo Jonsu ;; mostaza) echo Hathor ;; cobre) echo Nut ;; *) echo "$(echo ${1:0:1} | tr '[:lower:]' '[:upper:]')${1:1}" ;; esac; }
           export FAMILIA_DIR="$RUNNER_TEMP/familia"
           for d in escritorio/*/; do
             a=$(basename "$d")
             # Solo las apps (familia y json son bibliotecas: no tienen paquete)
             grep -q nativeDistributions "$d/build.gradle.kts" || continue
-            A="$(echo ${a:0:1} | tr '[:lower:]' '[:upper:]')${a:1}"
+            A="$(nombre "$a")"
             b="$d/build/compose/binaries/main/app/$A.app/Contents/MacOS/$A"
             [ -x "$b" ] || { echo "No está $b"; exit 1; }
             # Sin firma de Apple, pero la de la propia app (ad hoc) tiene que ser válida: si no, el Mac dice que «está dañada»
@@ -143,10 +149,11 @@ jobs:
       - name: Con su nombre de versión (App-x.y.z-mac.dmg)
         run: |
           mkdir -p dist
+          nombre() { case "$1" in hiedra) echo Bastet ;; marfil) echo Seshat ;; cobalto) echo Thot ;; azabache) echo Jonsu ;; mostaza) echo Hathor ;; cobre) echo Nut ;; *) echo "$(echo ${1:0:1} | tr '[:lower:]' '[:upper:]')${1:1}" ;; esac; }
           for d in escritorio/*/; do
             a=$(basename "$d"); [ "$a" = familia ] && continue
             [ -d "$d/build/compose/binaries/main/dmg" ] || continue
-            v=$(grep -m1 '^val version' "$d/build.gradle.kts" | cut -d'"' -f2); A="$(echo ${a:0:1} | tr '[:lower:]' '[:upper:]')${a:1}"
+            v=$(grep -m1 '^val version' "$d/build.gradle.kts" | cut -d'"' -f2); A="$(nombre "$a")"
             cp "$d"/build/compose/binaries/main/dmg/*.dmg "dist/$A-$v-mac.dmg"
           done
           ls -la dist

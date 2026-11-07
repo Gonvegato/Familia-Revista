@@ -47,13 +47,13 @@ fun PantAjustes(nav: Nav, inicial: Int = 0, editar: Lista? = null) {
             3 -> {
                 AjustesCuentaFamilia("cobre")
                 Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
-                Antetitulo("Lo de Cobre en tu cuenta", Modifier.padding(bottom = 4.dp))
+                Antetitulo("Lo de Nut en tu cuenta", Modifier.padding(bottom = 4.dp))
                 Cuerpo("Tus listas van en la parte secreta de tu cuenta (ni tu pareja la ve). Tus favoritos y su orden, los grupos que escondes, el último canal, lo visto de cada película y episodio y lo que eliges van también con la cuenta: lo que haces aquí lo sigues en el móvil, en la tablet y en la tele, y al revés. Los canales, el videoclub y la guía se bajan en cada dispositivo (aquí, cifrados con tu llavero).", tam = 13)
             }
             4 -> {
                 Antetitulo("Apariencia")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Cobre del ordenador tiene la apariencia de tu Cobre del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro y el acento.", tam = 14)
+                Cuerpo("Nut del ordenador tiene la apariencia de tu Nut del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro y el acento.", tam = 14)
                 Spacer(Modifier.height(10.dp))
                 MagChoice(listOf("Como el sistema", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
                 Spacer(Modifier.height(10.dp))
@@ -63,7 +63,7 @@ fun PantAjustes(nav: Nav, inicial: Int = 0, editar: Lista? = null) {
                     (listOf("paleta" to "El de la paleta") + ACCENT_COLORS.map { it.id to it.name }).forEach { (id, n) -> FiltroRevista(n, Skin.accentId == id) { Skin.accentId = id; Apariencia.guarda() } }
                 }
             }
-            else -> AjustesVersion("cobre", "Cobre")
+            else -> AjustesVersion("cobre", "Nut")
         }
     }
 }
@@ -84,7 +84,7 @@ private fun AjustesListas(nav: Nav, editar: Lista?) {
     val listas = Listas.lista()
     val e = editando
     if (e != null) { FormularioLista(e) { editando = null }; return }
-    Cuerpo("Tus listas van en tu cuenta, en su parte secreta (ni tu pareja la ve): las tienes en todos tus dispositivos. Los canales, el videoclub y la guía se bajan en cada uno (no van a la cuenta). Cobre no trae ninguna lista ni ningún canal: los pones tú.", tam = 13)
+    Cuerpo("Tus listas van en tu cuenta, en su parte secreta (ni tu pareja la ve): las tienes en todos tus dispositivos. Los canales, el videoclub y la guía se bajan en cada uno (no van a la cuenta). Nut no trae ninguna lista ni ningún canal: los pones tú.", tam = 13)
     Spacer(Modifier.height(10.dp))
     BotonAcento("Añadir una lista") { editando = Lista(DatosCuenta.idNuevo(), "", TipoLista.XTREAM, creada = System.currentTimeMillis()) }
     Spacer(Modifier.height(18.dp))
@@ -265,18 +265,18 @@ private fun AjustesDelReproductor() {
     Antetitulo("mpv", Modifier.padding(bottom = 4.dp))
     if (mpv != null) {
         MagFact("Reproductor", mpv.absolutePath)
-        Cuerpo("Cobre pone los canales, las películas y los episodios en mpv, en su ventana. Allí: ↑ y ↓ (o Re Pág / Av Pág, o la cruceta del mando) cambian de canal, los números van a un canal, Intro (o A) abre la lista de canales con lo que echan, «i» dice qué se emite, Esc sale de la pantalla completa y «q» cierra. En una película: espacio para pausa, ← y → saltan y ↑ y ↓ saltan un minuto.", tam = 13)
+        Cuerpo("Nut pone los canales, las películas y los episodios en mpv, en su ventana. Allí: ↑ y ↓ (o Re Pág / Av Pág, o la cruceta del mando) cambian de canal, los números van a un canal, Intro (o A) abre la lista de canales con lo que echan, «i» dice qué se emite, Esc sale de la pantalla completa y «q» cierra. En una película: espacio para pausa, ← y → saltan y ↑ y ↓ saltan un minuto.", tam = 13)
     } else {
         Cuerpo(Mpv.comoInstalar(), color = Acento, tam = 14)
     }
     Fila("A pantalla completa", "Al abrir mpv (de este ordenador: no viaja).") { var v by remember { mutableStateOf(PantallaCompleta.si()) }; Interruptor(v) { v = it; PantallaCompleta.pon(it) } }
     Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("En directo", Modifier.padding(bottom = 4.dp))
-    Fila("Volver a conectar solo", "Si un canal se corta, Cobre vuelve a conectar (hasta seis veces, esperando cada vez un poco más).") { Interruptor(AjustesReproductor.reconectar()) { AjustesReproductor.ponReconectar(it) } }
+    Fila("Volver a conectar solo", "Si un canal se corta, Nut vuelve a conectar (hasta seis veces, esperando cada vez un poco más).") { Interruptor(AjustesReproductor.reconectar()) { AjustesReproductor.ponReconectar(it) } }
     Fila("Arriba, el canal anterior", "Como en muchas teles (si no, arriba es el siguiente).") { Interruptor(AjustesReproductor.invertirCanales()) { AjustesReproductor.ponInvertirCanales(it) } }
     val ordenes = AjustesDirecto.Orden.entries
     MagChoice(ordenes.map { it.nombre }, ordenes.indexOf(AjustesDirecto.orden()), "El orden de los canales") { AjustesDirecto.ponOrden(ordenes[it]) }
-    Fila("Al abrir Cobre, el último canal", "Como una tele.") { Interruptor(AjustesDirecto.alAbrir()) { AjustesDirecto.ponAlAbrir(it) } }
+    Fila("Al abrir Nut, el último canal", "Como una tele.") { Interruptor(AjustesDirecto.alAbrir()) { AjustesDirecto.ponAlAbrir(it) } }
     Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("La imagen, el audio y los subtítulos", Modifier.padding(bottom = 4.dp))
     val aspectos = AjustesReproductor.Aspecto.entries
@@ -291,5 +291,5 @@ private fun AjustesDelReproductor() {
     val saltos = listOf(5, 10, 15, 30)
     MagChoice(saltos.map { "$it s" }, saltos.indexOf(AjustesReproductor.salto()).coerceAtLeast(1), "Saltar (desde la banda de abajo)") { AjustesReproductor.ponSalto(saltos[it]) }
     Cuerpo("Lo de la imagen, el audio y los subtítulos se le dice a mpv con cada canal; lo de los idiomas, al abrirlo (si lo cambias con algo puesto, vale para lo siguiente). «Ahorrar datos» y «Abrir con otro reproductor» son del móvil.", tam = 12)
-    if (Sitio.sistema == Sitio.Sistema.MAC) Cuerpo("En el Mac vale el mpv de Homebrew. IINA (que lleva mpv dentro) no deja que Cobre le hable: con ella no se cambiaría de canal ni se apuntaría lo visto.", tam = 12)
+    if (Sitio.sistema == Sitio.Sistema.MAC) Cuerpo("En el Mac vale el mpv de Homebrew. IINA (que lleva mpv dentro) no deja que Nut le hable: con ella no se cambiaría de canal ni se apuntaría lo visto.", tam = 12)
 }

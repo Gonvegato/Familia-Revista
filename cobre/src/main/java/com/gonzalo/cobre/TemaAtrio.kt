@@ -46,7 +46,7 @@ object TemaAtrio {
             }
         } catch (e: Exception) { null }
         if (v == null) {
-            aviso = if (instalada(c)) "Azabache no ofrece sus colores todavía: instala una versión más nueva de Azabache." else "Azabache no está instalado en este móvil."
+            aviso = if (instalada(c)) "Jonsu no ofrece sus colores todavía: instala una versión más nueva de Jonsu." else "Jonsu no está instalado en este móvil."
             return false
         }
         val nuevos = tonosDe(v)

@@ -15,8 +15,8 @@
     <string name="w_semana_d">Lo que has leído hoy, tus días seguidos y la semana en barras, con tu objetivo.</string>
     <string name="w_cita">Una cita</string>
     <string name="w_cita_d">Uno de tus subrayados, un día cada uno. Un toque y abres el libro en esa frase.</string>
-    <string name="w_marca">MARFIL</string>
-    <string name="w_marca_d">La cabecera de Marfil, sola sobre tu fondo. Un toque y estás en la portada.</string>
-    <string name="w_marcapapel">MARFIL en papel</string>
-    <string name="w_marcapapel_d">La cabecera de Marfil en su papel: el número del día y la fecha. Un toque y estás en la portada.</string>
+    <string name="w_marca">SESHAT</string>
+    <string name="w_marca_d">La cabecera de Seshat, sola sobre tu fondo. Un toque y estás en la portada.</string>
+    <string name="w_marcapapel">SESHAT en papel</string>
+    <string name="w_marcapapel_d">La cabecera de Seshat en su papel: el número del día y la fecha. Un toque y estás en la portada.</string>
 </resources>

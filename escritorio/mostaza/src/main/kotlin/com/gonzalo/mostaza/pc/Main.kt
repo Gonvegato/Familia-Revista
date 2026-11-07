@@ -7,7 +7,7 @@ import com.gonzalo.familia.pc.appDeLaFamilia
 fun main(args: Array<String>) {
     val icono = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
         ?.let { runCatching { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }.getOrNull() }
-    appDeLaFamilia("mostaza", "Mostaza", icono, args = args,
+    appDeLaFamilia("mostaza", "Hathor", icono, args = args,
         alIniciar = {
             Mando.inicia()
             // (el motor de torrents se mira ya, por detrás: así «Reproducir» sabe enseguida si puede elegir un torrent)

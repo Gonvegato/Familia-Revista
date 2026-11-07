@@ -26,7 +26,7 @@ object Subs {
         if (dest.isFile && dest.length() > 0) return@runCatching dest
         val c = URI(s.url).toURL().openConnection() as HttpURLConnection
         c.connectTimeout = 15_000; c.readTimeout = 30_000
-        c.setRequestProperty("User-Agent", "Mostaza")
+        c.setRequestProperty("User-Agent", "Hathor")
         if (conCabeceras(s.url, f)) f!!.cabeceras.forEach { (k, v) -> c.setRequestProperty(k, v) }
         if (c.responseCode !in 200..299) { c.disconnect(); return@runCatching null }
         val tmp = File(dest.path + ".part")

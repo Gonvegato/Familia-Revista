@@ -135,9 +135,9 @@ class JuegoActivity : ComponentActivity() {
         Actualizador.ocupada++; Actualizador.init(applicationContext)
         iniciar(this); AjustesJuego.cargar(this)
         val j = intent.getStringExtra("id")?.let { Biblioteca.por(it) }
-        if (j == null) { Lanzar.aviso(this, "Ese juego ya no está en Hiedra"); finish(); return }
+        if (j == null) { Lanzar.aviso(this, "Ese juego ya no está en Bastet"); finish(); return }
         val n = Nucleos.para(j.sistema)
-        if (n == null) { Lanzar.aviso(this, "Hiedra todavía no juega a ${Catalogo.sistema(j.sistema)?.nombre ?: j.sistema}"); finish(); return }
+        if (n == null) { Lanzar.aviso(this, "Bastet todavía no juega a ${Catalogo.sistema(j.sistema)?.nombre ?: j.sistema}"); finish(); return }
         juego = j; nucleoDef = n
         entrada.sistema = j.sistema
         aplicarAjustesEntrada()
@@ -233,7 +233,7 @@ class JuegoActivity : ComponentActivity() {
                 val una = faltan.size > 1 && faltan.all { it.grupo != null && it.grupo == faltan[0].grupo }
                 fase = FaseJuego.Error(
                     "${nucleoDef.nombre} necesita " + (if (una) "una de estas BIOS: " else if (faltan.size == 1) "la BIOS " else "estas BIOS: ") +
-                        faltan.joinToString(" · ") { "${it.archivo} (${it.descripcion})" } + ". Elige el archivo: Hiedra lo reconoce y lo deja donde lo busca.",
+                        faltan.joinToString(" · ") { "${it.archivo} (${it.descripcion})" } + ". Elige el archivo: Bastet lo reconoce y lo deja donde lo busca.",
                     "Elegir la BIOS" to { elegirBios.launch(arrayOf("*/*")) })
                 return
             }
@@ -278,7 +278,7 @@ class JuegoActivity : ComponentActivity() {
     private suspend fun bajarDeLaNube(j: Juego): Pair<Juego, File?> {
         val app = applicationContext
         val f = withContext(Dispatchers.IO) { if (Cuenta.vinculada && KDrive.on(app)) runCatching { NubeP.romEnNube(j) }.getOrNull() else null }
-            ?: throw IOException("La ROM de «${j.titulo}» no está en este móvil ni en tu kDrive. Se sube sola, con wifi, al abrir Hiedra en el móvil donde la tienes.")
+            ?: throw IOException("La ROM de «${j.titulo}» no está en este móvil ni en tu kDrive. Se sube sola, con wifi, al abrir Bastet en el móvil donde la tienes.")
         val tmp = NubeP.temporalRom(app, j)
         val vigia = lifecycleScope.launch {
             while (isActive) { fase = FaseJuego.Preparando("Bajando «${f.n}» de tu kDrive…", if (f.s > 0) (tmp.length().toFloat() / f.s).coerceIn(0f, 1f) else null); delay(300) }
@@ -322,7 +322,7 @@ class JuegoActivity : ComponentActivity() {
         val nombre = doc?.name ?: (j.archivo + "." + n.extensiones.first())
         val ext = nombre.substringAfterLast('.', "").lowercase()
         fun abrir() = contentResolver.openInputStream(uri) ?: throw IOException("No se puede leer la ROM")
-        if (ext == "7z") throw IOException("Hiedra no abre archivos .7z: descomprímelo o guárdalo como .zip")
+        if (ext == "7z") throw IOException("Bastet no abre archivos .7z: descomprímelo o guárdalo como .zip")
         val hermanos by lazy { Discos.hermanos(this, uri) }
         if (n.zipEntero) {
             if (ext != "zip") throw IOException("${n.nombre} abre los juegos en .zip, tal cual (con el nombre de su romset)")
@@ -478,7 +478,7 @@ class JuegoActivity : ComponentActivity() {
         // Abierta donde está (sin copiar): hay núcleos y archivos que no se llevan bien con eso; copiándola a Hiedra suele ir
         GLRetroView.ERROR_LOAD_GAME -> if (abiertaDirecta) FaseJuego.Error("${nucleoDef.nombre} no ha podido abrir esta ROM donde está. Se puede probar copiándola antes (tarda más la primera vez).",
                 "Probar copiándola" to { intent.putExtra("copiar", true); recreate() })
-            else FaseJuego.Error("${nucleoDef.nombre} no ha podido abrir esta ROM. ¿Está bien el archivo?" + if (nucleoDef.pruebas) " (Este sistema está en pruebas en Hiedra: en «Emulador» puedes elegir otro.)" else "")
+            else FaseJuego.Error("${nucleoDef.nombre} no ha podido abrir esta ROM. ¿Está bien el archivo?" + if (nucleoDef.pruebas) " (Este sistema está en pruebas en Bastet: en «Emulador» puedes elegir otro.)" else "")
         GLRetroView.ERROR_GL_NOT_COMPATIBLE -> FaseJuego.Error("Este móvil no tiene la versión de OpenGL que necesita ${nucleoDef.nombre}.")
         else -> FaseJuego.Error("El núcleo se ha parado (error $c).")
     }
@@ -548,12 +548,12 @@ class JuegoActivity : ComponentActivity() {
                     val cv = ContentValues().apply {
                         put(MediaStore.Images.Media.DISPLAY_NAME, "$safe ${SimpleDateFormat("yyyy-MM-dd HH.mm.ss", Locale.ROOT).format(Date())}.png")
                         put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Hiedra/$safe")
+                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Bastet/$safe")
                     }
                     val u = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv) ?: error("sin sitio")
                     contentResolver.openOutputStream(u)!!.use { b.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 }.isSuccess
-                runOnUiThread { aviso = if (ok) "Captura guardada en Imágenes/Hiedra" else "No se ha podido guardar la captura" }
+                runOnUiThread { aviso = if (ok) "Captura guardada en Imágenes/Bastet" else "No se ha podido guardar la captura" }
             }
         }, Handler(Looper.getMainLooper()))
     }

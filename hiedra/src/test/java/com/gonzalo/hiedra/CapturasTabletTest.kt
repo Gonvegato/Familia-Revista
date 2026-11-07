@@ -49,7 +49,7 @@ abstract class CapturasTabletBase {
         rule.onNodeWithText("MIS ELEGIDOS").performScrollTo(); foto("t2_estantes")
         rule.onAllNodesWithText("JUGANDO")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("t3_jugando")
         rule.onAllNodesWithText("Pokémon Platino", substring = true, useUnmergedTree = true)[0].performClick(); foto("t4_ficha")
-        pulsar("← VOLVER"); pulsar("← HIEDRA")
+        pulsar("← VOLVER"); pulsar("← BASTET")
         rule.onNodeWithContentDescription("Ajustes").performClick()
         rule.onNodeWithText("JUEGOS").performClick(); rule.waitForIdle()
         rule.onNodeWithText("Sistemas y emuladores", substring = true).performScrollTo().performClick(); foto("t5_sistemas")

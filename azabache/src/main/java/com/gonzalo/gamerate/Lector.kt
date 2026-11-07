@@ -880,7 +880,7 @@ fun BookNotesBox(id: Long, name: String) {
     var all by remember { mutableStateOf(false) }
     val italic = androidx.compose.ui.text.font.FontStyle.Italic
     if (notes.isEmpty()) {
-        Text("Aún no has subrayado nada. Lo que subrayes y anotes en Marfil aparecerá en esta casilla.",
+        Text("Aún no has subrayado nada. Lo que subrayes y anotes en Seshat aparecerá en esta casilla.",
             color = Muted, fontFamily = Display, fontStyle = italic, fontSize = 15.sp, lineHeight = 20.sp)
         return
     }

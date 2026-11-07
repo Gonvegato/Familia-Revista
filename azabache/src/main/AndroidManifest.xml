@@ -26,7 +26,7 @@
         </intent>
     </queries>
     <application
-        android:label="Azabache"
+        android:label="Jonsu"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Ronron"
@@ -58,7 +58,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_atrio"
             android:roundIcon="@mipmap/icon_atrio"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="true">
             <intent-filter>
@@ -72,7 +72,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_clasico"
             android:roundIcon="@mipmap/icon_clasico"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -86,7 +86,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_noche"
             android:roundIcon="@mipmap/icon_noche"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -100,7 +100,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_neon"
             android:roundIcon="@mipmap/icon_neon"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -114,7 +114,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_papel"
             android:roundIcon="@mipmap/icon_papel"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -128,7 +128,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_arcade"
             android:roundIcon="@mipmap/icon_arcade"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -142,7 +142,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_oro"
             android:roundIcon="@mipmap/icon_oro"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -156,7 +156,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_oceano"
             android:roundIcon="@mipmap/icon_oceano"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -170,7 +170,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_sakura"
             android:roundIcon="@mipmap/icon_sakura"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -184,7 +184,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_fuego"
             android:roundIcon="@mipmap/icon_fuego"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -198,7 +198,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_bosque"
             android:roundIcon="@mipmap/icon_bosque"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>
@@ -212,7 +212,7 @@
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/icon_oled"
             android:roundIcon="@mipmap/icon_oled"
-            android:label="Azabache"
+            android:label="Jonsu"
             android:exported="true"
             android:enabled="false">
             <intent-filter>

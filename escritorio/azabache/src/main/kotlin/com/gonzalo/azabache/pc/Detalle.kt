@@ -196,8 +196,8 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav, disenar: Boolean 
         }
     }) {
         Cuerpo(when {
-            f.mostaza -> "Se quita de Mostaza (queda borrada en la cuenta y en tus otros dispositivos: no vuelve sola aunque la veas; solo «Añadir» la recupera, con lo suyo)."
-            f.ref != null -> "Se borra de la cuenta: deja de estar también en ${if (k.id == GAMES.id) "Hiedra" else "Marfil"} y en tus otros dispositivos."
+            f.mostaza -> "Se quita de Hathor (queda borrada en la cuenta y en tus otros dispositivos: no vuelve sola aunque la veas; solo «Añadir» la recupera, con lo suyo)."
+            f.ref != null -> "Se borra de la cuenta: deja de estar también en ${if (k.id == GAMES.id) "Bastet" else "Seshat"} y en tus otros dispositivos."
             else -> "Se borra de la cuenta (y de tus otros dispositivos)."
         }, tam = 14)
     }

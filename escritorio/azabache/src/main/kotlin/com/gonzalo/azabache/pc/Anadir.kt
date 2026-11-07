@@ -84,7 +84,7 @@ fun DialogoAnadir(k: Kind, estadoInicial: Int, nav: Nav, onCerrar: () -> Unit) {
     }) {
         MagChoice(listOf(k.doneWord.removeSuffix("s"), k.statuses[1], k.statuses[0], k.statuses[2]), estado, "Cómo está") { estado = it }
         // (en el móvil, «Añadir» abre Mostaza; aquí no la hay, y se añade igual a tu biblioteca de Mostaza)
-        if (CosasMostaza.de(k)) Cuerpo("Va a tu biblioteca de Mostaza, la misma que ves en el móvil.", tam = 12)
+        if (CosasMostaza.de(k)) Cuerpo("Va a tu biblioteca de Hathor, la misma que ves en el móvil.", tam = 12)
         Spacer(Modifier.height(12.dp))
         if (aMano) {
             Campo("Nombre", nombre) { nombre = it }

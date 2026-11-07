@@ -326,13 +326,13 @@ class MostazaTest {
         fun nodos(col: String) = c[col].comoMapa().map { (k, v) -> Nodo(k, v.comoMapa()) }
         val titulos = nodos("titulos"); val progreso = nodos("progreso"); val tiempo = nodos("tiempo")
         val vivos = titulos.filter { !it.borrado }
-        assertTrue("lo que quitas en Mostaza queda borrado (y no se lee)", titulos.single { it.ref == c["borrada"] }.borrado)
+        assertTrue("lo que quitas en Hathor queda borrado (y no se lee)", titulos.single { it.ref == c["borrada"] }.borrado)
         val pelis = CosasMostaza.construye(vivos, tiempo.filter { !it.borrado }, progreso.filter { !it.borrado }, "movie", 4242)
         leeIgual("películas", pelis, construyeMovil(vivos, tiempo, progreso, "movie"))
         // Lo mismo que comprueba el ContratoHermanasTest del móvil
         val peli = pelis.fichas.single()
         assertTrue(peli.valorada); assertTrue(peli.mostaza); assertFalse(peli.sinValorar)
-        assertEquals("Cadena perpetua", peli.nombre); assertEquals("su número de Azabache", 278L, peli.id); assertEquals(92, peli.general); assertEquals(95, peli.notas[2])
+        assertEquals("Cadena perpetua", peli.nombre); assertEquals("su número de Jonsu", 278L, peli.id); assertEquals(92, peli.general); assertEquals(95, peli.notas[2])
         assertEquals("La esperanza es algo bueno.", peli.resena); assertTrue("vista: con su día", peli.terminado > 0); assertEquals("los 14 minutos que viste", 14, peli.minutos)
         assertEquals("https://images.metahub.space/poster/small/tt0111161/img", peli.portadaWeb)
         assertEquals("https://images.metahub.space/background/medium/tt0111161/img", peli.o["hero"])
@@ -341,7 +341,7 @@ class MostazaTest {
         leeIgual("series", series, construyeMovil(vivos, tiempo, progreso, "series"))
         val serie = series.fichas.single()
         assertFalse(serie.valorada); assertEquals("Juego de tronos", serie.nombre); assertEquals("en curso (viendo)", 1, serie.estado)
-        assertEquals("sin número de Azabache: uno fijo de su ref (el del móvil)", Movil.idDeRef("tt0944947"), serie.id)
+        assertEquals("sin número de Jonsu: uno fijo de su ref (el del móvil)", Movil.idDeRef("tt0944947"), serie.id)
         assertEquals(CosasMostaza.idDeRef("tt0944947"), serie.id)
         assertEquals(12, serie.minutos)
         assertTrue("sin nota: nunca un 0", serie.sinValorar)
@@ -444,8 +444,8 @@ class MostazaTest {
         sincroniza()
 
         assertTrue(CosasMostaza.activa())
-        leeIgual("lo de Mostaza", Cuenta.vistaMostaza(pelis), vistaMovil(pelis))
-        leeIgual("lo de Mostaza", Cuenta.vistaMostaza(series), vistaMovil(series))
+        leeIgual("lo de Hathor", Cuenta.vistaMostaza(pelis), vistaMovil(pelis))
+        leeIgual("lo de Hathor", Cuenta.vistaMostaza(series), vistaMovil(series))
         val club = Cuenta.ficha(pelis.id, 550L)!!
         assertTrue(club.mostaza); assertTrue(club.valorada); assertEquals("tt0137523", club.ref)
         assertEquals("El club de la lucha", club.nombre); assertEquals(85, club.general); assertEquals(90, club.notas[2]); assertEquals("La primera regla.", club.resena)
@@ -454,10 +454,10 @@ class MostazaTest {
         assertEquals("el tiempo de cada día", mapOf(hoy.toString() to 21 * 60_000L), Cuenta.porDia("tt0137523"))
         assertEquals("ver no es jugar (como en el móvil)", 0L, diasDeLaCuenta()[hoy.toEpochDay()]?.jugadoMs ?: 0L)
         val matrix = Cuenta.fichas(pelis.id).single { it.nombre == "Matrix" }
-        assertEquals("la de Mostaza: el número de TMDB", 603L, matrix.id); assertEquals(1, matrix.estado); assertFalse(matrix.valorada)
+        assertEquals("la de Hathor: el número de TMDB", 603L, matrix.id); assertEquals(1, matrix.estado); assertFalse(matrix.valorada)
         val got = Cuenta.fichas(series.id).single()
         assertEquals(82L, got.id)
-        assertEquals("lo visto en Mostaza manda; lo demás, lo marcado en Azabache", listOf(true, false, true), got.o["parts"].let { it as List<*> }.map { (it as Map<*, *>)["d"] })
+        assertEquals("lo visto en Hathor manda; lo demás, lo marcado en Jonsu", listOf(true, false, true), got.o["parts"].let { it as List<*> }.map { (it as Map<*, *>)["d"] })
         assertEquals(listOf(true, false), CosasMostaza.vistosDe("tt0944947").map { it.visto })
         assertEquals("el mismo número de siempre: la saga y el diario lo encuentran", 550L, Cuenta.fichas(pelis.id).firstOrNull { it.ref == "tt0137523" }?.id)
 
@@ -469,7 +469,7 @@ class MostazaTest {
         assertEquals("Toma la pastilla roja.", m.texto("resena")); assertEquals(Fechas.ms(19500), m.entero("fin"))
         assertFalse("no se borra al pasar de una lista a otra", m.borrado)
         assertEquals("y queda su número", 603L, m.entero("azid")); assertEquals(pelis.id.toLong(), m.entero("azk"))
-        assertEquals("lo de Mostaza no se toca", "tt0133093", m.texto("imdb"))
+        assertEquals("lo de Hathor no se toca", "tt0133093", m.texto("imdb"))
 
         // Cambias solo la reseña del club mientras Mostaza la marca como favorita: no se pisan
         val club2 = Cuenta.ficha(pelis.id, 550L)!!

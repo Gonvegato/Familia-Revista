@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.14.4"
+const val VERSION = "0.15.0"
 
 /** «Ajustes» en pestañas, como Atrio: Apariencia · Lectura · Cuenta (Atrio y libros en la nube) · Avanzado (actualizaciones y copias). */
 @OptIn(ExperimentalLayoutApi::class)
@@ -50,11 +50,11 @@ fun PantEstilo(alVolver: () -> Unit) {
         if (u != null) mensaje = runCatching { ctx.contentResolver.openOutputStream(u)!!.use { it.write(Biblioteca.aTexto().toByteArray()) }; "Copia guardada" }.getOrElse { "No se pudo guardar la copia" }
     }
     val importar = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { u ->
-        if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Marfil" }
+        if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Seshat" }
     }
     var pestana by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 20.dp)) {
-        RevistaTopBar(alVolver, "Marfil")
+        RevistaTopBar(alVolver, "Seshat")
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
@@ -73,7 +73,7 @@ fun PantEstilo(alVolver: () -> Unit) {
                 var reto by remember { mutableIntStateOf(Ajustes.metaAnual(ctx)) }
                 val retos = remember { (listOf(0, 6, 12, 20, 24, 30, 40, 52) + Ajustes.metaAnual(ctx)).distinct().sorted() }
                 MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Libros al año") { i -> reto = retos[i]; Ajustes.ponMetaAnual(ctx, reto) }
-                Text("Tu reto del año sale en la portada y en el widget de la semana. Los dos objetivos viajan con tu cuenta a tus otros Marfil y a Azabache, que los enseña tal cual.", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+                Text("Tu reto del año sale en la portada y en el widget de la semana. Los dos objetivos viajan con tu cuenta a tus otros Seshat y a Jonsu, que los enseña tal cual.", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
                 Spacer(Modifier.height(14.dp))
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
@@ -106,8 +106,8 @@ fun PantEstilo(alVolver: () -> Unit) {
         Spacer(Modifier.height(26.dp))
         Filete(3.dp)
         Spacer(Modifier.height(10.dp))
-        Etiqueta("Marfil $VERSION")
-        Text("Marfil es hermana de Azabache, Hiedra y Cobalto. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
+        Etiqueta("Seshat $VERSION")
+        Text("Seshat es hermana de Jonsu, Bastet y Thot. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
     }
 }
@@ -189,17 +189,17 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Marfil-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
+    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     // Android 13 o más: sin el permiso de avisos, «tienes una versión nueva» y «se ha actualizado, toca para abrirla» no se ven nunca
     if (android.os.Build.VERSION.SDK_INT >= 33) {
         var avisos by remember { mutableStateOf(ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
         val pedirAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { avisos = it }
-        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir Marfil al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir Seshat al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (!conectado) {
-        Text("El token de kDrive es de tu cuenta: se pone una vez en Azabache (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps. Si no lo has puesto aún, puedes pegarlo aquí: en cuanto funcione, pasa a tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("El token de kDrive es de tu cuenta: se pone una vez en Jonsu (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps. Si no lo has puesto aún, puedes pegarlo aquí: en cuanto funcione, pasa a tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Token", token, "token de kDrive", secreto = true) { token = it }
         CampoRevista("kDrive", unidad, "número o dirección") { unidad = it }
         MagLink(if (ocupado) "Comprobando…" else "Conectar", "Comprueba el token y busca tu «Mi carpeta»") {
@@ -224,11 +224,11 @@ private fun SeccionActualizaciones() {
             if (!ocupado) { ocupado = true; ambito.launch { withContext(Dispatchers.IO) { Actualizador.comprueba(ctx, manual = true) }; ocupado = false } }
         }
         Filete(1.dp, Line)
-        MagLink(if (sobre) "Tras actualizar, Marfil se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
+        MagLink(if (sobre) "Tras actualizar, Seshat se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
-        Text("Para cambiar o quitar el token: Azabache → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
@@ -242,8 +242,8 @@ fun AvisoActualizacion() {
     if (luego) return
     AlertDialog(
         onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Marfil tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Marfil instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
+        title = { Text("Seshat tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Seshat instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
@@ -269,7 +269,7 @@ fun SeccionLibros() {
         color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(bottom = 4.dp)
     )
     var auto by remember { mutableStateOf(NubeLibros.autoBajar(ctx)) }
-    Fila("Tener todos mis libros aquí", "Con Wi-Fi, Marfil baja en segundo plano los libros de tu kDrive que falten en este dispositivo. Si prefieres bajarlos uno a uno al abrirlos, apágalo.", final = { Interruptor(auto) { auto = it; NubeLibros.ponAutoBajar(ctx, it) } })
+    Fila("Tener todos mis libros aquí", "Con Wi-Fi, Seshat baja en segundo plano los libros de tu kDrive que falten en este dispositivo. Si prefieres bajarlos uno a uno al abrirlos, apágalo.", final = { Interruptor(auto) { auto = it; NubeLibros.ponAutoBajar(ctx, it) } })
     Filete(1.dp, Line)
     MagLink(if (ocupado) "Un momento…" else "Traer mis libros de Atrio", "Solo lee tu cuenta: no cambia nada en Atrio. Trae fichas, lo leído, subrayados y dónde están los archivos") {
         if (ocupado) return@MagLink

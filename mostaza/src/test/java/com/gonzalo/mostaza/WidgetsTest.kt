@@ -75,7 +75,7 @@ class WidgetsTest {
         val celdas = pen.zonas.mapNotNull { it.celdas }.single().single()
         assertEquals("cada póster abre su ficha", listOf("Abrir Separación", "Abrir Dune: Parte dos", "Abrir Shōgun", "Abrir Perfect Days"), celdas.map { it.second })
         assertTrue(celdas.all { it.first != null })
-        assertTrue(pen.zonas.any { it.desc == "Abrir Pendientes en Mostaza" })
+        assertTrue(pen.zonas.any { it.desc == "Abrir Pendientes en Hathor" })
     }
 
     @Test fun vacioInvitaAAbrirMostaza() = runBlocking {

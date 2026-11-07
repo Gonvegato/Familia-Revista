@@ -68,7 +68,7 @@ class TuPcCapturasTest {
     /** El móvil manda una orden al PC (Suite.sendRaw) y devuelve su id. */
     private fun manda(op: String, a: Map<String, Any?> = emptyMap()): String {
         val r = RedJava().pedir("POST", movil.sesion.url("/users/$uid/suite/cmd/$pc", conPase = true),
-            Json.escribe(mapOf("op" to op, "a" to a, "t" to mapOf(".sv" to "timestamp"), "by" to "Hiedra · Pixel 8")))
+            Json.escribe(mapOf("op" to op, "a" to a, "t" to mapOf(".sv" to "timestamp"), "by" to "Bastet · Pixel 8")))
         assertTrue(r.ok)
         return Json.lee(r.cuerpo).comoMapa()["name"].comoTexto()
     }
@@ -118,7 +118,7 @@ class TuPcCapturasTest {
         assertEquals(id, o["id"]); assertEquals(pc, o["dev"]); assertEquals(Sitio.nombreEquipo, o["pc"])
         assertEquals(1400L, o["w"].comoLong()); assertEquals(900L, o["h"].comoLong()); assertEquals("image/png", o["mime"]); assertEquals(png.size.toLong(), o["bytes"].comoLong())
         assertEquals(Capturas.trozos(png).size.toLong(), o["n"].comoLong()); assertEquals("subida entera", o["n"].comoLong(), o["up"].comoLong())
-        assertEquals("spectacle", o["m"]); assertEquals("Hiedra · Pixel 8", o["by"]); assertNull("sin juego: el móvil la llama «Escritorio»", o["game"])
+        assertEquals("spectacle", o["m"]); assertEquals("Bastet · Pixel 8", o["by"]); assertNull("sin juego: el móvil la llama «Escritorio»", o["game"])
         assertTrue(o["t"].comoLong() > 0)
         assertTrue(o["name"].comoTexto().matches(Regex("Escritorio \\d{4}-\\d\\d-\\d\\d \\d\\d\\.\\d\\d\\.\\d\\d\\.png")))
         // El móvil la baja tal cual: byte a byte la misma
@@ -145,14 +145,14 @@ class TuPcCapturasTest {
         imagen = ImagenesPrueba.deXvfb(1024, 768) ?: Captura.Imagen(ImagenesPrueba.png(ImagenesPrueba.ruido(320, 200)), 320, 200, "image/png", "prueba")
         val png = imagen!!.bytes
         juegaHades()
-        val h = Capturas.haz(por = "Hiedra · Pixel 8", alMovil = false)
+        val h = Capturas.haz(por = "Bastet · Pixel 8", alMovil = false)
         assertFalse(h.subida)
         assertNull("las de aquí no van al móvil si no se quiere", Emulador.lee("/users/$uid/suite/shots/${h.id}"))
         assertEquals("Hades", h.juego)
         assertTrue(h.archivo!!.path.contains("/Hiedra/Hades/Hades "))
         // En trozos pequeños (unos veinte, múltiplos de 4), para que sean muchos y en varias tandas
         val trozo = maxOf(4, Base64.getEncoder().encodeToString(png).length / 20 / 4 * 4)
-        Capturas.sube(h.id, imagen!!, h.archivo!!.name, "Hiedra", Pc.ahora, trozo = trozo, tanda = 3)
+        Capturas.sube(h.id, imagen!!, h.archivo!!.name, "Bastet", Pc.ahora, trozo = trozo, tanda = 3)
         val o = lee("/suite/shots/${h.id}").comoMapa()
         assertEquals(mapOf("n" to "Hades", "k" to "steam:1145360", "sg" to 0L), o["game"].comoMapa().mapValues { (k, v) -> if (k == "sg") v.comoLong() else v })
         assertEquals(imagen!!.w.toLong(), o["w"].comoLong()); assertEquals(imagen!!.h.toLong(), o["h"].comoLong())

@@ -49,6 +49,7 @@ fun appDeLaFamilia(
 ) {
     // Una sola copia de cada app: si ya estaba abierta, sale al frente aquella y esta no abre nada
     if (!Instancia.unica(Sitio.de(app), args.toList())) return
+    Actualizador.recogeNombreViejo(app)
     ventanaDeLaFamilia(app, titulo, icono, alIniciar, alCerrar, alPedirOtraVez, contenido)
 }
 
@@ -158,7 +159,7 @@ object VentanaFamilia {
 
 /** El programa de una app instalada: `<App>/bin/<App>` en Linux; el `<App>.app` en el Mac. */
 private fun lanzadorDe(app: String, sitio: File): File =
-    if (Sitio.sistema == Sitio.Sistema.MAC) sitio else File(sitio, "bin/" + app.replaceFirstChar { it.uppercase() })
+    if (Sitio.sistema == Sitio.Sistema.MAC) sitio else File(sitio, "bin/" + NombresApp.de(app))
 
 /** Abajo, fina: hay una versión nueva ya bajada; se pone sola al cerrar, o ahora mismo reiniciando. */
 @Composable
@@ -212,7 +213,7 @@ fun PantallaEntrar(titulo: String) {
             Antetitulo("La cuenta de la familia")
             Spacer(Modifier.height(10.dp))
             Cuerpo("La misma que en el móvil. Todo lo tuyo está en la cuenta: lo que hagas aquí lo verás en tus otros dispositivos y en tus otras apps. " +
-                "Entra una vez: Azabache, Cobalto, Hiedra, Marfil, Mostaza y Cobre de este ordenador entran solas.", tam = 15)
+                "Entra una vez: Jonsu, Thot, Bastet, Seshat, Hathor y Nut de este ordenador entran solas.", tam = 15)
             Spacer(Modifier.height(22.dp))
             OutlinedTextField(usuario, { usuario = it }, label = { Text("Usuario") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next))
@@ -282,7 +283,7 @@ fun AjustesVersion(app: String, nombre: String) {
                     trabajando = false
                     aviso = r.fold({ when {
                         it != null -> "La ${it.version} está lista: se pone sola al cerrar."
-                        !KDrive().activo -> "Pon tu kDrive en Azabache (Ajustes → Servicios) para que se actualice sola."
+                        !KDrive().activo -> "Pon tu kDrive en Jonsu (Ajustes → Servicios) para que se actualice sola."
                         else -> Actualizador.estado.ifBlank { "Tienes la última." }
                     } }, { it.message ?: "No se ha podido mirar." })
                 } }
@@ -305,7 +306,7 @@ fun AjustesVersion(app: String, nombre: String) {
                         val r = withContext(Dispatchers.IO) { runCatching { Actualizador.busca(app) } }
                         trabajando = false
                         nueva = r.getOrNull()
-                        aviso = r.fold({ if (it == null) (if (KDrive().activo) "Tienes la última." else "Pon tu kDrive en Azabache (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
+                        aviso = r.fold({ if (it == null) (if (KDrive().activo) "Tienes la última." else "Pon tu kDrive en Jonsu (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
                     } }
                 }
             }

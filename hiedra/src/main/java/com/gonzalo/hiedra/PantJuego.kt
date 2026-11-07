@@ -67,7 +67,7 @@ fun PantJuego(a: JuegoActivity) {
             is FaseJuego.Error -> Aviso(a, f.texto, null, error = true) {
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp), modifier = Modifier.padding(top = 20.dp)) {
                     f.accion?.let { (t, hacer) -> BotonOscuro(t, acento = true, foco = true) { hacer() } }
-                    BotonOscuro("Volver a Hiedra", acento = f.accion == null, foco = f.accion == null) { a.finish() }
+                    BotonOscuro("Volver a Bastet", acento = f.accion == null, foco = f.accion == null) { a.finish() }
                 }
             }
             FaseJuego.Jugando -> Jugando(a)
@@ -94,7 +94,7 @@ private fun Aviso(a: JuegoActivity, texto: String, fraccion: Float?, error: Bool
     @Composable
     fun Textos(centrar: Boolean) {
         Column(horizontalAlignment = if (centrar) Alignment.CenterHorizontally else Alignment.Start) {
-            Text(listOfNotNull("HIEDRA", sistema?.uppercase()).joinToString(" · "), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 2.sp)
+            Text(listOfNotNull("BASTET", sistema?.uppercase()).joinToString(" · "), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 2.sp)
             Text(j?.titulo.orEmpty(), color = Tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 36.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp))
             Text(texto, color = if (error) Tinta else Gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 12.dp).widthIn(max = 520.dp))
             if (!error) {
@@ -284,7 +284,7 @@ private fun MenuPrincipal(a: JuegoActivity) {
     FilaOscura("Mando y controles", (a.ultimoMando?.name ?: if (a.mandoConectado) "Mando conectado" else "Sin mando: controles táctiles"), flecha = true) { a.pantallaMenu = "mando" }
     FilaOscura("Imagen y guardado", "${AjustesJuego.filtro.nombre} · ${AjustesJuego.orientacion.nombre.lowercase()}", flecha = true) { a.pantallaMenu = "imagen" }
     if (a.nucleoDef.opciones.isNotEmpty()) FilaOscura("Consola", a.nucleoDef.nombre + " · " + a.nucleoDef.opciones.joinToString(" · ") { it.nombre.lowercase() }, flecha = true) { a.pantallaMenu = "consola" }
-    FilaOscura("Captura", "A Imágenes/Hiedra") { a.guardarCaptura() }
+    FilaOscura("Captura", "A Imágenes/Bastet") { a.guardarCaptura() }
     FilaOscura(if (reiniciar) "Pulsa otra vez para reiniciar" else "Reiniciar", "Vuelve al principio (la partida del cartucho no se borra)") {
         if (reiniciar) { a.motor?.reiniciar(); a.cerrarMenu() } else reiniciar = true
     }
@@ -380,7 +380,7 @@ private fun MenuDiagnostico(a: JuegoActivity) {
         InputDevice.getDeviceIds().toList().mapNotNull { InputDevice.getDevice(it) }.filter { !it.isVirtual && (it.sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD || it.sources and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK || it.sources and InputDevice.SOURCE_DPAD == InputDevice.SOURCE_DPAD) }
     }
     val texto = buildString {
-        appendLine("Hiedra $VERSION · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}")
+        appendLine("Bastet $VERSION · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE}")
         if (dispositivos.isEmpty()) appendLine("No se ve ningún mando.")
         dispositivos.forEach { d ->
             val fuentes = listOfNotNull("mando".takeIf { d.sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD }, "joystick".takeIf { d.sources and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK },

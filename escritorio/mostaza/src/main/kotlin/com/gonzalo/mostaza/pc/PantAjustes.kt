@@ -39,16 +39,16 @@ fun PantAjustes(nav: Nav, inicial: Int = 0) {
                 AjustesCuentaFamilia("mostaza")
                 Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
                 Antetitulo("Las hermanas", Modifier.padding(bottom = 4.dp))
-                Cuerpo("Azabache valora lo que ves aquí (la nota y la reseña van en la misma ficha de tu cuenta). Lo que ves aquí, lo sigues en el móvil y al revés: tu biblioteca, por dónde vas de cada película y episodio, el tiempo visto, tus addons y lo que eliges van con la cuenta.", tam = 13)
+                Cuerpo("Jonsu valora lo que ves aquí (la nota y la reseña van en la misma ficha de tu cuenta). Lo que ves aquí, lo sigues en el móvil y al revés: tu biblioteca, por dónde vas de cada película y episodio, el tiempo visto, tus addons y lo que eliges van con la cuenta.", tam = 13)
             }
             4 -> {
                 Antetitulo("Apariencia")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Mostaza del ordenador tiene la apariencia de tu Mostaza del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
+                Cuerpo("Hathor del ordenador tiene la apariencia de tu Hathor del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
                 Spacer(Modifier.height(10.dp))
                 MagChoice(listOf("Como el sistema", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
             }
-            else -> AjustesVersion("mostaza", "Mostaza")
+            else -> AjustesVersion("mostaza", "Hathor")
         }
     }
 }
@@ -61,9 +61,9 @@ private fun AjustesCatalogo(nav: Nav) {
     var texto by remember { mutableStateOf("") }
     var aviso by remember { mutableStateOf<String?>(null) }
     var probando by remember { mutableStateOf(false) }
-    Antetitulo("El catálogo de Mostaza", Modifier.padding(bottom = 4.dp))
+    Antetitulo("El catálogo de Hathor", Modifier.padding(bottom = 4.dp))
     Cuerpo(if (puesta) "Con TMDB: la portada, «Explorar», «Buscar» y las fichas son las de una plataforma (tendencias, estrenos, géneros, lo que hay en cada plataforma, reparto, tráileres, en castellano). Tus addons quedan para las fuentes."
-        else "Sin TMDB, lo que ves es lo de los catálogos de tus addons. Con tu clave de TMDB (gratis), Mostaza tiene su propio catálogo, como una plataforma.", color = Charcoal, tam = 14)
+        else "Sin TMDB, lo que ves es lo de los catálogos de tus addons. Con tu clave de TMDB (gratis), Hathor tiene su propio catálogo, como una plataforma.", color = Charcoal, tam = 14)
     Spacer(Modifier.height(8.dp))
     Etiqueta(if (puesta) "Tu clave está puesta (en tu cuenta, solo la puedes leer tú; la misma que en el móvil)" else "Cómo sacar tu clave")
     if (!puesta) Cuerpo("1. Hazte una cuenta en themoviedb.org.  2. En tu perfil → Ajustes → API, pide una clave (uso personal).  3. Copia el «Token de lectura de la API» (el largo, empieza por «eyJ») y pégalo aquí.", tam = 12)
@@ -98,7 +98,7 @@ private fun AjustesCatalogo(nav: Nav) {
 private fun AjustesFuentes(nav: Nav) {
     val p = AjustesElector.prefs()
     fun pon(n: PrefsElector) = AjustesElector.pon(n)
-    Cuerpo("Al pulsar «Reproducir», Mostaza mira las fuentes de todos tus addons y pone la mejor para ti: primero tu idioma (en el orden de abajo), luego la mejor calidad que cabe en tu conexión, luego las directas o de tu debrid antes que los torrents, y por último el orden de tus addons. La lista entera está a un clic («Cambiar»). Es lo mismo que en el móvil (viaja con tu cuenta).", tam = 13)
+    Cuerpo("Al pulsar «Reproducir», Hathor mira las fuentes de todos tus addons y pone la mejor para ti: primero tu idioma (en el orden de abajo), luego la mejor calidad que cabe en tu conexión, luego las directas o de tu debrid antes que los torrents, y por último el orden de tus addons. La lista entera está a un clic («Cambiar»). Es lo mismo que en el móvil (viaja con tu cuenta).", tam = 13)
     Fila("Elegir sola", "Si no, «Reproducir» te enseña la lista.") { Interruptor(AjustesElector.auto()) { AjustesElector.ponAuto(it) } }
     Spacer(Modifier.height(8.dp)); Antetitulo("Idiomas, por orden", Modifier.padding(bottom = 4.dp))
     val todos = PrefsElector.IDIOMAS.map { it.first }
@@ -154,7 +154,7 @@ private fun AjustesDelReproductor() {
     Antetitulo("mpv", Modifier.padding(bottom = 4.dp))
     if (mpv != null) {
         MagFact("Reproductor", mpv.absolutePath)
-        Cuerpo("Mostaza abre las películas y los episodios con mpv, en su ventana, y desde aquí sabe por dónde vas (como en el móvil: lo visto, el tiempo, seguir donde lo dejaste). En la ventana de mpv: espacio para pausa, flechas para saltar, «f» pantalla completa, «#» cambia el audio, «j» los subtítulos y «q» cierra.", tam = 13)
+        Cuerpo("Hathor abre las películas y los episodios con mpv, en su ventana, y desde aquí sabe por dónde vas (como en el móvil: lo visto, el tiempo, seguir donde lo dejaste). En la ventana de mpv: espacio para pausa, flechas para saltar, «f» pantalla completa, «#» cambia el audio, «j» los subtítulos y «q» cierra.", tam = 13)
     } else {
         Cuerpo(Mpv.comoInstalar(), color = Acento, tam = 14)
         Cuerpo("Sin mpv también se puede abrir una fuente con el reproductor del sistema, pero así no se sabe por dónde vas (ni entra en tu biblioteca, ni se apunta lo visto).", tam = 12)
@@ -178,5 +178,5 @@ private fun AjustesDelReproductor() {
     val saltos = listOf(5, 10, 15, 30)
     MagChoice(saltos.map { "$it s" }, saltos.indexOf(AjustesReproductor.salto()).coerceAtLeast(1), "Saltar (desde la banda de abajo y con el mando)") { i -> AjustesReproductor.ponSalto(saltos[i]) }
     Cuerpo("Lo de los subtítulos y el audio se le dice a mpv al abrirlo (si lo cambias con algo puesto, vale para lo siguiente).", tam = 12)
-    if (Sitio.sistema == Sitio.Sistema.MAC) Cuerpo("En el Mac vale el mpv de Homebrew. IINA (que lleva mpv dentro) no deja que Mostaza sepa por dónde vas: con ella no se apuntaría nada.", tam = 12)
+    if (Sitio.sistema == Sitio.Sistema.MAC) Cuerpo("En el Mac vale el mpv de Homebrew. IINA (que lleva mpv dentro) no deja que Hathor sepa por dónde vas: con ella no se apuntaría nada.", tam = 12)
 }

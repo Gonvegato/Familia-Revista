@@ -1,8 +1,8 @@
-# Hiedra: el modelo de datos (para aprobar antes de programar)
+# Bastet: el modelo de datos (para aprobar antes de programar)
 
-Hiedra es el lanzador de juegos del móvil hecho de una vez, sin la herencia de Pórtico. Fuera: paquete `com.gonzalo.hiedra`, nodo
-`/users/<uid>/hiedra`, misma base que Cobalto (revista, tema, cuenta, kDrive, actualizador, widgets). Carmesí sigue funcionando hasta que
-Hiedra lo tenga todo; lo tuyo se trae con una importación una sola vez (de Carmesí y, si falta algo, de Atrio).
+Bastet es el lanzador de juegos del móvil hecho de una vez, sin la herencia de Pórtico. Fuera: paquete `com.gonzalo.hiedra`, nodo
+`/users/<uid>/hiedra`, misma base que Thot (revista, tema, cuenta, kDrive, actualizador, widgets). Carmesí sigue funcionando hasta que
+Bastet lo tenga todo; lo tuyo se trae con una importación una sola vez (de Carmesí y, si falta algo, de Atrio).
 
 ## 1. La idea que lo cambia todo: el juego no es el lanzador
 
@@ -10,7 +10,7 @@ En Pórtico/Carmesí un juego **es** su lanzador: su identidad es `rom:gba:zelda
 las fichas sin lanzador (`juego:título`), los alias, «unir con otro», «vincular», las gemelas… Cada vez que un juego tenía dos formas de
 abrirse (la ROM en el móvil y el mismo juego en Steam), había que hacer trampas.
 
-En Hiedra un **juego** es una cosa con identidad propia, y **cómo se abre** es una lista:
+En Bastet un **juego** es una cosa con identidad propia, y **cómo se abre** es una lista:
 
 ```
 Juego
@@ -25,12 +25,12 @@ Juego
   portada       { url de internet (SteamGridDB, PC…) · tu imagen (en kDrive, por id) · encuadre zoom/ox/oy }
   dura          { historia, extras, completo } en minutos (de Atrio: HowLongToBeat/RAWG)
   claves        [ ] las claves de lanzador por las que se le conoce (ver 2): sirven para no duplicar al añadir, para importar y para que
-                Azabache enlace lo que valoró con la clave antigua
+                Jonsu enlace lo que valoró con la clave antigua
   lanzadores    [ Lanzador ] (ver 2)
   horas         (ver 3)
 ```
 
-Lo que no vuelve: la nota (es de Azabache), los apuntes de texto libre, la maqueta de casillas, «terminado» aparte del estado (es `estado =
+Lo que no vuelve: la nota (es de Jonsu), los apuntes de texto libre, la maqueta de casillas, «terminado» aparte del estado (es `estado =
 PASADO` + `finalizado`), `claveFija`, `alias`, `pcKey/pcDev` sueltos (van en su lanzador).
 
 ## 2. Lanzadores
@@ -59,14 +59,14 @@ Lanzador
 ```
 horas
   propias:   { ms, veces, dias: { "AAAA-MM-DD": ms } }           lo jugado en ESTE dispositivo (ROM, app o web)
-  ajenas:    { <dispositivo Hiedra>: { ms, veces, dias } }        lo de tus otros móviles (viene al sincronizar; se SUMA)
+  ajenas:    { <dispositivo Bastet>: { ms, veces, dias } }        lo de tus otros móviles (viene al sincronizar; se SUMA)
   externas:  { steam: { ms, dias }, "pc:<pc>": { ms, dias } }     lo de fuera (se queda el MÁXIMO, nunca se suma dos veces)
   total = propias + Σ ajenas + Σ externas
 ```
 
 - **Steam**: las horas de la API de Steam son una fuente externa, no un dispositivo. Dos móviles que las traigan escriben lo mismo y gana el
   máximo. (En Carmesí se guardaban como «dispositivo steam» en `ajenosMs` y había que borrar las importadas de Atrio para no sumarlas dos veces.)
-- **PC**: las horas del PC las publica Atrio del PC en `suite/lib/<pc>` (minutos). Hiedra las lee de ahí en directo como fuente `pc:<pc>` y no las
+- **PC**: las horas del PC las publica Atrio del PC en `suite/lib/<pc>` (minutos). Bastet las lee de ahí en directo como fuente `pc:<pc>` y no las
   vuelve a guardar ni a subir (en Carmesí los juegos del PC tenían `msPropios = 0` por decreto). Las partidas del PC que el móvil ve empezar y
   acabar van a `externas["pc:<pc>"].dias` (máximo por día, no suma).
 - Corregir las horas a mano ajusta `propias.ms` (nunca por debajo de lo que sumen las demás), como ahora.
@@ -75,7 +75,7 @@ horas
 
 - **Sagas**: `{ id, nombre, juegos: [id…] en orden, mod }`. Por id de juego, no por clave.
 - **Portada de inicio**: destacado (id o vacío), estantes en orden `{ estante, grande, activa }`, «Mis elegidos» (ids). Gana la más reciente.
-- **Apariencia**: como en Cobalto.
+- **Apariencia**: como en Thot.
 - **Borrados**: `id → ms` (180 días), como ahora.
 - **Carpetas de ROMs, emuladores por sistema, qué PC usar**: de cada dispositivo, no viajan.
 
@@ -91,25 +91,25 @@ para una ficha de juego.
 - **De Carmesí** (`/users/<uid>/portico/dev/*/data`, el formato de `Mezcla.kt` de Carmesí): cada juego pasa a un `Juego` con id nuevo,
   `claves = [k] + al`, un lanzador según su tipo (ROM/APP/WEB/PC) o ninguno (FICHA), estado, favorito, finalizado, plataforma, portada de
   internet, encuadre, duraciones; las horas de cada dispositivo de Carmesí pasan a la fuente externa `carmesi:<ese dispositivo>` (viaja
-  con la cuenta y se mezcla por máximo: así ningún Hiedra las pierde aunque Carmesí ya no suba nada). Las de Steam y del PC no están en lo que
-  Carmesí sube (eran locales de cada dispositivo): Hiedra las vuelve a leer de Steam y del PC. Las sagas (`sg`), la portada (`ini`) y la
+  con la cuenta y se mezcla por máximo: así ningún Bastet las pierde aunque Carmesí ya no suba nada). Las de Steam y del PC no están en lo que
+  Carmesí sube (eran locales de cada dispositivo): Bastet las vuelve a leer de Steam y del PC. Las sagas (`sg`), la portada (`ini`) y la
   apariencia (`aj`) se traducen a ids / se aplican. Las
   portadas tuyas se bajan de kDrive (`nube/portadas/<kid>`); el índice de guardados y ROMs de kDrive (`nube/saves/<kid>`, `nube/roms/<kid>`) se
-  copia al de Hiedra por el id del juego, así los archivos ya subidos siguen valiendo. Dos juegos de Carmesí con la misma clave entre dispositivos son uno. Carmesí no se
+  copia al de Bastet por el id del juego, así los archivos ya subidos siguen valiendo. Dos juegos de Carmesí con la misma clave entre dispositivos son uno. Carmesí no se
   toca.
 - **De Atrio** (lo que no esté en Carmesí): como hace Carmesí hoy (fichas con `juego:<título>` como clave, estado, horas, duraciones, sagas).
 - **De tu PC**: los juegos del PC entran solos si los has jugado o ya estaban; los demás, desde «Tu PC → Biblioteca → Añadir», como ahora.
 
-## 7. Lo que Hiedra hereda tal cual (copiando archivos, como Cobalto hizo con Escribir)
+## 7. Lo que Bastet hereda tal cual (copiando archivos, como Thot hizo con Escribir)
 
 Suite (PC en directo, órdenes, capturas, streaming, encender por red), Lanzador (emuladores, comandos, apps, webs), Escaneo de carpetas,
 Catálogo de sistemas, Servicios (SteamGridDB, horas de Steam, claves desde Atrio), Encuadre, kDrive (portadas, ROMs y guardados),
 Internet (buscador de portadas), portada de revista con mando, widgets. Todo adaptado al modelo nuevo, que es más simple que el viejo.
 
-## 8. Para Azabache
+## 8. Para Jonsu
 
 El contrato está en `CONTRATO-DATOS.md`: `tiempo/<id>/<fuente>` ligero (con las claves del juego, para enlazar lo valorado con la clave
-antigua), y nada más que leer. La valoración es de Azabache, enlazada por el `id` del juego (y por sus claves mientras haya valoraciones
+antigua), y nada más que leer. La valoración es de Jonsu, enlazada por el `id` del juego (y por sus claves mientras haya valoraciones
 antiguas por clave).
 
 ## 9. Lo que necesito que confirmes
@@ -118,4 +118,4 @@ antiguas por clave).
    como cosa aparte.
 2. **Las horas de Steam y del PC como fuentes con máximo** (punto 3).
 3. **Importar desde Carmesí** y no desde Atrio como primera opción (punto 6).
-4. **El icono**: súbelo al repo como `docs/iconos/hiedra-original.jpg` (como en Marfil y Carmesí) y lo saco de ahí; una hiedra verde muy oscura.
+4. **El icono**: súbelo al repo como `docs/iconos/hiedra-original.jpg` (como en Seshat y Carmesí) y lo saco de ahí; una hiedra verde muy oscura.

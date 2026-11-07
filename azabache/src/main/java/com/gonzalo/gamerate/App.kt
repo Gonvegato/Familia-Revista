@@ -157,7 +157,7 @@ private fun AppContenido(
         val v = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
         val sp = ctx.getSharedPreferences("actualizador", android.content.Context.MODE_PRIVATE)
         val antes = sp.getString("vista", "").orEmpty()
-        if (v.isNotEmpty() && v != antes) { sp.edit().putString("vista", v).apply(); if (antes.isNotEmpty()) snack.showSnackbar("Azabache se ha actualizado a la $v", withDismissAction = true) }
+        if (v.isNotEmpty() && v != antes) { sp.edit().putString("vista", v).apply(); if (antes.isNotEmpty()) snack.showSnackbar("Jonsu se ha actualizado a la $v", withDismissAction = true) }
     }
 
     // Viendo la app de tu pareja (solo lectura).
@@ -642,7 +642,7 @@ private fun AppContenido(
             try {
                 val bm = Export.renderYear(ctx, k, list, y, store.myName)
                 val uri = withContext(Dispatchers.IO) { Export.saveJpgUri(ctx, bm, "ronron-$y-${normName(k.title)}") }
-                if (uri != null) Export.share(ctx, uri, "Mi $y en Azabache") else say("No se pudo preparar la imagen")
+                if (uri != null) Export.share(ctx, uri, "Mi $y en Jonsu") else say("No se pudo preparar la imagen")
             } catch (e: Exception) { say("Error: ${e.message}") }
         }
     }
@@ -1166,7 +1166,7 @@ private fun AppContenido(
                             .let { l -> if (pv) l.filter { !Photos.isLocal(it.play.cover) } else l }
                         run {
                             ShellHome(ShellModel(
-                                name = if (pv) p!!.name else store.myName.ifBlank { "Azabache" },
+                                name = if (pv) p!!.name else store.myName.ifBlank { "Jonsu" },
                                 readOnly = pv,
                                 kinds = sectionKinds,
                                 entries = { k -> (gs(k).map { ShellEntry(k, null, it) } + ps(k).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
@@ -1590,7 +1590,7 @@ private fun AppContenido(
             val p = partner
             val ks = if (pv && p != null) p.allKinds else myKinds
             NumeroEspecial(
-                if (pv && p != null) p.name else store.myName.ifBlank { "Azabache" }, ks,
+                if (pv && p != null) p.name else store.myName.ifBlank { "Jonsu" }, ks,
                 { k -> ((if (pv && p != null) p.games(k) else gamesOf(k)).map { ShellEntry(k, null, it) } +
                     (if (pv && p != null) p.plays(k) else playsOf(k)).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
                 onOpen = { e ->
@@ -1697,8 +1697,8 @@ private fun AppContenido(
         Actualizador.nueva?.takeIf { !it.silenciosa && !luego }?.let { n ->
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = { luego = true },
-                title = { Text("Azabache ${n.nombre.removePrefix("Azabache-").removeSuffix(".apk")}", fontFamily = Display) },
-                text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Azabache instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.") },
+                title = { Text("Jonsu ${n.nombre.removePrefix("Jonsu-").removePrefix("Azabache-").removeSuffix(".apk")}", fontFamily = Display) },
+                text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Jonsu instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.") },
                 confirmButton = { androidx.compose.material3.TextButton({
                     luego = true
                     if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }

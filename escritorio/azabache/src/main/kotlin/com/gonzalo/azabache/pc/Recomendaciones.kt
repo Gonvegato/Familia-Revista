@@ -89,7 +89,7 @@ fun DialogoRecomendar(f: Ficha, k: Kind, pareja: String, nav: Nav, onCerrar: () 
             }
         }
         Spacer(Modifier.height(14.dp))
-        Cuerpo("Le saldrá en la portada de su Azabache (en el móvil y en el ordenador), con lo que le escribas.", tam = 14)
+        Cuerpo("Le saldrá en la portada de su Jonsu (en el móvil y en el ordenador), con lo que le escribas.", tam = 14)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(nota, { nota = it }, Modifier.fillMaxWidth().heightIn(min = 110.dp), placeholder = { Text("¿Por qué le va a gustar? (opcional)") })
         if (antes != null) Text("Ya se lo recomendaste el ${Formato.fecha(antes.hora)}.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))

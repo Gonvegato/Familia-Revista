@@ -283,7 +283,7 @@ fun SeccionServicios() {
     CampoRevista("IGDB (Client ID)", p.igdbId, if (atrio.igdbId.isNotBlank()) "el de Atrio" else "Client ID de Twitch (dev.twitch.tv)") { guarda(p.copia(igdbId = it)) }
     CampoRevista("IGDB (secreto)", p.igdbSecret, if (atrio.igdbSecret.isNotBlank()) "el de Atrio" else "secreto de esa aplicación", secreto = true) { guarda(p.copia(igdbSecret = it)) }
     Filete(1.dp, Line)
-    MagLink(if (ocupado) "Un momento…" else "Traer las horas de Steam", "Las pone en los juegos de Hiedra que se llamen igual (los del PC ya las traen de Atrio). La biblioteca de Steam tiene que ser pública.") {
+    MagLink(if (ocupado) "Un momento…" else "Traer las horas de Steam", "Las pone en los juegos de Bastet que se llamen igual (los del PC ya las traen de Atrio). La biblioteca de Steam tiene que ser pública.") {
         if (ocupado) return@MagLink
         ocupado = true; msg = "Hablando con Steam…"
         scope.launch { msg = withContext(Dispatchers.IO) { Servicios.traerHorasSteam(ctx) }; ocupado = false }

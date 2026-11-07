@@ -40,7 +40,7 @@ object Lanzar {
     }
 
     /** El jugador interno: un emulador más en la lista («Hiedra»), para los sistemas con núcleo. Siempre se puede (el núcleo se baja al jugar). */
-    const val HIEDRA = "Hiedra"
+    const val HIEDRA = "Bastet"
     const val PLANTILLA_HIEDRA = "hiedra:interno"
     fun esInterno(e: Eleccion?) = e?.plantilla == PLANTILLA_HIEDRA
     private fun interno(c: Context, sistema: String): Eleccion? = Nucleos.para(sistema)?.let {
@@ -123,7 +123,7 @@ object Lanzar {
             val l = j.principal ?: return "«${j.titulo}» no se juega desde el móvil" + (if (j.plataforma.isNotBlank()) " (${j.plataforma})" else "") + ". Si tienes su ROM, su app o su web, añádela desde la ficha."
             when (l.tipo) {
                 TipoLanzador.ROM -> {
-                    val e = elegir(c, j) ?: return "Hiedra no sabe lanzar «${l.sistema}»"
+                    val e = elegir(c, j) ?: return "Bastet no sabe lanzar «${l.sistema}»"
                     // Sin la ROM aquí: el jugador de Hiedra la baja él solo de tu kDrive; los demás emuladores necesitan el archivo
                     if (!Archivos.tiene(l.clave) && !esInterno(e)) return "Esta ROM está en otro de tus móviles: en su ficha, «Jugar» la baja de tu kDrive."
                     // El jugador interno: lleva la cuenta del tiempo él mismo (sabe exactamente cuándo juegas)

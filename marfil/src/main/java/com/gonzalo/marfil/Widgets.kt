@@ -624,7 +624,7 @@ object Widgets {
     private suspend fun leyendo(d: WDatos, id: Int, w: Float, h: Float, fijo: Libro? = null): Pagina {
         val ctx = d.ctx
         val lista = if (fijo != null) listOf(fijo) else d.leyendo.ifEmpty { d.recientes.filter { it.estado != Estado.LEIDO }.take(1) }
-        if (lista.isEmpty()) return vacio(ctx, "Sigue leyendo", "Nada que leer todavía", "Añade un libro a Marfil y lo tendrás aquí, a un toque de seguir.", w, h)
+        if (lista.isEmpty()) return vacio(ctx, "Sigue leyendo", "Nada que leer todavía", "Añade un libro a Seshat y lo tendrás aquí, a un toque de seguir.", w, h)
         val i = Math.floorMod(estado(ctx, id, "i", 0), lista.size)
         val e = lista[i]
         val compacto = w < 200f && h < 200f
@@ -717,13 +717,13 @@ object Widgets {
         val ch = h - top - pad - textos
         val imgs = items.map { imagen(ctx, it, px(ctx, ch)) }
         val zonas = listOf(
-            Zona(0f, 0f, w, top, abrirApp(ctx), "Abrir Marfil"),
+            Zona(0f, 0f, w, top, abrirApp(ctx), "Abrir Seshat"),
             Zona(pad, top, w - 2 * pad, h - top, null, "", listOf(items.map { leer(ctx, it) to "Leer ${it.titulo}" }))
         )
         return Pagina(zonas) {
             fondo()
             seccion(titulo, pad, pad, w - 2 * pad, tinta, acento)
-            pon(capa("Marfil", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa("Seshat", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
             items.forEachIndexed { k, e ->
                 val gap = 5f
@@ -770,7 +770,7 @@ object Widgets {
                 velo(0f, min(96f, h * 0.42f), 0xC8000000.toInt(), 0x00000000, 0x70000000)
                 velo(h * 0.18f, h, 0x00000000, 0xF2000000.toInt(), 0x99000000.toInt())
             } else { fondo(0xFF15120F.toInt()); reborde = 0xCCFFFFFF.toInt() }
-            val mast = capa("Marfil", tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
+            val mast = capa("Seshat", tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
             pon(mast, pad, pad - 4f)
             val fw = w - 2 * pad - mast.getLineWidth(0) - 8f
             ante(if (fw < anchoAnte(fecha, 8.5f)) fecha.substringBeforeLast(' ') else fecha, w - pad - fw, pad, fw, 0xDDFFFFFF.toInt(), 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
@@ -794,7 +794,7 @@ object Widgets {
     private suspend fun siguiente(d: WDatos, id: Int, w: Float, h: Float): Pagina {
         val ctx = d.ctx
         val lista = d.pendientes.sortedBy { (it.id.hashCode().toLong() * 2654435761L) and 0xFFFFFF }
-        if (lista.isEmpty()) return vacio(ctx, "¿Y ahora qué?", "Nada pendiente", "Añade libros a Marfil y aquí te propondré cuál empezar.", w, h)
+        if (lista.isEmpty()) return vacio(ctx, "¿Y ahora qué?", "Nada pendiente", "Añade libros a Seshat y aquí te propondré cuál empezar.", w, h)
         // Una propuesta distinta cada día (y la que quieras con «Otro»)
         val i = Math.floorMod(LocalDate.now().toEpochDay() + estado(ctx, id, "i", 0), lista.size.toLong()).toInt()
         val e = lista[i]
@@ -845,11 +845,11 @@ object Widgets {
         val hoyMin = (dias[hoy.toString()] ?: 0L) / 60_000L
         val racha = rachaDeLectura(dias)
         val sem = (6 downTo 0).map { hoy.minusDays(it.toLong()) }.map { dia -> dia to (dias[dia.toString()] ?: 0L) / 60_000L }
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Marfil"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
             fondo()
             val pad = if (h < 90f) 12f else 16f
             seccion("Lectura", pad, pad, w - 2 * pad, tinta, acento)
-            pon(capa("Marfil", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa("Seshat", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
             val top = pad + 26f
             val ancho = w - 2 * pad
@@ -917,23 +917,23 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Marfil"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
             val color = if (noche) 0xFFF6F1E7.toInt() else tinta
             val sombra = if (noche) 0x99000000.toInt() else 0x55FFFFFF
             val pie = if (h >= 84f) 16f else 0f
             val p = tp(fTitular, 10f, color, -0.03f)
-            val ancho = p.measureText("MARFIL")
+            val ancho = p.measureText("SESHAT")
             val cuadro = 0.16f
             var s = min((w - 8f) / (ancho / 10f * (1f + cuadro)), (h - pie - 4f) / 0.95f)
             s = s.coerceAtLeast(10f)
             val tpa = tp(fTitular, s, color, -0.03f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
             val fm = tpa.fontMetrics
-            val tw = tpa.measureText("MARFIL")
+            val tw = tpa.measureText("SESHAT")
             val total = tw + s * cuadro
             val x = (w - total) / 2
             val capH = s * 0.72f
             val base = (h - pie) / 2 + capH / 2
-            c.drawText("MARFIL", x, base, tpa)
+            c.drawText("SESHAT", x, base, tpa)
             val q = s * 0.12f
             c.drawRect(x + tw + s * 0.03f, base - q, x + tw + s * 0.03f + q, base, lleno(acento).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
             if (pie > 0f) {
@@ -948,7 +948,7 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Marfil"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
             fondo()
             val pad = if (h < 90f) 12f else 16f
             val conLinea = h >= 70f
@@ -956,13 +956,13 @@ object Widgets {
             val bajo = (if (conLinea) 22f else 0f) + (if (conEntradilla) 24f else 0f)
             val alto = h - 2 * pad - bajo
             val p = tp(fTitular, 10f, tinta, -0.03f)
-            val s = min((w - 2 * pad) / (p.measureText("MARFIL") / 10f), alto / 0.78f).coerceAtLeast(10f)
+            val s = min((w - 2 * pad) / (p.measureText("SESHAT") / 10f), alto / 0.78f).coerceAtLeast(10f)
             val tpa = tp(fTitular, s, tinta, -0.03f)
             val capH = s * 0.72f
             val bloque = capH + s * 0.08f + 4f + bajo
             val base = max(pad, (h - bloque) / 2) + capH
-            val tw = tpa.measureText("MARFIL")
-            c.drawText("MARFIL", (w - tw) / 2, base, tpa)
+            val tw = tpa.measureText("SESHAT")
+            c.drawText("SESHAT", (w - tw) / 2, base, tpa)
             var y = base + s * 0.08f + 4f
             if (conLinea) {
                 c.drawRect(pad, y, w - pad, y + 1.6f, lleno(tinta))

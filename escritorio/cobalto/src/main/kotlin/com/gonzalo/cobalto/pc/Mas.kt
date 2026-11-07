@@ -232,12 +232,12 @@ fun PantAjustes(nav: Nav) {
             2 -> {
                 Antetitulo("Apariencia")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Cobalto del ordenador tiene la apariencia de tu Cobalto del móvil (la que pones allí viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
+                Cuerpo("Thot del ordenador tiene la apariencia de tu Thot del móvil (la que pones allí viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
                 Spacer(Modifier.height(10.dp))
                 MagChoice(listOf("Como el sistema", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Con los colores de Azabache", Modifier.weight(1f), color = Charcoal, fontFamily = Body, fontSize = 14.sp)
+                    Text("Con los colores de Jonsu", Modifier.weight(1f), color = Charcoal, fontFamily = Body, fontSize = 14.sp)
                     Interruptor(Skin.origenAtrio) { Skin.origenAtrio = it; Apariencia.guarda() }
                 }
             }
@@ -273,7 +273,7 @@ fun PantAjustes(nav: Nav) {
                 Spacer(Modifier.height(6.dp))
                 ListaAtajos()
             }
-            else -> AjustesVersion("cobalto", "Cobalto")
+            else -> AjustesVersion("cobalto", "Thot")
         }
     }
 }

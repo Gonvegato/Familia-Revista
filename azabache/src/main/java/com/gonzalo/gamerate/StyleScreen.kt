@@ -42,7 +42,7 @@ import androidx.core.graphics.drawable.toBitmap
 /** Iconos de la app: alias de la actividad principal (Manifest), uno activo a la vez. */
 object AppIcon {
     val ALL = listOf(
-        "atrio" to "Azabache", "clasico" to "Clásico", "noche" to "Noche", "neon" to "Neón", "papel" to "Papel", "arcade" to "Arcade",
+        "atrio" to "Jonsu", "clasico" to "Clásico", "noche" to "Noche", "neon" to "Neón", "papel" to "Papel", "arcade" to "Arcade",
         "oro" to "Oro", "oceano" to "Océano", "sakura" to "Sakura", "fuego" to "Fuego", "bosque" to "Bosque", "oled" to "OLED"
     )
 

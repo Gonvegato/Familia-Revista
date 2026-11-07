@@ -34,7 +34,7 @@ fun SelectorLista(actual: Lista?, soloXtream: Boolean = false, alCambiar: (Lista
 /** La cabecera de las secciones: «← Cobre», el antetítulo y el titular, y lo que vaya a la derecha. */
 @Composable
 fun CabeceraSeccion(titulo: String, ante: String, alVolver: () -> Unit, acciones: @Composable RowScope.() -> Unit = {}) {
-    RevistaTopBar(alVolver, "Cobre", acciones)
+    RevistaTopBar(alVolver, "Nut", acciones)
     Antetitulo(ante, Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
     FitTitle(titulo, 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
     Filete(3.dp)
