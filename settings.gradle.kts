@@ -7,13 +7,15 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Familia"
-// Las apps de la familia, cada una con su paquete de siempre (se instalan encima de las que ya tienes); Mostaza, la de películas y series, es nueva
+// Las apps de la familia, cada una con su paquete de siempre (se instalan encima de las que ya tienes); Mostaza, la de películas y series, y Cobre, la de la tele (IPTV), son las nuevas
 // (con -PsoloEscritorio, sin las de Android: para compilar las de escritorio en un Mac o en Linux sin el SDK de Android)
 val soloEscritorio = providers.gradleProperty("soloEscritorio").isPresent
 include(":nucleo")
+// Lo de Cobre que no es pantalla (listas M3U, Xtream Codes, la guía XMLTV): Kotlin puro, para el móvil y el ordenador
+include(":iptv")
 if (!soloEscritorio) {
     include(":familia")
-    include(":hiedra", ":marfil", ":cobalto", ":azabache", ":mostaza")
+    include(":hiedra", ":marfil", ":cobalto", ":azabache", ":mostaza", ":cobre")
     // El motor de torrents de Mostaza (libtorrent4j): ver un torrent mientras se baja
     include(":torrent")
 }

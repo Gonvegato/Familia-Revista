@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tv SYSTEM "xmltv.dtd">
+<tv date="20261107" source-info-name="Guía de prueba" generator-info-name="cobre-pruebas">
+  <!-- Los canales primero, como en casi todas las guías -->
+  <channel id="La1.es">
+    <display-name lang="es">La 1</display-name>
+    <display-name lang="es">TVE La 1 HD</display-name>
+    <icon src="http://logos.ejemplo.test/la1.png" />
+  </channel>
+  <channel id="La2.es"><display-name>La 2</display-name></channel>
+  <channel id="Antena3.es"><display-name>Antena 3</display-name><icon src="http://logos.ejemplo.test/a3.png"/></channel>
+  <channel id="CanalSur.es"><display-name>Canal Sur Andalucía</display-name></channel>
+  <channel id="Ajeno.uk"><display-name>BBC One</display-name></channel>
+  <programme start="20261107150000 +0100" stop="20261107155000 +0100" channel="La1.es">
+    <title lang="es">Telediario 1</title>
+    <sub-title lang="es">Edición de mediodía</sub-title>
+    <desc lang="es">Las noticias del día &amp; el tiempo, con &quot;Ana Blanco&quot; &#8212; en directo.</desc>
+    <category lang="es">Noticias</category>
+    <icon src="http://img.ejemplo.test/td.jpg"/>
+    <episode-num system="onscreen">T1 E120</episode-num>
+    <rating system="ES"><value>TP</value></rating>
+  </programme>
+  <programme start="20261107135000 +0000" stop="20261107140000 +0000" channel="La1.es">
+    <title>El tiempo</title>
+  </programme>
+  <programme start="20261107155000 +0100" stop="20261107170000 +0100" channel="La1.es">
+    <title><![CDATA[Saber y ganar: <el concurso>]]></title>
+  </programme>
+  <programme start="20261107080000 -0600" stop="20261107090000 -0600" channel="La2.es">
+    <title>Documentales &#xE1;rabes</title>
+  </programme>
+  <programme start="20261107140000" stop="20261107150000" channel="Antena3.es">
+    <title>Noticias sin zona (UTC)</title>
+  </programme>
+  <programme start="202611071500 BST" stop="202611071600 BST" channel="CanalSur.es">
+    <title>Hora inglesa de verano</title>
+  </programme>
+  <programme start="20261107140000 +0000" stop="20261107150000 +0000" channel="Ajeno.uk">
+    <title>No lo quiero</title>
+  </programme>
+  <programme start="20261107140000 +0000" stop="20261107150000 +0000" channel="La1.es">
+    <title>Repetido: misma hora en el mismo canal</title>
+  </programme>
+</tv>

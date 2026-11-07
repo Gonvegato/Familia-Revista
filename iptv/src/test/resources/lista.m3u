@@ -1,0 +1,33 @@
+﻿#EXTM3U url-tvg="http://epg.ejemplo.test/guia.xml.gz,http://epg2.ejemplo.test/otra.xml" tvg-shift="0" catchup="append" catchup-days="3"
+#EXTINF:-1 tvg-id="La1.es" tvg-name="La 1 HD" tvg-logo="http://logos.ejemplo.test/la1.png" group-title="Nacionales" tvg-chno="1",La 1 HD
+http://tv.ejemplo.test:8080/live/pepe/s3cr3t0/101.ts
+#EXTINF:-1 tvg-id="La2.es" tvg-name="La 2" tvg-logo="http://logos.ejemplo.test/la2.png" group-title="Nacionales",La 2, cultura y más
+http://tv.ejemplo.test:8080/live/pepe/s3cr3t0/102.ts
+#EXTINF:-1 tvg-id="Antena3.es" tvg-logo="http://logos.ejemplo.test/a3.png" group-title="Nacionales" catchup="default" catchup-days="7" catchup-source="http://tv.ejemplo.test/a3/{utc}-{duration}.m3u8",ES: Antena 3 FHD
+#EXTVLCOPT:http-user-agent=Reproductor/1.0
+#EXTVLCOPT:http-referrer=http://ejemplo.test/
+http://cdn.ejemplo.test/a3/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal Sur",Canal Sur
+#EXTGRP:Autonómicas
+http://cdn.ejemplo.test/canalsur.m3u8|User-Agent=Mozilla%2F5.0%20(Linux)&Referer=http%3A%2F%2Fcanalsur.test%2F
+#EXTINF:-1 tvg-id="TV3.cat",TV3
+http://cdn.ejemplo.test/tv3.m3u8
+#EXTGRP:
+#EXTINF:-1 tvg-id=Cuatro.es tvg-logo=http://logos.ejemplo.test/cuatro.png group-title=Nacionales,Cuatro
+http://cdn.ejemplo.test/cuatro.m3u8
+#EXTINF:-1 tvg-id="Movistar.es" group-title="De pago",M+ Estrenos
+#KODIPROP:inputstream.adaptive.manifest_type=mpd
+#KODIPROP:inputstream.adaptive.license_type=com.widevine.alpha
+#KODIPROP:inputstream.adaptive.license_key=https://lic.ejemplo.test/wv
+#KODIPROP:inputstream.adaptive.stream_headers=User-Agent=Kodi&Referer=https://ejemplo.test/
+https://cdn.ejemplo.test/mplus/manifest.mpd
+#EXTINF:-1 tvg-id="RNE1.es" radio="true" group-title="Radio",Radio Nacional
+http://radio.ejemplo.test/rne1.mp3
+#EXTINF:-1 tvg-id="La1.es" tvg-name="La 1 HD" group-title="Nacionales (copia)",La 1 HD
+http://tv2.ejemplo.test/la1.ts
+#EXTINF:-1,Sin atributos
+rtmp://rtmp.ejemplo.test/vivo/sin
+# un comentario cualquiera
+#EXTINF:-1 tvg-id="Rota",Una entrada sin dirección
+#EXTINF:-1 tvg-id="Telecinco.es" group-title="Nacionales",Telecinco
+http://cdn.ejemplo.test/t5.m3u8
