@@ -143,11 +143,11 @@ fun FilaCanal(l: Lista, cg: Cargada, c: Canal, i: Int, ahora: Long, fav: Favorit
     val (ya, luego) = remember(c.clave, ahora, cg) { Tele.ahoraYDespuesRapido(cg, c, ahora) }
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).pulsable { alVer() }.padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("${if (c.numero > 0) c.numero else i + 1}", color = Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.width(52.dp))
+            Text("${if (c.numero > 0) c.numero else i + 1}", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 36.dp).padding(end = 8.dp))
             Logo(c.logo, c.nombre, 46.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 if (ya != null || luego != null) AhoraYDespues(ya, luego, ahora, Modifier.padding(top = 2.dp))
                 else if (c.grupo.isNotBlank()) Text(c.grupo.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1)
             }

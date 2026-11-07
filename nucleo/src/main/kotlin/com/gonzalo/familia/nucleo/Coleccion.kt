@@ -94,10 +94,16 @@ class Coleccion internal constructor(val nombre: String, internal val archivo: S
         invalida(setOf(ref))
     }
 
-    /** Solo los campos que de verdad cambian (comparando con lo que hay): si no cambia nada, no se sube nada. */
+    /**
+     * Solo los campos que de verdad cambian (comparando con lo que hay): si no cambia nada, no se sube nada. Un campo que aún no está se
+     * escribe aunque sea `false` o `0`: para comparar, «no está» vale lo mismo que `false`, pero quien lo lee puede tener `true` por
+     * defecto (un ajuste encendido de serie que apagas): si no se escribiera, el cambio no llegaría nunca. Quitar algo que no está, no sube nada.
+     */
     fun cambia(ref: String, campos: Map<String, Any?>, hora: Long? = null) {
         val actual = nodo(ref)
-        val distintos = campos.filter { (c, v) -> actual == null || !igual(actual[c], v ?: "") }
+        val distintos = campos.filter { (c, v) ->
+            actual == null || (c !in actual.campos && v != null && v != "") || !igual(actual[c], v ?: "")
+        }
         if (distintos.isNotEmpty()) pon(ref, distintos, hora)
     }
 

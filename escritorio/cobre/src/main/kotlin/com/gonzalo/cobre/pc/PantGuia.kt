@@ -121,7 +121,7 @@ private fun FilaGuia(l: Lista, cg: Cargada, c: Canal, desde: Long, hasta: Long, 
     }
     Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.width(izq).fillMaxHeight().pulsable { alVer() }.padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("${c.numero.takeIf { it > 0 } ?: ""}", color = Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.width(36.dp))
+            Text("${c.numero.takeIf { it > 0 } ?: ""}", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 30.dp).padding(end = 6.dp))
             Logo(c.logo, c.nombre, 38.dp)
             Spacer(Modifier.width(8.dp))
             Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)

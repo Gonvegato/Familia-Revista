@@ -226,10 +226,10 @@ private fun ListaRapida(canales: List<com.gonzalo.iptv.Canal>, actual: Int) {
             val (a, d) = cg?.let { Tele.ahoraYDespuesRapido(it, c, ahora) } ?: (null to null)
             Row(Modifier.fillMaxWidth().pulsable { Reproductor.vaACanal(i) }.background(if (i == actual) Paper else Sand).padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                Text("${if (c.numero > 0) c.numero else i + 1}", color = if (i == actual) Acento else Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.width(48.dp))
+                Text("${if (c.numero > 0) c.numero else i + 1}", color = if (i == actual) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 36.dp).padding(end = 8.dp))
                 Logo(c.logo, c.nombre, 30.dp)
                 Spacer(Modifier.width(10.dp))
-                Text(c.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(240.dp))
+                Text(c.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(240.dp))
                 AhoraYDespues(a, d, ahora, Modifier.weight(1f))
             }
         }

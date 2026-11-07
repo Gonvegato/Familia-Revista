@@ -36,6 +36,22 @@ class SincroTest {
         assertEquals(0, a.pendientes)
     }
 
+    @Test fun apagarUnAjusteQueNuncaSeHabiaGuardadoLlega() {
+        // Un ajuste encendido de serie («el episodio siguiente, solo») que nunca se había escrito: apagarlo tiene que llegar al otro
+        val a = Emulador.dispositivo("gonzalo")
+        val b = Emulador.dispositivo("gonzalo")
+        b.coleccion("ajustes")
+        a.coleccion("ajustes").pon("app_reproductor", "subs" to "spa")
+        a.coleccion("ajustes").cambia("app_reproductor", mapOf("siguiente" to false, "subs" to "spa"))
+        assertTrue(a.sincroniza().ok); assertTrue(b.sincroniza().ok)
+        val n = b.coleccion("ajustes").nodo("app_reproductor")!!
+        assertTrue("el campo está, apagado", "siguiente" in n.campos)
+        assertEquals(false, n.si("siguiente"))
+        // (y quitar algo que no está no sube nada)
+        a.coleccion("ajustes").cambia("app_reproductor", mapOf("audio" to ""))
+        assertEquals(0, a.pendientes)
+    }
+
     @Test fun quienEscuchaUnaColeccionLaSigueOyendoTrasSalirYVolverAEntrar() {
         val a = Emulador.dispositivo("gonzalo")
         val b = Emulador.dispositivo("gonzalo")
