@@ -12,8 +12,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -27,7 +26,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -117,6 +126,8 @@ class ReproductorActivity : ComponentActivity() {
     private val tanteando: Boolean get() = tanteo?.terminado == false
     private var ultimaInteraccion = SystemClock.elapsedRealtime()
     private var parado = false
+    /** En la tele (o en la sala de una tablet): los controles, más grandes y a salvo del borde. */
+    private val tele: Boolean by lazy { Sala.esTele(this) || Sala.enTablet }
 
     private val pulso = object : Runnable {
         override fun run() {
@@ -172,6 +183,8 @@ class ReproductorActivity : ComponentActivity() {
             AndroidView({ c ->
                 PlayerView(c).apply {
                     useController = false
+                    // (la cruceta no se para en el vídeo: con los controles escondidos, las teclas llegan a onKeyDown para saltar)
+                    isFocusable = false; isFocusableInTouchMode = false; descendantFocusability = android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                     setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
                     setKeepContentOnPlayerReset(true)
@@ -180,9 +193,12 @@ class ReproductorActivity : ComponentActivity() {
                     player = this@ReproductorActivity.player
                 }
             }, Modifier.fillMaxSize(), update = { it.player = player })
+            // Atrás (el del mando a distancia también): primero cierra lo que esté abierto encima (audio, subtítulos, fuente); si no, sale
+            androidx.activity.compose.BackHandler(enabled = estado.eleccion != null) { estado.eleccion = null }
             ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { s -> salta(s) }, alIr = { p -> player?.seekTo(p); visionado?.sesion?.salto() },
                 alVolver = { finish() }, alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alFuente = { eligeFuente() }, alOtro = { conOtro() },
-                alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() })
+                alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() },
+                tele = tele, salto = AjustesReproductor.salto(this@ReproductorActivity))
         }
     }
 
@@ -590,17 +606,33 @@ class ReproductorActivity : ComponentActivity() {
 
     // ---------------------------------------------------------------- el mando (cruceta, OK, reproducir/pausa)
 
+    /** Cualquier tecla (también las que se quedan los botones al moverse el foco entre ellos) cuenta como que estás ahí: los controles no se esconden. */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        ultimaInteraccion = SystemClock.elapsedRealtime()
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         ultimaInteraccion = SystemClock.elapsedRealtime()
+        // Con los controles escondidos, la cruceta salta y OK (o arriba, abajo) los enseña; con ellos a la vista, la cruceta va de botón en botón
         if (!estado.visibles && estado.eleccion == null) when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MEDIA_REWIND -> { salta(-AjustesReproductor.salto(this)); return true }
-            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { salta(AjustesReproductor.salto(this)); return true }
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> { estado.visibles = true; return true }
+            KeyEvent.KEYCODE_DPAD_LEFT -> { salta(-AjustesReproductor.salto(this)); return true }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> { salta(AjustesReproductor.salto(this)); return true }
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_BUTTON_A,
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> { estado.visibles = true; return true }
         }
+        // Las teclas de los mandos a distancia (las de reproducir, la de subtítulos, la de audio, la de información…), siempre
         when (keyCode) {
-            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_SPACE -> { alternar(); return true }
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_HEADSETHOOK -> { alternar(); return true }
             KeyEvent.KEYCODE_MEDIA_PLAY -> { player?.play(); return true }
             KeyEvent.KEYCODE_MEDIA_PAUSE -> { player?.pause(); return true }
+            KeyEvent.KEYCODE_MEDIA_REWIND, KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD, KeyEvent.KEYCODE_MEDIA_STEP_BACKWARD -> { salta(-AjustesReproductor.salto(this)); return true }
+            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD, KeyEvent.KEYCODE_MEDIA_STEP_FORWARD -> { salta(AjustesReproductor.salto(this)); return true }
+            KeyEvent.KEYCODE_MEDIA_STOP -> { finish(); return true }
+            KeyEvent.KEYCODE_MEDIA_NEXT -> { if (videoSiguiente() != null) siguienteYa() else muestra("Es el último episodio"); return true }
+            KeyEvent.KEYCODE_CAPTIONS -> { estado.visibles = true; eligeSubs(); return true }
+            KeyEvent.KEYCODE_MEDIA_AUDIO_TRACK -> { estado.visibles = true; eligeAudio(); return true }
+            KeyEvent.KEYCODE_INFO, KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_Y -> { estado.visibles = true; return true }
         }
         return super.onKeyDown(keyCode, event)
     }
@@ -636,80 +668,123 @@ class ReproductorActivity : ComponentActivity() {
     }
 }
 
-/** Los controles: arriba el título, en medio reproducir y saltar, abajo la barra y lo de audio, subtítulos, fuente y otro reproductor. */
+/**
+ * Los controles: arriba el título, en medio reproducir y saltar, abajo la barra y lo de audio, subtítulos, fuente y otro reproductor.
+ * Todo se alcanza con el mando a distancia: al aparecer, el foco va a reproducir/pausa; en la barra, la cruceta salta [salto] segundos;
+ * lo que se abre encima (audio, subtítulos, fuente; el aviso; el episodio siguiente; «se corta») se lleva el foco a lo suyo. En la tele
+ * ([tele]), con los márgenes a salvo del borde y más grande.
+ */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun ControlesReproductor(
     e: EstadoReproductor, alTocar: () -> Unit, alPlay: () -> Unit, alSaltar: (Int) -> Unit, alIr: (Long) -> Unit, alVolver: () -> Unit,
     alAudio: () -> Unit, alSubs: () -> Unit, alFuente: () -> Unit, alOtro: () -> Unit, alSiguiente: () -> Unit, alCancelarSiguiente: () -> Unit, alCorte: () -> Unit,
+    tele: Boolean = false, salto: Int = 10,
 ) {
     val blanco = Color(0xFFF7F2E8)
-    Box(Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { alTocar() }) {
-        if (e.cargando && e.aviso == null) Text("Cargando…", color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 20.sp, modifier = Modifier.align(Alignment.Center))
+    val k = if (tele) 1.35f else 1f
+    val mh = if (tele) 48.dp else 24.dp
+    val mv = if (tele) 27.dp else 16.dp
+    val fPlay = remember { FocusRequester() }
+    val fEleccion = remember { FocusRequester() }
+    val fAviso = remember { FocusRequester() }
+    val fSiguiente = remember { FocusRequester() }
+    val fCorte = remember { FocusRequester() }
+    val teclado = LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    // Al aparecer algo, el foco a lo suyo (con el dedo no hace falta: nada se enfoca en modo táctil)
+    val botones = e.visibles && e.aviso == null && !e.cargando
+    // (también al pasar del dedo al mando: la primera tecla pone el foco donde toca)
+    LaunchedEffect(botones, e.eleccion != null, e.aviso != null, e.siguiente != null, e.corte != null, teclado) {
+        if (!(teclado || tele)) return@LaunchedEffect
+        withFrameNanos { }
+        runCatching {
+            when {
+                e.eleccion != null -> fEleccion.requestFocus()
+                e.aviso != null -> fAviso.requestFocus()
+                e.siguiente != null -> fSiguiente.requestFocus()
+                e.corte != null -> fCorte.requestFocus()
+                botones -> fPlay.requestFocus()
+            }
+        }
+    }
+    // (un toque, no un botón: así la cruceta no se para en todo el vídeo, y con los controles escondidos llega al reproductor para saltar)
+    Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures(onTap = { alTocar() }) }) {
+        if (e.cargando && e.aviso == null) Text("Cargando…", color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 20.sp * k, modifier = Modifier.align(Alignment.Center))
         if (e.visibles || e.aviso != null) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xCC000000), Color.Transparent, Color.Transparent, Color(0xCC000000)))))
-            Column(Modifier.align(Alignment.TopStart).fillMaxWidth().statusBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp)) {
-                Text("← VOLVER", color = blanco, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp, modifier = Modifier.tocable { alVolver() }.padding(vertical = 8.dp))
-                Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
-                if (e.fuente.isNotBlank()) Text(e.fuente, color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp, maxLines = 1)
+            Column(Modifier.align(Alignment.TopStart).fillMaxWidth().statusBarsPadding().padding(horizontal = mh, vertical = mv)) {
+                Text("← VOLVER", color = blanco, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp * k, letterSpacing = 1.4.sp, modifier = Modifier.tocable { alVolver() }.padding(vertical = 8.dp))
+                Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp * k, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp * k, letterSpacing = 1.sp, maxLines = 1)
+                if (e.fuente.isNotBlank()) Text(e.fuente, color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp * k, maxLines = 1)
             }
-            if (e.aviso == null && !e.cargando) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
-                BotonReproductor(Icons.Rounded.Replay10, "Atrás", blanco, 52.dp) { alSaltar(-10) }
-                BotonReproductor(if (e.reproduciendo) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (e.reproduciendo) "Pausa" else "Reproducir", blanco, 76.dp) { alPlay() }
-                BotonReproductor(Icons.Rounded.Forward10, "Adelante", blanco, 52.dp) { alSaltar(10) }
+            if (botones) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
+                BotonReproductor(Icons.Rounded.Replay10, "Atrás", blanco, 52.dp * k) { alSaltar(-salto) }
+                BotonReproductor(if (e.reproduciendo) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (e.reproduciendo) "Pausa" else "Reproducir", blanco, 76.dp * k, Modifier.focusRequester(fPlay)) { alPlay() }
+                BotonReproductor(Icons.Rounded.Forward10, "Adelante", blanco, 52.dp * k) { alSaltar(salto) }
             }
-            Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
+            Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().navigationBarsPadding().padding(horizontal = mh, vertical = if (tele) mv else 12.dp)) {
                 if (e.dur > 0) {
-                    Slider(e.pos.toFloat().coerceIn(0f, e.dur.toFloat()), { alIr(it.toLong()) }, valueRange = 0f..e.dur.toFloat(),
-                        colors = SliderDefaults.colors(thumbColor = Acento, activeTrackColor = Acento, inactiveTrackColor = blanco.copy(alpha = 0.3f)))
+                    // La barra: con el dedo se arrastra; con la cruceta, izquierda y derecha saltan (de [salto] en [salto] segundos)
+                    val src = remember { MutableInteractionSource() }
+                    Slider(e.pos.toFloat().coerceIn(0f, e.dur.toFloat()), { alIr(it.toLong()) }, valueRange = 0f..e.dur.toFloat(), interactionSource = src,
+                        colors = SliderDefaults.colors(thumbColor = Acento, activeTrackColor = Acento, inactiveTrackColor = blanco.copy(alpha = 0.3f)),
+                        modifier = Modifier.marcoFoco(src, 2.dp).onPreviewKeyEvent { ev ->
+                            val izq = ev.key == Key.DirectionLeft; val der = ev.key == Key.DirectionRight
+                            if (!izq && !der) return@onPreviewKeyEvent false
+                            if (ev.type == KeyEventType.KeyDown) alSaltar(if (der) salto else -salto)
+                            true
+                        }.semantics { contentDescription = "Barra de tiempo" })
                     Row(Modifier.fillMaxWidth()) {
-                        Text(tiempo(e.pos), color = blanco, fontFamily = Body, fontSize = 12.sp); Spacer(Modifier.weight(1f))
-                        Text("−" + tiempo((e.dur - e.pos).coerceAtLeast(0L)), color = blanco, fontFamily = Body, fontSize = 12.sp)
+                        Text(tiempo(e.pos), color = blanco, fontFamily = Body, fontSize = 12.sp * k); Spacer(Modifier.weight(1f))
+                        Text("−" + tiempo((e.dur - e.pos).coerceAtLeast(0L)), color = blanco, fontFamily = Body, fontSize = 12.sp * k)
                     }
                 }
-                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    EnlaceClaro("Audio", blanco, alAudio); EnlaceClaro("Subtítulos", blanco, alSubs); EnlaceClaro("Fuente", blanco, alFuente)
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp * k), verticalAlignment = Alignment.CenterVertically) {
+                    EnlaceClaro("Audio", blanco, k, alAudio); EnlaceClaro("Subtítulos", blanco, k, alSubs); EnlaceClaro("Fuente", blanco, k, alFuente)
                     Spacer(Modifier.weight(1f))
-                    EnlaceClaro("Abrir con otro reproductor", blanco, alOtro)
+                    EnlaceClaro("Abrir con otro reproductor", blanco, k, alOtro)
                 }
             }
         }
         // (debajo de «Cargando…», en el centro: arriba tapaba el título)
-        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.align(Alignment.Center).offset(y = 64.dp).widthIn(max = 560.dp).padding(horizontal = 24.dp).background(Color(0x99000000)).padding(horizontal = 16.dp, vertical = 8.dp)) }
+        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp * k, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.align(Alignment.Center).offset(y = 64.dp * k).widthIn(max = 560.dp * k).padding(horizontal = 24.dp).background(Color(0x99000000)).padding(horizontal = 16.dp, vertical = 8.dp)) }
         e.aviso?.let { a ->
-            Column(Modifier.align(Alignment.Center).widthIn(max = 520.dp).padding(24.dp).background(Paper).padding(22.dp)) {
+            Column(Modifier.align(Alignment.Center).widthIn(max = 520.dp * k).padding(24.dp).background(Paper).padding(22.dp).atrapaFoco()) {
                 Antetitulo("No se puede", Modifier.padding(bottom = 8.dp))
-                Text(a, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp)
+                Text(a, color = Charcoal, fontFamily = Body, fontSize = 15.sp * k, lineHeight = 21.sp * k)
                 Spacer(Modifier.height(10.dp))
-                MagLink("Abrir con otro reproductor", accent = true) { alOtro() }
+                Box(Modifier.focusRequester(fAviso)) { MagLink("Abrir con otro reproductor", accent = true) { alOtro() } }
                 MagLink("Probar otra fuente") { alFuente() }
                 MagLink("Volver") { alVolver() }
             }
         }
         e.corte?.let { c ->
-            Row(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 110.dp).background(Paper).padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(c, color = Charcoal, fontFamily = Body, fontSize = 14.sp, modifier = Modifier.weight(1f, fill = false))
+            Row(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 110.dp * k).padding(horizontal = mh).background(Paper).padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(c, color = Charcoal, fontFamily = Body, fontSize = 14.sp * k, modifier = Modifier.weight(1f, fill = false))
                 Spacer(Modifier.width(14.dp))
-                EnlaceRevista("Sí, cambiar", acento = true) { alCorte() }
+                EnlaceRevista("Sí, cambiar", Modifier.focusRequester(fCorte), acento = true) { alCorte() }
             }
         }
         e.siguiente?.let { s ->
-            Column(Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(24.dp).background(Paper).padding(18.dp)) {
+            Column(Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(horizontal = mh, vertical = mv + 8.dp).background(Paper).padding(18.dp)) {
                 Antetitulo("Siguiente", Modifier.padding(bottom = 4.dp))
-                Text(s, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2)
+                Text(s, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp * k, maxLines = 2)
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    EnlaceRevista(if (e.cuentaAtras >= 0) "Ver ya (${e.cuentaAtras})" else "Ver ya", acento = true) { alSiguiente() }
+                    EnlaceRevista(if (e.cuentaAtras >= 0) "Ver ya (${e.cuentaAtras})" else "Ver ya", Modifier.focusRequester(fSiguiente), acento = true) { alSiguiente() }
                     EnlaceRevista("Cancelar") { alCancelarSiguiente() }
                 }
             }
         }
         e.eleccion?.let { (titulo, ops, elegir) ->
-            Column(Modifier.align(Alignment.CenterEnd).fillMaxHeight().widthIn(max = 420.dp).fillMaxWidth(0.9f).background(Paper).statusBarsPadding().padding(20.dp).verticalScroll(rememberScrollState())) {
+            val marcada = ops.indexOfFirst { it.second }.coerceAtLeast(0)
+            Column(Modifier.align(Alignment.CenterEnd).fillMaxHeight().widthIn(max = 420.dp * k).fillMaxWidth(0.9f).background(Paper).statusBarsPadding()
+                .padding(horizontal = if (tele) mh else 20.dp, vertical = if (tele) mv else 20.dp).verticalScroll(rememberScrollState()).atrapaFoco()) {
                 Antetitulo(titulo, Modifier.padding(bottom = 6.dp))
                 ops.forEachIndexed { i, (t, sel) ->
-                    Text((if (sel) "✓ " else "   ") + t, color = if (sel) Acento else Charcoal, fontFamily = Body, fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal, fontSize = 15.sp,
-                        modifier = Modifier.fillMaxWidth().tocable { elegir(i) }.padding(vertical = 10.dp))
+                    Text((if (sel) "✓ " else "   ") + t, color = if (sel) Acento else Charcoal, fontFamily = Body, fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal, fontSize = 15.sp * k,
+                        modifier = Modifier.fillMaxWidth().then(if (i == marcada) Modifier.focusRequester(fEleccion) else Modifier).tocable { elegir(i) }.padding(vertical = 10.dp))
                     Filete(1.dp, Line)
                 }
                 EnlaceRevista("Cerrar") { e.eleccion = null }
@@ -720,15 +795,15 @@ fun ControlesReproductor(
 
 /** Un botón del reproductor: el icono a buen tamaño (se ve desde el sofá), con el marco de foco del mando. */
 @Composable
-private fun BotonReproductor(icono: androidx.compose.ui.graphics.vector.ImageVector, descripcion: String, color: Color, tam: androidx.compose.ui.unit.Dp, alHacer: () -> Unit) {
-    Box(Modifier.size(tam + 20.dp).tocable(fuera = 2.dp) { alHacer() }.semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
+private fun BotonReproductor(icono: androidx.compose.ui.graphics.vector.ImageVector, descripcion: String, color: Color, tam: androidx.compose.ui.unit.Dp, modifier: Modifier = Modifier, alHacer: () -> Unit) {
+    Box(modifier.size(tam + 20.dp).tocable(fuera = 2.dp) { alHacer() }.semantics { contentDescription = descripcion }, contentAlignment = Alignment.Center) {
         Icon(icono, null, tint = color, modifier = Modifier.size(tam))
     }
 }
 
 @Composable
-private fun EnlaceClaro(t: String, color: Color, alHacer: () -> Unit) =
-    Text(t.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.3.sp, maxLines = 1, modifier = Modifier.tocable { alHacer() }.padding(vertical = 10.dp))
+private fun EnlaceClaro(t: String, color: Color, k: Float, alHacer: () -> Unit) =
+    Text(t.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp * k, letterSpacing = 1.3.sp, maxLines = 1, modifier = Modifier.tocable { alHacer() }.padding(vertical = 10.dp, horizontal = 4.dp))
 
 /** «1:23:45» o «23:45». */
 fun tiempo(ms: Long): String {

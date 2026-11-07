@@ -24,6 +24,7 @@ fun iniciar(c: Context) {
     Cuenta.cargar(c)
     Skin.cargar(c); TemaAtrio.cargarGuardado(c)
     Biblioteca.cargar(c); Addons.cargar(c); Tmdb.cargar(c)
+    Sala.cargar(c)
     SincroP.iniciar(c)
     // El motor de torrents (no arranca nada hasta que se abre un torrent)
     FuenteMotor.conecta(c)

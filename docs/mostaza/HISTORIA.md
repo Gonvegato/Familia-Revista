@@ -15,6 +15,51 @@ addon de fuentes ni de torrents: los pones tú.
 Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo con `-Proborazzi.test.record=true`), en el móvil, en la
 tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar, Buscar, la ficha de una película y la de una serie, las
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
+Y en la tele, la sala (`CapturasTeleTest`, 1920 × 1080 en modo de tele).
+
+## En la tele: la sala
+
+**Mostaza también en Android TV y Google TV**, con el mismo APK que el móvil (en la tele sale en la fila de las apps, con su banner).
+Al abrirse en una tele no se ve la Mostaza del móvil sino **la sala**, como la de Hiedra en el ordenador (`--sala`): a pantalla completa,
+oscura, con portadas grandes y todo con la cruceta del mando a distancia, sin nada que haya que tocar. Es la misma Mostaza: la misma
+biblioteca, los mismos addons, el mismo elector y el mismo reproductor; solo cambia la cara (`Sala.kt`, `SalaFoco.kt`, `SalaPiezas.kt`,
+`SalaSecciones.kt`, `SalaFicha.kt`).
+
+- **Arriba**, el nombre, las secciones (Inicio · Biblioteca · Explorar · Buscar), el menú y la hora; **abajo**, qué hace cada tecla.
+- **Inicio**: lo enfocado en grande (título, año, lo que llevas, géneros y su fondo) y debajo las filas de la portada del móvil, con los
+  mismos datos (`rememberPortada`): «Seguir viendo» (con la barra de lo visto), «Pendientes», «En tu kDrive» y el catálogo de TMDB si
+  tienes la clave (si no, los catálogos de tus addons).
+- **Biblioteca**: Viendo · Pendiente · Visto · Abandonado, con el filtro y el orden de cada una (los mismos que en el móvil, que viajan).
+- **Explorar**: el de TMDB (películas o series, orden, plataforma y género) o el de tus addons (catálogo y género), en rejilla y por páginas.
+- **Buscar**: el campo se escribe con el teclado de la tele (OK en él; el de Android TV trae también el micrófono) o con «Hablar», el
+  reconocimiento de voz del sistema si la tele lo tiene.
+- **La ficha**: «Reproducir» (o «Seguir · T2·E5») pone la fuente que elige Mostaza sola, igual que en el móvil (`Busqueda.reproduce`, la
+  misma función para los dos), y dice cuál ha sido; «Todas las fuentes», en un panel a la derecha con la mejor para ti marcada y
+  enfocada; dónde está en tu biblioteca (y cambiarlo, favorita, o quitarla, con la misma pregunta de siempre: quitar es para siempre); en
+  una serie, las temporadas y los episodios (OK pone uno; al lado, sus fuentes y la marca de visto); y «Más como esta».
+- **El foco** se ve desde el sofá: lo enfocado crece y un marco del acento se desliza de una cosa a otra. Lo que se abre encima (la ficha,
+  las fuentes, el menú, una pregunta) se queda el foco, y al cerrarlo vuelves a donde estabas. ATRÁS vuelve (de la ficha a donde
+  estabas; de una sección a Inicio; en Inicio sale de Mostaza); MENÚ abre el menú (Ajustes y Addons, las páginas de siempre; Biblioteca;
+  Buscar); la tecla de buscar va a Buscar; con un mando de juegos, L1 y R1 cambian de sección.
+- **A salvo del borde**: se compone sobre 1080 líneas y se escala a cualquier tele, con los márgenes del 5 % que pide Google para el
+  «overscan» (48 × 27 dp de 960 × 540).
+- **El reproductor, con el mando**: al enseñar los controles el foco va a reproducir/pausa; la cruceta va de un botón a otro (audio,
+  subtítulos, fuente, otro reproductor) y en la barra salta adelante o atrás; con los controles escondidos, izquierda y derecha saltan y OK
+  los enseña. Las teclas del mando: reproducir/pausa, adelante y atrás, parar, el episodio siguiente, la de subtítulos y la de audio. Lo
+  que se abre encima (audio, subtítulos, fuente, el aviso, «se corta», el episodio siguiente) se lleva el foco, y ATRÁS cierra primero la
+  lista abierta. En la tele, más grande y lejos del borde. (También en el móvil y la tablet: ATRÁS cierra la lista de audio o subtítulos.)
+- **En una tablet con un mando** (o conectada a la tele), la sala se pide en Ajustes → Avanzado → «Modo sala» (es de ese dispositivo, no
+  viaja); se sale desde su menú. En el móvil y la tablet de siempre no cambia nada.
+- No se usa Compose for TV (`androidx.tv`): sus filas se retiraron en favor de las normales de Compose, que ya saben moverse con la
+  cruceta, y sus botones y tarjetas son los de Material, no los de la revista. Tampoco `focusRestorer` de Compose: en esta versión se cae
+  al quitar una fila (suelta dos veces lo que guarda); la sala recuerda lo último enfocado por su cuenta.
+- Pruebas: `SalaTest` (en una tele de 1920 × 1080 de mentira, en modo de tele): con las teclas del mando, de verdad, se entra con el foco
+  en «Seguir viendo», la cruceta va al siguiente y lo pasa arriba, OK abre la ficha con el foco en «Reproducir», en la ficha la cruceta
+  no se sale a lo de debajo, ATRÁS vuelve al mismo póster, arriba están las secciones y OK abre una; en una serie, bajando se llega a un
+  episodio y OK lo pone (se abre el reproductor con la fuente elegida); y en el reproductor, el foco en pausa, la barra salta con la
+  cruceta. Capturas: `CapturasTeleTest` (solo con `-Proborazzi.test.record=true`), `mostaza-tele-*.png`: Inicio, Biblioteca, Explorar,
+  Buscar, las fichas, las fuentes, el menú, quitar, Inicio y Explorar con TMDB, y el reproductor (controles, subtítulos, el siguiente).
+- Sin probar todavía en una tele de verdad ni con un mando a distancia de verdad: todo lo de arriba se ha probado en el ordenador.
 
 ## 0.3.3
 

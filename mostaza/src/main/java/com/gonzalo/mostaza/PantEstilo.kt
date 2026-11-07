@@ -222,6 +222,14 @@ private fun SeccionAvanzado() {
     val ops = listOf(0, 2, 4, 6, 8, 12)
     MagChoice(ops.map { if (it == 0) "Ninguna" else "$it" }, ops.indexOf(cuantas).coerceAtLeast(2), "Filas de catálogos") { i -> cuantas = ops[i]; AjustesPortada.ponCuantas(ctx, cuantas) }
     Text("Las primeras de tus addons, en su orden.", color = Muted, fontFamily = Body, fontSize = 12.sp)
+    // La sala (la cara de la tele) también en una tablet: en una tele sale siempre, así que allí no se ofrece
+    if (!Sala.esTele(ctx)) {
+        Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+        Antetitulo("La sala", Modifier.padding(bottom = 4.dp))
+        Fila("Modo sala", "Mostaza como en la tele: a pantalla completa, con portadas grandes y todo con la cruceta de un mando. Para una tablet con un mando o conectada a la tele. Solo en este dispositivo; se sale desde su menú.") {
+            Interruptor(Sala.enTablet) { Sala.ponEnTablet(ctx, it) }
+        }
+    }
 }
 
 /** «Actualizaciones»: Mostaza se actualiza sola desde la carpeta «versiones» de tu kDrive, con el token de kDrive de tu cuenta. */

@@ -62,14 +62,21 @@ object Catalogos {
 }
 
 /**
- * La portada de Mostaza: la cabecera y el menú de las hermanas; «Seguir viendo» (lo que estás viendo, con lo que llevas), «Pendientes»
- * y las filas de los catálogos de tus addons.
+ * Lo que sale en la portada, lo mismo en el móvil que en la sala de la tele: lo que estás viendo y lo pendiente (en el orden de los
+ * widgets), lo de tu kDrive y, con TMDB, las filas del catálogo (si no, las de los catálogos de tus addons). null: aún llegando.
  */
-@OptIn(ExperimentalLayoutApi::class)
+class DatosPortada(
+    val titulos: List<Titulo>, val viendo: List<Titulo>, val pendientes: List<Titulo>, val conTmdb: Boolean,
+    val filasTmdb: List<FilaTmdb>?, val enKDrive: List<MetaBreve>, val filas: List<FilaCatalogo>?,
+) {
+    /** El destacado de la portada con TMDB: lo primero de su primera fila que tenga fondo. */
+    val destacado: MetaBreve? get() = if (conTmdb) filasTmdb?.firstOrNull()?.cosas?.firstOrNull { it.fondo.isNotBlank() } else null
+}
+
+/** Carga (y vuelve a cargar cuando cambian la biblioteca, tus addons, TMDB o tu kDrive) lo de la portada. */
 @Composable
-fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
+fun rememberPortada(): DatosPortada {
     val ctx = LocalContext.current
-    val hoy = remember { Calendar.getInstance() }
     val titulos = Biblioteca.titulos.toList()
     Biblioteca.version
     // (el mismo orden que los widgets)
@@ -90,6 +97,20 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
         }.getOrDefault(emptyList())
     }
     val filas by produceState<List<FilaCatalogo>?>(null, Addons.version, conTmdb) { value = if (conTmdb) emptyList() else runCatching { Catalogos.portada(ctx) }.getOrDefault(emptyList()) }
+    return DatosPortada(titulos, viendo, pendientes, conTmdb, filasTmdb, enKDrive, filas)
+}
+
+/**
+ * La portada de Mostaza: la cabecera y el menú de las hermanas; «Seguir viendo» (lo que estás viendo, con lo que llevas), «Pendientes»
+ * y las filas de los catálogos de tus addons.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
+    val hoy = remember { Calendar.getInstance() }
+    val d = rememberPortada()
+    val titulos = d.titulos; val viendo = d.viendo; val pendientes = d.pendientes; val conTmdb = d.conTmdb
+    val filasTmdb = d.filasTmdb; val enKDrive = d.enKDrive; val filas = d.filas
     val secciones = listOf("Viendo" to Destino.Viendo, "Pendiente" to Destino.Pendiente, "Visto" to Destino.Visto, "Abandonado" to Destino.Abandonado, "Explorar" to Destino.Explorar, "Addons" to Destino.Addons)
     val desplazado = rememberScrollState()
     val umbral = with(LocalDensity.current) { 300.dp.toPx() }
@@ -127,7 +148,7 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
                 Spacer(Modifier.height(14.dp))
                 Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Azabache, y Mostaza entra sola). Tu biblioteca, lo que ves y tus addons van con tu cuenta.")
             }
-            if (conTmdb) filasTmdb?.firstOrNull()?.cosas?.firstOrNull { it.fondo.isNotBlank() }?.let { Destacado(it, alAbrir) }
+            d.destacado?.let { Destacado(it, alAbrir) }
             if (viendo.isNotEmpty()) FilaPosters("Seguir viendo", viendo.map { it.breve() }, alAbrir, verTodo = { alIr(Destino.Viendo) },
                 sub = { b -> viendo.firstOrNull { it.idStremio == b.id }?.let { seguirTexto(it) }.orEmpty() },
                 progreso = { b -> viendo.firstOrNull { it.idStremio == b.id }?.let { Biblioteca.ultimo(it.ref)?.takeIf { p -> !p.visto }?.fraccion } },

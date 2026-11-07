@@ -36,6 +36,18 @@ object Busqueda {
 
     fun elige(c: Context, cs: List<Candidata>, m: Meta?, grupo: String = ""): Eleccion =
         Conexion.red(c).let { red -> Elector.elige(cs, AjustesElector.prefs(c), red, Conexion.capacidades(c), m?.minutos ?: 0, Torrents.usables(c, red), grupo, MemoriaPistas.busca(c), FuentesRotas.busca(c)) }
+
+    /**
+     * «Reproducir» (en la ficha del móvil y en la de la sala): pregunta a tus addons por las fuentes de [v] (o de la película) y elige la
+     * mejor para ti; si hay una que se puede poner sola, la pone. Devuelve la elección (para decir cuál ha sido; sin elegida, hay que
+     * enseñar la lista) y el aviso si no se ha podido poner.
+     */
+    suspend fun reproduce(c: Context, tipo: String, b: MetaBreve, t: Titulo?, m: Meta?, v: Video?): Pair<Eleccion, String?> {
+        val cs = runCatching { fuentes(tipo, v?.id ?: (t?.idStremio ?: b.id)) }.getOrDefault(emptyList())
+        val e = elige(c, cs, m)
+        val x = e.elegida ?: return e to null
+        return e to Reproducir.pon(c, t?.breve() ?: b, m, v, x, e.ordenadas, automatica = true)
+    }
 }
 
 /**
@@ -91,12 +103,10 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
         if (!AjustesElector.auto(ctx)) { fuentesDe = v to true; return }
         buscando = true; elegida = null
         ambito.launch {
-            val cs = runCatching { Busqueda.fuentes(tipo, v?.id ?: (t?.idStremio ?: b.id)) }.getOrDefault(emptyList())
-            val e = Busqueda.elige(ctx, cs, m)
+            val (e, aviso) = Busqueda.reproduce(ctx, tipo, b, t, m, v)
             buscando = false; elegida = e
-            val c = e.elegida
-            if (c == null) { fuentesDe = v to true; return@launch }
-            Reproducir.pon(ctx, t?.breve() ?: b, m, v, c, e.ordenadas, automatica = true)?.let { Toast.makeText(ctx, it, Toast.LENGTH_LONG).show() }
+            if (e.elegida == null) { fuentesDe = v to true; return@launch }
+            aviso?.let { Toast.makeText(ctx, it, Toast.LENGTH_LONG).show() }
         }
     }
 

@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,9 +45,21 @@ class MainActivity : ComponentActivity() {
                         navigationBarStyle = if (oscuro) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
                     )
                 }
-                MostazaApp(fichaPedida, addonPedido, seccionPedida) { fichaPedida = null; addonPedido = null; seccionPedida = null }
+                // En la tele (o en una tablet con un mando, si lo pides en Ajustes), la sala; si no, la Mostaza de siempre
+                Sala.enTablet
+                val sala = Sala.activa(this)
+                LaunchedEffect(sala) { pantallaCompleta(sala) }
+                if (sala) SalaApp(fichaPedida, addonPedido, seccionPedida, alAtender = { fichaPedida = null; addonPedido = null; seccionPedida = null })
+                else MostazaApp(fichaPedida, addonPedido, seccionPedida) { fichaPedida = null; addonPedido = null; seccionPedida = null }
             }
         }
+    }
+
+    /** La sala va a pantalla completa (en una tablet, sin las barras del sistema; en la tele no las hay); fuera de ella, como siempre. */
+    private fun pantallaCompleta(si: Boolean) {
+        val c = WindowInsetsControllerCompat(window, window.decorView)
+        if (si) { c.hide(WindowInsetsCompat.Type.systemBars()); c.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE }
+        else c.show(WindowInsetsCompat.Type.systemBars())
     }
 
     override fun onStart() {

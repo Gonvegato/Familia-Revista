@@ -14,6 +14,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/** Lo de una sección de tu biblioteca, con su filtro (películas, series o todo) y su orden: el mismo en el móvil y en la sala. */
+fun deSeccion(todos: List<Titulo>, estado: Estado, orden: OrdenGuardado.Orden, filtro: OrdenGuardado.Filtro): List<Titulo> =
+    todos.filter { it.estado == estado }
+        .filter { when (filtro) { OrdenGuardado.Filtro.PELICULAS -> !it.esSerie; OrdenGuardado.Filtro.SERIES -> it.esSerie; else -> true } }
+        .let { l -> when (orden) {
+            OrdenGuardado.Orden.RECIENTES -> l.sortedByDescending { maxOf(it.ultima, it.fin, it.anadido) }
+            OrdenGuardado.Orden.ANADIDOS -> l.sortedByDescending { it.anadido }
+            OrdenGuardado.Orden.TITULO -> l.sortedBy { it.nombre.lowercase() }
+            OrdenGuardado.Orden.ANO -> l.sortedByDescending { it.ano.take(4) }
+        } }
+
+/** El texto de una sección vacía (lo mismo en el móvil y en la sala). */
+fun seccionVacia(estado: Estado): String = when (estado) {
+    Estado.VIENDO -> "Nada a medias. Lo que ves entra aquí solo cuando llevas 10 minutos viéndolo."
+    Estado.PENDIENTE -> "Nada pendiente. En la ficha de cualquier película o serie, «+ Añadir»."
+    Estado.VISTO -> "Aún no has terminado nada aquí. Una película está vista al 90 %; una serie, con todos sus episodios estrenados vistos."
+    Estado.ABANDONADO -> "Nada abandonado."
+}
+
 /** Las secciones de tu biblioteca: Viendo · Pendiente · Visto · Abandonado, cada una con sus películas y series, en rejilla. */
 @Composable
 fun PantSecciones(d: Destino, alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
@@ -25,14 +44,7 @@ fun PantSecciones(d: Destino, alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit
     var filtro by remember(estado) { mutableStateOf(OrdenGuardado.filtro(ctx, estado)) }
     val todos = Biblioteca.titulos.toList()
     Biblioteca.version
-    val lista = todos.filter { it.estado == estado }
-        .filter { when (filtro) { OrdenGuardado.Filtro.PELICULAS -> !it.esSerie; OrdenGuardado.Filtro.SERIES -> it.esSerie; else -> true } }
-        .let { l -> when (orden) {
-            OrdenGuardado.Orden.RECIENTES -> l.sortedByDescending { maxOf(it.ultima, it.fin, it.anadido) }
-            OrdenGuardado.Orden.ANADIDOS -> l.sortedByDescending { it.anadido }
-            OrdenGuardado.Orden.TITULO -> l.sortedBy { it.nombre.lowercase() }
-            OrdenGuardado.Orden.ANO -> l.sortedByDescending { it.ano.take(4) }
-        } }
+    val lista = deSeccion(todos, estado, orden, filtro)
     val m = margen()
     val ancho = if (esAncha()) 150.dp else 104.dp
     LazyVerticalGrid(GridCells.Adaptive(ancho), Modifier.fillMaxSize().background(Paper), contentPadding = PaddingValues(start = m, end = m, bottom = 40.dp),
@@ -49,12 +61,7 @@ fun PantSecciones(d: Destino, alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit
                 Row { Text("ORDEN  ", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 9.dp))
                     FiltrosRevista(OrdenGuardado.Orden.entries.map { it.nombre }, orden.ordinal) { i -> orden = OrdenGuardado.Orden.entries[i]; OrdenGuardado.pon(ctx, estado, orden) } }
                 Filete(1.dp, Line)
-                if (lista.isEmpty()) Nota(when (estado) {
-                    Estado.VIENDO -> "Nada a medias. Lo que ves entra aquí solo cuando llevas 10 minutos viéndolo."
-                    Estado.PENDIENTE -> "Nada pendiente. En la ficha de cualquier película o serie, «+ Añadir»."
-                    Estado.VISTO -> "Aún no has terminado nada aquí. Una película está vista al 90 %; una serie, con todos sus episodios estrenados vistos."
-                    Estado.ABANDONADO -> "Nada abandonado."
-                }, Modifier.padding(top = 18.dp))
+                if (lista.isEmpty()) Nota(seccionVacia(estado), Modifier.padding(top = 18.dp))
             }
         }
         items(lista, key = { it.ref }) { t ->
