@@ -188,6 +188,23 @@ object Skin {
     )
     private val cache = HashMap<String, FontFamily>()
 
+    /**
+     * Las letras de Google Fonts ya bajadas y listas. Hasta que lo están, se ve la de la app: si se pedía una que aún no había
+     * llegado, la primera pantalla se quedaba con la letra de repuesto y no se ponía la buena hasta cambiar de pantalla.
+     */
+    val listas = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
+    fun lista(name: String): Boolean = name.isBlank() || name == "Atrio" || name == "Vitrina" || listas[name] == true
+
+    /** Baja (si hace falta) las letras elegidas y avisa cuando están, para que todo se vuelva a pintar con ellas. */
+    suspend fun preparaLetras(resolver: androidx.compose.ui.text.font.FontFamily.Resolver) {
+        for (n in listOf(display, body).distinct()) {
+            if (lista(n)) continue
+            val f = family(n) ?: continue
+            runCatching { resolver.preload(f) }
+            listas[n] = true  // (aunque no se haya podido bajar ahora: así se pide como siempre, sin quedarse en la de la app)
+        }
+    }
+
     /** La letra de Google Fonts por su nombre (con sus gruesos reales), o null si es una de las que van dentro de la app. */
     fun family(name: String): FontFamily? {
         if (name.isBlank() || name == "Atrio") return null
@@ -317,8 +334,8 @@ val AtrioBody = FontFamily(
     Font(R.font.body_bold, FontWeight.Bold), Font(R.font.body_bold, FontWeight.ExtraBold)
 )
 
-val Display: FontFamily get() = Skin.family(Skin.display) ?: AtrioDisplay
-val Body: FontFamily get() = Skin.family(Skin.body) ?: AtrioBody
+val Display: FontFamily get() = Skin.family(Skin.display)?.takeIf { Skin.lista(Skin.display) } ?: AtrioDisplay
+val Body: FontFamily get() = Skin.family(Skin.body)?.takeIf { Skin.lista(Skin.body) } ?: AtrioBody
 
 private val base = Typography()
 private fun TextStyle.body() = copy(fontFamily = Body)
@@ -336,6 +353,8 @@ val AppTypography: Typography get() = Typography(
 /** La raíz del tema: modo claro/oscuro, colores, letras y tamaño del texto. */
 @Composable
 fun CobreTheme(content: @Composable () -> Unit) {
+    val letras = androidx.compose.ui.platform.LocalFontFamilyResolver.current
+    androidx.compose.runtime.LaunchedEffect(Skin.display, Skin.body) { Skin.preparaLetras(letras) }
     val sistema = isSystemInDarkTheme()
     Modo.oscuro = when (Modo.eleccion) { 1 -> false; 2 -> true; else -> sistema }
     val d = LocalDensity.current
