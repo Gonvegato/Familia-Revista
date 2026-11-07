@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El icono de Cobre: un degradado de cobre y, encima, una tele antigua (la pantalla redondeada, sus dos antenas y la onda de la señal) en líneas claras, dentro de la zona segura del 66 %. El monocromo es el mismo dibujo, para los iconos con tema. Lo saca herramientas/cobre/icono-cobre.py. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_cobre_bg"/>
+    <foreground android:drawable="@drawable/ic_launcher_cobre_fg"/>
+    <monochrome android:drawable="@drawable/ic_launcher_cobre_mono"/>
+</adaptive-icon>

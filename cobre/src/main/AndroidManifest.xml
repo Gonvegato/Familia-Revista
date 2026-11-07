@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Actualizarse sola desde tu kDrive (Actualizador.kt): instalar la versión nueva de sí misma, y reabrirse después -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- En el móvil, en la tablet y en la tele (con el mando a distancia): sin pantalla táctil y en el menú de Android TV -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <queries>
+        <!-- Las hermanas, los colores de Azabache y los reproductores de fuera («Abrir con otro reproductor») -->
+        <package android:name="com.gonzalo.hiedra" />
+        <package android:name="com.gonzalo.marfil" />
+        <package android:name="com.gonzalo.cobalto" />
+        <package android:name="com.gonzalo.gamerate" />
+        <package android:name="com.gonzalo.mostaza" />
+        <provider android:authorities="com.gonzalo.gamerate.tema" />
+        <package android:name="org.videolan.vlc" />
+        <package android:name="com.brouken.player" />
+        <package android:name="is.xyz.mpv" />
+        <package android:name="com.mxtech.videoplayer.ad" />
+        <package android:name="com.mxtech.videoplayer.pro" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="video/*" />
+        </intent>
+    </queries>
+    <!-- Casi todos los canales van por http (sin s): sin esto, Android no los deja abrir.
+         Sin copia de seguridad de Android: lo de esta app es tu cuenta (que ya está en la nube) y una caché con tus listas, que llevan secretos.
+         Con mucha memoria (largeHeap): una lista puede tener decenas de miles de canales, y las teles traen poca. -->
+    <application
+        android:label="Cobre"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:banner="@drawable/banner_cobre"
+        android:theme="@style/Cobre"
+        android:usesCleartextTraffic="true"
+        android:allowBackup="false"
+        android:largeHeap="true">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density|navigation">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- El reproductor (Media3): a pantalla completa, sin cortarse al girar -->
+        <activity android:name=".ReproductorActivity" android:exported="false" android:theme="@style/Reproductor"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density|navigation" />
+        <receiver android:name=".ActualizadorReceiver" android:exported="false" />
+        <receiver android:name=".ActualizadorReabrir" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
+    </application>
+</manifest>

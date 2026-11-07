@@ -140,6 +140,9 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   vez: aquí se lee lo que ya está), la conexión medida a la vez que en el móvil (aquí se mide con lo que baja mpv) y los subtítulos de un
   tamaño o color que se cambian con algo puesto (valen para lo siguiente). Los torrents en el Mac con procesador Intel y en Linux ARM.
   mpv y el mando se han probado sin pantalla ni mando de verdad (mpv sí, de verdad, con `--vo=null`), y el Mac solo lo compila GitHub.
+- **Cobre** (la tele, IPTV) aún no tiene versión de escritorio. Lo que no es pantalla ya está en Kotlin puro en `iptv/` (listas M3U, el
+  cliente de Xtream Codes, la guía XMLTV a trozos, emparejar canales y guía, el almacén de cada lista y lo que va a la cuenta, con sus
+  pruebas): la del ordenador lo usará tal cual, con los mismos nodos de la cuenta (`cobre_*`, ver `nube/ESQUEMA.md`) y mpv para ver.
 - Las letras de Google Fonts que se eligen en el móvil: aquí van las de la app (Atrio y Vitrina) en su lugar.
 
 ## Por dentro

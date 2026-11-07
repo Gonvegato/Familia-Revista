@@ -46,6 +46,7 @@ guardan ya reducidas (unos 600×900, la proporción 2:3 de las cajas de SteamGri
 | `rawg` | Datos de juegos |
 | `tmdb` | Películas y series (Azabache; Mostaza, para pasar los ids de TMDB a los de IMDb) |
 | `mostaza_addons` | Los addons de Mostaza, en tu orden: un texto JSON `[{"u": <dirección del manifiesto>, "n": <nombre>}]`. Van aquí y en ningún otro sitio de la cuenta porque **sus direcciones pueden llevar la clave de tu debrid** (tu pareja puede leer `/users/<uid>`, esto no). Sin la clave, Mostaza usa solo Cinemeta (`https://v3-cinemeta.strem.io/manifest.json`); `"[]"` = ninguno. De la lista entera gana el último cambio (moverlos o quitarlos es poner la lista otra vez). |
+| `cobre_listas` | Tus listas de Cobre (la tele), en tu orden: un texto JSON `[{"id", "n", "t", "u", "us", "pw", "epg", "ua", "dev", "f", "c"}]`: `id` (`l` + 10 hexadecimales al azar, el que usan los nodos de abajo), `n` (el nombre que le pones), `t` (`m3u` una dirección M3U, `archivo` un archivo M3U de un dispositivo, `xtream` un login de Xtream Codes), `u` (la dirección de la lista o, en Xtream, el servidor), `us` y `pw` (el usuario y la contraseña de Xtream), `epg` (una guía XMLTV tuya), `ua` (el user-agent que pida tu proveedor), `dev` (en las de archivo, el dispositivo donde está el archivo: en los demás sale como «en otro dispositivo»), `f` (`ts` o `m3u8`: cómo se piden los canales de Xtream) y `c` (cuándo se añadió, ms). Van aquí y en ningún otro sitio de la cuenta porque **son secretos**: las direcciones llevan tu usuario y tu contraseña (tu pareja puede leer `/users/<uid>`, esto no). Sin la clave o `"[]"`: ninguna (Cobre no trae ninguna). De la lista entera gana el último cambio. |
 | `mostaza_tmdb` | Tu clave de TMDB (el «token de lectura de la API», texto), para el catálogo propio de Mostaza (portada, Explorar, Buscar y fichas en castellano). Va aquí porque es una clave tuya: no la lee tu pareja. `""` o sin campo = sin catálogo propio (se usan los catálogos de tus addons) |
 
 ## Colecciones
@@ -153,6 +154,26 @@ o `tt0944947:1:3` en una serie), con lo que Firebase no admite como `%XX`.
 | `visto`, `cuando` | Visto (al 90 %, o marcado a mano) y cuándo |
 | `ul` | La última vez que se vio (ms): gana lo más reciente entre esto y lo de cada dispositivo |
 
+### `cobre_favoritos/<lista>~<canal>`, `cobre_grupos/<lista>~g<hash>`, `cobre_estado/ultimo` y `cobre_progreso/<lista>~<vídeo>` (Cobre)
+
+Lo tuyo de Cobre, la tele de la familia (IPTV: tus listas M3U y tus logins de Xtream Codes, que van en `/claves`, arriba). `<lista>` es el
+`id` de la lista; `<canal>`, la clave del canal: `x<stream_id>` en Xtream y `c` + 16 hexadecimales del SHA-256 de su `tvg-id` y su nombre
+en M3U (`c…~2` si se repite), que no cambian aunque la lista se vuelva a bajar con otras direcciones; lo que Firebase no admite, como `%XX`.
+**Aquí no va nada secreto** (ni direcciones, ni usuarios, ni contraseñas, ni imágenes del servidor de la lista: pueden ir por él): solo
+ids, nombres y lo visto. Los canales, el videoclub y la guía no van a la cuenta (pueden ser decenas de miles de canales y cientos de megas
+de guía): son caché de cada dispositivo. Sin cuenta, Cobre no escribe nada de esto.
+
+| Nodo | Campos |
+|---|---|
+| `cobre_favoritos/<lista>~<canal>` | `lista`, `canal`, `n` (el nombre del canal, para enseñarlo sin la lista) y `o` (su sitio en tus favoritos: 1, 2, 3…; mover uno es cambiar los `o`). Quitarlo es `b`; volver a ponerlo, `b = 0` |
+| `cobre_grupos/<lista>~g<16 hex del SHA-256 del nombre del grupo>` | `lista`, `g` (el nombre del grupo, tal cual) y `oculto` (sí/no: volver a enseñarlo es `false`) |
+| `cobre_estado/ultimo` | El último canal que viste: `lista`, `canal`, `n` y `ul` (cuándo, ms) |
+| `cobre_progreso/<lista>~p<id>` y `…~e<id>` | Lo visto de una película (`p` + su `stream_id`) o de un episodio (`e` + su id) del videoclub de Xtream: `lista`, `v` (el vídeo, `p…`/`e…`), `tipo` (`pelicula` / `episodio`), `id`, `ext` (la extensión del archivo), `t` (el título), y en los episodios `serie` (el `series_id`), `st` (el nombre de la serie), `temp` y `ep`; `pos` y `dur` (ms), `visto` (al 90 %, o a mano) y `ul` (la última vez; gana lo más reciente entre esto y lo de cada dispositivo). «Seguir viendo» sale de aquí |
+
+Lo que ves en Cobre se queda en Cobre: no pasa a `titulos`, `progreso` ni `tiempo` de Mostaza (el videoclub de un servidor de Xtream no
+trae ids de Stremio, y emparejarlo con la biblioteca de Mostaza con sus reglas —10 minutos, visto al 90 %, borrar es para siempre— sin
+equivocarse no es seguro todavía).
+
 ### `obras/<obra>`, `capitulos/<obra>~<capítulo>` y `palabras/<dispositivo>` (Cobalto)
 
 Lo que escribes vive en los documentos de Escribir (`/users/<uid>/escritos`, `escritosIdx`), los mismos que Atrio del PC, con su
@@ -218,7 +239,7 @@ la marca de que Mostaza ya los trajo).
 
 ### `ajustes/<nombre>`
 
-`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto`, `ajustes/mostaza` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
+`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto`, `ajustes/mostaza`, `ajustes/cobre` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
 del lector; Hiedra también `ini`, su portada), `ajustes/azabache` (`at` y `skin`: la apariencia de Azabache, que las demás pueden
 copiar) y `ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros del año, `anio` el año en que se fijó; los fija Marfil).
 Lo demás que eliges en cada app, en `ajustes/<app>_<grupo>` (abajo).
@@ -255,13 +276,19 @@ tenía distinto, con la hora a la que ese dispositivo cambió esos ajustes por �
 | `mostaza_orden` | `VIENDO`, `PENDIENTE`, `VISTO`, `ABANDONADO` = `RECIENTES`, `ANADIDOS`, `TITULO`, `ANO`; `filtro_<sección>` = `TODO`, `PELICULAS`, `SERIES` |
 | `mostaza_portada` | `filas` (los catálogos de la portada, `<addon>\|<tipo>\|<catálogo>` con comas; `""` = los primeros), `cuantas`, y lo último de «Explorar»: `explorarTipo`, `explorarCatalogo`, `explorarGenero` |
 | `mostaza_actualizador` | `on`: «actualizar sola» |
+| `cobre_reproductor` | `aspecto` (`AJUSTAR`, `LLENAR`, `ZOOM`, `ANCHO` —16:9—, `ESTRECHO` —4:3—), `subs` (el idioma de los subtítulos: `spa`, `eng`…; `""` sin), `audio` (el idioma de audio preferido), `ahorro` (con datos del móvil, la calidad más baja), `reconectar` (volver a conectar un canal que se corta), `siguiente` (el episodio siguiente, solo), `invertirCanales` (arriba en el mando es el canal anterior), `salto` (segundos), `externo` (el paquete del reproductor de fuera; `""` = preguntar; es de Android) |
+| `cobre_guia` | `horas` (cada cuántas se vuelve a bajar la guía), `dias` (cuántos días por delante), `soloWifi` (con datos del móvil, solo si la pides) |
+| `cobre_directo` | `orden` (`LISTA`, `NUMERO`, `NOMBRE`: el de los canales), `lista` y `grupo` (dónde estabas: el id de la lista y el nombre del grupo), `alAbrir` (al abrir Cobre, el último canal) |
+| `cobre_actualizador` | `on`: «actualizar sola» |
 
 No viaja (es de cada dispositivo): dónde está cada ROM, las carpetas de ROMs y de guardados, lo ya sincronizado con kDrive, los núcleos y BIOS
 bajados, las capturas bajadas, el juego que está abierto ahora, «usar Hiedra como launcher» (es de Android), la configuración de cada widget,
 el brillo del lector, el sprint de Escribir que está corriendo, la copia en Google Drive de ese móvil, la sesión y las cachés (datos de
 juegos, páginas de libros, notas de Rotten Tomatoes, plataformas de RAWG, lo de las hermanas que se refleja en Azabache). En Mostaza: lo
 que mide la conexión de ese dispositivo (por wifi y por datos) y lo que sabe decodificar, lo que puede ocupar su caché de torrents, el punto
-para seguir de lo que aún no está en tu biblioteca (antes de los 10 minutos), los manifiestos de los addons (se vuelven a pedir) y su id.
+para seguir de lo que aún no está en tu biblioteca (antes de los 10 minutos), los manifiestos de los addons (se vuelven a pedir) y su id. En Cobre:
+los canales, el videoclub y la guía de cada lista (caché, cifrada la que lleva direcciones), el archivo de una lista de archivo, el punto para
+seguir sin cuenta y su id (`cobre-…`).
 
 ### `/users/<uid>/name`
 
