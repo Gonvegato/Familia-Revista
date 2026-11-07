@@ -48,6 +48,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import java.time.LocalDate
+import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.math.max
@@ -60,11 +62,12 @@ import kotlin.math.sqrt
  * titulares grandes en Fraunces, pósteres recortados, esquinas redondas y el reborde fino de tinta — pero con tus películas y series.
  * Cada widget se dibuja entero (así la letra y los pósteres quedan como en la app) y encima lleva zonas transparentes para tocar. Los
  * colores son los del tema que tengas puesto en Apariencia: los de Mostaza o los de Azabache (invertidos o no), tu fondo y tus colores.
- * Nada de lo que hay en `/claves` (tus addons, con la clave de tu debrid) llega aquí: solo la biblioteca y lo visto.
+ * Nada de lo que hay en `/claves` (tus addons, con la clave de tu debrid) llega aquí: solo la biblioteca y lo visto (y «Próximos
+ * capítulos», que lee lo que ya guardó [Proximos]: la clave de TMDB no pasa por los widgets).
  */
 
 /** Los widgets que hay. */
-enum class WTipo { SEGUIR, PENDIENTES }
+enum class WTipo { SEGUIR, PENDIENTES, PORTADA, PROXIMOS, SEMANA, MARCA, MARCA_PAPEL }
 
 abstract class WBase(private val tipo: WTipo) : AppWidgetProvider() {
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) = Widgets.pintar(ctx, tipo, ids, goAsync())
@@ -82,6 +85,11 @@ abstract class WBase(private val tipo: WTipo) : AppWidgetProvider() {
 
 class WSeguir : WBase(WTipo.SEGUIR)
 class WPendientes : WBase(WTipo.PENDIENTES)
+class WPortada : WBase(WTipo.PORTADA)
+class WProximos : WBase(WTipo.PROXIMOS)
+class WSemana : WBase(WTipo.SEMANA)
+class WMarca : WBase(WTipo.MARCA)
+class WMarcaPapel : WBase(WTipo.MARCA_PAPEL)
 
 /** Una zona que se puede tocar (en dp, desde la esquina de arriba a la izquierda); con [celdas], una rejilla. */
 class Zona(
@@ -117,7 +125,10 @@ class Zona(
 
 /** Un widget listo para dibujar: sus zonas y cómo se pinta (en claro y en oscuro). */
 class Pagina(val zonas: List<Zona>, val dibujo: Hoja.() -> Unit) {
-    fun bitmap(ctx: Context, w: Float, h: Float, noche: Boolean, s: Float): Bitmap = Hoja(ctx, w, h, noche, s).apply { dibujo(); terminar() }.bm
+    /** Sin papel ni esquinas: solo lo dibujado, sobre el fondo de pantalla (la cabecera HATHOR). */
+    var sinFondo = false
+    fun transparente() = apply { sinFondo = true }
+    fun bitmap(ctx: Context, w: Float, h: Float, noche: Boolean, s: Float): Bitmap = Hoja(ctx, w, h, noche, s).apply { dibujo(); if (!sinFondo) terminar() }.bm
 }
 
 private val ES = Locale("es", "ES")
@@ -193,6 +204,14 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     fun ante(t: String, x: Float, y: Float, ancho: Float, color: Int = tinta, size: Float = 9f, al: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL): Float =
         pon(capa(t.uppercase(ES), tp(fNegrita, size, color, 0.16f), ancho, 1, 1f, al), x, y)
 
+    fun anchoAnte(t: String, size: Float = 9f) = tp(fNegrita, size, tinta, 0.16f).measureText(t.uppercase(ES))
+
+    /** «2/5 ›»: hay más, y tocando aquí se pasa al siguiente. */
+    fun paginas(i: Int, n: Int, xDer: Float, y: Float, color: Int = gris) {
+        if (n < 2) return
+        ante("${i + 1}/$n  ›", xDer - 80f, y, 80f, color, 9f, Layout.Alignment.ALIGN_OPPOSITE)
+    }
+
     /** Cabecera de sección: el cuadradito de acento y el antetítulo. */
     fun seccion(t: String, x: Float, y: Float, ancho: Float, color: Int = tinta, cuadro: Int = acento) {
         c.drawRect(x, y + 1.6f, x + 7.4f, y + 9f, lleno(cuadro))
@@ -251,6 +270,13 @@ class WDatos(val ctx: Context) {
     fun fraccion(t: Titulo): Float? = Biblioteca.ultimo(t.ref)?.takeIf { !it.visto }?.fraccion
     /** «Serie · 2011–2019», «Película · 2024». */
     fun origen(t: Titulo): String = tipoNombre(t.tipo) + if (t.ano.isNotBlank()) " · ${t.ano}" else ""
+    /** Por dónde vas, para «En portada» (en una película, también el %): «T2 · E5 · quedan 20 min», «40 % · quedan 1 h 48 min». */
+    fun porDonde(t: Titulo): String = porDonde(Biblioteca.ultimo(t.ref), t.esSerie, porcentaje = true)
+    /** Los próximos episodios de tus series (lo guardado por [Proximos], sin red). */
+    val proximos: List<Proximo> by lazy { Proximos.lista(ctx) }
+    /** Lo visto estos siete días (de `tiempo`, todos tus dispositivos). */
+    val semana: Semana by lazy { Semana.de(Biblioteca.ratos(), LocalDate.now()) { r -> todos.firstOrNull { it.ref == r }?.nombre } }
+    fun titulo(ref: String): Titulo? = todos.firstOrNull { it.ref == ref }
 }
 
 object Widgets {
@@ -262,6 +288,11 @@ object Widgets {
     fun clase(t: WTipo): Class<out AppWidgetProvider> = when (t) {
         WTipo.SEGUIR -> WSeguir::class.java
         WTipo.PENDIENTES -> WPendientes::class.java
+        WTipo.PORTADA -> WPortada::class.java
+        WTipo.PROXIMOS -> WProximos::class.java
+        WTipo.SEMANA -> WSemana::class.java
+        WTipo.MARCA -> WMarca::class.java
+        WTipo.MARCA_PAPEL -> WMarcaPapel::class.java
     }
 
     @Synchronized fun fuente(ctx: Context, id: Int): Typeface =
@@ -368,6 +399,8 @@ object Widgets {
                     ids.forEach { id -> try { pintarUno(app, tipo, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } }
                 }
             } finally { res?.finish() }
+            // «Próximos capítulos»: si toca, se pregunta a TMDB después (sin hacer esperar al widget); al llegar, se repintan solos
+            if (tipo == WTipo.PROXIMOS) runCatching { if (Proximos.toca(app)) Proximos.refresca(app) }
         }
     }
 
@@ -413,8 +446,11 @@ object Widgets {
         return (if (w > 40) w.toFloat() else dw) to (if (h > 40) h.toFloat() else dh)
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    fun porDefecto(t: WTipo): Pair<Float, Float> = 330f to 165f
+    fun porDefecto(t: WTipo): Pair<Float, Float> = when (t) {
+        WTipo.PORTADA -> 330f to 250f
+        WTipo.MARCA -> 330f to 80f
+        else -> 330f to 165f
+    }
 
     /** Píxeles por dp del dibujo: los de la pantalla, sin pasarse de memoria (Android limita lo que pesa un widget). */
     fun escala(ctx: Context, w: Float, h: Float, copias: Int): Float {
@@ -445,6 +481,11 @@ object Widgets {
         return when (tipo) {
             WTipo.SEGUIR -> seguir(d, id, w, h)
             WTipo.PENDIENTES -> pendientes(d, w, h)
+            WTipo.PORTADA -> enPortada(d, id, w, h)
+            WTipo.PROXIMOS -> proximos(d, w, h)
+            WTipo.SEMANA -> semana(d, w, h)
+            WTipo.MARCA -> marca(d, w, h)
+            WTipo.MARCA_PAPEL -> marcaPapel(d, w, h)
         }
     }
 
@@ -458,7 +499,7 @@ object Widgets {
         return PendingIntent.getBroadcast(ctx, id, i, PI)
     }
 
-    /** Abre Mostaza en su portada. */
+    /** Abre Hathor en su portada. */
     fun abrirApp(ctx: Context): PendingIntent {
         val i = Intent(ctx, MainActivity::class.java).setAction(Intent.ACTION_MAIN).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         return PendingIntent.getActivity(ctx, 1, i, PI)
@@ -505,6 +546,22 @@ object Widgets {
                 else -> null
             }
         } catch (e: CancellationException) { throw e } catch (e: Exception) { null }
+    }
+
+    /** La imagen de fondo de un título (la de TMDB, apaisada) o, si no hay, su póster. */
+    suspend fun imagenFondo(ctx: Context, t: Titulo, lado: Int): Bitmap? = withContext(Dispatchers.IO) {
+        val u = t.fondo
+        val f = try {
+            when {
+                u.startsWith("http") -> withTimeoutOrNull(4_500) {
+                    val r = ctx.imageLoader.execute(ImageRequest.Builder(ctx).data(u).allowHardware(false).size(lado).build())
+                    ((r as? SuccessResult)?.drawable as? BitmapDrawable)?.bitmap
+                }
+                u.startsWith("/") -> decodificar(u, lado)
+                else -> null
+            }
+        } catch (e: CancellationException) { throw e } catch (e: Exception) { null }
+        f ?: imagen(ctx, t, lado)
     }
 
     // ------------------------------------------------------------------ Seguir viendo
@@ -648,6 +705,239 @@ object Widgets {
                     ante(d.origen(e), x, top + ch + 7f + l.height, tw, acento, 7.5f)
                 }
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ En portada (lo que estás viendo, a toda página)
+
+    private suspend fun enPortada(d: WDatos, id: Int, w: Float, h: Float): Pagina {
+        val ctx = d.ctx
+        val items = d.viendo
+        if (items.isEmpty()) return vacio(ctx, "En portada", "Nada a medias", "Empieza una película o una serie en Hathor y saldrá aquí, a toda página.", w, h)
+        val i = Math.floorMod(estado(ctx, id, "i", 0), items.size)
+        val e = items[i]
+        val img = imagenFondo(ctx, e, px(ctx, max(w, h)))
+        val sigue = d.porDonde(e)
+        val frac = d.fraccion(e)
+        // Como «Seguir viendo»: todo el widget abre su ficha (allí está «Reproducir», con el episodio que toca); la esquina, el siguiente
+        val zonas = mutableListOf(Zona(0f, 0f, w, h, abrirFicha(ctx, e), "Seguir viendo ${e.nombre}"))
+        if (items.size > 1) zonas += Zona(w - 80f, 0f, 80f, 52f, op(ctx, WTipo.PORTADA, id, "sig"), "Siguiente")
+        val fecha = LocalDate.now().let { "${it.dayOfMonth} ${it.month.getDisplayName(TextStyle.SHORT, ES).trimEnd('.')} ${it.year}" }
+        return Pagina(zonas) {
+            val pad = 16f
+            val blanco = 0xFFFFFFFF.toInt()
+            if (img != null) {
+                poster(img, RectF(0f, 0f, w, h), e.nombre, 0f, false); reborde = 0xCCFFFFFF.toInt()
+                velo(0f, min(96f, h * 0.42f), 0xC8000000.toInt(), 0x00000000, 0x70000000)
+                velo(h * 0.18f, h, 0x00000000, 0xF2000000.toInt(), 0x99000000.toInt())
+            } else { fondo(0xFF15120F.toInt()); reborde = 0xCCFFFFFF.toInt() }
+            // Cabecera de la revista
+            val mast = capa("Hathor", tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
+            pon(mast, pad, pad - 4f)
+            val fw = w - 2 * pad - mast.getLineWidth(0) - 8f
+            ante(if (fw < anchoAnte(fecha, 8.5f)) fecha.substringBeforeLast(' ') else fecha, w - pad - fw, pad, fw, 0xDDFFFFFF.toInt(), 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
+            paginas(i, items.size, w - pad, pad + 13f, 0xBBFFFFFF.toInt())
+            c.drawRect(pad, pad + mast.height + 1f, w - pad, pad + mast.height + 1.8f, lleno(0x66FFFFFF))
+            // El pie: de dónde es y «Seguir»; encima, lo que llevas
+            var y = h - pad
+            val pie = capa("Seguir  →".uppercase(ES), tp(fNegrita, 9f, acentoFoto, 0.16f), 90f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE)
+            pon(pie, w - pad - 90f, y - pie.height)
+            val meta = d.origen(e).takeIf { h >= 150f }
+            if (meta != null) { val ml = capa(meta, tp(fCursiva, 12.5f, 0xCCFFFFFF.toInt()), w - 2 * pad - 96f, 1); pon(ml, pad, y - ml.height); y -= max(ml.height.toFloat(), pie.height.toFloat()) }
+            else y -= pie.height
+            if (frac != null) { y -= 9f; barra(pad, y, w - 2 * pad, frac, 0x55FFFFFF, acentoFoto); y -= 5f } else y -= 6f
+            // El titular
+            val l = titular(e.nombre, w - 2 * pad, min(h * 0.46f, y - pad - mast.height - 30f), if (w > 280f) 40f else 30f, 14f, 3, blanco, inter = 0.92f)
+            y -= l.height
+            pon(l, pad, y)
+            // Por dónde vas, en una etiqueta de acento (se lee sobre cualquier foto)
+            if (sigue.isNotBlank()) {
+                val ew = min(w - 2 * pad, anchoAnte(sigue, 8.5f) + 12f)
+                c.drawRoundRect(pad, y - 19f, pad + ew, y - 4f, 4f, 4f, lleno(acento))
+                ante(sigue, pad + 6f, y - 16.5f, ew - 10f, 0xFFFFFFFF.toInt(), 8.5f)
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ Próximos capítulos
+
+    private fun proximos(d: WDatos, w: Float, h: Float): Pagina {
+        val ctx = d.ctx
+        val todos = d.proximos
+        if (todos.isEmpty()) return vacio(ctx, "Próximos capítulos", "Nada a la vista",
+            if (Proximos.fijos != null || Tmdb.activo) "Cuando una serie de tu biblioteca anuncie episodio nuevo, saldrá aquí con su fecha."
+            else "Pon tu clave de TMDB en Hathor y aquí verás qué se estrena de tus series.", w, h)
+        val pad = 14f
+        val top = pad + 22f
+        val bajo = h < 130f
+        val fila = if (bajo) 24f else 36f
+        val n = ((h - top - pad + 6f) / fila).toInt().coerceIn(1, 8).coerceAtMost(todos.size)
+        val items = todos.take(n)
+        val hoy = LocalDate.now()
+        val zonas = mutableListOf(Zona(0f, 0f, w, top, abrirApp(ctx), "Abrir Hathor"))
+        items.forEachIndexed { k, x ->
+            val t = d.titulo(x.ref)
+            zonas += Zona(0f, top + k * fila - 3f, w, fila, t?.let { abrirFicha(ctx, it) } ?: abrirApp(ctx), "Abrir ${x.serie}")
+        }
+        return Pagina(zonas) {
+            fondo()
+            seccion(if (w < 220f) "Próximos" else "Próximos capítulos", pad, pad, w - 2 * pad - 54f, tinta, acento)
+            pon(capa("Hathor", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
+            val fw = min(84f, (w - 2 * pad) * 0.3f)
+            val x0 = pad + fw + 8f
+            val rw = w - pad - x0
+            items.forEachIndexed { k, x ->
+                val y = top + k * fila
+                if (k > 0) c.drawRect(pad, y - 4f, w - pad, y - 3.4f, lleno(linea))
+                val dia = x.dia ?: return@forEachIndexed
+                val pronto = !dia.isAfter(hoy.plusDays(1))
+                ante(Proximos.cuando(dia, hoy), pad, y + 3f, fw, if (pronto) acento else gris, 8.5f)
+                val ep = Proximos.episodio(x)
+                if (bajo) {
+                    val corto = "T${x.temporada} · E${x.episodio}"
+                    val ew = anchoAnte(corto, 8f) + 2f
+                    pon(capa(x.serie, tp(fTitular, 13f, tinta, -0.01f), rw - ew - 8f, 1), x0, y)
+                    ante(corto, w - pad - ew, y + 3f, ew, gris, 8f, Layout.Alignment.ALIGN_OPPOSITE)
+                } else {
+                    val l = capa(x.serie, tp(fTitular, 14f, tinta, -0.01f), rw, 1)
+                    pon(l, x0, y - 1f)
+                    pon(capa(ep, tp(fCursiva, 11.5f, gris), rw, 1), x0, y + l.height + 1f)
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ Tu semana
+
+    private fun semana(d: WDatos, w: Float, h: Float): Pagina {
+        val ctx = d.ctx
+        val sem = d.semana
+        if (sem.vacia) return vacio(ctx, "Tu semana", "Nada visto estos días", "Lo que veas en Hathor se irá sumando aquí, día a día.", w, h)
+        val hoy = LocalDate.now()
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Hathor"))) {
+            fondo()
+            val pad = if (h < 90f) 12f else 16f
+            seccion("Tu semana", pad, pad, w - 2 * pad - 54f, tinta, acento)
+            pon(capa("Hathor", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
+            val top = pad + 26f
+            val ancho = w - 2 * pad
+            // A la izquierda (si cabe): el total y lo que más has visto
+            val izqW = if (w >= 230f) ancho * 0.47f else 0f
+            if (izqW > 0f) {
+                val big = titular(Semana.horas(sem.total), izqW - 6f, 40f, 30f, 14f, 1, acento)
+                pon(big, pad, top - 2f)
+                var y = top + big.height
+                y += ante("estos 7 días", pad, y + 1f, izqW, gris, 8.5f) + 8f
+                for ((_, nombre, ms) in sem.titulos) {
+                    val l = capa(nombre, tp(fTitular, 12f, tinta, -0.01f), izqW, 1)
+                    if (y + l.height > h - pad) break
+                    // (las horas en minúscula: «1,5 h», no «1,5 H»)
+                    val hp = tp(fTexto, 10.5f, gris)
+                    val tw = hp.measureText(Semana.corto(ms)) + 2f
+                    pon(capa(nombre, tp(fTitular, 12f, tinta, -0.01f), izqW - tw - 6f, 1), pad, y)
+                    pon(capa(Semana.corto(ms), hp, tw, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), pad + izqW - tw, y + 1.5f)
+                    y += l.height + 4f
+                }
+            }
+            // Las barras: lo visto cada día (hoy, en acento)
+            val x0 = pad + izqW + if (izqW > 0f) 16f else 0f
+            val bw = w - pad - x0
+            val etiqueta = 12f
+            val alto = h - top - pad - 14f - etiqueta
+            val tope = max(sem.maximo, 60_000L).toFloat()
+            val slot = bw / 7f
+            sem.dias.forEachIndexed { k, (dia, ms) ->
+                val bx = x0 + slot * k + slot * 0.19f
+                val bwid = slot * 0.62f
+                val base = top + etiqueta + alto
+                val hh = if (ms >= 60_000L) max(3f, alto * ms / tope) else 1f
+                c.drawRect(bx, base - hh, bx + bwid, base, lleno(if (ms >= 60_000L) (if (dia == hoy) acento else tinta) else linea))
+                if (ms == sem.maximo && ms >= 60_000L) pon(capa(Semana.corto(ms), tp(fTexto, 9.5f, gris), slot + 24f, 1, 1f, Layout.Alignment.ALIGN_CENTER), x0 + slot * k - 12f, base - hh - 13f)
+                ante(dia.dayOfWeek.getDisplayName(TextStyle.NARROW, ES), x0 + slot * k - 2f, base + 3f, slot + 4f, if (dia == hoy) acento else gris, 8.5f, Layout.Alignment.ALIGN_CENTER)
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ La marca
+
+    private fun hoyLargo(): String {
+        val hoy = LocalDate.now()
+        return "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
+    }
+
+    /** HATHOR: solo la palabra (y el punto de acento), sobre el fondo de pantalla. Un toque y estás en la portada. */
+    private fun marca(d: WDatos, w: Float, h: Float): Pagina {
+        val ctx = d.ctx
+        val fecha = hoyLargo()
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Hathor"))) {
+            // Solo la palabra, sobre el fondo de pantalla (con una sombra suave para que se lea en cualquiera)
+            val color = if (noche) 0xFFF6F1E7.toInt() else tinta
+            val sombra = if (noche) 0x99000000.toInt() else 0x55FFFFFF
+            val pie = if (h >= 84f) 16f else 0f
+            val p = tp(fTitular, 10f, color, -0.03f)
+            val ancho = p.measureText("HATHOR")
+            val cuadro = 0.16f
+            var s = min((w - 8f) / (ancho / 10f * (1f + cuadro)), (h - pie - 4f) / 0.95f)
+            s = s.coerceAtLeast(10f)
+            val tpa = tp(fTitular, s, color, -0.03f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
+            val fm = tpa.fontMetrics
+            val tw = tpa.measureText("HATHOR")
+            val total = tw + s * cuadro
+            val x = (w - total) / 2
+            val capH = s * 0.72f
+            val base = (h - pie) / 2 + capH / 2
+            c.drawText("HATHOR", x, base, tpa)
+            // El punto de la revista: un cuadradito de acento
+            val q = s * 0.12f
+            c.drawRect(x + tw + s * 0.03f, base - q, x + tw + s * 0.03f + q, base, lleno(acento).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
+            if (pie > 0f) {
+                val pp = tp(fNegrita, 8.5f, color, 0.2f).apply { setShadowLayer(2f, 0f, 0.6f, sombra) }
+                val largo = "Películas y series · $fecha".uppercase(ES)
+                val txt = if (pp.measureText(largo) <= w - 8f) largo else fecha.uppercase(ES)
+                val l = capa(txt, pp, w - 8f, 1, 1f, Layout.Alignment.ALIGN_CENTER)
+                pon(l, 4f, min(h - l.height - 2f, base + fm.descent * 0.4f + 2f))
+            }
+        }.transparente()
+    }
+
+    /** HATHOR en papel: la cabecera de la portada (el nombre, el número del día y la fecha), con su papel de fondo. */
+    private fun marcaPapel(d: WDatos, w: Float, h: Float): Pagina {
+        val ctx = d.ctx
+        val hoy = LocalDate.now()
+        val fecha = hoyLargo()
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Hathor"))) {
+            fondo()
+            val pad = if (h < 90f) 12f else 16f
+            // Lo de debajo del nombre, según el sitio: la línea del número y la fecha; y la entradilla si cabe
+            val conLinea = h >= 70f
+            val conEntradilla = h >= 140f
+            val bajo = (if (conLinea) 22f else 0f) + (if (conEntradilla) 24f else 0f)
+            val alto = h - 2 * pad - bajo
+            val p = tp(fTitular, 10f, tinta, -0.03f)
+            val s = min((w - 2 * pad) / (p.measureText("HATHOR") / 10f), alto / 0.78f).coerceAtLeast(10f)
+            val tpa = tp(fTitular, s, tinta, -0.03f)
+            val capH = s * 0.72f
+            // Todo el bloque centrado en el widget (el nombre se mide por sus mayúsculas, no por la caja de la letra)
+            val bloque = capH + s * 0.08f + 4f + bajo
+            val base = max(pad, (h - bloque) / 2) + capH
+            val tw = tpa.measureText("HATHOR")
+            c.drawText("HATHOR", (w - tw) / 2, base, tpa)
+            var y = base + s * 0.08f + 4f
+            if (conLinea) {
+                c.drawRect(pad, y, w - pad, y + 1.6f, lleno(tinta))
+                y += 5f
+                val iz = "Nº ${hoy.dayOfYear}"
+                ante(iz, pad, y, w / 2, tinta, 8.5f)
+                val sitio = w - 2 * pad - anchoAnte(iz, 8.5f) - 12f
+                val corta = "${hoy.dayOfWeek.getDisplayName(TextStyle.SHORT, ES).trimEnd('.')} ${hoy.dayOfMonth} ${hoy.month.getDisplayName(TextStyle.SHORT, ES).trimEnd('.')}"
+                ante(if (anchoAnte(fecha, 8.5f) > sitio) corta else fecha, pad + anchoAnte(iz, 8.5f) + 12f, y, sitio, tinta, 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
+                y += 14f
+                c.drawRect(pad, y, w - pad, y + 0.6f, lleno(tinta))
+                y += 6f
+            }
+            if (conEntradilla) pon(capa("Tus películas y series, al día", tp(fCursiva, 13f, gris), w - 2 * pad, 1), pad, y)
         }
     }
 }

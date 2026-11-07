@@ -183,9 +183,16 @@ fun PantPortada(alAbrir: (MetaBreve) -> Unit, alIr: (Destino) -> Unit) {
 }
 
 /** Lo que se dice de algo que estás viendo: «T2 · E5 · quedan 20 min», «quedan 34 min», «T1 · E3». */
-fun seguirTexto(t: Titulo): String {
-    val p = Biblioteca.ultimo(t.ref) ?: return if (t.esSerie) "Serie" else "Película"
+fun seguirTexto(t: Titulo): String = porDonde(Biblioteca.ultimo(t.ref), t.esSerie)
+
+/**
+ * Por dónde vas, de lo último que viste [p]: «T2 · E5 · quedan 20 min», «quedan 34 min», «T1 · E3 · visto». Sin nada visto, «Serie» o
+ * «Película». Con [porcentaje], en una película también lo que llevas: «40 % · quedan 1 h 48 min».
+ */
+fun porDonde(p: Progreso?, esSerie: Boolean, porcentaje: Boolean = false): String {
+    if (p == null) return if (esSerie) "Serie" else "Película"
     val ep = if (p.temporada > 0) "T${p.temporada} · E${p.episodio}" else ""
+    val pct = if (porcentaje && ep.isEmpty() && !p.visto && p.dur > 0 && p.pos > 0) "${(p.fraccion * 100).toInt()} %" else ""
     val queda = if (!p.visto && p.dur > 0 && p.pos > 0) "quedan ${duracion(((p.dur - p.pos) / 60_000L).toInt().coerceAtLeast(1))}" else if (p.visto) "visto" else ""
-    return listOf(ep, queda).filter { it.isNotBlank() }.joinToString(" · ")
+    return listOf(ep, pct, queda).filter { it.isNotBlank() }.joinToString(" · ")
 }

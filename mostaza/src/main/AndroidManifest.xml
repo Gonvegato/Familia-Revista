@@ -75,7 +75,7 @@
         <receiver android:name=".ActualizadorReabrir" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
-        <!-- Los widgets de la pantalla de inicio (Widgets.kt): «Seguir viendo» y «Pendientes» -->
+        <!-- Los widgets de la pantalla de inicio (Widgets.kt): «Seguir viendo», «Pendientes», «En portada», «Próximos capítulos», «Tu semana» y la cabecera -->
         <receiver android:name=".WSeguir" android:label="@string/w_seguir" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_seguir" />
@@ -83,6 +83,26 @@
         <receiver android:name=".WPendientes" android:label="@string/w_pendientes" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_pendientes" />
+        </receiver>
+        <receiver android:name=".WPortada" android:label="@string/w_portada" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_portada" />
+        </receiver>
+        <receiver android:name=".WProximos" android:label="@string/w_proximos" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_proximos" />
+        </receiver>
+        <receiver android:name=".WSemana" android:label="@string/w_semana" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_semana" />
+        </receiver>
+        <receiver android:name=".WMarca" android:label="@string/w_marca" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_marca" />
+        </receiver>
+        <receiver android:name=".WMarcaPapel" android:label="@string/w_marcapapel" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_marcapapel" />
         </receiver>
     </application>
 </manifest>

@@ -70,5 +70,7 @@ class MainActivity : ComponentActivity() {
         SincroP.iniciar(c)
         // Lo que entró sin código de IMDb (de Azabache): se busca, sin molestar
         kotlin.concurrent.thread { runCatching { MigraAzabache.completaImdb(c) } }
+        // Los próximos capítulos de tus series (el widget), si toca
+        Proximos.alDia(c)
     }
 }

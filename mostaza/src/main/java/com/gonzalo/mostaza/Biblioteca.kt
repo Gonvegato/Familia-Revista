@@ -64,6 +64,7 @@ object Biblioteca {
     /** En las pruebas de pantallas: una lista fija (sin la cuenta debajo). */
     @Volatile private var congelada = false
     private val progresoFijo = HashMap<String, Progreso>()
+    private val ratosFijos = ArrayList<Rato>()
 
     /** Un visto es al 90 % (regla 2). */
     const val VISTO = 0.90
@@ -77,7 +78,8 @@ object Biblioteca {
         col = LaFamilia.coleccion("titulos").also { it.alCambiar { principal.post { refresca() } } }
         // Lo visto (de aquí o de otro dispositivo, por la cuenta) también cambia los widgets: «T2 · E5 · quedan 20 min» y su barra
         prog = LaFamilia.coleccion("progreso").also { it.alCambiar { principal.post { version++; appCtx?.let { c -> Widgets.pedir(c) } } } }
-        tiempo = LaFamilia.coleccion("tiempo")
+        // El tiempo que ves (de aquí o de otro dispositivo) alimenta «Tu semana»
+        tiempo = LaFamilia.coleccion("tiempo").also { it.alCambiar { principal.post { appCtx?.let { c -> Widgets.pedir(c) } } } }
         refresca()
         cargada = true
     }
@@ -86,13 +88,14 @@ object Biblioteca {
     var version by mutableStateOf(0)
         private set
 
-    fun fijaParaPruebas(l: List<Titulo>, progresos: List<Progreso> = emptyList()) {
+    fun fijaParaPruebas(l: List<Titulo>, progresos: List<Progreso> = emptyList(), ratos: List<Rato> = emptyList()) {
         congelada = true; cargada = true; titulos.clear(); titulos.addAll(l)
         progresoFijo.clear(); progresos.forEach { progresoFijo[it.video] = it }
+        ratosFijos.clear(); ratosFijos.addAll(ratos)
     }
 
     /** (Para las pruebas: como si la app acabara de abrirse.) */
-    fun olvidaParaPruebas() { cargada = false; congelada = false; col = null; prog = null; tiempo = null; titulos.clear(); progresoFijo.clear() }
+    fun olvidaParaPruebas() { cargada = false; congelada = false; col = null; prog = null; tiempo = null; titulos.clear(); progresoFijo.clear(); ratosFijos.clear() }
 
     // ---------------------------------------------------------------- las claves
 
@@ -339,4 +342,19 @@ object Biblioteca {
     fun msVistos(r: String): Long = tiempo?.vivos()?.filter { it.texto("ref") == r }?.sumOf { it.entero("total") } ?: 0L
 
     fun hoy(ahora: Long = System.currentTimeMillis()) = dia(ahora)
+
+    private val DIA = Regex("d(\\d{4}-\\d{2}-\\d{2})")
+
+    /** Lo visto, día a día y título a título (los campos `d<día>` de `tiempo`, de todos tus dispositivos): lo que lee «Tu semana». */
+    fun ratos(): List<Rato> {
+        if (congelada) return ratosFijos.toList()
+        val tc = tiempo ?: return emptyList()
+        return tc.vivos().flatMap { n ->
+            val r = n.texto("ref")
+            n.campos.keys.mapNotNull { k -> DIA.matchEntire(k)?.groupValues?.get(1)?.let { d -> Rato(r, n.texto("t"), d, n.entero(k)) } }.filter { it.ms > 0 }
+        }
+    }
 }
+
+/** Un rato visto: un título, un día («2026-11-05») y cuánto (ms), en un dispositivo. */
+data class Rato(val ref: String, val nombre: String, val dia: String, val ms: Long)

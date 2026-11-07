@@ -36,6 +36,8 @@ object SincroP {
                 if (inf.ok) app?.let { a ->
                     a.getSharedPreferences("mostaza_sync", Context.MODE_PRIVATE).edit().putLong("ultima", System.currentTimeMillis()).apply()
                     MigraAzabache.siHaceFalta(a)
+                    // (y los próximos capítulos del widget, si toca: cada pocas horas o si cambian tus series)
+                    Proximos.alDia(a)
                 }
             }
             ajustes().alCambiar { refs -> if ("mostaza" in refs) android.os.Handler(android.os.Looper.getMainLooper()).post { aplicaAjustes() } }
