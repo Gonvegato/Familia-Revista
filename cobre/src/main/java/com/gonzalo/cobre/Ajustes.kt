@@ -14,7 +14,7 @@ object AjustesReproductor {
     enum class Aspecto(val nombre: String) { AJUSTAR("Ajustar"), LLENAR("Llenar"), ZOOM("Zoom"), ANCHO("16:9"), ESTRECHO("4:3") }
 
     val GRUPO = EspejoCuenta.Grupo("cobre_reproductor", "cobre_reproductor", { k ->
-        when (k) { "aspecto", "subs", "audio", "externo" -> Tipo.TEXTO; "salto" -> Tipo.ENTERO; "ahorro", "reconectar", "siguiente", "invertirCanales" -> Tipo.SI_NO; else -> null }
+        when (k) { "aspecto", "subs", "audio", "externo" -> Tipo.TEXTO; "salto" -> Tipo.ENTERO; "ahorro", "reconectar", "siguiente", "invertirCanales", "segundoPlano" -> Tipo.SI_NO; else -> null }
     })
     private fun p(c: Context) = EspejoCuenta.prefs(c, GRUPO)
     fun aspecto(c: Context) = Aspecto.entries.firstOrNull { it.name == p(c).getString("aspecto", null) } ?: Aspecto.AJUSTAR
@@ -43,6 +43,9 @@ object AjustesReproductor {
     /** «Abrir con otro reproductor»: el paquete del que usas siempre ("" = preguntar). Es de Android: Cobre del ordenador no lo lee. */
     fun externo(c: Context) = p(c).getString("externo", "").orEmpty()
     fun ponExterno(c: Context, v: String) = p(c).edit().putString("externo", v).apply()
+    /** «Seguir sonando al salir»: al salir del reproductor (inicio, otra app, la pantalla apagada) el sonido sigue. Apagado de serie; en la tele no se usa. */
+    fun segundoPlano(c: Context) = p(c).getBoolean("segundoPlano", false)
+    fun ponSegundoPlano(c: Context, v: Boolean) = p(c).edit().putBoolean("segundoPlano", v).apply()
 }
 
 /** La guía: cada cuánto se baja y cuántos días. */
@@ -61,7 +64,7 @@ object AjustesGuia {
 /** Los canales: su orden, dónde estabas y qué hacer al abrir. */
 object AjustesDirecto {
     enum class Orden(val nombre: String) { LISTA("Como la lista"), NUMERO("Por número"), NOMBRE("Por nombre") }
-    val GRUPO = EspejoCuenta.Grupo("cobre_directo", "cobre_directo", { k -> when (k) { "orden", "lista", "grupo" -> Tipo.TEXTO; "alAbrir" -> Tipo.SI_NO; else -> null } })
+    val GRUPO = EspejoCuenta.Grupo("cobre_directo", "cobre_directo", { k -> when (k) { "orden", "lista", "grupo" -> Tipo.TEXTO; "alAbrir", "videoclub" -> Tipo.SI_NO; else -> null } })
     private fun p(c: Context) = EspejoCuenta.prefs(c, GRUPO)
     fun orden(c: Context) = Orden.entries.firstOrNull { it.name == p(c).getString("orden", null) } ?: Orden.LISTA
     fun ponOrden(c: Context, o: Orden) = p(c).edit().putString("orden", o.name).apply()
@@ -72,4 +75,15 @@ object AjustesDirecto {
     /** Al abrir Cobre, el último canal que viste (como una tele). */
     fun alAbrir(c: Context) = p(c).getBoolean("alAbrir", false)
     fun ponAlAbrir(c: Context, v: Boolean) = p(c).edit().putBoolean("alAbrir", v).apply()
+    /**
+     * «Pelis y series del proveedor»: el videoclub de Xtream en el menú, en la portada y en «Buscar» (y se baja al poner al día la lista).
+     * Apagado de serie: Nut es sobre todo la tele y el fútbol. El código sigue ahí ([PantVideoclub]); se vuelve a ver encendiéndolo.
+     */
+    fun videoclub(c: Context) = p(c).getBoolean("videoclub", false)
+    fun ponVideoclub(c: Context, v: Boolean) = p(c).edit().putBoolean("videoclub", v).apply()
 }
+
+/** Las secciones del menú de la portada, en su orden: el fútbol lo primero; el videoclub, solo con Xtream y si lo enciendes. */
+fun seccionesMenu(hayXtream: Boolean, videoclub: Boolean): List<Pair<String, Destino>> =
+    listOf("Fútbol" to Destino.Futbol, "Favoritos" to Destino.Favoritos, "Directo" to Destino.Directo, "Guía" to Destino.Guia) +
+        (if (hayXtream && videoclub) listOf("Películas" to Destino.Peliculas, "Series" to Destino.Series) else emptyList()) + listOf("Listas" to Destino.Listas)

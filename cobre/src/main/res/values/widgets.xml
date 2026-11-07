@@ -6,5 +6,7 @@
     <string name="w_marca">NUT</string>
     <string name="w_marca_d">La cabecera de Nut, sola sobre tu fondo. Un toque y estás en la portada.</string>
     <string name="w_marcapapel">NUT en papel</string>
+    <string name="w_proximo">Próximo partido</string>
+    <string name="w_proximo_d">El próximo partido de tus equipos (o el que se juega, con el marcador), con el día y la hora. Un toque en su canal y lo estás viendo.</string>
     <string name="w_marcapapel_d">La cabecera de Nut en su papel: el número del día y la fecha. Un toque y estás en la portada.</string>
 </resources>

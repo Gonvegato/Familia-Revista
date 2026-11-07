@@ -77,31 +77,17 @@ fun VolverRevista(onClick: () -> Unit, texto: String = "Volver") = EnlaceRevista
 
 /** Las pestañas de una página: versalitas; la elegida en tinta con el subrayado de acento; su número, en acento. */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifier, cuentas: List<Int?>? = null, onSel: (Int) -> Unit) {
-    // La fila se desplaza sola hasta la pestaña elegida si no se ve entera (al entrar en «Sagas» desde la portada, por ejemplo)
-    val desplazamiento = rememberScrollState()
-    val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
-    var anchoFila by remember { mutableIntStateOf(0) }
-    LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
-        val (x, w) = sitios[sel] ?: return@LaunchedEffect
-        if (anchoFila <= 0) return@LaunchedEffect
-        if (x < desplazamiento.value || x + w > desplazamiento.value + anchoFila) desplazamiento.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, desplazamiento.maxValue))
-    }
+    // Todas a la vista: si no caben en una línea (letra grande, pantalla estrecha), siguen en la siguiente; nunca cortadas
     Column(modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().onGloballyPositioned { anchoFila = it.size.width }.drawWithContent {
-                // Un degradado en los bordes cuando hay más pestañas por un lado o por otro (para que no parezcan cortadas)
-                drawContent()
-                val f = 28.dp.toPx()
-                if (desplazamiento.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
-                if (desplazamiento.value < desplazamiento.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-            }.horizontalScroll(desplazamiento), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Bottom) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }
-                    .semantics { selected = on; role = Role.Tab }.tocable { onSel(i) }
+                Row(Modifier.semantics { selected = on; role = Role.Tab }.tocable { onSel(i) }
                     .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
                     .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-                    Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1)
+                    Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1, softWrap = false)
                     cuentas?.getOrNull(i)?.let { c -> Text(" $c", color = if (on) Charcoal else Muted,  // (el rojo, solo para lo que se toca: la pestaña activa y los enlaces)
                          fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1) }
                 }

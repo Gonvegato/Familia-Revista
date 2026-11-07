@@ -56,14 +56,14 @@ import kotlin.math.sqrt
  * titulares grandes en la letra del tema, esquinas redondas y el reborde fino de tinta. Cada widget se dibuja entero (así la letra
  * queda como en la app) y encima lleva zonas transparentes para tocar. Los colores son los del tema de Apariencia.
  *
- * De momento, la cabecera (NUT y NUT en papel). Para añadir otro: su tipo en [WTipo], su clase (`class WLoQueSea : WBase(...)`) y su
+ * La cabecera (NUT y NUT en papel) y «Próximo partido» (el de tus equipos, con los botones de sus canales). Para añadir otro: su tipo en [WTipo], su clase (`class WLoQueSea : WBase(...)`) y su
  * receiver en el AndroidManifest, su `res/xml/w_<tipo>.xml` con su vista previa (la dibuja WidgetsTest), su caso en [Widgets.clase]
  * y en [Widgets.componer], y lo que lea en [WDatos]. Lo que cambie en la app y se vea en un widget, que llame a [Widgets.pedir].
  * Nada de tus listas (que llevan usuario y contraseña) llega aquí.
  */
 
 /** Los widgets que hay. */
-enum class WTipo { MARCA, MARCA_PAPEL }
+enum class WTipo { MARCA, MARCA_PAPEL, PROXIMO }
 
 abstract class WBase(private val tipo: WTipo) : AppWidgetProvider() {
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) = Widgets.pintar(ctx, tipo, ids, goAsync())
@@ -81,6 +81,7 @@ abstract class WBase(private val tipo: WTipo) : AppWidgetProvider() {
 
 class WMarca : WBase(WTipo.MARCA)
 class WMarcaPapel : WBase(WTipo.MARCA_PAPEL)
+class WProximo : WBase(WTipo.PROXIMO)
 
 /** Una zona que se puede tocar (en dp, desde la esquina de arriba a la izquierda); con [celdas], una rejilla. */
 class Zona(
@@ -247,11 +248,25 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     }
 }
 
-/** Lo que hay guardado en la app, como lo ven los widgets (los que vengan: canales, favoritos, la guía…). */
-class WDatos(val ctx: Context)
+/** Lo que hay guardado en la app, como lo ven los widgets: de momento, el próximo partido de tus equipos (de lo ya bajado: sin red). */
+class WDatos(val ctx: Context) {
+    /** El partido que toca (el que se juega o el siguiente de tus equipos) y los grupos de canales de su competición. */
+    fun proximo(): Pair<com.gonzalo.iptv.futbol.Partido, List<com.gonzalo.iptv.futbol.GrupoCanales>>? {
+        Futbol.cargar(ctx)
+        val eqs = AjustesFutbol.equipos(ctx).map { it.first.id }
+        if (eqs.isEmpty()) return null
+        val p = com.gonzalo.iptv.futbol.Orden.tusPartidos(runCatching { Futbol.partidos(ctx, fresco = false) }.getOrDefault(emptyList()), eqs, System.currentTimeMillis()).firstOrNull() ?: return null
+        return p to AjustesFutbol.gruposDe(ctx, p.liga)
+    }
+    val hayEquipos: Boolean get() = AjustesFutbol.equipos(ctx).isNotEmpty()
+}
 
 object Widgets {
     const val ACCION = "com.gonzalo.cobre.WIDGET"
+    /** Abrir Nut poniendo un canal de un grupo del fútbol (extras `grupo` y `n`). */
+    const val ACCION_CANAL = "com.gonzalo.cobre.FUTBOL_CANAL"
+    /** Abrir Nut en una página (el nombre de un [Destino]). */
+    const val EXTRA_DESTINO = "destino"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     @Volatile private var pendiente: Job? = null
     private val fuentes = HashMap<Int, Typeface>()
@@ -259,6 +274,7 @@ object Widgets {
     fun clase(t: WTipo): Class<out AppWidgetProvider> = when (t) {
         WTipo.MARCA -> WMarca::class.java
         WTipo.MARCA_PAPEL -> WMarcaPapel::class.java
+        WTipo.PROXIMO -> WProximo::class.java
     }
 
     @Synchronized fun fuente(ctx: Context, id: Int): Typeface =
@@ -365,6 +381,8 @@ object Widgets {
                     ids.forEach { id -> try { pintarUno(app, tipo, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } }
                 }
             } finally { res?.finish() }
+            // «Próximo partido»: después de pintar lo guardado, se pide lo que haya caducado (y si cambia algo, se vuelve a pintar)
+            if (tipo == WTipo.PROXIMO) runCatching { if (Futbol.refrescaSiToca(app)) ids.forEach { id -> runCatching { pintarUno(app, tipo, id) } } }
         }
     }
 
@@ -404,6 +422,7 @@ object Widgets {
     fun porDefecto(t: WTipo): Pair<Float, Float> = when (t) {
         WTipo.MARCA -> 330f to 80f
         WTipo.MARCA_PAPEL -> 330f to 165f
+        WTipo.PROXIMO -> 330f to 170f
     }
 
     /** Píxeles por dp del dibujo: los de la pantalla, sin pasarse de memoria (Android limita lo que pesa un widget). */
@@ -434,6 +453,7 @@ object Widgets {
         return when (tipo) {
             WTipo.MARCA -> marca(d, w, h)
             WTipo.MARCA_PAPEL -> marcaPapel(d, w, h)
+            WTipo.PROXIMO -> proximo(d, id, w, h)
         }
     }
 
@@ -455,8 +475,124 @@ object Widgets {
         return PendingIntent.getActivity(ctx, 1, i, PI)
     }
 
+    /** Abre Nut en una página ([Destino]). */
+    fun abrirEn(ctx: Context, d: Destino, codigo: Int): PendingIntent {
+        val i = Intent(ctx, MainActivity::class.java).setAction(Intent.ACTION_VIEW).setData(Uri.parse("cobre://abrir/${d.name}"))
+            .putExtra(EXTRA_DESTINO, d.name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        return PendingIntent.getActivity(ctx, codigo, i, PI)
+    }
+
+    /** Pone el canal [n] del grupo [grupo] (abre Nut, que lo pone en el reproductor). */
+    fun ponCanal(ctx: Context, id: Int, grupo: String, n: Int): PendingIntent {
+        val i = Intent(ctx, MainActivity::class.java).setAction(ACCION_CANAL).setData(Uri.parse("cobre://futbol/$id/$grupo/$n"))
+            .putExtra("grupo", grupo).putExtra("n", n).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        return PendingIntent.getActivity(ctx, 1000 + id * 16 + (grupo.hashCode() and 0xF), i, PI)
+    }
+
+    // ------------------------------------------------------------------ escudos
+
+    /** Donde se guarda el escudo de [url] (los escudos son imágenes públicas de ESPN; se bajan una vez). */
+    fun archivoEscudo(ctx: Context, url: String): File {
+        val h = java.security.MessageDigest.getInstance("SHA-256").digest(url.toByteArray()).joinToString("") { "%02x".format(it) }.take(20)
+        return File(File(ctx.cacheDir, "escudos"), "$h.png")
+    }
+
+    /** El escudo de [url] (del disco o, la primera vez, de internet; null si no hay). */
+    fun escudo(ctx: Context, url: String): Bitmap? {
+        if (url.isBlank()) return null
+        val f = archivoEscudo(ctx, url)
+        if (!f.isFile && Futbol.fijo == null) runCatching {
+            val c = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+            c.connectTimeout = 4_000; c.readTimeout = 4_000
+            try {
+                if (c.responseCode == 200) {
+                    val bm = android.graphics.BitmapFactory.decodeStream(c.inputStream) ?: return@runCatching
+                    val chico = Bitmap.createScaledBitmap(bm, 128, (128f * bm.height / bm.width.coerceAtLeast(1)).roundToInt().coerceAtLeast(1), true)
+                    f.parentFile?.mkdirs(); f.outputStream().use { chico.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                }
+            } finally { c.disconnect() }
+        }
+        return if (f.isFile) runCatching { android.graphics.BitmapFactory.decodeFile(f.path) }.getOrNull() else null
+    }
+
+    // ------------------------------------------------------------------ Próximo partido
+
+    /**
+     * «Próximo partido»: el de tus equipos que se juega ahora (con el marcador) o el siguiente: los escudos y los nombres, la competición,
+     * el día y la hora (en la de España), y un botón por cada grupo de canales de su competición, que lo pone directamente. Un toque en lo
+     * demás abre «Fútbol».
+     */
+    private fun proximo(d: WDatos, id: Int, w: Float, h: Float): Pagina {
+        val ctx = d.ctx
+        val x = d.proximo()
+        if (x == null) {
+            val v = vacio(ctx, "Próximo partido", if (d.hayEquipos) "Sin partidos a la vista" else "Elige tus equipos",
+                if (d.hayEquipos) "En cuanto haya uno, saldrá aquí con sus canales." else "En Nut, Ajustes → Fútbol. Un toque y vas.", w, h)
+            return Pagina(listOf(Zona(0f, 0f, w, h, abrirEn(ctx, if (d.hayEquipos) Destino.Futbol else Destino.AjustesFutbol, 2), "Abrir el fútbol de Nut")), v.dibujo)
+        }
+        val (p, grupos) = x
+        val ahora = System.currentTimeMillis()
+        val escL = escudo(ctx, p.local.escudo); val escV = escudo(ctx, p.visitante.escudo)
+        val pad = if (h < 110f) 10f else 14f
+        val conBotones = grupos.isNotEmpty() && h >= 96f
+        val altoBoton = if (h >= 150f) 30f else 26f
+        val bajoBotones = if (conBotones) altoBoton + 8f else 0f
+        // Los botones: cada uno a lo ancho que le toque (como mucho, tres)
+        val gs = grupos.take(3)
+        val anchoB = if (gs.isEmpty()) 0f else (w - 2 * pad - 8f * (gs.size - 1)) / gs.size
+        val zonas = mutableListOf(Zona(0f, 0f, w, h, abrirEn(ctx, Destino.Futbol, 3), "${p.local.nombre} contra ${p.visitante.nombre}"))
+        if (conBotones) gs.forEachIndexed { k, g ->
+            val bx = pad + k * (anchoB + 8f); val by = h - pad - altoBoton
+            zonas += Zona(bx, by, anchoB, altoBoton, if (g.canales.isEmpty()) abrirEn(ctx, Destino.AjustesFutbol, 4) else ponCanal(ctx, id, g.id, 0), if (g.canales.isEmpty()) "Elegir los canales de ${g.nombre}" else "Ver en ${g.nombre}")
+        }
+        return Pagina(zonas) {
+            fondo()
+            val vivo = p.estado.enDirecto
+            // Arriba: «PRÓXIMO PARTIDO» (o «EN DIRECTO») y la competición
+            // (en uno bajo, cuándo va arriba, junto a la competición)
+            val conLinea = h >= 130f
+            val cuando = if (vivo) p.cuando(ahora) else p.cuando(ahora)
+            val comp = if (conLinea) p.competicion.corto else "${p.competicion.corto} · $cuando"
+            seccion(if (vivo) "En directo" else "Próximo partido", pad, pad, w - 2 * pad - anchoAnte(comp) - 8f, tinta, acento)
+            ante(comp, w - pad - anchoAnte(comp) - 2f, pad, anchoAnte(comp) + 2f, if (vivo && !conLinea) acento else gris, al = Layout.Alignment.ALIGN_OPPOSITE)
+            val top = pad + 16f
+            val bottom = h - pad - bajoBotones - if (conLinea) 16f else 2f
+            val filaH = ((bottom - top) / 2f).coerceIn(14f, 34f)
+            val esc = (filaH - 4f).coerceIn(12f, 28f)
+            val goles = p.golesLocal != null && p.golesVisitante != null
+            fun fila(e: com.gonzalo.iptv.futbol.Equipo, bm: Bitmap?, g: Int?, y: Float) {
+                val r = RectF(pad, y + (filaH - esc) / 2, pad + esc, y + (filaH - esc) / 2 + esc)
+                if (bm != null) poster(bm, r, e.nombre, rad = 0f, filo = false) else {
+                    c.drawOval(r, lleno(arena))
+                    val t = capa(e.siglas.ifBlank { e.nombre.take(3) }.uppercase(ES), tp(fNegrita, esc * 0.32f, tinta), esc, 1, 1f, Layout.Alignment.ALIGN_CENTER)
+                    pon(t, r.left, r.centerY() - t.height / 2f)
+                }
+                val anchoG = if (goles) 26f else 0f
+                val n = titular(e.nombre, w - 2 * pad - esc - 8f - anchoG, filaH, min(20f, filaH * 0.7f), 10f, 1)
+                pon(n, pad + esc + 8f, y + (filaH - n.height) / 2)
+                if (g != null) {
+                    val gl = capa("$g", tp(fTitular, min(22f, filaH * 0.8f), if (vivo) acento else tinta), anchoG, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE)
+                    pon(gl, w - pad - anchoG, y + (filaH - gl.height) / 2)
+                }
+            }
+            fila(p.local, escL, p.golesLocal, top)
+            fila(p.visitante, escV, p.golesVisitante, top + filaH)
+            // Cuándo (en la hora de España) o el minuto
+            if (conLinea) ante(cuando, pad, top + 2 * filaH + 3f, w - 2 * pad, if (vivo) acento else tinta, 9.5f)
+            if (conBotones) gs.forEachIndexed { k, g ->
+                val bx = pad + k * (anchoB + 8f); val by = h - pad - altoBoton
+                val r = RectF(bx, by, bx + anchoB, by + altoBoton)
+                val lleno0 = k == 0 && g.canales.isNotEmpty()
+                if (lleno0) c.drawRoundRect(r, altoBoton / 2, altoBoton / 2, lleno(acento))
+                else c.drawRoundRect(RectF(r.left + 0.7f, r.top + 0.7f, r.right - 0.7f, r.bottom - 0.7f), altoBoton / 2, altoBoton / 2, Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.3f; color = tinta })
+                val txt = if (g.canales.isEmpty()) "${g.boton}: elegir" else "▶  ${g.boton}"
+                val t = capa(txt.uppercase(ES), tp(fNegrita, 9.5f, if (lleno0) papel else tinta, 0.1f), anchoB - 10f, 1, 1f, Layout.Alignment.ALIGN_CENTER)
+                pon(t, bx + 5f, by + (altoBoton - t.height) / 2)
+            }
+        }
+    }
+
     /** Un widget sin nada que enseñar todavía: lo dice con la misma letra y lleva a la app. */
-    @Suppress("unused")
     private fun vacio(ctx: Context, sec: String, titulo: String, texto: String, w: Float, h: Float): Pagina =
         Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), titulo))) {
             fondo()

@@ -112,7 +112,7 @@ object Tele {
                     runCatching { almacen.actualizaGuia(l, almacen.canales(l).second, AjustesGuia.dias(c)) }.onFailure { e -> if (todo) error = (e as? IptvError)?.message }
                     cargadas.remove(l.id); avisa()
                 }
-                if (todo && l.esXtream) {
+                if (todo && l.esXtream && AjustesDirecto.videoclub(c)) {
                     principal.post { ocupada[l.id] = "Bajando el videoclub…" }
                     almacen.actualizaPeliculas(l); almacen.actualizaSeries(l); avisa()
                 }

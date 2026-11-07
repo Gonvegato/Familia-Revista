@@ -14,9 +14,20 @@ import com.gonzalo.iptv.Serie
 /** Lo que se le pasa al reproductor: un canal (con los de su grupo, para cambiar con el mando), una película o un episodio. */
 sealed class Encargo {
     abstract val lista: Lista
-    class Directo(override val lista: Lista, val canales: List<Canal>, val indice: Int) : Encargo()
+    /** [plan]: si viene de un grupo del fútbol, sus entradas en todas sus calidades (para cambiar de calidad y para probar otra si falla). */
+    class Directo(override val lista: Lista, val canales: List<Canal>, val indice: Int, val plan: PlanFutbol? = null) : Encargo()
     class DePelicula(override val lista: Lista, val pelicula: Pelicula, val duracionSeg: Long = 0L) : Encargo()
     class DeEpisodio(override val lista: Lista, val serie: Serie, val ficha: FichaSerie?, val episodio: Episodio) : Encargo()
+}
+
+/**
+ * Un grupo de canales del fútbol, ya en el reproductor: sus entradas (las de esta lista) con cada calidad resuelta a su canal, la calidad
+ * que se quiere ([quiero], elegida por la conexión o a mano) y el rótulo (el grupo, «DAZN LaLiga»). Los canales del encargo son, de cada
+ * entrada, el de la calidad que toca.
+ */
+class PlanFutbol(val grupo: String, val entradas: List<com.gonzalo.iptv.futbol.Entrada>, val canales: List<Map<com.gonzalo.iptv.futbol.Calidad, Canal>>, var quiero: com.gonzalo.iptv.futbol.Calidad) {
+    /** La calidad del canal [c] en la entrada [i]. */
+    fun calidadDe(i: Int, c: Canal): com.gonzalo.iptv.futbol.Calidad? = canales.getOrNull(i)?.entries?.firstOrNull { it.value.clave == c.clave }?.key
 }
 
 object Reproducir {

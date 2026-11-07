@@ -34,16 +34,18 @@ fun PantBuscar(alVolver: () -> Unit, alFicha: (Ficha) -> Unit) {
     val ctx = LocalContext.current
     var q by rememberSaveable { mutableStateOf("") }
     val listas = Listas.usables()
+    // (las películas y las series, solo con «Pelis y series del proveedor» encendido)
+    val vc = AjustesDirecto.videoclub(ctx)
     class Resultado(val canales: List<Pair<Lista, Canal>>, val pelis: List<Pair<Lista, Pelicula>>, val series: List<Pair<Lista, Serie>>)
-    val r by produceState<Resultado?>(null, q, listas) {
+    val r by produceState<Resultado?>(null, q, listas, vc) {
         if (q.trim().length < 2) { value = null; return@produceState }
         delay(250)
         value = withContext(Dispatchers.IO) {
             val n = Buscar.normal(q)
             Resultado(
                 listas.flatMap { l -> Tele.cargada(l)?.canales.orEmpty().asSequence().filter { Buscar.normal(it.nombre).contains(n) }.take(80).map { l to it }.toList() },
-                listas.filter { it.esXtream }.flatMap { l -> Tele.almacen.buscaPeliculas(l, q).map { l to it } },
-                listas.filter { it.esXtream }.flatMap { l -> Tele.almacen.buscaSeries(l, q).map { l to it } },
+                listas.filter { vc && it.esXtream }.flatMap { l -> Tele.almacen.buscaPeliculas(l, q).map { l to it } },
+                listas.filter { vc && it.esXtream }.flatMap { l -> Tele.almacen.buscaSeries(l, q).map { l to it } },
             )
         }
     }
@@ -51,7 +53,7 @@ fun PantBuscar(alVolver: () -> Unit, alFicha: (Ficha) -> Unit) {
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = m)) {
         CabeceraSeccion("Buscar", "En tus listas", alVolver)
         Box(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-            if (q.isEmpty()) Text("Un canal, una película, una serie…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp)
+            if (q.isEmpty()) Text(if (vc) "Un canal, una película, una serie…" else "Un canal…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp)
             BasicTextField(q, { q = it }, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp), cursorBrush = SolidColor(Acento),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), keyboardActions = KeyboardActions(), modifier = Modifier.fillMaxWidth().focoInicial())
         }

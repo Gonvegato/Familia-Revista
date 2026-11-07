@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- «Seguir sonando al salir» del reproductor: el servicio en primer plano de Media3 (ReproduccionService.kt) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- En el móvil, en la tablet y en la tele (con el mando a distancia): sin pantalla táctil y en el menú de Android TV -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -53,11 +56,15 @@
         <activity android:name=".ReproductorActivity" android:exported="false" android:theme="@style/Reproductor"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density|navigation" />
+        <!-- Seguir sonando al salir del reproductor: la sesión de Media3 (notificación y pantalla de bloqueo) del mismo ExoPlayer -->
+        <service android:name=".ReproduccionService" android:exported="true" android:foregroundServiceType="mediaPlayback">
+            <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
+        </service>
         <receiver android:name=".ActualizadorReceiver" android:exported="false" />
         <receiver android:name=".ActualizadorReabrir" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
-        <!-- Los widgets de la pantalla de inicio (Widgets.kt): de momento, la cabecera -->
+        <!-- Los widgets de la pantalla de inicio (Widgets.kt): la cabecera y el próximo partido -->
         <receiver android:name=".WMarca" android:label="@string/w_marca" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_marca" />
@@ -65,6 +72,10 @@
         <receiver android:name=".WMarcaPapel" android:label="@string/w_marcapapel" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_marcapapel" />
+        </receiver>
+        <receiver android:name=".WProximo" android:label="@string/w_proximo" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_proximo" />
         </receiver>
     </application>
 </manifest>

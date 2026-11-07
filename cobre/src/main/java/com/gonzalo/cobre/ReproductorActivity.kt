@@ -95,6 +95,19 @@ class EstadoReproductor {
     var confirmaOtro by mutableStateOf(false)
     /** La guía del canal de ahora (para la banda). */
     var guiaDe: (Canal) -> Pair<Programa?, Programa?> = { null to null }
+    /** La calidad del canal de ahora (en los grupos del fútbol: «Ultra HD», «HD», «SD»), o null. */
+    var calidad by mutableStateOf<String?>(null)
+    /** «Seguir sonando al salir»: encendido o no (null: no se ofrece, como en la tele). */
+    var segundoPlano by mutableStateOf<Boolean?>(null)
+}
+
+/** La última velocidad que ha medido de verdad el reproductor (para elegir la calidad del fútbol). */
+object Medida {
+    @Volatile private var kbps = 0L
+    @Volatile private var cuando = 0L
+    fun pon(bps: Long) { if (bps > 0) { kbps = bps / 1000; cuando = SystemClock.elapsedRealtime() } }
+    /** Lo medido en la última media hora (kb/s), o 0. */
+    fun kbps(): Long = if (cuando > 0 && SystemClock.elapsedRealtime() - cuando < 30 * 60_000L) kbps else 0L
 }
 
 /**
@@ -125,6 +138,10 @@ class ReproductorActivity : ComponentActivity() {
     private var guardadoEn = 0L
     private var guiaEn = 0L
     private var parado = false
+    /** «Seguir sonando al salir» en este reproductor (el ajuste o el botón). */
+    private var segundoPlano = false
+    /** En un grupo del fútbol: lo ya probado sin éxito (entrada, calidad), para pasar a la siguiente calidad y luego al siguiente canal. */
+    private val probadas = HashSet<Pair<Int, com.gonzalo.iptv.futbol.Calidad>>()
 
     private val pulso = object : Runnable {
         override fun run() {
@@ -151,6 +168,8 @@ class ReproductorActivity : ComponentActivity() {
         estado.guiaDe = { c -> Tele.enMemoria(encargo.lista.id)?.let { Tele.ahoraYDespuesRapido(it, c) } ?: (null to null) }
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply { hide(WindowInsetsCompat.Type.systemBars()); systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE }
+        if (!esTele(this)) { segundoPlano = AjustesReproductor.segundoPlano(this); estado.segundoPlano = segundoPlano }
+        ReproduccionService.alParar = { principal.post { finish() } }
         setContent { CobreTheme { Pantalla() } }
         abre()
     }
@@ -181,7 +200,8 @@ class ReproductorActivity : ComponentActivity() {
             ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { salta(it) }, alIr = { player?.seekTo(it) }, alVolver = { finish() },
                 alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alAspecto = { cambiaAspecto() }, alOtro = { estado.confirmaOtro = true }, alOtroSi = { conOtro() },
                 alCanal = { d -> zapea(d) }, alLista = { abreLista() }, alElegirCanal = { i -> vaACanal(i) }, alSiguiente = { siguienteYa() },
-                alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alReintentar = { reintenta(manual = true) })
+                alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alReintentar = { reintenta(manual = true) },
+                alCalidad = { cambiaCalidad() }, alSegundoPlano = { activaSegundoPlano(!segundoPlano) })
         }
     }
 
@@ -196,7 +216,8 @@ class ReproductorActivity : ComponentActivity() {
         when (val e = encargo) {
             is Encargo.Directo -> {
                 val c = e.canales[e.indice]
-                estado.directo = true; estado.titulo = c.nombre; estado.numero = if (c.numero > 0) c.numero else e.indice + 1; estado.logo = c.logo; estado.subtitulo = c.grupo
+                estado.directo = true; estado.titulo = c.nombre; estado.numero = if (c.numero > 0) c.numero else e.indice + 1; estado.logo = c.logo; estado.subtitulo = e.plan?.grupo ?: c.grupo
+                estado.calidad = e.plan?.calidadDe(e.indice, c)?.texto
                 estado.dur = 0L; estado.ahora = null; estado.despues = null
                 if (c.conDrm) { estado.cargando = false; estado.aviso = "Este canal va cifrado con DRM (Widevine o parecido): Nut no lo puede abrir. Prueba con otro reproductor."; return }
                 url = Tele.url(l, c); cabeceras = Tele.cabeceras(l, c)
@@ -246,9 +267,14 @@ class ReproductorActivity : ComponentActivity() {
         // (con FFmpeg detrás de los decodificadores del aparato: el AC3 o el DTS que este no sepa, lo decodifica la app)
         val renderers = DefaultRenderersFactory(this).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
         val p = ExoPlayer.Builder(this, renderers).setMediaSourceFactory(DefaultMediaSourceFactory(datos)).build().also { nuevo ->
-            player = nuevo; vista?.player = nuevo
+            player = nuevo; if (!parado || !segundoPlano) vista?.player = nuevo
             nuevo.addListener(oyente)
+            // (la velocidad que mide el reproductor: con ella se elige la calidad del fútbol la próxima vez)
+            nuevo.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+                override fun onBandwidthEstimate(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, ms: Int, bytes: Long, bps: Long) = Medida.pon(bps)
+            })
             principal.post(pulso)
+            if (segundoPlano) ReproduccionService.pon(this, nuevo)
         }
         val audio = AjustesReproductor.audio(this); val texto = AjustesReproductor.subs(this)
         var tsp = p.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audio.ifBlank { null }).setPreferredTextLanguage(texto.ifBlank { null })
@@ -256,7 +282,7 @@ class ReproductorActivity : ComponentActivity() {
         // Con datos del móvil, la calidad más baja que dé el canal (en los que dan varias: HLS y DASH)
         if (AjustesReproductor.ahorro(this) && Tele.datosMoviles(this)) tsp = tsp.setForceLowestBitrate(true)
         p.trackSelectionParameters = tsp.build()
-        val item = MediaItem.Builder().setUri(url).setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setTitle(estado.titulo).build())
+        val item = MediaItem.Builder().setUri(url).setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setTitle(estado.titulo).setArtist(estado.subtitulo.ifBlank { "Nut" }).build())
         val ruta = Uri.parse(url).path.orEmpty().lowercase()
         when {
             comoHls || ruta.endsWith(".m3u8") || ruta.endsWith(".m3u") -> item.setMimeType(MimeTypes.APPLICATION_M3U8)
@@ -303,6 +329,8 @@ class ReproductorActivity : ComponentActivity() {
             if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED && !comoHls) { comoHls = true; empieza(if (estado.directo) 0L else estado.pos); return }
             val red = error.errorCode in 2000..2999
             val codec = error.errorCode in 4000..4999 || error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED
+            // Un canal de un grupo del fútbol que no arranca: la siguiente calidad y, luego, el siguiente canal del grupo
+            if (!listo && probarOtro()) return
             if (red && (estado.directo || listo) && AjustesReproductor.reconectar(this@ReproductorActivity) && reintentos < 6) { reintenta(); return }
             estado.cargando = false
             val http = (error.cause as? androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException)?.responseCode
@@ -314,6 +342,58 @@ class ReproductorActivity : ComponentActivity() {
                 else -> "No se puede ver ahora (el servidor no responde, o no hay conexión)."
             }
         }
+    }
+
+    /** En un grupo del fútbol, lo siguiente que probar ([com.gonzalo.iptv.futbol.Calidades.siguienteIntento]); false si no hay plan o no queda nada. */
+    private fun probarOtro(): Boolean {
+        val e = encargo as? Encargo.Directo ?: return false
+        val plan = e.plan ?: return false
+        val c = e.canales.getOrNull(e.indice) ?: return false
+        val q = plan.calidadDe(e.indice, c) ?: return false
+        probadas += e.indice to q
+        val (i, q2) = com.gonzalo.iptv.futbol.Calidades.siguienteIntento(plan.entradas, e.indice, q, plan.quiero, probadas) ?: return false
+        val nuevo = plan.canales[i][q2] ?: return false
+        val canales = e.canales.toMutableList().also { it[i] = nuevo }
+        encargo = Encargo.Directo(e.lista, canales, i, plan)
+        abre()
+        estado.mensaje = "No arrancaba: probando ${nuevo.nombre}…"
+        principal.postDelayed({ if (estado.mensaje?.startsWith("No arrancaba") == true) estado.mensaje = null }, 6_000L)
+        return true
+    }
+
+    /** En un grupo del fútbol: la otra calidad del canal de ahora (Ultra HD → HD → SD → Ultra HD…), y se queda para los demás. */
+    private fun cambiaCalidad() {
+        ultimaInteraccion = SystemClock.elapsedRealtime()
+        val e = encargo as? Encargo.Directo ?: return
+        val plan = e.plan ?: return
+        val hay = plan.canales.getOrNull(e.indice) ?: return
+        if (hay.size < 2) return
+        val ahora = plan.calidadDe(e.indice, e.canales[e.indice]) ?: return
+        val todas = com.gonzalo.iptv.futbol.Calidad.entries
+        val sig = (1..todas.size).map { todas[(ahora.ordinal + it) % todas.size] }.first { hay.containsKey(it) }
+        plan.quiero = sig
+        // (los demás canales del grupo, también en esa calidad si la tienen)
+        val canales = e.canales.mapIndexed { i, c -> plan.canales.getOrNull(i)?.let { m -> com.gonzalo.iptv.futbol.Calidades.orden(sig).firstNotNullOfOrNull { m[it] } } ?: c }
+        probadas.clear()
+        encargo = Encargo.Directo(e.lista, canales, e.indice, plan)
+        abre()
+        estado.mensaje = "Calidad: ${sig.texto}"
+        principal.postDelayed({ if (estado.mensaje?.startsWith("Calidad:") == true) estado.mensaje = null }, 2_500L)
+    }
+
+    /** «Seguir sonando al salir», ahora (sin tocar el ajuste de siempre). */
+    private fun activaSegundoPlano(on: Boolean) {
+        if (esTele(this)) return
+        ultimaInteraccion = SystemClock.elapsedRealtime()
+        segundoPlano = on; estado.segundoPlano = on
+        val p = player
+        if (on) {
+            if (android.os.Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                runCatching { requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 3) }
+            if (p != null) ReproduccionService.pon(this, p)
+        } else ReproduccionService.quita(this)
+        estado.mensaje = if (on) "Al salir, seguirá sonando" else "Al salir, se para"
+        principal.postDelayed({ if (estado.mensaje?.startsWith("Al salir") == true) estado.mensaje = null }, 2_500L)
     }
 
     /** Se ha cortado: se vuelve a conectar, esperando cada vez un poco más (1, 2, 4, 8… segundos). */
@@ -398,7 +478,7 @@ class ReproductorActivity : ComponentActivity() {
         val e = encargo as? Encargo.Directo ?: return
         if (e.canales.size <= 1) return
         val i = (e.indice + d + e.canales.size) % e.canales.size
-        encargo = Encargo.Directo(e.lista, e.canales, i)
+        encargo = Encargo.Directo(e.lista, e.canales, i, e.plan); probadas.clear()
         abre()
     }
 
@@ -406,7 +486,7 @@ class ReproductorActivity : ComponentActivity() {
         val e = encargo as? Encargo.Directo ?: return
         estado.lista = null
         if (i == e.indice) return
-        encargo = Encargo.Directo(e.lista, e.canales, i.coerceIn(0, e.canales.size - 1))
+        encargo = Encargo.Directo(e.lista, e.canales, i.coerceIn(0, e.canales.size - 1), e.plan); probadas.clear()
         abre()
     }
 
@@ -508,20 +588,34 @@ class ReproductorActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Vuelves de seguir sonando: el vídeo, otra vez en la pantalla (el mismo reproductor, sin cortar)
+        if (enSegundoPlano) { enSegundoPlano = false; vista?.player = player }
         if (parado) { parado = false; player?.let { if (estado.directo) { it.seekToDefaultPosition(); it.prepare() }; it.playWhenReady = true } }
     }
+
+    /** Sonando con Nut fuera (el vídeo no se pinta). */
+    private var enSegundoPlano = false
 
     override fun onStop() {
         super.onStop()
         if (!estado.directo) guarda()
+        val p = player
+        // «Seguir sonando al salir»: el sonido sigue (el servicio con su notificación y los controles de la pantalla de bloqueo) y el vídeo se deja de pintar
+        if (segundoPlano && p != null && (p.isPlaying || p.playWhenReady) && !isFinishing) {
+            ReproduccionService.pon(this, p)
+            vista?.player = null
+            enSegundoPlano = true
+            return
+        }
         // Un canal en directo no se queda bajando datos en segundo plano (ni con la tele apagada)
-        player?.let { if (estado.directo) it.stop() else it.pause() }
+        p?.let { if (estado.directo) it.stop() else it.pause() }
         parado = true
     }
 
     override fun onDestroy() {
         principal.removeCallbacksAndMessages(null)
         ambito.cancel()
+        ReproduccionService.quita(this); ReproduccionService.alParar = null
         player?.release(); player = null
         Actualizador.ocupada = (Actualizador.ocupada - 1).coerceAtLeast(0)
         super.onDestroy()
@@ -545,11 +639,13 @@ object Reanudar {
 }
 
 /** Los controles: arriba el canal (o el título), en medio reproducir, abajo la guía o la barra y lo de audio, subtítulos e imagen. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ControlesReproductor(
     e: EstadoReproductor, alTocar: () -> Unit, alPlay: () -> Unit, alSaltar: (Int) -> Unit, alIr: (Long) -> Unit, alVolver: () -> Unit,
     alAudio: () -> Unit, alSubs: () -> Unit, alAspecto: () -> Unit, alOtro: () -> Unit, alOtroSi: () -> Unit, alCanal: (Int) -> Unit, alLista: () -> Unit,
     alElegirCanal: (Int) -> Unit, alSiguiente: () -> Unit, alCancelarSiguiente: () -> Unit, alReintentar: () -> Unit,
+    alCalidad: () -> Unit = {}, alSegundoPlano: () -> Unit = {},
 ) {
     val blanco = Color(0xFFF7F2E8)
     // (tocar la pantalla enseña o esconde los controles; sin «clickable», que se quedaría el foco y el OK del mando ya no abriría los canales)
@@ -598,10 +694,11 @@ fun ControlesReproductor(
                         Text("−" + tiempo((e.dur - e.pos).coerceAtLeast(0L)), color = blanco, fontFamily = Body, fontSize = 12.sp)
                     }
                 }
-                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     if (e.directo) EnlaceClaro("Canales", blanco, alLista)
+                    e.calidad?.let { EnlaceClaro("Calidad: $it", blanco, alCalidad) }
+                    e.segundoPlano?.let { on -> EnlaceClaro(if (on) "Sonar al salir: sí" else "Sonar al salir: no", if (on) Acento else blanco, alSegundoPlano) }
                     EnlaceClaro("Audio", blanco, alAudio); EnlaceClaro("Subtítulos", blanco, alSubs); EnlaceClaro("Imagen: ${e.aspecto.nombre}", blanco, alAspecto)
-                    Spacer(Modifier.weight(1f))
                     EnlaceClaro("Abrir con otro reproductor", blanco, alOtro)
                 }
             }

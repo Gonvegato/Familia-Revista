@@ -21,7 +21,7 @@ object SincroP {
     private fun ajustes() = LaFamilia.coleccion("ajustes")
 
     /** Lo que eliges en Cobre, grupo a grupo (`ajustes/<nodo>`). */
-    val GRUPOS: List<EspejoCuenta.Grupo> get() = listOf(AjustesReproductor.GRUPO, AjustesGuia.GRUPO, AjustesDirecto.GRUPO, Actualizador.GRUPO)
+    val GRUPOS: List<EspejoCuenta.Grupo> get() = listOf(AjustesReproductor.GRUPO, AjustesGuia.GRUPO, AjustesDirecto.GRUPO, AjustesFutbol.GRUPO, Actualizador.GRUPO)
 
     fun iniciar(c: Context) {
         app = c.applicationContext

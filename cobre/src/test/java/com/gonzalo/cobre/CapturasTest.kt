@@ -165,6 +165,9 @@ abstract class CapturasBase {
             ),
             ultimo = Favorito("ultimo", e.lista.id, e.canales[2].clave, e.canales[2].nombre, ahora),
         )
+        // El fútbol de mentira (tus equipos, un partido en juego, la clasificación y los goleadores de verdad de ESPN, sin red)
+        val futbol = FutbolDeMentira.datos(ctx, vivo = true)
+        Futbol.fijo = futbol
         coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
         Modo.eleccion = if (oscuro) 2 else 1
         val c = e.canales[0]
@@ -188,6 +191,9 @@ abstract class CapturasBase {
                         6 -> PantListas(alVolver = {})
                         7 -> PantAjustes(alVolver = {})
                         8 -> PantVideoclub(true, alVolver = {}, alIr = {}, alFicha = {})
+                        20 -> PantFutbol(alVolver = {}, alIr = {}, alFicha = {})
+                        21 -> PantFichaPartido(futbol.partidos.first(), alCerrar = {}, alConfigurar = {})
+                        22 -> PantAjustes(alVolver = {}, inicial = PESTANA_FUTBOL)
                         else -> Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF2F3E4A), Color(0xFF0E1014))))) {
                             ControlesReproductor(if (cual == 11) repVod else rep, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
                         }
@@ -196,6 +202,13 @@ abstract class CapturasBase {
             }
         }
         esperaTexto("Tus favoritos"); foto("1-portada")
+        cual = 20; esperaTexto("Ahora y lo siguiente"); foto("17-futbol")
+        rule.onAllNodesWithText("CLASIFICACIÓN")[0].performClick(); esperaTexto("Atlético"); foto("18-futbol-clasificacion")
+        rule.onAllNodesWithText("GOLEADORES")[0].performClick(); esperaTexto("Raphinha"); foto("19-futbol-goleadores")
+        cual = 21; esperaTexto("Lo que pasa"); foto("20-ficha-partido")
+        rule.onAllNodesWithText("ALINEACIONES")[0].performClick(); esperaTexto("Joan García"); foto("21-ficha-alineaciones")
+        rule.onAllNodesWithText("CIFRAS")[0].performClick(); esperaTexto("Posesión"); foto("22-ficha-cifras")
+        cual = 22; esperaTexto("Tus equipos"); foto("23-ajustes-futbol")
         cual = 1; esperaTexto("Telediario"); foto("2-directo")
         cual = 99; esperaTexto("Telediario"); foto("2b-favoritos")
         cual = 2; esperaTexto("Ahora"); foto("3-guia")

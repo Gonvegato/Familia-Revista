@@ -31,20 +31,26 @@ fun iniciar(c: Context) {
     Skin.cargar(c); TemaAtrio.cargarGuardado(c)
     Listas.cargar(c)
     Tele.cargar(c)
+    Futbol.cargar(c)
+    kotlin.concurrent.thread(name = "futbol-limpia") { Futbol.limpia() }
     SincroP.iniciar(c)
 }
 
 /** Dónde estás: la portada y sus secciones (se llega a ellas desde el menú de la portada, como en las hermanas). */
-enum class Destino(val nombre: String) { Portada("Portada"), Directo("Directo"), Guia("Guía"), Peliculas("Películas"), Series("Series"), Buscar("Buscar"), Listas("Listas"), Ajustes("Ajustes"), Favoritos("Favoritos") }
+enum class Destino(val nombre: String) { Portada("Portada"), Directo("Directo"), Guia("Guía"), Peliculas("Películas"), Series("Series"), Buscar("Buscar"), Listas("Listas"), Ajustes("Ajustes"), Favoritos("Favoritos"), Futbol("Fútbol"), AjustesFutbol("Ajustes del fútbol") }
 
-/** Una ficha abierta por encima de la página (una película o una serie de una lista). */
+/** Una ficha abierta por encima de la página (una película o una serie de una lista, o un partido). */
 sealed class Ficha {
     class DePelicula(val lista: Lista, val pelicula: Pelicula) : Ficha()
     class DeSerie(val lista: Lista, val serie: Serie) : Ficha()
+    class DePartido(val partido: com.gonzalo.iptv.futbol.Partido) : Ficha()
 }
 
 private val entraHoja = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it / 10 } + fadeIn(tween(220))
 private val saleHoja = slideOutVertically(tween(200, easing = FastOutLinearInEasing)) { it / 14 } + fadeOut(tween(160))
+
+/** Lo que pide un widget al abrir la app (una página). Cada pedido es otro objeto: el mismo dos veces, dos veces. */
+class Pedido(val destino: Destino?)
 
 /** La lista con la que se está (la última que elegiste, si sigue; si no, la primera que se puede usar aquí). */
 fun listaActual(c: Context): Lista? {
@@ -70,12 +76,14 @@ fun rememberCargadas(l: List<Lista>): Map<String, Cargada?> {
 
 /** La app: portada de revista, sus secciones y, por encima, la ficha de una película o de una serie. */
 @Composable
-fun CobreApp(inicial: Destino = Destino.Portada) {
+fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
     val ctx = LocalContext.current
     var destino by rememberSaveable { mutableIntStateOf(inicial.ordinal) }
     var ficha by remember { mutableStateOf<Ficha?>(null) }
     val d = Destino.entries[destino]
     fun ir(x: Destino) { destino = x.ordinal }
+    // (lo que pide un widget: abrir una página)
+    LaunchedEffect(pedido) { pedido?.destino?.let { ficha = null; ir(it) } }
     AvisoActualizacion()
     BackHandler(enabled = ficha != null) { ficha = null }
     BackHandler(enabled = ficha == null && d != Destino.Portada) { destino = 0 }
@@ -95,12 +103,15 @@ fun CobreApp(inicial: Destino = Destino.Portada) {
                 Destino.Buscar -> PantBuscar(alVolver = volver, alFicha = { ficha = it })
                 Destino.Listas -> PantListas(alVolver = volver)
                 Destino.Ajustes -> PantAjustes(alVolver = volver, alListas = { ir(Destino.Listas) })
+                Destino.AjustesFutbol -> PantAjustes(alVolver = volver, alListas = { ir(Destino.Listas) }, inicial = PESTANA_FUTBOL)
+                Destino.Futbol -> PantFutbol(alVolver = volver, alIr = ::ir, alFicha = { ficha = it })
             }
         }
         AnimatedVisibility(ficha != null, enter = entraHoja, exit = saleHoja) {
             when (val f = ficha) {
                 is Ficha.DePelicula -> PantFichaPelicula(f.lista, f.pelicula, alCerrar = { ficha = null })
                 is Ficha.DeSerie -> PantFichaSerie(f.lista, f.serie, alCerrar = { ficha = null })
+                is Ficha.DePartido -> PantFichaPartido(f.partido, alCerrar = { ficha = null }, alConfigurar = { ficha = null; ir(Destino.AjustesFutbol) })
                 null -> {}
             }
         }

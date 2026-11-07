@@ -24,12 +24,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.4.0"
+const val VERSION = "0.5.0"
 
-/** «Ajustes» en pestañas, como las hermanas: Apariencia · Reproductor · Guía · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
+/** La pestaña «Fútbol» de Ajustes (para llegar a ella desde un partido o desde el widget). */
+const val PESTANA_FUTBOL = 1
+
+/** «Ajustes» en pestañas, como las hermanas: Apariencia · Fútbol · Reproductor · Guía · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
-fun PantAjustes(alVolver: () -> Unit, alListas: () -> Unit = {}) {
-    var pestana by rememberSaveable { mutableIntStateOf(0) }
+fun PantAjustes(alVolver: () -> Unit, alListas: () -> Unit = {}, inicial: Int = 0) {
+    var pestana by rememberSaveable { mutableIntStateOf(inicial) }
     EspejoCuenta.version
     val mg = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
@@ -37,14 +40,15 @@ fun PantAjustes(alVolver: () -> Unit, alListas: () -> Unit = {}) {
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)
-        PestanasRevista(listOf("Apariencia", "Reproductor", "Guía", "Cuenta", "Avanzado"), pestana) { pestana = it }
+        PestanasRevista(listOf("Apariencia", "Fútbol", "Reproductor", "Guía", "Cuenta", "Avanzado"), pestana) { pestana = it }
         Spacer(Modifier.height(14.dp))
         Column(Modifier.widthIn(max = 760.dp)) {
             when (pestana) {
                 0 -> SeccionApariencia()
-                1 -> SeccionReproductor()
-                2 -> SeccionGuia(alListas)
-                3 -> SeccionCuenta()
+                PESTANA_FUTBOL -> SeccionFutbol()
+                2 -> SeccionReproductor()
+                3 -> SeccionGuia(alListas)
+                4 -> SeccionCuenta()
                 else -> SeccionAvanzado()
             }
         }
@@ -78,11 +82,17 @@ private fun SeccionReproductor() {
     Antetitulo("En directo", Modifier.padding(bottom = 4.dp))
     Fila("Volver a conectar solo", "Si un canal se corta, se vuelve a conectar (hasta seis veces, cada vez esperando un poco más).") { Interruptor(AjustesReproductor.reconectar(ctx)) { x -> cambia { AjustesReproductor.ponReconectar(ctx, x) } } }
     Fila("Arriba, el canal anterior", "Como en muchas teles. Si no, arriba en el mando es el siguiente.") { Interruptor(AjustesReproductor.invertirCanales(ctx)) { x -> cambia { AjustesReproductor.ponInvertirCanales(ctx, x) } } }
+    if (!esTele(ctx)) Fila("Seguir sonando al salir", "Al salir del reproductor (inicio, otra app, la pantalla apagada) se sigue oyendo, con la notificación para pausar o parar. También se enciende desde el reproductor.") {
+        Interruptor(AjustesReproductor.segundoPlano(ctx)) { x -> cambia { AjustesReproductor.ponSegundoPlano(ctx, x) } }
+    }
     Fila("Al abrir, el último canal", "Nut se abre con lo último que viste, como una tele.") { Interruptor(AjustesDirecto.alAbrir(ctx)) { x -> cambia { AjustesDirecto.ponAlAbrir(ctx, x) } } }
     val ordenes = AjustesDirecto.Orden.entries
     MagChoice(ordenes.map { it.nombre }, ordenes.indexOf(AjustesDirecto.orden(ctx)), "El orden de los canales") { i -> cambia { AjustesDirecto.ponOrden(ctx, ordenes[i]) } }
     Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Películas y series", Modifier.padding(bottom = 4.dp))
+    Fila("Pelis y series del proveedor", "Las de tu servidor de Xtream, en el menú, en la portada y en «Buscar». Apagado, Nut es la tele y el fútbol.") {
+        Interruptor(AjustesDirecto.videoclub(ctx)) { x -> cambia { AjustesDirecto.ponVideoclub(ctx, x) } }
+    }
     Fila("El episodio siguiente, solo", "Al terminar uno, el siguiente empieza en 8 segundos.") { Interruptor(AjustesReproductor.siguiente(ctx)) { x -> cambia { AjustesReproductor.ponSiguiente(ctx, x) } } }
     val saltos = listOf(5, 10, 15, 30)
     MagChoice(saltos.map { "$it s" }, saltos.indexOf(AjustesReproductor.salto(ctx)).coerceAtLeast(1), "Saltar con el mando") { i -> cambia { AjustesReproductor.ponSalto(ctx, saltos[i]) } }
@@ -162,11 +172,11 @@ private fun SeccionAvanzado() {
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Este dispositivo", Modifier.padding(bottom = 4.dp))
     var aviso by remember { mutableStateOf<String?>(null) }
-    val ocupa by produceState(0L, aviso) { value = withContext(Dispatchers.IO) { java.io.File(ctx.filesDir, "cobre_listas").walkTopDown().filter { it.isFile }.sumOf { it.length() } } }
-    Text("Lo bajado de tus listas (canales, videoclub y guía) ocupa aquí ${Formato.cifra(ocupa / 1_000_000)} MB. Es caché: se vuelve a bajar.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+    val ocupa by produceState(0L, aviso) { value = withContext(Dispatchers.IO) { listOf("cobre_listas", "cobre_futbol").sumOf { d -> java.io.File(ctx.filesDir, d).walkTopDown().filter { it.isFile }.sumOf { it.length() } } } }
+    Text("Lo bajado de tus listas (canales, videoclub y guía) y del fútbol ocupa aquí ${Formato.cifra(ocupa / 1_000_000)} MB. Es caché: se vuelve a bajar.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     MagLink("Borrar lo bajado", "Tus listas siguen en tu cuenta; las de archivo de este dispositivo hay que volver a elegirlas") {
         ambito.launch {
-            withContext(Dispatchers.IO) { Listas.lista().forEach { l -> Tele.olvida(l) } }
+            withContext(Dispatchers.IO) { Listas.lista().forEach { l -> Tele.olvida(l) }; Futbol.limpia(todo = true) }
             aviso = "Hecho. Se vuelve a bajar todo al entrar en cada lista."
         }
     }

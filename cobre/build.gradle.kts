@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.cobre"
         minSdk = 29
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.4.0"
+        versionCode = 7
+        versionName = "0.5.0"
         // Móviles, tabletas y teles: muchas teles y cajas de Android TV (también algunas con Google TV) van con Android de 32 bits, así que
         // además del de 64 va el de 32 (la única biblioteca nativa es la del sonido, FFmpeg, que trae las dos)
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
@@ -72,6 +72,8 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-exoplayer-dash:$media3")
     implementation("androidx.media3:media3-ui:$media3")
+    // Seguir sonando al salir del reproductor: el servicio en primer plano con su MediaSession (la notificación y la pantalla de bloqueo)
+    implementation("androidx.media3:media3-session:$media3")
     // El sonido que no todos los aparatos saben decodificar (AC3, E-AC3, DTS…: muchas teles y tablets no traen la licencia de Dolby, y
     // los canales lo llevan a menudo): FFmpeg dentro de la app, el que precompila Jellyfin para Media3 (GPL-3.0), como en Mostaza
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1")

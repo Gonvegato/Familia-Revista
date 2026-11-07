@@ -35,7 +35,8 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * La portada de Cobre: la cabecera y el menú de secciones; «Seguir viendo» (películas y episodios a medias), tus favoritos (con lo que
+ * La portada de Cobre: la cabecera y el menú de secciones; arriba del todo, «Tus partidos» (el próximo de cada equipo tuyo, con sus
+ * canales); el último canal que viste, tus favoritos (con lo que
  * echan ahora), el último canal que viste y cómo van tus listas. Sin listas, cómo poner la primera.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -50,9 +51,9 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     val ultimo = MiCuenta.ultimo()
     // Las listas de los favoritos, leídas (para sus logos y lo que echan)
     val cargadas = rememberCargadas(usables)
-    // (Favoritos lo primero: es donde se está casi todo el rato)
-    val secciones = listOf("Favoritos" to Destino.Favoritos, "Directo" to Destino.Directo, "Guía" to Destino.Guia) +
-        (if (usables.any { it.esXtream }) listOf("Películas" to Destino.Peliculas, "Series" to Destino.Series) else emptyList()) + listOf("Listas" to Destino.Listas)
+    // (el fútbol lo primero; luego Favoritos, que es donde se está casi todo el rato)
+    EspejoCuenta.version
+    val secciones = seccionesMenu(usables.any { it.esXtream }, AjustesDirecto.videoclub(ctx))
     val desplazado = rememberScrollState()
     val umbral = with(LocalDensity.current) { 300.dp.toPx() }
     val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
@@ -84,6 +85,8 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
                 }
                 Filete(1.dp)
             }
+            // Lo primero: el próximo partido de tus equipos (y el que se juega ahora), con sus canales
+            TusPartidos(alIr, alFicha)
             if (!Cuenta.vinculada) {
                 Spacer(Modifier.height(14.dp))
                 Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Nut entra sola). Tus listas, tus favoritos y lo que ves van con tu cuenta.")
@@ -93,7 +96,7 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
                 Antetitulo("Para empezar")
                 Filete(1.dp)
                 Spacer(Modifier.height(10.dp))
-                Text("Nut no trae canales: es tu reproductor. Pon tu lista M3U (una dirección o un archivo) o el login de tu servidor de Xtream Codes (servidor, usuario y contraseña) y aquí tendrás tus canales con su guía, y, con Xtream, sus películas y series.",
+                Text("Nut no trae canales: es tu reproductor. Pon tu lista M3U (una dirección o un archivo) o el login de tu servidor de Xtream Codes (servidor, usuario y contraseña) y aquí tendrás tus canales con su guía y los partidos de tus equipos, con su canal a un toque.",
                     color = Charcoal, fontFamily = Display, fontSize = 19.sp, lineHeight = 26.sp)
                 Spacer(Modifier.height(14.dp))
                 BotonAcento("Añadir una lista", modifier = Modifier.focoInicial("vacia")) { alIr(Destino.Listas) }
