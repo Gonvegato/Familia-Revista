@@ -5,7 +5,7 @@ Uso:  python3 herramientas/firmar.py hiedra      (después de gradle :hiedra:ass
 
 Las cuatro apps de antes se firmaban cada una con su clave. La familia usa una sola (`familia`), y Android acepta la versión nueva encima
 de la vieja porque va firmada con las dos y con el linaje (apksigner rotate) que dice que la nueva sustituye a la vieja. La rotación
-vale desde Android 9 (--rotation-min-sdk-version 28). Una app que nace ya en la familia (Mostaza) no tiene clave vieja: se firma solo con
+vale desde Android 9 (--rotation-min-sdk-version 28). Una app que nace ya en la familia (Mostaza, Cobre) no tiene clave vieja: se firma solo con
 la de la familia, sin linaje. Las claves y sus contraseñas están en firma/ (fuera del repositorio); las contraseñas no se escriben en
 ningún sitio (apksigner las lee de una variable de entorno, no de la línea de órdenes).
 Deja el APK firmado en <app>/build/outputs/apk/release/<App>-<versión>.apk y comprueba la firma.
@@ -14,8 +14,8 @@ import os, re, subprocess, sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # La clave de antes de cada app (None: nació ya con la de la familia, no hay linaje)
-VIEJA = {"hiedra": "hiedra", "marfil": "marfil", "cobalto": "cobalto", "azabache": "valorin", "mostaza": None}
-NOMBRE = {"hiedra": "Hiedra", "marfil": "Marfil", "cobalto": "Cobalto", "azabache": "Azabache", "mostaza": "Mostaza"}
+VIEJA = {"hiedra": "hiedra", "marfil": "marfil", "cobalto": "cobalto", "azabache": "valorin", "mostaza": None, "cobre": None}
+NOMBRE = {"hiedra": "Hiedra", "marfil": "Marfil", "cobalto": "Cobalto", "azabache": "Azabache", "mostaza": "Mostaza", "cobre": "Cobre"}
 BT = "/opt/android-sdk/build-tools/35.0.0"
 
 def pases():
