@@ -61,6 +61,7 @@ fun PantPortada(alAbrir: (String) -> Unit, alNueva: () -> Unit, alAjustes: (Int)
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 8.dp))
         Spacer(Modifier.height(14.dp))
         when {
+            Prueba.activo -> AvisoPrueba(alAjustes)
             !Cuenta.vinculada -> Panel(alHacer = { alAjustes(1) }) {
                 Antetitulo("Primero, tu cuenta")
                 Cuerpo("Shai guarda tus carreras en tu cuenta de la familia (la de Jonsu y las demás): entra con tu usuario y tu contraseña.", Modifier.padding(top = 4.dp))
@@ -96,5 +97,14 @@ fun PantPortada(alAbrir: (String) -> Unit, alNueva: () -> Unit, alAjustes: (Int)
         }
         Spacer(Modifier.height(18.dp))
         BotonAcento("Empezar una carrera", Icons.Filled.Add, Modifier.fillMaxWidth()) { alNueva() }
+    }
+}
+
+/** El aviso del modo prueba: que se vea siempre que lo de fuera del campo no lo escribe Claude. */
+@Composable
+fun AvisoPrueba(alAjustes: (Int) -> Unit, corto: Boolean = false) {
+    Panel(Modifier.padding(top = if (corto) 8.dp else 0.dp), alHacer = { alAjustes(2) }) {
+        Antetitulo("Modo prueba · sin IA, sin gasto", color = Acento)
+        if (!corto) Cuerpo("Lo de fuera del campo lo escriben unas plantillas de ejemplo (no Claude) y los textos se repiten: es para ver cómo funciona todo. Estas carreras van aparte, solo en este móvil. Se quita en Ajustes → IA.", Modifier.padding(top = 4.dp))
     }
 }

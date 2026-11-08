@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
     Cuenta.cargar(c)
-    Carreras.almacen = AlmacenCuenta()
+    // (en modo prueba, las carreras de prueba: ver Prueba.kt)
+    if (!Prueba.activo) Carreras.almacen = AlmacenCuenta()
+    Prueba.cargar(c)
     Gasto.dispositivo = Cuenta.dispositivo
     Skin.cargar(c); TemaAtrio.cargarGuardado(c)
     SincroP.iniciar(c)

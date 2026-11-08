@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.1.0"
+const val VERSION = "0.1.1"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
@@ -197,16 +197,20 @@ private fun SeccionIA() {
     var aviso by remember { mutableStateOf<String?>(null) }
     var tope by remember { mutableStateOf(Formato.cifra(Math.round(Gasto.tope()))) }
     var solos by remember { mutableStateOf(Gasto.eventosSolos()) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    SiNo("Modo prueba (sin IA)", "Para ver todas las funciones sin gastar: lo de fuera del campo lo escriben unas plantillas de ejemplo, no Claude. Sus carreras van aparte (solo en este móvil) y no tocan las de tu cuenta; el gasto es siempre 0.", Prueba.activo) { Prueba.pon(ctx, it) }
+    if (Prueba.activo) MagLink("Borrar las carreras de prueba", "Empezar de cero en el modo prueba") { Prueba.vacia(); aviso = "Borradas." }
+    Spacer(Modifier.height(10.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Tu clave de la API", Modifier.padding(bottom = 4.dp))
     Text("La de tu organización de Claude Console (platform.claude.com), donde reclamas los créditos de la API de tu plan desde claude.ai → Configuración → Facturación. " +
         "Va solo a tu cuenta, a un sitio que no ve nadie más (ni tu pareja), y nunca a un registro.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
-    if (ClaveApi.hay) Text("Puesta: ${ClaveApi.tapada()}", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 6.dp))
-    CampoClave(if (ClaveApi.hay) "Cambiarla" else "Clave", clave) { clave = it }
+    if (ClaveApi.hayDeVerdad) Text("Puesta: ${ClaveApi.tapada()}", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 6.dp))
+    CampoClave(if (ClaveApi.hayDeVerdad) "Cambiarla" else "Clave", clave) { clave = it }
     if (clave.isNotBlank()) MagLink("Guardar la clave", accent = true) {
         aviso = try { ClaveApi.guarda(clave); clave = ""; ambito.launch { withContext(Dispatchers.IO) { runCatching { com.gonzalo.familia.LaFamilia.sincronizaYa() } } }; "Guardada." }
         catch (e: Exception) { e.message ?: "No se pudo guardar." }
     }
-    if (ClaveApi.hay) MagLink("Quitar la clave", "Shai deja de pedir nada") { aviso = try { ClaveApi.guarda(""); "Quitada." } catch (e: Exception) { e.message } }
+    if (ClaveApi.hayDeVerdad) MagLink("Quitar la clave", "Shai deja de pedir nada") { aviso = try { ClaveApi.guarda(""); "Quitada." } catch (e: Exception) { e.message } }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Lo gastado", Modifier.padding(bottom = 4.dp))

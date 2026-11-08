@@ -4,6 +4,13 @@ Shai (el dios egipcio del destino, «lo que está ordenado») es el acompañante
 campo y Shai escribe lo de fuera. De la familia (la cuenta, la revista, el actualizador de kDrive), pero Jonsu no enseña nada suyo. Solo
 Android. Paquete `com.gonzalo.shai`; icono «SHAI · CARRERA» en césped de noche (#0F2A1D), crema (#F2E8D0) y el dorado de un trofeo (#C9A227).
 
+## 0.1.1
+
+- **Modo prueba (sin IA)**, en Ajustes → IA: toda la app sin clave y sin gastar. Lo de fuera del campo lo escriben unas plantillas de
+  ejemplo (no Claude) con los nombres de tu carrera, tu gente, el rival y el marcador; lo demás es la app de verdad (dinero, bolsa,
+  decisiones, ofertas, los dos eventos de entre partidos, que en este modo llegan al momento). Sus carreras van aparte, solo en este móvil
+  (no tocan las de tu cuenta), con un aviso visible en cada pantalla y un botón para borrarlas. No hace falta ni entrar en la cuenta.
+
 ## 0.1.0
 
 Lo que pidió Gonzalo, tal cual quedó hablado:

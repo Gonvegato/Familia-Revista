@@ -62,7 +62,8 @@ resultados. Las personas reales solo salen de pasada; lo íntimo y lo escandalos
 Lo escribe Claude con **tu clave de la API** (la de los créditos de tu plan, en Claude Console), que va solo a `/claves` (`shai_anthropic`):
 Haiku 5.5 para la red, los mensajes y las fotos; Sonnet 5.5 para lo demás. Shai cuenta lo gastado con lo que dice cada respuesta y se para al
 llegar al tope del mes (de serie, 100 $). Tus carreras van en tu cuenta (la colección `shai`); la foto de tu personaje se queda en el móvil.
-Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Todo en `docs/shai/HISTORIA.md`.
+Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Con un **modo prueba** (Ajustes → IA) para ver
+todas las funciones sin IA y sin gastar (plantillas de ejemplo; carreras aparte, solo en el móvil). Todo en `docs/shai/HISTORIA.md`.
 
 ## En el ordenador (Linux y Mac)
 

@@ -39,6 +39,7 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
         Antetitulo(listOfNotNull(u.club, u.temporada.ifBlank { null }, "jornada\u00A0${u.paso}").joinToString(" · "), Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle(u.nombre, 48.sp, 52.sp, letterSpacing = (-1.4).sp, modifier = Modifier.padding(top = 2.dp))
         Filete(3.dp)
+        if (Prueba.activo) AvisoPrueba(alAjustes, corto = true)
         Spacer(Modifier.height(12.dp))
         AccionGrande(Icons.Filled.SportsSoccer, "Meter el partido", Modifier.fillMaxWidth()) { alPartido() }
         Spacer(Modifier.height(4.dp))
@@ -117,7 +118,7 @@ private fun TabPortada(u: Universo, entradas: List<Entrada>, alMensajes: () -> U
         }, Modifier.padding(vertical = 6.dp))
     }
     val va = EnCurso.ids[u.id]
-    MagLink(va ?: "¿Qué ha pasado esta semana?", if (va == null) "Una cosa más, ahora (Sonnet, unos céntimos)" else null) {
+    MagLink(va ?: "¿Qué ha pasado esta semana?", if (va == null) (if (Prueba.activo) "Una cosa más, ahora (modo prueba: gratis)" else "Una cosa más, ahora (Sonnet, unos céntimos)") else null) {
         if (va != null || !ClaveApi.hay) return@MagLink
         EnCurso.ids[u.id] = "Escribiendo lo que pasa…"; aviso = null
         ambito.launch { aviso = withContext(Dispatchers.IO) { Motor.eventoAhora(u.id).second }; EnCurso.ids.remove(u.id) }

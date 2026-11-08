@@ -13,7 +13,10 @@ object ClaveApi {
     @Volatile var fija: String? = null
 
     fun lee(): String { fija?.let { return it }; return runCatching { LaFamilia.familia.clave(CLAVE) }.getOrDefault("").trim() }
-    val hay: Boolean get() { runCatching { LaFamilia.cambios }; return lee().isNotBlank() }
+    /** ¿Se puede pedir? (en modo prueba, siempre: no hace falta clave). */
+    val hay: Boolean get() = Prueba.activo || hayDeVerdad
+    /** ¿Hay una clave puesta de verdad? */
+    val hayDeVerdad: Boolean get() { runCatching { LaFamilia.cambios }; return lee().isNotBlank() }
 
     fun guarda(k: String) {
         val t = k.trim()
@@ -127,6 +130,8 @@ object Motor {
         val id = claude.creaLote(ps)
         val nu = Carreras.de(u.id) ?: u
         Carreras.guarda(nu.copy(lotes = nu.lotes + Lote(id, reloj(), u.paso)))
+        // En modo prueba, el lote «vuelve» al momento
+        if (Prueba.activo) { miraLotes(); revela(u.id) }
     }
 
     /** Mira los lotes que faltan; los que han vuelto, a su sitio (el primero sale ya y el segundo, horas después). Devuelve cuántos eventos llegaron. */
@@ -147,7 +152,8 @@ object Motor {
                 Gasto.apunta(resp.modelo.ifBlank { Claude.SONNET }, Precios.coste(resp.modelo.ifBlank { Claude.SONNET }, resp.uso, lote = true, cacheHora = true))
                 val m = runCatching { resp.json() }.getOrNull() ?: return@forEachIndexed
                 // Si ya metiste otro partido, salen ya: se quedaron atrás
-                val visible = if (u.paso > l.paso) ahora else ahora + i * separacion
+                // (en modo prueba, los dos salen ya: no hay que esperar horas para ver cómo va)
+                val visible = if (u.paso > l.paso || Prueba.activo) ahora else ahora + i * separacion
                 Carreras.guarda(Narrador.leeEvento(m, u, ahora, visible).copy(paso = l.paso))
                 llegados++
             }
