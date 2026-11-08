@@ -156,7 +156,7 @@ object RelojDigital : TipoWidget {
         Elige("La cabecera", CABECERAS, d.texto("cabecera", "portada")) { cambia(d.con("cabecera", it)) }
         Elige("Las horas", OPCIONES_FORMATO, d.texto("formato", "24")) { cambia(d.con("formato", it)) }
         Elige("La letra de la hora", OPCIONES_LETRA_HORA, d.texto("letraHora")) { cambia(d.con("letraHora", it)) }
-        Nota("La hora y la fecha se ponen al día solas en tu pantalla de inicio. Android solo deja ponerles las letras de la familia que van dentro de Ptah: si tus títulos son de Google Fonts, la hora va con la que más se le parece.",
+        Nota("En tu pantalla de inicio, Ptah vuelve a pintar el reloj al empezar cada minuto, con la pantalla encendida (Ajustes → Avanzado: «La hora de tus relojes»).",
             Modifier.padding(top = 4.dp))
         Campo("Antetítulo", d.texto("ante"), "La hora") { cambia(d.con("ante", it)) }
     }
@@ -265,7 +265,7 @@ object RelojAgujas : TipoWidget {
     @Composable override fun Editor(d: Diseno, cambia: (Diseno) -> Unit) {
         Elige("Las horas de la esfera", NUMEROS, d.texto("numeros", "romanos")) { cambia(d.con("numeros", it)) }
         Elige("Las agujas", FormaAgujas.entries.map { it.name to it.nombre }, d.texto("forma", FormaAgujas.HOJA.name)) { cambia(d.con("forma", it)) }
-        SiNo("Con segundero", "Una aguja fina más, la de los segundos (en Android 12 o más).", d.si("segundero")) { cambia(d.con("segundero", it)) }
+        SiNo("Con segundero", "Una aguja fina más, la de los segundos: en la vista previa (y en tu pantalla de inicio solo con «la letra del móvil», en Android 12 o más; dibujado cada minuto se quedaría quieto).", d.si("segundero")) { cambia(d.con("segundero", it)) }
         Campo("El nombre de la esfera", d.texto("texto"), "Sin nombre") { cambia(d.con("texto", it)) }
         Campo("Antetítulo del día (si es ancho)", d.texto("ante"), "Hoy") { cambia(d.con("ante", it)) }
     }

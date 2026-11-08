@@ -40,11 +40,11 @@ import kotlin.math.sqrt
  * El widget de Ptah: uno solo para todos los diseños ([WPtah]), redimensionable a cualquier tamaño. Al ponerlo en la pantalla de inicio,
  * [ConfigWidgetActivity] te deja elegir uno de tus diseños (o hacer uno). Cada widget se dibuja entero para su tamaño de verdad, en claro y
  * en oscuro ([Pintor], el mismo dibujo que la vista previa del editor), y encima lleva:
- *  - lo que se mueve solo ([Vivo]): la hora y la fecha son un `TextClock` (con la letra de la familia que toque: `w_vivo_*.xml`, con
- *    `android:fontFamily`), y las agujas un `AnalogClock`. En Android 12 o más, sus agujas son las del diseño (`setIcon` con la máscara de
- *    cada una y `setColorStateList` con su color); en Android 10 y 11 (que no lo dejan cambiar), unas agujas de bastón del diseño
- *    `w_vivo_agujas*.xml`, oscuras o claras según el color de la minutera. Así el reloj anda solo, sin despertar a Ptah cada minuto (un
- *    dibujo no se vuelve a pintar a tiempo: Android no deja);
+ *  - los relojes: la hora, la fecha y las agujas van **dibujadas** con la letra de verdad del diseño, y el widget se vuelve a pintar
+ *    cada minuto con una alarma exacta que no despierta al móvil ([Minutero]: con la pantalla apagada no gasta nada; al encenderla, la
+ *    alarma pendiente salta y se pone en hora). Si Android no deja alarmas exactas, o eliges en Ajustes «la letra del móvil», van como
+ *    `TextClock` y `AnalogClock` ([Vivo]), que se mueven solos pero con la letra del sistema (un `android:fontFamily` en un widget no lo
+ *    respetan todos los lanzadores: en ColorOS sale Roboto);
  *  - las zonas para tocar ([Zona]): lo de cada tipo (abrir una app, buscar, las alarmas…).
  * Se vuelve a pintar al cambiar el diseño o la apariencia, a medianoche (lo que cambia cada día: el mes, la cuenta atrás), cada 15–30
  * minutos ([Refresco]: el tiempo y la batería) y al abrir Ptah. La configuración de cada widget (qué diseño lleva) es de este móvil: no viaja.
@@ -57,7 +57,8 @@ class WPtah : AppWidgetProvider() {
     override fun onEnabled(ctx: Context) { Refresco.programa(ctx) }
     override fun onReceive(ctx: Context, i: Intent) {
         when (i.action) {
-            Widgets.ACCION_MEDIANOCHE, Intent.ACTION_DATE_CHANGED, Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_LOCALE_CHANGED ->
+            Minutero.ACCION -> Widgets.pintarRelojes(ctx, goAsync())
+            Widgets.ACCION_MEDIANOCHE, Intent.ACTION_BOOT_COMPLETED, "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED", Intent.ACTION_DATE_CHANGED, Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_LOCALE_CHANGED ->
                 Widgets.pintar(ctx, Widgets.ids(ctx), goAsync())
             else -> super.onReceive(ctx, i)
         }
@@ -96,6 +97,7 @@ object Widgets {
                 }
             } finally { res?.finish() }
             runCatching { programaMedianoche(app) }
+            runCatching { Minutero.programa(app) }
         }
     }
 
@@ -106,10 +108,11 @@ object Widgets {
         if (hay.isEmpty()) return
         pendiente?.cancel()
         pendiente = scope.launch {
-            delay(800)
+            delay(150)
             preparar(app)
             hay.forEach { id -> try { pintarUno(app, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } }
             runCatching { programaMedianoche(app) }
+            runCatching { Minutero.programa(app) }
         }
     }
 
@@ -151,29 +154,59 @@ object Widgets {
         return min(d, sqrt(tope / (w * h)))
     }
 
-    /** Lo que se manda al lanzador para ese widget: el dibujo (o los dos), lo que se mueve solo y las zonas. */
+    /** ¿El móvil está ahora en oscuro? (para los relojes dibujados, que se repintan cada minuto: un solo dibujo) */
+    fun nocheAhora(ctx: Context): Boolean =
+        (ctx.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+    /**
+     * Lo que se manda al lanzador para ese widget: el dibujo (o los dos), lo que se mueve solo (si va como `TextClock`/`AnalogClock`) y las
+     * zonas. Todo de cero cada vez: muchos lanzadores no vuelven a inflar el widget, sino que aplican lo nuevo encima de lo que ya tenían
+     * (`RemoteViews.reapply`), y cada `addView` se sumaba a las vistas de antes (en un OPPO, la hora salía tres veces, una por cada tamaño
+     * al que se había pintado). Por eso primero se vacían los huecos y se quitan los dibujos de antes.
+     */
     fun vistas(ctx: Context, id: Int, d: Diseno?, w: Float, h: Float): RemoteViews {
         val datos = datosDe(ctx)
         val diseno = d ?: sinDiseno(id)
+        val reloj = Minutero.esReloj(diseno)
+        // La hora: dibujada con la letra del diseño (y repintada cada minuto) o, si no se puede, TextClock/AnalogClock con la del móvil
+        val relojVivo = reloj && Minutero.relojVivo(ctx)
+        var n = noche(d)
+        if (reloj && !relojVivo && n == null) n = nocheAhora(ctx)
         val rv = RemoteViews(ctx.packageName, R.layout.w_marco)
+        listOf(R.id.w_vivos, R.id.w_vivos_dia, R.id.w_vivos_noche, R.id.w_zonas).forEach { rv.removeAllViews(it) }
+        listOf(R.id.w_img, R.id.w_dia, R.id.w_noche).forEach { rv.setImageViewResource(it, 0) }
         val dens = ctx.resources.displayMetrics.density
-        val n = noche(d)
         val l: Lienzo
         if (n == null) {
             val s = escala(ctx, w, h, 2)
-            l = Pintor.pinta(ctx, diseno, w, h, false, s, datos, enWidget = true)
-            val ln = Pintor.pinta(ctx, diseno, w, h, true, s, datos, enWidget = true)
+            l = Pintor.pinta(ctx, diseno, w, h, false, s, datos, enWidget = true, relojVivo = relojVivo)
+            val ln = Pintor.pinta(ctx, diseno, w, h, true, s, datos, enWidget = true, relojVivo = relojVivo)
             rv.setImageViewBitmap(R.id.w_dia, l.bm)
             rv.setImageViewBitmap(R.id.w_noche, ln.bm)
             l.vivos.forEach { rv.addView(R.id.w_vivos_dia, vivo(ctx, it, w, h, dens, 2)) }
             ln.vivos.forEach { rv.addView(R.id.w_vivos_noche, vivo(ctx, it, w, h, dens, 2)) }
         } else {
-            l = Pintor.pinta(ctx, diseno, w, h, n, escala(ctx, w, h, 1), datos, enWidget = true)
+            l = Pintor.pinta(ctx, diseno, w, h, n, escala(ctx, w, h, 1), datos, enWidget = true, relojVivo = relojVivo)
             rv.setImageViewBitmap(R.id.w_img, l.bm)
             l.vivos.forEach { rv.addView(R.id.w_vivos, vivo(ctx, it, w, h, dens, 1)) }
         }
         l.zonas.forEachIndexed { i, z -> rv.addView(R.id.w_zonas, zona(ctx, z, id, i, w, h, dens)) }
         return rv
+    }
+
+    /** Repinta solo los widgets de reloj (lo que hace el [Minutero] cada minuto). */
+    fun pintarRelojes(ctx: Context, res: BroadcastReceiver.PendingResult?) {
+        val app = ctx.applicationContext
+        scope.launch {
+            try {
+                withTimeoutOrNull(9_000) {
+                    preparar(app)
+                    Minutero.relojes(app).forEach { id -> try { pintarUno(app, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } }
+                    Minutero.apunta(app)
+                }
+            } finally { res?.finish() }
+            runCatching { Minutero.programa(app) }
+        }
     }
 
     /** Lo que sale en un widget sin diseño (recién puesto sin elegir, o con el suyo borrado): un toque y eliges otro. */

@@ -36,5 +36,14 @@ object Plantillas {
     }
 
     /** Un diseño tuyo nuevo a partir de una plantilla. */
-    fun copia(p: Diseno): Diseno = p.copy(id = Diseno.nuevoId(), creado = System.currentTimeMillis(), cambiado = System.currentTimeMillis())
+    fun copia(p: Diseno): Diseno {
+        val c = TODAS.firstOrNull { it.first.id == p.id }?.second
+        return p.copy(id = Diseno.nuevoId(), creado = System.currentTimeMillis(), cambiado = System.currentTimeMillis()).let { if (c != null) it.con("celdas", "${c.col}x${c.fil}") else it }
+    }
+
+    /** El tamaño con el que se enseña un diseño (el de su plantilla, o el de su tipo). */
+    fun celdasDe(d: Diseno): Tamanos.Celdas {
+        Regex("""(\d)x(\d)""").matchEntire(d.texto("celdas"))?.let { m -> return Tamanos.Celdas(m.groupValues[1].toInt(), m.groupValues[2].toInt()) }
+        return TODAS.firstOrNull { it.first.id == d.id }?.second ?: Tipos.de(d.tipo)?.muestra ?: Tamanos.Celdas(2, 2)
+    }
 }

@@ -65,8 +65,8 @@ object Tipos {
 /** Dibuja un diseño entero: el fondo, lo de su tipo, el borde y el toque de serie. */
 object Pintor {
     /** El dibujo de [d] en [w] × [h] dp, en claro u oscuro, a [s] píxeles por dp. */
-    fun pinta(ctx: android.content.Context, d: Diseno, w: Float, h: Float, noche: Boolean, s: Float, datos: Datos, enWidget: Boolean = false): Lienzo {
-        val l = Lienzo(ctx, d, w, h, noche, s, datos, enWidget)
+    fun pinta(ctx: android.content.Context, d: Diseno, w: Float, h: Float, noche: Boolean, s: Float, datos: Datos, enWidget: Boolean = false, relojVivo: Boolean = false): Lienzo {
+        val l = Lienzo(ctx, d, w, h, noche, s, datos, enWidget, relojVivo)
         val t = Tipos.de(d.tipo)
         l.fondo()
         if (t == null) {

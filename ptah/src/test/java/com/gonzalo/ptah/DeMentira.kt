@@ -41,6 +41,6 @@ class DatosDeMentira(private val ctx: Context, var cargando: Boolean = true, var
         }
 
         /** Unos diseños de ejemplo, uno por tipo (las plantillas, y alguno más). */
-        fun disenos(): List<Diseno> = Plantillas.TODAS.mapIndexed { i, (p, _) -> p.copy(id = "d%010d".format(i), creado = 1000L - i) }
+        fun disenos(): List<Diseno> = Plantillas.TODAS.mapIndexed { i, (p, c) -> p.copy(id = "d%010d".format(i), creado = 1000L - i).con("celdas", "${c.col}x${c.fil}") }
     }
 }

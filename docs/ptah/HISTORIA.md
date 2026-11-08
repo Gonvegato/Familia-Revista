@@ -48,22 +48,31 @@ La primera.
 
 ### Cómo se mueve un reloj en la pantalla de inicio
 
-Cada widget se dibuja entero (como los de las hermanas) para su tamaño de verdad y en claro y en oscuro, con el mismo dibujo que la vista
-previa del editor (`Lienzo.kt`, `Pintor`). Pero un dibujo no se vuelve a pintar cada minuto de forma fiable (Android no despierta la app
-para eso), así que **lo que se mueve no va en el dibujo**: va encima, y lo pone al día el propio lanzador.
+(Así desde la primera prueba en un móvil de verdad: ver «Lo que salió en el OPPO», abajo.)
 
-- **La hora y la fecha** son un `TextClock` (con su formato y su color, y el tamaño calculado para que quepa lo más ancho que puede salir:
-  «23:59», «miércoles 30 de septiembre»). Su letra va en el diseño XML (`android:fontFamily="@font/…"`, `w_vivo_*.xml`): Android solo deja
-  poner en un widget las letras que vienen dentro de la app, no las de Google Fonts; si tus títulos son de Google Fonts, la hora va con la
-  de la familia que más se le parece (Atrio de títulos, en cursiva, de texto, en negrita o Vitrina; se puede elegir). Comprobado inflando
-  en las pruebas lo que se manda al lanzador: la letra es la del recurso y el tamaño el calculado. Los nombres de los días y los meses los
-  pone Android en el idioma del móvil.
-- **Las agujas** son un `AnalogClock`. En Android 12 o más llevan las del diseño: cada aguja es una máscara (`setIcon`) del tamaño de una
-  esfera vacía, con su color (`setColorStateList`), y la esfera de verdad (con sus números y sus rayas) va en el dibujo de debajo. En
-  Android 10 y 11, que no dejan cambiarlas, unas de bastón oscuras o claras (según el color de la minutera) y sin segundero.
-- Lo demás se vuelve a pintar al cambiar el diseño o la apariencia, **a medianoche** (el mes, la cuenta atrás, la fecha dibujada: una
-  alarma inexacta, sin el permiso de alarmas exactas), al cambiar la hora o el idioma, **cada 15 minutos** con un widget de batería o
-  **cada 30** con uno del tiempo (WorkManager), y al abrir Ptah.
+Cada widget se dibuja entero (como los de las hermanas) para su tamaño de verdad, con el mismo dibujo que la vista previa del editor
+(`Lienzo.kt`, `Pintor`). **Los relojes también: la hora, la fecha y las agujas van dibujadas con la letra de tu diseño**, y Ptah vuelve a
+pintar los widgets de reloj (solo esos) al empezar cada minuto (`Minutero.kt`):
+
+- **Una alarma exacta por minuto, que no despierta al móvil** (`setExact` del tipo `RTC`). Con la pantalla apagada no salta, así que no
+  gasta nada; al encenderla, la que estaba pendiente salta enseguida y el reloj se pone en hora. También se repinta al cambiar la hora, la
+  zona o el idioma, al encender el móvil y cuando cambia el permiso de las alarmas.
+- **El permiso**: `USE_EXACT_ALARM` (Android 13 o más). Se concede al instalar, sin preguntar ni pantallas; Google Play solo lo deja a las
+  apps de reloj y alarmas, pero Ptah se instala desde tu kDrive. En Android 12, `SCHEDULE_EXACT_ALARM` (concedido de serie; se puede quitar
+  en Ajustes del móvil → «Alarmas y recordatorios»). En Android 10 y 11 no hace falta ninguno.
+- **Si Android no deja alarmas exactas**, o eliges en Ajustes → Avanzado → «La hora de tus relojes» «con la letra del móvil», la hora va
+  como `TextClock` y las agujas como `AnalogClock`: siempre en hora y sin gastar, pero con la letra del sistema. Ajustes lo dice y lleva al
+  ajuste del permiso.
+- **Sin segundero en la pantalla de inicio** (dibujado una vez por minuto se quedaría quieto): solo en la vista previa, y con «la letra
+  del móvil» (`AnalogClock`, Android 12 o más).
+- **Lo que cuesta**: un dibujo y un envío al lanzador por minuto y por reloj, con la pantalla encendida. Medido en el ordenador
+  (`WidgetsTest.loQueCuestaUnMinuto`): unos 6 ms por dibujo de un reloj 4×4, y el dibujo pesa unos 3,7 MB a la densidad de un móvil
+  (2,75 px/dp; Android limita lo que pesa un widget a la pantalla × 1,5). En un móvil será algo más lento que en el ordenador, pero son
+  milisegundos por minuto: 60 dibujos por hora de pantalla encendida y por reloj.
+- En algunos móviles (OPPO, Realme, Xiaomi) el ahorro de batería no deja a las apps despertarse: si un reloj se queda atrás, Ajustes dice
+  cuándo se puso en hora por última vez y lleva a los ajustes de Ptah para permitirle la actividad en segundo plano.
+- El resto se vuelve a pintar al cambiar el diseño o la apariencia (al momento), a medianoche, cada 15 minutos con un widget de batería o
+  cada 30 con uno del tiempo (WorkManager), y al abrir Ptah.
 
 ### Dónde se guarda cada cosa
 
@@ -92,8 +101,34 @@ y, pequeño, en el propio widget.
 - El tiempo de las pruebas tiene la forma de una respuesta de verdad de Open-Meteo, pero hecha a mano: el día de hacerlas, la API
   contestaba «Daily API request limit exceeded» (también guardada, de verdad: `error_limite.json`). El geocoding sí es de verdad.
 
+## Lo que salió en el OPPO (antes de la próxima versión)
+
+Probada en un OPPO (ColorOS, Android 14/15):
+
+- **El reloj «Columna» salía tres veces, una encima de otra, y con Roboto.** Dos fallos:
+  - *Tres veces*: muchos lanzadores no vuelven a inflar un widget al repintarlo, sino que aplican lo nuevo encima de lo que ya tenían
+    (`RemoteViews.reapply`); cada `addView` de la hora se sumaba a las de antes (una por cada tamaño al que se había pintado al ponerlo y
+    redimensionarlo). Ahora cada envío vacía antes los huecos (`removeAllViews`) y quita los dibujos de antes. Prueba: `WidgetsTest`
+    aplica lo que se manda una y otra vez sobre la misma vista, con tamaños distintos, y cuenta que hay un solo dibujo y una sola hora.
+  - *Roboto*: ColorOS no respeta `android:fontFamily` en un `TextClock` de un widget (en Robolectric sí salía bien: esa prueba engañaba). Por
+    eso la hora pasa a ir dibujada y repintada cada minuto (arriba).
+- **«Muy poco intuitivo»: ahora la portada tiene dos zonas**: «Tus diseños» (los tuyos, y debajo de cada uno «En tu pantalla de inicio: 2»
+  o «Aún no está en tu pantalla») y, aparte, en su banda de color, «Plantillas para empezar» (un toque hace una copia tuya y abre el
+  editor). «+ Crear uno nuevo», grande. La primera vez, «Cómo va» en tres pasos (se cierra y no vuelve).
+- **Al guardar** («Guardar diseño»): vuelta a la portada con «✓ Guardado en Tus diseños», el diseño resaltado y el botón grande «Ponerlo en
+  la pantalla de inicio», que le pide al lanzador un widget nuevo que ya lleva ese diseño (sin pasar por elegirlo). Si el lanzador no lo
+  deja, «Cómo ponerlo a mano» lo explica en cuatro pasos. Salir del editor sin guardar lo pregunta.
+- **Cada diseño tiene su ficha**: cómo se ve, en cuántos widgets está, «Ponerlo en la pantalla de inicio», «Editar», «Hacer una copia» y
+  «Borrar». Cambiar un diseño repinta al momento los widgets que lo llevan.
+- Al añadir el widget desde el lanzador: «¿Qué va en este widget?», tus diseños arriba, las plantillas debajo y «+ Crear uno nuevo»
+  («Guardar y ponerlo aquí»).
+- Los botones grandes ya no se cortan con la letra grande (van en dos líneas).
+
+Sin probar todavía en el móvil: que el minutero mantenga la hora en ColorOS con la pantalla encendida un buen rato y tras apagarla y
+encenderla, cuánto gasta allí de verdad, y que su lanzador acepte «Ponerlo en la pantalla de inicio» (`requestPinAppWidget`).
+
 ## Capturas
 
-Hechas en el ordenador con datos de mentira (`CapturasTest`, solo con `-Proborazzi.test.record=true`; las de los widgets, `WidgetsTest`),
+Hechas en el ordenador con datos de mentira (`CapturasTest`; también la portada con pocos diseños y las plantillas, tras guardar y la ficha de un diseño, solo con `-Proborazzi.test.record=true`; las de los widgets, `WidgetsTest`),
 en claro, en oscuro y con la letra al 130 %: la portada, «+ Nuevo», el editor de cada tipo y sus pestañas, el selector de color, los ajustes
 y elegir el diseño de un widget. En `capturas/` van unas cuantas; en `widgets/`, las plantillas a su tamaño (y alguna en otros).

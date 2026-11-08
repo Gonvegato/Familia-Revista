@@ -48,7 +48,7 @@ fun BotonAcento(texto: String, icono: ImageVector? = null, modifier: Modifier = 
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
         if (icono != null) { Icon(icono, null, tint = SobreAcento, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)) }
-        Text(texto.uppercase(), color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.5.sp, maxLines = 1)
+        Text(texto.uppercase(), color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.5.sp, lineHeight = 17.sp, maxLines = 3, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 
@@ -66,7 +66,7 @@ fun AccionGrande(icono: ImageVector?, texto: String, modifier: Modifier = Modifi
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
         if (icono != null) { Icon(icono, null, tint = letra, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)) }
-        Text(texto.uppercase(), color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.5.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        Text(texto.uppercase(), color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.5.sp, lineHeight = 17.sp, maxLines = 3, textAlign = androidx.compose.ui.text.style.TextAlign.Center)  // (en dos líneas antes que cortado)
     }
 }
 

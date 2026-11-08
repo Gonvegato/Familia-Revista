@@ -24,6 +24,7 @@ object Disenos {
     private val ver = mutableIntStateOf(0)
     /** En las pruebas de pantallas: los diseños, fijos. */
     @Volatile var fijos: List<Diseno>? = null
+        set(v) { field = v; ver.intValue++ }
 
     private fun p(ctx: Context) = EspejoCuenta.prefs(ctx, GRUPO)
 

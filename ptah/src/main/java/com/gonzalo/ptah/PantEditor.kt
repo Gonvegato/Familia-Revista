@@ -36,21 +36,21 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
     val tipo = Tipos.de(inicial.tipo)
     var d by remember(inicial.id) { mutableStateOf(inicial) }
     var pestana by rememberSaveable { mutableIntStateOf(pestanaInicial) }
-    val muestra = tipo?.muestra ?: Tamanos.Celdas(2, 2)
+    val muestra = Plantillas.celdasDe(inicial)
     var celdas by remember { mutableStateOf<Tamanos.Celdas?>(muestra) }
     var w by remember { mutableFloatStateOf(Tamanos.dp(muestra).first) }
     var h by remember { mutableFloatStateOf(Tamanos.dp(muestra).second) }
     var noche by remember { mutableStateOf(Modo.oscuro) }
-    var borrar by remember { mutableStateOf(false) }
+    var salir by remember { mutableStateOf(false) }
     val cambiado = d != inicial || nuevo
     val mg = margen()
     fun guarda() { Disenos.guarda(ctx, d); alGuardar(Disenos.de(ctx, d.id) ?: d) }
 
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = mg, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            VolverRevista(alVolver, "Ptah")
+            VolverRevista({ if (cambiado) salir = true else alVolver() }, "Ptah")
             Spacer(Modifier.weight(1f))
-            EnlaceRevista(if (eligiendo) "Guardar y ponerlo" else "Guardar", acento = true) { guarda() }
+            EnlaceRevista(if (eligiendo) "Guardar y ponerlo aquí" else "Guardar diseño", acento = true) { guarda() }
         }
         // ---- La vista previa (fija arriba: se ve mientras cambias lo de abajo)
         BoxWithConstraints(Modifier.fillMaxWidth().height(262.dp).background(FondoDePantalla)) {
@@ -91,31 +91,19 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
             }
 
             Spacer(Modifier.height(22.dp))
-            AccionGrande(null, if (eligiendo) "Guardar y ponerlo" else "Guardar", Modifier.fillMaxWidth()) { guarda() }
-            if (!eligiendo && android.os.Build.VERSION.SDK_INT >= 26) {
-                val mgr = remember { AppWidgetManager.getInstance(ctx) }
-                if (runCatching { mgr.isRequestPinAppWidgetSupported }.getOrDefault(false)) {
-                    MagLink("Ponerlo en la pantalla de inicio", "Se guarda y tu lanzador te pregunta dónde") {
-                        Disenos.guarda(ctx, d)
-                        AlFijar.pide(ctx, d.id)
-                    }
-                }
-            }
-            if (!nuevo) {
-                Filete(1.dp, Line)
-                MagLink("Hacer una copia") { val c = Disenos.duplica(ctx, d); alGuardar(c) }
-                Filete(1.dp, Line)
-                MagLink("Borrar este diseño", "Los widgets que lo llevan te dejarán elegir otro") { borrar = true }
-            }
-            if (cambiado) Nota("Sin guardar: lo que cambias se ve arriba; «Guardar» lo pone en tus widgets y en tu cuenta.", Modifier.padding(top = 10.dp))
+            AccionGrande(null, if (eligiendo) "Guardar y ponerlo aquí" else "Guardar diseño", Modifier.fillMaxWidth()) { guarda() }
+            Text(if (eligiendo) "Se guarda en «Tus diseños» y se pone en el widget que estás añadiendo."
+                else "Se guarda en «Tus diseños» (y en tu cuenta). Si ya está en tu pantalla de inicio, se cambia allí al momento.",
+                color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(30.dp))
         }
     }
-    if (borrar) AlertDialog(onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("¿Borrar «${d.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text("Se borra de tu cuenta (en todos tus móviles). Los widgets que lo llevan te dejarán elegir otro.", color = Muted, fontFamily = Body) },
-        confirmButton = { TextButton({ Disenos.borra(ctx, d.id); borrar = false; alVolver() }) { Text("BORRAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ borrar = false }) { Text("NO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } })
+    androidx.activity.compose.BackHandler(enabled = cambiado) { salir = true }
+    if (salir) AlertDialog(onDismissRequest = { salir = false }, containerColor = Paper, shape = esquina(4.dp),
+        title = { Text("¿Salir sin guardar?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text("Lo que has cambiado no está guardado.", color = Muted, fontFamily = Body) },
+        confirmButton = { TextButton({ salir = false; guarda() }) { Text("GUARDAR DISEÑO", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
+        dismissButton = { TextButton({ salir = false; alVolver() }) { Text("SALIR SIN GUARDAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } })
 }
 
 /** Los colores con los que se dibuja ahora (para enseñar el efectivo de cada pieza). */
@@ -236,12 +224,25 @@ class AlFijar : android.content.BroadcastReceiver() {
         val d = i.getStringExtra("diseno") ?: return
         if (id == AppWidgetManager.INVALID_APPWIDGET_ID) return
         Widgets.asigna(ctx, id, d)
+        pendiente(ctx, null)
         Widgets.pintar(ctx, intArrayOf(id), goAsync())
         Refresco.programa(ctx)
     }
 
     companion object {
+        /** ¿Deja el lanzador pedirle un widget nuevo? */
+        fun puede(ctx: android.content.Context): Boolean = runCatching { AppWidgetManager.getInstance(ctx).isRequestPinAppWidgetSupported }.getOrDefault(false)
+
+        private fun p(ctx: android.content.Context) = ctx.getSharedPreferences("ptah_widgets", android.content.Context.MODE_PRIVATE)
+        /** El diseño pedido hace un momento (si el lanzador abre también el selector al ponerlo, ya sabe cuál es). */
+        fun pendiente(ctx: android.content.Context): String? {
+            val p = p(ctx)
+            return p.getString("fijar", null)?.takeIf { System.currentTimeMillis() - p.getLong("fijar_t", 0L) < 5 * 60_000L }
+        }
+        fun pendiente(ctx: android.content.Context, d: String?) { p(ctx).edit().putString("fijar", d).putLong("fijar_t", System.currentTimeMillis()).apply() }
+
         fun pide(ctx: android.content.Context, diseno: String) {
+            pendiente(ctx, diseno)
             val mgr = AppWidgetManager.getInstance(ctx)
             val pi = android.app.PendingIntent.getBroadcast(ctx, diseno.hashCode(), android.content.Intent(ctx, AlFijar::class.java).putExtra("diseno", diseno),
                 android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE)

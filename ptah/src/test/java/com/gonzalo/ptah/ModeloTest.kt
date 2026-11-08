@@ -93,7 +93,7 @@ class ModeloTest {
         for ((p, c) in Plantillas.TODAS) {
             assertNotNull(p.nombre, Tipos.de(p.tipo)); assertTrue(p.id.startsWith("p")); assertTrue(c.col in 1..5 && c.fil in 1..4)
             val copia = Plantillas.copia(p)
-            assertNotEquals(p.id, copia.id); assertEquals(p.estilo, copia.estilo); assertEquals(p.opciones, copia.opciones); assertTrue(copia.id.startsWith("d"))
+            assertNotEquals(p.id, copia.id); assertEquals(p.estilo, copia.estilo); assertEquals(p.opciones, copia.opciones - "celdas"); assertEquals(c, Plantillas.celdasDe(copia)); assertTrue(copia.id.startsWith("d"))
         }
         assertEquals("todos los tipos tienen al menos una plantilla", Tipos.TODOS.map { it.id }.toSet(), Plantillas.TODAS.map { it.first.tipo }.toSet())
     }

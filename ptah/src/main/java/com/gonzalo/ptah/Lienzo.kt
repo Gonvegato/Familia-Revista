@@ -95,7 +95,13 @@ class Lienzo(
     val datos: Datos,
     /** Para el widget: lo que se mueve solo se apunta en [vivos] en lugar de dibujarse. */
     val enWidget: Boolean = false,
+    /**
+     * Solo en el widget: lo que se mueve solo va como `TextClock`/`AnalogClock` (true) o dibujado aquí, con la letra de verdad (false: el
+     * widget se vuelve a pintar cada minuto, [Minutero]). En la app siempre se dibuja.
+     */
+    val relojVivo: Boolean = false,
 ) {
+    private val apuntaVivos get() = enWidget && relojVivo
     val bm: Bitmap = Bitmap.createBitmap(max(1, (w * s).roundToInt()), max(1, (h * s).roundToInt()), Bitmap.Config.ARGB_8888)
     val c = Canvas(bm).apply { scale(bm.width / w, bm.height / h) }
     val e: Estilo get() = d.estilo
@@ -305,7 +311,7 @@ class Lienzo(
      * En el widget es un `TextClock`; aquí se dibuja la de ahora.
      */
     fun textoVivo(r: RectF, formato: String, l: LetraFija, tam: Float, color: Int, al: Alineacion = e.alineacion, formato12: String = formato) {
-        if (enWidget) { vivos += Vivo.Texto(RectF(r), formato, l, tam, color, al, formato12); return }
+        if (apuntaVivos) { vivos += Vivo.Texto(RectF(r), formato, l, tam, color, al, formato12); return }
         val f = if (formato12 != formato && !android.text.format.DateFormat.is24HourFormat(ctx)) formato12 else formato
         val t = Formatos.formatea(f, datos.ahora()).let { if (l.mayusculas) it.uppercase(ES) else it }
         val p = tp(letraFija(l), tam, color, l.espaciado)
@@ -315,14 +321,15 @@ class Lienzo(
 
     /** Las agujas, en la esfera [r] (cuadrada). En el widget es un `AnalogClock`; aquí se dibujan las de ahora. */
     fun agujas(r: RectF, forma: FormaAgujas, horaria: Int, minutera: Int, segundero: Int?, centro: Int) {
-        if (enWidget) { vivos += Vivo.Agujas(RectF(r), forma, horaria, minutera, segundero, centro); return }
+        if (apuntaVivos) { vivos += Vivo.Agujas(RectF(r), forma, horaria, minutera, segundero, centro); return }
         val t = datos.ahora()
         val rad = r.width() / 2f
         val m = t.minute + t.second / 60f
         val hAng = ((t.hour % 12) + m / 60f) * 30f
         Agujas.pinta(c, r.centerX(), r.centerY(), rad, hAng, Agujas.Pieza.HORA, forma, horaria)
         Agujas.pinta(c, r.centerX(), r.centerY(), rad, m * 6f, Agujas.Pieza.MINUTO, forma, minutera)
-        if (segundero != null) Agujas.pinta(c, r.centerX(), r.centerY(), rad, t.second * 6f, Agujas.Pieza.SEGUNDO, forma, segundero)
+        // (en el widget dibujado no hay segundero: se pinta una vez por minuto, se quedaría quieto)
+        if (segundero != null && !enWidget) Agujas.pinta(c, r.centerX(), r.centerY(), rad, t.second * 6f, Agujas.Pieza.SEGUNDO, forma, segundero)
         Agujas.pinta(c, r.centerX(), r.centerY(), rad, 0f, Agujas.Pieza.CENTRO, forma, centro)
     }
 

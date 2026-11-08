@@ -20,6 +20,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.Shadows.shadowOf
 import java.io.File
 
 /**
@@ -38,9 +39,10 @@ class WidgetsTest {
         Skin.cargar(ctx)
         Skin.origenAtrio = false; Skin.invertido = false; Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Modo.eleccion = 0
         Widgets.datos = { DatosDeMentira(it) }
+        org.robolectric.shadows.ShadowAlarmManager.setCanScheduleExactAlarms(true)
     }
 
-    @After fun suelta() { Widgets.datos = null; Disenos.fijos = null; Modo.eleccion = 0 }
+    @After fun suelta() { Widgets.datos = null; Disenos.fijos = null; Modo.eleccion = 0; Minutero.ponLetraDelMovil(ctx, false) }
 
     private val tamanos = listOf(40f to 40f, 57f to 102f, 130f to 102f, 203f to 102f, 276f to 102f, 130f to 220f, 276f to 220f, 276f to 337f, 276f to 454f,
         554f to 117f, 412f to 51f, 350f to 60f, 60f to 350f, 110f to 110f)
@@ -64,10 +66,10 @@ class WidgetsTest {
         }
     }
 
-    @Test fun losRelojesDelWidgetSeMuevenSolos() {
+    @Test fun losRelojesConLaLetraDelMovilSeMuevenSolos() {
         val datos = DatosDeMentira(ctx)
         // El digital: la hora y la fecha son TextClock; la hora cabe entera con su letra (también «23:59»)
-        val l = Pintor.pinta(ctx, RelojDigital.nuevo(), 276f, 220f, false, 1f, datos, enWidget = true)
+        val l = Pintor.pinta(ctx, RelojDigital.nuevo(), 276f, 220f, false, 1f, datos, enWidget = true, relojVivo = true)
         val textos = l.vivos.filterIsInstance<Vivo.Texto>()
         assertEquals(listOf(Formatos.FECHA_LARGA, Formatos.HORA), textos.map { it.formato })
         for (t in textos) {
@@ -78,10 +80,10 @@ class WidgetsTest {
         }
         assertTrue("la hora, grande", textos.last().tam > 60f)
         // El de agujas: un AnalogClock cuadrado, con el segundero si se pide
-        val a = Pintor.pinta(ctx, RelojAgujas.nuevo().con("segundero", true), 130f, 130f, false, 1f, datos, enWidget = true).vivos.single() as Vivo.Agujas
+        val a = Pintor.pinta(ctx, RelojAgujas.nuevo().con("segundero", true), 130f, 130f, false, 1f, datos, enWidget = true, relojVivo = true).vivos.single() as Vivo.Agujas
         assertEquals(a.r.width(), a.r.height(), 0.01f); assertNotNull(a.segundero)
         // «Como el móvil»: 24 horas o 12, lo que diga el móvil
-        val m = Pintor.pinta(ctx, RelojDigital.nuevo().con("formato", "movil"), 276f, 220f, false, 1f, datos, enWidget = true).vivos.filterIsInstance<Vivo.Texto>().last()
+        val m = Pintor.pinta(ctx, RelojDigital.nuevo().con("formato", "movil"), 276f, 220f, false, 1f, datos, enWidget = true, relojVivo = true).vivos.filterIsInstance<Vivo.Texto>().last()
         assertEquals(Formatos.HORA, m.formato); assertEquals(Formatos.HORA_12, m.formato12)
         // En la app, la hora se dibuja (la de mentira: 10:08): el dibujo cambia con la hora
         val b1 = Pintor.pinta(ctx, RelojDigital.nuevo(), 276f, 220f, false, 1f, datos).bm
@@ -93,7 +95,8 @@ class WidgetsTest {
     /** Todas las vistas de un árbol. */
     private fun vistas(v: View): List<View> = listOf(v) + ((v as? ViewGroup)?.let { g -> (0 until g.childCount).flatMap { vistas(g.getChildAt(it)) } } ?: emptyList())
 
-    @Test fun loQueSeMandaAlLanzadorSeInflaDeVerdad() {
+    @Test fun conLaLetraDelMovilSeMandanTextClock() {
+        Minutero.ponLetraDelMovil(ctx, true)
         val d = RelojDigital.nuevo()
         Disenos.fijos = listOf(d)
         // (lo que hace el lanzador: inflar los RemoteViews con los recursos de Ptah y aplicar cada acción; un método que no se pueda llamar
@@ -112,7 +115,7 @@ class WidgetsTest {
         assertTrue("la fecha, en versalitas", fecha.isAllCaps); assertEquals(0.16f, fecha.letterSpacing, 0.001f)
         assertEquals(Letras.fuente(ctx, R.font.body_bold), fecha.typeface)
         // Su tamaño, el calculado (en dp)
-        val l = Pintor.pinta(ctx, d, 276f, 220f, false, 1f, DatosDeMentira(ctx), enWidget = true)
+        val l = Pintor.pinta(ctx, d, 276f, 220f, false, 1f, DatosDeMentira(ctx), enWidget = true, relojVivo = true)
         val tam = l.vivos.filterIsInstance<Vivo.Texto>().last().tam
         assertEquals(tam * ctx.resources.displayMetrics.density, hora.textSize, 0.6f)
         // Con un color fijo (sin depender del claro y del oscuro), un solo dibujo
@@ -125,12 +128,13 @@ class WidgetsTest {
     }
 
     @Test fun lasAgujasSonLasDelDiseno() {
+        Minutero.ponLetraDelMovil(ctx, true)
         val d = RelojAgujas.nuevo().con("segundero", true).conEstilo(Estilo(fondo = TipoFondo.COLOR, colorFondo = "#FFFFFF", tinta = "#111111", acento = "#C8372D", secundario = "#888888",
             piezas = mapOf("horaria" to "#123456", "minutera" to "#654321", "segundero" to "#FF0000")))
         val v = Widgets.vistas(ctx, 6, d, 130f, 130f).apply(ctx, FrameLayout(ctx))
         val reloj = vistas(v).filterIsInstance<AnalogClock>().single()
         // Android 12 o más: las agujas son las máscaras del diseño (del tamaño de la esfera vacía), cada una con su color
-        val lado = Widgets.ladoAgujas(Pintor.pinta(ctx, d, 130f, 130f, false, 1f, DatosDeMentira(ctx), enWidget = true).vivos.single().r, ctx.resources.displayMetrics.density, 1)
+        val lado = Widgets.ladoAgujas(Pintor.pinta(ctx, d, 130f, 130f, false, 1f, DatosDeMentira(ctx), enWidget = true, relojVivo = true).vivos.single().r, ctx.resources.displayMetrics.density, 1)
         fun campo(n: String) = AnalogClock::class.java.getDeclaredField(n).apply { isAccessible = true }.get(reloj)
         val horaria = campo("mHourHand") as android.graphics.drawable.Drawable
         assertEquals(lado, horaria.intrinsicWidth)
@@ -187,6 +191,90 @@ class WidgetsTest {
         assertEquals(0, t.bm.getPixel(2, 2) ushr 24)
         // Con esquinas, la esquina queda recortada
         assertEquals(0, Pintor.pinta(ctx, TipoNota.nuevo(), 100f, 100f, false, 1f, DatosDeMentira(ctx)).bm.getPixel(0, 0) ushr 24)
+    }
+
+    // ---------------------------------------------------------------- la hora dibujada cada minuto (el fallo del OPPO)
+
+    /** Lo que ve el lanzador: las vistas que no están ocultas. */
+    private fun visibles(v: View): List<View> = if (v.visibility != View.VISIBLE) emptyList() else listOf(v) + ((v as? ViewGroup)?.let { g -> (0 until g.childCount).flatMap { visibles(g.getChildAt(it)) } } ?: emptyList())
+
+    @Test fun laHoraVaDibujadaConLaLetraDelDisenoYSinDuplicados() {
+        assertFalse(Minutero.relojVivo(ctx))
+        for (d in listOf(RelojDigital.nuevo().con("cabecera", "columna"), RelojAgujas.nuevo().con("segundero", true))) {
+            Disenos.fijos = listOf(d)
+            // Como un lanzador que no vuelve a inflar el widget: lo nuevo se aplica encima de lo de antes, una y otra vez, con tamaños distintos
+            val v = Widgets.vistas(ctx, 5, d, 130f, 220f).apply(ctx, FrameLayout(ctx))
+            for ((w, h) in listOf(276f to 454f, 200f to 300f, 276f to 454f, 130f to 220f)) Widgets.vistas(ctx, 5, d, w, h).reapply(ctx, v)
+            val todas = vistas(v)
+            assertTrue("${d.tipo}: ningún TextClock", todas.none { it is TextClock })
+            assertTrue("${d.tipo}: ningún AnalogClock", todas.none { it is AnalogClock })
+            // Un solo dibujo (con la hora dentro), y las zonas de la última vez, no las de todas
+            val imgs = visibles(v).filterIsInstance<android.widget.ImageView>().filter { it.drawable != null }
+            assertEquals("${d.tipo}: un solo dibujo a la vista", 1, imgs.size)
+            val zonas = Pintor.pinta(ctx, d, 130f, 220f, false, 1f, DatosDeMentira(ctx), enWidget = true).zonas.size
+            assertEquals(zonas, (v.findViewById<ViewGroup>(R.id.w_zonas)).childCount)
+            assertEquals(0, v.findViewById<ViewGroup>(R.id.w_vivos).childCount + v.findViewById<ViewGroup>(R.id.w_vivos_dia).childCount + v.findViewById<ViewGroup>(R.id.w_vivos_noche).childCount)
+        }
+        // El dibujo cambia con el minuto (10:08 → 10:09), con la letra del diseño
+        val d = RelojDigital.nuevo()
+        val b1 = Pintor.pinta(ctx, d, 276f, 220f, false, 1f, DatosDeMentira(ctx), enWidget = true).bm
+        val luego = object : Datos by DatosDeMentira(ctx) { override fun ahora() = DatosDeMentira.AHORA.plusMinutes(1) }
+        assertFalse(b1.sameAs(Pintor.pinta(ctx, d, 276f, 220f, false, 1f, luego, enWidget = true).bm))
+    }
+
+    @Test fun conLaLetraDelMovilHayUnaHoraYUnaFechaAunqueSeRepinte() {
+        Minutero.ponLetraDelMovil(ctx, true)
+        val d = RelojDigital.nuevo()
+        Disenos.fijos = listOf(d)
+        val v = Widgets.vistas(ctx, 5, d, 130f, 220f).apply(ctx, FrameLayout(ctx))
+        for ((w, h) in listOf(276f to 454f, 200f to 300f, 276f to 454f)) Widgets.vistas(ctx, 5, d, w, h).reapply(ctx, v)
+        val relojes = visibles(v).filterIsInstance<TextClock>()
+        assertEquals("una hora y una fecha a la vista", 2, relojes.size)
+        assertEquals(1, relojes.count { it.format24Hour == Formatos.HORA })
+        // (y en total, la de día y la de noche, nada más)
+        assertEquals(4, vistas(v).count { it is TextClock })
+    }
+
+    @Test fun elMinuteroSoloAndaConRelojesDibujados() {
+        val am = ctx.getSystemService(android.app.AlarmManager::class.java)
+        val sombra = shadowOf(am)
+        val mgr = shadowOf(AppWidgetManager.getInstance(ctx))
+        val reloj = RelojDigital.nuevo(); val nota = TipoNota.nuevo()
+        Disenos.fijos = listOf(reloj, nota)
+        val id = mgr.createWidget(WPtah::class.java, R.layout.w_marco)
+        Widgets.asigna(ctx, id, nota.id)
+        assertFalse("sin relojes, sin alarma", Minutero.programa(ctx)); assertNull(sombra.peekNextScheduledAlarm())
+        Widgets.asigna(ctx, id, reloj.id)
+        assertTrue(Minutero.programa(ctx))
+        val a = sombra.peekNextScheduledAlarm()!!
+        assertEquals(android.app.AlarmManager.RTC, a.type)
+        assertEquals(0L, (a.triggerAtTime - 150L) % 60_000L)
+        assertTrue(a.triggerAtTime - System.currentTimeMillis() in 0L..60_200L)
+        // Con «la letra del móvil», o sin permiso de alarmas exactas, no hace falta
+        Minutero.ponLetraDelMovil(ctx, true)
+        assertFalse(Minutero.programa(ctx)); assertNull(sombra.peekNextScheduledAlarm())
+        Minutero.ponLetraDelMovil(ctx, false)
+        org.robolectric.shadows.ShadowAlarmManager.setCanScheduleExactAlarms(false)
+        assertTrue(Minutero.relojVivo(ctx)); assertFalse(Minutero.programa(ctx))
+        org.robolectric.shadows.ShadowAlarmManager.setCanScheduleExactAlarms(true)
+        assertEquals(listOf(id), Minutero.relojes(ctx))
+    }
+
+    @Test fun loQueCuestaUnMinuto() {
+        // Un reloj 4×4 a la densidad de un móvil (2,75): lo que se dibuja y lo que se manda al lanzador cada minuto
+        kotlinx.coroutines.runBlocking { Letras.prepara(ctx, listOf(RelojDigital.nuevo())) }
+        for (d in listOf(RelojDigital.nuevo().con("cabecera", "columna"), RelojAgujas.nuevo())) {
+            val s = minOf(2.75f, kotlin.math.sqrt(1_800_000f / (276f * 454f)))  // (lo de Widgets.escala con la densidad de un móvil)
+            repeat(3) { Pintor.pinta(ctx, d, 276f, 454f, false, s, DatosDeMentira(ctx), enWidget = true) }
+            val t0 = System.nanoTime()
+            val n = 10
+            var bytes = 0
+            repeat(n) { bytes = Pintor.pinta(ctx, d, 276f, 454f, false, s, DatosDeMentira(ctx), enWidget = true).bm.byteCount }
+            val ms = (System.nanoTime() - t0) / 1e6 / n
+            println("MINUTERO ${d.tipo}: ${"%.1f".format(ms)} ms por dibujo (en el ordenador, con Robolectric), ${bytes / 1024} KB por envío")
+            assertTrue("el dibujo de un minuto, rápido", ms < 400)
+            assertTrue("y no pesa más de lo que deja Android", bytes <= 1_800_000 * 4)
+        }
     }
 
     // ---------------------------------------------------------------- las vistas previas (solo con -Proborazzi.test.record=true)

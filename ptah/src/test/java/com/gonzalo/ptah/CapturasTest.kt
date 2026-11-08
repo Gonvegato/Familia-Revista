@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Rule
@@ -49,6 +51,13 @@ abstract class CapturasBase {
         val disenos = DatosDeMentira.disenos()
         Disenos.fijos = disenos
         listOf("#C8372D", "#12393A", "#D98A3D", "#2F5D8A", "#80F2E6CF").forEach { Recientes.pon(ctx, it) }
+        // (uno de los diseños ya está en la pantalla de inicio, en dos widgets)
+        val mgr = org.robolectric.Shadows.shadowOf(android.appwidget.AppWidgetManager.getInstance(ctx))
+        repeat(2) { Widgets.asigna(ctx, mgr.createWidget(WPtah::class.java, R.layout.w_marco), disenos[9].id) }
+        ctx.getSharedPreferences("ptah_ui", Context.MODE_PRIVATE).edit().clear().commit()
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+        Thread.sleep(1500)
+        // (después: al poner los widgets se pintan, y eso vuelve a leer la apariencia guardada)
         Modo.eleccion = if (oscuro) 2 else 1
         var cual by mutableIntStateOf(0)
         val porTipo = Tipos.TODOS.map { t -> disenos.firstOrNull { it.tipo == t.id } ?: t.nuevo() }
@@ -57,7 +66,10 @@ abstract class CapturasBase {
             PtahTheme {
                 Surface(Modifier.fillMaxSize(), color = Paper) {
                     when (cual) {
-                        0 -> PantPortada(false, {}, {}, {}, {})
+                        0 -> PantPortada(false, alAbrir = {}, alPlantilla = {}, alNuevo = {}, alAjustes = {})
+                        6 -> PantPortada(false, guardado = disenos[1].id, alAbrir = {}, alPlantilla = {}, alNuevo = {}, alAjustes = {})
+                        7 -> PantFicha(disenos[0].id, alVolver = {}, alEditar = {}, alCopiar = {})
+                        8 -> PantFicha(disenos[9].id, alVolver = {}, alEditar = {}, alCopiar = {})
                         1 -> PantNuevo({}, {})
                         in 100..199 -> androidx.compose.runtime.key(cual) { PantEditor(porTipo[cual - 100], false, alVolver = {}, alGuardar = {}) }
                         in 200..204 -> androidx.compose.runtime.key(cual) { PantEditor(porTipo[0], false, alVolver = {}, alGuardar = {}, pestanaInicial = cual - 200) }
@@ -76,6 +88,11 @@ abstract class CapturasBase {
             }
         }
         foto("01-portada")
+        Disenos.fijos = disenos.take(2); foto("01b-portada-pocos-y-plantillas"); Disenos.fijos = disenos
+        Intro.cierra(ctx)
+        cual = 6; foto("03-tras-guardar")
+        cual = 7; foto("04-ficha-diseno")
+        cual = 8; foto("05-ficha-diseno-en-pantalla")
         cual = 1; foto("02-nuevo")
         Tipos.TODOS.forEachIndexed { i, t -> cual = 100 + i; foto("1${"%02d".format(i)}-editor-${t.id}") }
         cual = 210; foto("120-editor-accesos-con-apps")

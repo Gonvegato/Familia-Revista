@@ -23,6 +23,8 @@ class ConfigWidgetActivity : ComponentActivity() {
         setResult(Activity.RESULT_CANCELED, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
         if (id == AppWidgetManager.INVALID_APPWIDGET_ID) { finish(); return }
         iniciar(this)
+        // Si viene de «Ponerlo en la pantalla de inicio» (y el lanzador abre esto igualmente), ya se sabe qué diseño va
+        AlFijar.pendiente(this)?.let { d -> Disenos.de(this, d)?.let { AlFijar.pendiente(this, null); elige(id, it); return } }
         setContent {
             PtahTheme {
                 BarrasDelSistema(this)

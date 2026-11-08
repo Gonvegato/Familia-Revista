@@ -9,6 +9,12 @@
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Los relojes dibujados con tu letra se repintan cada minuto (Minutero.kt): una alarma exacta que no despierta al móvil.
+         USE_EXACT_ALARM (Android 13+) se concede al instalar; Google Play lo limita a apps de reloj, pero Ptah no va por Play. En Android 12, SCHEDULE_EXACT_ALARM -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <!-- Al encender el móvil, las alarmas se han perdido: se vuelven a poner -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <queries>
         <!-- Las hermanas y los colores de Jonsu -->
         <package android:name="com.gonzalo.hiedra" />
@@ -54,13 +60,15 @@
         <receiver android:name=".ActualizadorReabrir" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
-        <!-- El widget (Widgets.kt): uno solo, redimensionable, con el diseño que elijas. Y a medianoche o al cambiar la hora, se repinta -->
+        <!-- El widget (Widgets.kt): uno solo, redimensionable, con el diseño que elijas. Y cada minuto (los relojes), a medianoche, al cambiar la hora y al encender el móvil, se repinta -->
         <receiver android:name=".WPtah" android:label="@string/w_ptah" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.LOCALE_CHANGED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_ptah" />
         </receiver>

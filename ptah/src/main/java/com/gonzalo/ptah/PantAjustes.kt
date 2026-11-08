@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.1.0"
+const val VERSION = "0.2.0"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
@@ -83,6 +83,8 @@ private fun SeccionAvanzado() {
     val ambito = rememberCoroutineScope()
     Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
     SeccionActualizaciones()
+    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    SeccionRelojes()
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("Tus widgets", Modifier.padding(bottom = 4.dp))
     var aviso by remember { mutableStateOf<String?>(null) }
@@ -205,4 +207,31 @@ fun AvisoActualizacion() {
         }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
         dismissButton = { TextButton({ luego = true }) { Text("LUEGO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
     )
+}
+
+/** La hora de los relojes de la pantalla de inicio: dibujada con tu letra (cada minuto) o con la del móvil. */
+@Composable
+fun SeccionRelojes() {
+    val ctx = LocalContext.current
+    var delMovil by remember { mutableStateOf(Minutero.letraDelMovil(ctx)) }
+    val exactas = remember { Minutero.puedeExactas(ctx) }
+    Antetitulo("La hora de tus relojes", Modifier.padding(bottom = 4.dp))
+    Text("Para que la hora salga con la letra de tu diseño, Ptah la dibuja y vuelve a pintar tus relojes al empezar cada minuto, solo con la pantalla encendida (apagada no gasta nada). Si lo prefieres, con la letra del móvil: se pone en hora sola y no gasta, pero con la letra del sistema.",
+        color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+    MagChoice(listOf("Con la letra del diseño", "Con la letra del móvil"), if (delMovil) 1 else 0, "La hora y la fecha") { i -> delMovil = i == 1; Minutero.ponLetraDelMovil(ctx, delMovil) }
+    if (!exactas) {
+        Text("Android no deja ahora a Ptah despertarse cada minuto: tus relojes van con la letra del móvil hasta que lo permitas.", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp)
+        if (android.os.Build.VERSION.SDK_INT >= 31) MagLink("Permitir las alarmas exactas", "En Ajustes del móvil: «Alarmas y recordatorios»", accent = true) {
+            runCatching { ctx.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, android.net.Uri.parse("package:${ctx.packageName}"))) }
+        }
+    }
+    if (!delMovil && exactas) {
+        val u = Minutero.ultimo(ctx)
+        if (u > 0) Text("Última vez que se pusieron en hora: " + java.text.SimpleDateFormat("HH:mm", java.util.Locale("es", "ES")).format(java.util.Date(u)), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Si un reloj se queda atrás (en algunos móviles, como los OPPO, Realme o Xiaomi, el ahorro de batería no deja a las apps despertarse), permite a Ptah «actividad en segundo plano» o «inicio automático» y quítale la optimización de batería.",
+            color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        MagLink("Abrir los ajustes de Ptah en el móvil", "Batería → permitir actividad en segundo plano") {
+            runCatching { ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:${ctx.packageName}"))) }
+        }
+    }
 }
