@@ -4,6 +4,13 @@ Shai (el dios egipcio del destino, «lo que está ordenado») es el acompañante
 campo y Shai escribe lo de fuera. De la familia (la cuenta, la revista, el actualizador de kDrive), pero Jonsu no enseña nada suyo. Solo
 Android. Paquete `com.gonzalo.shai`; icono «SHAI · CARRERA» en gris grafito (#515151), crema (#F2E8D0) y el oro viejo de un trofeo (#C59E21) desde la 0.5.0 (hasta la 0.4.0, césped de noche #0F2A1D y dorado #C9A227).
 
+## 0.5.1
+
+- **Arreglo: «The compiled grammar is too large».** La API real rechazaba lo de después del partido porque los esquemas de respuesta
+  (salida estructurada, `output_config.format`) eran demasiado grandes para compilarlos. Ahora no se fuerza la salida estructurada: el
+  esquema va en el mensaje como instrucción, lo que vuelve se lee aunque venga entre ``` o con texto alrededor, y si no se puede leer se
+  pide otra vez (una vez; si se cortó, con más sitio). Lo que ya estaba guardado («Falta lo de después») se puede volver a pedir.
+
 ## 0.5.0
 
 - **Colores nuevos de serie** (los que Gonzalo tenía puestos en «A tu manera»): fondo gris grafito #515151, texto crema #F2E8D0 y acento oro

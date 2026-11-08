@@ -50,11 +50,15 @@ object Motor {
     private val cerrojo = Any()
 
     /** Pide, con el tope y el gasto apuntado. */
-    fun pide(p: Peticion): Map<String, Any?> {
+    fun pide(p: Peticion, intento: Int = 0): Map<String, Any?> {
         Gasto.compruebaAntes(Precios.coste(p.modelo, p.usoMaximo()))
         val r = try { claude.mensaje(p) } catch (e: Claude.Rechazo) { Gasto.apunta(e.modelo.ifBlank { p.modelo }, Precios.coste(e.modelo.ifBlank { p.modelo }, e.uso)); throw e }
         Gasto.apunta(r.modelo.ifBlank { p.modelo }, Precios.coste(r.modelo.ifBlank { p.modelo }, r.uso))
-        return r.json()
+        // (el JSON va pedido en el mensaje, no forzado: si no se pudo leer, una vez más; si se cortó, con más sitio)
+        return try { r.json() } catch (e: Claude.Fallo) {
+            if (intento > 0) throw e
+            pide(if (r.parada == "max_tokens") p.copy(maxTokens = (p.maxTokens * 3 / 2).coerceAtMost(16_000)) else p, intento + 1)
+        }
     }
 
     private fun <T> en(universo: String, f: () -> T): T { val antes = actual.get(); actual.set(universo); try { return f() } finally { actual.set(antes) } }

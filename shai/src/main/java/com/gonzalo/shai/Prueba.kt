@@ -385,7 +385,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
     // ---------------------------------------------------------------- las respuestas, según lo que se pide (su esquema)
 
     private fun mensaje(c: Map<String, Any?>, uid: String?): String {
-        val props = c["output_config"].comoMapa()["format"].comoMapa()["schema"].comoMapa()["properties"].comoMapa().keys
+        val props = Peticion.esquemaDe(c).orEmpty()["properties"].comoMapa().keys
         val texto = c["messages"].comoLista().flatMap { it.comoMapa()["content"].comoLista() }.joinToString("\n") { it.comoMapa()["text"].comoTexto() }
         val d = datos(texto)
         val u = Uso(uid)

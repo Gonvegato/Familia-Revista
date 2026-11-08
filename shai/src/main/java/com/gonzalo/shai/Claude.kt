@@ -64,7 +64,11 @@ data class Peticion(
     val sistema: List<Bloque>,
     val usuario: List<Map<String, Any?>>,
     val maxTokens: Int,
-    /** El esquema JSON de la respuesta (salida estructurada: `output_config.format`). */
+    /**
+     * El esquema JSON de la respuesta. NO va como salida estructurada (`output_config.format`): con esquemas como los de Shai la API
+     * contesta 400 «The compiled grammar is too large». Va en el mensaje, como instrucción, y lo que vuelve se lee con tolerancia
+     * ([Respuesta.json]); si no se puede leer, [Motor.pide] lo pide otra vez.
+     */
     val esquema: Map<String, Any?>? = null,
     val esfuerzo: String = "low",
     /** La caché de una hora (para los lotes, que pueden tardar más de cinco minutos). */
@@ -78,11 +82,8 @@ data class Peticion(
         m["model"] = modelo
         m["max_tokens"] = maxTokens.toLong()
         m["system"] = sistema.map { b -> if (b.cache) mapOf("type" to "text", "text" to b.texto, "cache_control" to ttl) else mapOf("type" to "text", "text" to b.texto) }
-        m["messages"] = listOf(mapOf("role" to "user", "content" to usuario))
-        val oc = LinkedHashMap<String, Any?>()
-        oc["effort"] = esfuerzo
-        esquema?.let { oc["format"] = mapOf("type" to "json_schema", "schema" to it) }
-        m["output_config"] = oc
+        m["messages"] = listOf(mapOf("role" to "user", "content" to (if (esquema == null) usuario else usuario + texto(instruccion(esquema)))))
+        m["output_config"] = mapOf("effort" to esfuerzo)
         // Sin pensar más de la cuenta: Haiku 5.5 acepta apagarlo (con esfuerzo bajo); Sonnet 5.5 no («disabled» es un 400 en él), y con
         // esfuerzo bajo piensa poco o nada en lo sencillo
         if (modelo.startsWith("claude-haiku")) m["thinking"] = mapOf("type" to "disabled")
@@ -96,6 +97,20 @@ data class Peticion(
     }
 
     companion object {
+        private const val ABRE = "<<<ESQUEMA\n"
+        private const val CIERRA = "\nESQUEMA>>>"
+
+        fun instruccion(esquema: Map<String, Any?>) = "FORMATO DE LA RESPUESTA: contesta SOLO con un objeto JSON válido, sin nada antes ni después y sin ```, " +
+            "con TODAS las claves de este esquema JSON (los textos, en español; si algo no toca, cadena vacía, 0, false o lista vacía):\n" + ABRE + Json.escribe(esquema) + CIERRA
+
+        /** El esquema que va en el mensaje de una petición (para las API de mentira y las pruebas). */
+        fun esquemaDe(cuerpo: Map<String, Any?>): Map<String, Any?>? {
+            val t = cuerpo["messages"].comoLista().flatMap { it.comoMapa()["content"].comoLista() }.joinToString("\n") { it.comoMapa()["text"].comoTexto() }
+            val i = t.indexOf(ABRE).takeIf { it >= 0 } ?: return null
+            val j = t.indexOf(CIERRA, i).takeIf { it >= 0 } ?: return null
+            return runCatching { Json.lee(t.substring(i + ABRE.length, j)).comoMapa() }.getOrNull()
+        }
+
         fun texto(t: String): Map<String, Any?> = mapOf("type" to "text", "text" to t)
         fun imagen(base64: String, tipo: String = "image/jpeg"): Map<String, Any?> = mapOf("type" to "image", "source" to mapOf("type" to "base64", "media_type" to tipo, "data" to base64))
     }
@@ -103,7 +118,14 @@ data class Peticion(
 
 /** Lo que contesta Claude: el texto (en salida estructurada, el JSON) y lo que gastó. */
 data class Respuesta(val texto: String, val uso: Uso, val parada: String, val modelo: String) {
-    fun json(): Map<String, Any?> = runCatching { Json.lee(texto).comoMapa() }.getOrElse { throw Claude.Fallo("La respuesta no se pudo leer (se cortó o no venía en JSON).") }
+    /** El JSON de la respuesta, aunque venga entre ``` o con algo de texto alrededor. */
+    fun json(): Map<String, Any?> {
+        val t = texto.trim()
+        val i = t.indexOf('{'); val j = t.lastIndexOf('}')
+        val m = runCatching { Json.lee(t).comoMapa() }.getOrNull()?.takeIf { it.isNotEmpty() }
+            ?: (if (i >= 0 && j > i) runCatching { Json.lee(t.substring(i, j + 1)).comoMapa() }.getOrNull()?.takeIf { it.isNotEmpty() } else null)
+        return m ?: throw Claude.Fallo(if (parada == "max_tokens") "La respuesta se cortó (era demasiado larga)." else "La respuesta no se pudo leer (no venía en JSON).", true)
+    }
 }
 
 class Claude(private val clave: () -> String, private val red: Transporte = TransporteHttp(), private val base: String = "https://api.anthropic.com") {

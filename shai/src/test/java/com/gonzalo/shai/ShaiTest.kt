@@ -93,6 +93,16 @@ class ShaiTest {
 
     // ---------------------------------------------------------------- lo que se manda a la API
 
+    @Test fun elJsonSeLeeAunqueVengaEnvueltoYSiNoSePideOtraVez() {
+        assertEquals("b", Respuesta("```json\n{\"a\":\"b\"}\n```", Uso(), "end_turn", "m").json()["a"])
+        assertEquals("b", Respuesta("Aquí lo tienes: {\"a\":\"b\"} ¡Suerte!", Uso(), "end_turn", "m").json()["a"])
+        // La primera respuesta no trae JSON: se pide otra vez y vale la segunda
+        api.siguiente = Transporte.Respuesta(200, """{"id":"x","type":"message","role":"assistant","model":"claude-haiku-5-5","content":[{"type":"text","text":"perdón, no sé"}],"stop_reason":"end_turn","usage":{"input_tokens":10,"output_tokens":5}}""")
+        val r = Motor.pide(Narrador.red(Ejemplo.universo(), Ejemplo.partido(), "ctx"))
+        assertTrue(r["posts"].comoLista().isNotEmpty())
+        assertEquals(2, api.mensajes().size)
+    }
+
     @Test fun laPeticionEsComoPideLaApi() {
         val u = Ejemplo.universo()
         val h = Narrador.red(u, Ejemplo.partido(), "ctx").cuerpo()
@@ -101,8 +111,9 @@ class ShaiTest {
         // Ni temperature ni top_p ni top_k: en la versión 2026-10-21 son un 400
         assertFalse(h.keys.any { it in setOf("temperature", "top_p", "top_k") })
         val oc = h["output_config"].comoMapa()
-        assertEquals("low", oc["effort"]); assertEquals("json_schema", oc["format"].comoMapa()["type"])
-        val sch = oc["format"].comoMapa()["schema"].comoMapa()
+        // Sin salida estructurada (la API la rechaza por grande: «compiled grammar is too large»): el esquema va en el mensaje
+        assertEquals("low", oc["effort"]); assertNull(oc["format"])
+        val sch = Peticion.esquemaDe(h)!!
         assertEquals(false, sch["additionalProperties"]); assertEquals(listOf("tendencia", "posts", "mensajes"), sch["required"])
         val sistema = h["system"].comoLista().first().comoMapa()
         assertEquals(mapOf("type" to "ephemeral"), sistema["cache_control"])

@@ -74,7 +74,7 @@ class ApiDeMentira : Transporte {
     /** Lo que contestaría Claude a esta petición (según su esquema). */
     private fun mensaje(c: Map<String, Any?>): String {
         val modelo = c["model"].comoTexto()
-        val props = c["output_config"].comoMapa()["format"].comoMapa()["schema"].comoMapa()["properties"].comoMapa().keys
+        val props = Peticion.esquemaDe(c).orEmpty()["properties"].comoMapa().keys
         val texto = c["messages"].comoLista().flatMap { it.comoMapa()["content"].comoLista() }.joinToString { it.comoMapa()["text"].comoTexto() }
         val respuesta: Any = when {
             "se_ve" in props -> mapOf("se_ve" to true, "goles_favor" to 3, "goles_contra" to 1, "rival" to "Sevilla FC", "minutos" to 90, "goles" to 2, "asistencias" to 1, "nota" to 8.7,
