@@ -53,6 +53,10 @@ object EspejoCuenta {
 
     const val COLECCION = "ajustes"
 
+    /** Para el diagnóstico de Ptah: lo que pasa con cada ajuste de un grupo (el grupo, la clave, el valor y qué ha pasado). */
+    @Volatile var registro: ((Context, Grupo, String, Any?, String) -> Unit)? = null
+    private fun apunta(c: Context, g: Grupo, k: String, v: Any?, que: String) { runCatching { registro?.invoke(c, g, k, v, que) } }
+
     /** Sube cada vez que llega algo de otro dispositivo: las pantallas que leen estas preferencias las vuelven a leer. */
     private val ver = mutableIntStateOf(0)
     val version: Int get() = ver.intValue
@@ -163,12 +167,13 @@ object EspejoCuenta {
             if (f == Nodo.B) continue
             val k = clave(f)
             val t = g.tipo(k) ?: continue
-            if (v == null || v == "") { if (todo.containsKey(k)) { ed.remove(k); cambio = true }; continue }
+            if (v == null || v == "") { if (todo.containsKey(k)) { ed.remove(k); cambio = true; apunta(c, g, k, null, "llega de la cuenta: borrado") }; continue }
             val nuevo = deCuenta(t, v)
             if (todo[k] != nuevo) {
                 // (lo de aquí es más nuevo que lo que dice la cuenta: se queda y se vuelve a subir)
-                if (todo[k] != null && g.prefiereLocal?.invoke(k, todo[k], nuevo) == true) { resube[f] = aCuenta(todo[k]); continue }
+                if (todo[k] != null && g.prefiereLocal?.invoke(k, todo[k], nuevo) == true) { resube[f] = aCuenta(todo[k]); apunta(c, g, k, nuevo, "llega de la cuenta, ignorado: más viejo que el de aquí"); continue }
                 pon(ed, k, nuevo); cambio = true
+                apunta(c, g, k, nuevo, "llega de la cuenta, aplicado")
             }
         }
         if (resube.isNotEmpty()) runCatching { col.pon(g.nodo, resube) }
@@ -182,7 +187,9 @@ object EspejoCuenta {
         if (cambios.isEmpty()) return
         val campos = cambios.entries.associate { (k, v) -> campo(k) to (aCuenta(v) ?: "") }
         val col = runCatching { LaFamilia.familia; LaFamilia.coleccion(COLECCION) }.getOrNull()
-        if (col == null || runCatching { col.pon(g.nodo, campos) }.isFailure) apuntaSucios(c, g, campos.keys)
+        val ok = col != null && runCatching { col.pon(g.nodo, campos) }.isSuccess
+        if (!ok) apuntaSucios(c, g, campos.keys)
+        cambios.forEach { (k, v) -> apunta(c, g, k, v, if (ok) "a la cuenta (en cola para subir)" else "sin cuenta todavía: se subirá luego") }
     }
 
     private fun apuntaSucios(c: Context, g: Grupo, campos: Set<String>) {

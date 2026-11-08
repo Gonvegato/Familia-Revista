@@ -363,7 +363,8 @@ class Lienzo(
      * En el widget es un `TextClock`; aquí se dibuja la de ahora.
      */
     fun textoVivo(r: RectF, formato: String, l: LetraFija, tam: Float, color: Int, al: Alineacion = e.alineacion, formato12: String = formato) {
-        if (apuntaVivos) { vivos += Vivo.Texto(RectF(r), formato, l, tam, color, al, formato12); return }
+        // (en el widget, solo la hora va como TextClock: la fecha se dibuja —cambia a medianoche, y entonces se repinta—, así sale siempre)
+        if (apuntaVivos && formato.any { it in "Hhkms" }) { vivos += Vivo.Texto(RectF(r), formato, l, tam, color, al, formato12); return }
         val f = if (formato12 != formato && !android.text.format.DateFormat.is24HourFormat(ctx)) formato12 else formato
         val t = Formatos.formatea(f, datos.ahora()).let { if (l.mayusculas) it.uppercase(ES) else it }
         val p = tp(letraFija(l), tam, color, l.espaciado)
@@ -391,6 +392,13 @@ class Lienzo(
             fun ch(x: Int, s: Int) = (x shr s) and 0xFF
             fun m(s: Int) = (ch(a, s) + (ch(b, s) - ch(a, s)) * t).roundToInt().coerceIn(0, 255)
             return (0xFF shl 24) or (m(16) shl 16) or (m(8) shl 8) or m(0)
+        }
+        /** El contraste entre dos colores (el de las pautas de accesibilidad: de 1, nada, a 21, negro sobre blanco). */
+        fun contraste(a: Int, b: Int): Float {
+            fun lin(v: Int): Double { val x = v / 255.0; return if (x <= 0.03928) x / 12.92 else Math.pow((x + 0.055) / 1.055, 2.4) }
+            fun L(c: Int) = 0.2126 * lin((c shr 16) and 0xFF) + 0.7152 * lin((c shr 8) and 0xFF) + 0.0722 * lin(c and 0xFF)
+            val la = L(a); val lb = L(b)
+            return ((maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)).toFloat()
         }
         fun luz(c: Int): Float = (0.299f * ((c shr 16) and 0xFF) + 0.587f * ((c shr 8) and 0xFF) + 0.114f * (c and 0xFF)) / 255f
     }

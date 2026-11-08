@@ -55,6 +55,56 @@ object Minutero {
         catch (e: SecurityException) { am.cancel(pi); false }
     }
 
+    /** Por qué la hora va ahora con la letra del móvil (null: va dibujada, con la letra del diseño). */
+    fun motivo(ctx: Context): String? = when {
+        letraDelMovil(ctx) -> "lo has elegido en Ajustes → Avanzado («con la letra del móvil»)"
+        !puedeExactas(ctx) -> "Android no deja a Ptah poner alarmas exactas (canScheduleExactAlarms = no): falta el permiso «Alarmas y recordatorios»"
+        else -> null
+    }
+
+    /** ¿Ptah tiene limitada la actividad en segundo plano? (entonces el minutero puede no llegar) */
+    fun restringida(ctx: Context): Boolean = runCatching { ctx.getSystemService(android.app.ActivityManager::class.java)?.isBackgroundRestricted == true }.getOrDefault(false)
+    fun sinOptimizar(ctx: Context): Boolean = runCatching { ctx.getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true }.getOrDefault(false)
+
+    /**
+     * ¿El minutero se ha quedado atrás? (hay relojes dibujados y la última vez que se pusieron en hora fue hace más de 10 minutos, con la
+     * pantalla encendida: el ahorro de batería no deja llegar las alarmas). Se mira al abrir Ptah.
+     */
+    fun atrasado(ctx: Context): Boolean {
+        if (relojVivo(ctx) || relojes(ctx).isEmpty()) return false
+        val u = ultimo(ctx)
+        return u > 0 && System.currentTimeMillis() - u > 10 * 60_000L
+    }
+
+    /**
+     * Las pantallas de ColorOS (OPPO, Realme, OnePlus) para dejar a una app arrancar sola y trabajar en segundo plano (cambian con cada
+     * versión: se prueban por orden); si ninguna está, el detalle de la app en Ajustes.
+     */
+    val COLOROS = listOf(
+        "com.coloros.safecenter" to "com.coloros.safecenter.startupapp.StartupAppListActivity",
+        "com.coloros.safecenter" to "com.coloros.safecenter.permission.startup.StartupAppListActivity",
+        "com.oppo.safe" to "com.oppo.safe.permission.startup.StartupAppListActivity",
+        "com.coloros.oppoguardelf" to "com.coloros.powermanager.fuelgaue.PowerUsageModelActivity",
+        "com.coloros.oppoguardelf" to "com.coloros.powermanager.fuelgaue.PowerSaverModeActivity",
+    )
+
+    fun abreInicioAutomatico(ctx: Context): Boolean {
+        for ((p, c) in COLOROS) {
+            val i = Intent().setClassName(p, c).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (runCatching { ctx.startActivity(i) }.isSuccess) return true
+        }
+        return runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+    }
+
+    fun abreAlarmas(ctx: Context): Boolean = Build.VERSION.SDK_INT >= 31 &&
+        runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+
+    /** Pide que la batería no limite a Ptah (el cuadro de Android; si no sale, la lista de apps de la batería). */
+    @android.annotation.SuppressLint("BatteryLife")
+    fun abreBateria(ctx: Context): Boolean =
+        runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess ||
+            runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+
     /** Cuándo se repintó la hora por última vez (para Ajustes: si se queda atrás, algo lo frena). */
     fun apunta(ctx: Context) { p(ctx).edit().putLong("ultimo", System.currentTimeMillis()).apply() }
     fun ultimo(ctx: Context) = p(ctx).getLong("ultimo", 0L)

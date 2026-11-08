@@ -13,11 +13,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
+    // (el diagnóstico: lo que llega de la cuenta y lo que sube, de los diseños)
+    EspejoCuenta.registro = { ctx, g, k, v, que ->
+        if (g.nodo == Disenos.GRUPO.nodo) {
+            Registro.apunta(ctx, "$que: ${if (v == null) k else Registro.corto(v)}")
+            if (que.endsWith("aplicado")) Registro.origen(ctx, k, "llegó de la cuenta")
+        }
+    }
     Cuenta.cargar(c)
     Skin.cargar(c); TemaAtrio.cargarGuardado(c)
     SincroP.iniciar(c)
@@ -30,7 +38,22 @@ sealed class Pagina {
     data object Nuevo : Pagina()
     data class Editor(val d: Diseno, val nuevo: Boolean) : Pagina()
     data object Ajustes : Pagina()
+    data object Diagnostico : Pagina()
 }
+
+/** Cómo se guarda la pila de páginas (texto: cada página, y el diseño del editor en JSON). */
+val PILA: androidx.compose.runtime.saveable.Saver<List<Pagina>, ArrayList<String>> = androidx.compose.runtime.saveable.Saver(
+    save = { st -> ArrayList(st.map { p -> when (p) {
+        Pagina.Portada -> "P"; is Pagina.Ficha -> "F" + p.id; Pagina.Nuevo -> "N"; Pagina.Ajustes -> "A"; Pagina.Diagnostico -> "D"
+        is Pagina.Editor -> (if (p.nuevo) "E1" else "E0") + p.d.aJson()
+    } }) },
+    restore = { l -> l.mapNotNull { t -> when {
+        t == "P" -> Pagina.Portada; t == "N" -> Pagina.Nuevo; t == "A" -> Pagina.Ajustes; t == "D" -> Pagina.Diagnostico
+        t.startsWith("F") -> Pagina.Ficha(t.drop(1))
+        t.startsWith("E") -> Diseno.deJson(t.drop(2))?.let { Pagina.Editor(it, t[1] == '1') }
+        else -> null
+    } }.ifEmpty { listOf(Pagina.Portada) } },
+)
 
 /** Lo que pide un widget al abrir la app (editar un diseño). Cada pedido es otro objeto: el mismo dos veces, dos veces. */
 class Pedido(val editar: String?)
@@ -44,9 +67,11 @@ class Pedido(val editar: String?)
 @Composable
 fun PtahApp(pedido: Pedido? = null, eligiendo: Boolean = false, alElegir: (Diseno) -> Unit = {}, inicial: List<Pagina> = listOf(Pagina.Portada), guardadoInicial: String? = null) {
     val ctx = LocalContext.current
-    var pila by remember { mutableStateOf(inicial) }
+    // (guardadas aunque Android cierre Ptah por detrás, como hace ColorOS al irte a la pantalla de inicio: al volver, sigues donde estabas,
+    // también a medio editar)
+    var pila by rememberSaveable(stateSaver = PILA) { mutableStateOf(inicial) }
     /** El diseño que se acaba de guardar (la portada lo resalta y ofrece ponerlo en la pantalla). */
-    var guardado by remember { mutableStateOf(guardadoInicial) }
+    var guardado by rememberSaveable { mutableStateOf(guardadoInicial) }
     val arriba = pila.last()
     fun ir(p: Pagina) { pila = pila + p }
     fun volver() { if (pila.size > 1) pila = pila.dropLast(1) }
@@ -73,7 +98,8 @@ fun PtahApp(pedido: Pedido? = null, eligiendo: Boolean = false, alElegir: (Disen
                 is Pagina.Editor -> PantEditor(p.d, p.nuevo, eligiendo = eligiendo, alVolver = ::volver, alGuardar = { d ->
                     if (eligiendo) alElegir(d) else { pila = listOf(Pagina.Portada); guardado = d.id }
                 })
-                Pagina.Ajustes -> PantAjustes(alVolver = ::volver)
+                Pagina.Ajustes -> PantAjustes(alVolver = ::volver, alDiagnostico = { ir(Pagina.Diagnostico) })
+                Pagina.Diagnostico -> PantDiagnostico(alVolver = ::volver)
             }
         }
     }

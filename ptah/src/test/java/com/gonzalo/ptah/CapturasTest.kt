@@ -74,6 +74,7 @@ abstract class CapturasBase {
                         9 -> androidx.compose.runtime.key(cual) { PantEditor(cambiado, false, alVolver = {}, alGuardar = {}, pestanaInicial = PESTANA_COLORES) }
                         10 -> androidx.compose.runtime.key(cual) { PantEditor(dePie, true, alVolver = {}, alGuardar = {}) }
                         11 -> PantPortada(false, guardado = cambiado.id, alAbrir = {}, alPlantilla = {}, alNuevo = {}, alAjustes = {})
+                        12 -> PantDiagnostico(alVolver = {})
                         7 -> PantFicha(disenos[0].id, alVolver = {}, alEditar = {}, alCopiar = {})
                         8 -> PantFicha(disenos[9].id, alVolver = {}, alEditar = {}, alCopiar = {})
                         1 -> PantNuevo({}, {})
@@ -111,6 +112,7 @@ abstract class CapturasBase {
         cual = 211; foto("25-editor-agujas-colores")
         cual = 3; foto("30-selector-color")
         cual = 4; foto("31-selector-color-propio")
+        cual = 12; foto("60-que-ve-tu-movil")
         cual = 300; foto("40-ajustes-apariencia")
         cual = 301; foto("41-ajustes-cuenta")
         cual = 302; foto("42-ajustes-avanzado")

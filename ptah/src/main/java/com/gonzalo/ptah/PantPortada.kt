@@ -61,6 +61,9 @@ fun PantPortada(eligiendo: Boolean, guardado: String? = null, alCerrarGuardado: 
             if (!Intro.vista(ctx)) Explicacion { Intro.cierra(ctx) }
         }
 
+        // ---- Si los relojes no pueden ir con tu letra, o se quedan atrás: dicho aquí, con los botones para arreglarlo
+        if (!eligiendo) AvisoReloj()
+
         // ---- Lo que se acaba de guardar
         if (recien != null && !eligiendo) Guardado(recien, usos[recien.id] ?: 0, alCerrarGuardado)
 
@@ -250,5 +253,40 @@ fun PantNuevo(alVolver: () -> Unit, alElegir: (TipoWidget) -> Unit) {
             }
         }
         Spacer(Modifier.height(30.dp))
+    }
+}
+
+/**
+ * El aviso de la portada para los relojes: si van con la letra del móvil porque falta un permiso, si se han quedado atrás o si Android
+ * frena a Ptah en segundo plano. Con los botones que llevan a cada sitio (los de ColorOS incluidos).
+ */
+@Composable
+fun AvisoReloj() {
+    val ctx = LocalContext.current
+    var vez by remember { mutableIntStateOf(0) }
+    // (se vuelve a mirar al volver a Ptah: el permiso se da fuera)
+    DisposableEffect(Unit) {
+        val owner = androidx.lifecycle.ProcessLifecycleOwner.get()
+        val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) vez++ }
+        owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
+    }
+    val hayRelojes = remember(vez) { Disenos.todos(ctx).any { Minutero.esReloj(it) } }
+    if (!hayRelojes) return
+    val sinPermiso = remember(vez) { !Minutero.puedeExactas(ctx) && !Minutero.letraDelMovil(ctx) }
+    val atrasado = remember(vez) { Minutero.atrasado(ctx) }
+    val restringida = remember(vez) { Minutero.restringida(ctx) }
+    if (!sinPermiso && !atrasado && !restringida) return
+    Column(Modifier.fillMaxWidth().padding(top = 14.dp).background(Acento.copy(alpha = 0.12f)).border(2.dp, Acento).padding(16.dp)) {
+        Text("Tus relojes", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.sp)
+        Text(when {
+            sinPermiso -> "Van con la letra del móvil: para dibujar la hora con la tuya, Ptah tiene que poder despertarse cada minuto, y Android no le deja poner alarmas exactas."
+            restringida -> "Android frena a Ptah en segundo plano: tus relojes pueden quedarse atrás."
+            else -> "Se han quedado atrás: el ahorro de batería no deja a Ptah ponerlos en hora cada minuto."
+        }, color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
+        Spacer(Modifier.height(10.dp))
+        if (sinPermiso && android.os.Build.VERSION.SDK_INT >= 31) AccionGrande(null, "Permitir las alarmas", Modifier.fillMaxWidth()) { Minutero.abreAlarmas(ctx) }
+        MagLink("Que la batería no frene a Ptah", "Sin restricciones de batería") { Minutero.abreBateria(ctx) }
+        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus; si no, los ajustes de Ptah") { Minutero.abreInicioAutomatico(ctx) }
+        if (sinPermiso) MagLink("Dejarlos con la letra del móvil", "Se ponen en hora solos y no gastan; este aviso no vuelve") { Minutero.ponLetraDelMovil(ctx, true); vez++ }
     }
 }

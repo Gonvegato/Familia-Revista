@@ -34,7 +34,9 @@ const val PESTANA_COLORES = 1
 fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVolver: () -> Unit, alGuardar: (Diseno) -> Unit, pestanaInicial: Int = 0) {
     val ctx = LocalContext.current
     val tipo = Tipos.de(inicial.tipo)
-    var d by remember(inicial.id) { mutableStateOf(inicial) }
+    // (lo que llevas cambiado sobrevive a que Android cierre Ptah por detrás: se guarda como JSON)
+    var d by rememberSaveable(inicial.id, stateSaver = androidx.compose.runtime.saveable.Saver<Diseno, String>(
+        save = { it.aJson() }, restore = { Diseno.deJson(it) })) { mutableStateOf(inicial) }
     var pestana by rememberSaveable { mutableIntStateOf(pestanaInicial) }
     val muestra = Plantillas.celdasDe(inicial)
     var celdas by remember { mutableStateOf<Tamanos.Celdas?>(muestra) }
@@ -131,6 +133,12 @@ private fun EditorColores(d: Diseno, tipo: TipoWidget, noche: Boolean, cambia: (
         TipoFondo.TRANSPARENTE -> Nota("Sin fondo: lo de encima, sobre tu fondo de pantalla.", Modifier.padding(top = 4.dp))
     }
     if (e.fondo != TipoFondo.TRANSPARENTE) Barra("Lo que se ve del fondo", e.opacidad.toFloat(), 0f..100f, { "${it.roundToInt()} %" }) { pon(e.copy(opacidad = it.roundToInt())) }
+    // Lo que casi no se va a leer sobre el fondo (como unos minutos marrones sobre verde agua)
+    val fondo = l.papelDeVerdad()
+    val flojos = (listOf("La tinta" to l.tinta, "El acento" to l.acento) + tipo.piezas.filter { e.pieza(it.first).isNotBlank() }.map { it.second to l.pieza(it.first, l.tinta) })
+        .filter { (_, c) -> (c ushr 24) > 0x80 && Lienzo.contraste(c, fondo) < 2.5f }.map { it.first }
+    if (e.fondo != TipoFondo.TRANSPARENTE && flojos.isNotEmpty()) Text("Poco contraste con el fondo: ${flojos.joinToString(", ") { it.lowercase() }} casi no se ${if (flojos.size > 1) "leerán" else "leerá"}. Prueba con uno más claro o más oscuro.",
+        color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 10.dp))
     BloqueEditor("La tinta")
     FilaColor("La tinta", e.tinta, l.tinta, "La de tu Apariencia") { pon(e.copy(tinta = it)) }
     FilaColor("El acento", e.acento, l.acento, "El de tu Apariencia") { pon(e.copy(acento = it)) }

@@ -158,6 +158,40 @@ encenderla, cuánto gasta allí de verdad, y que su lanzador acepte «Ponerlo en
   1×1 y 1×2 entre sus tamaños, y hay una plantilla pensada de pie: «Hora de pie».
 - El reloj «Columna» enseña ya el día y la fecha en 2×2.
 
+## Lo que salió con la 0.3.0 (antes de la próxima versión)
+
+En el OPPO, el widget de pie enseñaba «11» y «51» con la letra del sistema, sin cabecera y con mucho hueco: estaba en el modo de reserva,
+la hora con `TextClock`. Sin el móvil no se puede saber por qué, así que:
+
+- **«Qué ve tu móvil»** (Ajustes → Avanzado): lo que Ptah sabe, para copiarlo («Copiar el informe») o compartirlo, sin nada secreto:
+  - la versión instalada de verdad, el móvil, Android, el lanzador por defecto y la pantalla;
+  - la hora de los relojes: **si va dibujada o con la letra del móvil, y por qué** (lo has elegido, o `canScheduleExactAlarms` dice que
+    no), si hay alarmas exactas, la última vez que se pusieron en hora, si Android frena a Ptah en segundo plano y si tiene la
+    optimización de batería;
+  - por cada widget: su diseño, todo lo que da el lanzador (ancho y alto mínimo y máximo, `OPTION_APPWIDGET_SIZES`, dónde está y sus
+    opciones propias), los tamaños a los que se pinta, cuándo se pintó, la composición de cada tamaño (1×1, de pie…), sus píxeles, si la
+    hora va dibujada o con `TextClock`, y el error si falló al pintar;
+  - por cada diseño: su id, cuándo se guardó, de dónde viene (de este móvil o de la cuenta) y su estilo en corto;
+  - lo último que ha pasado al guardar y con la cuenta («guardado aquí…», «llega de la cuenta, ignorado: más viejo…»: `Registro.kt`).
+- **Un dibujo por cada tamaño** (Android 12 o más): el widget se manda con un `RemoteViews` por tamaño y el lanzador elige el que le va,
+  aunque no avise al cambiarlo de tamaño: los que da el lanzador (`OPTION_APPWIDGET_SIZES`) o, si no los da, el de vertical (ancho mínimo ×
+  alto máximo), el de apaisado y los de siempre (1×1, 1×2, 2×1, 2×2, 4×2, 4×4). Los dibujos de todos comparten lo que deja pesar Android.
+  Comprobado que no se acumula nada al aplicarlo una y otra vez a tamaños distintos. Los repintados van de uno en uno (dos a la vez se
+  pisaban).
+- **El modo con la letra del móvil, mejor**: solo la hora es `TextClock` (y su letra se ajusta a su hueco: autoSize); la cabecera y la
+  fecha van dibujadas (se repintan a medianoche), así que «SÁB 7» y el mes salen siempre. Los minutos en el acento solo si se leen
+  sobre el fondo; si no, en la tinta.
+- **El aviso, en la portada**: si los relojes van con la letra del móvil porque falta el permiso de las alarmas, si se han quedado atrás o
+  si Android frena a Ptah, lo dice arriba, con los botones: «Permitir las alarmas» (Alarmas y recordatorios), «Que la batería no frene a
+  Ptah» (el cuadro de Android para quitarle la optimización: permiso `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`) e «Inicio automático y
+  segundo plano» (las pantallas de ColorOS de `com.coloros.safecenter`, `com.oppo.safe` y `com.coloros.oppoguardelf`, por orden; si no
+  hay ninguna, los ajustes de Ptah); o dejarlos con la letra del móvil.
+- **Poco contraste**: el editor avisa (pestaña Colores) de lo que casi no se leerá sobre el fondo.
+- **Lo que llevas editado sobrevive** a que Android cierre Ptah por detrás (ColorOS lo hace al irte a la pantalla de inicio): las páginas
+  y el diseño a medio editar se guardan (`rememberSaveable`, el diseño como JSON).
+- No hay otra forma fiable de tener la letra del diseño sin alarmas exactas: WorkManager y JobScheduler no bajan de 15 minutos, las
+  alarmas inexactas se retrasan muchos minutos, y `setAlarmClock` saca el despertador en la barra de estado. Sin el permiso, `TextClock`.
+
 ## Capturas
 
 Hechas en el ordenador con datos de mentira (`CapturasTest`; también la portada con pocos diseños y las plantillas, tras guardar y la ficha de un diseño, solo con `-Proborazzi.test.record=true`; las de los widgets, `WidgetsTest`),

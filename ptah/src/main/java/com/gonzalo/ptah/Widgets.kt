@@ -123,12 +123,56 @@ object Widgets {
         Cuenta.cargar(ctx)
     }
 
-    suspend fun pintarUno(ctx: Context, id: Int) {
+    /** De uno en uno: dos repintados a la vez (el del minuto y el de un cambio) se pisaban. */
+    private val cerrojo = kotlinx.coroutines.sync.Mutex()
+
+    suspend fun pintarUno(ctx: Context, id: Int) = cerrojo.withLockCompat { pintarUnoYa(ctx, id) }
+
+    private suspend fun <T> kotlinx.coroutines.sync.Mutex.withLockCompat(f: suspend () -> T): T { lock(); try { return f() } finally { unlock() } }
+
+    private suspend fun pintarUnoYa(ctx: Context, id: Int) {
         val mgr = AppWidgetManager.getInstance(ctx)
-        val (w, h) = tamano(ctx, mgr.getAppWidgetOptions(id))
         val d = disenoDe(ctx, id)?.let { Disenos.de(ctx, it) }
-        if (d != null) Letras.prepara(ctx, listOf(d))
-        mgr.updateAppWidget(id, vistas(ctx, id, d, w, h))
+        val notas = ArrayList<String>()
+        try {
+            if (d != null) Letras.prepara(ctx, listOf(d))
+            mgr.updateAppWidget(id, vistasDe(ctx, id, d, mgr.getAppWidgetOptions(id), notas))
+            Registro.pintado(ctx, id, notas)
+        } catch (e: CancellationException) { throw e } catch (e: Throwable) {
+            Registro.pintado(ctx, id, notas, e)
+            if (e is Exception) throw e
+        }
+    }
+
+    /**
+     * Los tamaños a los que se pinta un widget. Android 12 o más: los que dice el lanzador (OPTION_APPWIDGET_SIZES, en dp: uno por
+     * orientación, normalmente); si no los dice, el de vertical (ancho mínimo × alto máximo) y el de apaisado (ancho máximo × alto mínimo)
+     * y, por si acaso, los de siempre (1×1, 1×2 de pie, 2×1, 2×2, 4×2, 4×4): el lanzador elige él solo el que le va, aunque no avise al
+     * cambiarlo de tamaño. Antes de Android 12, uno: el de la orientación de ahora.
+     */
+    fun tamanosPara(ctx: Context, o: Bundle?): List<Pair<Float, Float>> {
+        if (Build.VERSION.SDK_INT < 31) return listOf(tamano(ctx, o))
+        @Suppress("DEPRECATION")
+        val dados = o?.getParcelableArrayList<android.util.SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES).orEmpty()
+            .filter { it.width > 20f && it.height > 20f }.map { it.width to it.height }
+        val l = ArrayList<Pair<Float, Float>>()
+        if (dados.isNotEmpty()) l += dados
+        else {
+            val minW = o?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 0; val maxW = o?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH) ?: 0
+            val minH = o?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 0; val maxH = o?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: 0
+            if (minW > 20 && maxH > 20) l += minW.toFloat() to maxH.toFloat()
+            if (maxW > 20 && minH > 20) l += maxW.toFloat() to minH.toFloat()
+            l += listOf(Tamanos.Celdas(1, 1), Tamanos.Celdas(1, 2), Tamanos.Celdas(2, 1), Tamanos.Celdas(2, 2), Tamanos.Celdas(4, 2), Tamanos.Celdas(4, 4)).map { Tamanos.dp(it) }
+        }
+        return l.map { (w, h) -> Math.round(w).toFloat() to Math.round(h).toFloat() }.distinct().take(8)
+    }
+
+    /** Lo que se manda al lanzador: con varios tamaños (Android 12 o más), un RemoteViews por tamaño y que él elija. [notas]: para el diagnóstico. */
+    fun vistasDe(ctx: Context, id: Int, d: Diseno?, o: Bundle?, notas: MutableList<String> = ArrayList()): RemoteViews {
+        val ts = tamanosPara(ctx, o)
+        if (Build.VERSION.SDK_INT < 31 || ts.size == 1) { val (w, h) = ts.first(); return vistas(ctx, id, d, w, h, notas = notas) }
+        val area = ts.sumOf { (w, h) -> (w * h).toDouble() }.toFloat()
+        return RemoteViews(ts.associate { (w, h) -> android.util.SizeF(w, h) to vistas(ctx, id, d, w, h, area, notas) })
     }
 
     /** Claro, oscuro, o null = como el sistema (se mandan los dos y Android enseña el que toca). Con colores que no dependen de eso, uno. */
@@ -148,10 +192,11 @@ object Widgets {
     }
 
     /** Píxeles por dp del dibujo: los de la pantalla, sin pasarse de memoria (Android limita lo que pesa un widget). */
-    fun escala(ctx: Context, w: Float, h: Float, copias: Int): Float {
+    fun escala(ctx: Context, w: Float, h: Float, copias: Int, area: Float = w * h): Float {
         val d = ctx.resources.displayMetrics.density
-        val tope = if (copias == 2) 1_100_000f else 1_800_000f
-        return min(d, sqrt(tope / (w * h)))
+        // (con varios tamaños, entre todos: Android limita lo que pesan todos los dibujos de un widget)
+        val tope = (if (copias == 2) 1_100_000f else 1_800_000f) * (if (area > w * h * 1.01f) 1.4f else 1f)
+        return min(d, sqrt(tope / area))
     }
 
     /** ¿El móvil está ahora en oscuro? (para los relojes dibujados, que se repintan cada minuto: un solo dibujo) */
@@ -164,7 +209,7 @@ object Widgets {
      * (`RemoteViews.reapply`), y cada `addView` se sumaba a las vistas de antes (en un OPPO, la hora salía tres veces, una por cada tamaño
      * al que se había pintado). Por eso primero se vacían los huecos y se quitan los dibujos de antes.
      */
-    fun vistas(ctx: Context, id: Int, d: Diseno?, w: Float, h: Float): RemoteViews {
+    fun vistas(ctx: Context, id: Int, d: Diseno?, w: Float, h: Float, area: Float = w * h, notas: MutableList<String>? = null): RemoteViews {
         val datos = datosDe(ctx)
         val diseno = d ?: sinDiseno(id)
         val reloj = Minutero.esReloj(diseno)
@@ -178,7 +223,7 @@ object Widgets {
         val dens = ctx.resources.displayMetrics.density
         val l: Lienzo
         if (n == null) {
-            val s = escala(ctx, w, h, 2)
+            val s = escala(ctx, w, h, 2, area)
             l = Pintor.pinta(ctx, diseno, w, h, false, s, datos, enWidget = true, relojVivo = relojVivo)
             val ln = Pintor.pinta(ctx, diseno, w, h, true, s, datos, enWidget = true, relojVivo = relojVivo)
             rv.setImageViewBitmap(R.id.w_dia, l.bm)
@@ -186,11 +231,13 @@ object Widgets {
             l.vivos.forEach { rv.addView(R.id.w_vivos_dia, vivo(ctx, it, w, h, dens, 2)) }
             ln.vivos.forEach { rv.addView(R.id.w_vivos_noche, vivo(ctx, it, w, h, dens, 2)) }
         } else {
-            l = Pintor.pinta(ctx, diseno, w, h, n, escala(ctx, w, h, 1), datos, enWidget = true, relojVivo = relojVivo)
+            l = Pintor.pinta(ctx, diseno, w, h, n, escala(ctx, w, h, 1, area), datos, enWidget = true, relojVivo = relojVivo)
             rv.setImageViewBitmap(R.id.w_img, l.bm)
             l.vivos.forEach { rv.addView(R.id.w_vivos, vivo(ctx, it, w, h, dens, 1)) }
         }
         l.zonas.forEachIndexed { i, z -> rv.addView(R.id.w_zonas, zona(ctx, z, id, i, w, h, dens)) }
+        notas?.add("${w.roundToInt()}×${h.roundToInt()} dp: ${l.proporcion.name.lowercase()}, ${l.bm.width}×${l.bm.height} px" + (if (n == null) " ×2 (claro y oscuro)" else "") +
+            if (!reloj) "" else if (relojVivo) ", hora con TextClock (${l.vivos.size} vivas)" else ", hora dibujada")
         return rv
     }
 
@@ -232,22 +279,30 @@ object Widgets {
         val (l, t, r, b) = huecos(x.r, w, h, d).toList()
         return when (x) {
             is Vivo.Texto -> RemoteViews(ctx.packageName, x.letra.diseno).apply {
-                setViewPadding(R.id.w_hueco, l, t, r, b)
+                coloca(this, x.r, w, h, l, t, r, b)
                 setTextColor(R.id.w_reloj, x.color)
-                setTextViewTextSize(R.id.w_reloj, TypedValue.COMPLEX_UNIT_DIP, x.tam)
                 // (el mismo formato con el móvil en 12 o en 24 horas, salvo el «como el móvil», que lleva los dos)
                 setCharSequence(R.id.w_reloj, "setFormat24Hour", x.formato)
                 setCharSequence(R.id.w_reloj, "setFormat12Hour", x.formato12)
                 setInt(R.id.w_reloj, "setGravity", Gravity.CENTER_VERTICAL or when (x.al) { Alineacion.IZQUIERDA -> Gravity.START; Alineacion.CENTRO -> Gravity.CENTER_HORIZONTAL; Alineacion.DERECHA -> Gravity.END })
             }
-            is Vivo.Agujas -> agujas(ctx, x, l, t, r, b, d, copias)
+            is Vivo.Agujas -> agujas(ctx, x, l, t, r, b, d, copias, w, h)
         }
+    }
+
+    /**
+     * Pone lo vivo en su sitio (con márgenes: un widget no deja cambiar pesos desde fuera). Para que caiga donde toca, el widget se pinta a
+     * los tamaños que da el propio lanzador ([vistasDe]); y el `TextClock` ajusta su letra a su hueco (autoSize).
+     */
+    @Suppress("UNUSED_PARAMETER")
+    private fun coloca(v: RemoteViews, r: android.graphics.RectF, w: Float, h: Float, l: Int, t: Int, rr: Int, b: Int, centro: Int = R.id.w_reloj) {
+        v.setViewPadding(R.id.w_hueco, l, t, rr, b)
     }
 
     /** El lado (px) de las máscaras de las agujas: el de la esfera, sin pasarse (cada una pesa un byte por píxel). */
     fun ladoAgujas(r: android.graphics.RectF, d: Float, copias: Int) = min(r.width() * d, if (copias == 2) 560f else 760f).roundToInt().coerceAtLeast(16)
 
-    private fun agujas(ctx: Context, x: Vivo.Agujas, l: Int, t: Int, r: Int, b: Int, d: Float, copias: Int): RemoteViews {
+    private fun agujas(ctx: Context, x: Vivo.Agujas, l: Int, t: Int, r: Int, b: Int, d: Float, copias: Int, wW: Float, hW: Float): RemoteViews {
         if (Build.VERSION.SDK_INT < 31) {
             // Android 10 y 11: las agujas de bastón del diseño XML (no se pueden cambiar desde fuera), del color que mejor se acerque
             val claras = Lienzo.luz(x.minutera) > 0.5f
@@ -255,7 +310,7 @@ object Widgets {
         }
         val lado = ladoAgujas(x.r, d, copias)
         return RemoteViews(ctx.packageName, R.layout.w_vivo_agujas).apply {
-            setViewPadding(R.id.w_hueco, l, t, r, b)
+            coloca(this, x.r, wW, hW, l, t, r, b, R.id.w_agujas)
             // La esfera, vacía (la de verdad va en el dibujo de debajo) y del mismo tamaño que las agujas: así el reloj las escala igual
             setIcon(R.id.w_agujas, "setDial", Icon.createWithBitmap(Bitmap.createBitmap(lado, lado, Bitmap.Config.ALPHA_8)))
             setIcon(R.id.w_agujas, "setHourHand", Icon.createWithBitmap(Agujas.mascara(lado, Agujas.Pieza.HORA, x.forma)))

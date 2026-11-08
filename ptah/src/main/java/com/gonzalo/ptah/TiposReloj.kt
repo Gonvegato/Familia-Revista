@@ -45,7 +45,8 @@ object RelojDigital : TipoWidget {
     val CABECERAS = listOf("portada" to "Portada", "columna" to "Columna", "titular" to "Titular con fecha")
 
     override fun opcionesDeSerie() = mapOf("cabecera" to "portada", "formato" to "24", "ante" to "La hora", "letraHora" to "")
-    override fun necesita(d: Diseno) = if (d.estilo.ve("numero") && d.texto("cabecera") == "columna") setOf(Necesidad.MEDIANOCHE) else emptySet()
+    // (la fecha va dibujada: cambia a medianoche)
+    override fun necesita(d: Diseno) = setOf(Necesidad.MEDIANOCHE)
     override fun accion(d: Diseno) = Accion.Alarmas
     override fun descripcionToque(d: Diseno) = "Abrir las alarmas"
 
@@ -111,7 +112,9 @@ object RelojDigital : TipoWidget {
         val letra = letraHora(l)
         val fila = (bottom - top - 2f) / 2f
         l.vivoQueLlena(horas, letra, RectF(a.left, top, a.right, top + fila), l.pieza("hora", l.tinta))
-        l.vivoQueLlena("mm", letra, RectF(a.left, bottom - fila, a.right, bottom), l.pieza("minutos", l.acento))
+        // (los minutos en el acento, si se lee sobre el fondo; si no, en la tinta)
+        val minutos = l.pieza("minutos", if (Lienzo.contraste(l.acento, l.papelDeVerdad()) >= 2.5f) l.acento else l.tinta)
+        l.vivoQueLlena("mm", letra, RectF(a.left, bottom - fila, a.right, bottom), minutos)
     }
 
     /** «Portada»: la hora enorme y, debajo de una raya, la fecha en versalitas. */
@@ -231,6 +234,7 @@ object RelojAgujas : TipoWidget {
     private val ROMANOS = listOf("XII", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI")
 
     override fun opcionesDeSerie() = mapOf("numeros" to "romanos", "forma" to FormaAgujas.HOJA.name, "segundero" to false, "texto" to "Ptah")
+    override fun necesita(d: Diseno) = setOf(Necesidad.MEDIANOCHE)
     override fun accion(d: Diseno) = Accion.Alarmas
     override fun descripcionToque(d: Diseno) = "Abrir las alarmas"
 

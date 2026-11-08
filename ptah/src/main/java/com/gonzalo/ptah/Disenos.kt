@@ -51,6 +51,8 @@ object Disenos {
         val n = d.copy(cambiado = System.currentTimeMillis(), creado = d.creado.takeIf { it > 0 } ?: System.currentTimeMillis())
         if (fijos != null) { fijos = fijos!!.filter { it.id != n.id } + n; ver.intValue++; return }
         p(ctx).edit().putString(n.id, n.aJson()).apply()
+        Registro.apunta(ctx, "guardado aquí: ${Registro.corto(n.aJson())}")
+        Registro.origen(ctx, n.id, "guardado en este móvil")
         ver.intValue++
         Widgets.pedir(ctx)
     }
@@ -59,6 +61,7 @@ object Disenos {
     fun borra(ctx: Context, id: String) {
         if (fijos != null) { fijos = fijos!!.filter { it.id != id }; ver.intValue++; return }
         p(ctx).edit().remove(id).apply()
+        Registro.apunta(ctx, "borrado aquí: $id")
         Fotos.borra(ctx, id)
         ver.intValue++
         Widgets.pedir(ctx)

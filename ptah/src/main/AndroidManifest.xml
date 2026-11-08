@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <!-- Al encender el móvil, las alarmas se han perdido: se vuelven a poner -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Para pedir, con un botón, que el ahorro de batería no frene el minutero (Ptah no va por Google Play) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <queries>
         <!-- Las hermanas y los colores de Jonsu -->
         <package android:name="com.gonzalo.hiedra" />
@@ -36,6 +38,14 @@
         <intent><action android:name="android.intent.action.WEB_SEARCH" /></intent>
         <intent><action android:name="android.speech.action.WEB_SEARCH" /></intent>
         <intent><action android:name="android.intent.action.SHOW_ALARMS" /></intent>
+        <!-- El lanzador por defecto (para el diagnóstico) y las pantallas de batería e inicio automático de ColorOS -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <package android:name="com.coloros.safecenter" />
+        <package android:name="com.oppo.safe" />
+        <package android:name="com.coloros.oppoguardelf" />
     </queries>
     <application
         android:label="Ptah"

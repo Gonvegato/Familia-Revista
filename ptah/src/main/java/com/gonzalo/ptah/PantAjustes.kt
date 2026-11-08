@@ -24,11 +24,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.3.0"
+const val VERSION = "0.4.0"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
-fun PantAjustes(alVolver: () -> Unit, inicial: Int = 0) {
+fun PantAjustes(alVolver: () -> Unit, inicial: Int = 0, alDiagnostico: () -> Unit = {}) {
     var pestana by rememberSaveable { mutableIntStateOf(inicial) }
     EspejoCuenta.version
     val mg = margen()
@@ -43,7 +43,7 @@ fun PantAjustes(alVolver: () -> Unit, inicial: Int = 0) {
             when (pestana) {
                 0 -> SeccionApariencia()
                 1 -> SeccionCuenta()
-                else -> SeccionAvanzado()
+                else -> SeccionAvanzado(alDiagnostico)
             }
         }
         Spacer(Modifier.height(26.dp))
@@ -78,9 +78,12 @@ fun CampoClave(etiqueta: String, valor: String, alCambiar: (String) -> Unit) {
 }
 
 @Composable
-private fun SeccionAvanzado() {
+private fun SeccionAvanzado(alDiagnostico: () -> Unit) {
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
+    Antetitulo("Si algo no sale bien", Modifier.padding(bottom = 4.dp))
+    MagLink("Qué ve tu móvil", "Los tamaños de tus widgets, la hora, lo guardado: para copiarlo y mandarlo", accent = true) { alDiagnostico() }
+    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
     SeccionActualizaciones()
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
@@ -219,19 +222,14 @@ fun SeccionRelojes() {
     Text("Para que la hora salga con la letra de tu diseño, Ptah la dibuja y vuelve a pintar tus relojes al empezar cada minuto, solo con la pantalla encendida (apagada no gasta nada). Si lo prefieres, con la letra del móvil: se pone en hora sola y no gasta, pero con la letra del sistema.",
         color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     MagChoice(listOf("Con la letra del diseño", "Con la letra del móvil"), if (delMovil) 1 else 0, "La hora y la fecha") { i -> delMovil = i == 1; Minutero.ponLetraDelMovil(ctx, delMovil) }
-    if (!exactas) {
-        Text("Android no deja ahora a Ptah despertarse cada minuto: tus relojes van con la letra del móvil hasta que lo permitas.", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp)
-        if (android.os.Build.VERSION.SDK_INT >= 31) MagLink("Permitir las alarmas exactas", "En Ajustes del móvil: «Alarmas y recordatorios»", accent = true) {
-            runCatching { ctx.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, android.net.Uri.parse("package:${ctx.packageName}"))) }
-        }
-    }
+    Minutero.motivo(ctx)?.let { Text("Ahora tus relojes van con la letra del móvil, porque $it.", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp)) }
+    if (!exactas && android.os.Build.VERSION.SDK_INT >= 31) MagLink("Permitir las alarmas exactas", "En Ajustes del móvil: «Alarmas y recordatorios»", accent = true) { Minutero.abreAlarmas(ctx) }
     if (!delMovil && exactas) {
         val u = Minutero.ultimo(ctx)
         if (u > 0) Text("Última vez que se pusieron en hora: " + java.text.SimpleDateFormat("HH:mm", java.util.Locale("es", "ES")).format(java.util.Date(u)), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
         Text("Si un reloj se queda atrás (en algunos móviles, como los OPPO, Realme o Xiaomi, el ahorro de batería no deja a las apps despertarse), permite a Ptah «actividad en segundo plano» o «inicio automático» y quítale la optimización de batería.",
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
-        MagLink("Abrir los ajustes de Ptah en el móvil", "Batería → permitir actividad en segundo plano") {
-            runCatching { ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:${ctx.packageName}"))) }
-        }
+        MagLink("Que la batería no frene a Ptah", "El cuadro de Android para quitarle la optimización") { Minutero.abreBateria(ctx) }
+        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus (ColorOS); si no, los ajustes de Ptah") { Minutero.abreInicioAutomatico(ctx) }
     }
 }

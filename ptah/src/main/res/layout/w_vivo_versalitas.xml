@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Lo que se mueve solo: un TextClock con la letra de texto en versalitas (Android no deja poner en un widget letras que no vengan dentro de la app) -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/w_hueco" android:layout_width="match_parent" android:layout_height="match_parent">
-    <TextClock android:id="@+id/w_reloj" android:layout_width="match_parent" android:layout_height="match_parent"
-        android:fontFamily="@font/body_bold" android:includeFontPadding="false" android:maxLines="1"
+<!-- Lo que se mueve solo: un TextClock con la letra de texto en versalitas (Android no deja poner en un widget letras que no vengan dentro de la app)
+     Va en su sitio con márgenes (Widgets.coloca) y su letra se ajusta a su hueco (autoSize). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_hueco" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <FrameLayout android:id="@+id/w_arriba" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0" />
+    <LinearLayout android:id="@+id/w_fila" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+        <FrameLayout android:id="@+id/w_izq" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0" />
+        <TextClock android:id="@+id/w_reloj" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
+        android:fontFamily="@font/body_bold" android:includeFontPadding="false" android:maxLines="1" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="6sp" android:autoSizeMaxTextSize="600sp" android:autoSizeStepGranularity="1px"
         android:gravity="center_vertical|start" android:textColor="#FF15120F" android:format24Hour="H:mm" android:format12Hour="h:mm"
         android:importantForAccessibility="yes"
         android:textAllCaps="true" android:letterSpacing="0.16" />
-</FrameLayout>
+        <FrameLayout android:id="@+id/w_der" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0" />
+    </LinearLayout>
+    <FrameLayout android:id="@+id/w_abajo" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0" />
+</LinearLayout>

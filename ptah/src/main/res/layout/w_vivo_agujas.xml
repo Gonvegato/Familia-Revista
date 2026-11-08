@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Las agujas: un AnalogClock. En Android 12 o más llevan las del diseño (Widgets.agujas: setIcon y setColorStateList); en Android 10 y 11, estas, oscuras -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/w_hueco" android:layout_width="match_parent" android:layout_height="match_parent">
-    <AnalogClock android:id="@+id/w_agujas" android:layout_width="match_parent" android:layout_height="match_parent"
+<!-- Las agujas: un AnalogClock. En Android 12 o más llevan las del diseño (Widgets.agujas: setIcon y setColorStateList); en Android 10 y 11, estas, oscuras
+     Va en su sitio con márgenes (Widgets.coloca) y su letra se ajusta a su hueco (autoSize). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_hueco" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <FrameLayout android:id="@+id/w_arriba" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0" />
+    <LinearLayout android:id="@+id/w_fila" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+        <FrameLayout android:id="@+id/w_izq" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0" />
+        <AnalogClock android:id="@+id/w_agujas" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
         android:dial="@drawable/esfera_vacia" android:hand_hour="@drawable/aguja_hora_oscuras" android:hand_minute="@drawable/aguja_minuto_oscuras"
         android:importantForAccessibility="yes" />
-</FrameLayout>
+        <FrameLayout android:id="@+id/w_der" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0" />
+    </LinearLayout>
+    <FrameLayout android:id="@+id/w_abajo" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0" />
+</LinearLayout>

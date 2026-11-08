@@ -71,7 +71,7 @@ class WidgetsTest {
         // El digital: la hora y la fecha son TextClock; la hora cabe entera con su letra (también «23:59»)
         val l = Pintor.pinta(ctx, RelojDigital.nuevo(), 276f, 220f, false, 1f, datos, enWidget = true, relojVivo = true)
         val textos = l.vivos.filterIsInstance<Vivo.Texto>()
-        assertEquals(listOf(Formatos.FECHA_LARGA, Formatos.HORA), textos.map { it.formato })
+        assertEquals("la fecha va dibujada; la hora, TextClock", listOf(Formatos.HORA), textos.map { it.formato })
         for (t in textos) {
             val p = l.tp(l.letraFija(t.letra), t.tam, 0, t.letra.espaciado)
             val ancho = Formatos.muestras(t.formato).maxOf { p.measureText(if (t.letra.mayusculas) it.uppercase() else it) }
@@ -103,27 +103,23 @@ class WidgetsTest {
         // desde un widget, o una letra que no se pueda poner, fallaría aquí)
         val v = Widgets.vistas(ctx, 5, d, 276f, 220f).apply(ctx, FrameLayout(ctx))
         val relojes = vistas(v).filterIsInstance<TextClock>()
-        // con la apariencia «como el móvil»: el dibujo claro y el oscuro, cada uno con su hora y su fecha
-        assertEquals(4, relojes.size)
+        // con la apariencia «como el móvil»: el dibujo claro y el oscuro, cada uno con su hora (la fecha va dibujada: cambia a medianoche)
+        assertEquals(2, relojes.size)
+        assertTrue(relojes.none { it.format24Hour == Formatos.FECHA_LARGA })
         val hora = relojes.first { it.format24Hour == Formatos.HORA }
         assertEquals(Formatos.HORA, hora.format12Hour.toString())
         // La letra es la de la familia (la del recurso, no la del sistema)
         val titulos = Letras.fuente(ctx, R.font.display_semibold)
         assertNotEquals(Typeface.DEFAULT, hora.typeface)
         assertEquals(titulos, hora.typeface)
-        val fecha = relojes.first { it.format24Hour == Formatos.FECHA_LARGA }
-        assertTrue("la fecha, en versalitas", fecha.isAllCaps); assertEquals(0.16f, fecha.letterSpacing, 0.001f)
-        assertEquals(Letras.fuente(ctx, R.font.body_bold), fecha.typeface)
-        // Su tamaño, el calculado (en dp)
-        val l = Pintor.pinta(ctx, d, 276f, 220f, false, 1f, DatosDeMentira(ctx), enWidget = true, relojVivo = true)
-        val tam = l.vivos.filterIsInstance<Vivo.Texto>().last().tam
-        assertEquals(tam * ctx.resources.displayMetrics.density, hora.textSize, 0.6f)
+        // Su letra se ajusta a su hueco (autoSize): llena el sitio aunque el lanzador lo haga algo más grande
+        assertEquals(android.widget.TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, hora.autoSizeTextType)
         // Con un color fijo (sin depender del claro y del oscuro), un solo dibujo
         val fijo = d.conEstilo(Estilo(fondo = TipoFondo.COLOR, colorFondo = "#12393A", tinta = "#F2E6CF", acento = "#D98A3D", secundario = "#AAAAAA"))
         assertEquals(false, Widgets.noche(fijo))
         val v2 = Widgets.vistas(ctx, 5, fijo, 276f, 220f).apply(ctx, FrameLayout(ctx))
         val r2 = vistas(v2).filterIsInstance<TextClock>()
-        assertEquals(2, r2.size)
+        assertEquals(1, r2.size)
         assertEquals(0xFFF2E6CF.toInt(), r2.first { it.format24Hour == Formatos.HORA }.currentTextColor)
     }
 
@@ -222,17 +218,75 @@ class WidgetsTest {
         assertFalse(b1.sameAs(Pintor.pinta(ctx, d, 276f, 220f, false, 1f, luego, enWidget = true).bm))
     }
 
-    @Test fun conLaLetraDelMovilHayUnaHoraYUnaFechaAunqueSeRepinte() {
+    @Test fun conLaLetraDelMovilHayUnaSolaHoraAunqueSeRepinte() {
         Minutero.ponLetraDelMovil(ctx, true)
         val d = RelojDigital.nuevo()
         Disenos.fijos = listOf(d)
         val v = Widgets.vistas(ctx, 5, d, 130f, 220f).apply(ctx, FrameLayout(ctx))
         for ((w, h) in listOf(276f to 454f, 200f to 300f, 276f to 454f)) Widgets.vistas(ctx, 5, d, w, h).reapply(ctx, v)
         val relojes = visibles(v).filterIsInstance<TextClock>()
-        assertEquals("una hora y una fecha a la vista", 2, relojes.size)
+        assertEquals("una hora a la vista", 1, relojes.size)
         assertEquals(1, relojes.count { it.format24Hour == Formatos.HORA })
         // (y en total, la de día y la de noche, nada más)
-        assertEquals(4, vistas(v).count { it is TextClock })
+        assertEquals(2, vistas(v).count { it is TextClock })
+        // En 1×2 de pie, con la letra del móvil: la cabecera («SÁB 7») y el mes, dibujados; las horas y los minutos, dos TextClock
+        val pie = Pintor.pinta(ctx, d, 70f, 146f, false, 1f, DatosDeMentira(ctx), enWidget = true, relojVivo = true)
+        assertEquals(listOf("HH", "mm"), pie.vivos.filterIsInstance<Vivo.Texto>().map { it.formato })
+        val vacio = Pintor.pinta(ctx, d.conEstilo(d.estilo.copy(ocultas = setOf("antetitulo", "fecha"))), 70f, 146f, false, 1f, DatosDeMentira(ctx), enWidget = true, relojVivo = true)
+        assertFalse("la cabecera se dibuja", pie.bm.sameAs(vacio.bm))
+    }
+
+    // ---------------------------------------------------------------- los tamaños que da el lanzador
+
+    private fun opciones(minW: Int, maxW: Int, minH: Int, maxH: Int, tamanos: List<android.util.SizeF>? = null) = android.os.Bundle().apply {
+        putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minW); putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, maxW)
+        putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, minH); putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxH)
+        if (tamanos != null) putParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, ArrayList(tamanos))
+    }
+
+    @Test fun seMandaUnDibujoPorCadaTamanoDelLanzador() {
+        // Con los tamaños que da el lanzador (Android 12 o más): esos, y nada más
+        val dados = opciones(70, 150, 70, 150, listOf(android.util.SizeF(70f, 146f), android.util.SizeF(150f, 70f)))
+        assertEquals(listOf(70f to 146f, 150f to 70f), Widgets.tamanosPara(ctx, dados))
+        // Sin ellos: el de vertical (ancho mín. × alto máx.), el de apaisado y los de siempre
+        val sin = Widgets.tamanosPara(ctx, opciones(64, 140, 70, 150))
+        assertEquals(64f to 150f, sin[0]); assertEquals(140f to 70f, sin[1])
+        assertTrue(Tamanos.dp(Tamanos.Celdas(1, 1)) in sin && Tamanos.dp(Tamanos.Celdas(1, 2)) in sin && Tamanos.dp(Tamanos.Celdas(4, 4)) in sin)
+        // Cada variante, con su composición; y aplicándolo una y otra vez (con otros tamaños) no se acumula nada
+        val d = RelojDigital.nuevo()
+        Disenos.fijos = listOf(d)
+        val notas = ArrayList<String>()
+        val rv = Widgets.vistasDe(ctx, 5, d, dados, notas)
+        assertEquals(2, notas.size)
+        assertTrue(notas[0], notas[0].startsWith("70×146 dp: vertical")); assertTrue(notas[1], notas[1].startsWith("150×70 dp: normal"))
+        val v = rv.apply(ctx, FrameLayout(ctx))
+        for (o in listOf(dados, opciones(64, 140, 70, 150), dados, opciones(300, 300, 300, 300))) Widgets.vistasDe(ctx, 5, d, o).reapply(ctx, v)
+        val imgs = visibles(v).filterIsInstance<android.widget.ImageView>().filter { it.drawable != null }
+        assertEquals("un solo dibujo a la vista", 1, imgs.size)
+        assertTrue(vistas(v).none { it is TextClock })
+    }
+
+    @Test fun elDiagnosticoLoCuentaSinSecretos() {
+        val d = RelojDigital.nuevo().copy(nombre = "Mi reloj")
+        Disenos.fijos = null
+        Disenos.guarda(ctx, d)
+        val mgr = shadowOf(AppWidgetManager.getInstance(ctx))
+        val id = mgr.createWidget(WPtah::class.java, R.layout.w_marco)
+        Widgets.asigna(ctx, id, d.id)
+        kotlinx.coroutines.runBlocking { Widgets.pintarUno(ctx, id) }
+        val t = Diagnostico.texto(ctx)
+        println(t)
+        for (que in listOf("== Ptah y este móvil ==", "Android", "Lanzador", "== La hora de los relojes ==", "Ahora: dibujada", "== Widget $id ==", "Mi reloj (${d.id}",
+            "Ancho mín. / máx.", "Tamaños (OPTION_APPWIDGET_SIZES)", "Lo que se pintó", "hora dibujada", "== Tus diseños ==", "guardado aquí: ${d.id}")) assertTrue(que, t.contains(que))
+        // Con la letra del móvil, lo dice y dice por qué
+        Minutero.ponLetraDelMovil(ctx, true)
+        assertTrue(Diagnostico.texto(ctx).contains("con la letra del móvil (TextClock), porque lo has elegido"))
+        Minutero.ponLetraDelMovil(ctx, false)
+        org.robolectric.shadows.ShadowAlarmManager.setCanScheduleExactAlarms(false)
+        assertTrue(Diagnostico.texto(ctx).contains("porque Android no deja a Ptah poner alarmas exactas"))
+        // Nada secreto: ni el uid, ni el usuario, ni el correo, ni claves
+        assertFalse(t.contains("@")); assertFalse(t.lowercase().contains("token"))
+        Disenos.borra(ctx, d.id)
     }
 
     @Test fun elMinuteroSoloAndaConRelojesDibujados() {
@@ -331,6 +385,20 @@ class WidgetsTest {
                 }
             }
         }
+        // Con la letra del móvil (TextClock): lo que de verdad pinta el lanzador, inflado y dibujado a su tamaño
+        Minutero.ponLetraDelMovil(ctx, true)
+        for ((nom, d) in listOf("digital" to RelojDigital.nuevo(), "depie" to Plantillas.TODAS.first { it.first.id == "pdepie" }.first, "agujas" to RelojAgujas.nuevo())) {
+            for ((tn, c) in listOf("1x1" to Tamanos.Celdas(1, 1), "1x2" to Tamanos.Celdas(1, 2), "4x2" to Tamanos.Celdas(4, 2))) {
+                val (w, h) = Tamanos.dp(c)
+                val dens = ctx.resources.displayMetrics.density
+                val v = Widgets.vistas(ctx, 5, d, w, h).apply(ctx, FrameLayout(ctx))
+                val pw = (w * dens).toInt(); val ph = (h * dens).toInt()
+                v.measure(View.MeasureSpec.makeMeasureSpec(pw, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(ph, View.MeasureSpec.EXACTLY)); v.layout(0, 0, pw, ph)
+                val b = Bitmap.createBitmap(pw, ph, Bitmap.Config.ARGB_8888); v.draw(Canvas(b))
+                guarda(sobreFondo(b, dens), "textclock_${nom}_$tn", "$dir/textclock")
+            }
+        }
+        Minutero.ponLetraDelMovil(ctx, false)
         // Lo de más: el digital en sus tres cabeceras en 4×2, y la foto con foto
         for (cab in listOf("portada", "columna", "titular")) guarda(sobreFondo(pinta(RelojDigital.nuevo().con("cabecera", cab), 276f, 220f, false), s), "digital_${cab}_4x2")
         guarda(sobreFondo(pinta(Foto.nuevo().con("pie", "Atardecer en Cádiz"), 130f, 220f, false), s), "foto_2x2_con_foto")

@@ -85,7 +85,7 @@ class ModeloTest {
         assertEquals(setOf("digital", "agujas", "calendario", "buscador", "accesos", "tiempo", "bateria", "nota", "cuentaatras", "foto"), ids.toSet())
         assertEquals(setOf(Necesidad.TIEMPO), Tiempo.necesita(Tiempo.nuevo()))
         assertEquals(setOf(Necesidad.MEDIANOCHE), Calendario.necesita(Calendario.nuevo()))
-        assertTrue(RelojDigital.necesita(RelojDigital.nuevo()).isEmpty())
+        assertEquals(setOf(Necesidad.MEDIANOCHE), RelojDigital.necesita(RelojDigital.nuevo()))
     }
 
     @Test fun lasPlantillasSonDeTiposQueHay() {
