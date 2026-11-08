@@ -210,6 +210,8 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
             Text("Ponerla en Ajustes → IA →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
         }
     }
+    // El club de verdad: si espera tu «Sí, es este» (tras un traspaso) o aún no está identificado
+    if (ClaveApi.hay && !u.clubIdentificado) { Spacer(Modifier.height(10.dp)); SeccionClub(u, enInicio = true) }
     entradas.filter { it.pendiente.isNotBlank() }.take(3).forEach { e ->
         Spacer(Modifier.height(10.dp))
         val va = EnCurso.ids[e.id]

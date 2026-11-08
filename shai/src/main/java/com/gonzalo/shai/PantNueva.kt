@@ -40,6 +40,22 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
     var ocupado by remember { mutableStateOf(false) }
     var aviso by remember { mutableStateOf<String?>(null) }
     var creada by remember { mutableStateOf<String?>(null) }
+    // El club de verdad (búsqueda web): lo encontrado, si se está buscando, desde dónde se pidió y si prefieres no identificarlo
+    var info by remember { mutableStateOf<InfoClub?>(null) }
+    var buscando by remember { mutableStateOf(false) }
+    var abajo by remember { mutableStateOf(false) }
+    var sinIdentificar by remember { mutableStateOf(false) }
+    var avisoClub by remember { mutableStateOf<String?>(null) }
+    val infoVale = info?.takeIf { it.es(club) }
+    fun buscaClub(precisa: String = "", desdeAbajo: Boolean = false) {
+        if (buscando || club.isBlank()) return
+        buscando = true; abajo = desdeAbajo; avisoClub = null
+        ambito.launch {
+            val r = withContext(Dispatchers.IO) { runCatching { Clubes.identifica(club, liga, precisa) } }
+            buscando = false
+            r.onSuccess { info = it }.onFailure { avisoClub = Motor.mensaje(it) }
+        }
+    }
 
     PaginaRevista {
         RevistaTopBar(alVolver, "Shai")
@@ -70,6 +86,16 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
         BloqueEditor("Dónde")
         Campo("Club", club, "El de tu partida") { club = it }
         Campo("Liga", liga, "LaLiga, Premier League…") { liga = it }
+        when {
+            buscando && !abajo -> Cursiva("Buscando tu club en la web…", Modifier.padding(top = 6.dp), color = Muted)
+            infoVale?.confirmado == true -> Tarjeta(Modifier.padding(top = 8.dp), bordeIzq = Acento) {
+                Rotulo("Club identificado"); TextoTarjeta(infoVale.resumen, Modifier.padding(top = 4.dp), color = Charcoal)
+                PildoraMarco("Cambiar", Modifier.padding(top = 8.dp)) { info = infoVale.copy(confirmado = false) }
+            }
+            infoVale != null && !abajo -> Box(Modifier.padding(top = 8.dp)) { ConfirmaClub(infoVale, buscando, alSi = { info = infoVale.copy(confirmado = true) }, alOtro = { buscaClub(it) }) }
+            infoVale == null && club.isNotBlank() && ClaveApi.hay -> BotonBuscarClub(if (Prueba.activo) "Identificar el club (modo prueba: de ejemplo)" else "Identificar el club (búsqueda web, unos céntimos)") { buscaClub() }
+        }
+        if (!abajo) avisoClub?.let { Nota(it, Modifier.padding(top = 6.dp), color = Acento) }
         Campo("Temporada", temporada, "2026/27") { temporada = it }
         BloqueEditor("Quién eres")
         MagChoice(Nivel.entries.map { it.nombre }, nivel.ordinal, "Cómo de conocido empiezas") { nivel = Nivel.entries[it]; dinero = Formato.cifra(nivel.dinero) }
@@ -97,9 +123,24 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
         Campo("Su forma de ser", rasgos, "Ambicioso, fiestero y mujeriego", lineas = 3) { rasgos = it }
         Spacer(Modifier.height(20.dp))
         val listo = nombre.isNotBlank() && club.isNotBlank()
-        AccionGrande(null, when { ocupado -> "Escribiendo su presentación…"; creada != null -> "Ir a la carrera"; else -> "Empezar la carrera" }, Modifier.fillMaxWidth(), enabled = listo && !ocupado) {
+        // Antes de empezar, el club: se busca y lo confirmas (o empiezas sin identificarlo)
+        val faltaClub = listo && ClaveApi.hay && infoVale?.confirmado != true && !sinIdentificar && creada == null
+        if (abajo && infoVale != null && !infoVale.confirmado) {
+            ConfirmaClub(infoVale, buscando, alSi = { info = infoVale.copy(confirmado = true) }, alOtro = { buscaClub(it, desdeAbajo = true) }, textoSi = "Sí, es este") {
+                BotonRedondo("Empezar sin identificarlo", Modifier.fillMaxWidth(), lleno = false) { sinIdentificar = true }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+        if (abajo) avisoClub?.let {
+            Nota(it, Modifier.padding(bottom = 6.dp), color = Acento)
+            EnlaceRevista("Empezar sin identificar el club", Modifier.padding(bottom = 10.dp), acento = true) { sinIdentificar = true; avisoClub = null }
+        }
+        AccionGrande(null, when { ocupado -> "Escribiendo su presentación…"; creada != null -> "Ir a la carrera"; buscando -> "Buscando tu club…"
+            faltaClub && infoVale == null -> "Identificar el club y empezar"; faltaClub -> "Confirma tu club arriba"; else -> "Empezar la carrera" },
+            Modifier.fillMaxWidth(), enabled = listo && !ocupado && !buscando && !(faltaClub && infoVale != null)) {
             creada?.let { alCreada(it); return@AccionGrande }
-            if (ocupado || !listo) return@AccionGrande
+            if (ocupado || !listo || buscando) return@AccionGrande
+            if (faltaClub) { if (infoVale == null) buscaClub(desdeAbajo = true); return@AccionGrande }
             ocupado = true; aviso = null
             val pj = Personaje(nombre.trim(), apodo.trim(), edad.toIntOrNull() ?: 18, nacionalidad.trim(), if (modo == Rol.JUGADOR) posicion.trim() else "",
                 if (modo == Rol.JUGADOR) dorsal.toIntOrNull() ?: 0 else 0, media.toIntOrNull() ?: 0,
@@ -108,7 +149,8 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
             val c = Contratos.primero(nivel, club.trim(), temporada.trim(), modo)
             val u = Universo(Universo.nuevoId(), modo, pj, club.trim(), liga.trim(), temporada.trim(), c.sueldo, c.hasta, numero(dinero),
                 fuera = Fuera.INICIAL + mapOf(Fuera.FAMA to nivel.fama, Fuera.AFICION to nivel.aficion, Fuera.CARISMA to nivel.carisma),
-                nivel = nivel.name, trayectoria = trayectoria.trim(), contrato = c)
+                nivel = nivel.name, trayectoria = trayectoria.trim(), contrato = c, clubInfo = infoVale?.takeIf { it.confirmado })
+                .let { x -> if (x.liga.isBlank() && x.clubInfo != null) x.copy(liga = x.clubInfo.liga) else x }
             ambito.launch {
                 val (n, fallo) = withContext(Dispatchers.IO) { Motor.crea(u) }
                 ocupado = false

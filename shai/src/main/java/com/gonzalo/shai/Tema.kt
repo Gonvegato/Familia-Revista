@@ -321,8 +321,8 @@ val ACCENT_COLORS = listOf(
     Accent("coral", "Coral", 0xFFD2574A, 0xFFF08A7C),
     Accent("terracota", "Terracota", 0xFFB5562F, 0xFFE0936A),
     Accent("cobre", "Cobre", 0xFF9A5B2E, 0xFFD7A06B),
-    // El de Shai (el de su icono): el dorado de un trofeo, más hondo sobre papel claro
-    Accent("shai", "Shai", 0xFF8C6D0C, 0xFFC9A227),
+    // El de Shai (el de su icono): el oro viejo de un trofeo, más hondo sobre papel claro
+    Accent("shai", "Shai", 0xFF86690F, 0xFFC59E21),
     Accent("marron", "Marrón", 0xFF5B3A1E, 0xFFC9A27A),
     Accent("chocolate", "Chocolate", 0xFF3E2A1F, 0xFFB79B88),
     Accent("ocre", "Ocre", 0xFF9C7A12, 0xFFD9B646),

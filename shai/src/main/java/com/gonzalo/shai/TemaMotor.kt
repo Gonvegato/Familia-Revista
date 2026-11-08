@@ -114,10 +114,15 @@ object Modo {
     var eleccion by mutableStateOf(0)
 }
 
-/** Los colores de Shai (los de su icono). */
-const val SHAI_FONDO = 0xFF0F2A1DL
+/** Los colores de Shai (los de su icono, desde la 0.5.0): gris grafito, crema y el oro viejo de un trofeo. */
+const val SHAI_FONDO = 0xFF515151L
 const val SHAI_TINTA = 0xFFF2E8D0L
-const val SHAI_ACENTO = 0xFFC9A227L
+const val SHAI_ACENTO = 0xFFC59E21L
+/** Los de antes (hasta la 0.4.0): quien los tenía puestos de serie pasa a los nuevos. */
+const val SHAI_FONDO_VIEJO = 0xFF0F2A1DL
+const val SHAI_ACENTO_VIEJO = 0xFFC9A227L
+/** Los de serie de antes pasan a los de ahora (lo elegido a mano, sea lo que sea, se queda). */
+fun colorDeAhora(c: Long): Long = when (c) { SHAI_FONDO_VIEJO -> SHAI_FONDO; SHAI_ACENTO_VIEJO -> SHAI_ACENTO; else -> c }
 
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
@@ -248,8 +253,8 @@ object Skin {
         Modo.eleccion = p.getInt("modo", 0).coerceIn(0, 2)
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
-        // De serie, los colores del icono de Shai: césped de noche, crema y el dorado de un trofeo
-        fondoPropio = p.getLong("fondo_propio", SHAI_FONDO); tintaPropia = p.getLong("tinta_propia", SHAI_TINTA); acentoPropio = p.getLong("acento_propio", SHAI_ACENTO)
+        // De serie, los colores del icono de Shai: gris grafito, crema y oro viejo (los de serie de antes, el césped de noche, pasan a estos)
+        fondoPropio = colorDeAhora(p.getLong("fondo_propio", SHAI_FONDO)); tintaPropia = p.getLong("tinta_propia", SHAI_TINTA); acentoPropio = colorDeAhora(p.getLong("acento_propio", SHAI_ACENTO))
     }
 
     /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros dispositivos gana la más reciente. */
@@ -280,7 +285,7 @@ object Skin {
         invertido = k.optBoolean("invertido", invertido); origenAtrio = k.optBoolean("origenAtrio", origenAtrio)
         Modo.eleccion = k.optInt("modo", Modo.eleccion).coerceIn(0, 2)
         fondoId = k.optString("fondoId").takeIf { id -> FONDOS.any { it.id == id } } ?: ""
-        fondoPropio = k.optLong("fondoPropio", 0L); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = k.optLong("acentoPropio", 0L)
+        fondoPropio = colorDeAhora(k.optLong("fondoPropio", 0L)); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = colorDeAhora(k.optLong("acentoPropio", 0L))
         ajustesAt = at
         persistir(c)
         return true

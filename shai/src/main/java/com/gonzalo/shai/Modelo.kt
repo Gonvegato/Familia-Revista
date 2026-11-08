@@ -212,7 +212,13 @@ data class Universo(
     val recordsSuyos: List<RecordSuyo> = emptyList(),
     /** Sus rivales (surgen solos por lo que pasa, o los mete él): [Rivales]. */
     val rivales: List<Rival> = emptyList(),
+    /** Lo que se sabe de su club de verdad (búsqueda web, [Clubes]): si ya no es el de [club] (un traspaso), hay que identificar el nuevo. */
+    val clubInfo: InfoClub? = null,
 ) {
+    /** El club de ahora está identificado y confirmado. */
+    val clubIdentificado: Boolean get() = clubInfo?.let { it.confirmado && it.es(club) } == true
+    /** Hay una identificación del club de ahora esperando a que digas «Sí, es este». */
+    val clubPorConfirmar: InfoClub? get() = clubInfo?.takeIf { !it.confirmado && it.es(club) }
     /** Sin contrato: libre (si ya ha empezado). */
     val libre: Boolean get() = contrato == null
     val nivelDe: Nivel? get() = Nivel.de(nivel)
@@ -231,6 +237,7 @@ data class Universo(
         "c" to creado, "cm" to cambiado, "mm" to memoria, "mp" to memoriaPaso.toLong(), "tc" to cerradas, "nv" to nivel, "ty" to trayectoria, "fj" to famaJornada.toLong(),
         "fh" to famaHist.map { listOf(it.first.toLong(), it.second.toLong()) }, "ct" to (contrato?.aMapa() ?: emptyMap<String, Any?>()), "pt" to patrocinio,
         "rp" to renovacionPaso.toLong(), "ht" to hitos.map { it.aMapa() }, "rs" to recordsSuyos.map { it.aMapa() }, "rv" to rivales.map { it.aMapa() },
+        "ic" to (clubInfo?.aMapa() ?: emptyMap<String, Any?>()),
     )
     fun aJson(): String = Json.escribe(aMapa())
 
@@ -254,6 +261,7 @@ data class Universo(
                 Contrato.de(m["ct"].comoMapa()), m["pt"].comoLong(), m["rp"].comoLong().toInt(), m["ht"].comoLista().map { Hito.de(it.comoMapa()) }.filter { it.id.isNotBlank() },
                 m["rs"].comoLista().map { RecordSuyo.de(it.comoMapa()) }.filter { it.n > 0 },
                 m["rv"].comoLista().map { Rival.de(it.comoMapa()) }.filter { it.nombre.isNotBlank() },
+                InfoClub.de(m["ic"].comoMapa()),
             )
             // (las carreras de antes de los contratos: su sueldo y su «3 años» pasan a ser su contrato)
             return if (!m.containsKey("ct") && u.contrato == null) u.copy(contrato = Contratos.migra(u)) else u

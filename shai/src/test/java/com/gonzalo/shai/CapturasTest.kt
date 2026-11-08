@@ -24,6 +24,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 abstract class CapturasBase {
     abstract val tema: String
+    open val largas: Boolean = false
     @get:Rule val rule = createComposeRule()
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
     private val dir: String get() = System.getProperty("capturas")?.takeIf { it.isNotBlank() } ?: "build/outputs/roborazzi"
@@ -47,6 +48,13 @@ abstract class CapturasBase {
             Motor.partido(u0.id, p); Motor.miraLotes(); Motor.revela(forzar = true)
         }
         Carreras.entradasDe(u0.id).firstOrNull { it.decision?.abierta == true }?.let { Motor.decide(it.id, it.decision!!.opciones.first()) }
+        // El club, identificado (lo de una búsqueda de ejemplo: las personas, sin nombre de verdad) y confirmado
+        val betis = InfoClub("Real Betis Balompié", "Los verdiblancos", "Sevilla", "España", "Benito Villamarín", 60_721, "LaLiga EA Sports", "Primera",
+            "Nombre del entrenador", "Nombre del presidente", "Verde y blanco", listOf("Sevilla FC"), "Una Liga, tres Copas del Rey.",
+            "Ejemplo de captura: aquí va su momento deportivo y económico, tal cual lo encuentra la búsqueda.", "Ejemplo de captura: aquí va cómo es su afición.",
+            listOf("Un diario local"), "", listOf("Real Betis Balompié - Wikipedia" to "https://es.wikipedia.org/wiki/Real_Betis_Balompi%C3%A9", "Web oficial" to "https://www.realbetisbalompie.es/"),
+            "2026-11-08", "Real Betis", coste = 0.07, busquedas = 2)
+        Motor.confirmaClub(u0.id, betis)
         val u = Carreras.de(u0.id)!!
         Gasto.apunta(Claude.SONNET, 3.42); Gasto.apunta(Claude.HAIKU, 0.37)
         // (otra carrera, de míster, para la portada)
@@ -72,6 +80,7 @@ abstract class CapturasBase {
                             63 -> PaginaRevista { Carreras.de(otra)?.let { TusRivales(it) } }
                             64 -> PantCarrera(otra, {}, {}, {}, inicial = 1)
                             in 70..71 -> PantCarrera(otra, {}, {}, {}, chatInicial = chatAbierto)
+                            80 -> PaginaRevista { ConfirmaClub(betis, false, {}, {}) }
                             62 -> PaginaRevista { Carreras.de(otra)?.let { RecordsHistoricos(it, Carreras.partidos(otra).map { x -> x.second }) } }
                         }
                     }
@@ -80,6 +89,9 @@ abstract class CapturasBase {
         }
         foto("01-portada")
         PESTANAS.forEachIndexed { i, n -> cual = 10 + i; foto("1$i-carrera-${n.lowercase()}") }
+        cual = 80; foto("80-club-confirmacion")
+        // (en un móvil larguísimo: Cifras y Perfil enteros, y nada más)
+        if (largas) { cual = 14; foto("14-cifras-entera"); cual = 16; foto("16-perfil-entero"); Cuenta.dentroFijo = null; ClaveApi.fija = null; Gasto.mesFijo = null; return }
         cual = 17; foto("17-carrera-noticia")
         // Un chat con una decisión abierta y uno sin ella (un grupo, si lo hay)
         val convs = conversaciones(Carreras.entradasDe(u.id))
@@ -147,3 +159,10 @@ class CapturasNormalTest : CapturasBase() { override val tema = "normal" }
 /** Con la letra grande (el tamaño de texto del móvil al 130 %): nada cortado. */
 @RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = ALTO, fontScale = 1.3f)
 class CapturasLetraGrandeTest : CapturasBase() { override val tema = "letra-grande" }
+
+/** Cifras y Perfil enteros (un móvil de 411 × 6000 dp), con la letra normal y con la grande. */
+@RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = "w411dp-h6000dp-xhdpi")
+class CapturasLargasTest : CapturasBase() { override val tema = "larga"; override val largas = true }
+
+@RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = "w411dp-h6000dp-xhdpi", fontScale = 1.3f)
+class CapturasLargasLetraGrandeTest : CapturasBase() { override val tema = "larga-letra-grande"; override val largas = true }

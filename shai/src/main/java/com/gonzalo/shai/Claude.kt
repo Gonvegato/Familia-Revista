@@ -107,7 +107,7 @@ data class Respuesta(val texto: String, val uso: Uso, val parada: String, val mo
 }
 
 class Claude(private val clave: () -> String, private val red: Transporte = TransporteHttp(), private val base: String = "https://api.anthropic.com") {
-    class Fallo(msg: String, val reintentable: Boolean = false) : Exception(msg)
+    open class Fallo(msg: String, val reintentable: Boolean = false) : Exception(msg)
 
     private fun cabeceras(): Map<String, String> {
         val k = clave().trim()
@@ -120,6 +120,20 @@ class Claude(private val clave: () -> String, private val red: Transporte = Tran
         val r = try { red.post("$base/v1/messages", cabeceras(), Json.escribe(p.cuerpo())) } catch (e: IOException) { throw Fallo("Sin conexión con la API de Claude.", true) }
         if (r.codigo !in 200..299) throw error(r)
         return deMensaje(Json.lee(r.cuerpo).comoMapa())
+    }
+
+    /**
+     * Una petición tal cual (el cuerpo ya hecho) y la respuesta entera, con todos sus bloques: para las herramientas de servidor (la
+     * búsqueda web, [Clubes]). Si la búsqueda web está apagada en la organización, [Clubes.Desactivada].
+     */
+    fun crudo(cuerpo: Map<String, Any?>): Map<String, Any?> {
+        val r = try { red.post("$base/v1/messages", cabeceras(), Json.escribe(cuerpo)) } catch (e: IOException) { throw Fallo("Sin conexión con la API de Claude.", true) }
+        if (r.codigo !in 200..299) {
+            val msg = runCatching { Json.lee(r.cuerpo).comoMapa()["error"].comoMapa()["message"].comoTexto() }.getOrDefault("").lowercase()
+            if (r.codigo == 400 && "web search" in msg && ("not enabled" in msg || "disabled" in msg)) throw Clubes.Desactivada()
+            throw error(r)
+        }
+        return Json.lee(r.cuerpo).comoMapa()
     }
 
     /** Manda un lote (a mitad de precio; vuelve en minutos, como mucho en 24 horas). Devuelve su id. */

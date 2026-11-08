@@ -15,6 +15,12 @@ class ApiDeMentira : Transporte {
     /** El próximo `/v1/messages` contesta esto (código, cuerpo) en vez de lo de siempre. */
     var siguiente: Transporte.Respuesta? = null
     var estadoLote = "in_progress"
+    /** La búsqueda web del club: el texto final (el JSON) y si la primera vuelta se para (`pause_turn`). */
+    var textoClub: String = """Aquí va lo que he encontrado: {"encontrado": true, "nombre": "Real Betis Balompié", "apodo": "Los verdiblancos", "ciudad": "Sevilla", "pais": "España",
+        |"estadio": "Benito Villamarín", "aforo": 60721, "liga": "LaLiga", "division": "Primera", "entrenador": "Entrenador de verdad", "presidente": "Presidente de verdad",
+        |"colores": "verde y blanco", "rivales": ["Sevilla FC"], "palmares": "Una Liga y tres Copas del Rey.", "contexto": "En Europa y con la economía saneada.",
+        |"aficion": "Fiel y ruidosa.", "medios": ["Diario de ejemplo"], "dudas": ""}""".trimMargin()
+    var pausaClub = false
     private val lotes = LinkedHashMap<String, List<Map<String, Any?>>>()
 
     fun mensajes(): List<Llamada> = llamadas.filter { it.url.endsWith("/v1/messages") }
@@ -24,6 +30,7 @@ class ApiDeMentira : Transporte {
         llamadas += Llamada("POST", url, cabeceras, c)
         siguiente?.let { siguiente = null; return it }
         return when {
+            url.endsWith("/v1/messages") && c["tools"].comoLista().any { it.comoMapa()["name"] == "web_search" } -> Transporte.Respuesta(200, busqueda(c))
             url.endsWith("/v1/messages") -> Transporte.Respuesta(200, mensaje(c))
             url.endsWith("/v1/messages/batches") -> {
                 val id = "msgbatch_${lotes.size + 1}"
@@ -43,6 +50,25 @@ class ApiDeMentira : Transporte {
         })
         return Transporte.Respuesta(200, Json.escribe(mapOf("id" to id, "type" to "message_batch", "processing_status" to estadoLote,
             "results_url" to if (estadoLote == "ended") "https://api.anthropic.com/v1/messages/batches/$id/results" else null)))
+    }
+
+    /** La búsqueda web (la herramienta de servidor): sus bloques como los de verdad, con 2 búsquedas en `usage`. */
+    private fun busqueda(c: Map<String, Any?>): String {
+        val continua = c["messages"].comoLista().size > 1
+        val bloques = if (pausaClub && !continua) listOf(
+            mapOf("type" to "server_tool_use", "id" to "srvtoolu_1", "name" to "web_search", "input" to mapOf("query" to "Real Betis estadio")),
+            mapOf("type" to "web_search_tool_result", "tool_use_id" to "srvtoolu_1", "content" to listOf(
+                mapOf("type" to "web_search_result", "url" to "https://es.wikipedia.org/wiki/Real_Betis_Balompi%C3%A9", "title" to "Real Betis Balompié - Wikipedia", "encrypted_content" to "x", "page_age" to "1 de enero de 2026"))),
+        ) else listOf(
+            mapOf("type" to "server_tool_use", "id" to "srvtoolu_2", "name" to "web_search", "input" to mapOf("query" to "Real Betis entrenador")),
+            mapOf("type" to "web_search_tool_result", "tool_use_id" to "srvtoolu_2", "content" to listOf(
+                mapOf("type" to "web_search_result", "url" to "https://www.realbetisbalompie.es/", "title" to "Web oficial", "encrypted_content" to "y"))),
+            mapOf("type" to "text", "text" to textoClub, "citations" to listOf(mapOf("type" to "web_search_result_location", "url" to "https://www.laliga.com/", "title" to "LaLiga", "cited_text" to "Betis"))),
+        )
+        return Json.escribe(mapOf("id" to "msg_${llamadas.size}", "type" to "message", "role" to "assistant", "model" to c["model"].comoTexto(), "content" to bloques,
+            "stop_reason" to if (pausaClub && !continua) "pause_turn" else "end_turn",
+            "usage" to mapOf("input_tokens" to 10_000, "output_tokens" to 800, "cache_creation_input_tokens" to 0, "cache_read_input_tokens" to 0,
+                "server_tool_use" to mapOf("web_search_requests" to 1))))
     }
 
     /** Lo que contestaría Claude a esta petición (según su esquema). */

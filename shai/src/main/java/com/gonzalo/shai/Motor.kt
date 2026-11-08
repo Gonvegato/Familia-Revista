@@ -476,12 +476,33 @@ object Motor {
         val texto = listOfNotNull(o.texto.ifBlank { null }, o.salario.takeIf { it > 0 }?.let { "${Formato.euros(it)} a la semana" }, o.prima.takeIf { it > 0 }?.let { "prima de ${Formato.euros(it)}" },
             o.anios.takeIf { it > 0 }?.let { "$it año${if (it > 1) "s" else ""}" }).joinToString(" · ")
         var of = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.OFICIAL, reloj(), u.paso, titulo, texto + "\nHazlo también en tu partida de FC."))
-        return en(u.id) {
+        val fallo = en(u.id) {
             try {
                 val r = Narrador.leeRed(pide(Narrador.oficial(nu, contexto(nu), o)))
                 of = Carreras.guarda(of.copy(posts = r.posts, dms = r.dms, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts)); null
             } catch (x: Exception) { mensaje(x) }
         }
+        // Club nuevo: se busca qué club es (queda esperando a que digas «Sí, es este»; si no se puede, lo pides tú desde Inicio o Perfil)
+        if (o.cambiaDeClub && !Vida.mismo(nu.club, u.club) && ClaveApi.hay) runCatching { identifica(nu.id) }
+        return fallo
+    }
+
+    // ---------------------------------------------------------------- el club de verdad
+
+    /** Busca en la web qué club es el de la carrera (queda por confirmar). Devuelve por qué no, si no se pudo. */
+    fun identifica(universo: String, precisa: String = ""): String? {
+        val u = Carreras.de(universo) ?: return null
+        return try {
+            val c = Clubes.identifica(u.club, u.liga, precisa)
+            Carreras.guarda((Carreras.de(universo) ?: u).copy(clubInfo = c)); null
+        } catch (e: Clubes.NoEncontrado) { e.message } catch (e: Exception) { mensaje(e) }
+    }
+
+    /** «Sí, es este»: el club queda identificado (y su liga, si no la habías puesto). */
+    fun confirmaClub(universo: String, c: InfoClub? = null) {
+        val u = Carreras.de(universo) ?: return
+        val info = (c ?: u.clubInfo ?: return).copy(confirmado = true)
+        Carreras.guarda(u.copy(clubInfo = info, liga = u.liga.ifBlank { info.liga }))
     }
 
     /** Leer la foto de la pantalla de estadísticas. */
@@ -491,7 +512,7 @@ object Motor {
     }
 
     fun mensaje(e: Throwable): String = when (e) {
-        is Gasto.Tope, is Claude.Fallo, is Claude.Rechazo, is Mercado.NoLlega -> e.message.orEmpty()
+        is Gasto.Tope, is Claude.Fallo, is Claude.Rechazo, is Mercado.NoLlega, is Clubes.NoEncontrado -> e.message.orEmpty()
         is IllegalStateException -> e.message ?: "No se pudo."
         else -> "No se pudo: ${e.message ?: e.javaClass.simpleName}"
     }

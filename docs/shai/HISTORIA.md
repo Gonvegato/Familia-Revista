@@ -2,7 +2,31 @@
 
 Shai (el dios egipcio del destino, «lo que está ordenado») es el acompañante de tus modos carrera de **EA Sports FC 26**: tú juegas el
 campo y Shai escribe lo de fuera. De la familia (la cuenta, la revista, el actualizador de kDrive), pero Jonsu no enseña nada suyo. Solo
-Android. Paquete `com.gonzalo.shai`; icono «SHAI · CARRERA» en césped de noche (#0F2A1D), crema (#F2E8D0) y el dorado de un trofeo (#C9A227).
+Android. Paquete `com.gonzalo.shai`; icono «SHAI · CARRERA» en gris grafito (#515151), crema (#F2E8D0) y el oro viejo de un trofeo (#C59E21) desde la 0.5.0 (hasta la 0.4.0, césped de noche #0F2A1D y dorado #C9A227).
+
+## 0.5.0
+
+- **Colores nuevos de serie** (los que Gonzalo tenía puestos en «A tu manera»): fondo gris grafito #515151, texto crema #F2E8D0 y acento oro
+  viejo #C59E21; el icono, con ellos. Quien tenía los de serie de antes pasa a estos; lo elegido a mano se queda.
+- **Perfil rehecho**: ficha de jugador (foto o iniciales, nombre, apodo, edad exacta, nacionalidad, posición, dorsal, club, nivel con su barra
+  y seguidores), la carta de FC (la media en grande y los atributos en rejilla con barras), tu club, tu contrato en tarjeta, lo de fuera del
+  campo en barras (y cómo ha ido tu fama), tu gente con su afinidad, tus rivales con su intensidad, quién eres, lo que Shai recuerda
+  (plegado) y un botón claro para editar.
+- **Cifras rehechas**: temporada y competición en chips; el resumen en grande (partidos, goles, asistencias, nota; de míster, victorias,
+  goles y porcentaje) con la barra de ganados, empatados y perdidos y los últimos resultados; un gráfico por jornada (goles en barras y la
+  nota en línea; de míster, a favor y en contra); la tabla por competición; récords e hitos y récords históricos en tarjetas; los partidos
+  con su V/E/D, y el cierre de temporada como tarjeta.
+- **El club, identificado con una búsqueda web** (Gonzalo: «al poner el club haz que la IA haga una búsqueda rápida para saber qué club es…
+  y que me diga que efectivamente has identificado al club»):
+  - Al crear la carrera («Identificar el club y empezar»), desde Perfil → Tu club y, solo, tras aceptar un traspaso.
+  - Sonnet 5.5 con la búsqueda web de la API (`web_search_20260209`, como mucho 3 búsquedas): nombre oficial, apodo, ciudad, estadio y aforo,
+    liga, entrenador, presidente, colores, derbis, palmarés, su momento, su afición, sus medios locales y las fuentes.
+  - «He identificado al club: …» con las fuentes, y «Sí, es este» / «No, buscar otro» (con un campo para precisar).
+  - Confirmado, va en el contexto de Claude («Lo que se sabe del club»): usa esos datos y no se inventa otros; entrenador y presidente,
+    solo de forma neutra; los medios de verdad, solo como estilo para inventar los suyos.
+  - Cuesta unos céntimos: 10 $ los 1.000 búsquedas más los tokens, y se apunta en el gasto. Si la búsqueda web está apagada en la
+    organización (Claude Console → Settings → Capabilities), la app lo explica y la carrera se puede empezar igual.
+  - En modo prueba, un club de ejemplo bien marcado: no se busca nada.
 
 ## 0.4.0
 
