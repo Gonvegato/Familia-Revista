@@ -225,4 +225,12 @@ class ModeloTest {
         assertEquals(IconoTiempo.entries.toSet(), (0..99).map { Wmo.de(it).icono }.toSet())
         assertEquals("12°", grados(12.4)); assertEquals("−2°", grados(-2.1)); assertEquals("0°", grados(-0.3))
     }
+
+    @Test fun lasCopiasDeUnaPlantillaNoRepitenNombre() {
+        assertEquals("Columna", Plantillas.nombreLibre("Columna", listOf("Portada")))
+        assertEquals("Columna 2", Plantillas.nombreLibre("Columna", listOf("Columna")))
+        assertEquals("Columna 4", Plantillas.nombreLibre("Columna", listOf("columna", "Columna 2", "Columna 3")))
+        val pl = Plantillas.TODAS.first().first
+        assertEquals(pl.nombre + " 2", Plantillas.copia(pl, listOf(pl.nombre)).nombre)
+    }
 }

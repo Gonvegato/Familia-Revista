@@ -88,7 +88,7 @@ fun PtahApp(pedido: Pedido? = null, eligiendo: Boolean = false, alElegir: (Disen
                     guardado = guardado,
                     alCerrarGuardado = { guardado = null },
                     alAbrir = { d -> if (eligiendo) alElegir(d) else ir(Pagina.Ficha(d.id)) },
-                    alPlantilla = { pl -> ir(Pagina.Editor(Plantillas.copia(pl), true)) },
+                    alPlantilla = { pl -> ir(Pagina.Editor(Plantillas.copia(pl, Disenos.todos(ctx).map { it.nombre }), true)) },
                     alNuevo = { ir(Pagina.Nuevo) },
                     alAjustes = { ir(Pagina.Ajustes) },
                 )

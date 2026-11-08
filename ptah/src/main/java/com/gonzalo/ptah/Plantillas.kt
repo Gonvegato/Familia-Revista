@@ -37,10 +37,21 @@ object Plantillas {
         )
     }
 
-    /** Un diseño tuyo nuevo a partir de una plantilla. */
-    fun copia(p: Diseno): Diseno {
+    /**
+     * Un diseño tuyo nuevo a partir de una plantilla, con un nombre que no se repite entre [usados] («Columna», «Columna 2»…):
+     * con varios iguales no se sabía cuál era cuál, y parecía que lo cambiado no se guardaba.
+     */
+    fun copia(p: Diseno, usados: Collection<String> = emptyList()): Diseno {
         val c = TODAS.firstOrNull { it.first.id == p.id }?.second
-        return p.copy(id = Diseno.nuevoId(), creado = System.currentTimeMillis(), cambiado = System.currentTimeMillis()).let { if (c != null) it.con("celdas", "${c.col}x${c.fil}") else it }
+        return p.copy(id = Diseno.nuevoId(), nombre = nombreLibre(p.nombre, usados), creado = System.currentTimeMillis(), cambiado = System.currentTimeMillis())
+            .let { if (c != null) it.con("celdas", "${c.col}x${c.fil}") else it }
+    }
+
+    /** [base] si nadie lo usa; si no, «[base] 2», «[base] 3»… (sin distinguir mayúsculas). */
+    fun nombreLibre(base: String, usados: Collection<String>): String {
+        val u = usados.map { it.trim().lowercase() }.toSet()
+        if (base.trim().lowercase() !in u) return base
+        return generateSequence(2) { it + 1 }.map { "$base $it" }.first { it.lowercase() !in u }
     }
 
     /** El tamaño con el que se enseña un diseño (el de su plantilla, o el de su tipo). */

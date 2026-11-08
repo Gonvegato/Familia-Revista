@@ -68,7 +68,7 @@ object Disenos {
     }
 
     /** Una copia (con otro id y «(copia)»). */
-    fun duplica(ctx: Context, d: Diseno): Diseno = d.copy(id = Diseno.nuevoId(), nombre = d.nombre + " (copia)", creado = System.currentTimeMillis()).also { guarda(ctx, it) }
+    fun duplica(ctx: Context, d: Diseno): Diseno = d.copy(id = Diseno.nuevoId(), nombre = Plantillas.nombreLibre(d.nombre + " (copia)", todos(ctx).map { it.nombre }), creado = System.currentTimeMillis()).also { guarda(ctx, it) }
 }
 
 /** Los colores que has usado hace poco (para el selector de color): tuyos, en `ajustes/ptah_general` (`recientes`, con comas). */
