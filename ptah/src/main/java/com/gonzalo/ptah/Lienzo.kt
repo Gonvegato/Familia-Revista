@@ -135,7 +135,29 @@ class Lienzo(
 
     // ---- márgenes
     val radio: Float = min(e.radio, min(w, h) / 2f)
-    val pad: Float = (if (min(w, h) < 100f) 9f else 14f) + (if (e.marco) 4f else 0f) + (if (e.borde) e.grosorBorde * 0.5f else 0f)
+
+    /**
+     * La forma del widget, para elegir su composición: un cuadrado pequeño (1×1: ~59 × 59 dp), uno de pie y estrecho (1×2, 1×3: ~59 × 120,
+     * 59 × 178), uno cuadrado mediano (2×2: ~120 × 120) o lo demás. Los tres primeros son «chicos»: llevan las composiciones de
+     * revista pequeñas ([Chico]), con su marco interior, su cabecera con el cuadradito y sus filetes.
+     */
+    enum class Proporcion { PEQUENO, VERTICAL, MEDIANO, NORMAL }
+    val proporcion: Proporcion = when {
+        w < 100f && h < 100f -> Proporcion.PEQUENO
+        w < 110f && h >= w * 1.45f -> Proporcion.VERTICAL
+        w < 150f && h < 150f && w >= 100f && h >= 100f -> Proporcion.MEDIANO
+        w < 110f && h < 110f -> Proporcion.PEQUENO
+        else -> Proporcion.NORMAL
+    }
+    /** ¿Una de las composiciones pequeñas? */
+    val chico: Boolean get() = proporcion != Proporcion.NORMAL
+    /** El marco interior de las pequeñas (como el de las cabeceras en papel de las hermanas): siempre; con el color del borde o del marco
+     *  del diseño, y si no tiene ninguno, de la tinta un poco apagada. */
+    private val marcoChico: Boolean get() = chico
+    private val dentroMarco = 3.5f
+
+    val pad: Float = if (proporcion != Proporcion.NORMAL) dentroMarco + 4.5f + (if (e.borde) e.grosorBorde * 0.5f else 0f)
+        else (if (min(w, h) < 100f) 9f else 14f) + (if (e.marco) 4f else 0f) + (if (e.borde) e.grosorBorde * 0.5f else 0f)
     /** El sitio para lo de dentro. */
     val area = RectF(pad, pad, w - pad, h - pad)
     val alineacion: Layout.Alignment get() = when (e.alineacion) { Alineacion.IZQUIERDA -> Layout.Alignment.ALIGN_NORMAL; Alineacion.CENTRO -> Layout.Alignment.ALIGN_CENTER; Alineacion.DERECHA -> Layout.Alignment.ALIGN_OPPOSITE }
@@ -163,12 +185,18 @@ class Lienzo(
 
     /** El borde, el marco de revista y las esquinas (recortadas suaves). Se llama al acabar. */
     fun terminar() {
-        if (e.marco) {
+        if (marcoChico) {
+            // Las pequeñas: un solo marco, fino y redondeado, un poco por dentro (el del borde o el del marco del diseño)
+            val m = dentroMarco
+            val rr = max(2f, radio - m)
+            val col = if (e.borde) col(e.colorBorde, tinta) else if (e.marco) pieza("marco", tinta) else pieza("marco", conAlfa(tinta, 150))
+            c.drawRoundRect(RectF(m, m, w - m, h - m), rr, rr, trazo(col, if (e.borde) e.grosorBorde.coerceAtMost(1.4f) else 0.8f))
+        } else if (e.marco) {
             val m = (if (e.borde) e.grosorBorde else 0f) + 4.5f
             val rr = max(0f, radio - m)
             c.drawRoundRect(RectF(m, m, w - m, h - m), rr, rr, trazo(pieza("marco", tinta), 0.6f))
         }
-        if (e.borde) {
+        if (e.borde && !marcoChico) {
             val g = e.grosorBorde
             val m = g / 2f + 0.4f
             c.drawRoundRect(RectF(m, m, w - m, h - m), max(0f, radio - m), max(0f, radio - m), trazo(col(e.colorBorde, tinta), g))
@@ -266,12 +294,6 @@ class Lienzo(
     }
 
     /** La forma del widget, para elegir su composición: un cuadrado pequeño (1×1), uno vertical y estrecho (1×2) o lo demás. */
-    enum class Proporcion { PEQUENO, VERTICAL, NORMAL }
-    val proporcion: Proporcion = when {
-        w < 110f && h < 110f -> Proporcion.PEQUENO
-        w < 120f && h >= w * 1.45f -> Proporcion.VERTICAL
-        else -> Proporcion.NORMAL
-    }
 
     /**
      * Un texto en una línea, tan grande como quepa en [r]: se mide por su tinta de verdad (lo que ocupan las letras, no la caja de la

@@ -75,7 +75,7 @@ object Pintor {
             l.pon(tl, l.area.left, l.area.top)
             l.toque(android.graphics.RectF(0f, 0f, w, h), Accion.AbrirPtah, "Abrir Ptah")
         } else {
-            runCatching { t.pinta(l) }.onFailure { x -> if (x is OutOfMemoryError) throw x }
+            runCatching { if (!Chico.pinta(l, t)) t.pinta(l) }.onFailure { x -> if (x is OutOfMemoryError) throw x }
             // Lo que no tenga zona propia, abre lo de su tipo (lo de encima se toca antes: las zonas van detrás de esta)
             l.zonas.add(0, Zona(android.graphics.RectF(0f, 0f, w, h), t.accion(d), t.descripcionToque(d)))
         }

@@ -78,7 +78,7 @@ object Buscador : TipoWidget {
     override fun descripcionToque(d: Diseno) = "Buscar en internet"
 
     /** La lupa, centrada en ([cx], [cy]), de lado [t]. */
-    private fun lupa(l: Lienzo, cx0: Float, cy0: Float, t: Float, color: Int) {
+    internal fun lupa(l: Lienzo, cx0: Float, cy0: Float, t: Float, color: Int) {
         val r = t * 0.3f; val cx = cx0 - t * 0.08f; val cy = cy0 - t * 0.08f
         val p = l.trazo(color, max(1.1f, t * 0.09f)).apply { strokeCap = Paint.Cap.ROUND }
         l.c.drawCircle(cx, cy, r, p)
@@ -86,7 +86,7 @@ object Buscador : TipoWidget {
     }
 
     /** El micrófono, centrado en ([mx], [my]), de alto [t]. */
-    private fun micro(l: Lienzo, mx: Float, my0: Float, t: Float, color: Int) {
+    internal fun micro(l: Lienzo, mx: Float, my0: Float, t: Float, color: Int) {
         val p = l.trazo(color, max(1.1f, t * 0.08f)).apply { strokeCap = Paint.Cap.ROUND }
         val mw = t * 0.3f; val mh = t * 0.52f; val my = my0 - t * 0.08f
         l.c.drawRoundRect(RectF(mx - mw / 2, my - mh * 0.75f, mx + mw / 2, my + mh * 0.25f), mw / 2, mw / 2, l.lleno(color))
@@ -180,7 +180,7 @@ object Accesos : TipoWidget {
 
     fun accesos(d: Diseno) = d.lista("items").mapNotNull { Acceso.de(it) }
 
-    private fun nombreDe(l: Lienzo, a: Acceso) = if (a.esWeb) a.nombre.ifBlank { Acceso.nombreWeb(a.destino) } else l.datos.nombreApp(a.destino) ?: a.destino.substringAfterLast('.')
+    internal fun nombreDe(l: Lienzo, a: Acceso) = if (a.esWeb) a.nombre.ifBlank { Acceso.nombreWeb(a.destino) } else l.datos.nombreApp(a.destino) ?: a.destino.substringAfterLast('.')
 
     override fun pinta(l: Lienzo) {
         val ar = l.area; val e = l.e; val d = l.d
@@ -237,7 +237,7 @@ object Accesos : TipoWidget {
         }
     }
 
-    private fun accion(a: Acceso) = if (a.esWeb) Accion.Web(Acceso.direccion(a.destino)) else Accion.App(a.destino)
+    internal fun accion(a: Acceso) = if (a.esWeb) Accion.Web(Acceso.direccion(a.destino)) else Accion.App(a.destino)
 
     /** Solo los nombres: como el índice de una revista, uno por línea, con su raya. */
     private fun indice(l: Lienzo, a: RectF, lista: List<Acceso>) {
@@ -258,7 +258,7 @@ object Accesos : TipoWidget {
     }
 
     /** El icono de la app (o, si no está en este móvil o es una web, su inicial sobre una tapa). */
-    private fun icono(l: Lienzo, a: Acceso, r: RectF) {
+    internal fun icono(l: Lienzo, a: Acceso, r: RectF) {
         val rad = r.width() * (l.e.radio / 22f).coerceIn(0f, 1f) * 0.24f
         val bm = if (a.esWeb) null else l.datos.iconoApp(a.destino)
         if (bm != null) { l.foto(bm, r, rad); return }

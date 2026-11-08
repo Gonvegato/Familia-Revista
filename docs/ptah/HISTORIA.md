@@ -192,6 +192,31 @@ la hora con `TextClock`. Sin el móvil no se puede saber por qué, así que:
 - No hay otra forma fiable de tener la letra del diseño sin alarmas exactas: WorkManager y JobScheduler no bajan de 15 minutos, las
   alarmas inexactas se retrasan muchos minutos, y `setAlarmClock` saca el despertador en la barra de estado. Sin el permiso, `TextClock`.
 
+## Lo que salió con la 0.4.1 (antes de la próxima versión)
+
+En el OPPO, el de pie (59×178 dp) y el cuadrado (120×120 dp) se veían sosísimos: lo pequeño perdía todos los detalles. Ahora lo
+pequeño tiene composiciones propias (`Chico.kt`), con lo de las cabeceras en papel de las hermanas (`w_prev_marcapapel` de Hiedra):
+
+- **Siempre**: un marco interior fino y redondeado (del color del borde o del marco del diseño; si no tiene, de la tinta apagada), el
+  antetítulo en versalitas con el cuadradito del acento («LA HORA», «HOY», «MADRID», «BATERÍA», «FALTAN»…, o «Nº 311 · SÁB»), la raya
+  gruesa debajo y rayas finas entre secciones. Lo de abajo (y arriba, en las de pie y las muy redondas) se aparta de la curva del marco;
+  en un widget redondo del todo, todo va dentro del cuadrado inscrito.
+- **Tres tamaños**: 1×1 (menos de 100 dp), de pie (estrecho y alto: una columna de periódico, con más secciones si pasa de 150 dp) y
+  mediano (de 100 a 150 dp, cuadrado).
+- **Por tipo**: el reloj de pie con «Nº 311» y la raya, las horas y los minutos enormes con un filete entre ellos, el día en versalitas,
+  la fecha en cursiva, la raya fina y «SEMANA 45»; el de 1×1 con «SÁB 7» de antetítulo y la hora a todo lo ancho. Las agujas de pie, con
+  la esfera, la raya, el día enorme y el mes en cursiva; redondas, la esfera entera con «SÁB 7» como la ventanita de un reloj. El
+  calendario, «HOY», el día de la semana, el número gigante, el mes en cursiva, el año y la semana (L M X J V S D, en dos filas si no cabe)
+  con hoy marcado; en 1×1, el número con el día y el mes al lado. El tiempo, la ciudad, el icono, la temperatura, la máxima y la mínima en
+  cursiva y los dos días siguientes. La batería, la pila con sus marcas, el % y «cargando». La cuenta atrás, el número, «días para
+  Navidad» en cursiva, «25 DIC» y, en la alta, «7 SEMANAS». La nota, el título y el texto en cursiva. El buscador, con «¿Qué buscamos?» al
+  pie. Los accesos, en columna con rayas finas o en rejilla (en 1×1, una fila con los tres primeros). La foto, con su pie en cursiva o la
+  fecha.
+- **Nada cortado**: si algo no cabe entero se quita lo menos importante (el pie, la fecha…), nunca el marco, el antetítulo ni las rayas
+  (salvo que las hayas ocultado). Se respetan los colores, las piezas y las partes ocultas del diseño.
+- Comprobado a los cuatro tamaños del OPPO (59×59, 59×120, 59×178 y 120×120 dp a 2,625), cada tipo y cada plantilla, en claro y en
+  oscuro (`WidgetsTest.dibujaLosChicos`, solo con `-Proborazzi.test.record=true`; van a `widgets/chicos/`).
+
 ## Capturas
 
 Hechas en el ordenador con datos de mentira (`CapturasTest`; también la portada con pocos diseños y las plantillas, tras guardar y la ficha de un diseño, solo con `-Proborazzi.test.record=true`; las de los widgets, `WidgetsTest`),

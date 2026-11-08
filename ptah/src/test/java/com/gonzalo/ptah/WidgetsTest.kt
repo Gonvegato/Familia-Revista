@@ -348,6 +348,18 @@ class WidgetsTest {
         return r
     }
 
+    /** Los cuatro tamaños chicos del móvil de verdad (59×59, 59×120, 59×178 y 120×120 dp a 2,625): cada tipo y cada plantilla, en claro y en oscuro. */
+    @Test fun dibujaLosChicos() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        kotlinx.coroutines.runBlocking { Letras.prepara(ctx, Plantillas.TODAS.map { it.first }) }
+        val datos = DatosDeMentira(ctx)
+        val s = 2.625f
+        val ejemplos = Plantillas.TODAS.map { it.first.id.removePrefix("p") to it.first } + Tipos.TODOS.map { t ->
+            "nuevo-" + t.id to (if (t.id == Accesos.id) t.nuevo().con("items", listOf("app:com.android.chrome", "app:com.whatsapp", "web:elpais.com|El País")) else t.nuevo()) }
+        for ((n, d) in ejemplos) for ((w, h) in listOf(59f to 59f, 59f to 120f, 59f to 178f, 120f to 120f)) for (noche in listOf(false, true))
+            guarda(sobreFondo(Pintor.pinta(ctx, d, w, h, noche, s, datos, enWidget = true).bm, s), "${n}_${w.toInt()}x${h.toInt()}${if (noche) "_oscuro" else ""}", "$dir/chicos")
+    }
+
     @Test fun dibujaLasVistasPrevias() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         kotlinx.coroutines.runBlocking { Letras.prepara(ctx, Plantillas.TODAS.map { it.first }) }

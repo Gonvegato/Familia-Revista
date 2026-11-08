@@ -21,7 +21,7 @@ import kotlin.math.sin
  */
 
 /** El formato de la hora con el móvil en 24 horas y en 12 (los dos iguales, salvo «como el móvil»). */
-private fun formatoHora(d: Diseno): Pair<String, String> = when (d.texto("formato", "24")) {
+internal fun formatoHora(d: Diseno): Pair<String, String> = when (d.texto("formato", "24")) {
     "24cero" -> Formatos.HORA_CERO to Formatos.HORA_CERO
     "12" -> Formatos.HORA_12 to Formatos.HORA_12
     "movil" -> Formatos.HORA to Formatos.HORA_12
@@ -29,7 +29,7 @@ private fun formatoHora(d: Diseno): Pair<String, String> = when (d.texto("format
 }
 
 /** La letra de la hora: la que elijas de las de la familia o, de serie, la que más se parece a la de títulos del diseño. */
-private fun letraHora(l: Lienzo): LetraFija = LetraFija.entries.firstOrNull { it.name == l.d.texto("letraHora") } ?: l.letraTitulosViva()
+internal fun letraHora(l: Lienzo): LetraFija = LetraFija.entries.firstOrNull { it.name == l.d.texto("letraHora") } ?: l.letraTitulosViva()
 
 val OPCIONES_FORMATO = listOf("24" to "9:41", "24cero" to "09:41", "12" to "12 horas", "movil" to "Como el móvil")
 val OPCIONES_LETRA_HORA = listOf("" to "La de los títulos") + LetraFija.entries.filter { it != LetraFija.VERSALITAS }.map { it.name to it.nombre }
@@ -290,7 +290,7 @@ object RelojAgujas : TipoWidget {
     }
 
     /** La esfera: el fondo, el aro, las rayas de los minutos y las horas, los números y el nombre. */
-    private fun esfera(l: Lienzo, r: RectF) {
+    internal fun esfera(l: Lienzo, r: RectF) {
         val e = l.e; val d = l.d; val c = l.c
         val cx = r.centerX(); val cy = r.centerY(); val rad = r.width() / 2f
         val fondo = l.pieza("esfera", 0)
