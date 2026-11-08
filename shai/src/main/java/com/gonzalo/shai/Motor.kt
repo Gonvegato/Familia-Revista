@@ -41,6 +41,11 @@ object Motor {
     @Volatile var reloj: () -> Long = { System.currentTimeMillis() }
     /** Cuánto tarda en salir el segundo evento de entre partidos tras el primero. */
     @Volatile var separacion: Long = 6 * 3600_000L
+    /** Cada cuántas jornadas se rehace lo que Shai recuerda. */
+    const val CADA_MEMORIA = 3
+
+    /** La carrera de la que se está pidiendo algo ahora (en este hilo): el modo prueba la usa para no repetir. */
+    val actual = ThreadLocal<String?>()
 
     private val cerrojo = Any()
 
@@ -52,63 +57,158 @@ object Motor {
         return r.json()
     }
 
-    private fun contexto(u: Universo) = Narrador.contexto(u, Carreras.entradasDe(u.id, ahora = reloj()), Carreras.partidos(u.id).map { it.second })
+    private fun <T> en(universo: String, f: () -> T): T { val antes = actual.get(); actual.set(universo); try { return f() } finally { actual.set(antes) } }
+
+    private fun contexto(u: Universo, cuantas: Int = 8) =
+        Narrador.contexto(u, Carreras.entradasDe(u.id, ahora = reloj()), Carreras.partidos(u.id).map { it.second }, cuantas)
+
+    /** ¿Cabe otra decisión? (con [Narrador.MAX_ABIERTAS] abiertas, ya no se ponen más). */
+    fun cabeDecision(universo: String): Boolean = Carreras.entradasDe(universo, ahora = reloj()).count { it.decision?.abierta == true } < Narrador.MAX_ABIERTAS
 
     // ---------------------------------------------------------------- una carrera nueva
 
     /** Crea la carrera y pide su principio (su gente y su presentación). Si eso falla, la carrera queda creada igual. */
     fun crea(u0: Universo): Pair<Universo, String?> {
-        var u = Carreras.guarda(u0.copy(precios = u0.precios.ifEmpty { Mercado.inicial() }))
-        val fallo = try {
-            val r = Narrador.leeInicio(pide(Narrador.inicio(u)))
-            u = Carreras.guarda(u.copy(entorno = u.entorno + r.gente.filter { g -> u.entorno.none { Vida.mismo(it.nombre, g.nombre) } }))
-            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.INICIO, reloj(), u.paso, r.titulo, r.texto, posts = r.posts, dms = r.dms, prensa = r.prensa))
-            null
-        } catch (e: Exception) { mensaje(e) }
+        var u = Carreras.guarda(u0.copy(precios = u0.precios.ifEmpty { Mercado.inicial() }, famaHist = u0.famaHist.ifEmpty { listOf(0 to u0.valorFuera(Fuera.FAMA)) }))
+        val fallo = en(u.id) {
+            try {
+                val r = Narrador.leeInicio(pide(Narrador.inicio(u)))
+                u = Carreras.guarda(u.copy(entorno = u.entorno + r.gente.filter { g -> u.entorno.none { Vida.mismo(it.nombre, g.nombre) } }))
+                Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.INICIO, reloj(), u.paso, r.titulo, r.texto, posts = r.posts, dms = r.dms, prensa = r.prensa,
+                    tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts))
+                null
+            } catch (e: Exception) { mensaje(e) }
+        }
         return u to fallo
     }
 
     // ---------------------------------------------------------------- tras un partido
 
     /**
-     * Guarda el partido (y la jornada: sueldo, bolsa…), saca los eventos que estaban esperando y pide la red y la prensa. Luego, si toca,
-     * manda los dos eventos de entre partidos por lotes. Devuelve la entrada del partido y, si algo no llegó, por qué.
+     * Guarda el partido (y la jornada: sueldo, bolsa, la fama que da…), caduca las decisiones que no contestaste, saca los eventos que
+     * estaban esperando y pide la red y la prensa (que cuenta también lo que dejaste sin contestar). Luego, si toca, manda los dos eventos
+     * de entre partidos por lotes y, cada [CADA_MEMORIA] jornadas, rehace lo que Shai recuerda. Devuelve la entrada del partido y, si algo
+     * no llegó, por qué.
      */
-    fun partido(universo: String, p: Partido): Pair<Entrada, String?> = synchronized(cerrojo) {
-        // Lo que estaba por salir sale ya (el partido llega antes que su hora)
+    fun partido(universo: String, p: Partido): Pair<Entrada, String?> = synchronized(cerrojo) { en(universo) {
+        // Lo que tenías abierto y ya habías visto caduca con el partido nuevo (lo que estaba por salir aún no lo habías visto)
+        caduca(universo)
         revela(universo, forzar = true)
         var u = Carreras.de(universo) ?: error("No encuentro esa carrera")
         u = Carreras.guarda(Vida.jornada(u, p))
         var e = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PARTIDO, reloj(), u.paso, partido = p, pendiente = "red,prensa"))
+        // Los hitos y récords (los de Shai, con sus cifras): se apuntan, dan algo de fama y la red y la prensa los cuentan
+        val hitos = Hitos.nuevos(u, Carreras.partidos(u.id).map { it.second }, u.paso)
+        if (hitos.isNotEmpty()) {
+            val ef = Efectos(fuera = mapOf(Fuera.FAMA to hitos.sumOf { Hitos.fama(it) }))
+            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.HITO, reloj() - 1, u.paso, hitos.joinToString(" · ") { it.titulo },
+                hitos.joinToString("\n") { it.texto }, efectos = Vida.recorta(u, ef)))
+            u = Carreras.guarda(Vida.aplica(u, ef).copy(hitos = u.hitos + hitos))
+        }
         val r = completa(e)
         e = r.first
-        if (e.pendiente.isEmpty()) runCatching { mandaEventos(Carreras.de(universo) ?: u) }
+        // El contrato: si toca hablar de renovar, el club (o tu representante) mueve ficha
+        runCatching { revisaContrato(universo) }
+        if (e.pendiente.isEmpty()) {
+            runCatching { mandaEventos(Carreras.de(universo) ?: u) }
+            if (u.paso % CADA_MEMORIA == 0) runCatching { recuerda(universo) }
+        }
         e to r.second
+    } }
+
+    // ---------------------------------------------------------------- el contrato
+
+    /** Los partidos de la temporada de ahora. */
+    private fun partidosTemporada(u: Universo) = Carreras.partidos(u.id).map { it.second }.filter { u.temporada.isBlank() || it.temporada == u.temporada }
+
+    /**
+     * Si toca hablar de renovar (le queda poco o su nivel ya está muy por encima de lo que cobra), el club le hace una oferta de renovación
+     * (o, si es por el nivel, su representante le pide permiso para renegociar). Devuelve lo que ha salido, si ha salido algo.
+     */
+    fun revisaContrato(universo: String): Entrada? {
+        val u = Carreras.de(universo) ?: return null
+        val c = u.contrato ?: return null
+        if (Carreras.entradasDe(universo, todas = true).any { e -> e.ofertas.any { it.tipo == "renovacion" && it.estado == Oferta.ABIERTA } || e.decision?.let { it.abierta && it.accion == "renegociar" } == true }) return null
+        val motivo = Contratos.motivoRenovacion(u, partidosTemporada(u).size) ?: return null
+        Carreras.guarda(u.copy(renovacionPaso = u.paso))
+        val rep = u.entorno.firstOrNull { it.rol.contains("representante", true) }?.nombre ?: "Tu representante"
+        return if (motivo.startsWith("tu nivel") && cabeDecision(universo)) {
+            val r = Rangos.de(u.nivelActual).sueldo
+            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, reloj(), u.paso, "$rep quiere renegociar",
+                "$rep te ha llamado con los números delante: cobras ${Formato.euros(c.sueldo)} a la semana y alguien de tu nivel (${u.nivelActual.nombre.lowercase()}) cobra entre ${Formato.euros(r.first)} y ${Formato.euros(r.last)}. " +
+                    "«Te están pagando como a un chaval del filial», te dice. Quiere pedirle al ${c.club} que te mejore el contrato ya, aunque te quedan ${Contratos.quedan(c, u.temporada)} temporadas. " +
+                    "Si lo pide y el club no quiere, puede haber tensión; si esperas, el precio puede subir… o bajar.",
+                decision = Decision(Universo.nuevoId("d"), rep, "¿Le dejas pedir la renovación?", listOf("Que la pida ya al club", "Esperar a final de temporada", "No tocar nada: firmé lo que firmé"),
+                    titulo = "$rep quiere renegociar", enJuego = "Lo que cobras, tu relación con el club y con $rep", accion = "renegociar")))
+        } else ofreceRenovacion(u, motivo.replaceFirstChar { it.uppercase() } + ", y el club ha llamado a tu representante para sentarse a hablar.")
     }
 
+    private fun ofreceRenovacion(u: Universo, porque: String): Entrada {
+        val o = Contratos.propuesta(u, partidosTemporada(u))
+        return Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, reloj(), u.paso, "El ${u.club} quiere renovarte",
+            "$porque ${o.texto} Puedes aceptarla, pedir más (una vez) o rechazarla y esperar: si el contrato se acaba sin renovar, quedarás libre.",
+            ofertas = listOf(o)))
+    }
+
+    /** Pedir más a una renovación: el club sube o se planta (una vez). Devuelve qué ha pasado. */
+    fun contraoferta(entrada: String, oferta: String): String? = synchronized(cerrojo) {
+        val e = Carreras.entrada(entrada) ?: return null
+        val o = e.ofertas.firstOrNull { it.id == oferta && it.estado == Oferta.ABIERTA && !it.negociada } ?: return null
+        val u = Carreras.de(e.universo) ?: return null
+        val (nueva, sube) = Contratos.contraoferta(u, o)
+        Carreras.guarda(e.copy(ofertas = e.ofertas.map { if (it.id == o.id) it.copy(estado = Oferta.NEGOCIADA) else it } + nueva.copy(negociada = true)))
+        if (sube) "El club ha subido su oferta." else "El club no se mueve."
+    }
+
+    /** Las decisiones abiertas que ya habías visto: caducan (lo que pase por no contestar lo cuenta la prensa del partido siguiente). */
+    fun caduca(universo: String): Int {
+        val ahora = reloj()
+        val abiertas = Carreras.entradasDe(universo, todas = true, ahora = ahora).filter { it.aplicada && it.visible(ahora) && it.decision?.abierta == true }
+        abiertas.forEach { e -> Carreras.guarda(e.copy(decision = e.decision!!.copy(estado = Decision.CADUCADA))) }
+        return abiertas.size
+    }
+
+    /** Las caducadas que aún no tienen su consecuencia. */
+    private fun sinContar(universo: String) = Carreras.entradasDe(universo, todas = true).filter { it.decision?.caducada == true && it.decision.consecuencia.isBlank() }
+        .sortedBy { it.creado }
+
     /** Pide lo que le falta a un partido (la red, la prensa o las dos). */
-    fun completa(e0: Entrada): Pair<Entrada, String?> {
+    fun completa(e0: Entrada): Pair<Entrada, String?> = en(e0.universo) {
         var e = e0
         var fallo: String? = null
-        val p = e.partido ?: return e to null
+        val p = e.partido ?: return@en e to null
         if ("red" in e.pendiente) {
             try {
-                val u = Carreras.de(e.universo) ?: return e to null
-                val (posts, dms) = Narrador.leeRed(pide(Narrador.red(u, p, contexto(u))))
-                e = Carreras.guarda(e.copy(posts = posts, dms = dms, pendiente = e.pendiente.split(',').filter { it != "red" }.joinToString(",")))
+                val u = Carreras.de(e.universo) ?: return@en e to null
+                val r = Narrador.leeRed(pide(Narrador.red(u, p, contexto(u))))
+                e = Carreras.guarda(e.copy(posts = r.posts, dms = r.dms, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts,
+                    pendiente = e.pendiente.split(',').filter { it != "red" }.joinToString(",")))
             } catch (x: Exception) { fallo = mensaje(x) }
         }
         if ("prensa" in e.pendiente && fallo == null) {
             try {
-                val u = Carreras.de(e.universo) ?: return e to null
-                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u))))
-                val nu = Vida.aplica(u, r.efectos)
+                val u = Carreras.de(e.universo) ?: return@en e to null
+                val caducadas = sinContar(u.id)
+                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u), caducadas)), u.nivelActual)
+                var nu = Vida.aplica(u, r.efectos)
+                val ef = Vida.recorta(u, r.efectos)
+                // Lo que no contestó: su consecuencia (la que cuenta la prensa, o una corta si no la cuenta) y sus efectos
+                caducadas.forEachIndexed { i, c ->
+                    val d = c.decision ?: return@forEachIndexed
+                    val sc = r.sinContestar.firstOrNull { it.n == i + 1 }
+                    val txt = sc?.consecuencia ?: "Lo dejaste pasar y nadie volvió a sacar el tema… de momento."
+                    val efc = sc?.efectos?.let { Vida.recorta(nu, it) } ?: Efectos()
+                    if (sc != null) nu = Vida.aplica(nu, sc.efectos)
+                    Carreras.guarda(c.copy(decision = d.copy(consecuencia = txt)))
+                    Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.SINCONTESTAR, reloj() - 1, u.paso, d.titulo.ifBlank { c.titulo }.ifBlank { d.texto }, txt, efectos = efc))
+                }
                 Carreras.guarda(nu)
-                e = Carreras.guarda(e.copy(prensa = r.prensa, ofertas = r.ofertas, decision = r.decision, efectos = Vida.recorta(u, r.efectos),
+                val dec = r.decision?.takeIf { cabeDecision(u.id) }
+                e = Carreras.guarda(e.copy(prensa = r.prensa, ofertas = r.ofertas, decision = dec, efectos = ef,
                     pendiente = e.pendiente.split(',').filter { it != "prensa" }.joinToString(",")))
             } catch (x: Exception) { fallo = mensaje(x) }
         }
-        return e to fallo
+        e to fallo
     }
 
     fun reintenta(id: String): String? = synchronized(cerrojo) {
@@ -124,12 +224,14 @@ object Motor {
     fun mandaEventos(u: Universo) {
         if (!Gasto.eventosSolos() || !u.autoEventos || !ClaveApi.hay) return
         if (u.lotes.any { it.paso == u.paso }) return
-        val ctx = contexto(u)
-        val ps = listOf(1, 2).map { i -> "${u.id}_${u.paso}_$i" to Narrador.evento(u, ctx, i, enLote = true) }
-        Gasto.compruebaAntes(ps.sumOf { Precios.coste(it.second.modelo, it.second.usoMaximo(), lote = true, cacheHora = true) })
-        val id = claude.creaLote(ps)
-        val nu = Carreras.de(u.id) ?: u
-        Carreras.guarda(nu.copy(lotes = nu.lotes + Lote(id, reloj(), u.paso)))
+        en(u.id) {
+            val ctx = contexto(u)
+            val ps = listOf(1, 2).map { i -> "${u.id}_${u.paso}_$i" to Narrador.evento(u, ctx, i, enLote = true) }
+            Gasto.compruebaAntes(ps.sumOf { Precios.coste(it.second.modelo, it.second.usoMaximo(), lote = true, cacheHora = true) })
+            val id = claude.creaLote(ps)
+            val nu = Carreras.de(u.id) ?: u
+            Carreras.guarda(nu.copy(lotes = nu.lotes + Lote(id, reloj(), u.paso)))
+        }
         // En modo prueba, el lote «vuelve» al momento
         if (Prueba.activo) { miraLotes(); revela(u.id) }
     }
@@ -137,24 +239,26 @@ object Motor {
     /** Mira los lotes que faltan; los que han vuelto, a su sitio (el primero sale ya y el segundo, horas después). Devuelve cuántos eventos llegaron. */
     fun miraLotes(): Int = synchronized(cerrojo) {
         var llegados = 0
-        for (u0 in Carreras.todas()) for (l in u0.lotes) {
-            val est = try { claude.lote(l.id) } catch (e: Claude.Fallo) { if (e.reintentable) continue else { quitaLote(u0.id, l.id); continue } }
+        for (u0 in Carreras.todas()) for (l in u0.lotes) en(u0.id) {
+            val est = try { claude.lote(l.id) } catch (e: Claude.Fallo) { if (e.reintentable) return@en else { quitaLote(u0.id, l.id); return@en } }
             if (est.estado != "ended") {
                 // (si en dos días no ha vuelto, se da por perdido: la API los caduca a las 24 horas)
                 if (reloj() - l.creado > 48 * 3600_000L) quitaLote(u0.id, l.id)
-                continue
+                return@en
             }
-            val res = try { claude.resultados(l.id, est.resultados) } catch (e: Claude.Fallo) { if (e.reintentable) continue else emptyList() }
-            val u = Carreras.de(u0.id) ?: continue
+            val res = try { claude.resultados(l.id, est.resultados) } catch (e: Claude.Fallo) { if (e.reintentable) return@en else emptyList() }
+            val u = Carreras.de(u0.id) ?: return@en
             val ahora = reloj()
+            var abiertas = Carreras.entradasDe(u.id, ahora = ahora).count { it.decision?.abierta == true }
             res.sortedBy { it.id }.forEachIndexed { i, r ->
                 val resp = r.respuesta ?: return@forEachIndexed
                 Gasto.apunta(resp.modelo.ifBlank { Claude.SONNET }, Precios.coste(resp.modelo.ifBlank { Claude.SONNET }, resp.uso, lote = true, cacheHora = true))
                 val m = runCatching { resp.json() }.getOrNull() ?: return@forEachIndexed
-                // Si ya metiste otro partido, salen ya: se quedaron atrás
-                // (en modo prueba, los dos salen ya: no hay que esperar horas para ver cómo va)
+                // Si ya metiste otro partido, salen ya: se quedaron atrás (en modo prueba, los dos salen ya: no hay que esperar horas para ver cómo va)
                 val visible = if (u.paso > l.paso || Prueba.activo) ahora else ahora + i * separacion
-                Carreras.guarda(Narrador.leeEvento(m, u, ahora, visible).copy(paso = l.paso))
+                var ev = Narrador.leeEvento(m, u, ahora, visible).copy(paso = l.paso)
+                if (ev.decision != null) { if (abiertas >= Narrador.MAX_ABIERTAS) ev = ev.copy(decision = null) else abiertas++ }
+                Carreras.guarda(ev)
                 llegados++
             }
             quitaLote(u.id, l.id)
@@ -184,15 +288,82 @@ object Motor {
     }
 
     /** Pedir un evento ahora («¿Qué ha pasado esta semana?»): sin lote, al momento (a precio normal). */
-    fun eventoAhora(universo: String): Pair<Entrada?, String?> = synchronized(cerrojo) {
-        val u = Carreras.de(universo) ?: return null to null
+    fun eventoAhora(universo: String): Pair<Entrada?, String?> = synchronized(cerrojo) { en(universo) {
+        val u = Carreras.de(universo) ?: return@en null to null
         try {
             val m = pide(Narrador.evento(u, contexto(u), 0))
-            val e = Carreras.guarda(Narrador.leeEvento(m, u, reloj(), reloj()))
+            var ev = Narrador.leeEvento(m, u, reloj(), reloj())
+            if (ev.decision != null && !cabeDecision(universo)) ev = ev.copy(decision = null)
+            val e = Carreras.guarda(ev)
             revela(universo)
             (Carreras.entrada(e.id) ?: e) to null
         } catch (x: Exception) { null to mensaje(x) }
+    } }
+
+    // ---------------------------------------------------------------- lo que Shai recuerda
+
+    /** Rehace lo que Shai recuerda de la carrera (Sonnet, corto). Devuelve por qué no se pudo, si no se pudo. */
+    fun recuerda(universo: String): String? = en(universo) {
+        val u = Carreras.de(universo) ?: return@en null
+        try {
+            val m = Narrador.leeMemoria(pide(Narrador.memoria(u, contexto(u, cuantas = 16))))
+            if (m.isNotBlank()) { val nu = Carreras.de(universo) ?: u; Carreras.guarda(nu.copy(memoria = m, memoriaPaso = nu.paso)) }
+            null
+        } catch (x: Exception) { mensaje(x) }
     }
+
+    // ---------------------------------------------------------------- el cierre de temporada
+
+    /** «2026/27» → «2027/28»; «2026» → «2027». */
+    fun siguienteTemporada(t: String): String {
+        Regex("""^(\d{4})([/-])(\d{2,4})$""").find(t.trim())?.let { m ->
+            val a = m.groupValues[1].toInt() + 1
+            val b = m.groupValues[3]
+            return "$a${m.groupValues[2]}" + if (b.length == 2) "%02d".format((a + 1) % 100) else "${a + 1}"
+        }
+        Regex("""^(\d{4})$""").find(t.trim())?.let { return "${it.groupValues[1].toInt() + 1}" }
+        return t
+    }
+
+    /**
+     * Cierra la temporada: el balance (con tus cifras), los premios (de medios inventados), las vacaciones con su decisión y el mercado de
+     * verano; luego pasa a la temporada siguiente (y un año más) y rehace lo que Shai recuerda. Devuelve por qué no se pudo, si no se pudo.
+     */
+    fun cierraTemporada(universo: String): String? = synchronized(cerrojo) { en(universo) {
+        val u = Carreras.de(universo) ?: return@en null
+        val t = u.temporada
+        if (t.isNotBlank() && t in u.cerradas) return@en "La temporada $t ya está cerrada."
+        val ps = Carreras.partidos(u.id).map { it.second }.filter { it.temporada == t || t.isBlank() }
+        if (ps.isEmpty()) return@en "No hay partidos en esta temporada: mete alguno antes de cerrarla."
+        try {
+            val r = Narrador.leeTemporada(pide(Narrador.temporada(u, contexto(u, cuantas = 12), Estadisticas.linea(t, "", ps), ps)), u.nivelActual)
+            val ef = Vida.recorta(u, r.efectos)
+            var nu = Vida.aplica(u, r.efectos)
+            val ahora = reloj()
+            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.TEMPORADA, ahora, u.paso, r.titulo.ifBlank { "Cierre de la temporada $t" }, r.balance,
+                posts = r.posts, dms = r.dms, prensa = r.prensa, ofertas = r.ofertas, efectos = ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts, premios = r.premios))
+            if (r.vacacionesTexto.isNotBlank()) Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, ahora + 1, u.paso, r.vacacionesTitulo.ifBlank { "Vacaciones" },
+                r.vacacionesTexto, decision = r.vacacionesDecision?.takeIf { cabeDecision(u.id) }))
+            nu = (Carreras.de(u.id) ?: nu).let { x -> x.copy(dinero = nu.dinero, fuera = nu.fuera, entorno = nu.entorno, famaJornada = nu.famaJornada, famaHist = nu.famaHist) }
+            nu = nu.copy(temporada = siguienteTemporada(t), cerradas = (nu.cerradas + t).filter { it.isNotBlank() }.distinct(), personaje = nu.personaje.copy(edad = nu.personaje.edad + 1))
+            // El contrato que se acaba: libre (o, si era una cesión, de vuelta a su club)
+            val c = u.contrato
+            if (c != null && Contratos.quedan(c, t) <= 1) {
+                val origen = c.nota.removePrefix("Cedido por ").takeIf { c.nota.startsWith("Cedido por ") }
+                if (origen != null) {
+                    val vuelta = Contratos.primero(nu.nivelActual, origen, nu.temporada, nu.modo).copy(sueldo = maxOf(c.sueldo, Rangos.de(nu.nivelActual).sueldo.first))
+                    nu = nu.copy(club = origen, contrato = vuelta, salario = vuelta.sueldo + nu.patrocinio)
+                    Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.OFICIAL, ahora + 2, u.paso, "Vuelves al $origen", "Se acaba la cesión en el ${c.club}: vuelves al $origen con ${Formato.euros(vuelta.sueldo)} a la semana hasta la temporada ${vuelta.hasta}.\nHazlo también en tu partida de FC."))
+                } else {
+                    nu = nu.copy(contrato = null, salario = nu.patrocinio)
+                    Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.OFICIAL, ahora + 2, u.paso, "Eres libre", "Se acaba tu contrato con el ${c.club} y no has renovado: eres agente libre. Ya no cobras sueldo de ningún club; las ofertas del verano son tu futuro.\nHazlo también en tu partida de FC."))
+                }
+            }
+            Carreras.guarda(nu)
+            runCatching { recuerda(u.id) }
+            null
+        } catch (x: Exception) { mensaje(x) }
+    } }
 
     // ---------------------------------------------------------------- lo que decides
 
@@ -200,17 +371,21 @@ object Motor {
     fun decide(entrada: String, eleccion: String): String? = synchronized(cerrojo) {
         val e = Carreras.entrada(entrada) ?: return null
         val d = e.decision?.takeIf { it.abierta } ?: return null
-        val u = Carreras.de(e.universo) ?: return null
-        val t = eleccion.trim().ifBlank { return "Escribe qué haces o elige una opción." }
-        try {
-            val r = Narrador.leeRespuesta(pide(Narrador.respuesta(u, contexto(u), e, d, t)))
-            Carreras.guarda(e.copy(decision = d.copy(elegida = t, consecuencia = r.texto, estado = Decision.RESUELTA)))
-            val ef = Vida.recorta(u, r.efectos)
-            Carreras.guarda(Vida.aplica(u, r.efectos))
-            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.RESPUESTA, reloj(), u.paso, r.titular.ifBlank { "Lo que pasó después" }, r.texto,
-                posts = r.posts, dms = listOf(Dm("Tú", t, mio = true)) + r.dms, efectos = ef))
-            null
-        } catch (x: Exception) { mensaje(x) }
+        en(e.universo) {
+            val u = Carreras.de(e.universo) ?: return@en null
+            val t = eleccion.trim().ifBlank { return@en "Escribe qué haces o elige una opción." }
+            try {
+                val r = Narrador.leeRespuesta(pide(Narrador.respuesta(u, contexto(u), e, d, t)))
+                Carreras.guarda(e.copy(decision = d.copy(elegida = t, consecuencia = r.texto, estado = Decision.RESUELTA)))
+                val ef = Vida.recorta(u, r.efectos)
+                Carreras.guarda(Vida.aplica(u, r.efectos))
+                Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.RESPUESTA, reloj(), u.paso, r.titular.ifBlank { "Lo que pasó después" }, r.texto,
+                    posts = r.posts, dms = listOf(Dm("Tú", t, mio = true, chat = d.de)) + r.dms, efectos = ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts))
+                // Si era pedir la renovación y dijo que sí, el club hace su oferta
+                if (d.accion == "renegociar" && t == d.opciones.firstOrNull()) Carreras.de(u.id)?.let { ofreceRenovacion(it, "Tu representante lo pidió y el club ha contestado con una oferta.") }
+                null
+            } catch (x: Exception) { mensaje(x) }
+        }
     }
 
     /** Aceptar o rechazar una oferta. Al aceptar: cambia tu carrera, se cae lo demás de esa vez y la red reacciona (si se puede). */
@@ -235,16 +410,18 @@ object Motor {
         val texto = listOfNotNull(o.texto.ifBlank { null }, o.salario.takeIf { it > 0 }?.let { "${Formato.euros(it)} a la semana" }, o.prima.takeIf { it > 0 }?.let { "prima de ${Formato.euros(it)}" },
             o.anios.takeIf { it > 0 }?.let { "$it año${if (it > 1) "s" else ""}" }).joinToString(" · ")
         var of = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.OFICIAL, reloj(), u.paso, titulo, texto + "\nHazlo también en tu partida de FC."))
-        return try {
-            val (posts, dms) = Narrador.leeRed(pide(Narrador.oficial(nu, contexto(nu), o)))
-            of = Carreras.guarda(of.copy(posts = posts, dms = dms)); null
-        } catch (x: Exception) { mensaje(x) }
+        return en(u.id) {
+            try {
+                val r = Narrador.leeRed(pide(Narrador.oficial(nu, contexto(nu), o)))
+                of = Carreras.guarda(of.copy(posts = r.posts, dms = r.dms, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts)); null
+            } catch (x: Exception) { mensaje(x) }
+        }
     }
 
     /** Leer la foto de la pantalla de estadísticas. */
     fun foto(universo: String, base64: String, tipo: String): Narrador.LoDeLaFoto {
         val u = Carreras.de(universo) ?: error("No encuentro esa carrera")
-        return Narrador.leeFoto(pide(Narrador.foto(u, base64, tipo)))
+        return en(universo) { Narrador.leeFoto(pide(Narrador.foto(u, base64, tipo))) }
     }
 
     fun mensaje(e: Throwable): String = when (e) {

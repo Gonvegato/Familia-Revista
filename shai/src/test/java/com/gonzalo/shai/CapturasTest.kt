@@ -36,9 +36,18 @@ abstract class CapturasBase {
     @Test fun pantallas() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         Cuenta.cargar(ctx); Skin.cargar(ctx)
-        val api = Ejemplo.prepara()
+        Ejemplo.prepara()
         Cuenta.dentroFijo = true
-        val u = Ejemplo.completa(api)
+        // Con las plantillas del modo prueba (lo más parecido a lo que escribe Claude), sin el aviso del modo prueba
+        Motor.claude = Claude({ ClaveApi.lee() }, TransporteDePrueba(kotlin.random.Random(11)))
+        Motor.separacion = 0
+        val (u0, _) = Motor.crea(Ejemplo.universo().copy(trayectoria = "Canterano del Betis desde los nueve años; debutó el año pasado en Copa. Su abuelo jugó en el filial.",
+            nivel = Nivel.PROMESA.name, fuera = Fuera.INICIAL + (Fuera.FAMA to 24)))
+        listOf(Ejemplo.partido(2, 2, "Athletic Club"), Ejemplo.partido(1, 2, "Valencia CF"), Ejemplo.partido(3, 1, "Sevilla FC")).forEach { p ->
+            Motor.partido(u0.id, p); Motor.miraLotes(); Motor.revela(forzar = true)
+        }
+        Carreras.entradasDe(u0.id).firstOrNull { it.decision?.abierta == true }?.let { Motor.decide(it.id, it.decision!!.opciones.first()) }
+        val u = Carreras.de(u0.id)!!
         Gasto.apunta(Claude.SONNET, 3.42); Gasto.apunta(Claude.HAIKU, 0.37)
         // (otra carrera, de míster, para la portada)
         Carreras.guarda(Universo(Universo.nuevoId(), Rol.MISTER, Personaje("Marcelo Ruiz", edad = 44, nacionalidad = "Argentina"), "Real Valladolid CF", "LaLiga Hypermotion", "2026/27", 9_000, dinero = 1_200_000))
@@ -51,6 +60,8 @@ abstract class CapturasBase {
                         when (cual) {
                             0 -> PantPortada({}, {}, {})
                             in 10..16 -> PantCarrera(otra, {}, {}, {}, inicial = cual - 10)
+                            17 -> PantCarrera(otra, {}, {}, {}, inicial = 0, articuloAbierto = true)
+                            18 -> PaginaRevista { CerrarTemporada(Carreras.de(otra)!!, preguntando0 = true) }
                             20 -> PantPartido(u.id, {}, {})
                             21 -> PantPartido(u.id, {}, {}, comoInicial = 1)
                             30 -> PantNueva({}, {})
@@ -63,11 +74,16 @@ abstract class CapturasBase {
         }
         foto("01-portada")
         PESTANAS.forEachIndexed { i, n -> cual = 10 + i; foto("1$i-carrera-${n.lowercase()}") }
+        cual = 17; foto("17-carrera-noticia")
+        cual = 18; foto("18-cerrar-temporada")
         cual = 20; foto("20-partido-rapido")
         cual = 21; foto("21-partido-completo")
         cual = 30; foto("30-nueva-carrera")
         cual = 40; foto("40-ajustes-ia")
         cual = 41; foto("41-ajustes-apariencia")
+        // El cierre de la temporada
+        Motor.cierraTemporada(u.id)
+        cual = 10; foto("19-carrera-fin-de-temporada")
         // El modo prueba (sin IA): una carrera nueva con sus plantillas de ejemplo
         Prueba.pon(ctx, true)
         val (p, _) = Motor.crea(Ejemplo.universo())
@@ -78,7 +94,7 @@ abstract class CapturasBase {
         cual = 11; foto("52-prueba-red")
         cual = 12; foto("53-prueba-mensajes")
         cual = 40; foto("54-prueba-ajustes-ia")
-        Prueba.vacia(); Prueba.pon(ctx, false)
+        Prueba.vacia(); Prueba.pon(ctx, false); Motor.separacion = 6 * 3600_000L
         Cuenta.dentroFijo = null; ClaveApi.fija = null; Gasto.mesFijo = null
     }
 }

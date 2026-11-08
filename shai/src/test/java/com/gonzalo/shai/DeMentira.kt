@@ -99,7 +99,7 @@ object Ejemplo {
 
     fun universo() = Universo(Universo.nuevoId(), Rol.JUGADOR, Personaje("Álex Cortés", "el Niño", 19, "España", "DC", 9, 74,
         mapOf("RIT" to 86, "TIR" to 76, "PAS" to 64, "REG" to 79, "DEF" to 31, "FIS" to 68), "Ambicioso, fiestero y mujeriego", listOf(0 to 74)),
-        "Real Betis", "LaLiga", "2026/27", 18_000, "", 250_000)
+        "Real Betis", "LaLiga", "2026/27", 18_000, "2028/29", 250_000, contrato = Contrato("Real Betis", 18_000, "2026/27", "2028/29", clausula = 30_000_000))
 
     fun partido(gf: Int = 3, gc: Int = 1, rival: String = "Sevilla FC") = Partido("2026/27", "LaLiga", rival, true, gf, gc, 90, 2, 1, 8.7)
 

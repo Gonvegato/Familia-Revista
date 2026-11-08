@@ -1,6 +1,7 @@
 package com.gonzalo.shai
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsSoccer
@@ -27,7 +28,7 @@ val PESTANAS = listOf("Portada", "Red", "Mensajes", "Ofertas", "Cifras", "Vida",
 
 /** Una carrera, en pestañas: la portada (la prensa y lo que pasa), la red, los mensajes y las decisiones, las ofertas, las cifras, la vida y el perfil. */
 @Composable
-fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjustes: (Int) -> Unit, inicial: Int = 0) {
+fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjustes: (Int) -> Unit, inicial: Int = 0, articuloAbierto: Boolean = false) {
     Carreras.version
     var pestana by rememberSaveable { mutableIntStateOf(inicial) }
     val u = Carreras.de(id) ?: run { PaginaRevista { RevistaTopBar(alVolver, "Shai"); Nota("Esta carrera ya no está.") }; return }
@@ -46,8 +47,8 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
         PestanasRevista(PESTANAS, pestana, cuentas = listOf(null, null, decisiones.takeIf { it > 0 }, ofertas.takeIf { it > 0 }, null, null, null)) { pestana = it }
         Spacer(Modifier.height(10.dp))
         when (pestana) {
-            0 -> TabPortada(u, entradas, alMensajes = { pestana = 2 }, alOfertas = { pestana = 3 }, alAjustes = alAjustes)
-            1 -> TabRed(entradas)
+            0 -> TabPortada(u, entradas, alMensajes = { pestana = 2 }, alOfertas = { pestana = 3 }, alAjustes = alAjustes, articuloAbierto = articuloAbierto)
+            1 -> TabRed(u, entradas)
             2 -> TabMensajes(u, entradas)
             3 -> TabOfertas(u, entradas)
             4 -> TabCifras(u)
@@ -65,23 +66,31 @@ fun textoEfectos(e: Efectos): String = buildList {
     e.nuevas.forEach { add("nueva: ${it.nombre}") }
 }.joinToString(" · ")
 
-/** La portada del periódico. */
+/** La portada del periódico: al tocarla, se lee la noticia entera. */
 @Composable
-fun PortadaPrensa(p: Prensa) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+fun PortadaPrensa(p: Prensa, abierta0: Boolean = false) {
+    var abierta by rememberSaveable(p.titular) { mutableStateOf(abierta0) }
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp).let { if (p.articulo.isNotBlank()) it.tocable { abierta = !abierta } else it }) {
         Text(p.cabecera.uppercase(), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 15.sp, letterSpacing = 3.sp, lineHeight = 19.sp)
         Filete(2.dp, modifier = Modifier.padding(top = 4.dp))
         FitTitle(p.titular, 34.sp, 37.sp, letterSpacing = (-0.8).sp, modifier = Modifier.padding(top = 8.dp))
         if (p.entradilla.isNotBlank()) Text(p.entradilla, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 6.dp))
-        p.otros.forEach { o ->
-            Filete(1.dp, Line, Modifier.padding(top = 8.dp))
-            Text(o, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 6.dp))
+        if (p.articulo.isNotBlank()) {
+            if (abierta) p.articulo.split(Regex("""\n\s*\n""")).map { it.trim() }.filter { it.isNotBlank() }.forEach { par ->
+                Text(par, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 10.dp))
+            }
+            Text(if (abierta) "Cerrar la noticia ↑" else "Leer la noticia →", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 8.dp))
         }
+    }
+    p.otros.forEachIndexed { i, o ->
+        Filete(1.dp, Line, Modifier.padding(top = 8.dp))
+        Text(o, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 6.dp))
+        p.entradillas.getOrNull(i)?.takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp)) }
     }
 }
 
 @Composable
-private fun TabPortada(u: Universo, entradas: List<Entrada>, alMensajes: () -> Unit, alOfertas: () -> Unit, alAjustes: (Int) -> Unit) {
+private fun TabPortada(u: Universo, entradas: List<Entrada>, alMensajes: () -> Unit, alOfertas: () -> Unit, alAjustes: (Int) -> Unit, articuloAbierto: Boolean = false) {
     val ambito = rememberCoroutineScope()
     var aviso by remember { mutableStateOf<String?>(null) }
     if (!ClaveApi.hay) Panel(alHacer = { alAjustes(2) }) {
@@ -106,7 +115,7 @@ private fun TabPortada(u: Universo, entradas: List<Entrada>, alMensajes: () -> U
     val ofertas = entradas.sumOf { e -> e.ofertas.count { it.estado == Oferta.ABIERTA } }
     if (decisiones > 0) MagLink(if (decisiones == 1) "Tienes una decisión pendiente" else "Tienes $decisiones decisiones pendientes", "En Mensajes", accent = true) { alMensajes() }
     if (ofertas > 0) MagLink(if (ofertas == 1) "Tienes una oferta sobre la mesa" else "Tienes $ofertas ofertas sobre la mesa", "En Ofertas", accent = true) { alOfertas() }
-    entradas.firstOrNull { it.prensa != null }?.prensa?.let { PortadaPrensa(it) }
+    entradas.firstOrNull { it.prensa != null }?.prensa?.let { PortadaPrensa(it, articuloAbierto) }
     Spacer(Modifier.height(8.dp))
     // Lo de entre partidos que está por llegar
     val ahora = System.currentTimeMillis()
@@ -148,26 +157,59 @@ fun TarjetaEntrada(u: Universo, e: Entrada) {
         e.prensa?.takeIf { p != null }?.let { Text("«${it.titular}»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 6.dp)) }
         if (e.texto.isNotBlank()) Text(e.texto, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
         e.decision?.let { d ->
-            Text(if (d.abierta) "Tienes que decidir: ${d.texto}" else "Elegiste: «${d.elegida}»", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
+            Text(when { d.abierta -> "Tienes que decidir: ${d.texto}"; d.caducada -> "No contestaste: «${d.titulo.ifBlank { d.texto }}»"; else -> "Elegiste: «${d.elegida}»" },
+                color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
+            if (d.caducada && d.consecuencia.isNotBlank()) Text(d.consecuencia, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp))
         }
+        e.premios.forEach { pr ->
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                Text(if (pr.ganado) "★ " else "☆ ", color = Dorado, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 15.sp)
+                Column(Modifier.weight(1f)) {
+                    Text("${pr.nombre} · ${pr.medio}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 20.sp)
+                    Text((if (pr.ganado) "Lo gana. " else "Se queda a las puertas. ") + pr.texto, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+                }
+            }
+        }
+        if (e.tendencia.isNotBlank()) Etiqueta("Tendencia: ${e.tendencia} · ${corto(e.tendenciaPosts)} posts", Modifier.padding(top = 6.dp))
         val ef = textoEfectos(e.efectos)
         if (ef.isNotBlank()) Text(ef.uppercase(), color = Dorado, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, lineHeight = 14.sp, modifier = Modifier.padding(top = 6.dp))
         if (e.posts.isNotEmpty() || e.dms.isNotEmpty()) Etiqueta(listOfNotNull(e.posts.size.takeIf { it > 0 }?.let { "$it en la red" }, e.dms.size.takeIf { it > 0 }?.let { "$it mensaje${if (it > 1) "s" else ""}" }).joinToString(" · "), Modifier.padding(top = 6.dp))
     }
 }
 
-/** Un post, como en X: quién, su @, lo que dice y lo que ha gustado. */
+/** Un post, como en X: quién, su @, lo que dice, lo que cita, lo que ha gustado y las respuestas de debajo. */
 @Composable
 fun PostRevista(p: Post) {
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(p.autor.ifBlank { p.usuario }, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.weight(1f, fill = false))
-            if (p.usuario.isNotBlank()) Text("  ${p.usuario}", color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-        }
+        Cabeza(p)
         Text(p.texto, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 3.dp))
-        Text("♥ ${corto(p.megusta)}   ⟲ ${corto(p.reposts)}", color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+        p.cita?.let { c ->
+            Column(Modifier.padding(top = 6.dp).fillMaxWidth().background(Sand).padding(10.dp)) {
+                Cabeza(c, tam = 12)
+                Text(c.texto, color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp))
+            }
+        }
+        Text("♥ ${corto(p.megusta)}   ⟲ ${corto(p.reposts)}" + (if (p.respuestas.isNotEmpty()) "   💬 ${p.respuestas.size}" else ""), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+        p.respuestas.forEach { r ->
+            Row(Modifier.padding(top = 8.dp).fillMaxWidth()) {
+                Box(Modifier.padding(end = 10.dp).width(2.dp).heightIn(min = 30.dp).background(Line))
+                Column(Modifier.weight(1f)) {
+                    Cabeza(r, tam = 12)
+                    Text(r.texto, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 1.dp))
+                    Text("♥ ${corto(r.megusta)}", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 2.dp))
+                }
+            }
+        }
     }
     Filete(1.dp, Line)
+}
+
+@Composable
+private fun Cabeza(p: Post, tam: Int = 14) {
+    Row(verticalAlignment = Alignment.Bottom) {
+        Text(p.autor.ifBlank { p.usuario }, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = tam.sp, modifier = Modifier.weight(1f, fill = false))
+        if (p.usuario.isNotBlank()) Text("  ${p.usuario}", color = Muted, fontFamily = Body, fontSize = (tam - 2).sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+    }
 }
 
 /** «1,2 mil», «3,4 M». */
@@ -178,10 +220,19 @@ fun corto(n: Int): String = when {
 }
 
 @Composable
-private fun TabRed(entradas: List<Entrada>) {
-    val posts = entradas.flatMap { it.posts }
-    if (posts.isEmpty()) { Nota("La red está en silencio. Mete un partido y verás."); return }
-    posts.forEach { PostRevista(it) }
+private fun TabRed(u: Universo, entradas: List<Entrada>) {
+    val con = entradas.filter { it.posts.isNotEmpty() }
+    if (con.isEmpty()) { Nota("La red está en silencio. Mete un partido y verás."); return }
+    Etiqueta("${Alcance.texto(Alcance.seguidores(u))} seguidores · ${u.nivelActual.nombre.lowercase()}", Modifier.padding(bottom = 4.dp))
+    con.forEach { e ->
+        Spacer(Modifier.height(10.dp)); Filete(2.dp)
+        Antetitulo(when {
+            e.partido != null -> "Tras el " + (if (e.partido.local) "${u.club} ${e.partido.golesFavor}-${e.partido.golesContra} ${e.partido.rival}" else "${e.partido.rival} ${e.partido.golesContra}-${e.partido.golesFavor} ${u.club}")
+            else -> e.titulo.ifBlank { e.tipo.nombre }
+        } + " · jornada ${e.paso}", Modifier.padding(top = 8.dp), tam = 11.sp)
+        if (e.tendencia.isNotBlank()) Text("Tendencia: ${e.tendencia} · ${corto(e.tendenciaPosts)} posts", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp))
+        e.posts.forEach { PostRevista(it) }
+    }
 }
 
 @Composable
@@ -201,34 +252,57 @@ private fun TabMensajes(u: Universo, entradas: List<Entrada>) {
         }
         Panel {
             if (d.de.isNotBlank()) Etiqueta("De ${d.de}")
-            if (e.titulo.isNotBlank()) Text(e.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 2.dp))
-            Text(d.texto, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 4.dp))
-            d.opciones.forEach { o -> BotonSuave(o, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { contesta(o) } }
+            val titulo = d.titulo.ifBlank { e.titulo }
+            if (titulo.isNotBlank()) Text(titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 2.dp))
+            val contexto = d.contexto.ifBlank { e.texto }
+            if (contexto.isNotBlank()) Text(contexto, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp))
+            if (d.enJuego.isNotBlank()) Text("Te juegas: ${d.enJuego}", color = Dorado, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
+            Text(d.texto, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 6.dp))
+            // (las opciones son frases enteras: se leen enteras, en varias líneas si hace falta)
+            d.opciones.forEach { o -> Opcion(o, Modifier.fillMaxWidth().padding(top = 8.dp)) { contesta(o) } }
             Campo("O haz otra cosa", libre, "Lo que tú quieras", lineas = 3) { libre = it }
             if (libre.isNotBlank()) EnlaceRevista("Contestar", acento = true) { contesta(libre) }
             va?.let { Nota(it, Modifier.padding(top = 6.dp)) }
             aviso?.let { Nota(it, Modifier.padding(top = 6.dp), color = Acento) }
         }
     }
-    // Los mensajes, por quién los manda (lo más nuevo, arriba)
-    val porQuien = LinkedHashMap<String, MutableList<Dm>>()
-    entradas.forEach { e -> e.dms.forEach { m -> porQuien.getOrPut(if (m.mio) "Tú" else m.de.ifBlank { "Alguien" }) { mutableListOf() }.add(m) } }
-    porQuien.remove("Tú")
-    if (porQuien.isEmpty() && abiertas.isEmpty()) { Nota("Ningún mensaje todavía."); return }
-    if (porQuien.isNotEmpty()) { Spacer(Modifier.height(10.dp)); Antetitulo("Mensajes") }
-    porQuien.forEach { (quien, ms) ->
+    // Las conversaciones (la más reciente arriba; dentro, de lo más viejo a lo más nuevo, con un corte por cada vez)
+    val chats = LinkedHashMap<String, MutableList<Pair<Entrada, List<Dm>>>>()
+    entradas.forEach { e -> e.dms.groupBy { it.conversacion.ifBlank { "Alguien" } }.forEach { (c, ms) -> chats.getOrPut(c) { mutableListOf() }.add(e to ms) } }
+    if (chats.isEmpty() && abiertas.isEmpty()) { Nota("Ningún mensaje todavía."); return }
+    if (chats.isNotEmpty()) { Spacer(Modifier.height(10.dp)); Antetitulo("Conversaciones") }
+    chats.forEach { (chat, tandas) ->
         Panel {
-            Text(quien, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 23.sp)
-            u.entorno.firstOrNull { Vida.mismo(it.nombre, quien) }?.let { Etiqueta(it.rol + " · afinidad ${it.afinidad}") }
-            ms.forEach { m -> Text(m.texto, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 6.dp)) }
+            Text(chat, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 23.sp)
+            u.entorno.firstOrNull { Vida.mismo(it.nombre, chat) }?.let { Etiqueta(it.rol + " · afinidad ${it.afinidad}") }
+            val grupo = tandas.flatMap { it.second }.filter { !it.mio }.map { it.de }.distinct().size > 1
+            tandas.reversed().take(4).forEach { (e, ms) ->
+                Etiqueta("Jornada ${e.paso} · " + (e.partido?.let { "tras el ${it.resultado} ante el ${it.rival}" } ?: e.titulo.ifBlank { e.tipo.nombre }), Modifier.padding(top = 8.dp))
+                ms.forEach { m ->
+                    Column(Modifier.fillMaxWidth().padding(top = 5.dp).let { if (m.mio) it.padding(start = 40.dp) else it.padding(end = 24.dp) }.background(if (m.mio) Sand else Paper).padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        if (grupo || m.mio) Text(if (m.mio) "Tú" else m.de, color = if (m.mio) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text(m.texto, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp)
+                    }
+                }
+            }
         }
     }
-    val resueltas = entradas.filter { it.decision?.abierta == false }
+    val caducadas = entradas.filter { it.decision?.caducada == true }
+    if (caducadas.isNotEmpty()) { Spacer(Modifier.height(10.dp)); Antetitulo("No contestaste") }
+    caducadas.forEach { e ->
+        val d = e.decision!!
+        Panel {
+            Text(d.titulo.ifBlank { e.titulo }.ifBlank { d.texto }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 22.sp)
+            Text("Te preguntaban: ${d.texto}", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 2.dp))
+            Text(d.consecuencia.ifBlank { "Lo que pase por no contestar lo contará la prensa del próximo partido." }, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp))
+        }
+    }
+    val resueltas = entradas.filter { it.decision?.let { d -> !d.abierta && !d.caducada } == true }
     if (resueltas.isNotEmpty()) { Spacer(Modifier.height(10.dp)); Antetitulo("Lo que decidiste") }
     resueltas.forEach { e ->
         val d = e.decision!!
         Panel {
-            Text(d.texto, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp)
+            Text(d.titulo.ifBlank { d.texto }, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp)
             Text("Elegiste: ${d.elegida}", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 4.dp))
             if (d.consecuencia.isNotBlank()) Text(d.consecuencia, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp))
         }
@@ -242,7 +316,8 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
     if (todas.isEmpty()) { Nota("Ninguna oferta todavía. Ya llegarán."); return }
     var aviso by remember { mutableStateOf<String?>(null) }
     Cuerpo("La app manda: si aceptas aquí, hazlo también en tu partida de FC.", Modifier.padding(bottom = 6.dp), tam = 13)
-    todas.sortedBy { if (it.second.estado == Oferta.ABIERTA) 0 else 1 }.forEach { (e, o) ->
+    u.contrato?.let { c -> MagFact("Tu contrato ahora", "${Formato.eurosCorto(c.sueldo)}/semana hasta ${c.hasta}") } ?: Nota("Eres agente libre: cualquier club puede ficharte.", Modifier.padding(bottom = 6.dp), color = Acento)
+    todas.filter { it.second.estado != Oferta.NEGOCIADA }.sortedBy { if (it.second.estado == Oferta.ABIERTA) 0 else 1 }.forEach { (e, o) ->
         Panel {
             Antetitulo((Oferta.TIPOS[o.tipo] ?: o.tipo) + if (o.estado != Oferta.ABIERTA) " · ${o.estado}" else "", tam = 11.sp)
             Text(o.de, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp, modifier = Modifier.padding(top = 4.dp))
@@ -250,6 +325,9 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
             if (o.salario > 0) MagFact(if (o.tipo == "patrocinio") "A la semana, de más" else "Sueldo a la semana", Formato.euros(o.salario) + (if (o.tipo != "patrocinio" && u.salario > 0) " (ahora ${Formato.eurosCorto(u.salario)})" else ""))
             if (o.prima > 0) MagFact("Prima", Formato.euros(o.prima))
             if (o.anios > 0) MagFact("Contrato", "${o.anios} año${if (o.anios > 1) "s" else ""}")
+            if (o.estado == Oferta.ABIERTA && o.tipo == "renovacion" && !o.negociada) EnlaceRevista("Pedir más (una vez)", Modifier.padding(top = 8.dp), acento = true) {
+                ambito.launch { aviso = withContext(Dispatchers.IO) { Motor.contraoferta(e.id, o.id) } }
+            }
             if (o.estado == Oferta.ABIERTA) {
                 val va = EnCurso.ids[o.id]
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -266,4 +344,12 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
         }
     }
     aviso?.let { Nota(it, Modifier.padding(top = 6.dp), color = Acento) }
+}
+
+/** Una opción de una decisión: la frase entera, sin cortar. */
+@Composable
+fun Opcion(texto: String, modifier: Modifier = Modifier, alHacer: () -> Unit) {
+    Box(modifier.heightIn(min = 44.dp).border(1.5.dp, Charcoal).tocable(onClick = alHacer).padding(horizontal = 14.dp, vertical = 10.dp), contentAlignment = Alignment.CenterStart) {
+        Text(texto, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 19.sp)
+    }
 }

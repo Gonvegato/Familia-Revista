@@ -34,6 +34,78 @@ object Cifras {
     val MISTER = listOf("TAC" to "Táctica", "MOT" to "Motivación", "CAN" to "Cantera", "MER" to "Mercado")
 }
 
+/**
+ * Cómo de conocido es. Al crear la carrera se elige el de salida, que fija la fama, la afición y el carisma de partida y el sueldo y el
+ * dinero que se sugieren; luego el nivel ACTUAL sale de la fama, que sube poco a poco con lo que hace (partidos, goles, notas, decisiones,
+ * escándalos), con topes por jornada ([Vida.jornada], [Vida.aplica]): un canterano no se vuelve estrella por un partidazo.
+ */
+enum class Nivel(
+    val nombre: String, val explica: String, val fama: Int, val aficion: Int, val carisma: Int, val salario: Long, val dinero: Long,
+    /** Desde qué fama se está en este nivel. */
+    val desde: Int,
+    /** Qué medios le siguen. */
+    val medios: String,
+) {
+    CANTERANO("Canterano", "Debuta o casi: le conocen en su barrio y en la grada del filial", 8, 55, 40, 3_000, 15_000, 0,
+        "la prensa local y las cuentas de la cantera de su club; los nacionales, de pasada"),
+    PROMESA("Promesa", "Ya suena: se habla de él en su liga y en las tertulias", 25, 55, 50, 15_000, 120_000, 18,
+        "la prensa deportiva nacional cuando hace algo, y la local siempre"),
+    TITULAR("Titular", "Fijo en su equipo y conocido en todo el país", 45, 55, 55, 45_000, 900_000, 38,
+        "toda la prensa deportiva nacional; la internacional, si hace algo gordo"),
+    ESTRELLA("Estrella", "De los mejores de su liga: portadas, marcas y fichajes", 75, 60, 65, 180_000, 12_000_000, 62,
+        "la prensa nacional e internacional a diario, la prensa rosa y los programas de televisión"),
+    LEYENDA("Leyenda mundial", "De los mejores del mundo: cada gesto da la vuelta al planeta", 92, 65, 75, 450_000, 60_000_000, 85,
+        "los medios de todo el mundo, la prensa rosa internacional y los programas de televisión de varios países");
+
+    companion object {
+        fun de(t: String): Nivel? = entries.firstOrNull { it.name == t }
+        /** El nivel que da una fama. */
+        fun deFama(f: Int): Nivel = entries.last { f >= it.desde }
+    }
+}
+
+/**
+ * Lo que puede pedir cada nivel en una oferta (euros): el sueldo a la semana, la prima, y en un patrocinio lo que da a la semana y de una vez.
+ * Se le pasa a Claude y lo que devuelva fuera de aquí se recorta ([Rangos.recorta]).
+ */
+object Rangos {
+    class Rango(val sueldo: LongRange, val primaMax: Long, val patroSemana: Long, val patroPrima: Long, val quien: String)
+    fun de(n: Nivel): Rango = when (n) {
+        Nivel.CANTERANO -> Rango(1_500L..12_000L, 60_000, 2_000, 20_000,
+            "cesiones a clubes de Segunda o a filiales, renovaciones modestas con su club y patrocinios de comercios y marcas locales (inventadas)")
+        Nivel.PROMESA -> Rango(8_000L..40_000L, 400_000, 8_000, 150_000,
+            "clubes medianos de su liga o de Segunda que le den minutos, renovaciones con mejora y marcas nacionales pequeñas (inventadas)")
+        Nivel.TITULAR -> Rango(25_000L..110_000L, 2_000_000, 25_000, 600_000,
+            "clubes de la parte alta de su liga o medianos de otras grandes ligas, renovaciones buenas y marcas nacionales (inventadas)")
+        Nivel.ESTRELLA -> Rango(90_000L..350_000L, 10_000_000, 80_000, 3_000_000,
+            "los grandes de Europa, renovaciones de estrella y marcas grandes internacionales (inventadas)")
+        Nivel.LEYENDA -> Rango(250_000L..900_000L, 30_000_000, 200_000, 10_000_000,
+            "los más grandes del mundo y contratos históricos, y las marcas más grandes del planeta (inventadas)")
+    }
+    fun texto(n: Nivel): String { val r = de(n)
+        return "OFERTAS PARA SU NIVEL (${n.nombre.lowercase()}): ${r.quien}. Sueldo entre ${Formato.euros(r.sueldo.first)} y ${Formato.euros(r.sueldo.last)} a la semana; prima de hasta ${Formato.euros(r.primaMax)}; un patrocinio, hasta ${Formato.euros(r.patroSemana)} a la semana y ${Formato.euros(r.patroPrima)} de una vez." }
+    /** Lo que se sale del rango de su nivel, a su sitio. */
+    fun recorta(o: Oferta, n: Nivel): Oferta { val r = de(n)
+        return if (o.tipo == "patrocinio") o.copy(salario = o.salario.coerceIn(0, r.patroSemana), prima = o.prima.coerceIn(0, r.patroPrima))
+        else o.copy(salario = if (o.salario <= 0) 0 else o.salario.coerceIn(r.sueldo.first, r.sueldo.last), prima = o.prima.coerceIn(0, r.primaMax))
+    }
+}
+
+/** El alcance en la red: cuántos le siguen y cuánto se mueve lo suyo (sale de su fama de ahora). */
+object Alcance {
+    /** Seguidores: de unos mil (fama 0) a unos doscientos millones (fama 100), en escala logarítmica. */
+    fun seguidores(fama: Int): Long = Math.round(1000.0 * Math.pow(200_000.0, fama.coerceIn(0, 100) / 100.0))
+    fun seguidores(u: Universo): Long = seguidores(u.valorFuera(Fuera.FAMA))
+    /** Los «me gusta» de un post normal suyo o sobre él (uno muy gordo, varias veces más). */
+    fun megustaTipico(u: Universo): Long = (seguidores(u) / 60).coerceAtLeast(12)
+    /** «48 M», «12 mil», «950». */
+    fun texto(n: Long): String = when {
+        n >= 1_000_000 -> Formato.decimal(n / 1_000_000.0) + " M"
+        n >= 1_000 -> Formato.cifra(Math.round(n / 1000.0)) + " mil"
+        else -> Formato.cifra(n)
+    }
+}
+
 /** Una persona de tu entorno (siempre inventada: las personas reales solo salen de pasada en la prensa y la red). */
 data class Persona(val id: String, val nombre: String, val rol: String, val afinidad: Int = 50, val nota: String = "") {
     fun aMapa(): Map<String, Any?> = mapOf("id" to id, "n" to nombre, "r" to rol, "a" to afinidad.toLong(), "t" to nota)
@@ -111,7 +183,34 @@ data class Universo(
     val autoEventos: Boolean = true,
     val creado: Long = 0,
     val cambiado: Long = 0,
+    /** Lo que Shai recuerda de la carrera (tramas abiertas, relaciones, hechos clave): lo resume Claude cada 3 jornadas y al cerrar temporada. */
+    val memoria: String = "",
+    /** La jornada en que se escribió [memoria]. */
+    val memoriaPaso: Int = 0,
+    /** Las temporadas cerradas («2026/27»…). */
+    val cerradas: List<String> = emptyList(),
+    /** Cómo de conocido empezó ([Nivel], por su nombre). El de ahora es [nivelActual]. */
+    val nivel: String = "",
+    /** Quién es, con sus palabras: su historia, su momento, su palmarés («23 años, Balón de Oro»…). Claude lo toma como su pasado. */
+    val trayectoria: String = "",
+    /** Lo que ha subido la fama en esta jornada (para el tope). */
+    val famaJornada: Int = 0,
+    /** Cómo ha ido la fama: (jornada, fama). */
+    val famaHist: List<Pair<Int, Int>> = emptyList(),
+    /** Su contrato (el de Shai). Null: es agente libre. */
+    val contrato: Contrato? = null,
+    /** Lo que le dan sus patrocinios a la semana (euros). */
+    val patrocinio: Long = 0,
+    /** La jornada en que se habló de renovar por última vez. */
+    val renovacionPaso: Int = 0,
+    /** Sus hitos y récords (de Shai: con sus cifras). */
+    val hitos: List<Hito> = emptyList(),
 ) {
+    /** Sin contrato: libre (si ya ha empezado). */
+    val libre: Boolean get() = contrato == null
+    val nivelDe: Nivel? get() = Nivel.de(nivel)
+    /** El nivel de ahora (sale de la fama): es el que se le cuenta a Claude. */
+    val nivelActual: Nivel get() = Nivel.deFama(valorFuera(Fuera.FAMA))
     val nombre: String get() = personaje.nombreCorto
     fun valorFuera(k: String) = fuera[k] ?: Fuera.INICIAL[k] ?: 50
     fun precio(simbolo: String): Long = precios[simbolo]?.lastOrNull() ?: 0L
@@ -122,7 +221,9 @@ data class Universo(
         "v" to 1L, "id" to id, "mo" to modo.name, "pj" to personaje.aMapa(), "cl" to club, "li" to liga, "te" to temporada, "sa" to salario, "ch" to contratoHasta,
         "di" to dinero, "fu" to fuera.mapValues { it.value.toLong() }, "en" to entorno.map { it.aMapa() }, "ca" to cartera, "cc" to costeCartera,
         "bi" to bienes.map { it.aMapa() }, "pr" to precios, "pa" to paso.toLong(), "lo" to lotes.map { it.aMapa() }, "ae" to autoEventos,
-        "c" to creado, "cm" to cambiado,
+        "c" to creado, "cm" to cambiado, "mm" to memoria, "mp" to memoriaPaso.toLong(), "tc" to cerradas, "nv" to nivel, "ty" to trayectoria, "fj" to famaJornada.toLong(),
+        "fh" to famaHist.map { listOf(it.first.toLong(), it.second.toLong()) }, "ct" to (contrato?.aMapa() ?: emptyMap<String, Any?>()), "pt" to patrocinio,
+        "rp" to renovacionPaso.toLong(), "ht" to hitos.map { it.aMapa() },
     )
     fun aJson(): String = Json.escribe(aMapa())
 
@@ -131,7 +232,7 @@ data class Universo(
         fun deJson(t: String?): Universo? = if (t.isNullOrBlank()) null else runCatching { de(Json.lee(t).comoMapa()) }.getOrNull()
         fun de(m: Map<String, Any?>): Universo? {
             val id = m["id"].comoTexto().ifBlank { return null }
-            return Universo(
+            val u = Universo(
                 id, runCatching { Rol.valueOf(m["mo"].comoTexto()) }.getOrDefault(Rol.JUGADOR), Personaje.de(m["pj"].comoMapa()),
                 m["cl"].comoTexto(), m["li"].comoTexto(), m["te"].comoTexto(), m["sa"].comoLong(), m["ch"].comoTexto(), m["di"].comoLong(),
                 Fuera.INICIAL + m["fu"].comoMapa().mapValues { it.value.comoLong().toInt().coerceIn(0, 100) },
@@ -140,7 +241,13 @@ data class Universo(
                 m["bi"].comoLista().map { Bien.de(it.comoMapa()) }, m["pr"].comoMapa().mapValues { (_, v) -> v.comoLista().map { it.comoLong() } },
                 m["pa"].comoLong().toInt(), m["lo"].comoLista().map { Lote.de(it.comoMapa()) }.filter { it.id.isNotBlank() },
                 if (m.containsKey("ae")) m["ae"].comoBool() else true, m["c"].comoLong(), m["cm"].comoLong(),
+                m["mm"].comoTexto(), m["mp"].comoLong().toInt(), m["tc"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() },
+                m["nv"].comoTexto(), m["ty"].comoTexto(), m["fj"].comoLong().toInt(),
+                m["fh"].comoLista().mapNotNull { x -> x.comoLista().takeIf { it.size == 2 }?.let { it[0].comoLong().toInt() to it[1].comoLong().toInt() } },
+                Contrato.de(m["ct"].comoMapa()), m["pt"].comoLong(), m["rp"].comoLong().toInt(), m["ht"].comoLista().map { Hito.de(it.comoMapa()) }.filter { it.id.isNotBlank() },
             )
+            // (las carreras de antes de los contratos: su sueldo y su «3 años» pasan a ser su contrato)
+            return if (!m.containsKey("ct") && u.contrato == null) u.copy(contrato = Contratos.migra(u)) else u
         }
     }
 }
@@ -170,6 +277,8 @@ data class Partido(
     val fecha: String = "",
     /** Cómo se metió: `rapida`, `completa` o `foto`. */
     val como: String = "rapida",
+    /** Si con este partido ganó un título (lo que tú pongas: «LaLiga», «Copa del Rey»…). */
+    val titulo: String = "",
 ) {
     val resultado: String get() = "$golesFavor-$golesContra"
     val ganado: Boolean get() = golesFavor > golesContra
@@ -179,7 +288,7 @@ data class Partido(
     fun aMapa(): Map<String, Any?> = mapOf(
         "te" to temporada, "co" to competicion, "ri" to rival, "lo" to local, "gf" to golesFavor.toLong(), "gc" to golesContra.toLong(), "mi" to minutos.toLong(),
         "go" to goles.toLong(), "as" to asistencias.toLong(), "no" to nota, "gs" to goleadores, "eq" to equipo, "re" to rendimiento, "mo" to momentos,
-        "me" to media.toLong(), "fe" to fecha, "cm" to como,
+        "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo,
     )
 
     /** Una línea para contárselo a Claude. */
@@ -194,6 +303,7 @@ data class Partido(
         if (rendimiento.isNotBlank()) append(". Rendimiento: $rendimiento")
         if (momentos.isNotBlank()) append(". Lo que pasó: $momentos")
         if (media > 0) append(". Su media en el juego es ahora $media")
+        if (titulo.isNotBlank()) append(". CON ESTE PARTIDO GANA UN TÍTULO: $titulo")
     }
 
     companion object {
@@ -203,51 +313,98 @@ data class Partido(
             m["te"].comoTexto(), m["co"].comoTexto(), m["ri"].comoTexto(), m["lo"].comoBool(), m["gf"].comoLong().toInt(), m["gc"].comoLong().toInt(),
             m["mi"].comoLong().toInt(), m["go"].comoLong().toInt(), m["as"].comoLong().toInt(), m["no"].comoDouble(), m["gs"].comoTexto(),
             m["eq"].comoMapa().mapValues { it.value.comoTexto() }, m["re"].comoTexto(), m["mo"].comoTexto(), m["me"].comoLong().toInt(), m["fe"].comoTexto(),
-            m["cm"].comoTexto().ifBlank { "rapida" },
+            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(),
         )
     }
 }
 
 /** Un post de la red (como X). [tipo]: `aficion`, `prensa`, `rival`, `famoso` (una persona pública, de pasada), `entorno`. */
-data class Post(val autor: String, val usuario: String, val texto: String, val megusta: Int = 0, val reposts: Int = 0, val tipo: String = "aficion") {
-    fun aMapa(): Map<String, Any?> = mapOf("a" to autor, "u" to usuario, "t" to texto, "l" to megusta.toLong(), "r" to reposts.toLong(), "k" to tipo)
-    companion object { fun de(m: Map<String, Any?>) = Post(m["a"].comoTexto(), m["u"].comoTexto(), m["t"].comoTexto(), m["l"].comoLong().toInt(), m["r"].comoLong().toInt(), m["k"].comoTexto()) }
+data class Post(
+    val autor: String, val usuario: String, val texto: String, val megusta: Int = 0, val reposts: Int = 0, val tipo: String = "aficion",
+    /** Las respuestas de debajo (en los más gordos). */
+    val respuestas: List<Post> = emptyList(),
+    /** Lo que cita (un retuit con comentario): el post citado. */
+    val cita: Post? = null,
+) {
+    fun aMapa(): Map<String, Any?> = mapOf("a" to autor, "u" to usuario, "t" to texto, "l" to megusta.toLong(), "r" to reposts.toLong(), "k" to tipo,
+        "rs" to respuestas.map { it.aMapa() }, "ci" to cita?.aMapa()).filterValues { it != null && it != emptyList<Any>() }
+    companion object {
+        fun de(m: Map<String, Any?>): Post = Post(m["a"].comoTexto(), m["u"].comoTexto(), m["t"].comoTexto(), m["l"].comoLong().toInt(), m["r"].comoLong().toInt(), m["k"].comoTexto(),
+            m["rs"].comoLista().map { de(it.comoMapa()) }, m["ci"]?.comoMapa()?.takeIf { it.isNotEmpty() }?.let { de(it) })
+    }
 }
 
 /** Un mensaje privado. [mio]: lo que contestaste tú. */
-data class Dm(val de: String, val texto: String, val mio: Boolean = false) {
-    fun aMapa(): Map<String, Any?> = mapOf("d" to de, "t" to texto, "m" to mio)
-    companion object { fun de(m: Map<String, Any?>) = Dm(m["d"].comoTexto(), m["t"].comoTexto(), m["m"].comoBool()) }
+data class Dm(val de: String, val texto: String, val mio: Boolean = false, val chat: String = "") {
+    /** La conversación a la que va (una persona o un grupo, «Los del barrio»): si no se dice, la de quien lo manda. */
+    val conversacion: String get() = chat.ifBlank { de }
+    fun aMapa(): Map<String, Any?> = mapOf("d" to de, "t" to texto, "m" to mio, "c" to chat)
+    companion object { fun de(m: Map<String, Any?>) = Dm(m["d"].comoTexto(), m["t"].comoTexto(), m["m"].comoBool(), m["c"].comoTexto()) }
 }
 
 /** La portada del periódico. */
-data class Prensa(val cabecera: String, val titular: String, val entradilla: String, val otros: List<String> = emptyList()) {
-    fun aMapa(): Map<String, Any?> = mapOf("c" to cabecera, "t" to titular, "e" to entradilla, "o" to otros)
-    companion object { fun de(m: Map<String, Any?>) = Prensa(m["c"].comoTexto(), m["t"].comoTexto(), m["e"].comoTexto(), m["o"].comoLista().map { it.comoTexto() }) }
+data class Prensa(
+    val cabecera: String, val titular: String, val entradilla: String, val otros: List<String> = emptyList(),
+    /** La noticia entera (párrafos separados por una línea en blanco): se lee al tocar la portada. */
+    val articulo: String = "",
+    /** La entradilla de cada uno de [otros] (en el mismo orden). */
+    val entradillas: List<String> = emptyList(),
+) {
+    fun aMapa(): Map<String, Any?> = mapOf("c" to cabecera, "t" to titular, "e" to entradilla, "o" to otros, "ar" to articulo, "oe" to entradillas)
+    companion object {
+        fun de(m: Map<String, Any?>) = Prensa(m["c"].comoTexto(), m["t"].comoTexto(), m["e"].comoTexto(), m["o"].comoLista().map { it.comoTexto() },
+            m["ar"].comoTexto(), m["oe"].comoLista().map { it.comoTexto() })
+    }
 }
 
 /**
  * Una oferta («la app manda»: si la aceptas aquí, la haces en FC). [tipo]: `traspaso`, `cesion`, `renovacion`, `patrocinio` o `banquillo`
  * (míster). [salario] en euros a la semana; [prima], de una vez.
  */
-data class Oferta(val id: String, val de: String, val tipo: String, val salario: Long, val prima: Long, val anios: Int, val texto: String, val estado: String = ABIERTA) {
-    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to tipo, "s" to salario, "p" to prima, "a" to anios.toLong(), "x" to texto, "e" to estado)
+data class Oferta(val id: String, val de: String, val tipo: String, val salario: Long, val prima: Long, val anios: Int, val texto: String, val estado: String = ABIERTA,
+                  /** Ya se pidió más una vez (no se puede volver a pedir). */
+                  val negociada: Boolean = false) {
+    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to tipo, "s" to salario, "p" to prima, "a" to anios.toLong(), "x" to texto, "e" to estado, "ng" to negociada)
     val cambiaDeClub: Boolean get() = tipo == "traspaso" || tipo == "cesion" || tipo == "banquillo"
     companion object {
         const val ABIERTA = "abierta"; const val ACEPTADA = "aceptada"; const val RECHAZADA = "rechazada"
         val TIPOS = mapOf("traspaso" to "Traspaso", "cesion" to "Cesión", "renovacion" to "Renovación", "patrocinio" to "Patrocinio", "banquillo" to "Banquillo")
-        fun de(m: Map<String, Any?>) = Oferta(m["id"].comoTexto(), m["d"].comoTexto(), m["t"].comoTexto(), m["s"].comoLong(), m["p"].comoLong(), m["a"].comoLong().toInt(), m["x"].comoTexto(), m["e"].comoTexto().ifBlank { ABIERTA })
+        const val NEGOCIADA = "negociada"
+        fun de(m: Map<String, Any?>) = Oferta(m["id"].comoTexto(), m["d"].comoTexto(), m["t"].comoTexto(), m["s"].comoLong(), m["p"].comoLong(), m["a"].comoLong().toInt(), m["x"].comoTexto(), m["e"].comoTexto().ifBlank { ABIERTA }, m["ng"].comoBool())
     }
 }
 
 /** Una decisión (con consecuencias): de 2 a 3 opciones, o lo que quieras contestar. */
-data class Decision(val id: String, val de: String, val texto: String, val opciones: List<String>, val elegida: String = "", val consecuencia: String = "", val estado: String = ABIERTA) {
-    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to texto, "o" to opciones, "el" to elegida, "cq" to consecuencia, "e" to estado)
+data class Decision(
+    val id: String, val de: String,
+    /** La pregunta («¿Qué le contestas?»). */
+    val texto: String,
+    val opciones: List<String>, val elegida: String = "", val consecuencia: String = "", val estado: String = ABIERTA,
+    /** De qué va, en corto («La entrevista de tu madre»). */
+    val titulo: String = "",
+    /** Lo que ha pasado, entero (quién, dónde, qué se dijo, por qué importa): si está vacío, el texto de su entrada. */
+    val contexto: String = "",
+    /** Qué te juegas. */
+    val enJuego: String = "",
+    /** Lo que hace Shai si eliges la primera opción («renegociar»: el club te hace una oferta de renovación). */
+    val accion: String = "",
+) {
+    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to texto, "o" to opciones, "el" to elegida, "cq" to consecuencia, "e" to estado,
+        "ti" to titulo, "cx" to contexto, "ej" to enJuego, "ac" to accion)
     val abierta: Boolean get() = estado == ABIERTA
+    /** No la contestaste antes del partido siguiente: caducó (y eso también tuvo consecuencias). */
+    val caducada: Boolean get() = estado == CADUCADA
     companion object {
-        const val ABIERTA = "abierta"; const val RESUELTA = "resuelta"
-        fun de(m: Map<String, Any?>) = Decision(m["id"].comoTexto(), m["d"].comoTexto(), m["t"].comoTexto(), m["o"].comoLista().map { it.comoTexto() }, m["el"].comoTexto(), m["cq"].comoTexto(), m["e"].comoTexto().ifBlank { ABIERTA })
+        const val ABIERTA = "abierta"; const val RESUELTA = "resuelta"; const val CADUCADA = "caducada"
+        fun de(m: Map<String, Any?>) = Decision(m["id"].comoTexto(), m["d"].comoTexto(), m["t"].comoTexto(), m["o"].comoLista().map { it.comoTexto() }, m["el"].comoTexto(),
+            m["cq"].comoTexto(), m["e"].comoTexto().ifBlank { ABIERTA }, m["ti"].comoTexto(), m["cx"].comoTexto(), m["ej"].comoTexto(), m["ac"].comoTexto())
     }
+}
+
+/** Un premio de fin de temporada (siempre de medios inventados). */
+data class Premio(val nombre: String, val medio: String, val ganado: Boolean, val texto: String) {
+    fun aMapa(): Map<String, Any?> = mapOf("n" to nombre, "m" to medio, "g" to ganado, "t" to texto)
+    companion object { fun de(m: Map<String, Any?>) = Premio(m["n"].comoTexto(), m["m"].comoTexto(), m["g"].comoBool(), m["t"].comoTexto()) }
 }
 
 /** Lo que cambia algo que pasa: dinero (euros), lo de fuera del campo (+/−) y la relación con tu gente (por nombre, +/−); y gente nueva. */
@@ -260,7 +417,10 @@ data class Efectos(val dinero: Long = 0, val fuera: Map<String, Int> = emptyMap(
     }
 }
 
-enum class TipoEntrada(val nombre: String) { PARTIDO("Partido"), EVENTO("Mientras tanto"), RESPUESTA("Lo que pasó después"), OFICIAL("Oficial"), INICIO("El principio") }
+enum class TipoEntrada(val nombre: String) {
+    PARTIDO("Partido"), EVENTO("Mientras tanto"), RESPUESTA("Lo que pasó después"), OFICIAL("Oficial"), INICIO("El principio"),
+    TEMPORADA("Fin de temporada"), SINCONTESTAR("No contestaste"), HITO("Hito"),
+}
 
 /**
  * Lo que pasa en tu carrera, en orden: un partido (con su prensa, la red y los mensajes de después), un evento de entre partidos, lo que
@@ -286,12 +446,18 @@ data class Entrada(
     val aplicada: Boolean = true,
     /** Lo que falta por escribir (la prensa no llegó: sin conexión, sin saldo…); se puede reintentar. */
     val pendiente: String = "",
+    /** La tendencia del día en la red («#ElNiñoSeSale») y cuántos posts lleva. */
+    val tendencia: String = "",
+    val tendenciaPosts: Int = 0,
+    /** Los premios (fin de temporada). */
+    val premios: List<Premio> = emptyList(),
 ) {
     fun visible(ahora: Long) = visibleDesde <= ahora
     fun aMapa(): Map<String, Any?> = mapOf(
         "v" to 1L, "id" to id, "un" to universo, "tp" to tipo.name, "c" to creado, "pa" to paso.toLong(), "ti" to titulo, "tx" to texto,
         "pt" to partido?.aMapa(), "po" to posts.map { it.aMapa() }, "dm" to dms.map { it.aMapa() }, "pr" to prensa?.aMapa(), "of" to ofertas.map { it.aMapa() },
         "de" to decision?.aMapa(), "ef" to efectos.aMapa(), "vd" to visibleDesde, "ap" to aplicada, "pe" to pendiente,
+        "tn" to tendencia, "tp2" to tendenciaPosts.toLong(), "pm" to premios.map { it.aMapa() },
     ).filterValues { it != null }
     fun aJson(): String = Json.escribe(aMapa())
 
@@ -306,6 +472,7 @@ data class Entrada(
                 m["pr"]?.comoMapa()?.takeIf { it.isNotEmpty() }?.let { Prensa.de(it) }, m["of"].comoLista().map { Oferta.de(it.comoMapa()) },
                 m["de"]?.comoMapa()?.takeIf { it.isNotEmpty() }?.let { Decision.de(it) }, Efectos.de(m["ef"].comoMapa()), m["vd"].comoLong(),
                 if (m.containsKey("ap")) m["ap"].comoBool() else true, m["pe"].comoTexto(),
+                m["tn"].comoTexto(), m["tp2"].comoLong().toInt(), m["pm"].comoLista().map { Premio.de(it.comoMapa()) },
             )
         }
     }

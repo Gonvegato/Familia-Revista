@@ -68,6 +68,7 @@ object Carreras {
     /** Borra una carrera y todo lo que pasó en ella. */
     fun borra(id: String) {
         entradasDe(id, todas = true).forEach { almacen.borra(it.id) }
+        almacen.borra("k$id")
         almacen.borra(id)
         avisa()
     }
@@ -86,6 +87,16 @@ object Carreras {
         almacen.pon(e.id, mapOf("un" to e.universo, "o" to e.aJson()))
         avisa()
         return e
+    }
+
+    /** Las plantillas del modo prueba que ya han salido en una carrera (para no repetirlas): en su nodo `k<id>`. */
+    fun usadas(universo: String): Set<String> = almacen.nodo("k$universo")?.get("us").comoTexto().split('|').filter { it.isNotBlank() }.toSet()
+    fun apunta(universo: String, ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        almacen.pon("k$universo", mapOf("us" to (usadas(universo) + ids).joinToString("|")))
+    }
+    fun olvida(universo: String, ids: Collection<String>) {
+        almacen.pon("k$universo", mapOf("us" to (usadas(universo) - ids.toSet()).joinToString("|").ifEmpty { "|" }))
     }
 
     /** Los partidos de una carrera, del primero al último. */

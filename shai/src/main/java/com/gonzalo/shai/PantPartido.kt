@@ -64,6 +64,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
     var goleadores by rememberSaveable { mutableStateOf("") }
     var rendimiento by rememberSaveable { mutableStateOf("") }
     var momentos by rememberSaveable { mutableStateOf("") }
+    var titulo by rememberSaveable { mutableStateOf("") }
     var media by rememberSaveable { mutableStateOf("") }
     var temporada by rememberSaveable { mutableStateOf(u.temporada) }
     var fecha by rememberSaveable { mutableStateOf("") }
@@ -151,6 +152,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
                 Campo("Fecha en el juego", fecha, "Opcional", Modifier.weight(1f)) { fecha = it }
             }
         }
+        Campo("¿Has ganado un título con este partido?", titulo, "LaLiga, Copa del Rey… (si no, déjalo vacío)") { titulo = it }
         Spacer(Modifier.height(22.dp))
         val listo = rival.isNotBlank() && gf.isNotBlank() && gc.isNotBlank()
         AccionGrande(null, ocupado ?: if (guardado) "Ver la carrera" else "Guardar el partido", Modifier.fillMaxWidth(), enabled = (listo || guardado) && ocupado == null) {
@@ -163,7 +165,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
             val p = Partido(temporada.trim().ifBlank { u.temporada }, competicion.trim(), rival.trim(), local, gf.toIntOrNull() ?: 0, gc.toIntOrNull() ?: 0,
                 if (u.modo == Rol.JUGADOR) minutos.toIntOrNull() ?: 0 else 90, goles.toIntOrNull() ?: 0, asist.toIntOrNull() ?: 0, nota(laNota), goleadores.trim(),
                 if (como == 1) equipo else emptyMap(), if (como == 1) rendimiento.trim() else "", if (como == 1) momentos.trim() else "",
-                if (como == 1) media.toIntOrNull() ?: 0 else 0, if (como == 1) fecha.trim() else "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida")
+                if (como == 1) media.toIntOrNull() ?: 0 else 0, if (como == 1) fecha.trim() else "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim())
             ocupado = "Escribiendo la prensa…"; aviso = null
             ambito.launch {
                 val r = withContext(Dispatchers.IO) { runCatching { Motor.partido(id, p) } }

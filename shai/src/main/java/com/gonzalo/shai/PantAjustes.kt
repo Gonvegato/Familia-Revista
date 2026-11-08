@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.1.1"
+const val VERSION = "0.2.0"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
@@ -219,7 +219,8 @@ private fun SeccionIA() {
     MagFact("Sonnet 5.5", Formato.dolares(Gasto.mes(modelo = "s")))
     MagFact("El mes pasado", Formato.dolares(Gasto.mes(Gasto.mesActual().minusMonths(1))))
     Text("Haiku escribe la red y los mensajes y lee las fotos; Sonnet, la prensa, las ofertas, las decisiones y lo de entre partidos. Se cuenta con lo que dice la API de cada respuesta (los tokens) y sus precios: Haiku 5.5, 0,10\u00A0$ y 0,50\u00A0$ por millón de tokens de entrada y de salida; Sonnet 5.5, 2\u00A0$ y 10\u00A0$; " +
-        "lo que se lee de la caché, la décima parte; lo de entre partidos va por lotes, a mitad de precio. Es una cuenta de Shai: la de verdad está en Claude Console.",
+        "lo que se lee de la caché, la décima parte; lo de entre partidos va por lotes, a mitad de precio. Es una cuenta de Shai: la de verdad está en Claude Console. " +
+        "Por jornada, unos 0,13 $ (estimación, no medida: la red ~0,003, la prensa ~0,04, los dos eventos por lotes ~0,035, contestar decisiones ~0,045, la memoria ~0,006); cerrar una temporada, unos 0,05 $.",
         color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
     Campo("Tope al mes (dólares)", tope, "100", teclado = KeyboardType.Number) { tope = it.filter { c -> c.isDigit() }.take(5) }
     if (numero(tope).toDouble() != Gasto.tope() && numero(tope) > 0) MagLink("Guardar el tope", "Al llegar a él, Shai no pide nada más hasta el mes siguiente", accent = true) { Gasto.ponTope(numero(tope).toDouble()); Carreras.avisa() }

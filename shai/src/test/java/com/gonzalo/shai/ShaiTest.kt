@@ -64,7 +64,8 @@ class ShaiTest {
         val u = Ejemplo.universo().copy(entorno = listOf(Persona("p1", "Loli Cortés", "madre", 50)))
         val r = Vida.aplica(u, Efectos(-10_000_000, mapOf(Fuera.FAMA to 40, Fuera.DISCIPLINA to -3, "inventado" to 9), mapOf("loli cortés" to -40), listOf(Persona("", "Irene", "ligue"))))
         assertEquals("como mucho, el 20 % de lo que tienes (y al menos 50.000 €)", 250_000 - 50_000L, r.dinero)
-        assertEquals(30, r.valorFuera(Fuera.FAMA)); assertEquals(57, r.valorFuera(Fuera.DISCIPLINA)); assertFalse(r.fuera.containsKey("inventado"))
+        // (la fama sube como mucho lo del tope de la jornada; a los 19 años, 7: 20 + 7)
+        assertEquals(27, r.valorFuera(Fuera.FAMA)); assertEquals(57, r.valorFuera(Fuera.DISCIPLINA)); assertFalse(r.fuera.containsKey("inventado"))
         assertEquals(35, r.entorno.first().afinidad)
         assertEquals("Irene", r.entorno.last().nombre); assertTrue(r.entorno.last().id.isNotBlank())
     }
@@ -85,7 +86,7 @@ class ShaiTest {
 
     @Test fun aceptarUnaOfertaCambiaElClub() {
         val u = Vida.acepta(Ejemplo.universo(), Oferta("o", "Villarreal CF", "traspaso", 42_000, 500_000, 4, ""))
-        assertEquals("Villarreal CF", u.club); assertEquals(42_000L, u.salario); assertEquals(750_000L, u.dinero); assertEquals("4 años", u.contratoHasta)
+        assertEquals("Villarreal CF", u.club); assertEquals(42_000L, u.salario); assertEquals(750_000L, u.dinero); assertEquals("2029/30", u.contrato!!.hasta); assertEquals("Villarreal CF", u.contrato!!.club)
         val p = Vida.acepta(Ejemplo.universo(), Oferta("o", "Relojes Cénit", "patrocinio", 2_000, 100_000, 2, ""))
         assertEquals("Real Betis", p.club); assertEquals(20_000L, p.salario); assertEquals(350_000L, p.dinero)
     }
@@ -102,7 +103,7 @@ class ShaiTest {
         val oc = h["output_config"].comoMapa()
         assertEquals("low", oc["effort"]); assertEquals("json_schema", oc["format"].comoMapa()["type"])
         val sch = oc["format"].comoMapa()["schema"].comoMapa()
-        assertEquals(false, sch["additionalProperties"]); assertEquals(listOf("posts", "mensajes"), sch["required"])
+        assertEquals(false, sch["additionalProperties"]); assertEquals(listOf("tendencia", "posts", "mensajes"), sch["required"])
         val sistema = h["system"].comoLista().first().comoMapa()
         assertEquals(mapOf("type" to "ephemeral"), sistema["cache_control"])
         assertTrue(sistema["text"].comoTexto().contains("Personas reales"))
@@ -205,7 +206,9 @@ class ShaiTest {
         assertEquals(9, e.posts.size); assertEquals(2, e.dms.size)
         assertEquals("El Niño se sale", e.prensa!!.titular); assertEquals(1, e.ofertas.size); assertEquals(3, e.decision!!.opciones.size)
         var u = Carreras.de(u0.id)!!
-        assertEquals(1, u.paso); assertEquals(250_000 + 18_000L, u.dinero); assertEquals(24, u.valorFuera(Fuera.FAMA))
+        assertEquals(1, u.paso); assertEquals(250_000 + 18_000L, u.dinero)
+        // (a los 19 años el partido da +4 de fama y la prensa pide +4, pero el tope de la jornada es 7: 20 + 7)
+        assertEquals(27, u.valorFuera(Fuera.FAMA))
         assertEquals(listOf("claude-sonnet-5-5", "claude-haiku-5-5", "claude-sonnet-5-5"), api.mensajes().map { it.cuerpo["model"] })
         val lote = api.llamadas.single { it.url.endsWith("/batches") }
         assertEquals(listOf("${u.id}_1_1", "${u.id}_1_2"), lote.cuerpo["requests"].comoLista().map { it.comoMapa()["custom_id"] })
