@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Con el tema «como el sistema», el widget lleva los dos dibujos y se ve el que toca (0 visible, 2 oculto: el orden del atributo visibility) -->
+    <integer name="w_dia">0</integer>
+    <integer name="w_noche">2</integer>
+    <string name="w_ptah">Ptah</string>
+    <string name="w_ptah_d">Uno de tus diseños de Ptah (un reloj, el tiempo, tus apps, una foto…), del tamaño que quieras. Un toque y eliges cuál.</string>
+</resources>

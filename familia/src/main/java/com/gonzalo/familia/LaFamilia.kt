@@ -27,7 +27,7 @@ import java.io.File
  */
 object LaFamilia {
     /** Las apps de la familia (sus paquetes). */
-    val APPS = listOf("com.gonzalo.hiedra", "com.gonzalo.marfil", "com.gonzalo.cobalto", "com.gonzalo.gamerate", "com.gonzalo.mostaza", "com.gonzalo.cobre")
+    val APPS = listOf("com.gonzalo.hiedra", "com.gonzalo.marfil", "com.gonzalo.cobalto", "com.gonzalo.gamerate", "com.gonzalo.mostaza", "com.gonzalo.cobre", "com.gonzalo.ptah")
 
     @Volatile private var f: Familia? = null
     private lateinit var appCtx: Context

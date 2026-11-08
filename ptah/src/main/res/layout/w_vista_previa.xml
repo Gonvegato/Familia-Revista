@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La vista previa del selector de widgets (Android 12 o más): la misma imagen que previewImage, que la dibuja WidgetsTest -->
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:scaleType="fitCenter" android:src="@drawable/w_prev_ptah" android:importantForAccessibility="no" />

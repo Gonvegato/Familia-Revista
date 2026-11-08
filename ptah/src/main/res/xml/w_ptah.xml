@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Un solo widget para todos los diseños: de serie 2×2, y de 1×1 (o menos) a lo que quieras -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp" android:minHeight="110dp"
+    android:minResizeWidth="40dp" android:minResizeHeight="40dp"
+    android:targetCellWidth="2" android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/w_marco"
+    android:previewImage="@drawable/w_prev_ptah"
+    android:previewLayout="@layout/w_vista_previa"
+    android:configure="com.gonzalo.ptah.ConfigWidgetActivity"
+    android:widgetFeatures="reconfigurable"
+    android:description="@string/w_ptah_d"
+    android:widgetCategory="home_screen" />

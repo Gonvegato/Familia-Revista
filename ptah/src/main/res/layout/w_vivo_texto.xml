@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lo que se mueve solo: un TextClock con la letra de texto (Android no deja poner en un widget letras que no vengan dentro de la app) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_hueco" android:layout_width="match_parent" android:layout_height="match_parent">
+    <TextClock android:id="@+id/w_reloj" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:fontFamily="@font/body_medium" android:includeFontPadding="false" android:maxLines="1"
+        android:gravity="center_vertical|start" android:textColor="#FF15120F" android:format24Hour="H:mm" android:format12Hour="h:mm"
+        android:importantForAccessibility="yes" />
+</FrameLayout>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Las agujas: un AnalogClock. En Android 12 o más llevan las del diseño (Widgets.agujas: setIcon y setColorStateList); en Android 10 y 11, estas, claras -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_hueco" android:layout_width="match_parent" android:layout_height="match_parent">
+    <AnalogClock android:id="@+id/w_agujas" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:dial="@drawable/esfera_vacia" android:hand_hour="@drawable/aguja_hora_claras" android:hand_minute="@drawable/aguja_minuto_claras"
+        android:importantForAccessibility="yes" />
+</FrameLayout>

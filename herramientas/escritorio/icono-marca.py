@@ -11,6 +11,7 @@ APPS = {  # nombre: (fondo, texto, acento, lo que hace)
     "Jonsu":  ("#1C1F22", "#F1EBE0", "#8F3232", "DIARIO"),
     "Hathor": ("#715021", "#FFFFFF", "#D4C1C0", "CINE"),
     "Nut":    ("#3D0E19", "#F1DCB5", "#D4A06A", "IPTV"),
+    "Ptah":   ("#12393A", "#F2E6CF", "#D98A3D", "WIDGETS"),
 }
 def rgb(h): return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
 
@@ -63,7 +64,7 @@ for n, (fo, ti, ac, que) in APPS.items():
     mo = Image.new("RGBA", (1536, 1536), (0, 0, 0, 0)); mo.alpha_composite(dibuja(n, fo, ti, ac, que, con_fondo=False, mono=True), (256, 256))
     w = Image.new("RGBA", mo.size, (255, 255, 255, 0)); w.putalpha(mo.getchannel("A")); w.save(f"{OUT}/{a}-mono.png")
 ims = [Image.open(f"{OUT}/{n.lower()}-full.png").resize((220, 220), Image.LANCZOS) for n in APPS]
-v = Image.new("RGB", (232 * 6, 220), "white")
+v = Image.new("RGB", (232 * len(APPS), 220), "white")
 for i, im in enumerate(ims):
     mask = Image.new("L", (220, 220), 0); ImageDraw.Draw(mask).rounded_rectangle((0, 0, 219, 219), radius=50, fill=255)
     v.paste(im, (i * 232, 0), mask)

@@ -16,6 +16,8 @@ include(":iptv")
 if (!soloEscritorio) {
     include(":familia")
     include(":hiedra", ":marfil", ":cobalto", ":azabache", ":mostaza", ":cobre")
+    // Ptah, la de los widgets (solo Android: no tiene versión de escritorio)
+    include(":ptah")
     // El motor de torrents de Mostaza (libtorrent4j): ver un torrent mientras se baja
     include(":torrent")
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El icono de Ptah: su widget «en papel» en pequeño (PTAH, la raya, ■ WIDGETS y la raya fina, en un marco), sobre petróleo, con el acento cobre. El monocromo es el mismo dibujo, para los iconos con tema. Lo saca herramientas/escritorio/icono-marca.py. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_ptah_bg"/>
+    <foreground android:drawable="@drawable/ic_launcher_ptah_fg"/>
+    <monochrome android:drawable="@drawable/ic_launcher_ptah_mono"/>
+</adaptive-icon>

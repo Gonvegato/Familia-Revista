@@ -239,7 +239,7 @@ la marca de que Mostaza ya los trajo).
 
 ### `ajustes/<nombre>`
 
-`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto`, `ajustes/mostaza`, `ajustes/cobre` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
+`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto`, `ajustes/mostaza`, `ajustes/cobre`, `ajustes/ptah` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
 del lector; Hiedra también `ini`, su portada), `ajustes/azabache` (`at` y `skin`: la apariencia de Azabache, que las demás pueden
 copiar) y `ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros del año, `anio` el año en que se fijó; los fija Marfil).
 Lo demás que eliges en cada app, en `ajustes/<app>_<grupo>` (abajo).
@@ -281,6 +281,9 @@ tenía distinto, con la hora a la que ese dispositivo cambió esos ajustes por �
 | `cobre_directo` | `orden` (`LISTA`, `NUMERO`, `NOMBRE`: el de los canales), `lista` y `grupo` (dónde estabas: el id de la lista y el nombre del grupo), `alAbrir` (al abrir Cobre, el último canal), `videoclub` («pelis y series del proveedor»: el videoclub de Xtream en el menú; apagado de serie) |
 | `cobre_futbol` | El fútbol de Cobre (Nut), textos JSON: `equipos` (tus equipos: `[{"id", "n", "c", "s", "e", "l"}]` — el id de ESPN, el nombre, el corto, las siglas, el escudo, una imagen pública de ESPN, y la competición donde lo elegiste: una de selecciones —`uefa.nations`, `fifa.world`, `fifa.friendly`…— si es una selección), `rivales` (tus rivales, igual que `equipos`; un equipo está en una lista o en la otra), `grupos` (tus grupos de canales: `[{"id", "n", "c": [{"u"\|"h"\|"s": {"l", "k", "n"}}]}]` — cada entrada, el mismo canal en Ultra HD, HD y SD: el id de la lista, la **clave** del canal (`x<id>` o `c<hash>`, nunca su dirección) y su nombre), un grupo de serie borrado queda como `{"id", "x": true}` para que no vuelva), `asignacion` (qué grupos tiene cada competición: `{"esp.1": ["movistar", "dazn"], …}`) `calidad` (`""` automática, `UHD`, `HD`, `SD`), `competiciones` (tu orden de las competiciones de los partidos del día: sus claves de ESPN con comas; las que falten, detrás en el orden de serie) y `ocultas` (las que escondes, con comas: no se piden). Nada secreto: tu pareja lo puede leer |
 | `cobre_actualizador` | `on`: «actualizar sola» |
+| `ptah_disenos` | Tus diseños de widget de Ptah: un campo por diseño, su id (`d` + 10 hexadecimales) = el diseño en JSON: `{"v": 1, "id", "n" (su nombre), "tipo" (`digital`, `agujas`, `calendario`, `buscador`, `accesos`, `tiempo`, `bateria`, `nota`, `cuentaatras`, `foto`…), "estilo": {"fondo" (`PAPEL`/`COLOR`/`DEGRADADO`/`TRANSPARENTE`), "cf", "cf2", "ang", "op", "tinta", "acento", "sec", "piezas" ({pieza: color}), "borde", "gb", "cb", "radio", "marco", "lt", "lx", "esc", "al", "ocultas"}, "op" (lo de su tipo: la cabecera, la ciudad y sus coordenadas, las apps de los accesos —sus paquetes— o webs, la fecha de la cuenta atrás, el pie de foto…), "c" y "cr" (cuándo se cambió y se creó, ms)}`. Un color es `@papel`, `@tinta`, `@acento`, `@gris` (los de tu Apariencia), `@transparente`, `#RRGGBB` o `#AARRGGBB`, o `""` (el de serie). Borrado = `""`. Ni la foto ni dónde estás: se quedan en el móvil. Nada secreto |
+| `ptah_general` | `recientes`: los colores que has usado hace poco en Ptah (`#RRGGBB` con comas) |
+| `ptah_actualizador` | `on`: «actualizar sola» |
 
 No viaja (es de cada dispositivo): dónde está cada ROM, las carpetas de ROMs y de guardados, lo ya sincronizado con kDrive, los núcleos y BIOS
 bajados, las capturas bajadas, el juego que está abierto ahora, «usar Hiedra como launcher» (es de Android), la configuración de cada widget,
@@ -289,7 +292,8 @@ juegos, páginas de libros, notas de Rotten Tomatoes, plataformas de RAWG, lo de
 que mide la conexión de ese dispositivo (por wifi y por datos) y lo que sabe decodificar, lo que puede ocupar su caché de torrents, el punto
 para seguir de lo que aún no está en tu biblioteca (antes de los 10 minutos), los manifiestos de los addons (se vuelven a pedir) y su id. En Cobre:
 los canales, el videoclub y la guía de cada lista (caché, cifrada la que lleva direcciones), el archivo de una lista de archivo, el punto para
-seguir sin cuenta y su id (`cobre-…`; en el ordenador, `cobre-linux-…` o `cobre-mac-…`: es el `dev` de las listas de archivo).
+seguir sin cuenta y su id (`cobre-…`; en el ordenador, `cobre-linux-…` o `cobre-mac-…`: es el `dev` de las listas de archivo). En Ptah: las fotos de
+los widgets de foto, qué diseño lleva cada widget, la ubicación aproximada y el tiempo bajado.
 
 ### `/users/<uid>/name`
 

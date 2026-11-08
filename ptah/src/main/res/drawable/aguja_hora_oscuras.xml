@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La aguja de las horas para Android 10 y 11 (bastón, del tamaño de la esfera vacía, apuntando a las 12) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="300dp" android:height="300dp" android:viewportWidth="300" android:viewportHeight="300">
+    <path android:fillColor="#FF15120F" android:pathData="M144.4,165 L155.6,165 L155.6,72 Q155.6,66.4 150,66.4 Q144.4,66.4 144.4,72 Z" />
+</vector>

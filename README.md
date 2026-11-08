@@ -10,6 +10,7 @@ Las apps de la familia en un solo sitio, alrededor de **una sola cuenta**:
 | `azabache/` | Jonsu | `com.gonzalo.gamerate` | La revista: valoraciones, diario, cifras, y donde se ponen las claves |
 | `mostaza/` | Hathor | `com.gonzalo.mostaza` | Tus películas y series: biblioteca y reproductor (con los addons de Stremio) |
 | `cobre/` | Nut | `com.gonzalo.cobre` | La tele (IPTV): tus listas M3U y tus logins de Xtream, con su guía y su videoclub; en el móvil, la tablet y Android TV |
+| `ptah/` | Ptah | `com.gonzalo.ptah` | Tus widgets de la pantalla de inicio, diseñados a tu manera (relojes, el tiempo, accesos, fotos…) |
 
 Cada app conserva su paquete de siempre, así que cada versión nueva se instala encima de la que ya tienes.
 
@@ -40,6 +41,14 @@ de tu cuenta (`/claves`: llevan tus contraseñas); tus favoritos, los grupos que
 cuenta como todo lo demás. Los canales y la guía son caché de cada dispositivo (se bajan a trozos: listas y guías enormes no se tienen
 enteras en memoria). Lo que no es pantalla está en `iptv/`, en Kotlin puro, y lo usa también Nut del ordenador (1.0.0, en `escritorio/cobre`). Todo en `docs/cobre/HISTORIA.md`.
 
+## Ptah (los widgets)
+
+La más nueva: un creador de widgets para la pantalla de inicio, con la revista de la familia. Haces tus diseños (relojes digitales y de
+agujas, el calendario del mes, un buscador, accesos a tus apps y webs, el tiempo de Open-Meteo, la batería, notas, cuentas atrás y fotos)
+con todos los colores, letras, bordes y esquinas que quieras, y los pones en la pantalla de inicio del tamaño que quieras. Los relojes se
+mueven solos (con `TextClock` y `AnalogClock`). Tus diseños van en tu cuenta (`ajustes/ptah_disenos`); las fotos se quedan en el móvil.
+Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Todo en `docs/ptah/HISTORIA.md`.
+
 ## En el ordenador (Linux y Mac)
 
 Jonsu, Thot, Bastet, Seshat, Hathor y Nut también son apps de escritorio, en tu kDrive («Mi carpeta/versiones»): `.dmg` para el Mac (Apple
@@ -67,7 +76,7 @@ una abierta a la vez, y desde cualquiera se abren las otras. Hathor y Nut ven co
 - `nucleo/`: la cuenta de la familia en Kotlin puro (sirve también para el PC). Sus pruebas van contra el emulador oficial de Firebase
   con las reglas de verdad (`herramientas/emulador.sh`).
 - `familia/`: lo común de Android (la cuenta en cada app, entrar una vez, los trabajos de fondo, las portadas).
-- `hiedra/`, `marfil/`, `cobalto/`, `azabache/`, `mostaza/`, `cobre/`: las apps de Android.
+- `hiedra/`, `marfil/`, `cobalto/`, `azabache/`, `mostaza/`, `cobre/`, `ptah/`: las apps de Android.
 - `iptv/`: lo de Nut que no es pantalla (listas M3U, Xtream Codes, la guía XMLTV), en Kotlin puro (sirve también para el PC).
 - `escritorio/`: las seis para **Linux y Mac** (Compose Multiplatform), contra la misma cuenta (`docs/ESCRITORIO.md`), y el motor de
   torrents de Hathor para el ordenador (`escritorio/torrent`, los mismos archivos que `torrent/`).
