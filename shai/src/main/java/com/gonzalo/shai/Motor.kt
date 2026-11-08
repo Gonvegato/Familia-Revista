@@ -90,11 +90,16 @@ object Motor {
      * de entre partidos por lotes y, cada [CADA_MEMORIA] jornadas, rehace lo que Shai recuerda. Devuelve la entrada del partido y, si algo
      * no llegó, por qué.
      */
-    fun partido(universo: String, p: Partido): Pair<Entrada, String?> = synchronized(cerrojo) { en(universo) {
+    fun partido(universo: String, p0: Partido): Pair<Entrada, String?> = synchronized(cerrojo) { en(universo) {
         // Lo que tenías abierto y ya habías visto caduca con el partido nuevo (lo que estaba por salir aún no lo habías visto)
         caduca(universo)
         revela(universo, forzar = true)
         var u = Carreras.de(universo) ?: error("No encuentro esa carrera")
+        // Sin fecha: la del anterior + 7 días (si la hay), marcada como estimada
+        val p = if (Fechas.lee(p0.fecha) != null) p0 else fechaEstimada(universo)?.let { p0.copy(fecha = Fechas.iso(it), fechaEstimada = true) } ?: p0
+        // Con fecha de nacimiento y fecha del partido, su edad (años cumplidos) es la de ese día
+        Fechas.lee(u.personaje.nacimiento)?.let { nac -> Fechas.lee(p.fecha)?.let { f -> Fechas.edad(nac, f).first.takeIf { it in 10..80 && it != u.personaje.edad }?.let { a ->
+            u = Carreras.guarda(u.copy(personaje = u.personaje.copy(edad = a))) } } }
         u = Carreras.guarda(Vida.jornada(u, p))
         var e = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PARTIDO, reloj(), u.paso, partido = p, pendiente = "red,prensa"))
         // Los hitos y récords (los de Shai, con sus cifras): se apuntan, dan algo de fama y la red y la prensa los cuentan
@@ -105,6 +110,10 @@ object Motor {
                 hitos.joinToString("\n") { it.texto }, efectos = Vida.recorta(u, ef)))
             u = Carreras.guarda(Vida.aplica(u, ef).copy(hitos = u.hitos + hitos))
         }
+        // Los récords del fútbol de verdad (los de la lista): batirlo es lo más gordo que le puede pasar
+        u = historicos(u)
+        // Los rivales: los duelos con su club, la pelea por el puesto… y alguno que nace solo
+        u = rivales(u)
         val r = completa(e)
         e = r.first
         // El contrato: si toca hablar de renovar, el club (o tu representante) mueve ficha
@@ -115,6 +124,60 @@ object Motor {
         }
         e to r.second
     } }
+
+    /** Los rivales tras el partido: cambian con los choques y, si nace uno, sale como «Rivalidad» (la prensa y la red lo cuentan). */
+    private fun rivales(u0: Universo): Universo {
+        val t = runCatching { Rivales.trasPartido(u0, Carreras.partidos(u0.id).map { it.second }) }.getOrNull() ?: return u0
+        val u = Carreras.guarda(u0.copy(rivales = t.rivales))
+        t.nacidos.forEach { r ->
+            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.RIVAL, reloj() - 3, u.paso, "Nace una rivalidad: ${r.nombre} (${r.club})",
+                "${r.origen}. ${r.nombre}, ${r.posicion.ifBlank { "jugador" }} del ${r.club}, ya está en tu lista de rivales (intensidad ${r.intensidad}/100)."))
+        }
+        return u
+    }
+
+    /** La fecha que tendría el próximo partido si no la pones: la del último con fecha + 7 días. */
+    fun fechaEstimada(universo: String): java.time.LocalDate? =
+        Carreras.partidos(universo).map { it.second }.lastOrNull { Fechas.lee(it.fecha) != null }?.let { Fechas.lee(it.fecha)!!.plusDays(7) }
+
+    /**
+     * Compara su carrera con los récords reales ([Historicos]) tras el último partido: lo que bate o iguala sale como «Récord histórico»
+     * (con su fama, sin el tope de la jornada) y pasa a ser suyo; lo que roza, como hito. Todo queda en sus hitos, con la línea de cifras
+     * que se le pasa a Claude.
+     */
+    private fun historicos(u0: Universo): Universo {
+        var u = u0
+        val ps = Carreras.partidos(u.id).map { it.second }
+        val cs = runCatching { Historicos.nuevos(u, ps) }.getOrDefault(emptyList())
+        if (cs.isEmpty()) return u
+        val t = ps.lastOrNull()?.temporada ?: u.temporada
+        var suyos = u.recordsSuyos
+        val hitos = mutableListOf<Hito>()
+        var fama = 0
+        for (c in cs) {
+            if (c.estado == Historicos.Estado.BATE || c.estado == Historicos.Estado.IGUALA)
+                suyos = suyos.filter { it.n != c.r.n } + RecordSuyo(c.r.n, c.suValor, c.suMarca, u.paso, t, c.estado == Historicos.Estado.IGUALA)
+            if (c.texto.isBlank()) continue
+            fama += Historicos.fama(u, c)
+            val titulo = when (c.estado) {
+                Historicos.Estado.BATE -> if (c.contraSuyo) "Mejora su récord: ${c.r.record}" else "Récord histórico: ${c.r.record}"
+                Historicos.Estado.IGUALA -> "Iguala un récord histórico: ${c.r.record}"
+                else -> "Roza un récord histórico: ${c.r.record}"
+            }
+            hitos += Hito("real_${c.r.n}_${c.estado.name.lowercase()}_${u.paso}", titulo, c.texto, u.paso, u.personaje.edad, c.r.tipo == TipoRecord.JOVEN && c.estado != Historicos.Estado.CERCA, t, c.r.n, c.linea)
+        }
+        if (hitos.isNotEmpty()) {
+            val grandes = hitos.filter { !it.id.contains("_cerca_") }
+            val e = Entrada(Universo.nuevoId("e"), u.id, if (grandes.isNotEmpty()) TipoEntrada.RECORD else TipoEntrada.HITO, reloj() - 2, u.paso,
+                (grandes.ifEmpty { hitos }).joinToString(" · ") { it.titulo }, hitos.joinToString("\n\n") { it.texto },
+                efectos = Efectos(fuera = mapOf(Fuera.FAMA to fama)))
+            Carreras.guarda(e)
+        }
+        // La fama de un récord no respeta el tope de la jornada (es lo más gordo que le puede pasar)
+        val f0 = u.valorFuera(Fuera.FAMA)
+        u = Carreras.guarda(u.copy(recordsSuyos = suyos, hitos = u.hitos + hitos, fuera = u.fuera + (Fuera.FAMA to (f0 + fama).coerceIn(0, 100))))
+        return u
+    }
 
     // ---------------------------------------------------------------- el contrato
 
@@ -402,7 +465,8 @@ object Motor {
         }
         Carreras.guarda(e.copy(ofertas = nuevas))
         if (!acepta) return null
-        val nu = Carreras.guarda(Vida.acepta(u, o))
+        // (al irse a otro club, el excompañero con el que no acabó bien se queda allí y empieza la rivalidad)
+        val nu = Carreras.guarda(Vida.acepta(u, o).let { n -> if (o.cambiaDeClub && !Vida.mismo(n.club, u.club)) Rivales.excompanero(n, u.club) else n })
         val titulo = when (o.tipo) {
             "traspaso" -> "Oficial: ficha por ${o.de}"; "cesion" -> "Oficial: cedido al ${o.de}"; "banquillo" -> "Oficial: nuevo entrenador del ${o.de}"
             "renovacion" -> "Oficial: renueva con ${o.de}"; else -> "Oficial: acuerdo con ${o.de}"

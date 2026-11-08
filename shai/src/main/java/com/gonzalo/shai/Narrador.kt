@@ -29,8 +29,9 @@ Reglas que no se rompen nunca:
 7. Su edad y cómo se le ve marcan el tono: a un chaval de 18 que rinde por encima de lo esperado se le trata como un terremoto (nuevo fenómeno, comparaciones, presión); a uno de 29 con un buen tramo, como una buena racha de alguien cuyo nivel ya se conoce; con la edad alta, los malos tramos se leen como declive. El alcance va con su nivel de AHORA: los seguidores, los «me gusta», cuánto se habla de él y qué medios le cubren (un canterano, la prensa local y cuatro cuentas de la grada; una estrella, medio mundo). Las cifras de interacción, creíbles para sus seguidores.
 8. Coherencia: respeta lo que ya ha pasado y lo que Shai recuerda (su gente, sus relaciones, lo que eligió, lo que dejó sin contestar). Usa a su gente por su nombre. Si algo viene de una decisión suya, que se note.
 9. Que todo se entienda sin haber leído nada antes: cada cosa que pasa dice quién, dónde (qué medio, qué programa, qué sitio, qué red), qué se dijo (con la cita literal cuando la hay), por qué importa y qué se juega él. Nada de frases sueltas sin contexto.
-10. Récords: los suyos son los de su carrera en Shai (con las cifras que él mete). No digas nunca que bate un récord del mundo real (no lo puedes comprobar); como mucho «de los más jóvenes en hacerlo» o comparaciones vagas, en tono periodístico.
+10. Récords: los suyos son los de su carrera en Shai (con las cifras que él mete). De récords del fútbol de verdad, solo puedes citar los que vienen en «RÉCORDS HISTÓRICOS REALES» de este mensaje (ya los ha comparado la app con su lista de récords), con sus protagonistas y sus cifras exactamente como vienen: nunca otros récords, nunca otras cifras, nunca «segundo más joven» ni comparaciones que no vengan ahí, y sin poner nada polémico ni escandaloso a esos protagonistas reales (solo la marca y, si acaso, un saludo o una felicitación pública neutra). Si no viene ninguno, no hables de récords del mundo real. Batir uno es lo más gordo que le puede pasar: portada con él, repercusión máxima según su edad y su nivel (cuanto más joven, más terremoto), y que la red no hable de otra cosa; rozarlo o igualarlo, también es noticia.
 11. La red tiene vida: posts con opinión, chiste o polémica, de 120 a 280 caracteres, que reaccionan a lo que ha pasado de verdad; respuestas debajo de los más gordos; citas con comentario.
+12. Rivales: los de «TUS RIVALES» existen y pesan; úsalos en la prensa, la red y los eventos cuando venga a cuento (un duelo directo con su club, la carrera de goleadores, la pelea por el puesto), y en efectos.rivales cuenta cada choque (nombre exacto, cambio de -15 a +15 en la intensidad, choque en una frase, tipo deportivo o personal). Con los marcados INVENTADO vale lo personal: pullas en redes, declaraciones, mal rollo, chicas de por medio. Con los marcados REAL (futbolistas de verdad), SOLO rivalidad deportiva vista por la prensa con cifras (comparar goles, la carrera por un trofeo): nunca les pongas frases, pullas, opiniones, mal rollo ni nada personal, y su tipo es siempre deportivo. Puedes proponer un rival nuevo (nuevo = true) cuando surja solo de lo que pasa (uno que le provoca tras una decisión suya, el que le roba protagonismo), pero SIEMPRE inventado (nombre inventado, de un club real), con su club, su posición y su origen en una frase; nunca un futbolista real. Si no hay nada de rivales, deja la lista vacía.
 """.trim()
 
     // ---------------------------------------------------------------- el contexto de la carrera
@@ -44,6 +45,8 @@ Reglas que no se rompen nunca:
             (if (u.modo == Rol.JUGADOR && pj.posicion.isNotBlank()) ", ${pj.posicion}" else "") + (if (pj.dorsal > 0) ", dorsal ${pj.dorsal}" else "") +
             (if (pj.media > 0) ", media ${pj.media} en el juego" else ""))
         if (pj.rasgos.isNotBlank()) appendLine("- Cómo es: ${pj.rasgos}")
+        Fechas.lee(pj.nacimiento)?.let { nac -> partidos.lastOrNull()?.let { Fechas.lee(it.fecha) }?.let { f ->
+            val (a, d) = Fechas.edad(nac, f); appendLine("- Edad exacta el día del último partido (${Fechas.texto(f)}): ${Fechas.textoEdad(a, d)}") } }
         if (u.trayectoria.isNotBlank()) appendLine("- Su trayectoria (lo que él cuenta de su pasado; respétalo): ${u.trayectoria}")
         val nv = u.nivelActual
         appendLine("- Nivel de AHORA: ${nv.nombre} (${nv.explica.lowercase()})" + (u.nivelDe?.takeIf { it != nv }?.let { "; empezó como ${it.nombre.lowercase()}" } ?: "") +
@@ -74,9 +77,15 @@ Reglas que no se rompen nunca:
         if (partidos.isNotEmpty()) appendLine("- Sus récords en Shai: ${r.partidos} partidos" + (if (u.modo == Rol.JUGADOR) ", ${r.goles} goles, ${r.hatTricks} hat-tricks, racha más larga marcando: ${r.rachaMarcando}" else ", ${r.victorias} victorias") +
             ", racha invicto más larga: ${r.rachaInvicto}" + (r.mejorTemporada?.let { ", mejor temporada: ${it.first} (${it.second}${if (u.modo == Rol.JUGADOR) " goles" else " victorias"})" } ?: "") +
             (if (r.titulos.isNotEmpty()) ", títulos: ${r.titulos.joinToString(", ")}" else ""))
-        val recien = u.hitos.filter { it.paso == u.paso }
+        val recienReales = u.hitos.filter { it.paso == u.paso && it.real > 0 && it.linea.isNotBlank() }
+        val aTiro = runCatching { Historicos.aTiro(u, partidos) }.getOrDefault(emptyList()).take(3)
+        if (recienReales.isNotEmpty() || aTiro.isNotEmpty()) appendLine("RÉCORDS HISTÓRICOS REALES (comparados por la app con la lista de récords del fútbol de verdad; cítalos SOLO así, con estas cifras):\n" +
+            (recienReales.map { it.linea } + aTiro.map { it.linea }).joinToString("\n"))
+        val recien = u.hitos.filter { it.paso == u.paso && it.real == 0 }
         if (recien.isNotEmpty()) appendLine("HITOS RECIÉN CONSEGUIDOS (celébralos con repercusión según su edad y su nivel; son de su carrera en Shai, no récords del mundo real):\n" +
             recien.joinToString("\n") { "- ${it.titulo}: ${it.texto}" + if (it.precoz) " (PRECOZ, con ${it.edad} años)" else "" })
+        if (u.rivales.isNotEmpty()) appendLine("TUS RIVALES (de más a menos caliente):\n" + Rivales.contexto(u))
+        u.rivales.filter { it.desde == u.paso && u.paso > 0 }.forEach { appendLine("RIVALIDAD QUE ACABA DE NACER (cuéntala): ${it.nombre} (${it.club}): ${it.origen}") }
         if (u.memoria.isNotBlank()) appendLine("LO QUE SHAI RECUERDA (tramas abiertas, relaciones, hechos clave):\n${u.memoria}")
         val abiertas = recientes.filter { it.decision?.abierta == true }
         appendLine("DECISIONES PENDIENTES: ${abiertas.size}" + if (abiertas.size >= MAX_ABIERTAS) " (ya tiene bastantes: no le pongas ninguna más; hay = false)" else "")
@@ -123,8 +132,10 @@ Reglas que no se rompen nunca:
     private val TENDENCIA = obj("hashtag" to TEXTO, "posts" to ENTERO)
     private val DM = obj("chat" to TEXTO, "de" to TEXTO, "texto" to TEXTO)
     private val PERSONA = obj("nombre" to TEXTO, "rol" to TEXTO, "nota" to TEXTO)
+    private val RIVAL = obj("nombre" to TEXTO, "club" to TEXTO, "posicion" to TEXTO, "origen" to TEXTO, "cambio" to ENTERO, "choque" to TEXTO,
+        "tipo" to enumerado(Choque.DEPORTIVO, Choque.PERSONAL), "nuevo" to SINO)
     private val EFECTOS = obj("dinero" to ENTERO, "fama" to ENTERO, "aficion" to ENTERO, "disciplina" to ENTERO, "carisma" to ENTERO,
-        "relaciones" to lista(obj("nombre" to TEXTO, "cambio" to ENTERO)))
+        "relaciones" to lista(obj("nombre" to TEXTO, "cambio" to ENTERO)), "rivales" to lista(RIVAL))
     private val DECISION = obj("hay" to SINO, "de" to TEXTO, "titulo" to TEXTO, "contexto" to TEXTO, "en_juego" to TEXTO, "pregunta" to TEXTO, "opciones" to lista(TEXTO))
     private val OFERTA = obj("de" to TEXTO, "tipo" to enumerado("traspaso", "cesion", "renovacion", "patrocinio", "banquillo"),
         "salario_semanal" to ENTERO, "prima" to ENTERO, "anios" to ENTERO, "texto" to TEXTO)
@@ -328,6 +339,7 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
         m["dinero"].comoLong(), Fuera.TODOS.associate { (k, _) -> k to m[k].comoLong().toInt() }.filterValues { it != 0 },
         m["relaciones"].comoLista().map { it.comoMapa() }.associate { it["nombre"].comoTexto() to it["cambio"].comoLong().toInt() }.filter { it.key.isNotBlank() && it.value != 0 },
         gente.comoLista().map { it.comoMapa() }.map { Persona("", it["nombre"].comoTexto(), it["rol"].comoTexto(), 50, it["nota"].comoTexto()) }.filter { it.nombre.isNotBlank() },
+        m["rivales"].comoLista().map { CambioRival.deClaude(it.comoMapa()) }.filter { it.nombre.isNotBlank() },
     )
 
     /** La red y los mensajes. */

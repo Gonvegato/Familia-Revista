@@ -147,11 +147,13 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
             if (u.modo == Rol.JUGADOR) Campo("Más del rendimiento", rendimiento, "Tiros, pases, regates… con tus palabras", lineas = 3) { rendimiento = it }
             Campo("Lo que pasó", momentos, "El golazo, la remontada, la tangana…", lineas = 3) { momentos = it }
             if (u.modo == Rol.JUGADOR) Campo("Tu media ahora en FC", media, if (u.personaje.media > 0) "${u.personaje.media}" else "Si ha cambiado", teclado = KeyboardType.Number) { media = it.filter { c -> c.isDigit() }.take(2) }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Campo("Temporada", temporada, "2026/27", Modifier.weight(1f)) { temporada = it }
-                Campo("Fecha en el juego", fecha, "Opcional", Modifier.weight(1f)) { fecha = it }
-            }
+            Campo("Temporada", temporada, "2026/27") { temporada = it }
         }
+        // La fecha del calendario de FC (en las dos plantillas): con ella y la de nacimiento, la edad exacta para los récords
+        val estimada = remember(id) { Motor.fechaEstimada(id) }
+        Campo("Fecha del partido en FC", fecha, estimada?.let { "Si no la pones: ${Fechas.texto(it)} (la anterior + 7 días)" } ?: "dd/mm/aaaa, la del calendario del juego") { fecha = it.take(20) }
+        if (fecha.isNotBlank() && Fechas.lee(fecha) == null) Nota("No entiendo esa fecha: ponla como 24/08/2026.", color = Acento)
+        else if (fecha.isBlank() && estimada == null) Text("Con poner la del primer partido, Shai calcula las siguientes (una semana después). Sirve para los récords de edad.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
         Campo("¿Has ganado un título con este partido?", titulo, "LaLiga, Copa del Rey… (si no, déjalo vacío)") { titulo = it }
         Spacer(Modifier.height(22.dp))
         val listo = rival.isNotBlank() && gf.isNotBlank() && gc.isNotBlank()
@@ -165,7 +167,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
             val p = Partido(temporada.trim().ifBlank { u.temporada }, competicion.trim(), rival.trim(), local, gf.toIntOrNull() ?: 0, gc.toIntOrNull() ?: 0,
                 if (u.modo == Rol.JUGADOR) minutos.toIntOrNull() ?: 0 else 90, goles.toIntOrNull() ?: 0, asist.toIntOrNull() ?: 0, nota(laNota), goleadores.trim(),
                 if (como == 1) equipo else emptyMap(), if (como == 1) rendimiento.trim() else "", if (como == 1) momentos.trim() else "",
-                if (como == 1) media.toIntOrNull() ?: 0 else 0, if (como == 1) fecha.trim() else "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim())
+                if (como == 1) media.toIntOrNull() ?: 0 else 0, Fechas.lee(fecha)?.let { Fechas.iso(it) } ?: "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim())
             ocupado = "Escribiendo la prensa…"; aviso = null
             ambito.launch {
                 val r = withContext(Dispatchers.IO) { runCatching { Motor.partido(id, p) } }

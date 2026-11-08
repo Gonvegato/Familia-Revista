@@ -267,7 +267,8 @@ object Vida {
         }
         val f = fuera[Fuera.FAMA] ?: u.valorFuera(Fuera.FAMA)
         val hist = if (f != u.valorFuera(Fuera.FAMA)) (u.famaHist.ifEmpty { listOf(u.paso to u.valorFuera(Fuera.FAMA)) }.filter { it.first != u.paso } + (u.paso to f)).takeLast(80) else u.famaHist
-        return u.copy(dinero = u.dinero + dinero, fuera = fuera, entorno = entorno.takeLast(40), famaJornada = famaJornada, famaHist = hist)
+        val r = u.copy(dinero = u.dinero + dinero, fuera = fuera, entorno = entorno.takeLast(40), famaJornada = famaJornada, famaHist = hist)
+        return if (e.rivales.isEmpty()) r else Rivales.aplica(r, e.rivales)
     }
 
     /** Lo que de verdad se aplicó (con los límites), para enseñarlo. */
@@ -276,7 +277,7 @@ object Vida {
         val queda = maxOf(0, topeFama(u.personaje.edad) - u.famaJornada)
         return e.copy(dinero = e.dinero.coerceIn(-limite, limite), fuera = e.fuera.filterKeys { k -> Fuera.TODOS.any { it.first == k } }
             .mapValues { (k, v) -> v.coerceIn(-10, 10).let { if (k == Fuera.FAMA && it > 0) minOf(it, queda) else it } }.filterValues { it != 0 },
-            relaciones = e.relaciones.mapValues { it.value.coerceIn(-15, 15) })
+            relaciones = e.relaciones.mapValues { it.value.coerceIn(-15, 15) }, rivales = Rivales.filtra(u, e.rivales))
     }
 
     fun mismo(a: String, b: String) = a.trim().equals(b.trim(), ignoreCase = true)

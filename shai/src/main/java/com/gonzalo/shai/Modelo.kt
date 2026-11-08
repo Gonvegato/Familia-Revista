@@ -126,17 +126,20 @@ data class Personaje(
     val atributos: Map<String, Int> = emptyMap(),
     val rasgos: String = "",
     val historial: List<Pair<Int, Int>> = emptyList(),
+    /** Su fecha de nacimiento en el juego (ISO, opcional): con ella y las fechas de los partidos, la edad exacta para los récords. */
+    val nacimiento: String = "",
 ) {
     val nombreCorto: String get() = apodo.ifBlank { nombre }
     fun aMapa(): Map<String, Any?> = mapOf(
         "n" to nombre, "ap" to apodo, "ed" to edad.toLong(), "na" to nacionalidad, "po" to posicion, "do" to dorsal.toLong(), "me" to media.toLong(),
-        "at" to atributos.mapValues { it.value.toLong() }, "ra" to rasgos, "hi" to historial.map { listOf(it.first.toLong(), it.second.toLong()) },
+        "at" to atributos.mapValues { it.value.toLong() }, "ra" to rasgos, "hi" to historial.map { listOf(it.first.toLong(), it.second.toLong()) }, "nc" to nacimiento,
     )
     companion object {
         fun de(m: Map<String, Any?>) = Personaje(
             m["n"].comoTexto(), m["ap"].comoTexto(), m["ed"].comoLong().toInt(), m["na"].comoTexto(), m["po"].comoTexto(), m["do"].comoLong().toInt(),
             m["me"].comoLong().toInt(), m["at"].comoMapa().mapValues { it.value.comoLong().toInt() }, m["ra"].comoTexto(),
             m["hi"].comoLista().mapNotNull { x -> x.comoLista().takeIf { it.size == 2 }?.let { it[0].comoLong().toInt() to it[1].comoLong().toInt() } },
+            m["nc"].comoTexto(),
         )
     }
 }
@@ -205,6 +208,10 @@ data class Universo(
     val renovacionPaso: Int = 0,
     /** Sus hitos y récords (de Shai: con sus cifras). */
     val hitos: List<Hito> = emptyList(),
+    /** Los récords reales que ha batido o igualado en su carrera de Shai: desde entonces, la marca a batir es la suya ([Historicos]). */
+    val recordsSuyos: List<RecordSuyo> = emptyList(),
+    /** Sus rivales (surgen solos por lo que pasa, o los mete él): [Rivales]. */
+    val rivales: List<Rival> = emptyList(),
 ) {
     /** Sin contrato: libre (si ya ha empezado). */
     val libre: Boolean get() = contrato == null
@@ -223,7 +230,7 @@ data class Universo(
         "bi" to bienes.map { it.aMapa() }, "pr" to precios, "pa" to paso.toLong(), "lo" to lotes.map { it.aMapa() }, "ae" to autoEventos,
         "c" to creado, "cm" to cambiado, "mm" to memoria, "mp" to memoriaPaso.toLong(), "tc" to cerradas, "nv" to nivel, "ty" to trayectoria, "fj" to famaJornada.toLong(),
         "fh" to famaHist.map { listOf(it.first.toLong(), it.second.toLong()) }, "ct" to (contrato?.aMapa() ?: emptyMap<String, Any?>()), "pt" to patrocinio,
-        "rp" to renovacionPaso.toLong(), "ht" to hitos.map { it.aMapa() },
+        "rp" to renovacionPaso.toLong(), "ht" to hitos.map { it.aMapa() }, "rs" to recordsSuyos.map { it.aMapa() }, "rv" to rivales.map { it.aMapa() },
     )
     fun aJson(): String = Json.escribe(aMapa())
 
@@ -245,6 +252,8 @@ data class Universo(
                 m["nv"].comoTexto(), m["ty"].comoTexto(), m["fj"].comoLong().toInt(),
                 m["fh"].comoLista().mapNotNull { x -> x.comoLista().takeIf { it.size == 2 }?.let { it[0].comoLong().toInt() to it[1].comoLong().toInt() } },
                 Contrato.de(m["ct"].comoMapa()), m["pt"].comoLong(), m["rp"].comoLong().toInt(), m["ht"].comoLista().map { Hito.de(it.comoMapa()) }.filter { it.id.isNotBlank() },
+                m["rs"].comoLista().map { RecordSuyo.de(it.comoMapa()) }.filter { it.n > 0 },
+                m["rv"].comoLista().map { Rival.de(it.comoMapa()) }.filter { it.nombre.isNotBlank() },
             )
             // (las carreras de antes de los contratos: su sueldo y su «3 años» pasan a ser su contrato)
             return if (!m.containsKey("ct") && u.contrato == null) u.copy(contrato = Contratos.migra(u)) else u
@@ -279,6 +288,8 @@ data class Partido(
     val como: String = "rapida",
     /** Si con este partido ganó un título (lo que tú pongas: «LaLiga», «Copa del Rey»…). */
     val titulo: String = "",
+    /** Si [fecha] la puso Shai (la del partido anterior + 7 días) y no tú. */
+    val fechaEstimada: Boolean = false,
 ) {
     val resultado: String get() = "$golesFavor-$golesContra"
     val ganado: Boolean get() = golesFavor > golesContra
@@ -288,12 +299,12 @@ data class Partido(
     fun aMapa(): Map<String, Any?> = mapOf(
         "te" to temporada, "co" to competicion, "ri" to rival, "lo" to local, "gf" to golesFavor.toLong(), "gc" to golesContra.toLong(), "mi" to minutos.toLong(),
         "go" to goles.toLong(), "as" to asistencias.toLong(), "no" to nota, "gs" to goleadores, "eq" to equipo, "re" to rendimiento, "mo" to momentos,
-        "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo,
+        "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo, "fx" to fechaEstimada,
     )
 
     /** Una línea para contárselo a Claude. */
     fun resumen(modo: Rol): String = buildString {
-        append(if (local) "En casa contra $rival" else "En el campo del $rival"); append(" ($competicion"); if (fecha.isNotBlank()) append(", $fecha"); append("): ")
+        append(if (local) "En casa contra $rival" else "En el campo del $rival"); append(" ($competicion"); if (fecha.isNotBlank()) append(", ${Fechas.bonita(fecha)}"); append("): ")
         append(resultado); append(if (ganado) " (victoria)" else if (empatado) " (empate)" else " (derrota)")
         if (modo == Rol.JUGADOR) {
             append(". Jugó $minutos min"); if (goles > 0) append(", $goles gol${if (goles > 1) "es" else ""}"); if (asistencias > 0) append(", $asistencias asistencia${if (asistencias > 1) "s" else ""}")
@@ -313,7 +324,7 @@ data class Partido(
             m["te"].comoTexto(), m["co"].comoTexto(), m["ri"].comoTexto(), m["lo"].comoBool(), m["gf"].comoLong().toInt(), m["gc"].comoLong().toInt(),
             m["mi"].comoLong().toInt(), m["go"].comoLong().toInt(), m["as"].comoLong().toInt(), m["no"].comoDouble(), m["gs"].comoTexto(),
             m["eq"].comoMapa().mapValues { it.value.comoTexto() }, m["re"].comoTexto(), m["mo"].comoTexto(), m["me"].comoLong().toInt(), m["fe"].comoTexto(),
-            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(),
+            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(), m["fx"].comoBool(),
         )
     }
 }
@@ -408,18 +419,21 @@ data class Premio(val nombre: String, val medio: String, val ganado: Boolean, va
 }
 
 /** Lo que cambia algo que pasa: dinero (euros), lo de fuera del campo (+/−) y la relación con tu gente (por nombre, +/−); y gente nueva. */
-data class Efectos(val dinero: Long = 0, val fuera: Map<String, Int> = emptyMap(), val relaciones: Map<String, Int> = emptyMap(), val nuevas: List<Persona> = emptyList()) {
-    val vacio: Boolean get() = dinero == 0L && fuera.values.all { it == 0 } && relaciones.values.all { it == 0 } && nuevas.isEmpty()
-    fun aMapa(): Map<String, Any?> = mapOf("d" to dinero, "f" to fuera.mapValues { it.value.toLong() }, "r" to relaciones.mapValues { it.value.toLong() }, "n" to nuevas.map { it.aMapa() })
+data class Efectos(val dinero: Long = 0, val fuera: Map<String, Int> = emptyMap(), val relaciones: Map<String, Int> = emptyMap(), val nuevas: List<Persona> = emptyList(),
+                   /** Lo que cambia con sus rivales (choques y alguno nuevo). */
+                   val rivales: List<CambioRival> = emptyList()) {
+    val vacio: Boolean get() = dinero == 0L && fuera.values.all { it == 0 } && relaciones.values.all { it == 0 } && nuevas.isEmpty() && rivales.isEmpty()
+    fun aMapa(): Map<String, Any?> = mapOf("d" to dinero, "f" to fuera.mapValues { it.value.toLong() }, "r" to relaciones.mapValues { it.value.toLong() }, "n" to nuevas.map { it.aMapa() },
+        "rv" to rivales.map { it.aMapa() })
     companion object {
         fun de(m: Map<String, Any?>) = Efectos(m["d"].comoLong(), m["f"].comoMapa().mapValues { it.value.comoLong().toInt() }, m["r"].comoMapa().mapValues { it.value.comoLong().toInt() },
-            m["n"].comoLista().map { Persona.de(it.comoMapa()) })
+            m["n"].comoLista().map { Persona.de(it.comoMapa()) }, m["rv"].comoLista().map { CambioRival.de(it.comoMapa()) }.filter { it.nombre.isNotBlank() })
     }
 }
 
 enum class TipoEntrada(val nombre: String) {
     PARTIDO("Partido"), EVENTO("Mientras tanto"), RESPUESTA("Lo que pasó después"), OFICIAL("Oficial"), INICIO("El principio"),
-    TEMPORADA("Fin de temporada"), SINCONTESTAR("No contestaste"), HITO("Hito"),
+    TEMPORADA("Fin de temporada"), SINCONTESTAR("No contestaste"), HITO("Hito"), RECORD("Récord histórico"), RIVAL("Rivalidad"),
 }
 
 /**

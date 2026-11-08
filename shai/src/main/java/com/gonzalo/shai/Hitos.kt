@@ -8,10 +8,14 @@ import com.gonzalo.familia.nucleo.comoTexto
  * Un hito o un récord de tu carrera en Shai (con las cifras que tú metes: no son récords del mundo real). [precoz]: conseguido muy joven
  * para lo que es.
  */
-data class Hito(val id: String, val titulo: String, val texto: String, val paso: Int, val edad: Int, val precoz: Boolean = false, val temporada: String = "") {
-    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "ti" to titulo, "tx" to texto, "pa" to paso.toLong(), "ed" to edad.toLong(), "pr" to precoz, "te" to temporada)
+data class Hito(val id: String, val titulo: String, val texto: String, val paso: Int, val edad: Int, val precoz: Boolean = false, val temporada: String = "",
+                /** Si es la comparación con un récord real ([RecordsReales]): su número, y la línea con las cifras para Claude. */
+                val real: Int = 0, val linea: String = "") {
+    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "ti" to titulo, "tx" to texto, "pa" to paso.toLong(), "ed" to edad.toLong(), "pr" to precoz, "te" to temporada,
+        "rn" to real.toLong(), "li" to linea)
     companion object {
-        fun de(m: Map<String, Any?>) = Hito(m["id"].comoTexto(), m["ti"].comoTexto(), m["tx"].comoTexto(), m["pa"].comoLong().toInt(), m["ed"].comoLong().toInt(), m["pr"].comoBool(), m["te"].comoTexto())
+        fun de(m: Map<String, Any?>) = Hito(m["id"].comoTexto(), m["ti"].comoTexto(), m["tx"].comoTexto(), m["pa"].comoLong().toInt(), m["ed"].comoLong().toInt(), m["pr"].comoBool(), m["te"].comoTexto(),
+            m["rn"].comoLong().toInt(), m["li"].comoTexto())
     }
 }
 

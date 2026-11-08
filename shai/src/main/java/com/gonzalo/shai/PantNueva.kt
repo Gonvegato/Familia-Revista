@@ -27,6 +27,7 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
     var nacionalidad by rememberSaveable { mutableStateOf("España") }
     var posicion by rememberSaveable { mutableStateOf("") }
     var dorsal by rememberSaveable { mutableStateOf("") }
+    var nacimiento by rememberSaveable { mutableStateOf("") }
     var club by rememberSaveable { mutableStateOf("") }
     var liga by rememberSaveable { mutableStateOf("") }
     var temporada by rememberSaveable { mutableStateOf("2026/27") }
@@ -55,6 +56,13 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
             Campo("Edad", edad, "18", Modifier.weight(1f), teclado = KeyboardType.Number) { edad = it.filter { c -> c.isDigit() }.take(2) }
             Campo("Nacionalidad", nacionalidad, "España", Modifier.weight(2f)) { nacionalidad = it }
         }
+        Campo("Fecha de nacimiento en FC (opcional)", nacimiento, "dd/mm/aaaa, la de tu jugador en el juego") { nacimiento = it.take(20) }
+        val nac = Fechas.lee(nacimiento)
+        Text(when {
+            nacimiento.isBlank() -> "Con ella (y la fecha de cada partido) Shai cuenta tu edad exacta, en años y días, para compararte con los récords del fútbol de verdad: el goleador más joven de la Champions, el debutante más joven de LaLiga…"
+            nac == null -> "No entiendo esa fecha: ponla como 12/08/2008."
+            else -> "Nacido el ${Fechas.texto(nac)}. Con la fecha de cada partido, tu edad exacta para los récords."
+        }, color = if (nacimiento.isNotBlank() && nac == null) Acento else Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
         if (modo == Rol.JUGADOR) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             Campo("Posición", posicion, "DC, MCO, LD…", Modifier.weight(2f)) { posicion = it }
             Campo("Dorsal", dorsal, "9", Modifier.weight(1f), teclado = KeyboardType.Number) { dorsal = it.filter { c -> c.isDigit() }.take(2) }
@@ -96,7 +104,7 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
             val pj = Personaje(nombre.trim(), apodo.trim(), edad.toIntOrNull() ?: 18, nacionalidad.trim(), if (modo == Rol.JUGADOR) posicion.trim() else "",
                 if (modo == Rol.JUGADOR) dorsal.toIntOrNull() ?: 0 else 0, media.toIntOrNull() ?: 0,
                 cifras.mapValues { it.value.toIntOrNull() ?: 0 }.filterValues { it > 0 }, rasgos.trim(),
-                media.toIntOrNull()?.takeIf { it > 0 }?.let { listOf(0 to it) } ?: emptyList())
+                media.toIntOrNull()?.takeIf { it > 0 }?.let { listOf(0 to it) } ?: emptyList(), Fechas.lee(nacimiento)?.let { Fechas.iso(it) } ?: "")
             val c = Contratos.primero(nivel, club.trim(), temporada.trim(), modo)
             val u = Universo(Universo.nuevoId(), modo, pj, club.trim(), liga.trim(), temporada.trim(), c.sueldo, c.hasta, numero(dinero),
                 fuera = Fuera.INICIAL + mapOf(Fuera.FAMA to nivel.fama, Fuera.AFICION to nivel.aficion, Fuera.CARISMA to nivel.carisma),

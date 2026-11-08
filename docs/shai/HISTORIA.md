@@ -4,6 +4,27 @@ Shai (el dios egipcio del destino, «lo que está ordenado») es el acompañante
 campo y Shai escribe lo de fuera. De la familia (la cuenta, la revista, el actualizador de kDrive), pero Jonsu no enseña nada suyo. Solo
 Android. Paquete `com.gonzalo.shai`; icono «SHAI · CARRERA» en césped de noche (#0F2A1D), crema (#F2E8D0) y el dorado de un trofeo (#C9A227).
 
+## 0.3.0
+
+- **Récords del fútbol de verdad.** Shai compara tu carrera con la lista de 200 récords que pasó Gonzalo («200 Récords Históricos del
+  Fútbol Mundial», temporada 2025/26), en `RecordsReales.kt`, con correcciones comprobadas en internet (noviembre de 2026): el Barça
+  tiene 32 Copas del Rey (no 31; la de 2026 la ganó la Real Sociedad); Thomas Müller, 13 Bundesligas (no 12; Manuel Neuer las igualó en
+  2025/26); Stanley Matthews no marcó con 50 años (su récord es jugar en la Primera inglesa con 50 años y 5 días, 1965); Dick Advocaat
+  dirigió en el Mundial 2026 con 78 años. Comprobados: Mbappé, 22 goles en Mundiales; Cristiano, gol en 6 Mundiales; Unai Simón, 650
+  minutos; el Mundial 2026, 308 goles. Los dudosos (cifras que no cuadran entre fuentes, marcas «más de…» que ya han subido) no cuentan.
+- **Fechas exactas.** Fecha de nacimiento en FC (al crear la carrera o en Perfil) y fecha de cada partido (en las dos plantillas; si no la
+  pones, la del anterior + 7 días, marcada como estimada): la edad exacta en años y días.
+- **La comparación** (`Historicos.kt`): de edad (goleador, debutante, asistente, hat-trick o campeón más joven en Champions, Mundial,
+  Eurocopa, Copa América, Libertadores y las cinco grandes ligas; el más veterano en marcar o jugar…) y de cifra (goles en una temporada,
+  en un año natural, en un partido, totales; partidos, títulos, rachas, puntos, porterías a cero si eres portero…). Si lo bates o lo
+  igualas: «Récord histórico» con fama sin tope, la portada y la red; si te quedas a menos de 90 días, «a X días del récord de…». Una vez
+  batido, el récord es tuyo en esa carrera. En Cifras, «Récords históricos»: los tuyos, los que tienes a tiro y la lista entera.
+- **A Claude** solo le llegan los récords reales ya comparados por la app, con sus cifras; no puede citar otros.
+- **Rivales** (`Rivales.kt`): surgen solos (el del club que siempre te marca, el central que te anuló, el que compite por tu puesto, el que
+  te disputa el trofeo de goleador, el excompañero tras un traspaso, el que te provoca, que propone Claude) y su intensidad sube y baja con
+  los duelos y lo que pasa. En Perfil, «Tus rivales» (también los que metes tú). Lo personal (pullas, mal rollo, chicas de por medio),
+  solo con rivales inventados; con futbolistas de verdad, solo la rivalidad deportiva que cuenta la prensa con cifras.
+
 ## 0.2.0
 
 Lo que pidió Gonzalo tras probar el modo prueba («todo tiene que estar más currado») y lo que fue añadiendo:

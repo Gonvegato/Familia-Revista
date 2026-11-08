@@ -47,6 +47,7 @@ fun TabCifras(u: Universo) {
     if (ps.isEmpty()) { Nota("Sin partidos todavía."); return }
     CerrarTemporada(u)
     RecordsEHitos(u, ps.map { it.second })
+    RecordsHistoricos(u, ps.map { it.second })
     val t = Estadisticas.total(ps.map { it.second })
     Antetitulo("Toda la carrera")
     LineaCifras(u, t)
@@ -115,7 +116,7 @@ fun RecordsEHitos(u: Universo, ps: List<Partido>) {
     MagFact("Racha más larga sin perder", partidos(r.rachaInvicto))
     r.mejorTemporada?.let { MagFact("Mejor temporada", "${it.first} (${it.second}${if (u.modo == Rol.JUGADOR) " goles" else " victorias"})") }
     if (r.titulos.isNotEmpty()) MagFact("Títulos", r.titulos.joinToString(", "))
-    u.hitos.reversed().take(12).forEach { h ->
+    u.hitos.filter { it.real == 0 }.reversed().take(12).forEach { h ->
         Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             Text((if (h.precoz) "★ " else "") + h.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp)
             Text(h.texto, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
@@ -124,6 +125,94 @@ fun RecordsEHitos(u: Universo, ps: List<Partido>) {
         Filete(1.dp, Line)
     }
     Text("Son los de tu carrera en Shai, con las cifras que metes; no los del fútbol de verdad.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+}
+
+/** Tus rivales: los que han surgido solos y los que metes tú (si es un futbolista de verdad, la rivalidad solo es deportiva). */
+@Composable
+fun TusRivales(u: Universo) {
+    var anadiendo by remember { mutableStateOf(false) }
+    var nombre by remember { mutableStateOf("") }
+    var club by remember { mutableStateOf("") }
+    var real by remember { mutableStateOf(true) }
+    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Antetitulo("Tus rivales")
+    if (u.rivales.isEmpty()) Text("Aún ninguno. Surgen solos: el del club que siempre te marca, el central que te anula, el que compite por tu puesto, el que te disputa el trofeo de goleador…",
+        color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp))
+    u.rivales.sortedByDescending { it.intensidad }.forEach { r ->
+        Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+            Text(r.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 22.sp)
+            Etiqueta(listOfNotNull(r.club.ifBlank { null }, r.posicion.ifBlank { null }, "${r.intensidad}/100 · ${r.grado}", if (r.real) "real: solo deportiva" else null).joinToString(" · "))
+            if (r.origen.isNotBlank()) Text(r.origen, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+            r.choques.takeLast(2).reversed().forEach { c -> Text("J${c.paso}: ${c.texto}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp)) }
+            EnlaceRevista("Quitar", Modifier.padding(top = 2.dp)) { Carreras.guarda(Rivales.quita(Carreras.de(u.id) ?: u, r.id)) }
+        }
+        Filete(1.dp, Line)
+    }
+    if (!anadiendo) MagLink("Añadir un rival", "Uno que tú elijas") { anadiendo = true }
+    else {
+        Campo("Nombre", nombre, "El rival") { nombre = it.take(60) }
+        Campo("Club", club, "Su club") { club = it.take(60) }
+        SiNo("Es un futbolista de verdad", "Entonces la rivalidad es solo deportiva: la prensa compara cifras, sin frases ni mal rollo.", real) { real = it }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BotonAcento("Añadir", modifier = Modifier.weight(1f)) {
+                if (nombre.isNotBlank()) Carreras.guarda(Rivales.anade(Carreras.de(u.id) ?: u, nombre, club, real))
+                nombre = ""; club = ""; anadiendo = false
+            }
+            BotonSuave("Cancelar", modifier = Modifier.weight(1f)) { anadiendo = false }
+        }
+    }
+}
+
+/** Los récords del fútbol de verdad (los de tu lista): los que ya son tuyos, los que tienes a tiro y la lista entera. */
+@Composable
+fun RecordsHistoricos(u: Universo, ps: List<Partido>, abierta0: Boolean = false) {
+    var abierta by rememberSaveable { mutableStateOf(abierta0) }
+    Antetitulo("Récords históricos")
+    Text("Tu carrera comparada con los récords del fútbol de verdad (tu lista de 200, temporada 2025/26).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
+    if (u.recordsSuyos.isNotEmpty()) {
+        Etiqueta("Los que son tuyos", Modifier.padding(top = 10.dp))
+        u.recordsSuyos.sortedByDescending { it.paso }.forEach { s ->
+            val r = RecordsReales.de(s.n) ?: return@forEach
+            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                Text("★ " + r.record, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp)
+                Text((if (s.iguala) "Lo iguala" else "Ahora es suyo") + ": ${s.marca}. Lo tenía ${r.quien} (${r.marca}).", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+                Etiqueta(listOfNotNull("J${s.paso}", s.temporada.ifBlank { null }, "#${r.n}").joinToString(" · "))
+            }
+            Filete(1.dp, Line)
+        }
+    }
+    u.hitos.filter { it.real > 0 && it.id.contains("_cerca_") }.takeLast(4).reversed().forEach { h ->
+        Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+            Text(h.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp)
+            Text(h.texto, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+        }
+        Filete(1.dp, Line)
+    }
+    val tiro = Historicos.aTiro(u, ps)
+    if (tiro.isNotEmpty()) {
+        Etiqueta("A tiro", Modifier.padding(top = 10.dp))
+        tiro.take(8).forEach { c ->
+            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                Text(c.r.record, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp)
+                Text(c.texto, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+            }
+            Filete(1.dp, Line)
+        }
+    }
+    if (Fechas.lee(u.personaje.nacimiento) == null && u.modo == Rol.JUGADOR)
+        Nota("Pon tu fecha de nacimiento en FC (Perfil → Editar) y la fecha de los partidos para compararte con los récords de edad (el más joven, el más veterano).", Modifier.padding(top = 6.dp))
+    MagLink(if (abierta) "Ocultar la lista" else "Ver los 200 récords", "Los dudosos no cuentan para batir nada") { abierta = !abierta }
+    if (abierta) RecordReal.CATEGORIAS.forEachIndexed { i, nombre ->
+        Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 23.sp, modifier = Modifier.padding(top = 12.dp))
+        RecordsReales.TODOS.filter { it.categoria == i + 1 }.forEach { r ->
+            Column(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+                Text("${r.n}. ${r.record}", color = if (r.dudoso) Muted else Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 18.sp)
+                Text("${r.quien} · ${r.marca}", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+                if (r.dudoso || r.nota.isNotBlank()) Text((if (r.dudoso) "Dudoso: no cuenta. " else "") + r.nota, color = Acento, fontFamily = Body, fontSize = 11.sp, lineHeight = 15.sp)
+            }
+        }
+    }
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
 }
 
@@ -236,7 +325,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
         }
         Column(Modifier.weight(1f).padding(start = 14.dp)) {
             Text(pj.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 26.sp)
-            Text(listOfNotNull("${pj.edad} años", pj.nacionalidad.ifBlank { null }, pj.posicion.ifBlank { null }, pj.dorsal.takeIf { it > 0 }?.let { "dorsal $it" }).joinToString(" · ").uppercase(),
+            Text(listOfNotNull("${pj.edad} años", Fechas.lee(pj.nacimiento)?.let { "nació el ${Fechas.texto(it)}" }, pj.nacionalidad.ifBlank { null }, pj.posicion.ifBlank { null }, pj.dorsal.takeIf { it > 0 }?.let { "dorsal $it" }).joinToString(" · ").uppercase(),
                 color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, lineHeight = 15.sp)
             if (foto != null) EnlaceRevista("Quitar la foto", Modifier.padding(top = 4.dp)) { Fotos.borra(ctx, u.id) }
         }
@@ -257,6 +346,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
     Text("Te cubren: ${nv.medios}.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     if (u.famaHist.size > 1) Text("Cómo ha subido tu fama: " + u.famaHist.takeLast(12).joinToString(" → ") { "J${it.first} ${it.second}" }, color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 6.dp))
     Text("Sube poco a poco con lo que haces (tus partidos, tus goles y notas, tus decisiones y tus líos), con un tope de ${Vida.topeFama(pj.edad)} por jornada a tus ${pj.edad} años (a los 21 o menos, un buen tramo pesa mucho más; a partir de los 28, poco)." , color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+    TusRivales(u)
     // Su contrato (el de Shai)
     Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
     Antetitulo("Tu contrato")
@@ -328,6 +418,7 @@ private fun EditarCarta(u: Universo, alAcabar: () -> Unit) {
     var rasgos by remember { mutableStateOf(pj.rasgos) }
     var trayectoria by remember { mutableStateOf(u.trayectoria) }
     var edad by remember { mutableStateOf("${pj.edad}") }
+    var nacimiento by remember { mutableStateOf(Fechas.lee(pj.nacimiento)?.let { Fechas.texto(it) } ?: "") }
     if (u.modo == Rol.JUGADOR) Campo("Media", media, "—", teclado = KeyboardType.Number) { media = it.filter { c -> c.isDigit() }.take(2) }
     (if (u.modo == Rol.MISTER) Cifras.MISTER else Cifras.JUGADOR).chunked(3).forEach { fila ->
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -336,12 +427,15 @@ private fun EditarCarta(u: Universo, alAcabar: () -> Unit) {
         }
     }
     Campo("Edad", edad, "18", teclado = KeyboardType.Number) { edad = it.filter { c -> c.isDigit() }.take(2) }
+    Campo("Fecha de nacimiento en FC", nacimiento, "dd/mm/aaaa (opcional)") { nacimiento = it.take(20) }
+    if (nacimiento.isNotBlank() && Fechas.lee(nacimiento) == null) Nota("No entiendo esa fecha: ponla como 12/08/2008.", color = Acento)
     Campo("Su forma de ser", rasgos, "", lineas = 3) { rasgos = it }
     Campo("Quién es (su historia, su palmarés)", trayectoria, "23 años, Balón de Oro, canterano que debuta…", lineas = 4) { trayectoria = it }
     Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         BotonAcento("Guardar", modifier = Modifier.weight(1f)) {
             val m = media.toIntOrNull() ?: 0
             val nuevo = pj.copy(media = m, atributos = cifras.mapValues { it.value.toIntOrNull() ?: 0 }.filterValues { it > 0 }, rasgos = rasgos.trim(), edad = edad.toIntOrNull() ?: pj.edad,
+                nacimiento = Fechas.lee(nacimiento)?.let { Fechas.iso(it) } ?: if (nacimiento.isBlank()) "" else pj.nacimiento,
                 historial = if (m > 0 && m != pj.media) (pj.historial + (u.paso to m)).takeLast(60) else pj.historial)
             Carreras.guarda((Carreras.de(u.id) ?: u).copy(personaje = nuevo, trayectoria = trayectoria.trim())); alAcabar()
         }

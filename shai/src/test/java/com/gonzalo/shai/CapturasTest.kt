@@ -67,6 +67,10 @@ abstract class CapturasBase {
                             30 -> PantNueva({}, {})
                             40 -> PantAjustes({}, inicial = 2)
                             41 -> PantAjustes({}, inicial = 0)
+                            in 60..61 -> PantCarrera(otra, {}, {}, {}, inicial = 0, articuloAbierto = cual == 61)
+                            63 -> PaginaRevista { Carreras.de(otra)?.let { TusRivales(it) } }
+                            64 -> PantCarrera(otra, {}, {}, {}, inicial = 1)
+                            62 -> PaginaRevista { Carreras.de(otra)?.let { RecordsHistoricos(it, Carreras.partidos(otra).map { x -> x.second }) } }
                         }
                     }
                 }
@@ -81,6 +85,26 @@ abstract class CapturasBase {
         cual = 30; foto("30-nueva-carrera")
         cual = 40; foto("40-ajustes-ia")
         cual = 41; foto("41-ajustes-apariencia")
+        // Un récord histórico (el goleador más joven de la Champions, con 17 años y 30 días) y la sección de récords reales
+        val dia = java.time.LocalDate.of(2026, 10, 21)
+        val (rc, _) = Motor.crea(Ejemplo.universo().let { it.copy(personaje = it.personaje.copy(edad = 17, nacimiento = Fechas.iso(dia.minusDays(30).minusYears(17)))) })
+        Motor.partido(rc.id, Partido("2026/27", "LaLiga EA Sports", "Girona FC", true, 2, 0, 90, 1, 0, 7.6, fecha = Fechas.iso(dia.minusDays(4))))
+        Motor.partido(rc.id, Partido("2026/27", "UEFA Champions League", "Inter de Milán", true, 2, 1, 90, 1, 1, 8.8, fecha = Fechas.iso(dia)))
+        otra = rc.id
+        cual = 60; foto("60-record-portada")
+        cual = 61; foto("61-record-noticia")
+        cual = 62; foto("62-records-historicos")
+        // Los rivales: uno que surge solo (dos duelos con el Sevilla y te marcan), uno inventado más y uno real (solo deportivo)
+        val (rv, _) = Motor.crea(Ejemplo.universo())
+        Carreras.guarda(Rivales.anade(Carreras.de(rv.id)!!, "Bruno Lafuente", "Real Madrid", real = false, origen = "Se conocen desde la selección sub-17: nunca se han soportado"))
+        Motor.partido(rv.id, Partido("2026/27", "LaLiga", "Sevilla FC", true, 1, 0, 90, 1, 0, 7.4))
+        Motor.partido(rv.id, Partido("2026/27", "LaLiga", "Sevilla FC", false, 1, 2, 90, 0, 0, 6.1))
+        Carreras.guarda(Rivales.anade(Carreras.de(rv.id)!!, "Un futbolista de verdad", "Real Madrid", real = true))
+        Motor.partido(rv.id, Partido("2026/27", "LaLiga", "Real Madrid", true, 2, 1, 90, 1, 1, 8.2))
+        otra = rv.id
+        cual = 63; foto("63-rivales")
+        cual = 64; foto("64-rivales-red")
+        otra = u.id
         // El cierre de la temporada
         Motor.cierraTemporada(u.id)
         cual = 10; foto("19-carrera-fin-de-temporada")

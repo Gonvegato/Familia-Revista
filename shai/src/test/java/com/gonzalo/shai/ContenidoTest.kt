@@ -146,7 +146,8 @@ class ContenidoTest {
         assertTrue(c.hitos.any { it.id == "goles_5" }.not())   // (5 no es un número de los que cuentan)
         // Se cuentan: una entrada del hito, la red lo celebra y la prensa lo sabe (sin récords del mundo real)
         assertTrue(Carreras.entradasDe(u.id).any { it.tipo == TipoEntrada.HITO && it.titulo.contains("hat-trick") })
-        assertTrue(Narrador.REGLAS.contains("No digas nunca que bate un récord del mundo real"))
+        // (de récords reales, solo los que le pasa la app con sus cifras: HistoricosTest)
+        assertTrue(Narrador.REGLAS.contains("solo puedes citar los que vienen en «RÉCORDS HISTÓRICOS REALES»"))
         val r = Hitos.records(c, Carreras.partidos(u.id).map { it.second })
         assertEquals(5, r.goles); assertEquals(1, r.hatTricks); assertEquals(3, r.rachaMarcando); assertEquals(4, r.rachaInvicto)
         // Un título y el veterano: no es precoz

@@ -144,7 +144,8 @@ private fun TabPortada(u: Universo, entradas: List<Entrada>, alMensajes: () -> U
 @Composable
 fun TarjetaEntrada(u: Universo, e: Entrada) {
     Panel {
-        Antetitulo(e.tipo.nombre + (if (e.paso > 0) " · jornada ${e.paso}" else ""), tam = 11.sp)
+        Antetitulo((if (e.tipo == TipoEntrada.RECORD) "★ " else "") + e.tipo.nombre + (if (e.paso > 0) " · jornada ${e.paso}" else ""), tam = 11.sp,
+            color = if (e.tipo == TipoEntrada.RECORD) Dorado else Charcoal)
         val p = e.partido
         val titulo = when {
             p != null -> (if (p.local) "${u.club} ${p.golesFavor}-${p.golesContra} ${p.rival}" else "${p.rival} ${p.golesContra}-${p.golesFavor} ${u.club}")

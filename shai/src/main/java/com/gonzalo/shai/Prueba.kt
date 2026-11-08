@@ -219,7 +219,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
     private fun post(d: Datos, autor: String, texto: String, tipo: String, gordo: Boolean = false, resp: List<Map<String, Any?>> = emptyList(), cita: Map<String, Any?> = SIN_CITA): Map<String, Any?> {
         val l = likes(d, gordo)
         val a = rellena(autor, d)
-        return mapOf("autor" to a, "usuario" to usuario(a), "texto" to rellena(texto, d), "megusta" to l, "reposts" to (l / (5 + azar.nextInt(8))).coerceAtLeast(1),
+        return mapOf("autor" to a, "usuario" to usuario(a), "texto" to frases(rellena(texto, d)), "megusta" to l, "reposts" to (l / (5 + azar.nextInt(8))).coerceAtLeast(1),
             "tipo" to tipo, "respuestas" to resp, "cita" to cita)
     }
 
@@ -259,6 +259,23 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
                 posts.add(0, post(d, medio(d), (if (precoz) "PRECOZ. " else "") + "{A}: ${m.groupValues[1].lowercase()}. " + m.groupValues[2].replace(" Con ", " con ").substringBefore(" de los más precoces") +
                     (if (precoz) " Con ${m.groupValues[4]} años, uno de los más jóvenes del {C} en hacerlo en mucho tiempo. La grada ya hace cuentas" else " Un número redondo para su carrera"), "prensa", gordo = true, resp = respuestas(u, d, 'V')))
             }
+        // Los rivales del duelo de hoy: la pulla (si es inventado) o la comparación de la prensa (si es real)
+        delDuelo(texto, d).forEach { r -> postsRival(u, d, r).reversed().forEach { posts.add(minOf(2, posts.size), it) } }
+        // Los récords del fútbol de verdad: si bate uno, la red no habla de otra cosa
+        records(texto).forEach { rc ->
+            val quien = nombreDe(rc.quien)
+            when (rc.estado) {
+                "BATE", "IGUALA" -> {
+                    val verbo = if (rc.estado == "BATE") "BATE" else "IGUALA"
+                    posts.add(0, post(d, medio(d), "HISTÓRICO. {A} $verbo el récord de $quien: ${rc.record.inicialMinuscula()}. La marca era ${rc.marca}; la suya, ${rc.su}. Guardad la fecha", "prensa", gordo = true, resp = respuestas(u, d, 'V')))
+                    posts.add(1, post(d, "Datos y Fútbol", "📊 ${rc.record}:\n\n1. {A} — ${rc.su}\n2. $quien — ${rc.marca}\n\nActualizad las enciclopedias", "prensa", gordo = true))
+                    posts.add(2, post(d, "Grada Joven", "Que lo he visto en directo. Que {A} acaba de ${if (rc.estado == "BATE") "quitarle un récord" else "igualar un récord"} a $quien y yo estaba ahí. Se lo contaré a mis nietos aunque no me crean", "aficion", gordo = true))
+                    posts.add(3, post(d, "Analista de sofá", "Para los que decían que {A} era humo: ${rc.record.inicialMinuscula()}. Ahí lo tenéis. Ahora a ver quién sale a pedir perdón", "aficion",
+                        cita = mapOf("autor" to medio(d), "usuario" to usuario(medio(d)), "texto" to "HISTÓRICO. {A} $verbo el récord de $quien".let { rellena(it, d) })))
+                }
+                else -> posts.add(0, post(d, "Datos y Fútbol", "📊 Ojo al dato: {A} se ha quedado muy cerca de un récord histórico. ${rc.texto.substringAfter("y se queda a ").let { "Se queda a $it" }}", "prensa", gordo = true, resp = respuestas(u, d, 'X')))
+            }
+        }
         // Cómo se le ve según su edad: el chaval que lo rompe es un terremoto; el veterano, una buena racha (o el declive)
         val vista = Regex("""Cómo se le está viendo \(para el tono\): (\p{L}+)""").find(texto)?.groupValues?.get(1).orEmpty()
         val edad = Regex(""", (\d+) años""").find(texto)?.groupValues?.get(1)?.toIntOrNull() ?: 24
@@ -273,7 +290,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
             "Guardad este tuit para dentro de dos años", "Esto lo firmo y lo enmarco")
         posts += post(d, "Analista de sofá", comentarios[azar.nextInt(comentarios.size)], "aficion",
             cita = mapOf("autor" to medio(d), "usuario" to usuario(medio(d)), "texto" to rellena(prensa["texto"].comoTexto(), d)))
-        val tag = when { "Cómo se le está viendo (para el tono): sorpresa" in texto -> "Fenómeno{A}"; d.goles > 0 && r == 'V' -> "Gol{A}"; r == 'V' -> "{A}Show"; r == 'D' -> "{C}Despierta"; else -> "{C}{R}" }
+        val tag = when { records(texto).any { it.estado != "CERCA" } -> "{A}Historico"; "Cómo se le está viendo (para el tono): sorpresa" in texto -> "Fenómeno{A}"; d.goles > 0 && r == 'V' -> "Gol{A}"; r == 'V' -> "{A}Show"; r == 'D' -> "{C}Despierta"; else -> "{C}{R}" }
         return mapOf("tendencia" to tendencia(d, tag), "posts" to posts, "mensajes" to conversaciones(u, d, r, 2 + azar.nextInt(2)))
     }
 
@@ -323,9 +340,98 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         "datos_equipo" to listOf(mapOf("dato" to "Posesión", "valor" to "55 / 45"), mapOf("dato" to "Tiros", "valor" to "14 / 9"), mapOf("dato" to "Tiros a puerta", "valor" to "6 / 3")),
         "rendimiento" to "4 tiros, 2 a puerta, 31 pases (modo prueba: la foto no se ha leído de verdad)", "dudas" to "Modo prueba: estos datos son de ejemplo, no salen de tu foto.")
 
+    /** Un récord real de los que ha comparado la app (la línea que va a Claude): batido, igualado o rozado. */
+    private class RecordP(val estado: String, val n: Int, val record: String, val quien: String, val marca: String, val su: String, val texto: String)
+
+    private fun records(texto: String): List<RecordP> =
+        Regex("""(?m)^- (BATE|IGUALA|CERCA) · #(\d+) ([^·\n]+?) · récord: (.+), ([^,·\n]+?) · él: ([^·\n]+?) · ([^\n]+)$""")
+            .findAll(texto.substringAfter("RÉCORDS HISTÓRICOS REALES", "")).map { m ->
+                val g = m.groupValues
+                RecordP(g[1], g[2].toInt(), g[3].trim(), g[4].trim(), g[5].trim(), g[6].trim(), g[7].trim())
+            }.toList()
+
+    /** Un rival de los que vienen en el contexto («TUS RIVALES»). [real]: futbolista de verdad (solo lo deportivo). */
+    private class RivalP(val nombre: String, val club: String, val posicion: String, val origen: String, val intensidad: Int, val real: Boolean)
+
+    private fun rivales(texto: String): List<RivalP> =
+        Regex("""(?m)^- RIVAL · ([^·\n]+) · ([^·\n]+) · ([^·\n]+) · ([^·\n]+) · intensidad (\d+)/100 \([^)\n]*\) · (INVENTADO|REAL)""").findAll(texto).map { m ->
+            val g = m.groupValues
+            RivalP(g[1].trim(), g[2].trim(), g[3].trim(), g[4].trim(), g[5].toInt(), g[6] == "REAL")
+        }.toList()
+
+    /** Los rivales del club de este partido (un duelo directo). */
+    private fun delDuelo(texto: String, d: Datos) = rivales(texto).filter { d.rival.isNotBlank() && it.club.equals(d.rival, ignoreCase = true) }
+
+    // Las pullas de un rival inventado tras un duelo, y lo que dice la red (con su respuesta)
+    private val PULLAS_RIVAL = listOf(
+        "Hay jugadores que juegan al fútbol y otros que juegan a salir en Instagram. Hoy se ha visto quién es quién 🤫",
+        "Mucho ruido en la previa. Luego, en el campo, cada uno en su sitio. Buen viaje de vuelta, chaval",
+        "A algunos les queda grande la camiseta, pero bien que les queda el flequillo. Nos vemos en la vuelta",
+        "Gracias a la afición por el recibimiento. Al '{AT}', ninguna: que siga contando seguidores, que goles le cuestan")
+    private val PULLAS_VUELTA = listOf("Los goles hablan solos. Los tuyos, hoy, estaban afónicos 🗣️", "Te espero en la vuelta. Tráete el móvil, que vas a querer grabarlo",
+        "Tranquilo, que en tu casa también hay espejos", "Dile a tu representante que me escriba cuando tengas mis números")
+
+    /** Los posts del duelo con un rival: si es inventado, la pulla (y su respuesta); si es real, solo la comparación de la prensa con cifras. */
+    private fun postsRival(u: Uso, d: Datos, r: RivalP): List<Map<String, Any?>> = if (r.real) listOf(
+        post(d, "Datos y Fútbol", "📊 Duelo de nombres en el {C}-{R}: {A} contra ${r.nombre}. Esta noche, {GOLES} para {A}. La prensa ya pone sus números uno al lado del otro y el debate está servido (en la grada, no entre ellos)", "prensa", gordo = true, resp = respuestas(u, d, 'X')),
+        post(d, medio(d), "El cara a cara que todos miraban: {A} frente a ${r.nombre} (${r.club}). Lo nuestro son las cifras: {GOLES} y una nota de {NOTA} para {A}. El resto, en el campo", "prensa"))
+    else {
+        val i = elige(u, PULLAS_RIVAL.indices.toList()) { "pulla:$it" } ?: 0
+        val pulla = PULLAS_RIVAL[i].replace("{AT}", d.alias.removePrefix("el ").removePrefix("El "))
+        val autorR = r.nombre
+        listOf(post(d, autorR, pulla, "rival", gordo = true, resp = listOf(
+                mapOf("autor" to d.alias, "usuario" to usuario(d.alias), "texto" to rellena(PULLAS_VUELTA[azar.nextInt(PULLAS_VUELTA.size)], d), "megusta" to likes(d, true), "tipo" to "entorno"),
+                mapOf("autor" to "Grada Joven", "usuario" to "gradajoven", "texto" to "Que se peleen en el campo, que fuera dan vergüenza ajena. Pero que sigan, que esto es lo mejor de la semana 🍿", "megusta" to likes(d), "tipo" to "aficion"))),
+            post(d, "{MEDR}", "GUERRA ABIERTA. ${r.nombre} (${r.club}) y {A} se han dicho de todo en redes tras el {C}-{R}. Lo de ellos ya no es fútbol: es un culebrón, y tenemos los capítulos", "prensa", gordo = true, resp = respuestas(u, d, 'X')))
+    }
+
+    /** Lo que cambia con los rivales en la prensa de este partido (y, a veces, uno nuevo: siempre inventado). */
+    private fun cambiosRival(u: Uso, d: Datos, texto: String): List<Map<String, Any?>> {
+        val l = delDuelo(texto, d).map { r ->
+            if (r.real) mapOf("nombre" to r.nombre, "club" to r.club, "posicion" to r.posicion, "origen" to r.origen, "cambio" to 3,
+                "choque" to "La prensa compara sus números tras el {C}-{R}: {GOLES} para {A}.".let { rellena(it, d) }, "tipo" to Choque.DEPORTIVO, "nuevo" to false)
+            else mapOf("nombre" to r.nombre, "club" to r.club, "posicion" to r.posicion, "origen" to r.origen, "cambio" to 7,
+                "choque" to "Se dijeron de todo en redes tras el {C}-{R}: pulla de ${r.nombre} y respuesta de {A}; {MEDR} ya lo llama «guerra abierta».".let { rellena(it, d) },
+                "tipo" to Choque.PERSONAL, "nuevo" to false)
+        }
+        // El que le roba protagonismo (inventado) tras una derrota fea, si aún tiene pocos rivales
+        val nuevo = if (d.resultado == 'D' && rivales(texto).size < 3 && d.rival.isNotBlank() && delDuelo(texto, d).isEmpty() && azar.nextInt(2) == 0) listOf(
+            mapOf("nombre" to listOf("Iván Saldaña", "Rayan Ferrer", "Bastian Kroll", "Gael Montoro").let { it[azar.nextInt(it.size)] }, "club" to d.rival, "posicion" to "extremo",
+                "origen" to "Le hizo el gesto de silencio a la grada del {C} tras el {MAR} y luego se rio de {A} en redes".let { rellena(it, d) }, "cambio" to 10,
+                "choque" to "Celebró delante de {A} con el dedo en la boca y luego subió la foto: «Silencio en {C}».".let { rellena(it, d) }, "tipo" to Choque.PERSONAL, "nuevo" to true))
+            else emptyList()
+        return l + nuevo
+    }
+
+    /** El protagonista del récord, sin el contexto («Ansu Fati (FC Barcelona) – ante el Inter…» → «Ansu Fati»). */
+    private fun nombreDe(quien: String) = quien.substringBefore(" (").substringBefore(" –").trim()
+
+    /** La portada de un récord batido: lo más gordo que le puede pasar (más cuanto más joven y más conocido). */
+    private fun portadaRecord(r: RecordP, d: Datos, edad: Int): Map<String, Any?> {
+        val quien = nombreDe(r.quien)
+        val joven = edad <= 21
+        val alcance = when (d.nivel) { 0 -> "En el barrio no se habla de otra cosa y la noticia ya ha saltado a la prensa nacional"; 1, 2 -> "La noticia ha abierto todos los informativos deportivos del país"; else -> "La noticia ha dado la vuelta al mundo en una hora: portadas en Londres, Milán y Buenos Aires" }
+        val titular = if (r.estado == "IGUALA") "{A} iguala a $quien" else when { joven && edad <= 18 -> "{A} rompe la historia"; joven -> "{A} ya es historia"; else -> "{A} entra en la historia" }
+        val entradilla = if (r.estado == "IGUALA") "Con ${r.su}, {A} se pone a la altura de $quien en un récord que parecía intocable: ${r.record.inicialMinuscula()}."
+            else "Con ${r.su}, {A} supera a $quien (${r.marca}) y se queda con un récord que llevaba años sin dueño nuevo: ${r.record.inicialMinuscula()}."
+        val articulo = listOf(
+            "Hay noches que se cuentan durante décadas y la de ayer ante el {R} va a ser una de ellas. {A} ${if (r.estado == "IGUALA") "igualó" else "batió"} el récord de $quien: ${r.record.inicialMinuscula()}. " +
+                "La marca era ${r.marca}; la suya, ${r.su}." + (Regex("""Lo bate por [^.]+\.""").find(r.texto)?.value?.let { " $it" } ?: ""),
+            "$alcance. " + (if (joven) "Y lo que más asusta es la edad: a la mayoría de los chavales de su quinta todavía les cuesta ganarse un sitio en el banquillo; {A} ya figura en los libros. En el {C} piden calma, pero hasta su entrenador sonrió al salir a la sala de prensa: «Que lo disfrute, que se lo ha ganado. Mañana, a entrenar como siempre»."
+                else "A su edad ya nadie le descubre, pero esto le pone en otra liga: la de los nombres que salen en las preguntas de los concursos. En el {C} lo celebraron como un título y el vestuario le hizo pasillo en el entrenamiento de esta mañana."),
+            "{M} lo vio desde la grada con la bufanda en la cara y {REP} no ha soltado el teléfono desde el pitido final: «No voy a hablar de dinero hoy», dijo. Lo dijo dos veces. La cuenta oficial de la competición ya ha publicado la efeméride y las enciclopedias de internet llevan toda la noche cambiando su nombre de sitio. Es el momento de {A}, y lo sabe todo el mundo.")
+        return prensaDe(medio(d), titular, entradilla, articulo.joinToString("\n\n"), listOf(
+            "La marca de $quien" to "${r.marca}: así se quedó el récord que {A} ${if (r.estado == "IGUALA") "ha igualado" else "acaba de borrar"}.",
+            "Lo que viene ahora" to (if (joven) "Las comparaciones, la presión y los grandes de Europa preguntando por él: lo difícil empieza mañana." else "Una marca para la historia y una pregunta: ¿cuánto le queda por batir?"),
+            "{M}, en la grada" to "Lloró, cantó y le hizo una foto a la pantalla del marcador. «Para el grupo de la familia», dice."), d)
+    }
+
+    /** Mayúscula al empezar cada frase («el Niño rompe…» → «El Niño rompe…»: los apodos con artículo). */
+    private fun frases(t: String): String = Regex("""(^|[.!?]\s+|\n)(\p{Ll})""").replace(t) { m -> m.groupValues[1] + m.groupValues[2].uppercase() }
+
     private fun prensaDe(cab: String, titular: String, entradilla: String, articulo: String, sec: List<Pair<String, String>>, d: Datos) = mapOf(
-        "cabecera" to rellena(cab, d), "titular" to rellena(titular, d), "entradilla" to rellena(entradilla, d), "articulo" to rellena(articulo, d),
-        "secundarios" to sec.map { (t, e) -> mapOf("titular" to rellena(t, d), "entradilla" to rellena(e, d)) })
+        "cabecera" to rellena(cab, d), "titular" to frases(rellena(titular, d)), "entradilla" to frases(rellena(entradilla, d)), "articulo" to frases(rellena(articulo, d)),
+        "secundarios" to sec.map { (t, e) -> mapOf("titular" to frases(rellena(t, d)), "entradilla" to frases(rellena(e, d))) })
 
     private fun ofertas(u: Uso, d: Datos, n: Int): List<Map<String, Any?>> {
         val nivel = d.nivel.coerceIn(0, 4)
@@ -353,11 +459,16 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
                 "efectos" to efectos(ev?.efIgnorar ?: EfP(carisma = -1), d))
         }.toList()
         val ef = when (r) { 'V' -> EfP(aficion = 2 + azar.nextInt(2), carisma = 1); 'D' -> EfP(aficion = -2 - azar.nextInt(2)); else -> NADA }
+        val grande = records(texto).firstOrNull { it.estado != "CERCA" }
+        val edad = Regex(""", (\d+) años""").find(texto)?.groupValues?.get(1)?.toIntOrNull() ?: 24
+        val duelo = delDuelo(texto, d).firstOrNull()
+        val sec2 = if (duelo != null) listOf((if (duelo.real) "{A} y ${duelo.nombre}, cifra a cifra" to "La comparación de la noche: {GOLES} para {A} ante el ${duelo.club}. Los números, uno al lado del otro."
+            else "{A} y ${duelo.nombre}, guerra abierta" to "Lo del ${duelo.club} ya es personal: pullas en redes, gestos en el campo y una vuelta que nadie se quiere perder.")) + sec.drop(1) else sec
         return mapOf(
-            "prensa" to prensaDe(medio(d), a.titular, a.entradilla, a.articulo, sec, d),
+            "prensa" to (grande?.let { portadaRecord(it, d, edad) } ?: prensaDe(medio(d), a.titular, a.entradilla, a.articulo, sec2, d)),
             "ofertas" to if (azar.nextInt(4) == 0) ofertas(u, d, 1) else emptyList(),
             "decision" to decision(d, dec), "sin_contestar" to sinContestar,
-            "efectos" to efectos(ef, d), "gente_nueva" to emptyList<Any>())
+            "efectos" to efectos(ef, d) + ("rivales" to cambiosRival(u, d, texto)), "gente_nueva" to emptyList<Any>())
     }
 
     private fun evento(u: Uso, d: Datos, texto: String): Map<String, Any?> {

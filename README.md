@@ -62,7 +62,7 @@ resultados. Las personas reales solo salen de pasada; lo íntimo y lo escandalos
 Lo escribe Claude con **tu clave de la API** (la de los créditos de tu plan, en Claude Console), que va solo a `/claves` (`shai_anthropic`):
 Haiku 5.5 para la red, los mensajes y las fotos; Sonnet 5.5 para lo demás. Shai cuenta lo gastado con lo que dice cada respuesta y se para al
 llegar al tope del mes (de serie, 100 $). Tus carreras van en tu cuenta (la colección `shai`); la foto de tu personaje se queda en el móvil.
-Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Desde la 0.2.0: contratos de Shai, nivel y alcance que suben poco a poco (la edad pesa), récords e hitos, decisiones que caducan, memoria y cierre de temporada. Con un **modo prueba** (Ajustes → IA) para ver
+Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Desde la 0.2.0: contratos de Shai, nivel y alcance que suben poco a poco (la edad pesa), récords e hitos, decisiones que caducan, memoria y cierre de temporada. Compara tu carrera con 200 **récords del fútbol de verdad** (con fecha de nacimiento y de partido, la edad exacta) y lleva tus **rivales**, que surgen solos. Con un **modo prueba** (Ajustes → IA) para ver
 todas las funciones sin IA y sin gastar (plantillas de ejemplo; carreras aparte, solo en el móvil). Todo en `docs/shai/HISTORIA.md`.
 
 ## En el ordenador (Linux y Mac)
