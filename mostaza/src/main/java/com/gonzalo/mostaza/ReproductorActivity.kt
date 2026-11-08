@@ -114,6 +114,8 @@ class ReproductorActivity : ComponentActivity() {
     private var listo = false
     private val cortes = ArrayList<Long>()
     private var cargandoDesde = 0L
+    /** Le has dicho que no a cambiar de fuente: con esta no se vuelve a proponer (hasta que cambies tú de fuente). */
+    private var noCambiar = false
     /** Cuándo se empezó a abrir esta fuente (para el tope de un torrent que no arranca). */
     private var arrancaDesde = 0L
     /** Desde cuándo el torrent que se está abriendo casi no baja nada. */
@@ -146,7 +148,7 @@ class ReproductorActivity : ComponentActivity() {
                 val ahora = SystemClock.elapsedRealtime()
                 if (bajada != null && bajada < 8_000L) { if (lentoDesde == 0L) lentoDesde = ahora } else lentoDesde = 0L
                 val parado = lentoDesde > 0 && ahora - lentoDesde > 45_000L
-                if (arrancaDesde > 0 && (parado || ahora - arrancaDesde > TORRENT_MAX_ARRANQUE_MS + 60_000L) && estado.corte == null) {
+                if (arrancaDesde > 0 && (parado || ahora - arrancaDesde > TORRENT_MAX_ARRANQUE_MS + 60_000L) && estado.corte == null && !noCambiar) {
                     arrancaDesde = 0L
                     if (!fallaEnTanteo()) siguienteCandidata()?.let { sig -> estado.corte = "Este torrent casi no baja (hay muy poca gente compartiéndolo). ¿Probar con ${sig.analisis.resumen().ifBlank { sig.addon }}?" }
                 }
@@ -197,7 +199,7 @@ class ReproductorActivity : ComponentActivity() {
             androidx.activity.compose.BackHandler(enabled = estado.eleccion != null) { estado.eleccion = null }
             ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { s -> salta(s) }, alIr = { p -> player?.seekTo(p); visionado?.sesion?.salto() },
                 alVolver = { finish() }, alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alFuente = { eligeFuente() }, alOtro = { conOtro() },
-                alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() },
+                alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() }, alNoCambiar = { seguirConEsta() },
                 tele = tele, salto = AjustesReproductor.salto(this@ReproductorActivity))
         }
     }
@@ -221,7 +223,7 @@ class ReproductorActivity : ComponentActivity() {
         val (t, s) = nombreDe(e); estado.titulo = t; estado.subtitulo = s
         estado.fuente = e.elegida.analisis.resumen().ifBlank { e.elegida.addon }
         estado.cargando = true; estado.aviso = null; estado.corte = null; estado.siguiente = null; estado.cuentaAtras = -1
-        listo = false; cortes.clear(); cargandoDesde = 0L; arrancaDesde = SystemClock.elapsedRealtime(); lentoDesde = 0L; subsDecididos = false; avisadoEntrada = false; avisoDelDebrid = false
+        listo = false; noCambiar = false; cortes.clear(); cargandoDesde = 0L; arrancaDesde = SystemClock.elapsedRealtime(); lentoDesde = 0L; subsDecididos = false; avisadoEntrada = false; avisoDelDebrid = false
         val v = visionado
         visionado = if (v != null && v.breve.id == e.breve.id && e.video != null && v.videoId != e.video.id) v.siguiente(e.video, e.meta)
             else Visionado(applicationContext, e.breve, e.meta, e.video, previo = e.previo, pendiente = e.pendiente)
@@ -534,6 +536,7 @@ class ReproductorActivity : ComponentActivity() {
 
     /** Se corta una y otra vez: se apunta que la conexión da menos y se propone la siguiente. */
     private fun seCorta() {
+        if (noCambiar) return
         val kbps = DefaultBandwidthMeter.getSingletonInstance(this).bitrateEstimate / 1000L
         Conexion.apunta(applicationContext, kbps, corte = true)
         val sig = siguienteCandidata() ?: return
@@ -548,6 +551,9 @@ class ReproductorActivity : ComponentActivity() {
     }
 
     private fun siguienteFuente() { estado.corte = null; siguienteCandidata()?.let { cambiaA(it) } }
+
+    /** «No, seguir con esta»: se queda con la fuente de ahora y no vuelve a preguntar mientras siga con ella. */
+    private fun seguirConEsta() { estado.corte = null; noCambiar = true; cortes.clear() }
 
     private fun conOtro() {
         val pos = player?.currentPosition ?: 0L
@@ -678,7 +684,7 @@ class ReproductorActivity : ComponentActivity() {
 @Composable
 fun ControlesReproductor(
     e: EstadoReproductor, alTocar: () -> Unit, alPlay: () -> Unit, alSaltar: (Int) -> Unit, alIr: (Long) -> Unit, alVolver: () -> Unit,
-    alAudio: () -> Unit, alSubs: () -> Unit, alFuente: () -> Unit, alOtro: () -> Unit, alSiguiente: () -> Unit, alCancelarSiguiente: () -> Unit, alCorte: () -> Unit,
+    alAudio: () -> Unit, alSubs: () -> Unit, alFuente: () -> Unit, alOtro: () -> Unit, alSiguiente: () -> Unit, alCancelarSiguiente: () -> Unit, alCorte: () -> Unit, alNoCambiar: () -> Unit = {},
     tele: Boolean = false, salto: Int = 10,
 ) {
     val blanco = Color(0xFFF7F2E8)
@@ -761,10 +767,12 @@ fun ControlesReproductor(
             }
         }
         e.corte?.let { c ->
-            Row(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 110.dp * k).padding(horizontal = mh).background(Paper).padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(c, color = Charcoal, fontFamily = Body, fontSize = 14.sp * k, modifier = Modifier.weight(1f, fill = false))
-                Spacer(Modifier.width(14.dp))
-                EnlaceRevista("Sí, cambiar", Modifier.focusRequester(fCorte), acento = true) { alCorte() }
+            Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 110.dp * k).padding(horizontal = mh).background(Paper).padding(horizontal = 18.dp, vertical = 10.dp)) {
+                Text(c, color = Charcoal, fontFamily = Body, fontSize = 14.sp * k)
+                Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    EnlaceRevista("Sí, cambiar", Modifier.focusRequester(fCorte), acento = true) { alCorte() }
+                    EnlaceRevista("No, seguir con esta") { alNoCambiar() }
+                }
             }
         }
         e.siguiente?.let { s ->
