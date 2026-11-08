@@ -53,6 +53,7 @@ abstract class CapturasBase {
         Carreras.guarda(Universo(Universo.nuevoId(), Rol.MISTER, Personaje("Marcelo Ruiz", edad = 44, nacionalidad = "Argentina"), "Real Valladolid CF", "LaLiga Hypermotion", "2026/27", 9_000, dinero = 1_200_000))
         var cual by mutableIntStateOf(0)
         var otra by androidx.compose.runtime.mutableStateOf(u.id)
+        var chatAbierto by androidx.compose.runtime.mutableStateOf<String?>(null)
         rule.setContent {
             ShaiTheme {
                 Surface(Modifier.fillMaxSize(), color = Paper) {
@@ -70,6 +71,7 @@ abstract class CapturasBase {
                             in 60..61 -> PantCarrera(otra, {}, {}, {}, inicial = 0, articuloAbierto = cual == 61)
                             63 -> PaginaRevista { Carreras.de(otra)?.let { TusRivales(it) } }
                             64 -> PantCarrera(otra, {}, {}, {}, inicial = 1)
+                            in 70..71 -> PantCarrera(otra, {}, {}, {}, chatInicial = chatAbierto)
                             62 -> PaginaRevista { Carreras.de(otra)?.let { RecordsHistoricos(it, Carreras.partidos(otra).map { x -> x.second }) } }
                         }
                     }
@@ -79,6 +81,13 @@ abstract class CapturasBase {
         foto("01-portada")
         PESTANAS.forEachIndexed { i, n -> cual = 10 + i; foto("1$i-carrera-${n.lowercase()}") }
         cual = 17; foto("17-carrera-noticia")
+        // Un chat con una decisión abierta y uno sin ella (un grupo, si lo hay)
+        val convs = conversaciones(Carreras.entradasDe(u.id))
+        chatAbierto = convs.firstOrNull { it.abierta != null }?.nombre ?: convs.first().nombre
+        cual = 70; foto("70-chat-decision")
+        chatAbierto = (convs.firstOrNull { it.grupo } ?: convs.firstOrNull { it.abierta == null } ?: convs.last()).nombre
+        cual = 71; foto("71-chat")
+        cual = 0
         cual = 18; foto("18-cerrar-temporada")
         cual = 20; foto("20-partido-rapido")
         cual = 21; foto("21-partido-completo")
@@ -104,6 +113,13 @@ abstract class CapturasBase {
         otra = rv.id
         cual = 63; foto("63-rivales")
         cual = 64; foto("64-rivales-red")
+        // La cuenta atrás: le quedan 20 días para el récord de Ansu Fati (goleador más joven de la Champions)
+        val dct = java.time.LocalDate.of(2026, 10, 1)
+        val (ct, _) = Motor.crea(Ejemplo.universo().let { it.copy(personaje = it.personaje.copy(edad = 17, nacimiento = Fechas.iso(dct.minusDays(20).minusYears(17)))) })
+        Motor.partido(ct.id, Partido("2026/27", "LaLiga EA Sports", "Girona FC", true, 1, 0, 90, 0, 0, 7.0, fecha = Fechas.iso(dct)))
+        otra = ct.id
+        cual = 10; foto("65-cuenta-atras-inicio")
+        cual = 11; foto("66-cuenta-atras-red")
         otra = u.id
         // El cierre de la temporada
         Motor.cierraTemporada(u.id)

@@ -63,7 +63,7 @@ data class RecordSuyo(val n: Int, val valor: Double, val marca: String, val paso
  * sin fecha de nacimiento no se compara nada de días.
  */
 object Historicos {
-    enum class Estado { BATE, IGUALA, CERCA, A_TIRO }
+    enum class Estado { BATE, IGUALA, CERCA, A_TIRO, ESCAPA }
 
     /** Hasta cuántos días por encima de la edad del récord se cuenta como «rozarlo». */
     const val CERCA_DIAS = 90L
@@ -77,6 +77,10 @@ object Historicos {
         /** Si lo que bate es su propio récord (ya lo tenía). */
         val contraSuyo: Boolean = false,
         val fechaEstimada: Boolean = false,
+        /** Lo que tiene a tiro por edad: los días que le quedan (desde su último partido) y hasta cuándo; -1 si no va por días. */
+        val quedanDias: Long = -1, val plazo: String = "",
+        /** Lo que tiene a tiro por cifra: lo que le falta para batirlo (en [RecordReal.unidad]) y lo que lleva; -1 si no va por cifra. */
+        val falta: Double = -1.0,
     ) {
         /** La línea para Claude (y para el modo prueba): con las cifras tal cual. */
         val linea: String get() = "- ${estado.name.replace('_', ' ')} · #${r.n} ${r.record} · récord: ${r.quien}, ${r.marca} · él: $suMarca · $texto"
@@ -358,7 +362,8 @@ object Historicos {
                     // Solo lo que tiene que ver con lo que juega (o lo general)
                     if (c !in setOf("top5", "champions", "pro", "") && ps.none { en(it, c) } && f != "cien_joven") continue
                     val n = ChronoUnit.DAYS.between(ultima, dia)
-                    l += Comparacion(r, Estado.A_TIRO, "aún no", 0.0, "Tiene hasta el ${Fechas.texto(dia)} (${Fechas.dias(n)}) para ser el más joven: ${r.record.inicialMinuscula()} (${r.quien}, ${r.marca}).")
+                    l += Comparacion(r, Estado.A_TIRO, "aún no", 0.0, "Tiene hasta el ${Fechas.texto(dia)} (${Fechas.dias(n)}) para ser el más joven: ${r.record.inicialMinuscula()} (${r.quien}, ${r.marca}).",
+                        quedanDias = n, plazo = Fechas.texto(dia))
                 } else {
                     val (a, _) = Fechas.edad(nac, ultima)
                     if (a < r.anios - 3 || ps.none { cumple(u, f, c, it, 0) }) continue
@@ -372,10 +377,66 @@ object Historicos {
                 val umbral = when (f) { "racha_gol", "racha_partidos", "victorias_seguidas", "invicto_liga", "invicto_temporada" -> 0.5; "goles_total", "asist_total", "partidos_total", "titulos", "titulos_total", "titulos_mister", "partidos_mister", "goles_portero", "cero_total", "hats_total", "pokers" -> 0.75; else -> 0.6 }
                 if (cur <= 0 || cur >= v || cur < v * umbral) continue
                 val falta = v - cur
-                l += Comparacion(r, Estado.A_TIRO, cuenta(cur, r.unidad), cur, "Lleva ${cuenta(cur, r.unidad)}: le falta${if (falta == 1.0) "" else "n"} ${cuenta(falta, r.unidad)} para igualar a ${r.quien} (${r.marca}) y ${cuenta(falta + 1, r.unidad)} para batir el récord: ${r.record.inicialMinuscula()}.")
+                l += Comparacion(r, Estado.A_TIRO, cuenta(cur, r.unidad), cur, "Lleva ${cuenta(cur, r.unidad)}: le falta${if (falta == 1.0) "" else "n"} ${cuenta(falta, r.unidad)} para igualar a ${r.quien} (${r.marca}) y ${cuenta(falta + 1, r.unidad)} para batir el récord: ${r.record.inicialMinuscula()}.",
+                    falta = falta + 1)
             }
         }
-        return l.sortedBy { if (it.r.deEdad) 0 else 1 }
+        return l.sortedWith(compareBy<Comparacion> { urgencia(u, it).ordinal }.thenBy { if (it.r.deEdad) 0 else 1 }.thenBy { if (it.quedanDias >= 0) it.quedanDias.toDouble() else it.falta })
+    }
+
+    // ---------------------------------------------------------------- la cuenta atrás
+
+    enum class Urgencia(val nombre: String) { ALTA("ALTA"), MEDIA("MEDIA"), BAJA("BAJA") }
+
+    /**
+     * Lo que pesa lo que tiene a tiro: cuanto menos le falta, más; y más cuanto más joven y más nivel tiene (un chaval que va a por un récord
+     * de precocidad es portada; un veterano que se acerca a una cifra, un dato). ALTA: la prensa lo convierte en cuenta atrás.
+     */
+    fun urgencia(u: Universo, c: Comparacion): Urgencia {
+        val joven = u.personaje.edad <= 21
+        val nivel = u.nivelActual.ordinal
+        val base = when {
+            c.quedanDias in 0..30 -> 0
+            c.quedanDias in 31..90 -> 1
+            c.quedanDias > 90 -> 2
+            c.falta in 0.0..3.0 -> 0
+            c.falta in 3.0..8.0 -> 1
+            else -> 2
+        }
+        val sube = (if (joven) 1 else 0) + (if (nivel >= 3) 1 else 0)
+        return Urgencia.entries[(base - (if (base == 2 && sube >= 2) 1 else 0)).coerceIn(0, 2)]
+    }
+
+    /** «23 días» o «4 goles»: lo que le queda. */
+    fun queda(c: Comparacion): String = when {
+        c.quedanDias >= 0 -> Fechas.dias(c.quedanDias)
+        c.falta >= 0 -> cuenta(c.falta, c.r.unidad)
+        else -> ""
+    }
+
+    /** La línea de la cuenta atrás para Claude (y para el modo prueba). */
+    fun lineaCuenta(u: Universo, c: Comparacion): String = "- CUENTA ATRÁS · #${c.r.n} ${c.r.record} · récord: ${c.r.quien}, ${c.r.marca} · " +
+        (if (c.quedanDias >= 0) "quedan ${Fechas.dias(c.quedanDias)} (hasta el ${c.plazo})" else "le faltan ${queda(c)} para batirlo (lleva ${c.suMarca})") +
+        " · urgencia ${urgencia(u, c).nombre}"
+
+    /**
+     * Los récords de precocidad que tenía a tiro antes del último partido y que ya no puede batir (el plazo ha pasado sin conseguirlo):
+     * «se le escapa». Si le quedaban 7 días o menos, se quedó a nada (drama).
+     */
+    fun escapados(u: Universo, ps: List<Partido>): List<Comparacion> {
+        if (ps.size < 2) return emptyList()
+        val antes = aTiro(u, ps.dropLast(1)).filter { it.quedanDias >= 0 && it.r.tipo == TipoRecord.JOVEN }
+        if (antes.isEmpty()) return emptyList()
+        val ahora = aTiro(u, ps).map { it.r.n }.toSet()
+        val conseguidos = nuevos(u, ps).map { it.r.n }.toSet()
+        val nombre = u.personaje.nombreCorto
+        return antes.filter { it.r.n !in ahora && it.r.n !in conseguidos }.map { c ->
+            val nada = c.quedanDias <= 7
+            Comparacion(c.r, Estado.ESCAPA, "aún no", 0.0,
+                "Se le escapa un récord histórico: ${c.r.record.inicialMinuscula()}. El plazo para superar a ${c.r.quien} (${c.r.marca}) acabó el ${c.plazo} y $nombre ya no puede ser el más joven." +
+                    if (nada) " Se queda a nada: en su último partido antes del plazo le quedaban solo ${Fechas.dias(c.quedanDias)}." else "",
+                quedanDias = c.quedanDias, plazo = c.plazo)
+        }
     }
 
     /** La fama que da (la repercusión: lo más gordo que le puede pasar; más cuanto más joven). No respeta el tope de la jornada. */
@@ -387,7 +448,7 @@ object Historicos {
             Estado.BATE -> 6 + porEdad + (if (c.r.deEdad) 2 else 0)
             Estado.IGUALA -> 4 + porEdad / 2
             Estado.CERCA -> 1 + porEdad / 3
-            Estado.A_TIRO -> 0
+            Estado.A_TIRO, Estado.ESCAPA -> 0
         }
     }
 }

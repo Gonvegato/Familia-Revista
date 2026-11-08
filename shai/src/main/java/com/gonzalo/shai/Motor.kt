@@ -148,7 +148,8 @@ object Motor {
     private fun historicos(u0: Universo): Universo {
         var u = u0
         val ps = Carreras.partidos(u.id).map { it.second }
-        val cs = runCatching { Historicos.nuevos(u, ps) }.getOrDefault(emptyList())
+        // Lo que bate, iguala o roza con este partido, y los de precocidad que se le acaban de escapar (el plazo ha pasado)
+        val cs = runCatching { Historicos.nuevos(u, ps) }.getOrDefault(emptyList()) + runCatching { Historicos.escapados(u, ps) }.getOrDefault(emptyList())
         if (cs.isEmpty()) return u
         val t = ps.lastOrNull()?.temporada ?: u.temporada
         var suyos = u.recordsSuyos
@@ -162,12 +163,13 @@ object Motor {
             val titulo = when (c.estado) {
                 Historicos.Estado.BATE -> if (c.contraSuyo) "Mejora su récord: ${c.r.record}" else "Récord histórico: ${c.r.record}"
                 Historicos.Estado.IGUALA -> "Iguala un récord histórico: ${c.r.record}"
+                Historicos.Estado.ESCAPA -> "Se le escapa un récord histórico: ${c.r.record}"
                 else -> "Roza un récord histórico: ${c.r.record}"
             }
-            hitos += Hito("real_${c.r.n}_${c.estado.name.lowercase()}_${u.paso}", titulo, c.texto, u.paso, u.personaje.edad, c.r.tipo == TipoRecord.JOVEN && c.estado != Historicos.Estado.CERCA, t, c.r.n, c.linea)
+            hitos += Hito("real_${c.r.n}_${c.estado.name.lowercase()}_${u.paso}", titulo, c.texto, u.paso, u.personaje.edad, c.r.tipo == TipoRecord.JOVEN && c.estado != Historicos.Estado.CERCA && c.estado != Historicos.Estado.ESCAPA, t, c.r.n, c.linea)
         }
         if (hitos.isNotEmpty()) {
-            val grandes = hitos.filter { !it.id.contains("_cerca_") }
+            val grandes = hitos.filter { !it.id.contains("_cerca_") && !it.id.contains("_escapa_") }
             val e = Entrada(Universo.nuevoId("e"), u.id, if (grandes.isNotEmpty()) TipoEntrada.RECORD else TipoEntrada.HITO, reloj() - 2, u.paso,
                 (grandes.ifEmpty { hitos }).joinToString(" · ") { it.titulo }, hitos.joinToString("\n\n") { it.texto },
                 efectos = Efectos(fuera = mapOf(Fuera.FAMA to fama)))

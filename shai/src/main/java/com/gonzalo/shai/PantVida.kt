@@ -62,11 +62,11 @@ fun TabCifras(u: Universo) {
         }
     }
     if (u.personaje.historial.size > 1) {
-        Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(22.dp))
         Antetitulo("Tu media en FC")
         Text(u.personaje.historial.joinToString("  →  ") { "${it.second}" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 4.dp))
     }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
     Antetitulo("Los partidos")
     ps.reversed().forEach { (e, p) ->
         Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
@@ -125,7 +125,7 @@ fun RecordsEHitos(u: Universo, ps: List<Partido>) {
         Filete(1.dp, Line)
     }
     Text("Son los de tu carrera en Shai, con las cifras que metes; no los del fútbol de verdad.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
 }
 
 /** Tus rivales: los que han surgido solos y los que metes tú (si es un futbolista de verdad, la rivalidad solo es deportiva). */
@@ -135,7 +135,7 @@ fun TusRivales(u: Universo) {
     var nombre by remember { mutableStateOf("") }
     var club by remember { mutableStateOf("") }
     var real by remember { mutableStateOf(true) }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
     Antetitulo("Tus rivales")
     if (u.rivales.isEmpty()) Text("Aún ninguno. Surgen solos: el del club que siempre te marca, el central que te anula, el que compite por tu puesto, el que te disputa el trofeo de goleador…",
         color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp))
@@ -213,7 +213,7 @@ fun RecordsHistoricos(u: Universo, ps: List<Partido>, abierta0: Boolean = false)
             }
         }
     }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
 }
 
 @Composable
@@ -230,74 +230,83 @@ private fun LineaCifras(u: Universo, l: Linea) {
 fun TabVida(u: Universo) {
     var aviso by remember { mutableStateOf<String?>(null) }
     fun haz(f: () -> Universo) { aviso = try { Carreras.guarda(f()); null } catch (e: Exception) { Motor.mensaje(e) } }
-    Antetitulo("Tu dinero")
-    MagFact("En el banco", Formato.euros(u.dinero))
-    MagFact("Sueldo a la semana", u.contrato?.let { Formato.euros(it.sueldo) } ?: "Libre: sin sueldo")
-    if (u.patrocinio > 0) MagFact("Patrocinios a la semana", Formato.euros(u.patrocinio))
-    u.contrato?.takeIf { it.porGol > 0 }?.let { MagFact("Por cada gol", Formato.euros(it.porGol)) }
-    val rentas = u.bienes.sumOf { it.renta }
-    if (rentas != 0L) MagFact("Tus cosas, cada jornada", (if (rentas > 0) "+" else "") + Formato.euros(rentas))
-    MagFact("Patrimonio", Formato.euros(u.patrimonio))
-    u.contrato?.let { MagFact("Contrato", "${it.club}, hasta ${it.hasta}") }
-    aviso?.let { Nota(it, Modifier.padding(top = 4.dp), color = Acento) }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-    Antetitulo("Fuera del campo")
-    Fuera.TODOS.forEach { (k, n) -> BarraValor(n, u.valorFuera(k)) }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-    Antetitulo("Lo tuyo")
-    if (u.bienes.isEmpty()) Nota("Nada todavía.", Modifier.padding(vertical = 4.dp))
-    u.bienes.forEach { b ->
-        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(b.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 22.sp)
-                Text(listOf("vale ${Formato.eurosCorto(b.valor)}", "pagaste ${Formato.eurosCorto(b.compra)}", (if (b.renta >= 0) "+" else "") + Formato.eurosCorto(b.renta) + "/jornada").joinToString(" · ").uppercase(),
-                    color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, lineHeight = 14.sp)
-            }
-            EnlaceRevista("Vender", Modifier.padding(start = 10.dp)) { haz { Mercado.vende(u, b.id) } }
-        }
-        Filete(1.dp, Line)
+    Rotulo("Tu dinero")
+    Spacer(Modifier.height(8.dp))
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // (la cifra sin «€», que va en la etiqueta: así cabe en una línea)
+        Contador(sinEuro(Formato.eurosCorto(u.dinero)), "€ en el banco", Modifier.weight(1f).fillMaxHeight(), destacado = true)
+        Contador(u.contrato?.let { sinEuro(Formato.eurosCorto(it.sueldo)) } ?: "0", if (u.contrato != null) "€ a la semana" else "€: libre, sin sueldo", Modifier.weight(1f).fillMaxHeight())
+        Contador(sinEuro(Formato.eurosCorto(u.patrimonio)), "€ de patrimonio", Modifier.weight(1f).fillMaxHeight())
     }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-    Antetitulo("La bolsa")
-    Cuerpo("Empresas inventadas; se mueven con cada jornada.", tam = 12)
+    Tarjeta(Modifier.padding(top = 8.dp)) {
+        if (u.patrocinio > 0) MagFact("Patrocinios a la semana", Formato.euros(u.patrocinio))
+        u.contrato?.takeIf { it.porGol > 0 }?.let { MagFact("Por cada gol", Formato.euros(it.porGol)) }
+        val rentas = u.bienes.sumOf { it.renta }
+        if (rentas != 0L) MagFact("Tus cosas, cada jornada", (if (rentas > 0) "+" else "") + Formato.euros(rentas))
+        u.contrato?.let { MagFact("Contrato", "${it.club}, hasta ${it.hasta}") } ?: MagFact("Contrato", "ninguno: eres libre")
+    }
+    aviso?.let { Nota(it, Modifier.padding(top = 6.dp), color = Acento) }
+    Spacer(Modifier.height(18.dp)); Rotulo("Fuera del campo"); Spacer(Modifier.height(8.dp))
+    Tarjeta { Fuera.TODOS.forEach { (k, n) -> BarraValor(n, u.valorFuera(k)) } }
+    Spacer(Modifier.height(18.dp)); Rotulo("Lo tuyo"); Spacer(Modifier.height(8.dp))
+    if (u.bienes.isEmpty()) Nota("Nada todavía: abajo, en «De compras», lo que te puedes permitir.")
+    u.bienes.forEach { b ->
+        Tarjeta(Modifier.padding(bottom = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    TituloTarjeta(b.nombre, tam = 18)
+                    TextoTarjeta(listOf("vale ${Formato.eurosCorto(b.valor)}", "pagaste ${Formato.eurosCorto(b.compra)}", (if (b.renta >= 0) "+" else "") + Formato.eurosCorto(b.renta) + " por jornada").joinToString(" · "))
+                }
+                Spacer(Modifier.width(10.dp))
+                BotonRedondo("Vender", lleno = false) { haz { Mercado.vende(u, b.id) } }
+            }
+        }
+    }
+    Spacer(Modifier.height(18.dp)); Rotulo("La bolsa")
+    Text("Empresas inventadas; sus acciones se mueven con cada jornada.", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
     Mercado.VALORES.forEach { v ->
         val h = u.precios[v.simbolo].orEmpty()
         val p = h.lastOrNull() ?: v.inicial
         val antes = h.getOrNull(h.size - 2) ?: p
         val cambio = if (antes > 0) (p - antes) * 100.0 / antes else 0.0
         val tiene = u.cartera[v.simbolo] ?: 0L
-        Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text("${v.nombre} ", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp, modifier = Modifier.weight(1f))
-                Text(Formato.centimos(p), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Tarjeta(Modifier.padding(bottom = 8.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f)) {
+                    TituloTarjeta(v.nombre, tam = 17)
+                    Text("${v.simbolo} · ${v.sector}", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(Formato.centimos(p), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 20.sp)
+                    Text((if (cambio >= 0) "▲ +" else "▼ ") + Formato.decimal(cambio) + " %", color = if (cambio >= 0) Acento else Coral, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp)
+                }
             }
-            Text(listOfNotNull(v.simbolo, v.sector, (if (cambio >= 0) "+" else "") + Formato.decimal(cambio) + " %", if (tiene > 0) "tienes ${Formato.cifra(tiene)} (${Formato.eurosCorto(tiene * p / 100)})" else null).joinToString(" · ").uppercase(),
-                color = if (cambio >= 0) Muted else Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, lineHeight = 14.sp)
-            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                listOf(10L, 100L, 1000L).forEach { n -> EnlaceRevista("Comprar ${Formato.cifra(n)}", Modifier.padding(top = 6.dp), acento = true) { haz { Mercado.compraAcciones(Carreras.de(u.id) ?: u, v.simbolo, n) } } }
-                if (tiene > 0) EnlaceRevista("Vender todas", Modifier.padding(top = 6.dp)) { haz { Mercado.vendeAcciones(Carreras.de(u.id) ?: u, v.simbolo, tiene) } }
+            if (tiene > 0) Text("Tienes ${Formato.cifra(tiene)} acciones (${Formato.eurosCorto(tiene * p / 100)})", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
+            androidx.compose.foundation.layout.FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(10L, 100L, 1000L).forEach { n -> PildoraMarco("Comprar ${Formato.cifra(n)}") { haz { Mercado.compraAcciones(Carreras.de(u.id) ?: u, v.simbolo, n) } } }
+                if (tiene > 0) PildoraMarco("Vender todas") { haz { Mercado.vendeAcciones(Carreras.de(u.id) ?: u, v.simbolo, tiene) } }
             }
         }
-        Filete(1.dp, Line)
     }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-    Antetitulo("De compras")
-    Cuerpo("Lo que te puedes permitir y lo que tienes cerca; según crezca tu dinero, habrá más.", tam = 12)
+    Spacer(Modifier.height(18.dp)); Rotulo("De compras")
+    Text("Lo que te puedes permitir y lo que tienes cerca; según crezca tu dinero, habrá más.", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp))
     val catalogo = Mercado.catalogo(u)
     listOf(Bien.CASA to "Casas", Bien.COCHE to "Coches y caprichos", Bien.NEGOCIO to "Negocios").forEach { (t, n) ->
-        Text(n, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 10.dp))
+        Text(n, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 12.dp, bottom = 8.dp))
         catalogo.filter { it.tipo == t }.forEach { a ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(a.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp)
-                    Text(a.descripcion, color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
-                    Text((Formato.euros(a.precio) + " · " + (if (a.renta >= 0) "deja +" else "cuesta ") + Formato.eurosCorto(kotlin.math.abs(a.renta)) + "/jornada").uppercase(),
-                        color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, lineHeight = 14.sp)
+            val llega = Mercado.llega(u, a)
+            Tarjeta(Modifier.padding(bottom = 8.dp)) {
+                TituloTarjeta(a.nombre, tam = 17, modifier = Modifier)
+                TextoTarjeta(a.descripcion, Modifier.padding(top = 2.dp))
+                Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(Formato.euros(a.precio), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
+                        Text((if (a.renta >= 0) "deja +" else "cuesta ") + Formato.eurosCorto(kotlin.math.abs(a.renta)) + " por jornada", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
+                    }
+                    if (llega) BotonRedondo("Comprar") { haz { Mercado.compra(Carreras.de(u.id) ?: u, a) } }
+                    else Sello("No te llega", Muted)
                 }
-                if (Mercado.llega(u, a)) EnlaceRevista("Comprar", Modifier.padding(start = 10.dp), acento = true) { haz { Mercado.compra(Carreras.de(u.id) ?: u, a) } }
-                else Text("NO TE LLEGA", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, modifier = Modifier.padding(start = 10.dp))
             }
-            Filete(1.dp, Line)
         }
     }
 }
@@ -333,7 +342,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
     if (pj.rasgos.isNotBlank()) Text(pj.rasgos, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 10.dp))
     if (u.trayectoria.isNotBlank()) Text(u.trayectoria, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
     // Su nivel y su alcance (lo de ahora, cómo ha subido)
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
     Antetitulo("Tu nivel")
     val nv = u.nivelActual
     Text(nv.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp, modifier = Modifier.padding(top = 2.dp))
@@ -348,7 +357,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
     Text("Sube poco a poco con lo que haces (tus partidos, tus goles y notas, tus decisiones y tus líos), con un tope de ${Vida.topeFama(pj.edad)} por jornada a tus ${pj.edad} años (a los 21 o menos, un buen tramo pesa mucho más; a partir de los 28, poco)." , color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     TusRivales(u)
     // Su contrato (el de Shai)
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
     Antetitulo("Tu contrato")
     val c = u.contrato
     if (c == null) Nota("Eres agente libre: no cobras sueldo de ningún club y cualquiera puede ficharte. Las ofertas llegarán.", Modifier.padding(vertical = 4.dp), color = Acento)
@@ -365,7 +374,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
         Text("Es el contrato de Shai, no el de FC: de aquí sale lo que cobras cada jornada, y el club o tu representante hablarán de renovar cuando toque.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     // Lo que Shai recuerda
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
     Antetitulo("Lo que Shai recuerda")
     if (u.memoria.isBlank()) Nota("Todavía nada: cada ${Motor.CADA_MEMORIA} jornadas y al cerrar la temporada, Shai resume las tramas abiertas, tu gente y lo que has decidido.", Modifier.padding(vertical = 4.dp))
     else {
@@ -381,14 +390,14 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
         ambitoM.launch { avisoM = withContext(Dispatchers.IO) { Motor.recuerda(u.id) }; EnCurso.ids.remove("m" + u.id) }
     }
     avisoM?.let { Nota(it, Modifier.padding(top = 4.dp), color = Acento) }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
     Antetitulo(if (u.modo == Rol.MISTER) "Tus cifras" else "Tu carta de FC")
     if (!editando) {
         if (u.modo == Rol.JUGADOR) MagFact("Media", if (pj.media > 0) "${pj.media}" else "—")
         (if (u.modo == Rol.MISTER) Cifras.MISTER else Cifras.JUGADOR).forEach { (k, n) -> MagFact(n, pj.atributos[k]?.toString() ?: "—") }
         EnlaceRevista("Cambiar (como en tu partida)", Modifier.padding(top = 6.dp), acento = true) { editando = true }
     } else EditarCarta(u) { editando = false }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(22.dp))
     Antetitulo("Tu gente")
     if (u.entorno.isEmpty()) Nota("Todavía no hay nadie: llegarán con la presentación y con lo que pase.", Modifier.padding(vertical = 4.dp))
     u.entorno.sortedByDescending { it.afinidad }.forEach { p ->

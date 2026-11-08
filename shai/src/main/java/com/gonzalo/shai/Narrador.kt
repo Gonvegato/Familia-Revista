@@ -79,8 +79,12 @@ Reglas que no se rompen nunca:
             (if (r.titulos.isNotEmpty()) ", títulos: ${r.titulos.joinToString(", ")}" else ""))
         val recienReales = u.hitos.filter { it.paso == u.paso && it.real > 0 && it.linea.isNotBlank() }
         val aTiro = runCatching { Historicos.aTiro(u, partidos) }.getOrDefault(emptyList()).take(3)
-        if (recienReales.isNotEmpty() || aTiro.isNotEmpty()) appendLine("RÉCORDS HISTÓRICOS REALES (comparados por la app con la lista de récords del fútbol de verdad; cítalos SOLO así, con estas cifras):\n" +
-            (recienReales.map { it.linea } + aTiro.map { it.linea }).joinToString("\n"))
+        if (recienReales.isNotEmpty()) appendLine("RÉCORDS HISTÓRICOS REALES (comparados por la app con la lista de récords del fútbol de verdad; cítalos SOLO así, con estas cifras):\n" +
+            recienReales.joinToString("\n") { it.linea })
+        if (aTiro.isNotEmpty()) appendLine("CUENTA ATRÁS DE RÉCORDS (récords del fútbol de verdad que tiene a tiro; la app ha hecho las cuentas: usa estas cifras tal cual, y no inventes ni el rival ni la fecha de su próximo partido, que no se saben). " +
+            "Con urgencia ALTA, conviértelo en historia: cuenta atrás en la prensa (un titular secundario con los días o los goles que le faltan), expectación creciente, posts y la tendencia, y alguien de su gente que le mete presión o se la quita en un mensaje; si quedan 7 días o menos, es su «última oportunidad». Con urgencia MEDIA, que se mencione. BAJA, solo si viene a cuento. " +
+            "Los ESCAPA de RÉCORDS HISTÓRICOS REALES son récords que se le acaban de escapar: cuéntalo como noticia (y como drama si se quedó a nada).\n" +
+            aTiro.joinToString("\n") { Historicos.lineaCuenta(u, it) })
         val recien = u.hitos.filter { it.paso == u.paso && it.real == 0 }
         if (recien.isNotEmpty()) appendLine("HITOS RECIÉN CONSEGUIDOS (celébralos con repercusión según su edad y su nivel; son de su carrera en Shai, no récords del mundo real):\n" +
             recien.joinToString("\n") { "- ${it.titulo}: ${it.texto}" + if (it.precoz) " (PRECOZ, con ${it.edad} años)" else "" })

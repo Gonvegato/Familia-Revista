@@ -100,25 +100,10 @@ fun Chip(texto: String, activo: Boolean, modifier: Modifier = Modifier, cuenta: 
     FiltroRevista(texto + (if (cuenta != null) " $cuenta" else ""), activo, modifier.padding(end = 14.dp), alHacer)
 }
 
-/** Panel: en la revista, sin tarjeta; un filete grueso arriba separa los bloques. */
+/** Panel: una tarjeta redonda (0.4.0: fuera el purismo de la revista; se entiende mejor qué va con qué). */
 @Composable
 fun Panel(modifier: Modifier = Modifier, alHacer: (() -> Unit)? = null, contenido: @Composable ColumnScope.() -> Unit) {
-    val f = Skin.forma
-    if (f.esq == Esq.Recta && f.borde.value == 0f) {
-        val tinta = Charcoal
-        Column(
-            modifier.fillMaxWidth().let { if (alHacer != null) it.tocable(onClick = alHacer) else it }
-                .drawBehind { drawRect(tinta, topLeft = Offset(0f, 0f), size = Size(size.width, 2.dp.toPx())) }.padding(top = 14.dp, bottom = 10.dp),
-            content = contenido
-        )
-        return
-    }
-    val forma = esquina(22.dp)
-    Column(
-        modifier.clip(forma).background(Crudo).let { if (f.borde.value > 0f) it.border(f.borde, if (f.bordeTinta) Charcoal else Line, forma) else it }
-            .let { if (alHacer != null) it.tocable(onClick = alHacer) else it }.padding(16.dp),
-        content = contenido
-    )
+    Tarjeta(modifier.padding(vertical = 5.dp), alHacer = alHacer, contenido = contenido)
 }
 
 /** Una fila de ajuste: título, descripción y algo a la derecha. */

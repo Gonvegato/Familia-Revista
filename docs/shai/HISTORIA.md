@@ -4,6 +4,33 @@ Shai (el dios egipcio del destino, «lo que está ordenado») es el acompañante
 campo y Shai escribe lo de fuera. De la familia (la cuenta, la revista, el actualizador de kDrive), pero Jonsu no enseña nada suyo. Solo
 Android. Paquete `com.gonzalo.shai`; icono «SHAI · CARRERA» en césped de noche (#0F2A1D), crema (#F2E8D0) y el dorado de un trofeo (#C9A227).
 
+## 0.4.0
+
+- **Interfaz nueva, más de app y menos de periódico** (Gonzalo: «la interfaz es horrible, muy muy confusa»). Se queda la cabecera de revista
+  (← SHAI / AJUSTES, club · temporada · jornada, el nombre y «Meter el partido»); lo demás, como lo eligió en las maquetas
+  (`docs/shai/maquetas/`):
+  - **Barra abajo** con Inicio, Red, Mensajes, Ofertas y Más (Cifras, Vida y Perfil), con iconos y contadores.
+  - **Inicio**: tres contadores (decisiones que esperan, ofertas abiertas, seguidores), los récords a tiro con su cuenta atrás, la portada
+    de hoy en su tarjeta (se abre la noticia al tocarla), «¿Qué ha pasado esta semana?» y lo de esta jornada en tarjetas (la de decidir,
+    con franja dorada y «DECIDE»); lo de antes, recogido (se abre al tocarlo). Desde cada tarjeta, a la red, al chat o a responder.
+  - **Red**: filtros (lo más comentado, sobre ti, prensa, tu gente, rivales), el post del día con su hilo abierto y la tendencia, y el feed
+    como en X: avatar con iniciales y color por persona, sello de prensa, @usuario · cuándo, cifras con iconos y «Ver las N respuestas».
+  - **Mensajes**: arriba lo que hay que decidir, en tarjetas; debajo, los chats (último mensaje, sin leer, grupos). Cada chat se abre a
+    pantalla completa con burbujas por jornada, lo que decidiste o no contestaste como aviso, y la decisión abierta al final, con todo el
+    contexto, las opciones enteras y lo que tú quieras escribir.
+  - **Ofertas**: tu contrato arriba; cada oferta en su tarjeta con sueldo, prima y años bien a la vista, lo que mejora tu sueldo, y
+    Aceptar / Rechazar / Pedir más. Las respondidas, abajo.
+  - **Vida**, **tus carreras** y los paneles de todas partes, en tarjetas; las acciones de la bolsa, en botones.
+- **La cuenta atrás de los récords** (Gonzalo: «que la prensa hable de la posibilidad de que esos se superen… le quedan tantos días para tal»).
+  Con los récords a tiro de [Historicos], la app calcula cuánto falta (días para los de precocidad, goles o lo que sea para los de cifra) y
+  su urgencia (más cuanto menos falta, cuanto más joven y cuanto más nivel). A Claude se le pasa como «CUENTA ATRÁS DE RÉCORDS» (récord,
+  quién lo tiene, la marca, cuánto falta y hasta cuándo; sin inventar el próximo partido) con la orden de convertirlo en historia si es
+  ALTA: titular secundario con la cuenta atrás, expectación, posts, la tendencia y alguien de su gente que le mete o le quita presión; con 7
+  días o menos, «última oportunidad». Cuando el plazo pasa sin batirlo, **se le escapa** (hito y noticia; drama si se quedó a nada). El
+  modo prueba tiene sus plantillas («⏳ CUENTA ATRÁS», «Última bala para el récord de…», «Por un suspiro: se le escapa…»). En Inicio,
+  la tarjeta «Récords a tiro» («20 días para el récord de Ansu Fati»).
+- Arreglado: la tendencia del modo prueba salía «#FenómenoelNiño» (ahora «#FenómenoNiño», sin el artículo pegado).
+
 ## 0.3.0
 
 - **Récords del fútbol de verdad.** Shai compara tu carrera con la lista de 200 récords que pasó Gonzalo («200 Récords Históricos del

@@ -165,7 +165,8 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         "disciplina" to e.disciplina, "carisma" to e.carisma, "relaciones" to rel(e.rel, d))
     private val NADA = EfP()
 
-    private fun etiqueta(t: String) = t.split(' ', '-', '\'').filter { it.isNotBlank() }.joinToString("") { it.replaceFirstChar { c -> c.uppercase() } }.filter { it.isLetterOrDigit() }
+    // (sin los artículos sueltos: «Fenómeno el Niño» → «FenómenoNiño», no «FenómenoelNiño»)
+    private fun etiqueta(t: String) = t.split(' ', '-', '\'').filter { it.isNotBlank() && it !in setOf("el", "la", "los", "las") }.joinToString("") { it.replaceFirstChar { c -> c.uppercase() } }.filter { it.isLetterOrDigit() }
 
     // ---------------------------------------------------------------- no repetir
 
@@ -273,6 +274,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
                     posts.add(3, post(d, "Analista de sofá", "Para los que decían que {A} era humo: ${rc.record.inicialMinuscula()}. Ahí lo tenéis. Ahora a ver quién sale a pedir perdón", "aficion",
                         cita = mapOf("autor" to medio(d), "usuario" to usuario(medio(d)), "texto" to "HISTÓRICO. {A} $verbo el récord de $quien".let { rellena(it, d) })))
                 }
+                "ESCAPA" -> {}
                 else -> posts.add(0, post(d, "Datos y Fútbol", "📊 Ojo al dato: {A} se ha quedado muy cerca de un récord histórico. ${rc.texto.substringAfter("y se queda a ").let { "Se queda a $it" }}", "prensa", gordo = true, resp = respuestas(u, d, 'X')))
             }
         }
@@ -290,8 +292,78 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
             "Guardad este tuit para dentro de dos años", "Esto lo firmo y lo enmarco")
         posts += post(d, "Analista de sofá", comentarios[azar.nextInt(comentarios.size)], "aficion",
             cita = mapOf("autor" to medio(d), "usuario" to usuario(medio(d)), "texto" to rellena(prensa["texto"].comoTexto(), d)))
-        val tag = when { records(texto).any { it.estado != "CERCA" } -> "{A}Historico"; "Cómo se le está viendo (para el tono): sorpresa" in texto -> "Fenómeno{A}"; d.goles > 0 && r == 'V' -> "Gol{A}"; r == 'V' -> "{A}Show"; r == 'D' -> "{C}Despierta"; else -> "{C}{R}" }
-        return mapOf("tendencia" to tendencia(d, tag), "posts" to posts, "mensajes" to conversaciones(u, d, r, 2 + azar.nextInt(2)))
+        val cuentaAlta = cuentas(texto).firstOrNull { it.urgencia == "ALTA" }
+        val tag = when { records(texto).any { it.estado == "BATE" || it.estado == "IGUALA" } -> "{A} Histórico"; cuentaAlta != null -> "Cuenta Atrás {A}"; "Cómo se le está viendo (para el tono): sorpresa" in texto -> "Fenómeno {A}"; d.goles > 0 && r == 'V' -> "Gol {A}"; r == 'V' -> "{A} Show"; r == 'D' -> "{C} Despierta"; else -> "{C} {R}" }
+        // La cuenta atrás de los récords que tiene a tiro (y los que se le acaban de escapar): la red y su gente
+        val (pc, mc) = redCuentaAtras(u, d, texto)
+        pc.reversed().forEach { posts.add(minOf(1, posts.size), it) }
+        return mapOf("tendencia" to tendencia(d, tag), "posts" to posts, "mensajes" to mc + conversaciones(u, d, r, 2 + azar.nextInt(2)))
+    }
+
+    // ---------------------------------------------------------------- la cuenta atrás de los récords
+
+    /** Un récord que tiene a tiro (de «CUENTA ATRÁS DE RÉCORDS»): por días (precocidad) o por cifra. */
+    private class CuentaP(val n: Int, val record: String, val quien: String, val marca: String, val dias: Int, val plazo: String, val falta: String, val lleva: String, val urgencia: String) {
+        val porDias: Boolean get() = dias >= 0
+    }
+
+    private fun cuentas(texto: String): List<CuentaP> =
+        Regex("""(?m)^- CUENTA ATRÁS · #(\d+) ([^·\n]+?) · récord: (.+), ([^,·\n]+?) · (?:quedan ([\d.]+) días? \(hasta el ([^)\n]+)\)|le faltan ([^(\n]+?) para batirlo \(lleva ([^)\n]+)\)) · urgencia (ALTA|MEDIA|BAJA)$""")
+            .findAll(texto).map { m ->
+                val g = m.groupValues
+                CuentaP(g[1].toInt(), g[2].trim(), g[3].trim(), g[4].trim(), g[5].replace(".", "").toIntOrNull() ?: -1, g[6].trim(), g[7].trim(), g[8].trim(), g[9])
+            }.toList()
+
+    private fun diasT(n: Int) = if (n == 1) "1 día" else "$n días"
+
+    /** Los posts y los mensajes de la cuenta atrás (y de lo que se le escapa). */
+    private fun redCuentaAtras(u: Uso, d: Datos, texto: String): Pair<List<Map<String, Any?>>, List<Map<String, Any?>>> {
+        val posts = mutableListOf<Map<String, Any?>>()
+        val ms = mutableListOf<Map<String, Any?>>()
+        val madre = alguien(d, "Loli", "madre", "padre")
+        val rep = alguien(d, "Toni Vidal", "representante")
+        records(texto).filter { it.estado == "ESCAPA" }.take(1).forEach { rc ->
+            val quien = nombreDe(rc.quien)
+            val nada = "Se queda a nada" in rc.texto
+            posts += post(d, medio(d), (if (nada) "POR UN SUSPIRO. " else "SE LE ESCAPA. ") + "{A} ya no podrá ser el más joven: ${rc.record.inicialMinuscula()}. El récord sigue siendo de $quien (${rc.marca})." +
+                (if (nada) " Le quedaban días contados y no llegó. Habrá otros, pero este duele" else " El plazo se acabó sin el gol que lo cambiaba todo"), "prensa", gordo = true, resp = respuestas(u, d, 'D'))
+            posts += post(d, "Grada Joven", if (nada) "Qué rabia lo del récord de $quien. Por tan poco… Cabeza alta, {A}, que con tu edad te quedan veinte récords más" else "Lo del récord de $quien no pudo ser. Nadie se acordará de eso si {A} sigue así", "aficion")
+            ms += mapOf("chat" to madre, "de" to madre, "texto" to if (nada) "Hijo, ya sé que estabas ilusionado con lo del récord. Que te quiten eso, pero no la sonrisa, ¿eh?" else "Lo del récord da igual. A mí me da igual. Tú sigue disfrutando")
+        }
+        cuentas(texto).filter { it.urgencia != "BAJA" }.take(2).forEachIndexed { i, c ->
+            val quien = nombreDe(c.quien)
+            val ultima = c.porDias && c.dias <= 7
+            if (c.urgencia == "ALTA" && i == 0) {
+                posts += post(d, medio(d), when {
+                    ultima -> "⏳ ÚLTIMA OPORTUNIDAD. A {A} le quedan solo ${diasT(c.dias)} para batir a $quien: ${c.record.inicialMinuscula()} ($quien lo hizo con ${c.marca}). Después del ${c.plazo}, ya no podrá ser el más joven. En el {C} todos hacen cuentas"
+                    c.porDias -> "⏳ CUENTA ATRÁS. {A} tiene ${diasT(c.dias)}, hasta el ${c.plazo}, para quitarle a $quien un récord histórico: ${c.record.inicialMinuscula()} (${c.marca}). La cuenta empieza ya"
+                    else -> "📈 A {A} le faltan ${c.falta} para batir a $quien: ${c.record.inicialMinuscula()} (${c.marca}). Lleva ${c.lleva}. ¿Cae esta temporada?"
+                }, "prensa", gordo = true, resp = respuestas(u, d, 'X'))
+                posts += post(d, "Grada Joven", if (ultima) "Que nadie le hable a {A} de lo de $quien esta semana, por favor. Dejadle jugar 🙏" else if (c.porDias) "Yo ya tengo el calendario marcado: ${diasT(c.dias)}. Vamos, {A}, que el récord de $quien está ahí" else "${c.falta}. Solo ${c.falta}. Vamos, {A}", "aficion")
+                posts += post(d, "Datos y Fútbol", "📊 ${c.record}\n\nAhora: $quien — ${c.marca}\n{A}: " + (if (c.porDias) "le quedan ${diasT(c.dias)}" else "lleva ${c.lleva}"), "prensa")
+                // Su gente: uno le mete presión y otro se la quita
+                ms += mapOf("chat" to rep, "de" to rep, "texto" to if (c.porDias) "Lo de $quien: si cae antes del ${c.plazo}, el teléfono no va a parar. Te lo digo para que lo sepas, no para que te agobies" else "Si superas lo de $quien, renegociamos sin pedir permiso a nadie")
+                ms += mapOf("chat" to madre, "de" to madre, "texto" to if (ultima) "Que no me entere yo de que no duermes por lo del récord. Tú juega como en el patio del colegio" else "He visto en la tele lo del récord. Ni caso, hijo: tú a lo tuyo")
+            } else posts += post(d, "Analista de sofá", "Ojo, que a {A} " + (if (c.porDias) "le quedan ${diasT(c.dias)} para el récord de $quien (${c.record.inicialMinuscula()})" else "le faltan ${c.falta} para el récord de $quien") + ". Nadie habla de esto", "aficion")
+        }
+        return posts to ms
+    }
+
+    /** El titular secundario de la cuenta atrás (o de lo que se le escapa), si lo hay. */
+    private fun secCuentaAtras(texto: String): Pair<String, String>? {
+        records(texto).firstOrNull { it.estado == "ESCAPA" }?.let { rc ->
+            val quien = nombreDe(rc.quien)
+            val nada = "Se queda a nada" in rc.texto
+            return (if (nada) "Por un suspiro: se le escapa el récord de $quien" else "Se le escapa el récord de $quien") to
+                "{A} ya no podrá ser el más joven: ${rc.record.inicialMinuscula()}. El récord sigue siendo de $quien (${rc.marca})" + (if (nada) ", y esta vez por muy poco." else ".")
+        }
+        val c = cuentas(texto).firstOrNull { it.urgencia == "ALTA" } ?: return null
+        val quien = nombreDe(c.quien)
+        return when {
+            c.porDias && c.dias <= 7 -> "Última bala para el récord de $quien" to "A {A} le quedan ${diasT(c.dias)} para ser el más joven: ${c.record.inicialMinuscula()} ($quien, ${c.marca}). Después del ${c.plazo}, se acabó."
+            c.porDias -> "${diasT(c.dias).replaceFirstChar { it.uppercase() }} para el récord de $quien" to "La cuenta atrás de {A}: tiene hasta el ${c.plazo} para ser el más joven en ${c.record.inicialMinuscula().removePrefix("goleador más joven en ").removePrefix("debutante más joven en ")} ($quien lo hizo con ${c.marca})."
+            else -> "A ${c.falta} del récord de $quien" to "{A} lleva ${c.lleva}: ${c.record.inicialMinuscula()} ($quien, ${c.marca}) está más cerca que nunca."
+        }
     }
 
     private fun conversaciones(u: Uso, d: Datos, r: Char, n: Int): List<Map<String, Any?>> {
@@ -344,7 +416,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
     private class RecordP(val estado: String, val n: Int, val record: String, val quien: String, val marca: String, val su: String, val texto: String)
 
     private fun records(texto: String): List<RecordP> =
-        Regex("""(?m)^- (BATE|IGUALA|CERCA) · #(\d+) ([^·\n]+?) · récord: (.+), ([^,·\n]+?) · él: ([^·\n]+?) · ([^\n]+)$""")
+        Regex("""(?m)^- (BATE|IGUALA|CERCA|ESCAPA) · #(\d+) ([^·\n]+?) · récord: (.+), ([^,·\n]+?) · él: ([^·\n]+?) · ([^\n]+)$""")
             .findAll(texto.substringAfter("RÉCORDS HISTÓRICOS REALES", "")).map { m ->
                 val g = m.groupValues
                 RecordP(g[1], g[2].toInt(), g[3].trim(), g[4].trim(), g[5].trim(), g[6].trim(), g[7].trim())
@@ -459,13 +531,13 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
                 "efectos" to efectos(ev?.efIgnorar ?: EfP(carisma = -1), d))
         }.toList()
         val ef = when (r) { 'V' -> EfP(aficion = 2 + azar.nextInt(2), carisma = 1); 'D' -> EfP(aficion = -2 - azar.nextInt(2)); else -> NADA }
-        val grande = records(texto).firstOrNull { it.estado != "CERCA" }
+        val grande = records(texto).firstOrNull { it.estado == "BATE" || it.estado == "IGUALA" }
         val edad = Regex(""", (\d+) años""").find(texto)?.groupValues?.get(1)?.toIntOrNull() ?: 24
         val duelo = delDuelo(texto, d).firstOrNull()
         val sec2 = if (duelo != null) listOf((if (duelo.real) "{A} y ${duelo.nombre}, cifra a cifra" to "La comparación de la noche: {GOLES} para {A} ante el ${duelo.club}. Los números, uno al lado del otro."
             else "{A} y ${duelo.nombre}, guerra abierta" to "Lo del ${duelo.club} ya es personal: pullas en redes, gestos en el campo y una vuelta que nadie se quiere perder.")) + sec.drop(1) else sec
         return mapOf(
-            "prensa" to (grande?.let { portadaRecord(it, d, edad) } ?: prensaDe(medio(d), a.titular, a.entradilla, a.articulo, sec2, d)),
+            "prensa" to (grande?.let { portadaRecord(it, d, edad) } ?: prensaDe(medio(d), a.titular, a.entradilla, a.articulo, secCuentaAtras(texto)?.let { listOf(it) + sec2.take(2) } ?: sec2, d)),
             "ofertas" to if (azar.nextInt(4) == 0) ofertas(u, d, 1) else emptyList(),
             "decision" to decision(d, dec), "sin_contestar" to sinContestar,
             "efectos" to efectos(ef, d) + ("rivales" to cambiosRival(u, d, texto)), "gente_nueva" to emptyList<Any>())
