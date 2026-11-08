@@ -47,6 +47,7 @@ guardan ya reducidas (unos 600×900, la proporción 2:3 de las cajas de SteamGri
 | `tmdb` | Películas y series (Azabache; Mostaza, para pasar los ids de TMDB a los de IMDb) |
 | `mostaza_addons` | Los addons de Mostaza, en tu orden: un texto JSON `[{"u": <dirección del manifiesto>, "n": <nombre>}]`. Van aquí y en ningún otro sitio de la cuenta porque **sus direcciones pueden llevar la clave de tu debrid** (tu pareja puede leer `/users/<uid>`, esto no). Sin la clave, Mostaza usa solo Cinemeta (`https://v3-cinemeta.strem.io/manifest.json`); `"[]"` = ninguno. De la lista entera gana el último cambio (moverlos o quitarlos es poner la lista otra vez). |
 | `cobre_listas` | Tus listas de Cobre (la tele), en tu orden: un texto JSON `[{"id", "n", "t", "u", "us", "pw", "epg", "ua", "dev", "f", "c"}]`: `id` (`l` + 10 hexadecimales al azar, el que usan los nodos de abajo), `n` (el nombre que le pones), `t` (`m3u` una dirección M3U, `archivo` un archivo M3U de un dispositivo, `xtream` un login de Xtream Codes), `u` (la dirección de la lista o, en Xtream, el servidor), `us` y `pw` (el usuario y la contraseña de Xtream), `epg` (una guía XMLTV tuya), `ua` (el user-agent que pida tu proveedor), `dev` (en las de archivo, el dispositivo donde está el archivo: en los demás sale como «en otro dispositivo»), `f` (`ts` o `m3u8`: cómo se piden los canales de Xtream) y `c` (cuándo se añadió, ms). Van aquí y en ningún otro sitio de la cuenta porque **son secretos**: las direcciones llevan tu usuario y tu contraseña (tu pareja puede leer `/users/<uid>`, esto no). Sin la clave o `"[]"`: ninguna (Cobre no trae ninguna). De la lista entera gana el último cambio. |
+| `shai_anthropic` | Tu clave de la API de Claude (la de tu organización de Claude Console, la de los créditos de tu plan), texto: la usa Shai para escribir lo de fuera del campo. Va aquí porque es una clave tuya: no la lee tu pareja; nunca va a `/users`, ni a un registro, ni a un mensaje. `""` o sin campo = Shai no pide nada |
 | `mostaza_tmdb` | Tu clave de TMDB (el «token de lectura de la API», texto), para el catálogo propio de Mostaza (portada, Explorar, Buscar y fichas en castellano). Va aquí porque es una clave tuya: no la lee tu pareja. `""` o sin campo = sin catálogo propio (se usan los catálogos de tus addons) |
 
 ## Colecciones
@@ -237,9 +238,21 @@ reseña, lo de Azabache en `az`, el tiempo y los episodios marcados); los nodos 
 Azabache (el del móvil desde la 1.6.3 y el del ordenador desde la 1.2.1) deja de leerlos en cuanto existe `azabache/a_mostaza` (`v` = `[<hora>]`, `por`, `cuantas`:
 la marca de que Mostaza ya los trajo).
 
+### `shai/<ref>` (Shai)
+
+Tus carreras de EA Sports FC y lo que pasa en ellas. Nada secreto (tu clave de la API va en `/claves`, arriba); la foto de tu personaje se
+queda en el móvil.
+
+| Nodo | Campos |
+|---|---|
+| `u<10 hex>` | Una carrera: `o` = la carrera en JSON (`{"v": 1, "id", "mo" (`JUGADOR`/`MISTER`), "pj" (el personaje: nombre, apodo, edad, nacionalidad, posición, dorsal, media y cifras del juego, rasgos e historial de la media), "cl", "li", "te" (club, liga, temporada), "sa" (sueldo, € a la semana), "ch" (contrato), "di" (dinero, €), "fu" (fama, afición, disciplina y carisma, 0–100), "en" (su gente, inventada: `{id, n, r, a, t}`), "ca"/"cc" (acciones y su precio medio, céntimos), "bi" (casas, coches y negocios: `{id, t, n, c, v, r, d}`), "pr" (el precio de cada acción y los últimos, céntimos), "pa" (las jornadas), "lo" (los lotes de la API que aún no han vuelto: `{id, c, p}`), "ae" (lo de entre partidos, solo), "c", "cm"}`) |
+| `e<10 hex>` | Algo que pasa en una carrera: `un` = la carrera, `o` = en JSON (`{"v": 1, "id", "un", "tp" (`PARTIDO`, `EVENTO`, `RESPUESTA`, `OFICIAL`, `INICIO`), "c", "pa", "ti", "tx", "pt" (el partido tal cual lo metiste), "po" (posts), "dm" (mensajes), "pr" (la portada), "of" (ofertas, con su estado), "de" (una decisión: opciones, lo que elegiste y lo que pasó), "ef" (lo que cambió: dinero, lo de fuera del campo, tu gente), "vd" (desde cuándo se ve), "ap" (sus efectos ya cuentan), "pe" (lo que falta por pedir: `red`, `prensa`)}`) |
+| `gasto` | Lo gastado en la API: `<AAAAMM>_<dispositivo>_<h\|s>` = millonésimas de dólar (Haiku o Sonnet) de ese mes en ese dispositivo; el del mes es la suma |
+| `ajustes` | `tope` (dólares al mes; de serie, 100) y `auto` (lo de entre partidos, solo) |
+
 ### `ajustes/<nombre>`
 
-`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto`, `ajustes/mostaza`, `ajustes/cobre`, `ajustes/ptah` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
+`ajustes/marfil`, `ajustes/hiedra`, `ajustes/cobalto`, `ajustes/mostaza`, `ajustes/cobre`, `ajustes/ptah`, `ajustes/shai` (la apariencia de cada app: campo `skin`; Marfil también `lector`, los ajustes
 del lector; Hiedra también `ini`, su portada), `ajustes/azabache` (`at` y `skin`: la apariencia de Azabache, que las demás pueden
 copiar) y `ajustes/lectura` (los objetivos: `dia` minutos al día, `ano` libros del año, `anio` el año en que se fijó; los fija Marfil).
 Lo demás que eliges en cada app, en `ajustes/<app>_<grupo>` (abajo).
@@ -284,6 +297,7 @@ tenía distinto, con la hora a la que ese dispositivo cambió esos ajustes por �
 | `ptah_disenos` | Tus diseños de widget de Ptah: un campo por diseño, su id (`d` + 10 hexadecimales) = el diseño en JSON: `{"v": 1, "id", "n" (su nombre), "tipo" (`digital`, `agujas`, `calendario`, `buscador`, `accesos`, `tiempo`, `bateria`, `nota`, `cuentaatras`, `foto`…), "estilo": {"fondo" (`PAPEL`/`COLOR`/`DEGRADADO`/`TRANSPARENTE`), "cf", "cf2", "ang", "op", "tinta", "acento", "sec", "piezas" ({pieza: color}), "borde", "gb", "cb", "radio", "marco", "lt", "lx", "esc", "al", "ocultas"}, "op" (lo de su tipo: la cabecera, la ciudad y sus coordenadas, las apps de los accesos —sus paquetes— o webs, la fecha de la cuenta atrás, el pie de foto…), "c" y "cr" (cuándo se cambió y se creó, ms)}`. Un color es `@papel`, `@tinta`, `@acento`, `@gris` (los de tu Apariencia), `@transparente`, `#RRGGBB` o `#AARRGGBB`, o `""` (el de serie). Borrado = `""`. Ni la foto ni dónde estás: se quedan en el móvil. Nada secreto |
 | `ptah_general` | `recientes`: los colores que has usado hace poco en Ptah (`#RRGGBB` con comas) |
 | `ptah_actualizador` | `on`: «actualizar sola» |
+| `shai_actualizador` | `on`: «actualizar sola» |
 
 No viaja (es de cada dispositivo): dónde está cada ROM, las carpetas de ROMs y de guardados, lo ya sincronizado con kDrive, los núcleos y BIOS
 bajados, las capturas bajadas, el juego que está abierto ahora, «usar Hiedra como launcher» (es de Android), la configuración de cada widget,

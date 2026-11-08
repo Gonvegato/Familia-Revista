@@ -11,6 +11,7 @@
         <package android:name="com.gonzalo.mostaza" />
         <package android:name="com.gonzalo.cobre" />
         <package android:name="com.gonzalo.ptah" />
+        <package android:name="com.gonzalo.shai" />
     </queries>
     <application>
         <!-- Entrar una vez: la app que ya tiene la cuenta se la da a sus hermanas (solo a las que llevan la firma de la familia) -->

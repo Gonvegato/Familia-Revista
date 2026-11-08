@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Actualizarse sola desde tu kDrive (Actualizador.kt): instalar la versión nueva de sí misma, y reabrirse después -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- Los avisos: «ha pasado algo en tu carrera» (los eventos de entre partidos) y los del actualizador -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <queries>
+        <!-- Las hermanas y los colores de Jonsu -->
+        <package android:name="com.gonzalo.hiedra" />
+        <package android:name="com.gonzalo.marfil" />
+        <package android:name="com.gonzalo.cobalto" />
+        <package android:name="com.gonzalo.gamerate" />
+        <package android:name="com.gonzalo.mostaza" />
+        <package android:name="com.gonzalo.cobre" />
+        <package android:name="com.gonzalo.ptah" />
+        <provider android:authorities="com.gonzalo.gamerate.tema" />
+    </queries>
+    <application
+        android:label="Shai"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/Shai"
+        android:allowBackup="false">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".ActualizadorReceiver" android:exported="false" />
+        <receiver android:name=".ActualizadorReabrir" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
+    </application>
+</manifest>

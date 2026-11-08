@@ -18,6 +18,8 @@ if (!soloEscritorio) {
     include(":hiedra", ":marfil", ":cobalto", ":azabache", ":mostaza", ":cobre")
     // Ptah, la de los widgets (solo Android: no tiene versión de escritorio)
     include(":ptah")
+    // Shai, la de tu carrera de EA Sports FC (solo Android; de la familia, pero sin nada en Jonsu)
+    include(":shai")
     // El motor de torrents de Mostaza (libtorrent4j): ver un torrent mientras se baja
     include(":torrent")
 }

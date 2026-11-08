@@ -11,6 +11,7 @@ Las apps de la familia en un solo sitio, alrededor de **una sola cuenta**:
 | `mostaza/` | Hathor | `com.gonzalo.mostaza` | Tus películas y series: biblioteca y reproductor (con los addons de Stremio) |
 | `cobre/` | Nut | `com.gonzalo.cobre` | La tele (IPTV): tus listas M3U y tus logins de Xtream, con su guía y su videoclub; en el móvil, la tablet y Android TV |
 | `ptah/` | Ptah | `com.gonzalo.ptah` | Tus widgets de la pantalla de inicio, diseñados a tu manera (relojes, el tiempo, accesos, fotos…) |
+| `shai/` | Shai | `com.gonzalo.shai` | Tus carreras de EA Sports FC: la prensa, la red, los mensajes, las ofertas y la vida de fuera del campo, escritas por Claude |
 
 Cada app conserva su paquete de siempre, así que cada versión nueva se instala encima de la que ya tienes.
 
@@ -49,6 +50,20 @@ con todos los colores, letras, bordes y esquinas que quieras, y los pones en la 
 mueven solos (con `TextClock` y `AnalogClock`). Tus diseños van en tu cuenta (`ajustes/ptah_disenos`); las fotos se quedan en el móvil.
 Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Todo en `docs/ptah/HISTORIA.md`.
 
+## Shai (tu carrera de EA Sports FC)
+
+La más nueva: el acompañante de tus modos carrera de EA Sports FC 26 (de jugador o de míster), con varias carreras a la vez. Cada partido que
+juegas lo metes (rápido, completo o con una foto de la pantalla de estadísticas, que lee Claude y tú revisas) y Shai monta lo de fuera del
+campo: la portada del día siguiente, la red (como X), los mensajes, las ofertas («la app manda»: si aceptas aquí, lo haces en el juego), las
+decisiones con consecuencias, el dinero en euros, la bolsa y las compras (todo inventado), tu gente y tu fama. Entre partido y partido, dos
+cosas que pasan mientras tanto (por lotes, a mitad de precio). Lo del campo lo pones tú: Shai no se inventa ni lesiones, ni suplencias, ni
+resultados. Las personas reales solo salen de pasada; lo íntimo y lo escandaloso, siempre con personajes inventados.
+
+Lo escribe Claude con **tu clave de la API** (la de los créditos de tu plan, en Claude Console), que va solo a `/claves` (`shai_anthropic`):
+Haiku 5.5 para la red, los mensajes y las fotos; Sonnet 5.5 para lo demás. Shai cuenta lo gastado con lo que dice cada respuesta y se para al
+llegar al tope del mes (de serie, 100 $). Tus carreras van en tu cuenta (la colección `shai`); la foto de tu personaje se queda en el móvil.
+Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Todo en `docs/shai/HISTORIA.md`.
+
 ## En el ordenador (Linux y Mac)
 
 Jonsu, Thot, Bastet, Seshat, Hathor y Nut también son apps de escritorio, en tu kDrive («Mi carpeta/versiones»): `.dmg` para el Mac (Apple
@@ -76,7 +91,7 @@ una abierta a la vez, y desde cualquiera se abren las otras. Hathor y Nut ven co
 - `nucleo/`: la cuenta de la familia en Kotlin puro (sirve también para el PC). Sus pruebas van contra el emulador oficial de Firebase
   con las reglas de verdad (`herramientas/emulador.sh`).
 - `familia/`: lo común de Android (la cuenta en cada app, entrar una vez, los trabajos de fondo, las portadas).
-- `hiedra/`, `marfil/`, `cobalto/`, `azabache/`, `mostaza/`, `cobre/`, `ptah/`: las apps de Android.
+- `hiedra/`, `marfil/`, `cobalto/`, `azabache/`, `mostaza/`, `cobre/`, `ptah/`, `shai/`: las apps de Android.
 - `iptv/`: lo de Nut que no es pantalla (listas M3U, Xtream Codes, la guía XMLTV), en Kotlin puro (sirve también para el PC).
 - `escritorio/`: las seis para **Linux y Mac** (Compose Multiplatform), contra la misma cuenta (`docs/ESCRITORIO.md`), y el motor de
   torrents de Hathor para el ordenador (`escritorio/torrent`, los mismos archivos que `torrent/`).

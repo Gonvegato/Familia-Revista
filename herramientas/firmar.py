@@ -14,8 +14,8 @@ import os, re, subprocess, sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # La clave de antes de cada app (None: nació ya con la de la familia, no hay linaje)
-VIEJA = {"hiedra": "hiedra", "marfil": "marfil", "cobalto": "cobalto", "azabache": "valorin", "mostaza": None, "cobre": None, "ptah": None}
-NOMBRE = {"hiedra": "Bastet", "marfil": "Seshat", "cobalto": "Thot", "azabache": "Jonsu", "mostaza": "Hathor", "cobre": "Nut", "ptah": "Ptah"}
+VIEJA = {"hiedra": "hiedra", "marfil": "marfil", "cobalto": "cobalto", "azabache": "valorin", "mostaza": None, "cobre": None, "ptah": None, "shai": None}
+NOMBRE = {"hiedra": "Bastet", "marfil": "Seshat", "cobalto": "Thot", "azabache": "Jonsu", "mostaza": "Hathor", "cobre": "Nut", "ptah": "Ptah", "shai": "Shai"}
 BT = "/opt/android-sdk/build-tools/35.0.0"
 
 def pases():
