@@ -265,6 +265,45 @@ class Lienzo(
         return Formatos.muestras(formato).maxOf { p.measureText(if (l.mayusculas) it.uppercase(ES) else it) } <= ancho
     }
 
+    /** La forma del widget, para elegir su composición: un cuadrado pequeño (1×1), uno vertical y estrecho (1×2) o lo demás. */
+    enum class Proporcion { PEQUENO, VERTICAL, NORMAL }
+    val proporcion: Proporcion = when {
+        w < 110f && h < 110f -> Proporcion.PEQUENO
+        w < 120f && h >= w * 1.45f -> Proporcion.VERTICAL
+        else -> Proporcion.NORMAL
+    }
+
+    /**
+     * Un texto en una línea, tan grande como quepa en [r]: se mide por su tinta de verdad (lo que ocupan las letras, no la caja de la
+     * letra), así un «7» o un «12°» llenan el sitio. Centrado en alto. Devuelve su tamaño.
+     */
+    fun grande(t: String, f: Typeface, r: RectF, color: Int, al: Layout.Alignment = alineacion, track: Float = -0.01f, max: Float = 300f): Float {
+        var s = max
+        val p = tp(f, s, color, track)
+        val b = android.graphics.Rect()
+        while (s > 5f) {
+            p.textSize = s
+            p.getTextBounds(t, 0, t.length, b)
+            if (p.measureText(t) <= r.width() && b.height() <= r.height() * 0.98f) break
+            s -= max(0.5f, s * 0.04f)
+        }
+        p.textSize = s
+        p.getTextBounds(t, 0, t.length, b)
+        val ancho = p.measureText(t)
+        val x = when (al) { Layout.Alignment.ALIGN_CENTER -> r.left + (r.width() - ancho) / 2; Layout.Alignment.ALIGN_OPPOSITE -> r.right - ancho; else -> r.left }
+        c.drawText(t, x, r.centerY() - b.exactCenterY(), p)
+        return s
+    }
+
+    /** Lo que se mueve solo (la hora, la fecha), tan grande como quepa en [r], centrado en alto. Devuelve el alto que ocupa (0 si no cabe). */
+    fun vivoQueLlena(formato: String, l: LetraFija, r: RectF, color: Int, max: Float = 300f, al: Alineacion = e.alineacion, formato12: String = formato, minimo: Float = 6.5f): Float {
+        val tam = tamanoQueCabe(Formatos.muestras(formato) + Formatos.muestras(formato12), l, r.width(), r.height(), max)
+        if (tam < minimo || !cabeVivo(formato, l, tam, r.width())) return 0f
+        val a = altoLinea(l, tam)
+        textoVivo(RectF(r.left, r.centerY() - a / 2, r.right, r.centerY() + a / 2), formato, l, tam, color, al, formato12)
+        return a
+    }
+
     /** Un filete (raya) a todo lo ancho del área. */
     fun filete(y: Float, grueso: Float = 1.6f, color: Int = pieza("rayas", tinta), x0: Float = area.left, x1: Float = area.right) = c.drawRect(x0, y, x1, y + grueso, lleno(color))
 
@@ -285,7 +324,20 @@ class Lienzo(
     fun xAlineada(r: RectF, ancho: Float, al: Alineacion = e.alineacion) = when (al) { Alineacion.IZQUIERDA -> r.left; Alineacion.CENTRO -> r.left + (r.width() - ancho) / 2; Alineacion.DERECHA -> r.right - ancho }
 
     /** La letra de lo que va en un `TextClock`. */
-    fun letraFija(l: LetraFija): Typeface = Letras.fuente(ctx, l.fuente)
+    fun letraFija(l: LetraFija): Typeface = if (!dibujaReloj) Letras.fuente(ctx, l.fuente) else when (l) {
+        // Dibujado (en la app y en el widget con la hora pintada cada minuto): la letra de verdad del diseño
+        LetraFija.TITULOS -> if (autoTitulos) fTitular else Letras.fuente(ctx, l.fuente)
+        LetraFija.CURSIVA -> fCursiva
+        else -> Letras.fuente(ctx, l.fuente)
+    }
+
+    /** ¿La hora va dibujada aquí (con la letra del diseño), y no como `TextClock`? */
+    val dibujaReloj: Boolean get() = !apuntaVivos
+    /** El reloj no tiene una letra de la hora elegida a mano: va con la de títulos del diseño. */
+    private val autoTitulos = d.texto("letraHora").isBlank()
+
+    /** La letra de títulos para la hora y la fecha: dibujadas, la del diseño; en un `TextClock`, la de la familia que más se le parece. */
+    fun letraTitulosViva(): LetraFija = if (dibujaReloj) LetraFija.TITULOS else LetraFija.paraTitulos(e.letraTitulos)
 
     /**
      * El tamaño (dp) con el que cabe [muestra] (el texto más ancho que puede salir: «23:59», «miércoles 30 de septiembre»…) en [ancho] × [alto]

@@ -44,6 +44,11 @@ object EspejoCuenta {
         val tipo: (String) -> Tipo?,
         val juntar: (String) -> ((String, String) -> String)? = { null },
         val alLlegar: (Context) -> Unit = {},
+        /**
+         * Para lo que lleva su propia hora de cambio dentro (los diseños de Ptah): ¿se queda lo de aquí aunque la cuenta diga otra cosa?
+         * (lo de aquí es más nuevo). Entonces no se pisa y se vuelve a subir.
+         */
+        val prefiereLocal: ((String, Any?, Any?) -> Boolean)? = null,
     )
 
     const val COLECCION = "ajustes"
@@ -153,14 +158,20 @@ object EspejoCuenta {
         val todo = b.all
         val ed = b.edit()
         var cambio = false
+        val resube = LinkedHashMap<String, Any?>()
         for ((f, v) in n.campos) {
             if (f == Nodo.B) continue
             val k = clave(f)
             val t = g.tipo(k) ?: continue
             if (v == null || v == "") { if (todo.containsKey(k)) { ed.remove(k); cambio = true }; continue }
             val nuevo = deCuenta(t, v)
-            if (todo[k] != nuevo) { pon(ed, k, nuevo); cambio = true }
+            if (todo[k] != nuevo) {
+                // (lo de aquí es más nuevo que lo que dice la cuenta: se queda y se vuelve a subir)
+                if (todo[k] != null && g.prefiereLocal?.invoke(k, todo[k], nuevo) == true) { resube[f] = aCuenta(todo[k]); continue }
+                pon(ed, k, nuevo); cambio = true
+            }
         }
+        if (resube.isNotEmpty()) runCatching { col.pon(g.nodo, resube) }
         if (!cambio) return
         ed.commit()
         principal.post { ver.intValue++; runCatching { g.alLlegar(c) } }

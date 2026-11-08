@@ -86,6 +86,28 @@ class CuentaTest {
         espera("se borra aquí") { Disenos.de(ctx, reloj.id) == null }
     }
 
+    @Test fun unoViejoQueLlegaDeLaCuentaNoPisaAlNuevo() {
+        // (lo que pasaba en el OPPO, o lo que podría pasar: la cuenta, o un móvil que se quedó atrás, manda el diseño de antes de tus cambios)
+        val viejo = RelojDigital.nuevo().copy(nombre = "Antes")
+        Disenos.guarda(ctx, viejo)
+        sincroniza()
+        val antes = Disenos.de(ctx, viejo.id)!!
+        Thread.sleep(5)
+        Disenos.guarda(ctx, antes.copy(nombre = "Después").conEstilo(antes.estilo.copy(fondo = TipoFondo.COLOR, colorFondo = "#12393A")))
+        // El otro móvil escribe ahora (más tarde, en la cuenta) la versión vieja
+        otro.coleccion("ajustes").pon("ptah_disenos", mapOf(viejo.id to antes.aJson()))
+        sincroniza(); Thread.sleep(300); sincroniza()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("aquí sigue lo nuevo", "Después", Disenos.de(ctx, viejo.id)!!.nombre)
+        assertEquals("#12393A", Disenos.de(ctx, viejo.id)!!.estilo.colorFondo)
+        espera("y la cuenta vuelve a tenerlo") { otro.sincroniza(); Diseno.deJson(otro.coleccion("ajustes").nodo("ptah_disenos")!!.texto(viejo.id))?.nombre == "Después" }
+        // Uno de verdad más nuevo de otro móvil sí llega
+        val deOtro = Disenos.de(ctx, viejo.id)!!.copy(nombre = "Del otro móvil", cambiado = System.currentTimeMillis() + 1000)
+        otro.coleccion("ajustes").pon("ptah_disenos", mapOf(viejo.id to deOtro.aJson()))
+        sincroniza()
+        espera("llega") { Disenos.de(ctx, viejo.id)?.nombre == "Del otro móvil" }
+    }
+
     @Test fun lasFotosNoSeSuben() {
         val foto = Foto.nuevo().copy(nombre = "La playa").con("pie", "El verano en Cádiz")
         Fotos.guarda(ctx, foto.id, DatosDeMentira.foto)

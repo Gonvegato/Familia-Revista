@@ -127,8 +127,39 @@ Probada en un OPPO (ColorOS, Android 14/15):
 Sin probar todavía en el móvil: que el minutero mantenga la hora en ColorOS con la pantalla encendida un buen rato y tras apagarla y
 encenderla, cuánto gasta allí de verdad, y que su lanzador acepte «Ponerlo en la pantalla de inicio» (`requestPinAppWidget`).
 
+## Lo que salió con la 0.2.0 (antes de la próxima versión)
+
+- **«Lo que guardo no se guarda».** Se ha probado tocando la app como el usuario (`GuardarTest`): una plantilla → el fondo de un color, la
+  tinta, la letra de títulos y el tamaño del texto → «Guardar diseño» → el diseño guardado los lleva (en la app, en el disco, en la cuenta
+  —el emulador de Firebase— y en otro móvil); después, desde su ficha, «Editar» → un degradado → guardar; y el widget que lo lleva se
+  repinta con lo nuevo. Con la cuenta y sin ella (sin red). En el ordenador **no se pierde nada**; lo que sí había:
+  - *Lo que cambiabas en las letras no se veía en los relojes*: la hora y la fecha iban siempre con las letras de la familia que van dentro
+    de Ptah (las únicas que admite un `TextClock`), aunque ya se dibujaban. Ahora, dibujadas, llevan la letra de títulos del diseño (y la
+    cursiva del diseño para el día); y la plantilla «Columna» ya no fija la letra de la hora (lleva Vitrina como letra de títulos, que se
+    puede cambiar).
+  - *Un diseño viejo que llegaba de la cuenta pisaba al nuevo*: lo que llega de la cuenta se aplica campo a campo y gana el que se escribió
+    más tarde **en la cuenta**; si una versión anterior del diseño llegaba después (un móvil que se quedó atrás, o un envío que se cruzaba
+    con el guardado), se ponía encima de la de aquí. Ahora cada diseño lleva dentro cuándo lo guardaste (`c`) y uno más viejo no pisa
+    nunca al de aquí: se queda el nuevo y se vuelve a subir (`EspejoCuenta.Grupo.prefiereLocal`; `CuentaTest.unoViejoQueLlegaDeLaCuentaNoPisaAlNuevo`,
+    que falla sin ese arreglo).
+  - Sin poder ver el móvil, no se ha podido saber cuál de las dos cosas era la del vídeo (o si fue otra): queda por mirar en el OPPO.
+- **Los tamaños pequeños, rehechos.** Cada tipo tiene composición propia para un cuadrado pequeño (1×1) y para uno de pie y estrecho
+  (1×2), elegida por el tamaño de verdad en dp (`Lienzo.proporcion`), con la letra tan grande como quepa (`Lienzo.grande`, medida por lo
+  que ocupan las letras) y nada cortado:
+  - reloj digital: en 1×1, el cuadradito y el día, la hora a todo lo ancho, la raya y «7 NOV»; en 1×2, «SÁB 7» con su raya, las horas y los
+    minutos apilados y enormes (los minutos en el acento) y el mes;
+  - de agujas: en 1×1 la esfera entera; en 1×2 la esfera arriba y debajo «SÁB», el número del día y el mes;
+  - calendario: el día de la semana, el número enorme y el mes (y el año, de pie);
+  - buscador: una moneda con la lupa; de pie, una píldora con la lupa arriba y el micrófono abajo (cada uno con su toque);
+  - accesos: solo los iconos, en rejilla o en columna; el tiempo: el icono y la temperatura (de pie, también el sitio y ↑ máx / ↓ mín);
+  - batería: la pila de pie llenándose y el porcentaje; cuenta atrás: la cifra y «días para Navidad»; nota: el titular en las líneas que
+    hagan falta; foto: a sangre (y su pie solo si cabe entero).
+- **Las celdas, casi cuadradas**, como las de los lanzadores de ahora: 76 dp por celda (1×1 = 70 × 70 dp, 1×2 = 70 × 146). El editor tiene
+  1×1 y 1×2 entre sus tamaños, y hay una plantilla pensada de pie: «Hora de pie».
+- El reloj «Columna» enseña ya el día y la fecha en 2×2.
+
 ## Capturas
 
 Hechas en el ordenador con datos de mentira (`CapturasTest`; también la portada con pocos diseños y las plantillas, tras guardar y la ficha de un diseño, solo con `-Proborazzi.test.record=true`; las de los widgets, `WidgetsTest`),
 en claro, en oscuro y con la letra al 130 %: la portada, «+ Nuevo», el editor de cada tipo y sus pestañas, el selector de color, los ajustes
-y elegir el diseño de un widget. En `capturas/` van unas cuantas; en `widgets/`, las plantillas a su tamaño (y alguna en otros).
+y elegir el diseño de un widget. En `capturas/` van unas cuantas; en `widgets/`, las plantillas a su tamaño (y alguna en otros); en `widgets/pequenos/`, cada tipo en 1×1 y en 1×2.

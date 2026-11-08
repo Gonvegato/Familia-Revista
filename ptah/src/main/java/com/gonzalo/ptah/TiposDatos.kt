@@ -61,6 +61,32 @@ object Tiempo : TipoWidget {
         val est = Wmo.de(p.codigo)
         val noche = !p.esDia
         val colTemp = l.pieza("temp", l.tinta); val colIco = l.pieza("icono", l.tinta); val colSol = l.pieza("sol", l.acento)
+        if (l.proporcion == Lienzo.Proporcion.PEQUENO) {
+            // 1×1: el icono grande arriba y la temperatura a todo lo ancho debajo
+            val iconoH = bajo.height() * 0.5f
+            val ico = min(iconoH, bajo.width() * 0.8f)
+            IconosTiempo.pinta(l.c, est.icono, RectF(bajo.centerX() - ico / 2, bajo.top, bajo.centerX() + ico / 2, bajo.top + ico), colIco, colSol, l.papelDeVerdad(), noche)
+            l.grande(grados(p.temp), l.fTitular, RectF(bajo.left, bajo.top + ico + 1f, bajo.right, bajo.bottom), colTemp, Layout.Alignment.ALIGN_CENTER)
+            return
+        }
+        if (l.proporcion == Lienzo.Proporcion.VERTICAL) {
+            // 1×2: el sitio, el icono, la temperatura enorme y la máxima y la mínima, apilados
+            var y = bajo.top
+            if (e.ve("lugar")) y += l.ante(nombreSitio(d), a.left, y, a.width(), l.tinta, 8f, Layout.Alignment.ALIGN_CENTER).let { if (it > 0f) it + 4f else 0f }
+            val hoy = p.dias.firstOrNull { it.fecha == p.hora.toLocalDate() } ?: p.dias.firstOrNull()
+            val mmH = if (e.ve("maxmin") && hoy != null) l.altoAnte(8.5f) * 2 + 6f else 0f
+            val resto = bajo.bottom - y - mmH
+            val ico = min(bajo.width(), resto * 0.48f)
+            IconosTiempo.pinta(l.c, est.icono, RectF(bajo.centerX() - ico / 2, y, bajo.centerX() + ico / 2, y + ico), colIco, colSol, l.papelDeVerdad(), noche)
+            y += ico + 2f
+            l.grande(grados(p.temp), l.fTitular, RectF(bajo.left, y, bajo.right, bajo.bottom - mmH), colTemp, Layout.Alignment.ALIGN_CENTER)
+            if (mmH > 0f && hoy != null) {
+                var my = bajo.bottom - mmH + 4f
+                my += l.ante("↑ ${grados(hoy.max)}", a.left, my, a.width(), l.tinta, 8.5f, Layout.Alignment.ALIGN_CENTER) + 2f
+                l.ante("↓ ${grados(hoy.min)}", a.left, my, a.width(), l.gris, 8.5f, Layout.Alignment.ALIGN_CENTER)
+            }
+            return
+        }
         if (bajo.height() < 100f || bajo.width() < 130f) {
             // En pequeño: el icono y la temperatura (y el sitio, si cabe)
             var y = bajo.top
@@ -167,6 +193,7 @@ object TipoBateria : TipoWidget {
         val a = l.area; val e = l.e; val d = l.d
         val b = l.datos.bateria() ?: Bateria(100, false)
         val colNivel = if (b.nivel <= 20 && !b.cargando) l.pieza("bajo", 0xFFC8372D.toInt()) else l.pieza("nivel", l.acento)
+        if (l.proporcion != Lienzo.Proporcion.NORMAL) { pila(l, b, colNivel); return }
         var y = a.top
         if (e.ve("ante") && d.texto("ante").isNotBlank() && a.height() >= 80f) y += l.seccion(d.texto("ante"), a.left, y, a.width()) + 4f
         val conBarra = e.ve("barra") && a.height() - (y - a.top) >= 44f
@@ -197,6 +224,31 @@ object TipoBateria : TipoWidget {
                 }, l.lleno(if (Lienzo.luz(colNivel) > 0.55f || b.nivel < 50) l.tinta else 0xFFFFFFFF.toInt()))
             }
         }
+    }
+
+    /** En pequeño o en vertical: la pila de pie, llenándose desde abajo, y el porcentaje debajo. */
+    private fun pila(l: Lienzo, b: Bateria, colNivel: Int) {
+        val a = l.area
+        val vertical = l.proporcion == Lienzo.Proporcion.VERTICAL
+        val numH = if (vertical) min(a.height() * 0.3f, a.width() * 0.62f) else a.height() * 0.42f
+        val sitio = RectF(a.left, a.top, a.right, a.bottom - numH - 3f)
+        val pw = min(sitio.width() * (if (vertical) 0.62f else 0.5f), sitio.height() * 0.55f)
+        val nub = pw * 0.32f
+        val cuerpo = RectF(sitio.centerX() - pw / 2, sitio.top + nub * 0.45f, sitio.centerX() + pw / 2, sitio.bottom)
+        val g = max(1.2f, pw * 0.07f)
+        val colBarra = l.pieza("barra", l.tinta)
+        l.c.drawRoundRect(RectF(sitio.centerX() - nub / 2, sitio.top, sitio.centerX() + nub / 2, cuerpo.top + 1f), nub * 0.2f, nub * 0.2f, l.lleno(colBarra))
+        l.c.drawRoundRect(RectF(cuerpo.left + g / 2, cuerpo.top + g / 2, cuerpo.right - g / 2, cuerpo.bottom - g / 2), pw * 0.16f, pw * 0.16f, l.trazo(colBarra, g))
+        val dentro = RectF(cuerpo.left + g * 2, cuerpo.top + g * 2, cuerpo.right - g * 2, cuerpo.bottom - g * 2)
+        l.c.drawRoundRect(RectF(dentro.left, dentro.bottom - dentro.height() * b.nivel / 100f, dentro.right, dentro.bottom), pw * 0.08f, pw * 0.08f, l.lleno(colNivel))
+        if (b.cargando) {
+            val cx = dentro.centerX(); val cy = dentro.centerY(); val hh = min(dentro.height() * 0.22f, dentro.width() * 0.45f)
+            l.c.drawPath(Path().apply {
+                moveTo(cx + hh * 0.25f, cy - hh); lineTo(cx - hh * 0.45f, cy + hh * 0.1f); lineTo(cx, cy + hh * 0.1f)
+                lineTo(cx - hh * 0.25f, cy + hh); lineTo(cx + hh * 0.45f, cy - hh * 0.1f); lineTo(cx, cy - hh * 0.1f); close()
+            }, l.lleno(l.tinta))
+        }
+        l.grande("${b.nivel} %", l.fTitular, RectF(a.left, a.bottom - numH, a.right, a.bottom), l.pieza("cifra", l.tinta), Layout.Alignment.ALIGN_CENTER)
     }
 
     @Composable override fun Editor(d: Diseno, cambia: (Diseno) -> Unit) {

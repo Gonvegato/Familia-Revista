@@ -15,8 +15,10 @@ object Plantillas {
     val TODAS: List<Pair<Diseno, Tamanos.Celdas>> by lazy {
         listOf(
             de("portada", "Portada", RelojDigital, Estilo(radio = 22f)) to Tamanos.Celdas(4, 2),
-            de("columna", "Columna", RelojDigital, Estilo(fondo = TipoFondo.COLOR, colorFondo = PETROLEO, tinta = CREMA, acento = COBRE, secundario = "#B9C9C4", marco = true, borde = false, radio = 18f),
-                "cabecera" to "columna", "ante" to "Ptah", "letraHora" to LetraFija.VITRINA.name) to Tamanos.Celdas(2, 2),
+            de("columna", "Columna", RelojDigital, Estilo(fondo = TipoFondo.COLOR, colorFondo = PETROLEO, tinta = CREMA, acento = COBRE, secundario = "#B9C9C4", marco = true, borde = false, radio = 18f, letraTitulos = "Vitrina"),
+                "cabecera" to "columna", "ante" to "Ptah") to Tamanos.Celdas(2, 2),
+            de("depie", "Hora de pie", RelojDigital, Estilo(fondo = TipoFondo.COLOR, colorFondo = PETROLEO, tinta = CREMA, acento = COBRE, secundario = "#B9C9C4", borde = false, radio = 18f, marco = true),
+                "ante" to "") to Tamanos.Celdas(1, 2),
             de("titular", "Titular con fecha", RelojDigital, Estilo(fondo = TipoFondo.COLOR, colorFondo = Col.TINTA, tinta = Col.PAPEL, secundario = "", acento = Col.ACENTO, borde = false, radio = 26f),
                 "cabecera" to "titular", "ante" to "Hoy") to Tamanos.Celdas(4, 2),
             de("esfera", "Esfera de revista", RelojAgujas, Estilo(marco = true, radio = 22f)) to Tamanos.Celdas(2, 2),

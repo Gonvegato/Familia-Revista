@@ -195,25 +195,22 @@ data class Diseno(
 }
 
 /**
- * El tamaño de un widget. Android (12 o más, en vertical) da 57 × 102 dp a 1×1, 130 × 102 a 2×1, 276 × 220 a 4×2 y 276 × 454 a 4×4 (developer.android.com, «Determine a size for your widget»). En apaisado las celdas son más anchas y más bajas.
+ * El tamaño de un widget. Las celdas de los lanzadores de ahora son casi cuadradas (en un OPPO con ColorOS, como en Pixel, unos 70–80 dp
+ * de lado): aquí, 76 dp por celda menos el hueco, así que 1×1 son 70 × 70 dp, 1×2 (de pie) 70 × 146, 2×2 146 × 146 y 4×2 298 × 146.
+ * Cada lanzador lo hace a su manera: el widget de verdad se dibuja siempre para el tamaño que le da el suyo.
  */
 object Tamanos {
     data class Celdas(val col: Int, val fil: Int) { override fun toString() = "$col×$fil" }
 
-    val PRESETS = listOf(Celdas(1, 1), Celdas(2, 1), Celdas(2, 2), Celdas(3, 1), Celdas(3, 2), Celdas(4, 1), Celdas(4, 2), Celdas(4, 3), Celdas(4, 4), Celdas(5, 2))
-
-    // Los de la tabla de Android (en vertical y en apaisado); de 4 en adelante, cada celda más lo mismo
-    private val ANCHO_V = listOf(57f, 130f, 203f, 276f); private val ALTO_V = listOf(102f, 220f, 337f, 454f)
-    private val ANCHO_H = listOf(127f, 269f, 412f, 554f); private val ALTO_H = listOf(51f, 117f, 184f, 250f)
-    private fun de(t: List<Float>, n: Int) = if (n <= t.size) t[n - 1] else t.last() + (t.last() - t[t.size - 2]) * (n - t.size)
+    val PRESETS = listOf(Celdas(1, 1), Celdas(1, 2), Celdas(2, 1), Celdas(2, 2), Celdas(3, 2), Celdas(4, 1), Celdas(4, 2), Celdas(4, 3), Celdas(4, 4))
+    private const val CELDA = 76f
+    private const val HUECO = 6f
 
     /** Las celdas → dp. */
-    fun dp(c: Celdas, apaisado: Boolean = false): Pair<Float, Float> =
-        if (!apaisado) de(ANCHO_V, c.col) to de(ALTO_V, c.fil) else de(ANCHO_H, c.col) to de(ALTO_H, c.fil)
+    fun dp(c: Celdas): Pair<Float, Float> = (CELDA * c.col - HUECO) to (CELDA * c.fil - HUECO)
 
     /** Los dp → las celdas que ocupa (las que caben enteras, al menos 1). */
-    fun celdas(w: Float, h: Float): Celdas =
-        Celdas((1..8).lastOrNull { de(ANCHO_V, it) <= w + 0.5f } ?: 1, (1..8).lastOrNull { de(ALTO_V, it) <= h + 0.5f } ?: 1)
+    fun celdas(w: Float, h: Float): Celdas = Celdas(((w + HUECO) / CELDA + 0.01f).toInt().coerceAtLeast(1), ((h + HUECO) / CELDA + 0.01f).toInt().coerceAtLeast(1))
 
     /** Lo más pequeño que se deja (y lo más grande). */
     const val MIN = 40f

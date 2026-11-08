@@ -45,7 +45,7 @@ class WidgetsTest {
     @After fun suelta() { Widgets.datos = null; Disenos.fijos = null; Modo.eleccion = 0; Minutero.ponLetraDelMovil(ctx, false) }
 
     private val tamanos = listOf(40f to 40f, 57f to 102f, 130f to 102f, 203f to 102f, 276f to 102f, 130f to 220f, 276f to 220f, 276f to 337f, 276f to 454f,
-        554f to 117f, 412f to 51f, 350f to 60f, 60f to 350f, 110f to 110f)
+        554f to 117f, 412f to 51f, 350f to 60f, 60f to 350f, 110f to 110f, 70f to 70f, 57f to 80f, 64f to 150f, 70f to 146f, 48f to 120f)
 
     private fun todos(): List<Diseno> = Plantillas.TODAS.map { it.first } + Tipos.TODOS.map { it.nuevo() } +
         listOf(RelojDigital.nuevo().con("cabecera", "columna"), RelojDigital.nuevo().con("cabecera", "titular"), RelojDigital.nuevo().con("formato", "movil"),
@@ -318,6 +318,17 @@ class WidgetsTest {
             for (o in listOf(Tamanos.Celdas(1, 1), Tamanos.Celdas(2, 1), Tamanos.Celdas(4, 4))) if (o != c) {
                 val (ow, oh) = Tamanos.dp(o)
                 guarda(sobreFondo(pinta(d, ow, oh, false), s), "${n}_${o.col}x${o.fil}")
+            }
+        }
+        // Cada tipo en 1×1 y en 1×2 de pie (las composiciones propias), en claro y en oscuro
+        for (t in Tipos.TODOS) {
+            val ejemplos = Plantillas.TODAS.filter { it.first.tipo == t.id }.map { it.first }.ifEmpty { listOf(t.nuevo()) }
+            for ((k, d0) in ejemplos.withIndex()) {
+                val d = if (t.id == Accesos.id) d0.con("items", listOf("app:com.android.chrome", "app:com.whatsapp", "web:elpais.com|El País")) else d0
+                for ((nom, c) in listOf("1x1" to Tamanos.Celdas(1, 1), "1x2" to Tamanos.Celdas(1, 2))) for (noche in listOf(false, true)) {
+                    val (w, h) = Tamanos.dp(c)
+                    guarda(sobreFondo(pinta(d, w, h, noche), s), "${t.id}${if (k > 0) k + 1 else ""}_$nom${if (noche) "_oscuro" else ""}", "$dir/pequenos")
+                }
             }
         }
         // Lo de más: el digital en sus tres cabeceras en 4×2, y la foto con foto

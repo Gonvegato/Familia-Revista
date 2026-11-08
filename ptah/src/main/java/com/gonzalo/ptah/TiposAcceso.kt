@@ -77,7 +77,44 @@ object Buscador : TipoWidget {
     override fun accion(d: Diseno) = Accion.Buscar(d.texto("navegador"))
     override fun descripcionToque(d: Diseno) = "Buscar en internet"
 
+    /** La lupa, centrada en ([cx], [cy]), de lado [t]. */
+    private fun lupa(l: Lienzo, cx0: Float, cy0: Float, t: Float, color: Int) {
+        val r = t * 0.3f; val cx = cx0 - t * 0.08f; val cy = cy0 - t * 0.08f
+        val p = l.trazo(color, max(1.1f, t * 0.09f)).apply { strokeCap = Paint.Cap.ROUND }
+        l.c.drawCircle(cx, cy, r, p)
+        l.c.drawLine(cx + r * 0.72f, cy + r * 0.72f, cx + r * 1.6f, cy + r * 1.6f, p)
+    }
+
+    /** El micrófono, centrado en ([mx], [my]), de alto [t]. */
+    private fun micro(l: Lienzo, mx: Float, my0: Float, t: Float, color: Int) {
+        val p = l.trazo(color, max(1.1f, t * 0.08f)).apply { strokeCap = Paint.Cap.ROUND }
+        val mw = t * 0.3f; val mh = t * 0.52f; val my = my0 - t * 0.08f
+        l.c.drawRoundRect(RectF(mx - mw / 2, my - mh * 0.75f, mx + mw / 2, my + mh * 0.25f), mw / 2, mw / 2, l.lleno(color))
+        l.c.drawArc(RectF(mx - mw, my - mh * 0.5f, mx + mw, my + mh * 0.45f), 20f, 140f, false, p)
+        l.c.drawLine(mx, my + mh * 0.45f, mx, my + mh * 0.7f, p)
+    }
+
+    /** En pequeño (1×1): una moneda con la lupa. En vertical (1×2): una píldora de pie con la lupa arriba y el micrófono abajo. */
+    private fun columna(l: Lienzo) {
+        val a = l.area; val d = l.d
+        val colIco = l.pieza("lupa", l.tinta)
+        val dentro = l.pieza("dentro", 0)
+        val voz = d.si("voz", true) && l.proporcion == Lienzo.Proporcion.VERTICAL
+        val ancho = min(a.width(), if (voz) a.height() * 0.5f else a.height())
+        val alto = if (voz) min(a.height(), ancho * 2.4f) else ancho
+        val r = RectF(a.centerX() - ancho / 2, a.centerY() - alto / 2, a.centerX() + ancho / 2, a.centerY() + alto / 2)
+        if (dentro != 0) l.c.drawRoundRect(r, ancho / 2, ancho / 2, l.lleno(dentro))
+        l.c.drawRoundRect(RectF(r.left + 0.8f, r.top + 0.8f, r.right - 0.8f, r.bottom - 0.8f), ancho / 2, ancho / 2, l.trazo(l.pieza("barra", l.tinta), 1.5f))
+        if (!voz) { lupa(l, r.centerX(), r.centerY(), ancho * 0.55f, colIco); return }
+        val mitad = r.height() / 2
+        lupa(l, r.centerX(), r.top + mitad / 2 + 2f, ancho * 0.55f, colIco)
+        l.c.drawLine(r.left + ancho * 0.25f, r.centerY(), r.right - ancho * 0.25f, r.centerY(), l.trazo(Lienzo.conAlfa(l.pieza("barra", l.tinta), 110), 0.8f))
+        micro(l, r.centerX(), r.bottom - mitad / 2, ancho * 0.6f, colIco)
+        l.toque(RectF(r.left, r.centerY(), r.right, r.bottom), Accion.BuscarVoz, "Buscar hablando")
+    }
+
     override fun pinta(l: Lienzo) {
+        if (l.proporcion != Lienzo.Proporcion.NORMAL) { columna(l); return }
         val a = l.area; val e = l.e; val d = l.d
         var top = a.top
         val barH0 = min(a.height(), 52f)
@@ -148,6 +185,7 @@ object Accesos : TipoWidget {
     override fun pinta(l: Lienzo) {
         val ar = l.area; val e = l.e; val d = l.d
         val lista = accesos(d)
+        if (lista.isNotEmpty() && l.proporcion != Lienzo.Proporcion.NORMAL) { soloIconos(l, lista); return }
         var top = ar.top
         if (e.ve("ante") && d.texto("ante").isNotBlank() && ar.height() >= 90f) top += l.seccion(d.texto("ante"), ar.left, top, ar.width()) + 6f
         val a = RectF(ar.left, top, ar.right, ar.bottom)
@@ -181,6 +219,21 @@ object Accesos : TipoWidget {
             val nombre = nombreDe(l, acc)
             if (etiqueta > 0f && tamNombre != null) l.pon(l.capa(nombre.uppercase(java.util.Locale("es", "ES")), l.tp(l.fNegrita, tamNombre, l.pieza("nombres", l.tinta), 0.1f), cw - 2f, 1, al = Layout.Alignment.ALIGN_CENTER), cx - cw / 2 + 1f, r.bottom + 3f)
             l.toque(RectF(cx - cw / 2, a.top + (i / cols) * ch, cx + cw / 2, a.top + (i / cols + 1) * ch), accion(acc), "Abrir $nombre")
+        }
+    }
+
+    /** En pequeño (1×1, en rejilla) o de pie (1×2, en columna): solo los iconos, tan grandes como quepan. */
+    private fun soloIconos(l: Lienzo, lista: List<Acceso>) {
+        val a = l.area
+        val n = lista.size
+        val cols = if (l.proporcion == Lienzo.Proporcion.VERTICAL) 1 else ceil(kotlin.math.sqrt(n.toDouble())).toInt()
+        val filas = ceil(n / cols.toFloat()).toInt()
+        val cw = a.width() / cols; val ch = a.height() / filas
+        val ico = min(cw, ch) * 0.86f
+        lista.forEachIndexed { i, acc ->
+            val cx = a.left + (i % cols) * cw + cw / 2; val cy = a.top + (i / cols) * ch + ch / 2
+            icono(l, acc, RectF(cx - ico / 2, cy - ico / 2, cx + ico / 2, cy + ico / 2))
+            l.toque(RectF(cx - cw / 2, cy - ch / 2, cx + cw / 2, cy + ch / 2), accion(acc), "Abrir ${nombreDe(l, acc)}")
         }
     }
 

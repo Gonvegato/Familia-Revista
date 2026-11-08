@@ -52,8 +52,9 @@ object TipoNota : TipoWidget {
         val titulo = d.texto("titulo")
         val texto = d.texto("texto")
         if (e.ve("titulo") && titulo.isNotBlank()) {
-            val maxAlto = if (texto.isBlank()) a.bottom - y else (a.bottom - y) * 0.5f
-            val t = l.titular(titulo, a.width(), maxAlto, 30f, 11f, 3, l.pieza("titulo", l.tinta))
+            val maxAlto = if (texto.isBlank() || a.width() < 80f) a.bottom - y else (a.bottom - y) * 0.5f
+            val vertical = l.proporcion == Lienzo.Proporcion.VERTICAL
+            val t = l.titular(titulo, a.width(), maxAlto, if (l.proporcion == Lienzo.Proporcion.NORMAL) 30f else 40f, 9f, if (vertical) 6 else 3, l.pieza("titulo", l.tinta))
             y += l.pon(t, a.left, y) + 3f
             if (e.ve("rayas") && texto.isNotBlank() && a.bottom - y > 20f) { l.filete(y, 1.2f); y += 5f }
         }
@@ -108,6 +109,7 @@ object CuentaAtras : TipoWidget {
         val f = fecha(d)
         val c = cuenta(l.datos.ahora().toLocalDate(), f)
         val titulo = d.texto("titulo")
+        if (l.proporcion != Lienzo.Proporcion.NORMAL) { columna(l, c, f, titulo); return }
         var y = a.top
         if (e.ve("ante") && a.height() >= 70f) y += l.seccion(c.ante, a.left, y, a.width()) + 4f
         // Debajo de la cifra: «días para Navidad» (en cursiva) y la fecha; lo que no quepa entero, no se pone
@@ -124,6 +126,32 @@ object CuentaAtras : TipoWidget {
         var py = a.bottom - pie
         if (fraseH > 0f) py += l.linea(fraseT, l.fCursiva, 13f, l.pieza("titulo", l.tinta), a.left, py, a.width())
         if (fechaH > 0f) l.ante(Formato.fecha(f), a.left, py + 1f, a.width(), l.pieza("fecha", l.gris), 8f)
+    }
+
+    /**
+     * En pequeño (1×1): la cifra a todo lo ancho y «días» debajo. En vertical (1×2): «FALTAN» con su raya, la cifra enorme, «días para
+     * Navidad» en cursiva en las líneas que haga falta, y la fecha.
+     */
+    private fun columna(l: Lienzo, c: Cuenta, f: LocalDate, titulo: String) {
+        val a = l.area; val e = l.e
+        val vertical = l.proporcion == Lienzo.Proporcion.VERTICAL
+        var top = a.top; var bottom = a.bottom
+        if (vertical && e.ve("ante")) {
+            val h = l.ante(c.ante, a.left, top, a.width(), l.tinta, 9f)
+            if (h > 0f) { top += h + 3f; l.filete(top, 1.6f); top += 6f }
+        }
+        if (vertical && e.ve("fecha")) {
+            val h = l.altoAnte(8f)
+            if (l.ante(Formato.fecha(f).substringBeforeLast(' '), a.left, bottom - h, a.width(), l.pieza("fecha", l.gris), 8f) > 0f) bottom -= h + 4f
+        }
+        val frase = if (vertical) listOf(c.unidad, if (e.ve("titulo") && titulo.isNotBlank()) (if (c.pasada) "desde " else if (c.dias == 0L) "" else "para ") + titulo else "")
+            .filter { it.isNotBlank() }.joinToString(" ") else c.unidad
+        if (frase.isNotBlank()) {
+            val p = l.tpk(l.fCursiva, if (vertical) 12.5f else 11.5f, l.pieza("titulo", l.tinta))
+            val lay = l.capa(frase, p, a.width(), if (vertical) 4 else 1)
+            if (lay.height < (bottom - top) * 0.45f) { l.pon(lay, a.left, bottom - lay.height); bottom -= lay.height + 2f }
+        }
+        l.grande(if (c.dias == 0L) "¡Hoy!" else Formato.cifra(c.dias), l.fTitular, RectF(a.left, top, a.right, bottom), l.pieza("cifra", l.acento))
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -200,8 +228,8 @@ object Foto : TipoWidget {
         val a = l.area; val e = l.e; val d = l.d
         val img = l.datos.foto(d.id)
         val pie = d.texto("pie")
-        val sangre = d.si("sangre")
-        val conPie = e.ve("pie") && pie.isNotBlank() && a.height() >= 80f && a.width() >= 96f
+        val sangre = d.si("sangre") || l.proporcion == Lienzo.Proporcion.PEQUENO
+        val conPie = e.ve("pie") && pie.isNotBlank() && a.height() >= 80f
         if (sangre) {
             // A sangre: la foto entera y el pie encima, sobre un velo
             val r = RectF(0f, 0f, l.w, l.h)
@@ -216,14 +244,17 @@ object Foto : TipoWidget {
             }
             return
         }
-        val pieH = if (conPie) l.capa(pie, l.tpk(l.fCursiva, 11.5f, l.tinta), a.width() - 6f * l.k - 5f, 2, al = Layout.Alignment.ALIGN_NORMAL).height + 8f else 0f
+        // (el pie, solo si cabe entero en dos líneas: nunca «El veran…»)
+        val capaPie = l.capa(pie, l.tpk(l.fCursiva, 11.5f, l.tinta), a.width() - 6f * l.k - 5f, 2, al = Layout.Alignment.ALIGN_NORMAL)
+        val pieEntero = conPie && capaPie.getEllipsisCount(capaPie.lineCount - 1) == 0
+        val pieH = if (pieEntero) capaPie.height + 8f else 0f
         val r = RectF(a.left, a.top, a.right, a.bottom - pieH)
         val rad = max(0f, l.radio - l.pad) * 0.4f
         if (img != null) {
             l.foto(img, r, rad)
             l.c.drawRoundRect(r, rad, rad, l.trazo(l.pieza("filo", Lienzo.conAlfa(l.tinta, 60)), 0.6f))
         } else vacia(l, r, rad)
-        if (conPie) {
+        if (pieEntero) {
             val q = 6f * l.k
             l.c.drawRect(a.left, r.bottom + 6f + 2f, a.left + q, r.bottom + 6f + 2f + q, l.lleno(l.acento))
             l.pon(l.capa(pie, l.tpk(l.fCursiva, 11.5f, l.pieza("pie", l.tinta)), a.width() - q - 5f, 2, al = Layout.Alignment.ALIGN_NORMAL), a.left + q + 5f, r.bottom + 6f)

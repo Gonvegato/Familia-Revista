@@ -60,6 +60,9 @@ abstract class CapturasBase {
         // (después: al poner los widgets se pintan, y eso vuelve a leer la apariencia guardada)
         Modo.eleccion = if (oscuro) 2 else 1
         var cual by mutableIntStateOf(0)
+        // (un diseño cambiado: el de la plantilla «Columna» con el fondo en degradado, la tinta del acento y Vitrina; y la «Hora de pie»)
+        val cambiado = disenos[1].copy(nombre = "Mi columna").conEstilo(disenos[1].estilo.copy(fondo = TipoFondo.DEGRADADO, colorFondo = "#5B1A2A", colorFondo2 = "#12393A", tinta = "#F2E6CF", letraTitulos = "Vitrina"))
+        val dePie = Plantillas.copia(Plantillas.TODAS.first { it.first.id == "pdepie" }.first)
         val porTipo = Tipos.TODOS.map { t -> disenos.firstOrNull { it.tipo == t.id } ?: t.nuevo() }
         val accesos = Accesos.nuevo().copy(nombre = "Mis apps").con("items", listOf("app:com.android.chrome", "app:com.whatsapp", "web:elpais.com|El País"))
         rule.setContent {
@@ -68,6 +71,9 @@ abstract class CapturasBase {
                     when (cual) {
                         0 -> PantPortada(false, alAbrir = {}, alPlantilla = {}, alNuevo = {}, alAjustes = {})
                         6 -> PantPortada(false, guardado = disenos[1].id, alAbrir = {}, alPlantilla = {}, alNuevo = {}, alAjustes = {})
+                        9 -> androidx.compose.runtime.key(cual) { PantEditor(cambiado, false, alVolver = {}, alGuardar = {}, pestanaInicial = PESTANA_COLORES) }
+                        10 -> androidx.compose.runtime.key(cual) { PantEditor(dePie, true, alVolver = {}, alGuardar = {}) }
+                        11 -> PantPortada(false, guardado = cambiado.id, alAbrir = {}, alPlantilla = {}, alNuevo = {}, alAjustes = {})
                         7 -> PantFicha(disenos[0].id, alVolver = {}, alEditar = {}, alCopiar = {})
                         8 -> PantFicha(disenos[9].id, alVolver = {}, alEditar = {}, alCopiar = {})
                         1 -> PantNuevo({}, {})
@@ -91,6 +97,11 @@ abstract class CapturasBase {
         Disenos.fijos = disenos.take(2); foto("01b-portada-pocos-y-plantillas"); Disenos.fijos = disenos
         Intro.cierra(ctx)
         cual = 6; foto("03-tras-guardar")
+        cual = 9; foto("06-editor-con-cambios")
+        Disenos.fijos = disenos.map { if (it.id == cambiado.id) cambiado else it }
+        cual = 11; foto("07-tras-guardar-con-cambios")
+        cual = 10; foto("08-editor-de-pie-1x2")
+        Disenos.fijos = disenos
         cual = 7; foto("04-ficha-diseno")
         cual = 8; foto("05-ficha-diseno-en-pantalla")
         cual = 1; foto("02-nuevo")

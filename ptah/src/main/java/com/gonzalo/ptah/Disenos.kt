@@ -18,7 +18,16 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object Disenos {
     val GRUPO = EspejoCuenta.Grupo("ptah_disenos", "ptah_disenos", { k -> if (k.startsWith("d") && k.length in 2..32) Tipo.TEXTO else null },
-        alLlegar = { c -> Widgets.pedir(c) })
+        alLlegar = { c -> Widgets.pedir(c) },
+        // Cada diseño lleva la hora en que lo guardaste (`c`): uno más viejo que llegue de la cuenta no pisa nunca al de aquí
+        prefiereLocal = { _, aqui, cuenta -> masNuevo(aqui as? String, cuenta as? String) })
+
+    /** ¿El diseño [aqui] es más nuevo que el que dice la cuenta? */
+    fun masNuevo(aqui: String?, cuenta: String?): Boolean {
+        val a = Diseno.deJson(aqui) ?: return false
+        val c = Diseno.deJson(cuenta) ?: return true
+        return a.cambiado > c.cambiado
+    }
 
     /** Sube con cada cambio de aquí (las pantallas lo leen para volver a pintarse). */
     private val ver = mutableIntStateOf(0)

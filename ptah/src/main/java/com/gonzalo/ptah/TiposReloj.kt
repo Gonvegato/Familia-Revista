@@ -29,10 +29,10 @@ private fun formatoHora(d: Diseno): Pair<String, String> = when (d.texto("format
 }
 
 /** La letra de la hora: la que elijas de las de la familia o, de serie, la que más se parece a la de títulos del diseño. */
-private fun letraHora(d: Diseno): LetraFija = LetraFija.entries.firstOrNull { it.name == d.texto("letraHora") } ?: LetraFija.paraTitulos(d.estilo.letraTitulos)
+private fun letraHora(l: Lienzo): LetraFija = LetraFija.entries.firstOrNull { it.name == l.d.texto("letraHora") } ?: l.letraTitulosViva()
 
 val OPCIONES_FORMATO = listOf("24" to "9:41", "24cero" to "09:41", "12" to "12 horas", "movil" to "Como el móvil")
-val OPCIONES_LETRA_HORA = listOf("" to "Como los títulos") + LetraFija.entries.filter { it != LetraFija.VERSALITAS }.map { it.name to it.nombre }
+val OPCIONES_LETRA_HORA = listOf("" to "La de los títulos") + LetraFija.entries.filter { it != LetraFija.VERSALITAS }.map { it.name to it.nombre }
 
 object RelojDigital : TipoWidget {
     override val id = "digital"
@@ -40,7 +40,7 @@ object RelojDigital : TipoWidget {
     override val grupo = "Relojes"
     override val descripcion = "La hora en grande, con la fecha debajo. Un toque y estás en tus alarmas."
     override val muestra = Tamanos.Celdas(4, 2)
-    override val piezas = listOf("hora" to "La hora", "fecha" to "La fecha", "rayas" to "Las rayas", "cuadro" to "El cuadradito")
+    override val piezas = listOf("hora" to "La hora", "minutos" to "Los minutos (en vertical)", "fecha" to "La fecha", "rayas" to "Las rayas", "cuadro" to "El cuadradito")
     override val partes = listOf("antetitulo" to "El antetítulo", "fecha" to "La fecha", "rayas" to "Las rayas", "numero" to "El número del día")
     val CABECERAS = listOf("portada" to "Portada", "columna" to "Columna", "titular" to "Titular con fecha")
 
@@ -51,11 +51,67 @@ object RelojDigital : TipoWidget {
 
     override fun pinta(l: Lienzo) {
         val d = l.d
+        if (l.proporcion == Lienzo.Proporcion.PEQUENO) { pequeno(l); return }
+        if (l.proporcion == Lienzo.Proporcion.VERTICAL) { vertical(l); return }
         when (d.texto("cabecera", "portada")) {
             "columna" -> columna(l)
             "titular" -> titular(l)
             else -> portada(l)
         }
+    }
+
+    /** En un cuadrado pequeño (1×1): el cuadradito y el día arriba, la hora a todo lo ancho, la raya y la fecha corta. */
+    private fun pequeno(l: Lienzo) {
+        val a = l.area; val e = l.e
+        val (fmt, fmt12) = formatoHora(l.d)
+        val col = l.pieza("fecha", l.tinta)
+        val ts = min(9f * l.k, a.height() * 0.16f)
+        val altoT = l.altoLinea(LetraFija.VERSALITAS, ts)
+        var top = a.top; var bottom = a.bottom
+        if (e.ve("antetitulo")) {
+            val q = ts * 0.8f
+            l.c.drawRect(a.left, top + (altoT - q) / 2, a.left + q, top + (altoT + q) / 2, l.lleno(l.pieza("cuadro", l.acento)))
+            l.vivoQueLlena("EEE", LetraFija.VERSALITAS, RectF(a.left + q + 4f, top, a.right, top + altoT), col, ts, Alineacion.IZQUIERDA)
+            top += altoT + 2f
+        }
+        if (e.ve("fecha")) {
+            if (l.vivoQueLlena("d MMM", LetraFija.VERSALITAS, RectF(a.left, bottom - altoT, a.right, bottom), col, ts) > 0f) {
+                bottom -= altoT + 3f
+                if (e.ve("rayas")) l.filete(bottom - 1f, 1f)
+                bottom -= 3f
+            }
+        }
+        l.vivoQueLlena(fmt, letraHora(l), RectF(a.left, top, a.right, bottom), l.pieza("hora", l.tinta), formato12 = fmt12)
+    }
+
+    /**
+     * En vertical y estrecho (1×2): arriba, el día como cabecera de revista («SÁB 7» y la raya); en medio, las horas y los minutos
+     * apilados, enormes; abajo, la raya fina y el mes.
+     */
+    private fun vertical(l: Lienzo) {
+        val a = l.area; val e = l.e
+        val formato = l.d.texto("formato", "24")
+        val horas = if (formato == "12") "hh" else "HH"
+        val col = l.pieza("fecha", l.tinta)
+        val ts = min(10f * l.k, a.width() * 0.2f)
+        val altoT = l.altoLinea(LetraFija.VERSALITAS, ts)
+        var top = a.top; var bottom = a.bottom
+        if (e.ve("antetitulo") || e.ve("fecha")) {
+            val h = l.vivoQueLlena("EEE d", LetraFija.VERSALITAS, RectF(a.left, top, a.right, top + altoT), col, ts)
+            if (h > 0f) { top += altoT + 3f; if (e.ve("rayas")) { l.filete(top, 1.8f); top += 1.8f }; top += 5f }
+        }
+        if (e.ve("fecha")) {
+            val f = if (l.cabeVivo("MMMM", LetraFija.VERSALITAS, ts * 0.85f, a.width())) "MMMM" else "MMM"
+            if (l.vivoQueLlena(f, LetraFija.VERSALITAS, RectF(a.left, bottom - altoT, a.right, bottom), l.gris, ts * 0.85f) > 0f) {
+                bottom -= altoT + 4f
+                if (e.ve("rayas")) l.filete(bottom - 0.8f, 0.8f)
+                bottom -= 5f
+            }
+        }
+        val letra = letraHora(l)
+        val fila = (bottom - top - 2f) / 2f
+        l.vivoQueLlena(horas, letra, RectF(a.left, top, a.right, top + fila), l.pieza("hora", l.tinta))
+        l.vivoQueLlena("mm", letra, RectF(a.left, bottom - fila, a.right, bottom), l.pieza("minutos", l.acento))
     }
 
     /** «Portada»: la hora enorme y, debajo de una raya, la fecha en versalitas. */
@@ -77,7 +133,7 @@ object RelojDigital : TipoWidget {
             if (e.ve("rayas")) l.filete(bottom - 1.6f, 1.6f)
             bottom -= 6f
         }
-        val letra = letraHora(d)
+        val letra = letraHora(l)
         val tam = l.tamanoQueCabe((Formatos.muestras(fmt) + Formatos.muestras(fmt12)), letra, a.width(), bottom - top, 400f)
         val alto = l.altoLinea(letra, tam)
         l.textoVivo(RectF(a.left, top + (bottom - top - alto) / 2, a.right, top + (bottom - top + alto) / 2), fmt, letra, tam, l.pieza("hora", l.tinta), formato12 = fmt12)
@@ -89,7 +145,7 @@ object RelojDigital : TipoWidget {
         val (fmt, fmt12) = formatoHora(d)
         var y = a.top
         val alto = a.height()
-        if (e.ve("antetitulo") && d.texto("ante").isNotBlank() && alto >= 110f) {
+        if (e.ve("antetitulo") && d.texto("ante").isNotBlank() && alto >= 100f) {
             y += l.seccion(d.texto("ante"), a.left, y, a.width())
             if (e.ve("numero") && a.width() >= 150f) {
                 val n = "Nº ${l.datos.ahora().dayOfYear}"
@@ -99,10 +155,10 @@ object RelojDigital : TipoWidget {
             if (e.ve("rayas")) { l.filete(y, 2.4f); y += 2.4f }
             y += 6f
         }
-        val conFecha = e.ve("fecha") && alto >= 120f && l.cabeVivo(Formatos.DIA_SEMANA, LetraFija.CURSIVA, 11f, a.width())
+        val conFecha = e.ve("fecha") && alto >= 100f && l.cabeVivo(Formatos.DIA_SEMANA, LetraFija.CURSIVA, 11f, a.width())
         val resto = a.bottom - y
         val altoHora = if (conFecha) resto * 0.5f else resto
-        val letra = letraHora(d)
+        val letra = letraHora(l)
         val tam = l.tamanoQueCabe((Formatos.muestras(fmt) + Formatos.muestras(fmt12)), letra, a.width(), altoHora, 300f)
         val ah = l.altoLinea(letra, tam)
         // (sin la fecha, la hora va en medio)
@@ -128,12 +184,12 @@ object RelojDigital : TipoWidget {
         if (e.ve("antetitulo") && d.texto("ante").isNotBlank() && a.height() >= 120f) y += l.seccion(d.texto("ante"), a.left, y, a.width()) + 6f
         val resto = a.bottom - y
         if (!e.ve("fecha") || resto < 70f || a.width() < 110f) {
-            val letra = letraHora(d)
+            val letra = letraHora(l)
             val tam = l.tamanoQueCabe((Formatos.muestras(fmt) + Formatos.muestras(fmt12)), letra, a.width(), resto, 300f)
             l.textoVivo(RectF(a.left, y, a.right, a.bottom), fmt, letra, tam, l.pieza("hora", l.acento), formato12 = fmt12)
             return
         }
-        val tit = LetraFija.paraTitulos(e.letraTitulos)
+        val tit = l.letraTitulosViva()
         val f1 = "EEEE d"
         val t1 = l.tamanoQueCabe(Formatos.muestras(f1), tit, a.width(), resto * 0.42f, 60f * l.k)
         val a1 = l.altoLinea(tit, t1)
@@ -146,7 +202,7 @@ object RelojDigital : TipoWidget {
         y += a2 + 5f
         if (e.ve("rayas")) { l.filete(y, 1.6f); y += 1.6f }
         y += 5f
-        val letra = letraHora(d)
+        val letra = letraHora(l)
         val th = l.tamanoQueCabe((Formatos.muestras(fmt) + Formatos.muestras(fmt12)), letra, a.width(), a.bottom - y, 200f)
         val ah = l.altoLinea(letra, th)
         l.textoVivo(RectF(a.left, y + (a.bottom - y - ah) / 2, a.right, y + (a.bottom - y + ah) / 2), fmt, letra, th, l.pieza("hora", l.acento), formato12 = fmt12)
@@ -182,7 +238,7 @@ object RelojAgujas : TipoWidget {
         val a = l.area; val e = l.e; val d = l.d
         // Ancho (4×2, 4×1): la esfera a la izquierda y el día al lado; alto (2×2 en vertical): la esfera arriba y el día debajo
         val ancho = e.ve("fecha") && a.width() >= a.height() * 1.15f && a.width() * 0.42f >= 84f && a.height() >= 60f
-        val alto = !ancho && e.ve("fecha") && a.height() >= a.width() * 1.3f && a.height() - a.width() >= 46f && a.width() >= 84f
+        val alto = !ancho && e.ve("fecha") && a.height() >= a.width() * 1.3f && a.height() - a.width() >= 46f
         val lado = when { ancho -> min(a.height(), a.width() * 0.58f); alto -> min(a.width(), a.height() * 0.72f); else -> min(a.width(), a.height()) }
         val r = when {
             ancho -> RectF(a.left, a.centerY() - lado / 2, a.left + lado, a.centerY() + lado / 2)
@@ -192,7 +248,7 @@ object RelojAgujas : TipoWidget {
         esfera(l, r)
         val forma = FormaAgujas.entries.firstOrNull { it.name == d.texto("forma") } ?: FormaAgujas.HOJA
         l.agujas(r, forma, l.pieza("horaria", l.tinta), l.pieza("minutera", l.tinta), if (d.si("segundero")) l.pieza("segundero", l.acento) else null, l.pieza("minutera", l.tinta))
-        val tit = LetraFija.paraTitulos(e.letraTitulos)
+        val tit = l.letraTitulosViva()
         if (ancho) {
             val col = RectF(r.right + 14f, a.top, a.right, a.bottom)
             var y = a.top + (a.height() * 0.1f)
@@ -206,6 +262,15 @@ object RelojAgujas : TipoWidget {
             val t2 = l.tamanoQueCabe(Formatos.muestras(Formatos.DIA_MES), LetraFija.VERSALITAS, col.width(), max(9f, (a.bottom - y) * 0.5f), 11f * l.k)
             if (l.cabeVivo(Formatos.DIA_MES, LetraFija.VERSALITAS, t2, col.width()) && t2 >= 6.5f)
                 l.textoVivo(RectF(col.left, y, col.right, y + l.altoLinea(LetraFija.VERSALITAS, t2)), Formatos.DIA_MES, LetraFija.VERSALITAS, t2, l.gris)
+        } else if (alto && a.width() < 84f) {
+            // Vertical y estrecho: debajo de la esfera, el día de la semana, el número enorme y el mes, apilados
+            var y = r.bottom + 6f
+            val ts = min(9f * l.k, a.width() * 0.2f)
+            val altoT = l.altoLinea(LetraFija.VERSALITAS, ts)
+            if (l.vivoQueLlena("EEE", LetraFija.VERSALITAS, RectF(a.left, y, a.right, y + altoT), l.pieza("fecha", l.tinta), ts, Alineacion.CENTRO) > 0f) y += altoT + 2f
+            val mesH = if (a.bottom - y > altoT * 3) altoT else 0f
+            l.vivoQueLlena("d", tit, RectF(a.left, y, a.right, a.bottom - mesH - (if (mesH > 0f) 2f else 0f)), l.pieza("fecha", l.tinta), al = Alineacion.CENTRO)
+            if (mesH > 0f) l.vivoQueLlena("MMM", LetraFija.VERSALITAS, RectF(a.left, a.bottom - mesH, a.right, a.bottom), l.gris, ts, Alineacion.CENTRO)
         } else if (alto) {
             var y = r.bottom + 6f
             val sitio = a.bottom - y
@@ -298,7 +363,7 @@ object Calendario : TipoWidget {
     override fun pinta(l: Lienzo) {
         val a = l.area; val e = l.e; val d = l.d
         val hoy = l.datos.ahora().toLocalDate()
-        if (a.width() < 120f || a.height() < 110f) { pequeno(l, hoy); return }
+        if (l.proporcion != Lienzo.Proporcion.NORMAL || a.width() < 120f || a.height() < 110f) { pequeno(l, hoy); return }
         var y = a.top
         val mes = Formatos.mes(hoy.monthValue).replaceFirstChar { it.uppercase() }
         val anioAncho = if (e.ve("anio")) l.anchoAnte("${hoy.year}") + 6f else 0f
@@ -338,18 +403,24 @@ object Calendario : TipoWidget {
         }
     }
 
-    /** En pequeño: el día de la semana, el número enorme y el mes. */
+    /** En pequeño (1×1) o en vertical (1×2): el día de la semana arriba con su raya, el número enorme y el mes; en vertical, también el año. */
     private fun pequeno(l: Lienzo, hoy: LocalDate) {
         val a = l.area
-        var y = a.top
-        val ante = Formatos.diaCorto(hoy.dayOfWeek)
-        if (a.height() >= 50f) y += l.ante(ante, a.left, y, a.width(), l.pieza("hoy", l.acento), 8.5f) + 2f
+        val vertical = l.proporcion == Lienzo.Proporcion.VERTICAL
+        val ts = min(9f * l.k, a.width() * 0.2f)
+        var top = a.top; var bottom = a.bottom
+        val dia = (if (vertical && l.cabe(Formatos.dia(hoy.dayOfWeek).uppercase(), l.fNegrita, ts, a.width(), 0.16f) != null) Formatos.dia(hoy.dayOfWeek) else Formatos.diaCorto(hoy.dayOfWeek))
+        top += l.ante(dia, a.left, top, a.width(), l.pieza("hoy", l.acento), ts / l.k).let { if (it > 0f) it + 3f else 0f }
+        if (l.e.ve("rayas") && top > a.top && vertical) { l.filete(top, 1.6f); top += 5f }
+        if (vertical && l.e.ve("anio")) { val h = l.ante("${hoy.year}", a.left, bottom - l.altoAnte(ts / l.k), a.width(), l.gris, ts / l.k); if (h > 0f) bottom -= h + 3f }
         val mes = Formatos.mes(hoy.monthValue)
-        val altoMes = if (a.height() >= 70f) 14f * l.k else 0f
-        val n = l.titular("${hoy.dayOfMonth}", a.width(), a.bottom - y - altoMes, 90f, 12f, 1, l.pieza("numeros", l.tinta), inter = 0.9f)
-        l.pon(n, a.left, y + (a.bottom - y - altoMes - n.height) / 2)
-        if (altoMes > 0f && l.linea(mes, l.fCursiva, 11.5f, l.gris, a.left, a.bottom - altoMes + 1f, a.width()) == 0f)
-            l.linea(Formatos.formatea("MMM", l.datos.ahora()), l.fCursiva, 11.5f, l.gris, a.left, a.bottom - altoMes + 1f, a.width())
+        val mesT = if (vertical && l.cabe(mes, l.fCursiva, 12f * l.k, a.width()) != null) mes else Formatos.formatea("MMM", l.datos.ahora())
+        val altoMes = l.altoLinea(mesT, l.fCursiva, if (vertical) 13f else 11.5f, a.width())
+        if (altoMes > 0f && bottom - top > altoMes * 2f) {
+            l.linea(mesT, l.fCursiva, if (vertical) 13f else 11.5f, l.gris, a.left, bottom - altoMes, a.width())
+            bottom -= altoMes + 2f
+        }
+        l.grande("${hoy.dayOfMonth}", l.fTitular, RectF(a.left, top, a.right, bottom), l.pieza("numeros", l.tinta))
     }
 
     @Composable override fun Editor(d: Diseno, cambia: (Diseno) -> Unit) {

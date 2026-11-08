@@ -101,12 +101,13 @@ class ModeloTest {
     // ---------------------------------------------------------------- los tamaños
 
     @Test fun lasCeldasYLosDp() {
-        // Los de developer.android.com (en vertical): 1×1 = 57×102, 2×1 = 130×102, 4×2 = 276×220, 4×4 = 276×454
-        assertEquals(57f to 102f, Tamanos.dp(Tamanos.Celdas(1, 1)))
-        assertEquals(130f to 102f, Tamanos.dp(Tamanos.Celdas(2, 1)))
-        assertEquals(276f to 220f, Tamanos.dp(Tamanos.Celdas(4, 2)))
-        assertEquals(276f to 454f, Tamanos.dp(Tamanos.Celdas(4, 4)))
+        // Celdas casi cuadradas, como las de los lanzadores de ahora (76 dp menos el hueco)
+        assertEquals(70f to 70f, Tamanos.dp(Tamanos.Celdas(1, 1)))
+        assertEquals(70f to 146f, Tamanos.dp(Tamanos.Celdas(1, 2)))
+        assertEquals(298f to 146f, Tamanos.dp(Tamanos.Celdas(4, 2)))
+        assertEquals(298f to 298f, Tamanos.dp(Tamanos.Celdas(4, 4)))
         for (c in Tamanos.PRESETS) { val (w, h) = Tamanos.dp(c); assertEquals(c, Tamanos.celdas(w, h)) }
+        assertTrue("1×1 y 1×2 de pie, entre los tamaños del editor", Tamanos.Celdas(1, 1) in Tamanos.PRESETS && Tamanos.Celdas(1, 2) in Tamanos.PRESETS)
         assertEquals(Tamanos.Celdas(1, 1), Tamanos.celdas(40f, 40f))
         assertEquals("4×2", Tamanos.Celdas(4, 2).toString())
         assertEquals(Tamanos.MIN to Tamanos.MAX, Tamanos.acota(1f, 9999f))
