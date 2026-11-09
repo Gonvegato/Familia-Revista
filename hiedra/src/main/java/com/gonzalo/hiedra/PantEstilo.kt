@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.7.1"
+const val VERSION = "0.8.0"
 
 private fun aliasInicio(c: Context) = ComponentName(c, "com.gonzalo.hiedra.InicioAlias")
 private fun esInicio(c: Context) = c.packageManager.getComponentEnabledSetting(aliasInicio(c)) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -45,7 +45,7 @@ private fun esInicio(c: Context) = c.packageManager.getComponentEnabledSetting(a
 /** «Ajustes»: Apariencia (modo, acento, tamaño, estilo), Portadas, Pantalla de inicio y copias. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
+fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}, pestanaInicial: Int = 0) {
     val ctx = LocalContext.current
     var inicio by remember { mutableStateOf(esInicio(ctx)) }
     var mensaje by remember { mutableStateOf<String?>(null) }
@@ -56,18 +56,28 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
     val importar = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { u ->
         if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Bastet" }
     }
-    var pestana by rememberSaveable { mutableIntStateOf(0) }
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 20.dp)) {
-        RevistaTopBar(alVolver, "Bastet")
-        Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
-        FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-        Filete(3.dp)
+    var pestana by rememberSaveable { mutableIntStateOf(pestanaInicial) }
+    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+        // Dirección C: la cabecera en un bloque de tinta con «AJUSTES.» en grotesca y las pestañas en bloques
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+            EnlaceRevista("← Bastet", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
+            NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp))
+        }
         PestanasRevista(listOf("Apariencia", "Juegos", "Cuenta", "Avanzado"), pestana) { pestana = it }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(14.dp))
 
         when (pestana) {
             0 -> SeccionApariencia()
             1 -> {
+                Antetitulo("Reto del año", Modifier.padding(bottom = 4.dp))
+                var reto by remember { mutableIntStateOf(RetoJuegos.meta(ctx)) }
+                val retos = remember { (listOf(0, 6, 12, 20, 24, 30, 40, 52) + RetoJuegos.meta(ctx)).distinct().sorted() }
+                MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Juegos terminados al año") { i -> reto = retos[i]; RetoJuegos.poner(ctx, reto) }
+                Text("Cuentan los que pasas a «Pasados» este año. Sale en la portada (cómo vas) y viaja con tu cuenta a tus otros Bastet.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 6.dp))
+                Spacer(Modifier.height(14.dp))
+                Filete(2.dp)
+                Spacer(Modifier.height(12.dp))
                 Antetitulo("Sistemas", Modifier.padding(bottom = 4.dp))
                 MagLink("Sistemas y emuladores", "Las ${Nucleos.principales.size} consolas que juega Bastet, el emulador de cada una, sus BIOS y las carpetas de ROMs", onClick = alSistemas)
                 Spacer(Modifier.height(26.dp))
@@ -142,6 +152,7 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}) {
         Etiqueta("Bastet $VERSION")
         Text("Bastet es hermana de Jonsu, Seshat y Thot. Los comandos para abrir emuladores salen de ES-DE Frontend (licencia MIT, © Northwestern Software AB, Leon Styhre y Alec Lofquist). Las portadas, de libretro. El jugador interno usa LibretroDroid y RadialGamePad (GPL-3.0, Filippo Scognamiglio) y los núcleos de libretro (mGBA, Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle, Handy, Stella, ProSystem, FinalBurn Neo, Mupen64Plus-Next, PCSX ReARMed, PPSSPP y melonDS, cada uno con su licencia), que no van dentro de la app: se descargan del buildbot de libretro, como en RetroArch. Las consolas y sus mandos son los de Lemuroid. Por eso Bastet es software libre (GPL-3.0).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.height(30.dp))
+        }
     }
 }
 

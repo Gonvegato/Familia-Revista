@@ -68,6 +68,12 @@ object Sgdb {
         val a = get("/grids/game/$id?dimensions=600x900", key)
         (0 until a.length()).map { a.getJSONObject(it).let { o -> o.getString("thumb") to o.getString("url") } }
     }
+
+    /** Fondos («heroes», las imágenes anchas de la cabecera de Steam: 1920×620 o 3840×1240) de un juego: pares (miniatura, imagen entera). */
+    suspend fun fondos(id: Long, key: String): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        val a = get("/heroes/game/$id", key)
+        (0 until a.length()).map { a.getJSONObject(it).let { o -> o.getString("thumb") to o.getString("url") } }
+    }
 }
 
 object Steam {

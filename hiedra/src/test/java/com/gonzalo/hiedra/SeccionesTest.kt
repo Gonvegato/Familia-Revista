@@ -36,7 +36,7 @@ class SeccionesTest {
         Biblioteca.juegos.add(Juego("a1", "Stardew Valley", lanzadores = listOf(Lanzador.app("x.y")), anadido = 3))
         // Un juego con dos lanzadores sale en los dos menús
         Biblioteca.juegos.add(Juego("d1", "Celeste", lanzadores = listOf(Lanzador.rom("switch", "Celeste"), Lanzador.pc("steam:2", "pc1")), anadido = 4).conEstado(Estado.PASADO, 7))
-        rule.setContent { HiedraTheme { Surface(Modifier.fillMaxSize(), color = Paper) { PantSecciones(Destino.Pasado, {}, {}, {}, {}, {}) } } }
+        rule.setContent { HiedraTheme { Surface(Modifier.fillMaxSize(), color = Paper) { PantPrincipal(paginaDe(Destino.Pasado), {}, {}, {}, {}, {}, {}, {}) } } }
         rule.onNodeWithText("Hades", useUnmergedTree = true).assertIsDisplayed()
         fun enPantalla(t: String) = rule.onAllNodesWithText(t, useUnmergedTree = true).fetchSemanticsNodes().any { it.boundsInRoot.left >= 0f && it.boundsInRoot.right <= 1080f && it.boundsInRoot.top >= 0f }
         fun tocar(t: String) { val n = rule.onAllNodesWithText(t); n[n.fetchSemanticsNodes().indexOfFirst { it.boundsInRoot.left >= 0f && it.boundsInRoot.right <= 1080f }].performClick(); rule.waitForIdle() }

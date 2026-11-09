@@ -15,6 +15,36 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.8.0 — la cara de Seshat: portada cartel, páginas y ficha a doble página
+
+- **Una sola pantalla con páginas, como Seshat.** Arriba, la cabecera de tinta (BUSCAR · + AÑADIR · la fecha · ⚙ y «BASTET.» en grande,
+  que se recoge al bajar sin cortarse); debajo, una sola fila de pestañas: Portada · Jugando · Pendientes · Pasados · Abandonados · Sagas ·
+  Sistemas. Se pasan con la pestaña o con el dedo, y Atrás vuelve a la portada. Tu PC y Ajustes van encima; las fichas, también.
+- **La portada, un cartel**: «AHORA JUEGAS» con la portada grande (con un paspartú del color de la página, o de la tinta si la portada se le
+  parece) sobre tu fondo o su color, las horas, de dónde es y cuándo jugaste; debajo, «SEGUIR JUGANDO →» (o «BAJAR Y JUGAR», «JUGAR EN EL
+  PC»…: se juega igual que antes, en Bastet, con tu emulador o en el PC). Si el PC está jugando, el cartel es eso, en directo. Luego tu PC,
+  el **reto del año** (juegos terminados: «Reto 2026 · 5 / 20», la barra y cómo vas; sin reto, «PONERTE UN RETO →»), **la semana** en barras
+  que se tocan (sale lo que jugaste ese día) y los días seguidos, «También juegas» y «Pendientes» (lado a lado si hay pocos), tus estantes
+  de siempre (Mis elegidos, Sagas, Tu PC, Pasados; se cambian en «Editar portada →», abajo) y el mosaico de lo que has pasado este año.
+- **El reto** se pone en Ajustes → Juegos y va con tu cuenta (`ajustes/juego_reto`): sale igual en tus otros Bastet.
+- **Listas con portadas grandes** (84×126): número, título, de dónde es y, abajo, cómo va según la sección (horas y última partida; lo que
+  suele durar; cuándo lo pasaste) con «JUGAR →». Arriba de cada sección, sus cifras (juegos, horas, plataformas), los menús pequeños (PC ·
+  Emulación · Android · Web, ahora en bloques) y solo los órdenes que tienen sentido allí (en Pendientes, «Más cortos»).
+- **La ficha, a doble página**: la portada ampliada (o tu fondo) como foto de apertura con un velo arriba para «← Volver · Imágenes · Editar ·
+  Borrar», la etiqueta del estado (en Jugando nunca dice «terminado»), el título enorme y «de <estudio> · <saga, n>», el botón principal y
+  las secciones numeradas: Tu partida (las horas, la historia, el estado y el favorito), La saga, Cómo se abre, tus partidas en Bastet,
+  Tiempo y duración, En Jonsu, Datos y En la nube. No se ha quitado nada de lo que tenía.
+- **Imágenes: portada y fondo**, como en Jonsu y Seshat. «Imágenes» abre una hoja con dos pestañas: la portada (SteamGridDB, buscar en
+  internet, de tu móvil, la automática) y el fondo (buscar, de tu móvil, usar la portada, quitar); con tu API key de SteamGridDB salen sus
+  propuestas (portadas y fondos «heroes»). El fondo va con tu cuenta; si no le pusiste ninguno y en Jonsu sí, se usa el de Jonsu.
+- **Encuadrar es de cada dispositivo**: la imagen es la misma en todos, pero qué parte se ve se elige en cada móvil o tableta (tienen otra
+  forma) y vuelve al centro si la imagen cambia. El encuadre que tenías se pasa una vez a este dispositivo.
+- **El acento, legible**: el de Bastet (#6A6D2C) se queda en el icono y en los bloques; donde hace falta leerlo (cifras, la pestaña elegida,
+  el botón principal, el texto en acento) se aclara lo justo para leerse sobre la página. Lo hace con el acento que elijas en «A tu manera».
+- **Icono nuevo**: «B.» con la franja «JUEGOS» (adaptable y monocromo). Los widgets, en la misma dirección: sin rebordes, tapas rectas,
+  titulares en grotesca y la cabecera en un bloque de tinta con «BASTET.».
+- Con mando, todo sigue enfocándose: las pestañas, el cartel (A juega, X abre la ficha), las portadas y el botón principal de la ficha.
+
 ## 0.6.2 — lo que eliges, en todos tus dispositivos
 
 - **Lo que eliges en Bastet ya está en tu cuenta, no solo en este móvil.** Hasta ahora viajaban los juegos, las horas, la apariencia y la

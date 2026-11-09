@@ -61,26 +61,32 @@ class InicioTest {
         Inicio.poner(ConfigInicio(), 3)
     }
 
-    @Test fun laPortadaEnsenaElMenuLosEstantesYRespondeAlMando() {
+    @Test fun laPortadaEnsenaLasPaginasElCartelLosEstantesYRespondeAlMando() {
         Datos.activo = false; Catalogo.cargar(ctx); Skin.cargar(ctx); Inicio.cargar(ctx); Inicio.poner(ConfigInicio(), 1)
         Biblioteca.cargada = true; Biblioteca.juegos.clear(); Sagas.cargada = true; Sagas.lista.clear(); Archivos.limpiarParaPruebas()
         Biblioteca.juegos.add(rom("a", "Zelda de prueba", Estado.JUGANDO, ultima = 50))
         Biblioteca.juegos.add(rom("b", "Metroid de prueba", Estado.JUGANDO, ultima = 90))
         Biblioteca.juegos.add(rom("c", "Kirby de prueba"))
-        var ir: Destino? = null; var jugado = ""; var abierto = ""
-        rule.setContent { HiedraTheme { Surface(Modifier.fillMaxSize(), color = Paper) { PantInicio({ abierto = it.titulo }, { jugado = it.titulo }, {}, { ir = it }, {}) } } }
-        listOf("JUGANDO", "PENDIENTES", "PASADOS", "ABANDONADOS", "SAGAS", "TU PC").forEach { rule.onAllNodesWithText(it)[0].assertExists() }
-        rule.onAllNodesWithText("PASADOS")[0].performClick(); assertEquals(Destino.Pasado, ir)
-        rule.onNodeWithTag("destacado").assertExists(); rule.onAllNodesWithText("Metroid de prueba", useUnmergedTree = true)[0].assertExists()
-        rule.onNodeWithText("SIGUE JUGANDO").assertExists(); rule.onNodeWithTag("loseta-a").assertExists(); rule.onNodeWithTag("loseta-c").assertExists()
-        rule.onNodeWithTag("loseta-a").performClick(); assertEquals("Zelda de prueba", jugado)
+        var pagina = 0; var jugado = ""; var abierto = ""
+        rule.setContent { HiedraTheme { Surface(Modifier.fillMaxSize(), color = Paper) {
+            PantPrincipal(pagina, { pagina = it }, { abierto = it.titulo }, { jugado = it.titulo }, {}, {}, {}, {})
+        } } }
+        // Una sola fila de pestañas: la portada y las secciones de Bastet
+        listOf("PORTADA", "JUGANDO", "PENDIENTES", "PASADOS", "ABANDONADOS", "SAGAS", "SISTEMAS").forEach { rule.onAllNodesWithText(it, useUnmergedTree = true)[0].assertExists() }
+        // El cartel: lo último a lo que juegas, y el botón de seguir
+        rule.onNodeWithTag("cartel").assertExists(); rule.onAllNodesWithText("METROID DE PRUEBA", useUnmergedTree = true)[0].assertExists()
+        rule.onNodeWithText("SEGUIR JUGANDO", useUnmergedTree = true).assertExists()
+        rule.onNodeWithTag("seguir").performClick(); assertEquals("Metroid de prueba", jugado)
+        // También juegas (Zelda) y Pendientes (Kirby): un toque juega; mantener abre la ficha
+        rule.onNodeWithTag("loseta-a").performScrollTo().performClick(); assertEquals("Zelda de prueba", jugado)
         rule.onNodeWithTag("loseta-c").performScrollTo().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnLongClick); assertEquals("Kirby de prueba", abierto)
         jugado = ""; abierto = ""
-        rule.onRoot().performKeyInput { pressKey(Key.DirectionDown) }; rule.waitForIdle()
         rule.onNodeWithTag("loseta-a").performScrollTo().requestFocus(); rule.waitForIdle()
         rule.onNodeWithTag("loseta-a").assertIsFocused()
         rule.onRoot().performKeyInput { pressKey(Key.ButtonA) }; rule.waitForIdle(); assertEquals("A juega", "Zelda de prueba", jugado)
         rule.onRoot().performKeyInput { pressKey(Key.ButtonX) }; rule.waitForIdle(); assertEquals("X abre la ficha", "Zelda de prueba", abierto)
+        // La pestaña lleva a su página
+        rule.onAllNodesWithText("PASADOS", useUnmergedTree = true)[0].performClick(); rule.waitForIdle(); assertEquals(paginaDe(Destino.Pasado), pagina)
         Biblioteca.juegos.clear()
     }
 }

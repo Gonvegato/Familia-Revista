@@ -27,6 +27,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -82,9 +83,43 @@ suspend fun guardarPortadaBytes(c: Context, id: String, bytes: ByteArray, origin
     }.getOrNull()
 }
 
+/** El encabezado de una sección de la ficha: su número (01, 02…) en el acento y el nombre en grotesca; a la derecha, su acción si la tiene. */
+@Composable
+private fun SeccionNumerada(n: Int, texto: String, accion: Pair<String, () -> Unit>? = null, arriba: androidx.compose.ui.unit.Dp = 26.dp) {
+    Row(Modifier.fillMaxWidth().padding(top = arriba, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
+        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, maxLines = 1)
+        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
+        accion?.let { (t, f) -> Text(t.uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1,
+            modifier = Modifier.tocable(onClick = f).padding(start = 8.dp, top = 4.dp, bottom = 4.dp)) }
+    }
+}
+
+/** Dos casillas de revista, una al lado de la otra, con su filete en medio. */
+@Composable
+private fun DosCasillas(izq: @Composable ColumnScope.() -> Unit, der: @Composable ColumnScope.() -> Unit) {
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+        Column(Modifier.weight(1f).padding(top = 6.dp, bottom = 18.dp, end = 14.dp), content = izq)
+        Box(Modifier.fillMaxHeight().width(2.dp).background(Charcoal))
+        Column(Modifier.weight(1f).padding(top = 6.dp, bottom = 18.dp, start = 16.dp), content = der)
+    }
+}
+
+/** La etiqueta del estado en la apertura: «JUGANDO · 12 H 30», «PENDIENTE», «PASADO · 2 NOV 2026», «ABANDONADO · 3 H». (En Jugando nunca dice «terminado».) */
+fun etiquetaEstado(j: Juego): String = when (j.estado) {
+    Estado.JUGANDO, Estado.ABANDONADO -> j.estado.nombre.uppercase() + if (j.msJugados >= 60_000) " · " + horasCortas(j.msJugados) else ""
+    Estado.PENDIENTE -> "PENDIENTE"
+    Estado.PASADO -> "PASADO" + if (j.finalizado > 0) " · " + fechaJunta(j.finalizado).uppercase() else ""
+}
+
+/**
+ * La ficha de un juego, como la de Seshat («doble página»): la portada ampliada (o tu fondo) como foto de apertura, con un velo arriba para
+ * «← Volver · Imágenes · Editar · Borrar»; la etiqueta del estado pisando su borde, el título enorme y «de <estudio> · <saga, n>»; el botón
+ * principal (jugar, seguir, bajar y jugar, en el PC…) y las secciones numeradas: 01 Tu partida, 02 La saga, 03 Cómo se abre, tus partidas en
+ * Bastet, tiempo y duración, En Jonsu, Datos y En la nube. Con mando, el foco empieza en el botón principal.
+ */
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPortada: Boolean = false, alVerPortada: () -> Unit = {}, alVincular: (Juego) -> Unit = {}, alIrA: (String) -> Unit = {}) {
+fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPortada: Boolean = false, alVerPortada: () -> Unit = {}, alVincular: (Juego) -> Unit = {}, alIrA: (String) -> Unit = {}, alAbrirSaga: (Saga) -> Unit = {}) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val j = Biblioteca.por(id)
@@ -93,154 +128,204 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
     var borrar by remember { mutableStateOf(false) }
     var selector by remember { mutableStateOf(false) }
     var editarWeb by remember { mutableStateOf(false) }
-    var eligePortada by remember { mutableStateOf(abrirPortada) }
+    var imagenes by remember { mutableStateOf(abrirPortada) }
+    var imagenesFondo by remember { mutableStateOf(false) }
     var editarHoras by remember { mutableStateOf(false) }
-    var buscaInternet by remember { mutableStateOf(false) }
     var saga by remember { mutableStateOf(false) }
-    var sgdb by remember { mutableStateOf(false) }
-    var encuadre by remember { mutableStateOf(false) }
-    // La valoración de Azabache, solo para verla (se refresca de vez en cuando)
+    // La valoración de Jonsu, solo para verla (se refresca de vez en cuando)
     var notas by remember(NotaAzabache.version) { mutableStateOf(NotaAzabache.cargar(ctx)) }
     LaunchedEffect(Unit) { if (Cuenta.vinculada && NotaAzabache.vieja(ctx)) withContext(Dispatchers.IO) { if (NotaAzabache.refrescar(ctx)) notas = NotaAzabache.cargar(ctx) } }
     LaunchedEffect(abrirPortada) { if (abrirPortada) alVerPortada() }
     // Los datos de fuera (fecha, estudio, géneros, lo que suele durar): se piden si faltan o son viejos
     var buscandoDatos by remember(id) { mutableStateOf(false) }
     LaunchedEffect(id) { Datos.cargar(ctx); if (Datos.activo && Datos.hacenFalta(id)) { buscandoDatos = true; runCatching { Datos.pedir(ctx, j) }; buscandoDatos = false } }
-    val cambiarPortada = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { u ->
-        if (u != null) scope.launch { guardarPortada(ctx, j.id, u)?.let { Biblioteca.poner(Biblioteca.por(j.id)!!.copy(portada = it, zoom = 1f, ox = 0f, oy = 0f)) } }
-    }
-    val sistema = Catalogo.sistema(j.sistema)
     val miSaga = Sagas.de(j)
-    // Con mando: al abrir la ficha, el foco va a «Jugar» (A juega); y no se sale de la ficha con la cruceta hacia lo que hay debajo
+    val datos = Datos.de[j.id]
+    // Con mando: al abrir la ficha, el foco va al botón principal (A juega); y no se sale de la ficha con la cruceta hacia lo que hay debajo
     val focoJugar = remember { androidx.compose.ui.focus.FocusRequester() }
     LaunchedEffect(id) { kotlinx.coroutines.delay(120); runCatching { focoJugar.requestFocus() } }
+    val tablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700
+    val margen = if (tablet) 40.dp else 20.dp
 
-    val anchoFicha = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
-    // En la tablet tumbada (o un móvil grande apaisado), en dos columnas: la portada, las horas y «Jugar» a la izquierda; las casillas a la derecha
-    val dosColumnas = anchoFicha >= 1000
-    val anchoPortada = if (dosColumnas) 200.dp else if (anchoFicha >= 700) 180.dp else 150.dp
-    Column(Modifier.fillMaxSize().atrapaFoco().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = if (anchoFicha >= 700) 40.dp else 20.dp)) {
-        // Arriba: favorito y editar (el nombre, la plataforma, las horas, quitar)
-        RevistaTopBar(alCerrar, "Volver") {
-            EnlaceRevista(if (j.favorito) "★ Favorito" else "☆ Favorito", acento = j.favorito) { Biblioteca.poner(j.copy(favorito = !j.favorito)) }
-            EnlaceRevista("Editar") { editar = true }
-        }
-        Filete(3.dp)
-        // El estado, como las pestañas de estado de Atrio, pegado a la barra de arriba
-        FiltrosRevista(Estado.entries.map { it.nombre }, j.estado.ordinal, Modifier.padding(top = 4.dp)) { i -> Biblioteca.cambiar(j.id) { it.conEstado(Estado.entries[i]) } }
-        Filete(1.dp)
-        Spacer(Modifier.height(14.dp))
-        RevistaHeadline(j.titulo, if (j.sinLanzador) j.plataforma.ifBlank { "Sin lanzador en el móvil" } else j.lanzadores.joinToString(" · ") { l -> when (l.tipo) {
-            TipoLanzador.ROM -> Catalogo.sistema(l.sistema)?.let { s -> listOf(s.corto, s.nombre).distinct().joinToString(" · ") } ?: l.sistema; TipoLanzador.APP -> "Android"; TipoLanzador.WEB -> "Navegador"; TipoLanzador.PC -> "PC" } })
-        val deck = listOfNotNull(
-            if (j.estado == Estado.PASADO) (if (j.finalizado > 0) "pasado el " + fechaCorta(j.finalizado) else "pasado") else if (j.estado != Estado.PENDIENTE) j.estado.nombre.lowercase() else null,
-            if (j.ultima > 0) "jugado por última vez " + haceCuanto(j.ultima).lowercase() else null
-        ).joinToString(" · ")
-        if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 6.dp))
-        Spacer(Modifier.height(14.dp))
+    // Las secciones van numeradas (01, 02…) en el orden en que salen
+    var nSec = 0
+    fun sig() = ++nSec
 
-        // La portada (un toque la cambia) y tus horas (como la ficha de Marfil: la portada y por dónde vas)
-        val portadaYHoras: @Composable () -> Unit = {
-        Row(Modifier.fillMaxWidth().height(anchoPortada * 1.5f)) {
-            Box(Modifier.width(anchoPortada).height(anchoPortada * 1.5f).clip(esquina(3.dp)).border(1.dp, Line, esquina(3.dp)).tocable { eligePortada = true }.testTag("portada")) {
-                PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = if (dosColumnas) 84 else 64)
-            }
-            Column(Modifier.weight(1f).padding(start = 18.dp).fillMaxHeight(), verticalArrangement = Arrangement.Bottom) {
-                val avance = j.avance
-                if (avance != null) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text("${(avance * 100).toInt()}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 62.sp)
-                        Text(" %", color = Muted, fontFamily = Body, fontSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
-                        Spacer(Modifier.weight(1f))
-                        Text("${tiempoDe(j.msJugados)} / ${tiempoDe(j.durHistoria * 60_000L)}", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(bottom = 12.dp))
-                    }
-                    Barra(avance)
-                    Text("de la historia (lo que suele durar)".uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp, modifier = Modifier.padding(top = 6.dp))
-                } else {
-                    FitTitle(if (j.msJugados >= 60_000) tiempoDe(j.msJugados) else "0 h", 56.sp, 58.sp, color = Acento, letterSpacing = (-1.5).sp, unaLinea = true, maxLines = 1)
-                    Text("TUS HORAS", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+    Column(Modifier.fillMaxSize().atrapaFoco().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+        // ---- «Doble página»: la portada ampliada como foto de apertura, a todo el ancho y recortada, sobre su color medio (o tu fondo)
+        val tela = remember(j.portada, j.titulo) { colorDePortada(j.portada) ?: telaDe(j.titulo) }
+        val conFondo = j.fondo.isNotBlank()
+        Box(Modifier.fillMaxWidth().height(ALTO_APERTURA).clipToBounds()
+            .background(Brush.verticalGradient(listOf(lerpColor(tela, Color.White, 0.12f), lerpColor(tela, Color.Black, 0.55f)))).testTag("apertura")) {
+            if (conFondo) ImagenEncuadrada(j.fondo, j.encFondo, Modifier.fillMaxSize(), "Fondo de ${j.titulo}")
+            else BoxWithConstraints(Modifier.fillMaxSize()) {
+                // (más ancha que la pantalla y recortada: la tapa como foto de apertura)
+                val w = minOf(maxWidth, 720.dp) + 24.dp
+                Box(Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f)) {
+                    PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 160)
                 }
-                val desglose = desgloseHoras(j)
-                if (desglose.isNotBlank()) Text(desglose.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, lineHeight = 13.sp, maxLines = 2, modifier = Modifier.padding(top = 6.dp))
-                Text(listOfNotNull(if (j.veces > 0) "${j.veces} ${if (j.veces == 1) "vez" else "veces"}" else null, if (j.ultima > 0) "última vez " + haceCuanto(j.ultima).lowercase() else null).joinToString(" · ").ifBlank { if (j.msJugados > 0) "jugado" else "sin empezar" },
-                    color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
+            }
+            // Un velo arriba para que se lean «Volver» y las acciones sobre cualquier imagen
+            Box(Modifier.fillMaxWidth().height(VELO_APERTURA).background(veloArriba()))
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = margen).padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                EnlaceRevista("← Volver", color = Color.White) { alCerrar() }
+                Spacer(Modifier.weight(1f))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    EnlaceRevista("Imágenes", Modifier.testTag("imagenes"), color = Color.White) { imagenesFondo = false; imagenes = true }
+                    EnlaceRevista("Editar", color = Color.White) { editar = true }
+                    EnlaceRevista("Borrar", color = Color.White) { borrar = true }
+                }
             }
         }
-        Spacer(Modifier.height(16.dp))
-        }
-
-        // Las acciones: jugar (o vincular) y la saga
-        val acciones: @Composable () -> Unit = {
-        Filete(1.dp)
-        // La acción de siempre, como en Marfil y Cobalto: un botón grande (jugar); la saga, al lado, en pequeño
-        Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (j.sinLanzador) AccionGrande(androidx.compose.material.icons.Icons.Rounded.Add, "Añadir cómo se abre", Modifier.weight(1f).focusRequester(focoJugar)) { alVincular(j) }
-            else AccionGrande(androidx.compose.material.icons.Icons.Rounded.PlayArrow, if (j.enPc && !j.abrible) "Jugar en el PC" else "Jugar", Modifier.weight(1f).focusRequester(focoJugar)) { alJugar(j) }
-            EnlaceRevista(if (miSaga != null) "Saga: ${miSaga.nombre} →" else "Saga →", acento = miSaga != null) { saga = true }
-        }
-        Filete(1.dp)
-        Spacer(Modifier.height(4.dp))
-        Filete(2.dp)
-        }
-
-        // Las casillas, fijas: cómo se abre (cada lanzador), En Azabache, lo que suele durar y la nube
-        val casillas: @Composable () -> Unit = {
-        if (!j.sinLanzador) Casilla("Cómo se abre", "+ Añadir" to { alVincular(j) }) {
-            j.lanzadores.forEachIndexed { i, l ->
-                if (i > 0) { Spacer(Modifier.height(8.dp)); Filete(1.dp, Line); Spacer(Modifier.height(8.dp)) }
-                when (l.tipo) {
-                    TipoLanzador.ROM -> {
-                        val e = remember(j, l) { Lanzar.elegir(ctx, j) }
-                        val aqui = Archivos.tiene(l.clave)
-                        Text((Catalogo.sistema(l.sistema)?.nombre ?: l.sistema) + " · " + (e?.etiqueta ?: "sin emulador"), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
-                        val r = e?.resultado
-                        Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Bastet · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }).uppercase(),
-                            color = if (aqui && r is Resultado.Ok) Muted else Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    }
-                    TipoLanzador.APP -> { Text("App de Android", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp); Text(l.paquete, color = Muted, fontFamily = Body, fontSize = 12.sp) }
-                    TipoLanzador.WEB -> { Text(l.url, color = Charcoal, fontFamily = Display, fontSize = 17.sp, maxLines = 2); Text(("Pantalla: " + listOf("automática", "horizontal", "vertical")[l.orientacion.coerceIn(0, 2)]).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }
-                    TipoLanzador.PC -> BotonesJugarPc(l.pcKey)
+        // La etiqueta del estado, en el acento, pisando el borde de la foto; con fondo, la portada (120×180) asoma abajo a la derecha
+        Box(Modifier.fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth()) {
+                Box(Modifier.padding(start = margen).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
+                    Text(etiquetaEstado(j), color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(start = margen, end = if (conFondo) margen + 136.dp else margen)) {
+                    FitTitle(j.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
+                    val estudio = datos?.desarrolladores?.firstOrNull()
+                    val de = listOfNotNull(estudio?.let { "de $it" }, miSaga?.let { "${it.nombre}, ${it.juegos.indexOf(j.id) + 1}" }, if (estudio == null && miSaga == null) plataformaDe(j) else null).joinToString(" · ")
+                    if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
+                }
+            }
+            // (en una caja de 116 dp que la deja salir 64 dp por arriba: así no estira el hueco hasta el botón)
+            if (conFondo) Box(Modifier.align(Alignment.TopEnd).padding(end = margen).width(120.dp).height(116.dp)) {
+                PortadaSobreFondo(j, Modifier.align(Alignment.BottomCenter).wrapContentHeight(Alignment.Bottom, unbounded = true).requiredHeight(180.dp).fillMaxWidth(), sombra = 14.dp,
+                    alTocar = { imagenesFondo = false; imagenes = true })
+            }
+        }
+        Column(Modifier.fillMaxWidth().padding(horizontal = margen)) {
+            Spacer(Modifier.height(16.dp))
+            // La acción principal, ancha y en el acento
+            if (j.sinLanzador) BotonC("Añadir cómo se abre", Modifier.focusRequester(focoJugar).testTag("jugar"), fondo = Charcoal, letra = Paper) { alVincular(j) }
+            else BotonC(textoJugar(j), Modifier.focusRequester(focoJugar).testTag("jugar"), fondo = Acento, letra = SobreAcento) { alJugar(j) }
+            if (j.enOtroDispositivo) Text("La ROM está en otro de tus móviles: «Bajar y jugar» la trae de tu kDrive.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 8.dp))
+
+            // ---- 01 Tu partida: la barra de la historia, tus horas, el estado (cambiarlo) y el favorito
+            SeccionNumerada(sig(), "Tu partida", "Corregir horas" to { editarHoras = true })
+            val avance = j.avance
+            if (avance != null) Box(Modifier.fillMaxWidth().height(8.dp).background(Line)) { Box(Modifier.fillMaxWidth(avance).fillMaxHeight().background(Acento)) }
+            val min = j.msJugados / 60_000L
+            val linea = unidos(listOf(
+                if (min >= 1) horasCortas(j.msJugados) + " JUGADAS" else "SIN EMPEZAR",
+                avance?.let { "${(it * 100).toInt()} % DE LA HISTORIA" },
+                if (avance != null && j.estado == Estado.JUGANDO && avance < 0.98f && min >= 5) "TE QUEDAN ~${tiempoDe((j.durHistoria - min).coerceAtLeast(1) * 60_000L).uppercase()}" else null
+            ))
+            Text(linea, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = if (avance != null) 7.dp else 0.dp))
+            val deck = unidos(listOf(
+                if (j.estado == Estado.PASADO) (if (j.finalizado > 0) "pasado el " + fechaCorta(j.finalizado) else "pasado") else null,
+                if (j.ultima > 0) "jugado por última vez " + haceCuanto(j.ultima).lowercase() else null,
+                if (j.veces > 0) "${j.veces} ${if (j.veces == 1) "vez" else "veces"}" else null
+            ))
+            if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
+            val desglose = desgloseHoras(j)
+            if (desglose.isNotBlank()) Text(desglose.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, lineHeight = 14.sp, modifier = Modifier.padding(top = 6.dp))
+            Spacer(Modifier.height(14.dp))
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).border(2.dp, Charcoal)) {
+                Estado.entries.forEach { e ->
+                    val on = e == j.estado
+                    Box(Modifier.weight(1f).fillMaxHeight().background(if (on) Charcoal else Paper).tocable(fuera = 0.dp) { Biblioteca.cambiar(j.id) { it.conEstado(e) } }.padding(vertical = 12.dp, horizontal = 2.dp), contentAlignment = Alignment.Center) {
+                        // (si no cabe, la letra se encoge: nada de «ABANDONAD»)
+                        FitTitle(e.nombre.uppercase(), 11.sp, 13.sp, color = if (on) Paper else Charcoal, family = Body, fontWeight = FontWeight.Black, letterSpacing = 0.4.sp, maxLines = 1, unaLinea = true, minSize = 6f,
+                            align = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
+            }
+            Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                EnlaceRevista(if (j.favorito) "★ Favorito" else "☆ Marcar como favorito", acento = j.favorito) { Biblioteca.poner(j.copy(favorito = !j.favorito)) }
+            }
+
+            // ---- 02 La saga: sus portadas en fila, con esta remarcada
+            SeccionNumerada(sig(), if (miSaga != null) "La saga" else "Saga", accion = (if (miSaga != null) "${miSaga.juegos.indexOf(j.id) + 1} de ${miSaga.juegos.size} →" else "Añadir a una saga →") to { saga = true })
+            if (miSaga != null) {
+                val deSaga = remember(miSaga, Biblioteca.juegos.size) { Sagas.juegos(miSaga) }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(miSaga.nombre, color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                    EnlaceRevista("Ver la saga →") { alAbrirSaga(miSaga) }
+                }
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    deSaga.forEach { x ->
+                        val esta = x.id == j.id
+                        Box(Modifier.then(if (esta) Modifier.border(3.dp, Acento).padding(3.dp) else Modifier).tocable { if (esta) saga = true else alIrA(x.id) }) {
+                            Box(Modifier.width(56.dp).height(84.dp)) { PortadaArco(x, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 22) }
+                        }
+                    }
+                }
+            } else Text("No está en ninguna saga.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+
+            // ---- 03 Cómo se abre: cada lanzador (emulador, app, web, PC)
+            if (!j.sinLanzador) {
+                SeccionNumerada(sig(), "Cómo se abre", "+ Añadir" to { alVincular(j) })
+                j.lanzadores.forEachIndexed { i, l ->
+                    if (i > 0) { Spacer(Modifier.height(8.dp)); Filete(1.dp, Line); Spacer(Modifier.height(8.dp)) }
                     when (l.tipo) {
-                        TipoLanzador.ROM -> EnlaceRevista("Emulador →") { selector = true }
-                        TipoLanzador.WEB -> EnlaceRevista("Editar →") { editarWeb = true }
-                        else -> {}
+                        TipoLanzador.ROM -> {
+                            val e = remember(j, l) { Lanzar.elegir(ctx, j) }
+                            val aqui = Archivos.tiene(l.clave)
+                            Text((Catalogo.sistema(l.sistema)?.nombre ?: l.sistema) + " · " + (e?.etiqueta ?: "sin emulador"), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            val r = e?.resultado
+                            Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Bastet · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }).uppercase(),
+                                color = if (aqui && r is Resultado.Ok) Muted else Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 14.sp)
+                        }
+                        TipoLanzador.APP -> { Text("App de Android", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp); Text(l.paquete, color = Muted, fontFamily = Body, fontSize = 12.sp) }
+                        TipoLanzador.WEB -> { Text(l.url, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2); Text(("Pantalla: " + listOf("automática", "horizontal", "vertical")[l.orientacion.coerceIn(0, 2)]).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }
+                        TipoLanzador.PC -> BotonesJugarPc(l.pcKey)
                     }
-                    EnlaceRevista("Quitar") { Biblioteca.cambiar(j.id) { it.sinLanzador(l.clave) }; if (l.tipo == TipoLanzador.ROM) Archivos.quitar(l.clave) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        when (l.tipo) {
+                            TipoLanzador.ROM -> EnlaceRevista("Emulador →") { selector = true }
+                            TipoLanzador.WEB -> EnlaceRevista("Editar →") { editarWeb = true }
+                            else -> {}
+                        }
+                        EnlaceRevista("Quitar") { Biblioteca.cambiar(j.id) { it.sinLanzador(l.clave) }; if (l.tipo == TipoLanzador.ROM) Archivos.quitar(l.clave) }
+                    }
                 }
             }
-        }
-        // Dónde lo dejaste en Hiedra: el estado automático y tus huecos, con su foto (solo si el jugador de Hiedra ya ha guardado alguno)
-        if (j.rom != null && Nucleos.para(j.sistema) != null) EstadosDeFicha(j)
-        val nota = NotaAzabache.de(notas, j)
-        Casilla("En Jonsu", if (NotaAzabache.instalado(ctx)) "Abrir" to { NotaAzabache.abrir(ctx, nota) } else null) {
+            // ---- Tus partidas en Bastet: el estado automático y tus huecos, con su foto (solo si el jugador de Bastet ya ha guardado alguno)
+            if (j.rom != null && Nucleos.para(j.sistema) != null && hayEstados(ctx, j)) { SeccionNumerada(sig(), "Tus partidas en Bastet"); EstadosDeFicha(j) }
+
+            // ---- Tiempo y duración
+            SeccionNumerada(sig(), "Tiempo y duración")
+            DosCasillas(
+                izq = {
+                    Text("TIEMPO", color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.4.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    FitTitle(if (j.msJugados >= 60_000) tiempoDe(j.msJugados) else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold, color = Acento)
+                    Text("JUGADO EN TOTAL", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text("Última vez: ${if (j.ultima > 0) haceCuanto(j.ultima).lowercase() else "todavía no"}", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
+                },
+                der = {
+                    Text("SUELE DURAR", color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.4.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    FitTitle(if (j.durHistoria > 0) tiempoDe(j.durHistoria * 60_000L) else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
+                    Text("LA HISTORIA", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    val mas = listOfNotNull(if (j.durExtras > 0) "con extras ${tiempoDe(j.durExtras * 60_000L)}" else null, if (j.durCompleto > 0) "al completo ${tiempoDe(j.durCompleto * 60_000L)}" else null).joinToString(" · ")
+                    Text(mas.ifBlank { if (!datos?.duracionDe.isNullOrBlank()) "según ${datos!!.duracionDe}" else "sin dato todavía" }, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
+                }
+            )
+            Filete(2.dp)
+
+            // ---- En Jonsu (solo se ve; se valora allí)
+            val nota = NotaAzabache.de(notas, j)
+            SeccionNumerada(sig(), "En Jonsu", if (NotaAzabache.instalado(ctx)) "Abrir" to { NotaAzabache.abrir(ctx, nota) } else null)
             if (nota == null) {
-                // Una línea: lo que hay y qué hacer (antes eran dos que decían lo mismo)
+                // Una línea: lo que hay y qué hacer
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
                     if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(j.id, 0, "")) }
                 }
             } else {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(nota.general.toString(), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 62.sp, letterSpacing = (-2).sp, maxLines = 1, softWrap = false)
-                    Text("/100", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
+                    FitTitle("${nota.general}", 48.sp, 50.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
+                    Text(" /100", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp))
                 }
-                if (nota.resena.isNotBlank()) Text(nota.resena, color = Charcoal, fontFamily = Display, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 6, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+                if (nota.resena.isNotBlank()) Text(nota.resena, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 6, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
             }
-        }
-        val datos = Datos.de[j.id]
-        if (j.durHistoria > 0 || j.durExtras > 0 || j.durCompleto > 0) Casilla("Lo que suele durar") {
-            listOf("Historia" to j.durHistoria, "Con extras" to j.durExtras, "Al completo" to j.durCompleto).filter { it.second > 0 }.forEach { (n, m) ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-                    Text(n.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f))
-                    Text(tiempoDe(m * 60_000L), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
-                }
-            }
-            if (!datos?.duracionDe.isNullOrBlank()) Text("Según ${datos!!.duracionDe}.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
-        }
-        // Datos (como la ficha de Marfil): lo de fuera y lo de aquí, en líneas con puntos guía
-        Casilla("Datos", "Buscar de nuevo" to { scope.launch { buscandoDatos = true; runCatching { Datos.pedir(ctx, j, forzar = true) }; buscandoDatos = false } }) {
+            Spacer(Modifier.height(16.dp))
+            Filete(2.dp)
+
+            // ---- Datos: lo de fuera y lo de aquí, en líneas con puntos guía
+            SeccionNumerada(sig(), "Datos", "Buscar de nuevo" to { scope.launch { buscandoDatos = true; runCatching { Datos.pedir(ctx, j, forzar = true) }; buscandoDatos = false } })
             if (datos != null && !datos.nada) {
                 if (datos.salida.isNotBlank()) MagFact("Salida", datos.salida)
                 if (datos.desarrolladores.isNotEmpty()) MagFact(if (datos.desarrolladores.size == 1) "Estudio" else "Estudios", datos.desarrolladores.joinToString(" · "))
@@ -267,21 +352,18 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                 else -> ""
             }
             if (pie.isNotBlank()) Text(pie, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 6.dp))
-            if (datos != null && datos.resumen.isNotBlank()) Text(datos.resumen, color = Charcoal, fontFamily = Display, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 8, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
+            if (datos != null && datos.resumen.isNotBlank()) Text(datos.resumen, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 21.sp, maxLines = 8, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
+            Spacer(Modifier.height(16.dp))
+            Filete(2.dp)
+
+            // ---- En la nube (solo ROMs)
+            if (j.rom != null) { SeccionNumerada(sig(), "En la nube"); SeccionNube(j) }
+            Spacer(Modifier.height(30.dp))
         }
-        SeccionNube(j)
-        }
-        if (dosColumnas) {
-            Row(Modifier.fillMaxWidth()) {
-                Column(Modifier.weight(0.42f)) { portadaYHoras(); acciones() }
-                Spacer(Modifier.width(36.dp))
-                Column(Modifier.weight(0.58f)) { Filete(2.dp); casillas() }
-            }
-        } else { portadaYHoras(); acciones(); casillas() }
-        Spacer(Modifier.height(20.dp))
     }
     if (editar) DialogoEditarJuego(j, alCerrar = { editar = false }, alHoras = { editar = false; editarHoras = true }, alQuitar = { editar = false; borrar = true })
     if (saga) DialogoSagaDeJuego(j) { saga = false }
+    if (imagenes) SelectorImagenes(j, fondo = imagenesFondo) { imagenes = false }
     if (borrar) AlertDialog(
         onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Quitar «${j.titulo}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
@@ -289,40 +371,13 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
         confirmButton = { TextButton({ Biblioteca.quitar(j.id); borrar = false; alCerrar() }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
         dismissButton = { TextButton({ borrar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
     )
-    if (eligePortada) AlertDialog(
-        onDismissRequest = { eligePortada = false }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Portada de «${j.titulo}»", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                MagLink("SteamGridDB", "Las portadas de los juegos (600×900), con tu API key") { eligePortada = false; sgdb = true }
-                Filete(1.dp, Line)
-                MagLink("Buscar en internet", "Google Imágenes, Pinterest, ArtStation, Newgrounds") { eligePortada = false; buscaInternet = true }
-                Filete(1.dp, Line)
-                MagLink("Elegir de la galería") { eligePortada = false; cambiarPortada.launch("image/*") }
-                if (j.portada.isNotBlank() && File(j.portada).exists()) { Filete(1.dp, Line); MagLink("Encuadrar", "Mueve y amplía la imagen entera dentro del hueco") { eligePortada = false; encuadre = true } }
-                if (j.portada.isNotBlank()) { Filete(1.dp, Line); MagLink("Usar la portada automática") { eligePortada = false; Biblioteca.poner(j.copy(portada = "", zoom = 1f, ox = 0f, oy = 0f)) } }
-            }
-        },
-        confirmButton = {}, dismissButton = { TextButton({ eligePortada = false }) { Text("CERRAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
-    )
-    if (encuadre) DialogoEncuadre(j) { encuadre = false }
-    if (sgdb) DialogoSgdb(j, alCerrar = { sgdb = false }) { url ->
-        sgdb = false
-        scope.launch {
-            val ruta = withContext(Dispatchers.IO) { runCatching { guardarPortadaBytes(ctx, j.id, Internet.descargar(url, "Mozilla/5.0 (Linux; Android 14) Bastet").first, original = true) }.getOrNull() }
-            if (ruta == null) Lanzar.aviso(ctx, "No he podido bajar esa portada") else Biblioteca.cambiar(j.id) { it.copy(portada = ruta, zoom = 1f, ox = 0f, oy = 0f) }
-        }
-    }
-    if (buscaInternet) InternetPicker(
-        initialQuery = j.titulo + (if (j.rom != null) " " + (sistema?.nombre ?: "") + " portada" else " portada"),
-        idJuego = j.id,
-        onPick = { ruta -> Biblioteca.por(j.id)?.let { Biblioteca.poner(it.copy(portada = ruta, zoom = 1f, ox = 0f, oy = 0f)) }; buscaInternet = false },
-        onDismiss = { buscaInternet = false }, original = true
-    )
     if (selector) SelectorEmulador(j.sistema, j) { selector = false }
     if (editarWeb) DialogoWeb(j) { editarWeb = false }
     if (editarHoras) DialogoHoras(j.msJugados, alAceptar = { ms -> Biblioteca.cambiar(j.id) { it.conTotalMs(ms) }; editarHoras = false }, alCerrar = { editarHoras = false })
 }
+
+/** ¿Ha guardado ya el jugador de Bastet algún estado de este juego (el automático o un hueco)? */
+fun hayEstados(c: Context, j: Juego): Boolean = Estados.huecos.any { Estados.meta(c, j.id, it) != null }
 
 /** Un cuadro con una línea de texto para escribir. */
 @Composable
@@ -505,7 +560,7 @@ private fun EstadosDeFicha(j: Juego) {
         } }
     }
     if (estados.isEmpty()) return
-    Casilla("Tus partidas en Bastet") {
+    Column(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             estados.forEach { (h, m, mini) ->
                 Column(Modifier.width(132.dp)) {
@@ -625,8 +680,6 @@ private fun SeccionNube(j: Juego) {
     val carpeta = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { u -> if (u != null) NubeP.ponCarpeta(ctx, j.sistema, u) }
     var bajar by remember(j.id) { mutableStateOf(false) }
     if (bajar) DialogoBajarRom(j, jugar = false) { bajar = false; nube = null }
-    Spacer(Modifier.height(16.dp))
-    Antetitulo("En la nube", Modifier.padding(bottom = 8.dp), tam = 12.sp, conCuadro = false)
     if (!listo) {
         Cuerpo("Para llevarte la partida a otro móvil: vincula tu cuenta de Atrio y conecta tu kDrive (Ajustes). Bastet sube el guardado al volver de jugar y baja el último antes de jugar.", tam = 12)
     } else {

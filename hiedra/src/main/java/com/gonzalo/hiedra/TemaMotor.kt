@@ -115,8 +115,6 @@ object Modo {
 }
 
 object Skin {
-    /** Hiedra es siempre la revista (papel y tinta): las pantallas del estudio lo preguntan. */
-    val revista: Boolean get() = true
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
     var palette by mutableStateOf(PALETTES.first { it.id == "revista" })
@@ -129,6 +127,9 @@ object Skin {
     var escala by mutableStateOf(100)
     /** Colores invertidos: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene. */
     var invertido by mutableStateOf(false)
+    /** Hiedra es siempre la revista (papel y tinta): las pantallas del estudio lo preguntan. */
+    val revista: Boolean get() = true
+
     /** Colores de Atrio (los que tienes puestos allí) en lugar de los de la paleta de Hiedra. */
     var origenAtrio by mutableStateOf(true)
     /** Colores elegidos a mano, como «A tu manera» de Atrio (0 = automático): por encima de todo lo demás. */
@@ -248,10 +249,10 @@ object Skin {
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
     }
 
-    /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros Hiedras gana la más reciente. */
+    /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros Hiedraes gana la más reciente. */
     var ajustesAt = 0L
 
-    /** Guarda la apariencia (y la marca como cambiada ahora, para que viaje a tus otros Hiedras). */
+    /** Guarda la apariencia (y la marca como cambiada ahora, para que viaje a tus otros Hiedraes). */
     fun guardar(c: Context) {
         ajustesAt = System.currentTimeMillis()
         persistir(c)
@@ -264,7 +265,7 @@ object Skin {
         .put("invertido", invertido).put("origenAtrio", origenAtrio).put("modo", Modo.eleccion)
         .put("fondoId", fondoId).put("fondoPropio", fondoPropio).put("tintaPropia", tintaPropia).put("acentoPropio", acentoPropio))
 
-    /** Aplica la apariencia de otro de tus Hiedras si es más nueva que la de aquí. Devuelve true si ha cambiado algo. */
+    /** Aplica la apariencia de otro de tus Hiedraes si es más nueva que la de aquí. Devuelve true si ha cambiado algo. */
     fun aplicarAjustes(c: Context, o: JSONObject): Boolean {
         val at = o.optLong("at", 0L)
         if (at <= ajustesAt) return false
@@ -298,8 +299,33 @@ val Line: Color get() = Skin.tones.cLine
 val Charcoal: Color get() = Skin.tones.cInk
 val Edge: Color get() = Skin.tones.cEdge
 val Muted: Color get() = Skin.tones.cMuted
-/** El acento (el coral de Vitrina). */
-val Acento: Color get() = Color(Skin.tones.general)
+/** El acento tal cual lo eliges (el de la paleta o «A tu manera»): para los bloques de color y el icono. */
+val AcentoBloque: Color get() = Color(Skin.tones.general)
+/**
+ * El acento legible: el elegido, aclarado (u oscurecido) lo justo para leerse sobre la página con contraste AA (4,5:1).
+ * Es el que llevan las letras, las cifras grandes, la pestaña activa y el botón principal; con un acento que ya se lee, es el mismo.
+ */
+val Acento: Color get() = acentoLegible(AcentoBloque, Paper, Charcoal)
+/** Texto sobre un bloque del acento elegido ([AcentoBloque]). */
+val SobreBloque: Color get() = if (AcentoBloque.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
+
+/** Contraste WCAG entre dos colores (1 a 21). */
+fun contraste(a: Color, b: Color): Float {
+    val la = a.luminance(); val lb = b.luminance()
+    return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+}
+
+private var cacheLegible = Triple(0L, 0L, 0L) to Color.Unspecified
+/** [c] mezclado poco a poco con [hacia] (la tinta: clara de noche, oscura de día) hasta leerse sobre [fondo] con 4,5:1. */
+fun acentoLegible(c: Color, fondo: Color, hacia: Color, minimo: Float = 4.5f): Color {
+    val k = Triple(c.value.toLong(), fondo.value.toLong(), hacia.value.toLong())
+    val cc = cacheLegible
+    if (cc.first == k) return cc.second
+    var x = c; var t = 0f
+    while (contraste(x, fondo) < minimo && t < 1f) { t += 0.04f; x = androidx.compose.ui.graphics.lerp(c, hacia, t.coerceAtMost(1f)) }
+    cacheLegible = k to x
+    return x
+}
 val Dorado: Color get() = Color(Skin.tones.gold)
 /** Texto sobre el acento: blanco o tinta oscura, el que se lea. */
 val SobreAcento: Color get() = if (Acento.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
@@ -327,7 +353,8 @@ val AtrioDisplay = FontFamily(
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 val VitrinaDisplay = FontFamily(
     listOf(400, 500, 600, 700, 800).map { w ->
-        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(if (w >= 700) 92f else 100f)))
+        // opsz 48: el tamaño óptico de titular (el de serie, 96, es el de cartel, con remates de distinta altura que se ven irregulares); ancho normal
+        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(100f), FontVariation.Setting("opsz", 48f)))
     }
 )
 
@@ -370,3 +397,9 @@ fun HiedraTheme(content: @Composable () -> Unit) {
         }
     }
 }
+
+// ───── dirección C (editorial moderna) ─────
+/** La letra de la dirección C: Bricolage Grotesque (grotesca), para la cabecera, los titulares y las cifras grandes. La serif queda para citas. */
+val Grotesca: FontFamily get() = VitrinaDisplay
+/** El segundo color de los bloques de cifras de la dirección C (el azul de las maquetas). */
+val Bloque2: Color get() = Color(0xFF1F3A5F)

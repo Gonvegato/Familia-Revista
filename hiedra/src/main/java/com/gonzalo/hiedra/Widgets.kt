@@ -154,7 +154,14 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     val gris = base?.let { mezcla(tinta, it, 0.4f) } ?: tonos.cMuted.toArgb()
     val linea = base?.let { mezcla(tinta, it, 0.78f) } ?: tonos.cLine.toArgb()
     val arena = base?.let { mezcla(it, tinta, 0.1f) } ?: tonos.cSand.toArgb()
-    val acento = acentoPropio?.let { 0xFF000000.toInt() or it } ?: tonos.cGeneral().toArgb().let { a -> if (base != null && kotlin.math.abs(lum(a) - lum(base)) < 0.22f) tinta else a }
+    /** El acento tal cual (el elegido). */
+    val acentoBloque = acentoPropio?.let { 0xFF000000.toInt() or it } ?: tonos.cGeneral().toArgb().let { a -> if (base != null && kotlin.math.abs(lum(a) - lum(base)) < 0.22f) tinta else a }
+    /** El acento legible sobre el papel del widget (como en la app: aclarado u oscurecido lo justo para el 4,5:1). */
+    val acento = acentoLegible(androidx.compose.ui.graphics.Color(acentoBloque), androidx.compose.ui.graphics.Color(papel), androidx.compose.ui.graphics.Color(tinta)).toArgb()
+    /** El acento sobre un bloque de tinta (la cabecera). */
+    val acentoSobreTinta = acentoLegible(androidx.compose.ui.graphics.Color(acentoBloque), androidx.compose.ui.graphics.Color(tinta), androidx.compose.ui.graphics.Color(papel)).toArgb()
+    /** El acento sobre lo oscuro (la marca de noche, sobre el fondo de pantalla). */
+    val acentoClaro = acentoLegible(androidx.compose.ui.graphics.Color(acentoBloque), androidx.compose.ui.graphics.Color(0xFF050404), androidx.compose.ui.graphics.Color.White).toArgb()
     /** El acento sobre una foto oscura. */
     val acentoFoto = Skin.tonosPara(true).cGeneral().toArgb()
     val radio = 22f
@@ -170,10 +177,11 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
 
     /** Recorta las esquinas (suaves, con antialias) y traza el reborde: una línea fina del color del texto, metida hacia dentro. */
     fun terminar() {
-        // Dentro de la app el reborde fino va más metido: más aire entre el borde y el contenido
-        val m = if (dentro) 9f else 6f
-        c.drawRoundRect(RectF(m, m, w - m, h - m), radio - m, radio - m, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE; strokeWidth = 1.1f; color = reborde ?: tinta })
+        // Dirección C: sin el reborde fino de la revista (los bloques ya separan); solo una línea si se pide (sobre una foto)
+        reborde?.let { col ->
+            val m = if (dentro) 9f else 6f
+            c.drawRoundRect(RectF(m, m, w - m, h - m), radio - m, radio - m, Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.1f; color = col })
+        }
         val p = Path().apply { addRoundRect(RectF(0f, 0f, w, h), radio, radio, Path.Direction.CW); fillType = Path.FillType.INVERSE_WINDING }
         c.drawPath(p, Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR) })
     }
@@ -196,7 +204,7 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
         val ancho = p.measureText(t) + 2 * (alto * 0.55f)
         val x0 = if (derecha) x - ancho else x
         val r = RectF(x0, top, x0 + ancho, top + alto)
-        c.drawRoundRect(r, alto / 2, alto / 2, lleno(color))
+        c.drawRect(r, lleno(color))
         val fm = p.fontMetrics
         c.drawText(t, r.left + alto * 0.55f, r.centerY() - (fm.ascent + fm.descent) / 2, p)
         return r
@@ -240,12 +248,12 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
 
     /** Cabecera de sección: el cuadradito de acento y el antetítulo. */
     fun seccion(t: String, x: Float, y: Float, ancho: Float, color: Int = tinta, cuadro: Int = acento) {
-        c.drawRect(x, y + 1.6f, x + 7.4f, y + 9f, lleno(cuadro))
-        ante(t, x + 12f, y, ancho - 12f, color)
+        // Dirección C: sin cuadradito; el antetítulo en el acento (o en el color que se pida, sobre una foto)
+        ante(t, x, y, ancho, if (color == tinta) cuadro else color)
     }
 
     /** Una portada recortada (centrada) con esquinas redondas; sin imagen, una portada de letra. */
-    fun portada(img: Bitmap?, r: RectF, nombre: String, rad: Float = 9f, filo: Boolean = true, soloInicial: Boolean = false) {
+    fun portada(img: Bitmap?, r: RectF, nombre: String, rad: Float = 0f, filo: Boolean = true, soloInicial: Boolean = false) {
         if (img == null || img.width <= 0) { if (soloInicial) tapa(r, "", rad, nombre) else tapa(r, nombre, rad); return }
         val s = max(r.width() / img.width, r.height() / img.height)
         val m = Matrix().apply { setScale(s, s); postTranslate(r.left + (r.width() - img.width * s) / 2, r.top + (r.height() - img.height * s) / 2) }
@@ -255,7 +263,7 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     }
 
     /** Portada de letra (la de los juegos sin imagen): la inicial grande en acento y el nombre. Con [inicial] y sin nombre (a sangre, con texto encima), solo la inicial, tenue. */
-    fun tapa(r: RectF, nombre: String, rad: Float = 9f, inicial: String = nombre) {
+    fun tapa(r: RectF, nombre: String, rad: Float = 0f, inicial: String = nombre) {
         c.drawRoundRect(r, rad, rad, lleno(arena))
         val ini = inicial.trim().firstOrNull()?.uppercase() ?: "·"
         val tenue = nombre.isBlank()
@@ -323,7 +331,8 @@ object Widgets {
     @Volatile private var letras: Letras? = null
     private val bajadas = HashMap<String, Typeface>()
 
-    private fun porDefecto(ctx: Context) = Letras(fuente(ctx, R.font.display_semibold), fuente(ctx, R.font.display_italic), fuente(ctx, R.font.body_bold), fuente(ctx, R.font.body_medium))
+    // Dirección C: los titulares de los widgets, en grotesca (Bricolage, muy negra) como la cabecera de la app
+    private fun porDefecto(ctx: Context) = Letras(vitrina(ctx, 800) ?: fuente(ctx, R.font.display_semibold), fuente(ctx, R.font.display_italic), fuente(ctx, R.font.body_bold), fuente(ctx, R.font.body_medium))
 
     /** Las letras ya preparadas (las del tema) o, si aún no se han preparado, las que vienen con la app. */
     fun letrasActuales(ctx: Context): Letras = letras ?: porDefecto(ctx)
@@ -550,7 +559,7 @@ object Widgets {
     /** La imagen de un juego a unos [lado] píxeles: la que elegiste, el icono de la app o la caja de libretro; si no llega, null (portada de letra). */
     suspend fun imagen(ctx: Context, j: Juego, lado: Int): Bitmap? = withContext(Dispatchers.IO) {
         try {
-            if (j.portada.isNotBlank()) decodificar(j.portada, if (j.encuadrada) lado * 2 else lado)?.let { return@withContext if (j.encuadrada) recortarEncuadre(it, j.zoom, j.ox, j.oy) else it }
+            if (j.portada.isNotBlank()) decodificar(j.portada, if (j.encuadrada) lado * 2 else lado)?.let { return@withContext if (j.encuadrada) recortarEncuadre(it, j.encPortada) else it }
             if (j.portadaUrl.isNotBlank()) {
                 val b = withTimeoutOrNull(4_500) {
                     val r = ctx.imageLoader.execute(ImageRequest.Builder(ctx).data(j.portadaUrl).allowHardware(false).size(lado).build())
@@ -613,7 +622,7 @@ object Widgets {
                 compacto && propio -> {
                     fondo()
                     val m = if (min(w, h) < 120f) 11f else pad
-                    if (min(w, h) < 120f) portada(img, RectF(m, m, w - m, h - m), e.titulo, 10f)
+                    if (min(w, h) < 120f) portada(img, RectF(m, m, w - m, h - m), e.titulo, 0f)
                     else {
                         val ch = h * 0.56f
                         portada(img, RectF(m, m, w - m, m + ch), e.titulo)
@@ -707,7 +716,7 @@ object Widgets {
                 val gap = 5f
                 val x = pad + slot * k + gap
                 val cw = min(slot - 2 * gap, ch * 0.68f)
-                portada(imgs[k], RectF(x, top, x + cw, top + ch), e.titulo, 8f)
+                portada(imgs[k], RectF(x, top, x + cw, top + ch), e.titulo, 0f)
                 if (bajo) {
                     val tx = x + cw + 8f
                     val tw = slot - 2 * gap - cw - 8f
@@ -830,22 +839,20 @@ object Widgets {
             val color = if (noche) 0xFFF6F1E7.toInt() else tinta
             val sombra = if (noche) 0x99000000.toInt() else 0x55FFFFFF
             val pie = if (h >= 84f) 16f else 0f
-            val p = tp(fTitular, 10f, color, -0.03f)
-            val ancho = p.measureText("BASTET")
-            val cuadro = 0.16f
-            var s = min((w - 8f) / (ancho / 10f * (1f + cuadro)), (h - pie - 4f) / 0.95f)
+            val p = tp(fTitular, 10f, color, -0.04f)
+            val ancho = p.measureText("BASTET.")
+            var s = min((w - 8f) / (ancho / 10f), (h - pie - 4f) / 0.95f)
             s = s.coerceAtLeast(10f)
-            val tpa = tp(fTitular, s, color, -0.03f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
+            val tpa = tp(fTitular, s, color, -0.04f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
             val fm = tpa.fontMetrics
             val tw = tpa.measureText("BASTET")
-            val total = tw + s * cuadro
+            val total = tpa.measureText("BASTET.")
             val x = (w - total) / 2
             val capH = s * 0.72f
             val base = (h - pie) / 2 + capH / 2
             c.drawText("BASTET", x, base, tpa)
-            // El punto de la revista: un cuadradito de acento
-            val q = s * 0.12f
-            c.drawRect(x + tw + s * 0.03f, base - q, x + tw + s * 0.03f + q, base, lleno(acento).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
+            // «BASTET.»: el punto, en el acento (la cabecera de la dirección C)
+            c.drawText(".", x + tw, base, tp(fTitular, s, if (noche) acentoClaro else acento, -0.04f).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
             if (pie > 0f) {
                 val l = capa(("Tus juegos · $fecha").uppercase(ES), tp(fNegrita, 8.5f, color, 0.2f).apply { setShadowLayer(2f, 0f, 0.6f, sombra) }, w - 8f, 1, 1f, Layout.Alignment.ALIGN_CENTER)
                 pon(l, 4f, min(h - l.height - 2f, base + fm.descent * 0.4f + 2f))
@@ -859,36 +866,35 @@ object Widgets {
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
         return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Bastet"))) {
-            fondo()
+            // Dirección C: la cabecera de la portada, en un bloque de tinta con el nombre del color del papel
+            fondo(tinta)
             val pad = if (dentro) padDe(h) else if (h < 90f) 12f else 16f
             // Lo de debajo del nombre, según el sitio: la línea del número y la fecha; y la entradilla si cabe
             val conLinea = h >= 70f
             val conEntradilla = h >= 140f
             val bajo = (if (conLinea) 22f else 0f) + (if (conEntradilla) 24f else 0f)
             val alto = h - 2 * pad - bajo
-            val p = tp(fTitular, 10f, tinta, -0.03f)
-            val s = min((w - 2 * pad) / (p.measureText("BASTET") / 10f), alto / 0.78f).coerceAtLeast(10f)
-            val tpa = tp(fTitular, s, tinta, -0.03f)
+            val p = tp(fTitular, 10f, papel, -0.04f)
+            val s = min((w - 2 * pad) / (p.measureText("BASTET.") / 10f), alto / 0.78f).coerceAtLeast(10f)
+            val tpa = tp(fTitular, s, papel, -0.04f)
             val capH = s * 0.72f
             // Todo el bloque centrado en el widget (el nombre se mide por sus mayúsculas, no por la caja de la letra)
             val bloque = capH + s * 0.08f + 4f + bajo
             val base = max(pad, (h - bloque) / 2) + capH
-            val tw = tpa.measureText("BASTET")
-            c.drawText("BASTET", (w - tw) / 2, base, tpa)
+            c.drawText("BASTET", pad, base, tpa)
+            c.drawText(".", pad + tpa.measureText("BASTET"), base, tp(fTitular, s, acentoSobreTinta, -0.04f))
             var y = base + s * 0.08f + 4f
             if (conLinea) {
-                c.drawRect(pad, y, w - pad, y + 1.6f, lleno(tinta))
-                y += 5f
+                c.drawRect(pad, y, w - pad, y + 2f, lleno(papel))
+                y += 6f
                 val iz = "Nº ${hoy.dayOfYear}"
-                ante(iz, pad, y, w / 2, tinta, 8.5f)
+                ante(iz, pad, y, w / 2, papel, 8.5f)
                 val sitio = w - 2 * pad - anchoAnte(iz, 8.5f) - 12f
                 val corta = "${hoy.dayOfWeek.getDisplayName(TextStyle.SHORT, ES).trimEnd('.')} ${hoy.dayOfMonth} ${hoy.month.getDisplayName(TextStyle.SHORT, ES).trimEnd('.')}"
-                ante(if (anchoAnte(fecha, 8.5f) > sitio) corta else fecha, pad + anchoAnte(iz, 8.5f) + 12f, y, w - 2 * pad - anchoAnte(iz, 8.5f) - 12f, tinta, 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
+                ante(if (anchoAnte(fecha, 8.5f) > sitio) corta else fecha, pad + anchoAnte(iz, 8.5f) + 12f, y, w - 2 * pad - anchoAnte(iz, 8.5f) - 12f, papel, 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
                 y += 14f
-                c.drawRect(pad, y, w - pad, y + 0.6f, lleno(tinta))
-                y += 6f
             }
-            if (conEntradilla) pon(capa("Tus juegos, al día", tp(fCursiva, 13f, gris), w - 2 * pad, 1), pad, y)
+            if (conEntradilla) pon(capa("Tus juegos, al día", tp(fCursiva, 13f, (papel and 0x00FFFFFF) or 0xCC000000.toInt()), w - 2 * pad, 1), pad, y)
         }
     }
 }

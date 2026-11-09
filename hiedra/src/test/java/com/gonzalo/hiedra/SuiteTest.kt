@@ -118,9 +118,10 @@ class SuiteTest {
     }
 
     @Test fun elRecorteDelEncuadreSigueElHueco() {
-        val b = android.graphics.Bitmap.createBitmap(300, 400, android.graphics.Bitmap.Config.ARGB_8888)
-        assertSame("sin encuadre, la misma imagen", b, recortarEncuadre(b, 1f, 0f, 0f))
-        val r = recortarEncuadre(b, 2f, 0f, 0f)
-        assertEquals("ampliada al doble, se ve la mitad", 150, r.width); assertEquals(200, r.height)
+        // (desde 0.8.0, el encuadre es el de Seshat: el punto del centro y el zoom; el hueco de los widgets, 2:3)
+        val b = android.graphics.Bitmap.createBitmap(600, 900, android.graphics.Bitmap.Config.ARGB_8888)
+        assertSame("sin encuadre, la misma imagen", b, recortarEncuadre(b, Encuadre()))
+        val r = recortarEncuadre(b, Encuadre(2f, 0.5f, 0.5f))
+        assertEquals("ampliada al doble, se ve la mitad", 300f, r.width.toFloat(), 2f); assertEquals(450f, r.height.toFloat(), 2f)
     }
 }

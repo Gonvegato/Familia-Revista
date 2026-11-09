@@ -153,7 +153,7 @@ class AjustesCuentaTest {
         assertTrue(otro.sincroniza().ok)
         // Este móvil tenía lo suyo de antes (con la versión que aún no lo subía): Pendiente y Pasado por otro orden, su emulador de la GBA
         // (en el formato de antes, todos juntos) y una opción del núcleo de la GBA
-        ctx.getSharedPreferences("hiedra_orden", Context.MODE_PRIVATE).edit().putString("PENDIENTE", "Jugados").putString("PASADO", "Recientes").putString("JUGANDO", "Nombre").commit()
+        ctx.getSharedPreferences("hiedra_orden", Context.MODE_PRIVATE).edit().putString("PENDIENTE", "Duracion").putString("PASADO", "Recientes").putString("JUGANDO", "Nombre").commit()
         ctx.getSharedPreferences("hiedra_ajustes", Context.MODE_PRIVATE).edit().putString("emus", JSONObject().put("gba", "mGBA").toString()).putBoolean("libretro", false).commit()
         ctx.getSharedPreferences("hiedra_nucleos", Context.MODE_PRIVATE).edit().putString("op:gba:mgba_solar_sensor_level", "3").commit()
         ctx.getSharedPreferences("espejo_cuenta", Context.MODE_PRIVATE).edit().apply { listOf("hiedra_orden", "hiedra_ajustes", "hiedra_nucleos").forEach { putLong("hora:$it", antesAqui) } }.commit()
@@ -163,14 +163,14 @@ class AjustesCuentaTest {
         arranca()
         // En la cuenta, lo de los dos: lo que solo tenía uno, tal cual; lo que tenían los dos, lo que se cambió más tarde
         val orden = enLaCuenta("hiedra_orden")!!
-        assertEquals("de aquí, más nuevo que lo de allí", "Jugados", orden.texto("PENDIENTE"))
+        assertEquals("de aquí, más nuevo que lo de allí", "Duracion", orden.texto("PENDIENTE"))
         assertEquals("de allí, más nuevo que lo de aquí", "Nombre", orden.texto("PASADO"))
         assertEquals("solo lo tenía este", "Nombre", orden.texto("JUGANDO"))
         enLaCuenta("hiedra_ajustes")!!.let { n -> assertEquals("mGBA", n.texto("emu:gba")); assertEquals("Snes9x", n.texto("emu:snes")); assertEquals(false, n["libretro"]) }
         enLaCuenta("hiedra_nucleos")!!.let { n -> assertEquals("3", n.texto("op:gba:mgba_solar_sensor_level")); assertEquals("Light", n.texto("op:snes:snes9x_overclock")) }
         // Y aquí también lo de los dos
         espera("aquí, lo del otro") { OrdenGuardado.de(ctx, Estado.PASADO) == Orden.Nombre && Ajustes.emuladorPorSistema == mapOf("gba" to "mGBA", "snes" to "Snes9x") }
-        assertEquals(Orden.Jugados, OrdenGuardado.de(ctx, Estado.PENDIENTE))
+        assertEquals(Orden.Duracion, OrdenGuardado.de(ctx, Estado.PENDIENTE))
         assertEquals(mapOf("snes9x_overclock" to "Light"), Nucleos.opcionesPropias(ctx, "snes"))
         assertTrue("el formato de antes ya no está", !EspejoCuenta.base(ctx, Ajustes.GRUPO).contains("emus"))
         // Lo que se cambia sin cuenta (o antes de abrirla) también llega, con su hora

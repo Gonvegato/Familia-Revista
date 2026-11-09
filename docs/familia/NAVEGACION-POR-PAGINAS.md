@@ -1,4 +1,4 @@
-# Navegación por páginas (hecho en Seshat 0.16.1, pendiente en las demás)
+# Navegación por páginas (hecho en Seshat 0.16.1 y Bastet 0.8.0; pendiente en las demás)
 
 Lo que pidió Gonzalo: la pantalla de entrada es la **portada**, y las secciones (leyendo, pendientes…) no abren submenús ni otra pantalla:
 son **páginas a la derecha** de la portada, como pasar hojas.
@@ -28,7 +28,7 @@ son **páginas a la derecha** de la portada, como pasar hojas.
 | App | Páginas |
 |---|---|
 | Seshat | Portada · Leyendo · Pendientes · Leídos · Abandonados · Autores · Sagas · Escritos (hecho) |
-| Bastet | Portada · Jugando · Pendientes · Pasados · Abandonados · Sagas · Sistemas… |
+| Bastet | Portada · Jugando · Pendientes · Pasados · Abandonados · Sagas · Sistemas (hecho; Tu PC y Ajustes, encima) |
 | Thot | Portada · Escribiendo · En pausa · Terminadas · Archivo |
 | Jonsu | Portada · las secciones de su diario |
 | Hathor | Portada · Viendo · Pendientes · Vistas · Próximos… |
@@ -87,3 +87,22 @@ Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSo
 - Paspartú: la portada sobre una imagen o un color va en `PortadaSobreFondo`: marco liso del color de la página (token `Paper`), ~5,4 % del
   ancho (4–14 dp); si la portada es casi blanca (luminancia > 0,85), en la tinta (`Charcoal`). Sombra por fuera.
 - Velo: sobre una foto con botones encima, `veloArriba()` (negro 80 % → transparente en 110 dp) y los botones en crema.
+
+## Lo aprendido al pasarlo a Bastet (0.8.0; para Thot, Jonsu, Hathor y Nut)
+
+- **Copiar lo común de Seshat tal cual** (`TemaMotor`, `Revista.kt`, `UiBase.kt`, `Encuadre.kt`, la semana y el reto) con las sustituciones de
+  nombre, y cambiar `.clickable` por lo que la app use para el mando (`tocable` en Bastet: enfoca, marca y responde a A/Enter).
+- **Lo que solo existe en una app se queda, con la estética nueva**: en Bastet, los menús pequeños PC · Emulación · Android · Web (en bloques),
+  el PC en directo (va al cartel), la tarjeta del PC, «Editar portada» (destacado elegido, estantes y «Mis elegidos»), el mando (A juega, X
+  ficha) y el jugador interno. Si una sección era una pantalla con cabecera propia (Sistemas), se le da un modo `enPagina`.
+- **Lo que no es página va encima** (Tu PC, Ajustes), con su propio Atrás; `go=<sección>` en el intent lleva a la página o a lo de encima.
+- **El estado de fuera de la app no se pierde**: un `Destino` sigue sirviendo para pedir páginas (`paginaDe(d)`; -1 si va encima).
+- **Acento legible** (`acentoLegible`): el elegido, mezclado con la tinta lo justo para leerse sobre la página con 4,5:1. Es el que llevan
+  letras, cifras, la pestaña activa y el botón principal; el de serie (`AcentoBloque`) queda para los bloques de color y el icono. Sobre la
+  cabecera (tinta) y sobre lo oscuro del cartel se calcula aparte, contra ese fondo. Con un acento que ya se lee, no cambia nada.
+- **Los nombres de clases chocan**: antes de crear una clase (p. ej. `DatosJuego` para la semana) mirar que no exista ya en la app.
+- **El encuadre de antes (en la cuenta, igual en todos)** pasa una vez a ser el de este dispositivo (`Encuadres.migrarDeAntes`); la cuenta
+  no se toca, así que una versión vieja en otro móvil sigue viendo el suyo.
+- **Órdenes**: solo los que dicen algo en cada sección; un orden guardado que ya no vale allí vuelve al de serie sin romper nada.
+- Las capturas de cada app nueva, en una prueba aparte con sus colores «A tu manera» (normal, noche y letra 1,3) y leídas todas antes de dar
+  nada por bueno.

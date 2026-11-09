@@ -39,7 +39,7 @@ private class EstadoConsola(val id: String, val s: Sistema, val n: Nucleos.Nucle
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit) {
+fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit, enPagina: Boolean = false) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val todos = Biblioteca.juegos.toList()
@@ -73,13 +73,22 @@ fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit) {
     val util = minOf(anchoPantalla.dp - margen * 2, 1180.dp) - 2.dp
     val porFila = maxOf(2, (util / 190.dp).toInt())
     val anchoCasilla = (util - 12.dp * (porFila - 1)) / porFila
-    LazyColumn(Modifier.fillMaxSize().background(Paper).statusBarsPadding(), contentPadding = PaddingValues(start = margen, end = margen, bottom = 40.dp)) {
+    // Como página de Bastet (enPagina), sin cabecera propia: la cabecera y las pestañas son las de la app
+    LazyColumn(Modifier.fillMaxSize().background(Paper).let { if (enPagina) it else it.statusBarsPadding() }, contentPadding = PaddingValues(start = margen, end = margen, bottom = 40.dp)) {
         item {
             Column(Modifier.widthIn(max = 1180.dp)) {
-                RevistaTopBar(alVolver, "Bastet") { EnlaceRevista("+ Carpeta", acento = true, onClick = alAnadirCarpeta) }
-                Antetitulo("Sección · ${Catalogo.sistemas.size} sistemas", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
-                FitTitle("Sistemas", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-                Filete(3.dp)
+                if (enPagina) {
+                    Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Antetitulo("Sistemas · ${conteo.size} con juegos", Modifier.weight(1f), color = Acento, conCuadro = false)
+                        EnlaceRevista("+ Carpeta", acento = true, onClick = alAnadirCarpeta)
+                    }
+                    Filete(2.dp, modifier = Modifier.padding(top = 8.dp))
+                } else {
+                    RevistaTopBar(alVolver, "Bastet") { EnlaceRevista("+ Carpeta", acento = true, onClick = alAnadirCarpeta) }
+                    Antetitulo("Sección · ${Catalogo.sistemas.size} sistemas", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
+                    FitTitle("Sistemas", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
+                    Filete(3.dp)
+                }
                 Text("Bastet juega ella misma a ${Nucleos.principales.size} consolas: baja el núcleo la primera vez, guarda donde lo dejas al salir y lo sube a tu nube para seguir en otro móvil. " +
                     "Para el resto, abre los emuladores que ya tienes instalados.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(vertical = 12.dp))
                 Filete(2.dp)
@@ -98,7 +107,7 @@ fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit) {
                 if (Biblioteca.carpetas.isEmpty()) Text("Todavía no has añadido ninguna. Añade la carpeta donde guardas tus ROMs y Bastet la recorre.", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
                 else Biblioteca.carpetas.forEach { c ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(c.nombre, color = Charcoal, fontFamily = Display, fontSize = 19.sp, modifier = Modifier.weight(1f))
+                        Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
                         Text("QUITAR", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, modifier = Modifier.tocable { Biblioteca.carpetas.remove(c); Biblioteca.guardar() }.padding(8.dp))
                     }
                 }
@@ -148,11 +157,11 @@ private fun CasillaConsola(e: EstadoConsola, ancho: Dp, alAbrir: () -> Unit) {
         Box(Modifier.fillMaxWidth().height(5.dp).background(e.s.color))
         Column(Modifier.padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)) {
             Row(verticalAlignment = Alignment.Top) {
-                Text(e.s.corto, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp, letterSpacing = (-0.5).sp, maxLines = 1, modifier = Modifier.weight(1f))
+                Text(e.s.corto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 32.sp, letterSpacing = 0.sp, maxLines = 1, modifier = Modifier.weight(1f))
                 if (e.n.pruebas) Text("PRUEBAS", color = Acento, fontFamily = Body, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp,
                     modifier = Modifier.padding(top = 6.dp).border(1.dp, Acento, esquina(2.dp)).padding(horizontal = 4.dp, vertical = 1.dp))
             }
-            Text(e.s.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 16.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+            Text(e.s.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 16.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
             Text(e.n.nombre.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, modifier = Modifier.padding(top = 6.dp))
             Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (e.bajado && !e.faltaBios) { Box(Modifier.size(6.dp).clip(esquina(3.dp)).background(Color(0xFF3E8E5A))); Spacer(Modifier.width(5.dp)) }

@@ -19,7 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-enum class Orden(val nombre: String) { Recientes("Recientes"), Nombre("Nombre"), Jugados("Más jugados"), Anadidos("Añadidos"), Pasados("Cuándo lo pasaste") }
+enum class Orden(val nombre: String) { Recientes("Última partida"), Nombre("Nombre A-Z"), Jugados("Más jugados"), Anadidos("Último añadido"), Pasados("Cuándo lo pasaste"), Duracion("Más cortos") }
 
 /** La casilla de búsqueda de la revista: «Buscar» en versalitas y el texto en cursiva sobre un filete. */
 @Composable

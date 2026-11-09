@@ -86,7 +86,9 @@ class WidgetsTest {
         TemaAtrio.tonos = TemaAtrio.tonosDe(listOf(0xFFF3EEE4.toInt(), 0xFFFAF6EE.toInt(), 0xFF15120F.toInt(), 0xFF2F5D8A.toInt(), 0xFFE9E2D5.toInt(), 0xFFD9D0C1.toInt(), 0xFFBDB2A0.toInt(), 0xFF7C746A.toInt(), 0xFFB8861B.toInt()))
         Skin.origenAtrio = true; Skin.invertido = true
         val a = Hoja(ctx, 100f, 100f, false, 1f)
-        assertEquals(0xFF15120F.toInt(), a.papel); assertEquals(0xFFF3EEE4.toInt(), a.tinta); assertEquals(0xFF2F5D8A.toInt(), a.acento)
+        assertEquals(0xFF15120F.toInt(), a.papel); assertEquals(0xFFF3EEE4.toInt(), a.tinta); assertEquals(0xFF2F5D8A.toInt(), a.acentoBloque)
+        // (el azul sobre el papel oscuro no se lee: el acento de las letras se aclara hasta el 4,5:1)
+        assertTrue(contraste(androidx.compose.ui.graphics.Color(a.acento), androidx.compose.ui.graphics.Color(a.papel)) >= 4.5f)
         assertEquals(a.papel, Hoja(ctx, 100f, 100f, true, 1f).papel)
         assertEquals(false, Widgets.noche())
         Skin.origenAtrio = false; Skin.invertido = false
@@ -133,8 +135,9 @@ class WidgetsTest {
         Skin.origenAtrio = false; Skin.invertido = false
         val pag = runBlocking { Widgets.componer(ctx, WTipo.MARCA_PAPEL, 1, 264f, 132f) }
         val bm = pag.bitmap(ctx, 264f, 132f, false, 1f)
-        val papel = Hoja(ctx, 10f, 10f, false, 1f).papel
-        assertEquals(papel, bm.getPixel(20, 20))
+        // Dirección C (0.8.0): la cabecera va en un bloque de tinta, con el nombre del color del papel
+        val tinta = Hoja(ctx, 10f, 10f, false, 1f).tinta
+        assertEquals(tinta, bm.getPixel(4, 66))
         val sola = runBlocking { Widgets.componer(ctx, WTipo.MARCA, 1, 264f, 132f) }.bitmap(ctx, 264f, 132f, false, 1f)
         assertEquals("la marca sola es transparente", 0, sola.getPixel(2, 2) ushr 24)
     }

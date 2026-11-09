@@ -30,14 +30,26 @@ fun iniciar(c: Context) {
 private val entraHoja = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it / 10 } + fadeIn(tween(220))
 private val saleHoja = slideOutVertically(tween(200, easing = FastOutLinearInEasing)) { it / 14 } + fadeOut(tween(160))
 
-/** Dónde estás: la portada y sus secciones (se llega a ellas desde el menú de la portada, como en Atrio). Sistemas se abre desde Ajustes. */
+/** Dónde estás: la portada y sus secciones (páginas de [PantPrincipal], en el orden de [PAGINAS]), Ajustes y Tu PC (encima). */
 enum class Destino { Portada, Jugando, Pendiente, Pasado, Abandonado, Sagas, Sistemas, Ajustes, PC }
 
-/** La app: portada de revista y sus secciones, la ficha de un juego o una saga por encima y la hoja de «añadir». */
+/** La sección pedida desde fuera (un aviso, Jonsu…): `go=jugando`, `go=pendientes`, `go=sistemas`… (el nombre de la pestaña o del destino). */
+fun destinoDe(go: String?): Destino? {
+    val g = Catalogo.norm(go ?: return null)
+    return Destino.entries.firstOrNull { Catalogo.norm(it.name) == g } ?: when (g) {
+        "pendientes" -> Destino.Pendiente; "pasados", "terminados" -> Destino.Pasado; "abandonados" -> Destino.Abandonado; "tu pc" -> Destino.PC; else -> null
+    }
+}
+
+/** La app: la portada y sus secciones como páginas, la ficha de un juego o una saga por encima, Ajustes, Tu PC y la hoja de «añadir». */
 @Composable
-fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrirPedida: () -> Unit = {}) {
+fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrirPedida: () -> Unit = {}, irPedido: String? = null, alIrPedido: () -> Unit = {}) {
     val ctx = LocalContext.current
-    var destino by rememberSaveable { mutableIntStateOf(0) }
+    /** La página de [PAGINAS] que se ve. */
+    var pagina by rememberSaveable { mutableIntStateOf(0) }
+    /** Lo que va encima de las páginas: Ajustes o Tu PC (null = nada). */
+    var encima by rememberSaveable { mutableStateOf<Destino?>(null) }
+    var pestanaAjustes by rememberSaveable { mutableIntStateOf(0) }
     var buscar by rememberSaveable { mutableStateOf(false) }
     var fichaId by rememberSaveable { mutableStateOf<String?>(null) }
     var sagaId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -51,13 +63,18 @@ fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrir
     var bajarRom by remember { mutableStateOf<Juego?>(null) }
     /** Una captura abierta a pantalla completa. */
     var captura by remember { mutableStateOf<Shot?>(null) }
-    val d = Destino.entries[destino]
+    fun ir(x: Destino) {
+        val p = paginaDe(x)
+        if (p >= 0) { encima = null; pagina = p } else encima = x
+    }
     // Un widget pide abrir la ficha de un juego
     LaunchedEffect(fichaPedida) {
         val j = fichaPedida?.let { Biblioteca.por(it) }
-        if (j != null) { if (jugarPedido && j.enPc) jugarPc = j else { fichaId = fichaPedida; destino = 0; if (jugarPedido && j.enOtroDispositivo) bajarRom = j } }
+        if (j != null) { if (jugarPedido && j.enPc) jugarPc = j else { fichaId = fichaPedida; encima = null; if (jugarPedido && j.enOtroDispositivo) bajarRom = j } }
         if (fichaPedida != null) alAbrirPedida()
     }
+    // Un aviso u otra app pide una sección
+    LaunchedEffect(irPedido) { if (irPedido != null) { destinoDe(irPedido)?.let { fichaId = null; sagaId = null; ir(it) }; alIrPedido() } }
     // Una captura recién llegada del PC se abre
     LaunchedEffect(Suite.arrived) { Suite.arrived?.let { captura = it; Suite.arrived = null } }
     LaunchedEffect(Suite.notice) { Suite.notice?.let { Lanzar.aviso(ctx, it); Suite.notice = null } }
@@ -65,41 +82,33 @@ fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrir
     fun jugar(j: Juego) {
         when {
             j.enPc -> jugarPc = j
-            // La ROM está en otro de tus móviles: se baja de tu kDrive y se juega (el jugador de Hiedra la baja él solo)
+            // La ROM está en otro de tus móviles: se baja de tu kDrive y se juega (el jugador de Bastet la baja él solo)
             j.enOtroDispositivo && !Lanzar.esInterno(Lanzar.elegir(ctx, j)) -> bajarRom = j
             else -> Lanzar.lanzar(ctx, j)?.let { Lanzar.aviso(ctx, it) }
         }
     }
     fun abrirAnadir(t: TipoLanzador?, para: String? = null) { tipoInicial = t; vincularA = para; anadir = true }
-    fun ir(x: Destino, buscando: Boolean = false) { buscar = buscando; destino = x.ordinal }
 
-    BackHandler(enabled = fichaId != null) { fichaId = null }
-    BackHandler(enabled = sagaId != null && fichaId == null) { sagaId = null }
     AvisoActualizacion()
-    BackHandler(enabled = fichaId == null && sagaId == null && d != Destino.Portada) { destino = 0 }
+    // Atrás: cierra lo de encima (la ficha, la saga, Ajustes o Tu PC); desde cualquier página vuelve a la portada; desde la portada, sale
+    BackHandler(enabled = fichaId == null && sagaId == null && encima == null && pagina != 0) { pagina = 0 }
+    BackHandler(enabled = fichaId == null && sagaId == null && encima != null) { encima = if (encima == Destino.Sistemas) Destino.Ajustes else null }
+    BackHandler(enabled = sagaId != null && fichaId == null) { sagaId = null }
+    BackHandler(enabled = fichaId != null) { fichaId = null }
 
     Box(Modifier.fillMaxSize().background(Paper)) {
-        // Entre páginas, un fundido corto con un poco de subida (la portada vuelve hacia abajo): sin saltos, como pasar una hoja
-        AnimatedContent(d, transitionSpec = {
-            val ida = targetState != Destino.Portada
-            (fadeIn(tween(220, delayMillis = 40)) + slideInVertically(tween(300, easing = FastOutSlowInEasing)) { if (ida) it / 24 else -it / 24 }) togetherWith fadeOut(tween(140))
-        }, label = "pagina") { d ->
-        when (d) {
-            Destino.Portada -> PantInicio(
-                alAbrir = { fichaId = it.id }, alJugar = ::jugar, alAnadir = { abrirAnadir(it) },
-                alIr = { ir(it) }, alBuscar = { ir(Destino.Jugando, true) }
-            )
-            Destino.Sistemas -> PantSistemas(alVolver = { destino = Destino.Ajustes.ordinal }, alAnadirCarpeta = { abrirAnadir(null) })
-            Destino.Ajustes -> PantEstilo(alVolver = { destino = 0 }, alSistemas = { destino = Destino.Sistemas.ordinal })
-            Destino.PC -> PantPc(alVolver = { destino = 0 }, alAbrir = { fichaId = it.id }, alCaptura = { captura = it })
-            else -> PantSecciones(d, alVolver = { destino = 0 }, alAbrir = { fichaId = it.id }, alJugar = ::jugar, alAbrirSaga = { sagaId = it.id }, alAnadir = { abrirAnadir(null) }, buscandoInicial = buscar)
-        }
+        // La portada y las secciones son páginas de una sola pantalla (se pasan con las pestañas o con el dedo); Ajustes y Tu PC van encima
+        when (encima) {
+            Destino.Ajustes -> PantEstilo(alVolver = { encima = null }, alSistemas = { encima = null; pagina = paginaDe(Destino.Sistemas) }, pestanaInicial = pestanaAjustes)
+            Destino.PC -> PantPc(alVolver = { encima = null }, alAbrir = { fichaId = it.id }, alCaptura = { captura = it })
+            else -> PantPrincipal(pagina = pagina, alPagina = { pagina = it }, alAbrir = { fichaId = it.id }, alJugar = ::jugar, alAbrirSaga = { sagaId = it.id },
+                alAnadir = { abrirAnadir(it) }, alAjustes = { pestanaAjustes = it; encima = Destino.Ajustes }, alIr = { ir(it) }, buscandoInicial = buscar, alBuscado = { buscar = false })
         }
         AnimatedVisibility(sagaId != null, enter = entraHoja, exit = saleHoja) {
             sagaId?.let { id -> PantSaga(id, alCerrar = { sagaId = null }, alAbrir = { fichaId = it.id }, alJugar = ::jugar) }
         }
         AnimatedVisibility(fichaId != null, enter = entraHoja, exit = saleHoja) {
-            fichaId?.let { id -> Ficha(id, alCerrar = { fichaId = null }, alJugar = ::jugar, alVincular = { abrirAnadir(null, it.id) }, alIrA = { fichaId = it }) }
+            fichaId?.let { id -> Ficha(id, alCerrar = { fichaId = null }, alJugar = ::jugar, alVincular = { abrirAnadir(null, it.id) }, alIrA = { fichaId = it }, alAbrirSaga = { sagaId = it.id }) }
         }
         AnimatedVisibility(captura != null, enter = fadeIn(), exit = fadeOut()) {
             captura?.let { s -> VisorCaptura(s, alCerrar = { captura = null }, alBorrar = { Suite.deleteLocal(s); captura = null }) }

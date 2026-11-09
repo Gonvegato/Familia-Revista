@@ -99,7 +99,8 @@ class ModeloTest {
         val j = rom("Zelda").conLanzador(Lanzador.pc("steam:1", "pc1")).copy(portada = "/x/p.jpg", zoom = 1.6f, ox = -0.2f, oy = 0.1f, durHistoria = 600, durExtras = 900, durCompleto = 1500,
             propias = Horas(300 * 60_000L, 3, mapOf("2026-01-01" to 60_000L)), ajenas = mapOf("B" to Horas(5_000)), externas = mapOf(Fuentes.STEAM to Horas(1_000, 0, mapOf("2026-01-02" to 1_000L))),
             otrasClaves = listOf("juego:zelda"), plataforma = "Switch", mod = 5).conEstado(Estado.PASADO, 77)
-        assertTrue(j.encuadrada); assertEquals(0.5f, j.avance!!, 0.01f)
+        // (desde 0.8.0 el encuadre es de cada dispositivo: el zoom de antes, en la cuenta, ya no cuenta como encuadrada)
+        assertFalse(j.encuadrada); assertTrue(j.copy(encPortada = Encuadre(1.6f, 0.4f, 0.5f)).encuadrada); assertEquals(0.5f, j.avance!!, 0.01f)
         // En el móvil: todo, incluidas las ajenas y la portada local
         val g = Biblioteca.aJuego(Biblioteca.aJson(j))
         assertEquals(j, g)

@@ -109,8 +109,23 @@ data class Juego(
     val portada: String = "",
     /** Una portada de internet (SteamGridDB, la biblioteca del PC…): se usa cuando no has puesto ninguna. */
     val portadaUrl: String = "",
-    /** El encuadre de tu portada: zoom (1 = cubre el hueco) y desplazamiento como fracción del hueco (-1..1). */
+    /**
+     * El encuadre de antes de Bastet 0.8 (zoom y desplazamiento, en la cuenta e igual en todos los dispositivos). Ya no se cambia: se lee una
+     * vez para pasarlo a [encPortada], que es de cada dispositivo.
+     */
     val zoom: Float = 1f, val ox: Float = 0f, val oy: Float = 0f,
+    /**
+     * El fondo: una imagen a lo ancho para el cartel de la portada y la apertura de la ficha (archivo de la app, o una dirección de internet
+     * mientras no ha bajado); "" = sin fondo (se usa el color de la portada). En la cuenta, como la portada: `fondo` (hash) y `fu` (de dónde salió).
+     */
+    val fondo: String = "",
+    val fondoUrl: String = "",
+    /**
+     * Qué parte se ve de la portada y del fondo ([Encuadre]): la imagen se guarda entera y viaja con la cuenta; el encuadre es de CADA
+     * dispositivo ([Encuadres]) y vuelve al centro si la imagen cambia.
+     */
+    val encPortada: Encuadre = Encuadre(),
+    val encFondo: Encuadre = Encuadre(),
     /** Lo que suele durar (minutos; 0 = no se sabe): la historia, con extras y al completo. */
     val durHistoria: Int = 0, val durExtras: Int = 0, val durCompleto: Int = 0,
     /** Claves por las que se conoció al juego además de las de sus lanzadores (`juego:<título>` de Atrio, las de lanzadores que ya no tiene…). */
@@ -146,7 +161,7 @@ data class Juego(
     /** ¿Se puede abrir desde este móvil ahora? */
     val abrible: Boolean get() = lanzadores.any { it.tipo == TipoLanzador.APP || it.tipo == TipoLanzador.WEB || (it.tipo == TipoLanzador.ROM && Archivos.tiene(it.clave)) }
     /** ¿Has movido o ampliado la portada? */
-    val encuadrada: Boolean get() = zoom != 1f || ox != 0f || oy != 0f
+    val encuadrada: Boolean get() = !encPortada.neutro
     /** Cuánto llevas de la historia (0–1), si se sabe lo que dura. */
     val avance: Float? get() = if (durHistoria > 0 && msJugados > 0) (msJugados / 60_000f / durHistoria).coerceIn(0f, 1f) else null
     /** El lanzador con el que se abre desde el móvil por defecto: la ROM que está aquí, la app, la web; si no, el del PC. */
@@ -311,11 +326,16 @@ object Biblioteca {
         val propias = horas.firstOrNull { it.texto("fuente") == Cuenta.dispositivo }?.let { horasDe(it) } ?: Horas()
         val ajenas = horas.filter { val f = it.texto("fuente"); f.isNotBlank() && f != Cuenta.dispositivo && !esExterna(f) }.associate { it.texto("fuente") to horasDe(it) }
         val externas = horas.filter { esExterna(it.texto("fuente")) }.associate { it.texto("fuente") to horasDe(it) }
+        val portada = c?.let { com.gonzalo.familia.PortadasFamilia.archivo(it, n.texto("portada")) }.orEmpty()
+        val zoom = n.decimal("ez").toFloat().takeIf { n["ez"] != null } ?: 1f; val ox = n.decimal("eox").toFloat(); val oy = n.decimal("eoy").toFloat()
+        // El encuadre de antes (en la cuenta) pasa una vez a ser el de este dispositivo
+        if (c != null && portada.isNotBlank()) Encuadres.migrarDeAntes(c, n.ref, portada, zoom, ox, oy)
+        val (fondo, fondoUrl) = fondoDe(c, n)
         return Juego(
             id = n.ref, titulo = n.texto("t"), plataforma = n.texto("pl"), estado = estadoDeCuenta(n.texto("estado")), favorito = n.si("fav"),
             finalizado = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("fin")), anadido = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("an")), ultima = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("ul")), mod = n.m.values.maxOrNull() ?: 0L,
-            portada = c?.let { com.gonzalo.familia.PortadasFamilia.archivo(it, n.texto("portada")) }.orEmpty(), portadaUrl = n.texto("pu"),
-            zoom = n.decimal("ez").toFloat().takeIf { n["ez"] != null } ?: 1f, ox = n.decimal("eox").toFloat(), oy = n.decimal("eoy").toFloat(),
+            portada = portada, portadaUrl = n.texto("pu"), zoom = zoom, ox = ox, oy = oy, fondo = fondo, fondoUrl = fondoUrl,
+            encPortada = c?.let { Encuadres.de(it, n.ref, false, portada) } ?: Encuadre(), encFondo = c?.let { Encuadres.de(it, n.ref, true, fondo) } ?: Encuadre(),
             durHistoria = n.entero("dh").toInt(), durExtras = n.entero("de").toInt(), durCompleto = n.entero("dc").toInt(),
             otrasClaves = n.lista("k").map { it.toString() }.filter { it.isNotBlank() },
             lanzadores = n.lista("ln").mapNotNull { (it as? Map<*, *>)?.let { m -> Lanzador.deJson(JSONObject(m)) } },
@@ -325,6 +345,46 @@ object Biblioteca {
 
     /** El hash de la portada de un juego en la cuenta ("" si no tiene). */
     fun hashPortada(id: String): String = col?.nodo(id)?.texto("portada").orEmpty()
+
+    /**
+     * El fondo de un juego: la imagen de la cuenta (`fondo`, por su hash) si ya está en el móvil; si aún no ha bajado, la dirección de la que
+     * salió (`fu`). Si el juego nunca ha tenido fondo puesto aquí (no hay campo `fondo`), el que le pusieras en Jonsu (`az.hero`, si es de internet).
+     */
+    fun fondoDe(c: Context?, n: com.gonzalo.familia.nucleo.Nodo): Pair<String, String> {
+        val fu = n.texto("fu")
+        if (n["fondo"] != null) {
+            val h = n.texto("fondo")
+            if (h.isBlank() || h == SIN_FONDO) return "" to ""
+            val f = c?.let { com.gonzalo.familia.PortadasFamilia.archivo(it, h) }.orEmpty()
+            return f.ifBlank { fu.takeIf { it.startsWith("http") }.orEmpty() } to fu
+        }
+        val hero = n.texto("az").takeIf { it.startsWith("{") }?.let { runCatching { JSONObject(it).optString("hero") }.getOrNull() }.orEmpty()
+        return if (hero.startsWith("http")) hero to hero else "" to ""
+    }
+
+    /** «Sin fondo, a propósito» (en la cuenta un campo vacío no existe, y entonces volvería el de Jonsu). */
+    const val SIN_FONDO = "-"
+
+    /** El hash del fondo de un juego en la cuenta ("" si no tiene). */
+    fun hashFondo(id: String): String = col?.nodo(id)?.texto("fondo").orEmpty().takeIf { it != SIN_FONDO }.orEmpty()
+
+    /** El fondo de un juego (el hash de una imagen ya guardada en la cuenta; "" = sin fondo) y de dónde salió. */
+    fun ponerFondo(id: String, hash: String, url: String) {
+        col?.cambia(id, mapOf("fondo" to hash.ifBlank { SIN_FONDO }, "fu" to url))
+        if (congelada || col == null) { val i = juegos.indexOfFirst { it.id == id }; val c = appCtx
+            if (i >= 0) juegos[i] = juegos[i].copy(fondo = if (hash.isBlank()) "" else c?.let { com.gonzalo.familia.PortadasFamilia.archivo(it, hash) }.orEmpty().ifBlank { url }, fondoUrl = url, encFondo = Encuadre()) }
+        else refresca()
+    }
+
+    /** Guarda el encuadre de la portada ([fondo] = false) o del fondo de un juego, en ESTE dispositivo (la cuenta no se toca). */
+    fun ponerEncuadre(id: String, fondo: Boolean, e: Encuadre) {
+        val j = por(id) ?: return
+        val c = appCtx ?: return
+        Encuadres.poner(c, id, fondo, if (fondo) j.fondo else j.portada, e)
+        val i = juegos.indexOfFirst { it.id == id }
+        if (i >= 0) juegos[i] = if (fondo) juegos[i].copy(encFondo = e) else juegos[i].copy(encPortada = e)
+        appCtx?.let { Widgets.pedir(it) }
+    }
 
     /** Lo que Azabache dice de este juego: su nota (0–100; 0 = sin valorar) y su reseña. */
     fun valoracion(id: String): Pair<Int, String> = col?.nodo(id)?.let { it.entero("nota").toInt() to it.texto("resena") } ?: (0 to "")
@@ -345,7 +405,10 @@ object Biblioteca {
         if (nueva != juegos.toList()) { juegos.clear(); juegos.addAll(nueva) }
         appCtx?.let { c ->
             Widgets.pedir(c)
-            com.gonzalo.familia.PortadasFamilia.baja(cc.vivos().filter { com.gonzalo.familia.PortadasFamilia.archivo(c, it.texto("portada")).isBlank() }.map { it.texto("portada") }) { refresca() }
+            // Las portadas y los fondos de la cuenta que aún no están en este móvil
+            val faltan = cc.vivos().filter { com.gonzalo.familia.PortadasFamilia.archivo(c, it.texto("portada")).isBlank() }.map { it.texto("portada") } +
+                cc.vivos().map { it.texto("fondo") }.filter { it.isNotBlank() && it != SIN_FONDO && com.gonzalo.familia.PortadasFamilia.archivo(c, it).isBlank() }
+            com.gonzalo.familia.PortadasFamilia.baja(faltan) { refresca() }
         }
     }
 

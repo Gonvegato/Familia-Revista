@@ -130,7 +130,7 @@ fun PortadaArco(
         // La imagen, según de dónde sea el juego
         when {
             // (si el archivo de tu portada ya no está, se enseña la siguiente: la de internet o la automática)
-            hayPortada && j.encuadrada -> { ImagenEncuadrada(File(j.portada), j.zoom, j.ox, j.oy, Modifier.fillMaxSize()); LaunchedEffect(j.portada) { conImagen = true } }
+            hayPortada && j.encuadrada -> { ImagenEncuadrada(j.portada, j.encPortada, Modifier.fillMaxSize()); LaunchedEffect(j.portada) { conImagen = true } }
             hayPortada -> ImagenEnCadena(listOf(File(j.portada)), Modifier.fillMaxSize(), ContentScale.Crop) { conImagen = true }
             j.portadaUrl.isNotBlank() -> ImagenEnCadena(listOf(j.portadaUrl), Modifier.fillMaxSize(), ContentScale.Crop) { conImagen = true }
             j.rom != null && Ajustes.portadasLibretro -> ImagenEnCadena(urlsLibretro(j), Modifier.fillMaxSize(), ContentScale.Crop) { conImagen = true }

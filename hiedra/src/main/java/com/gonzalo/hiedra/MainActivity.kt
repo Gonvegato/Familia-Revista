@@ -14,10 +14,12 @@ class MainActivity : ComponentActivity() {
     private var fichaPedida by androidx.compose.runtime.mutableStateOf<String?>(null)
     /** Con la ficha: jugar directamente (un juego del PC desde un widget o un acceso directo: se elige dónde). */
     private var jugarPedido by androidx.compose.runtime.mutableStateOf(false)
+    /** La sección que pide un aviso u otra app (`go`: «jugando», «pendientes», «sistemas»…). */
+    private var irPedido by androidx.compose.runtime.mutableStateOf<String?>(null)
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
-        setIntent(intent); fichaPedida = intent.getStringExtra("ficha"); jugarPedido = intent.getBooleanExtra("jugar", false)
+        setIntent(intent); fichaPedida = intent.getStringExtra("ficha"); jugarPedido = intent.getBooleanExtra("jugar", false); irPedido = intent.getStringExtra("go")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         iniciar(this)
         Actualizador.init(this)
-        fichaPedida = intent?.getStringExtra("ficha"); jugarPedido = intent?.getBooleanExtra("jugar", false) == true
+        fichaPedida = intent?.getStringExtra("ficha"); jugarPedido = intent?.getBooleanExtra("jugar", false) == true; irPedido = intent?.getStringExtra("go")
         setContent {
             HiedraTheme {
                 // Iconos de la barra de estado claros u oscuros según el fondo
@@ -36,7 +38,7 @@ class MainActivity : ComponentActivity() {
                         navigationBarStyle = if (oscuro) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
                     )
                 }
-                HiedraApp(fichaPedida, jugarPedido) { fichaPedida = null; jugarPedido = false }
+                HiedraApp(fichaPedida, jugarPedido, { fichaPedida = null; jugarPedido = false }, irPedido) { irPedido = null }
             }
         }
     }
