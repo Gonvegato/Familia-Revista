@@ -106,11 +106,23 @@ object Alcance {
     }
 }
 
-/** Una persona de tu entorno (siempre inventada: las personas reales solo salen de pasada en la prensa y la red). */
-data class Persona(val id: String, val nombre: String, val rol: String, val afinidad: Int = 50, val nota: String = "") {
-    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "n" to nombre, "r" to rol, "a" to afinidad.toLong(), "t" to nota)
+/**
+ * Una persona de tu entorno (siempre inventada: las personas reales solo salen de pasada en la prensa y la red). [alias]: otros nombres con
+ * los que sale («Marisa Bloise», «mamá»: es la misma persona, [Gente]); [noEs]: nombres que NO son ella aunque se parezcan (lo separaste a
+ * mano); [actitud]: cómo está contigo ahora y qué te insiste («presiona para que cambies de club»), que cambia con lo que habláis; [desde]:
+ * la jornada en que entró en tu vida; [salio]: la jornada en que le diste puerta (0: sigue) y [porque], lo que dijiste.
+ */
+data class Persona(val id: String, val nombre: String, val rol: String, val afinidad: Int = 50, val nota: String = "",
+                   val alias: List<String> = emptyList(), val noEs: List<String> = emptyList(), val actitud: String = "", val desde: Int = 0,
+                   val salio: Int = 0, val porque: String = "") {
+    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "n" to nombre, "r" to rol, "a" to afinidad.toLong(), "t" to nota, "al" to alias, "ne" to noEs, "ac" to actitud,
+        "ds" to desde.toLong(), "sa" to salio.toLong(), "pq" to porque)
+    /** El id corto que se le pasa a Claude (para que diga quién escribe sin equivocarse de nombre). */
+    val corto: String get() = id.take(6)
     companion object {
-        fun de(m: Map<String, Any?>) = Persona(m["id"].comoTexto(), m["n"].comoTexto(), m["r"].comoTexto(), m["a"].comoLong().toInt().coerceIn(0, 100), m["t"].comoTexto())
+        fun de(m: Map<String, Any?>) = Persona(m["id"].comoTexto(), m["n"].comoTexto(), m["r"].comoTexto(), m["a"].comoLong().toInt().coerceIn(0, 100), m["t"].comoTexto(),
+            m["al"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["ne"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["ac"].comoTexto(),
+            m["ds"].comoLong().toInt(), m["sa"].comoLong().toInt(), m["pq"].comoTexto())
     }
 }
 
@@ -214,6 +226,18 @@ data class Universo(
     val rivales: List<Rival> = emptyList(),
     /** Lo que se sabe de su club de verdad (búsqueda web, [Clubes]): si ya no es el de [club] (un traspaso), hay que identificar el nuevo. */
     val clubInfo: InfoClub? = null,
+    /** La gente a la que le diste puerta («Ya no está en tu vida»): no vuelven a escribir salvo que los recuperes. */
+    val exEntorno: List<Persona> = emptyList(),
+    /** Las competiciones que juega su club (de la búsqueda) y las que ha añadido él: la lista del desplegable ([Competiciones]). */
+    val comps: List<String> = emptyList(),
+    /** De qué club son [comps] (si cambia de club, hay que volver a buscarlas). */
+    val compsDe: String = "",
+    /** Cómo se agrupan los nombres viejos de competiciones (el nombre tal cual, en minúsculas → la de la lista). */
+    val compAlias: Map<String, String> = emptyMap(),
+    /** Ya se le preguntó a Haiku por los nombres que no encajaban (una sola vez por nombre: los que ya están en [compAlias]). */
+    val compsPreguntadas: List<String> = emptyList(),
+    /** El nivel (ordinal de [Nivel]) con el que entró la última gente nueva: al subir de nivel, entra gente nueva ([Gente]). -1: aún no. */
+    val nivelGente: Int = -1,
 ) {
     /** El club de ahora está identificado y confirmado. */
     val clubIdentificado: Boolean get() = clubInfo?.let { it.confirmado && it.es(club) } == true
@@ -237,7 +261,8 @@ data class Universo(
         "c" to creado, "cm" to cambiado, "mm" to memoria, "mp" to memoriaPaso.toLong(), "tc" to cerradas, "nv" to nivel, "ty" to trayectoria, "fj" to famaJornada.toLong(),
         "fh" to famaHist.map { listOf(it.first.toLong(), it.second.toLong()) }, "ct" to (contrato?.aMapa() ?: emptyMap<String, Any?>()), "pt" to patrocinio,
         "rp" to renovacionPaso.toLong(), "ht" to hitos.map { it.aMapa() }, "rs" to recordsSuyos.map { it.aMapa() }, "rv" to rivales.map { it.aMapa() },
-        "ic" to (clubInfo?.aMapa() ?: emptyMap<String, Any?>()),
+        "ic" to (clubInfo?.aMapa() ?: emptyMap<String, Any?>()), "ex" to exEntorno.map { it.aMapa() }, "cps" to comps, "cpd" to compsDe, "cpa" to compAlias,
+        "cpq" to compsPreguntadas, "nvg" to nivelGente.toLong(),
     )
     fun aJson(): String = Json.escribe(aMapa())
 
@@ -262,6 +287,10 @@ data class Universo(
                 m["rs"].comoLista().map { RecordSuyo.de(it.comoMapa()) }.filter { it.n > 0 },
                 m["rv"].comoLista().map { Rival.de(it.comoMapa()) }.filter { it.nombre.isNotBlank() },
                 InfoClub.de(m["ic"].comoMapa()),
+                m["ex"].comoLista().map { Persona.de(it.comoMapa()) }.filter { it.nombre.isNotBlank() },
+                m["cps"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["cpd"].comoTexto(),
+                m["cpa"].comoMapa().mapValues { it.value.comoTexto() }.filterValues { it.isNotBlank() }, m["cpq"].comoLista().map { it.comoTexto() },
+                if (m.containsKey("nvg")) m["nvg"].comoLong().toInt() else -1,
             )
             // (las carreras de antes de los contratos: su sueldo y su «3 años» pasan a ser su contrato)
             return if (!m.containsKey("ct") && u.contrato == null) u.copy(contrato = Contratos.migra(u)) else u
@@ -298,6 +327,10 @@ data class Partido(
     val titulo: String = "",
     /** Si [fecha] la puso FcFeed (la del partido anterior + 7 días) y no tú. */
     val fechaEstimada: Boolean = false,
+    /** Fue el MVP (el jugador del partido). */
+    val mvp: Boolean = false,
+    /** La competición tal cual se metió, si se agrupó en otra de la lista ([Competiciones]). */
+    val competicionOriginal: String = "",
 ) {
     val resultado: String get() = "$golesFavor-$golesContra"
     val ganado: Boolean get() = golesFavor > golesContra
@@ -307,7 +340,7 @@ data class Partido(
     fun aMapa(): Map<String, Any?> = mapOf(
         "te" to temporada, "co" to competicion, "ri" to rival, "lo" to local, "gf" to golesFavor.toLong(), "gc" to golesContra.toLong(), "mi" to minutos.toLong(),
         "go" to goles.toLong(), "as" to asistencias.toLong(), "no" to nota, "gs" to goleadores, "eq" to equipo, "re" to rendimiento, "mo" to momentos,
-        "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo, "fx" to fechaEstimada,
+        "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo, "fx" to fechaEstimada, "mv" to mvp, "co0" to competicionOriginal,
     )
 
     /** Una línea para contárselo a Claude. */
@@ -317,6 +350,7 @@ data class Partido(
         if (modo == Rol.JUGADOR) {
             append(". Jugó $minutos min"); if (goles > 0) append(", $goles gol${if (goles > 1) "es" else ""}"); if (asistencias > 0) append(", $asistencias asistencia${if (asistencias > 1) "s" else ""}")
             if (nota > 0) append(", nota ${Formato.decimal(nota)}")
+            if (mvp) append(". FUE EL MVP DEL PARTIDO")
         } else if (goleadores.isNotBlank()) append(". Goles: $goleadores")
         if (equipo.isNotEmpty()) append(". Datos: " + equipo.entries.joinToString(", ") { "${it.key} ${it.value}" })
         if (rendimiento.isNotBlank()) append(". Rendimiento: $rendimiento")
@@ -332,7 +366,7 @@ data class Partido(
             m["te"].comoTexto(), m["co"].comoTexto(), m["ri"].comoTexto(), m["lo"].comoBool(), m["gf"].comoLong().toInt(), m["gc"].comoLong().toInt(),
             m["mi"].comoLong().toInt(), m["go"].comoLong().toInt(), m["as"].comoLong().toInt(), m["no"].comoDouble(), m["gs"].comoTexto(),
             m["eq"].comoMapa().mapValues { it.value.comoTexto() }, m["re"].comoTexto(), m["mo"].comoTexto(), m["me"].comoLong().toInt(), m["fe"].comoTexto(),
-            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(), m["fx"].comoBool(),
+            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(), m["fx"].comoBool(), m["mv"].comoBool(), m["co0"].comoTexto(),
         )
     }
 }
@@ -354,11 +388,13 @@ data class Post(
 }
 
 /** Un mensaje privado. [mio]: lo que contestaste tú. */
-data class Dm(val de: String, val texto: String, val mio: Boolean = false, val chat: String = "") {
+data class Dm(val de: String, val texto: String, val mio: Boolean = false, val chat: String = "",
+              /** El id de la persona de su gente que lo escribe (si se sabe): así no se separa en chats distintos ([Gente]). */
+              val pid: String = "") {
     /** La conversación a la que va (una persona o un grupo, «Los del barrio»): si no se dice, la de quien lo manda. */
     val conversacion: String get() = chat.ifBlank { de }
-    fun aMapa(): Map<String, Any?> = mapOf("d" to de, "t" to texto, "m" to mio, "c" to chat)
-    companion object { fun de(m: Map<String, Any?>) = Dm(m["d"].comoTexto(), m["t"].comoTexto(), m["m"].comoBool(), m["c"].comoTexto()) }
+    fun aMapa(): Map<String, Any?> = mapOf("d" to de, "t" to texto, "m" to mio, "c" to chat, "p" to pid).filterValues { it != "" }
+    companion object { fun de(m: Map<String, Any?>) = Dm(m["d"].comoTexto(), m["t"].comoTexto(), m["m"].comoBool(), m["c"].comoTexto(), m["p"].comoTexto()) }
 }
 
 /** La portada del periódico. */
@@ -442,6 +478,7 @@ data class Efectos(val dinero: Long = 0, val fuera: Map<String, Int> = emptyMap(
 enum class TipoEntrada(val nombre: String) {
     PARTIDO("Partido"), EVENTO("Mientras tanto"), RESPUESTA("Lo que pasó después"), OFICIAL("Oficial"), INICIO("El principio"),
     TEMPORADA("Fin de temporada"), SINCONTESTAR("No contestaste"), HITO("Hito"), RECORD("Récord histórico"), RIVAL("Rivalidad"),
+    CHARLA("Charla"), PUERTA("Fuera de tu vida"), GENTE("Gente nueva"),
 }
 
 /**

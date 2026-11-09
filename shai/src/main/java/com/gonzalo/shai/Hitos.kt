@@ -23,6 +23,7 @@ data class Hito(val id: String, val titulo: String, val texto: String, val paso:
 class Records(
     val partidos: Int, val goles: Int, val asistencias: Int, val hatTricks: Int, val masGolesPartido: Int,
     val rachaMarcando: Int, val rachaInvicto: Int, val mejorTemporada: Pair<String, Int>?, val victorias: Int, val titulos: List<String>,
+    val mvps: Int = 0,
 )
 
 object Hitos {
@@ -30,6 +31,7 @@ object Hitos {
     private val PARTIDOS = listOf(1, 50, 100, 200, 300, 400, 500)
     private val RACHA_GOL = listOf(3, 5, 7, 10)
     private val INVICTO = listOf(10, 15, 20, 30)
+    private val MVPS = listOf(1, 5, 10, 25, 50, 100)
     private val NOTABLES = Regex("champions|europa|conference|selecci|mundial|euro|nations|copa del rey|supercopa|fa cup|copa", RegexOption.IGNORE_CASE)
 
     /** ¿Es precoz a esta edad? (cuanto más gordo el hito, más tarde sigue siéndolo). */
@@ -43,7 +45,7 @@ object Hitos {
         val porTemporada = ps.groupBy { it.temporada }.mapValues { (_, l) -> if (u.modo == Rol.JUGADOR) l.sumOf { it.goles } else l.count { it.ganado } }
         return Records(ps.size, ps.sumOf { it.goles }, ps.sumOf { it.asistencias }, ps.count { it.goles >= 3 }, ps.maxOfOrNull { it.goles } ?: 0,
             rachaMax(ps) { it.goles > 0 }, rachaMax(ps) { it.ganado || it.empatado }, porTemporada.maxByOrNull { it.value }?.toPair()?.takeIf { it.second > 0 },
-            ps.count { it.ganado }, ps.mapNotNull { it.titulo.ifBlank { null } })
+            ps.count { it.ganado }, ps.mapNotNull { it.titulo.ifBlank { null } }, ps.count { it.mvp })
     }
 
     /**
@@ -77,6 +79,13 @@ object Hitos {
             }
             val racha = rachaFinal(ps) { it.goles > 0 }
             RACHA_GOL.firstOrNull { it == racha }?.let { n -> h("racha_gol_${n}_$paso", "$n partidos seguidos marcando", "Encadena $n partidos seguidos con gol.", precoz(e, 20)) }
+            // MVP: el primero y las cifras redondas
+            if (p.mvp) {
+                val n = ps.count { it.mvp }
+                MVPS.firstOrNull { it == n }?.let { k -> h("mvp_$k", if (k == 1) "Primer MVP" else "$k veces MVP",
+                    if (k == 1) "Elegido el jugador del partido por primera vez, ante el ${p.rival} (${p.competicion})." else "Ya ha sido el jugador del partido $k veces en su carrera en FcFeed.",
+                    precoz(e, if (k <= 5) 20 else 22)) }
+            }
             // Récord de goles en una temporada (el suyo)
             val esta = ps.filter { it.temporada == t }.sumOf { it.goles }
             val mejorOtra = ps.filter { it.temporada != t }.groupBy { it.temporada }.maxOfOrNull { (_, x) -> x.sumOf { it.goles } } ?: 0
@@ -96,5 +105,5 @@ object Hitos {
     }
 
     /** Lo que da de fama un hito (pequeño; más si es precoz o gordo). */
-    fun fama(h: Hito): Int = (if (h.precoz) 2 else 1) + (if (h.id.startsWith("titulo") || h.id.startsWith("goles_100") || h.id.startsWith("record")) 1 else 0)
+    fun fama(h: Hito): Int = (if (h.precoz) 2 else 1) + (if (h.id.startsWith("titulo") || h.id.startsWith("goles_100") || h.id.startsWith("record") || h.id == "mvp_10") 1 else 0)
 }

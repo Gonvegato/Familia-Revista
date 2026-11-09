@@ -108,7 +108,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         val goles = Regex(""", (\d+) gol""").find(partido)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         val asist = Regex(""", (\d+) asistencia""").find(partido)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         val nota = Regex("""nota ([\d,]+)""").find(partido)?.groupValues?.get(1).orEmpty()
-        val gente = Regex("""  · ([^,\n]+), ([^,\n]+), afinidad""").findAll(t).map { it.groupValues[1].trim() to it.groupValues[2].trim() }.toList()
+        val gente = Regex("""  · (?:\[[^\]\n]*\] )?([^,\n]+), ([^,\n]+), afinidad""").findAll(t).map { it.groupValues[1].trim() to it.groupValues[2].trim() }.toList()
         val nivelTxt = Regex("""Nivel de AHORA: ([^(.;]+)""").find(t)?.groupValues?.get(1)?.trim().orEmpty()
         val nivel = Nivel.entries.indexOfFirst { nivelTxt.startsWith(it.nombre) }.takeIf { it >= 0 } ?: 1
         val seg = Regex("""Seguidores en la red: ([\d.,]+)( M| mil)?""").find(t)?.let { cifra(it.groupValues[1], it.groupValues[2]) } ?: 5_000
@@ -274,6 +274,11 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
             "declive" -> posts.add(0, post(d, medio(d), "¿Está acabado {A}? A sus $edad años, los números de las últimas semanas abren el debate. El club, de momento, guarda silencio sobre su futuro", "prensa", gordo = true, resp = respuestas(u, d, 'D')))
             "dudas" -> posts += post(d, "Grada Joven", "Que nadie se vuelva loco con {A}: tiene $edad años y está aprendiendo. Paciencia, que los que hoy le critican mañana le pedirán fotos", "aficion")
         }
+        // Fue el MVP: la cuenta oficial y la grada lo celebran
+        if ("FUE EL MVP DEL PARTIDO" in texto) {
+            posts.add(0, post(d, "{C}", "🏅 MVP DEL PARTIDO: {A}. {GOLES}, {ASIS} y un {NOTA} de nota ante el {R}. La afición lo ha votado por goleada", "prensa", gordo = true, resp = respuestas(u, d, 'V')))
+            posts += post(d, "Grada Joven", listOf("MVP. Otra vez. Se está acostumbrando y nosotros también", "El MVP no se lo dan a cualquiera: se lo dan al que manda en el campo. {A}", "Que alguien vaya preparando una vitrina para los MVP de {A}").let { it[azar.nextInt(it.size)] }, "aficion")
+        }
         // Un retuit con comentario: alguien cita la crónica
         val comentarios = listOf("Por fin alguien lo dice en un periódico", "Lo de la crónica de hoy, exagerado como siempre", "Me vale con el titular, la crónica ni la he leído",
             "Guardad este tuit para dentro de dos años", "Esto lo firmo y lo enmarco")
@@ -377,6 +382,8 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         val d = datos(texto)
         val u = Uso(uid)
         val r: Any = when {
+            "respuesta" in props && "actitud" in props -> charla(u, d, texto)
+            "despedida" in props -> puerta(u, d, texto)
             "se_ve" in props -> foto()
             "memoria" in props -> mapOf("memoria" to memoria(texto, d))
             "balance" in props -> temporada(u, d, texto)
@@ -397,7 +404,122 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
 
     private fun foto() = mapOf("se_ve" to true, "goles_favor" to 2, "goles_contra" to 1, "rival" to "Valencia CF", "minutos" to 90, "goles" to 1, "asistencias" to 1, "nota" to 7.8,
         "datos_equipo" to listOf(mapOf("dato" to "Posesión", "valor" to "55 / 45"), mapOf("dato" to "Tiros", "valor" to "14 / 9"), mapOf("dato" to "Tiros a puerta", "valor" to "6 / 3")),
-        "rendimiento" to "4 tiros, 2 a puerta, 31 pases (modo prueba: la foto no se ha leído de verdad)", "dudas" to "Modo prueba: estos datos son de ejemplo, no salen de tu foto.")
+        "rendimiento" to "4 tiros, 2 a puerta, 31 pases (modo prueba: la foto no se ha leído de verdad)", "mvp" to false, "dudas" to "Modo prueba: estos datos son de ejemplo, no salen de tu foto.")
+
+    // ---------------------------------------------------------------- hablar con alguien y darle puerta
+
+    /** Con quién se habla (de la petición): su nombre, su rol y su afinidad, y lo que le escribe él. */
+    private class Charla(val nombre: String, val rol: String, val afinidad: Int, val mensaje: String, val actitud: String) {
+        val tipo: String get() = when {
+            Regex("madre|padre|herman|abuel|tí[oa]|famil", RegexOption.IGNORE_CASE).containsMatchIn(rol) -> "familia"
+            Regex("represent|agente", RegexOption.IGNORE_CASE).containsMatchIn(rol) -> "agente"
+            Regex("amig|colega|barrio", RegexOption.IGNORE_CASE).containsMatchIn(rol) -> "amigo"
+            Regex("\\bex\\b|novia|ligue|chica|pareja|influencer|cantante|actriz|modelo", RegexOption.IGNORE_CASE).containsMatchIn(rol) -> "chica"
+            Regex("periodist|prensa|presentador", RegexOption.IGNORE_CASE).containsMatchIn(rol) -> "prensa"
+            else -> "otro"
+        }
+    }
+
+    private fun charlaDe(texto: String): Charla {
+        val m = Regex("""CHARLA PRIVADA con \[[^\]]*\] ([^(\n]+) \(([^,\n]+), afinidad (\d+)""").find(texto)
+            ?: Regex("""LE DA PUERTA a \[[^\]]*\] ([^(\n]+) \(([^,\n]+), afinidad (\d+)""").find(texto)
+        val msg = Regex("""ÉL LE ESCRIBE AHORA: «([\s\S]*?)»\n""").find(texto)?.groupValues?.get(1)
+            ?: Regex("""LO QUE ÉL LE DICE \(o el porqué\): «([\s\S]*?)»\n""").find(texto)?.groupValues?.get(1).orEmpty()
+        val act = Regex("""Su actitud(?: de ahora)?: ([^\n]+)""").find(texto)?.groupValues?.get(1)?.trim().orEmpty()
+        return Charla(m?.groupValues?.get(1)?.trim() ?: "Alguien", m?.groupValues?.get(2)?.trim().orEmpty(), m?.groupValues?.get(3)?.toIntOrNull() ?: 50, msg.trim(), act)
+    }
+
+    /** Cómo le ha llegado lo que le has escrito: 'B' (bien dicho: le convence), 'M' (mal: se ofende) o 'N' (no le convence). */
+    private fun tono(msg: String): Char {
+        val t = msg.lowercase()
+        val mal = listOf("pesad", "harto", "cállate", "callate", "déjame en paz", "dejame en paz", "vete", "mierda", "imbécil", "imbecil", "idiota", "que te den", "olvídame", "olvidame", "no me rayes")
+        val bien = listOf("por favor", "entiendo", "te quiero", "necesito", "confía", "confia", "gracias", "respeto", "tranquil", "te pido", "importante para mí", "importante para mi", "valoro", "de verdad")
+        return when {
+            mal.any { it in t } -> 'M'
+            bien.any { it in t } || t.length >= 140 -> 'B'
+            else -> 'N'
+        }
+    }
+
+    private fun cita(msg: String) = msg.replace(Regex("\\s+"), " ").trim().let { if (it.length > 70) it.take(68).trimEnd() + "…" else it }
+
+    private fun charla(u: Uso, d: Datos, texto: String): Map<String, Any?> {
+        val c = charlaDe(texto)
+        val t = tono(c.mensaje)
+        val q = cita(c.mensaje)
+        val n = c.nombre; val a = d.alias
+        val (ms, actitud) = when (c.tipo to t) {
+            "familia" to 'B' -> listOf("Ay, hijo… me has dejado sin palabras.", "Tienes razón. A veces me preocupo tanto que no te dejo respirar.", "Lo hablamos con calma el domingo, ¿vale? Yo hago croquetas.") to "Ha entendido que tiene que darle espacio; sigue preocupándose, pero ya no le agobia"
+            "familia" to 'M' -> listOf("¿Así me hablas?", "Después de todo lo que hemos pasado para que llegaras donde estás…", "Mira, no te contesto como te mereces porque soy tu familia. Cuando te calmes, me llamas.") to "Dolida por cómo le ha hablado; espera una disculpa"
+            "familia" to 'N' -> listOf("«$q»… ya.", "Yo solo te digo lo que veo, que para eso soy quien soy.", "Haz lo que quieras, pero luego no vengas llorando.") to "Sigue en sus trece: cree que tiene razón y se lo seguirá diciendo"
+            "agente" to 'B' -> listOf("Vale. Te he escuchado.", "Si quieres quedarte, nos quedamos y apretamos al club para que te lo reconozca. Pero lo hacemos a mi manera, ¿eh?", "Dejo de mover lo de fuera. De momento.") to "Ha dejado de presionarle para cambiar de club; ahora trabaja para mejorar su contrato donde está"
+            "agente" to 'M' -> listOf("Perfecto. Tú sabrás.", "Yo te he conseguido todo lo que tienes y me hablas así.", "Cuando el mercado se cierre y sigas cobrando lo mismo, acuérdate de esta conversación.") to "Ofendido y frío; sigue convencido de que tiene que irse y mueve hilos por su cuenta"
+            "agente" to 'N' -> listOf("Te entiendo, de verdad, pero escucha: estas ventanas no se abren dos veces.", "Tengo dos clubes llamando. Solo te pido que te sientes conmigo y mires los números.", "Mañana te mando un resumen. Léelo antes de decir que no.") to "Sigue insistiendo en que hay que cambiar de club, pero respeta que la decisión es suya"
+            "amigo" to 'B' -> listOf("Joder, tío. Vale.", "Tienes razón, me estoy pasando. Llevo una racha que no es normal.", "Si quieres, el finde hacemos algo tranquilo. Pádel, cervezas sin más. Como antes.") to "Ha dejado de arrastrarle a planes que le meten en líos; quiere recuperar la amistad de antes"
+            "amigo" to 'M' -> listOf("Ah, vale. Ahora que eres famoso ya no somos suficiente.", "No te preocupes, que no te vuelvo a molestar.", "Cuando necesites a alguien de verdad, llama a tus amigos nuevos.") to "Picado y resentido; habla mal de él con los del barrio"
+            "amigo" to 'N' -> listOf("Venga, hombre, no seas aburrido.", "Una noche. Una. Nadie se va a enterar.", "Te paso a recoger a las once. Si no bajas, subo yo.") to "Sigue intentando llevarle de fiesta; no se toma en serio lo que le dice"
+            "chica" to 'B' -> listOf("Vaya… no me esperaba un mensaje así.", "Me ha gustado que me lo digas claro.", "Vale. Empezamos de cero. Tú invitas a la cena 😏") to "Más cercana y con ganas de verle; el tono ha cambiado a mejor"
+            "chica" to 'M' -> listOf("Wow.", "Pues nada, guapo. Que te vaya bonito.", "Y que sepas que hago capturas de todo 🙂") to "Enfadada; es capaz de enseñar los mensajes a una revista"
+            "chica" to 'N' -> listOf("Ya…", "Es que contigo nunca sé a qué atenerme.", "Cuando lo tengas claro, me escribes. Yo no voy a estar esperando eternamente.") to "Dolida y a la espera; no se fía todavía"
+            "prensa" to 'B' -> listOf("Te lo agradezco mucho.", "Te prometo un tratamiento justo: sin titulares sacados de contexto.", "Te paso las preguntas antes, para que estés tranquilo.") to "Le trata con respeto y le pide permiso antes de publicar nada personal"
+            "prensa" to 'M' -> listOf("Tomo nota.", "Yo solo hago mi trabajo. El tuyo es jugar; el mío, contar lo que pasa.", "Y lo que pasa ahora mismo es que no te gusta que te pregunten.") to "Molesta; su próxima crónica sobre él será bastante menos amable"
+            "prensa" to 'N' -> listOf("Entiendo tu postura.", "Pero el lector quiere saber, y si no me lo cuentas tú, lo contará otro peor.", "Mi puerta sigue abierta.") to "Sigue detrás de la exclusiva, educada pero insistente"
+            else -> when (t) {
+                'B' -> listOf("Me parece muy bien lo que dices.", "Hagámoslo así, entonces.", "Gracias por ser claro, $a.") to "Más cercano después de la charla"
+                'M' -> listOf("No hacía falta hablarme así.", "Lo dejamos aquí.") to "Ofendido; se ha enfriado la relación"
+                else -> listOf("Lo pensaré.", "Pero no te prometo nada, $a.") to "Sin cambios; se lo sigue pensando"
+            }
+        }
+        val cambio = when (t) { 'B' -> 6 + azar.nextInt(5); 'M' -> -(7 + azar.nextInt(6)); else -> azar.nextInt(-2, 3) }
+        val trasciende = t == 'M' && c.tipo in setOf("chica", "prensa", "amigo")
+        val posts = if (trasciende) listOf(post(d, medioRosa(d), when (c.tipo) {
+            "chica" -> "Atención: $n ha subido una story con una canción de desamor y una frase muy clara: «hay gente que cambia cuando le va bien». ¿Indirecta para {A}? 👀"
+            "prensa" -> "Mal rollo entre {A} y la prensa: según nos cuentan, la conversación con $n no acabó nada bien. Habrá crónica, y no será amable"
+            else -> "En el barrio de {A} ya se comenta: su amigo de toda la vida, $n, va diciendo que «se le ha subido la fama a la cabeza». Ojo"
+        }, "prensa", gordo = true)) else emptyList()
+        return mapOf("respuesta" to ms.map { rellena(it, d) }, "cambio_afinidad" to cambio, "actitud" to actitud, "convencido" to (t == 'B'),
+            "resumen" to when (t) { 'B' -> "Habló claro con $n y le convenció: ${actitud.replaceFirstChar { it.lowercase() }}."; 'M' -> "La charla con $n acabó mal: ${actitud.replaceFirstChar { it.lowercase() }}."; else -> "Habló con $n, pero no le hizo cambiar de idea." },
+            "posts" to posts, "mensajes" to emptyList<Any>(),
+            "efectos" to mapOf("dinero" to 0, "fama" to 0, "aficion" to 0, "disciplina" to (if (c.tipo == "amigo" && t == 'B') 2 else 0), "carisma" to (if (t == 'B') 1 else if (t == 'M') -1 else 0), "relaciones" to emptyList<Any>()))
+    }
+
+    private fun puerta(u: Uso, d: Datos, texto: String): Map<String, Any?> {
+        val c = charlaDe(texto)
+        val n = c.nombre
+        val tag = tendencia(d, "{A} rompe con $n")
+        return when (c.tipo) {
+            "agente" -> mapOf("despedida" to listOf("¿Me estás despidiendo por WhatsApp?", "Muy bien. Mis abogados revisarán el contrato de representación línea por línea.", "Suerte encontrando a alguien que te consiga lo que te he conseguido yo."),
+                "titular" to "{A} se queda sin representante", "texto" to rellena("{A} ha roto con $n, el agente que llevaba su carrera. La noticia corrió como la pólvora: en menos de una hora, tres agencias habían llamado a su entorno. Las negociaciones que hubiera abiertas quedan en el aire hasta que elija a alguien nuevo, y $n ya ha dejado caer en una radio que «hay cosas que contar». En el club, prudencia: prefieren hablar con el jugador directamente.", d),
+                "tendencia" to tag, "posts" to listOf(post(d, medio(d), "ÚLTIMA HORA: {A} rompe con su representante, $n. Varias agencias ya se han movido para hacerse con su carrera", "prensa", gordo = true),
+                    post(d, "Abonado 1902", "Bien hecho. Ese agente solo pensaba en la comisión. Ahora a buscar a alguien que mire por el chaval", "aficion")),
+                "mensajes" to emptyList<Any>(),
+                "candidatos" to listOf(mapOf("nombre" to "Elena Sanz", "rol" to "representante (candidata)", "nota" to "Abogada deportiva; lleva a pocos jugadores y los cuida mucho"),
+                    mapOf("nombre" to "Ramiro Kessler", "rol" to "representante (candidato)", "nota" to "Superagente con contactos en toda Europa; agresivo en los mercados"),
+                    mapOf("nombre" to "Toño Blázquez", "rol" to "representante (candidato)", "nota" to "Exfutbolista; le promete un trato cercano y sin prisas")),
+                "efectos" to mapOf("dinero" to 0, "fama" to 1, "aficion" to 2, "disciplina" to 1, "carisma" to 0, "relaciones" to emptyList<Any>()))
+            "familia" -> mapOf("despedida" to listOf("No me puedo creer que me hagas esto.", "Soy tu familia. Lo seré siempre, aunque no quieras.", "Cuando se te pase, aquí estaré."),
+                "titular" to "Drama en casa de {A}", "texto" to rellena("{A} ha cortado la relación con $n. En la familia nadie habla del tema en voz alta, pero una tía ya ha intentado mediar sin éxito y en el barrio no se habla de otra cosa. Una revista del corazón asegura que «la fama ha roto una familia»; su entorno pide respeto. Es de esas decisiones que pesan aunque uno esté seguro.", d),
+                "tendencia" to tag, "posts" to listOf(post(d, medioRosa(d), "Silencio en casa de {A}: según nuestras fuentes, la relación con $n está rota. Su entorno pide respeto 🙏", "prensa", gordo = true)),
+                "mensajes" to emptyList<Any>(), "candidatos" to emptyList<Any>(),
+                "efectos" to mapOf("dinero" to 0, "fama" to 1, "aficion" to -1, "disciplina" to 0, "carisma" to -2, "relaciones" to emptyList<Any>()))
+            "amigo" -> mapOf("despedida" to listOf("Muy bien. Ya veo quién eres ahora.", "No hace falta que me bloquees, ya me voy yo.", "Pero que sepas que esto se paga."),
+                "titular" to "{A} se aleja de las malas compañías", "texto" to rellena("{A} ha cortado con $n, el amigo que le arrastraba a noches largas y planes que no le convenían. En el vestuario lo han notado enseguida: llega antes a entrenar y se le ve más centrado. $n no se lo ha tomado bien y ya ha soltado alguna pulla en redes, pero el entorno del jugador lo tiene claro: era lo que tocaba.", d),
+                "tendencia" to tag, "posts" to listOf(post(d, n, "Hay gente que se olvida de dónde viene. Yo no. Solo digo eso", "entorno", gordo = true),
+                    post(d, "Peña El Bombo", "Si se aleja de los que le liaban, mejor para él y para nosotros. Cabeza, {A} 👏", "aficion")),
+                "mensajes" to emptyList<Any>(), "candidatos" to emptyList<Any>(),
+                "efectos" to mapOf("dinero" to 0, "fama" to 0, "aficion" to 2, "disciplina" to 5, "carisma" to 0, "relaciones" to emptyList<Any>()))
+            "chica" -> mapOf("despedida" to listOf("Vaya forma de terminar las cosas.", "No te preocupes, que no vas a saber más de mí.", "Bueno… la prensa sí 🙂"),
+                "titular" to "Se acabó: {A} y $n", "texto" to rellena("{A} ha puesto punto final a lo que tuviera con $n. Ella ha borrado las fotos juntos y ha subido una story que las cuentas de cotilleo ya están analizando frase a frase. Las revistas del corazón se frotan las manos; él, de momento, ni confirma ni desmiente.", d),
+                "tendencia" to tag, "posts" to listOf(post(d, medioRosa(d), "BOMBAZO: $n ha borrado TODAS las fotos con {A}. Os lo contamos todo en nuestra web 💔", "prensa", gordo = true)),
+                "mensajes" to emptyList<Any>(), "candidatos" to emptyList<Any>(),
+                "efectos" to mapOf("dinero" to 0, "fama" to 2, "aficion" to 0, "disciplina" to 1, "carisma" to -1, "relaciones" to emptyList<Any>()))
+            else -> mapOf("despedida" to listOf("Entendido.", "Que te vaya bien."),
+                "titular" to "{A} cierra una puerta", "texto" to rellena("{A} ha cortado la relación con $n. No ha dado explicaciones públicas y su entorno prefiere no comentar nada. Quien le conoce dice que lleva tiempo queriendo rodearse solo de la gente que le suma.", d),
+                "tendencia" to tag, "posts" to listOf(post(d, medio(d), "{A} y $n ya no tienen relación, según ha podido saber este medio", "prensa")),
+                "mensajes" to emptyList<Any>(), "candidatos" to emptyList<Any>(),
+                "efectos" to mapOf("dinero" to 0, "fama" to 0, "aficion" to 0, "disciplina" to 1, "carisma" to 0, "relaciones" to emptyList<Any>()))
+        }.let { m -> m + ("despedida" to (m["despedida"] as List<*>).map { rellena(it.toString(), d) }) + ("titular" to rellena(m["titular"].toString(), d)) }
+    }
 
     /** Un récord real de los que ha comparado la app (la línea que va a Claude): batido, igualado o rozado. */
     private class RecordP(val estado: String, val n: Int, val record: String, val quien: String, val marca: String, val su: String, val texto: String)
@@ -638,7 +760,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         val elegidas = lineas.mapNotNull { l -> Regex("""Eligió: «([^»]+)»""").find(l)?.let { l.substringBefore(":").take(60) + " → eligió «" + it.groupValues[1] + "»" } }.take(4)
         val dejadas = lineas.mapNotNull { Regex("""No contestó a «([^»]+)»""").find(it)?.groupValues?.get(1) }.take(3)
         val partidos = lineas.filter { it.startsWith("Partido:") }
-        val gente = Regex("""  · ([^,\n]+), ([^,\n]+), afinidad (\d+)""").findAll(texto).map { m ->
+        val gente = Regex("""  · (?:\[[^\]\n]*\] )?([^,\n]+), ([^,\n]+), afinidad (\d+)""").findAll(texto).map { m ->
             val a = m.groupValues[3].toInt()
             "${m.groupValues[1]} (${m.groupValues[2]}): " + when { a >= 75 -> "muy unidos"; a >= 50 -> "bien"; a >= 30 -> "relación tensa"; else -> "casi rota" }
         }.toList().take(7)

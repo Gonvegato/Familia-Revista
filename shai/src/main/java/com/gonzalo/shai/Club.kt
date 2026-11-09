@@ -44,6 +44,8 @@ data class InfoClub(
     /** Lo que costó la búsqueda (dólares) y cuántas búsquedas hizo. */
     val coste: Double = 0.0,
     val busquedas: Int = 0,
+    /** Las competiciones que juega esta temporada (liga, copa, supercopa, Europa…), con su nombre oficial. */
+    val competiciones: List<String> = emptyList(),
 ) {
     /** «Real Betis Balompié · Sevilla · Benito Villamarín (60.721) · LaLiga · Entrenador: …» */
     val resumen: String get() = listOfNotNull(nombre.ifBlank { null }, ciudad.ifBlank { null },
@@ -57,6 +59,7 @@ data class InfoClub(
         "no" to nombre, "ap" to apodo, "ci" to ciudad, "pa" to pais, "es" to estadio, "af" to aforo, "li" to liga, "di" to division, "en" to entrenador, "pr" to presidente,
         "co" to colores, "ri" to rivales, "pl" to palmares, "cx" to contexto, "fi" to aficion, "me" to medios, "du" to dudas,
         "fu" to fuentes.map { listOf(it.first, it.second) }, "bu" to buscado, "cs" to consulta, "ok" to confirmado, "dm" to deMentira, "ct" to coste, "nb" to busquedas.toLong(),
+        "cp" to competiciones,
     )
 
     companion object {
@@ -66,6 +69,7 @@ data class InfoClub(
             m["cx"].comoTexto(), m["fi"].comoTexto(), m["me"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["du"].comoTexto(),
             m["fu"].comoLista().mapNotNull { x -> x.comoLista().takeIf { it.size == 2 }?.let { it[0].comoTexto() to it[1].comoTexto() } }.filter { it.second.isNotBlank() },
             m["bu"].comoTexto(), m["cs"].comoTexto(), m["ok"].comoBool(), m["dm"].comoBool(), (m["ct"] as? Number)?.toDouble() ?: 0.0, m["nb"].comoLong().toInt(),
+            m["cp"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() },
         )
     }
 }
@@ -99,7 +103,7 @@ Reglas:
 - Personas: solo el cargo y el nombre (entrenador, presidente), sin opiniones ni polémicas.
 - Escribe en español de España.
 Al terminar, responde SOLO con un objeto JSON (sin texto antes ni después, sin ```), con estas claves:
-{"encontrado": true/false, "nombre": nombre oficial, "apodo": cómo se le llama, "ciudad": "", "pais": "", "estadio": "", "aforo": número entero (0 si no se sabe), "liga": competición de liga en la que juega esta temporada, "division": "Primera", "Segunda"…, "entrenador": "", "presidente": "", "colores": "", "rivales": [derbis y rivales clásicos], "palmares": resumen de una o dos frases, "contexto": su momento deportivo y económico ahora mismo (dos o tres frases), "aficion": cómo es su afición (una o dos frases), "medios": [medios locales que lo cubren], "dudas": ""}
+{"encontrado": true/false, "nombre": nombre oficial, "apodo": cómo se le llama, "ciudad": "", "pais": "", "estadio": "", "aforo": número entero (0 si no se sabe), "liga": competición de liga en la que juega esta temporada, "division": "Primera", "Segunda"…, "entrenador": "", "presidente": "", "colores": "", "rivales": [derbis y rivales clásicos], "palmares": resumen de una o dos frases, "contexto": su momento deportivo y económico ahora mismo (dos o tres frases), "aficion": cómo es su afición (una o dos frases), "medios": [medios locales que lo cubren], "competiciones": [las competiciones oficiales que juega ESTA temporada, con su nombre oficial actual: su liga, su copa nacional, la supercopa si la juega, la competición europea o continental si la juega…], "dudas": ""}
 """.trim()
 
     fun peticion(club: String, liga: String, precisa: String = ""): Map<String, Any?> = linkedMapOf(
@@ -163,11 +167,61 @@ Al terminar, responde SOLO con un objeto JSON (sin texto antes ni después, sin 
         val l = mapOf<String, Any?>("type" to "array", "items" to t)
         val campos = linkedMapOf<String, Map<String, Any?>>("encontrado" to mapOf("type" to "boolean"), "nombre" to t, "apodo" to t, "ciudad" to t, "pais" to t, "estadio" to t,
             "aforo" to mapOf("type" to "integer"), "liga" to t, "division" to t, "entrenador" to t, "presidente" to t, "colores" to t, "rivales" to l, "palmares" to t,
-            "contexto" to t, "aficion" to t, "medios" to l, "dudas" to t)
+            "contexto" to t, "aficion" to t, "medios" to l, "competiciones" to l, "dudas" to t)
         mapOf("type" to "object", "properties" to campos, "required" to campos.keys.toList(), "additionalProperties" to false)
     }
 
     class NoEncontrado(msg: String) : Exception(msg)
+
+    /** Las competiciones de lo leído (sin repetir ni «Amistoso»). */
+    fun comps(m: Map<String, Any?>): List<String> = m["competiciones"].comoLista().map { it.comoTexto().trim() }
+        .filter { it.isNotBlank() && Competiciones.familia(it) != Competiciones.Familia.AMISTOSO }.distinctBy { Competiciones.norm(it) }.take(8)
+
+    val SISTEMA_COMPS = """
+Averiguas qué competiciones oficiales juega un club de fútbol de verdad ESTA temporada, para una app que acompaña carreras de EA Sports FC 26. Busca en la web (una o dos búsquedas bastan).
+Reglas: solo competiciones oficiales que juegue de verdad esta temporada (su liga con su nombre oficial actual, su copa nacional, la supercopa si la juega, la competición europea o continental si la juega, el Mundial de Clubes si lo juega). Nada de amistosos. No inventes nada; lo que no esté claro, en «dudas».
+Al terminar, responde SOLO con un objeto JSON (sin texto antes ni después, sin ```): {"competiciones": ["…"], "dudas": ""}
+""".trim()
+
+    fun peticionComps(club: String, liga: String): Map<String, Any?> = linkedMapOf(
+        "model" to Claude.SONNET,
+        "max_tokens" to 1200L,
+        "system" to listOf(mapOf("type" to "text", "text" to SISTEMA_COMPS)),
+        "messages" to listOf(mapOf("role" to "user", "content" to listOf(Peticion.texto("El club: «${club.trim()}»" + (if (liga.isNotBlank()) ", en ${liga.trim()}" else "") + ".")))),
+        "tools" to listOf(linkedMapOf("type" to "web_search_20260209", "name" to "web_search", "max_uses" to 2L,
+            "user_location" to mapOf("type" to "approximate", "country" to "ES", "timezone" to "Europe/Madrid"))),
+        "output_config" to mapOf("effort" to "low"),
+    )
+
+    /**
+     * Las competiciones que juega el club esta temporada (búsqueda corta: Sonnet y hasta dos búsquedas web). En modo prueba, unas de
+     * ejemplo. Devuelve la lista y lo que costó.
+     */
+    fun competiciones(club: String, liga: String): Pair<List<String>, Double> {
+        if (Prueba.activo) return compsDeMentira(liga) to 0.0
+        Gasto.compruebaAntes(0.10)
+        val cuerpo = peticionComps(club, liga)
+        val respuestas = ArrayList<Map<String, Any?>>()
+        var r = Motor.claude.crudo(cuerpo)
+        respuestas += r
+        var vueltas = 0
+        while (r["stop_reason"].comoTexto() == "pause_turn" && vueltas < 2) {
+            vueltas++
+            r = Motor.claude.crudo(cuerpo + ("messages" to (cuerpo["messages"].comoLista() + mapOf("role" to "assistant", "content" to respuestas.flatMap { it["content"].comoLista() }))))
+            respuestas += r
+        }
+        val v = lee(respuestas)
+        val coste = Precios.coste(v.modelo.ifBlank { Claude.SONNET }, v.uso) + v.busquedas * PRECIO_BUSQUEDA
+        Gasto.apunta(v.modelo.ifBlank { Claude.SONNET }, coste)
+        val i = v.texto.indexOf('{'); val j = v.texto.lastIndexOf('}')
+        val m = if (i >= 0 && j > i) runCatching { Json.lee(v.texto.substring(i, j + 1)).comoMapa() }.getOrNull() else null
+        val l = m?.let { comps(it) }.orEmpty()
+        if (l.isEmpty()) throw Claude.Fallo(if (v.errores.isNotEmpty()) "La búsqueda web no ha funcionado ahora mismo: prueba en un rato." else "No he encontrado sus competiciones: prueba otra vez.", true)
+        return l to coste
+    }
+
+    /** Modo prueba: competiciones de ejemplo (nada sale a la red). */
+    fun compsDeMentira(liga: String) = listOf(liga.ifBlank { "LaLiga EA Sports" }, "Copa del Rey", "Supercopa de España")
 
     /** De lo leído, el club (o por qué no). */
     fun info(m: Map<String, Any?>, v: Vuelta, consulta: String, hoy: String, coste: Double): InfoClub {
@@ -177,7 +231,8 @@ Al terminar, responde SOLO con un objeto JSON (sin texto antes ni después, sin 
         fun s(k: String) = m[k].comoTexto().trim()
         return InfoClub(s("nombre"), s("apodo"), s("ciudad"), s("pais"), s("estadio"), m["aforo"].comoLong().coerceIn(0, 300_000), s("liga"), s("division"), s("entrenador"), s("presidente"),
             s("colores"), m["rivales"].comoLista().map { it.comoTexto().trim() }.filter { it.isNotBlank() }.take(6), s("palmares"), s("contexto"), s("aficion"),
-            m["medios"].comoLista().map { it.comoTexto().trim() }.filter { it.isNotBlank() }.take(6), s("dudas"), v.fuentes, hoy, consulta, coste = coste, busquedas = v.busquedas)
+            m["medios"].comoLista().map { it.comoTexto().trim() }.filter { it.isNotBlank() }.take(6), s("dudas"), v.fuentes, hoy, consulta, coste = coste, busquedas = v.busquedas,
+            competiciones = comps(m))
     }
 
     /**
@@ -227,7 +282,7 @@ Al terminar, responde SOLO con un objeto JSON (sin texto antes ni después, sin 
         club.ifBlank { "Tu club" }, "Los de la prueba", "Ciudad de ejemplo", "España", "Estadio de ejemplo", 42_000, liga.ifBlank { "LaLiga" }, "Primera",
         "Entrenador de ejemplo", "Presidente de ejemplo", "Los colores de ejemplo", listOf("El rival de ejemplo"), "Modo prueba: un palmarés de ejemplo.",
         "Modo prueba: datos de ejemplo, no se ha buscado nada. Con tu clave y sin el modo prueba, aquí sale lo de verdad del club.", "Una afición de ejemplo.",
-        emptyList(), "Modo prueba: datos de ejemplo, no se ha buscado nada.", emptyList(), hoy, consulta, deMentira = true)
+        emptyList(), "Modo prueba: datos de ejemplo, no se ha buscado nada.", emptyList(), hoy, consulta, deMentira = true, competiciones = compsDeMentira(liga))
 
     /** Lo que va en el contexto de Claude (si está confirmado y es el club de ahora). */
     fun contexto(u: Universo): String? {

@@ -46,6 +46,7 @@ fun DatosClub(c: InfoClub, conFuentes: Boolean = true) {
     Spacer(Modifier.height(10.dp))
     DatoClub("Estadio", c.estadio + (if (c.aforo > 0) " (${Formato.cifra(c.aforo)})" else ""))
     DatoClub("Liga", listOf(c.liga, c.division).filter { it.isNotBlank() }.distinct().joinToString(" · "))
+    DatoClub("Compite en", c.competiciones.joinToString(", "))
     DatoClub("Entrenador", c.entrenador)
     DatoClub("Presidente", c.presidente)
     DatoClub("Colores", c.colores)
@@ -118,7 +119,9 @@ fun SeccionClub(u: Universo, enInicio: Boolean = false) {
         pendiente != null -> ConfirmaClub(pendiente, va != null, alSi = { Motor.confirmaClub(u.id) }, alOtro = { busca(it) })
         u.clubIdentificado && !enInicio -> {
             val c = u.clubInfo!!
-            Tarjeta { DatosClub(c); Spacer(Modifier.height(10.dp)); PildoraMarco(va ?: "Volver a buscarlo") { busca() } }
+            Tarjeta { DatosClub(c); Spacer(Modifier.height(10.dp)); PildoraMarco(va ?: "Volver a buscarlo") { busca() }
+                if (Motor.faltanCompeticiones(u)) BuscarCompeticiones(u, Modifier.padding(top = 10.dp))
+                else if (u.comps.isNotEmpty() && c.competiciones.isEmpty()) Text("Compite en: ${u.comps.joinToString(", ")}", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 8.dp)) }
         }
         !u.clubIdentificado -> Tarjeta(bordeIzq = Acento) {
             Row(verticalAlignment = Alignment.CenterVertically) {

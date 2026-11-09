@@ -74,11 +74,16 @@ object Motor {
 
     /** Crea la carrera y pide su principio (su gente y su presentación). Si eso falla, la carrera queda creada igual. */
     fun crea(u0: Universo): Pair<Universo, String?> {
-        var u = Carreras.guarda(u0.copy(precios = u0.precios.ifEmpty { Mercado.inicial() }, famaHist = u0.famaHist.ifEmpty { listOf(0 to u0.valorFuera(Fuera.FAMA)) }))
+        var u = Carreras.guarda(u0.copy(precios = u0.precios.ifEmpty { Mercado.inicial() }, famaHist = u0.famaHist.ifEmpty { listOf(0 to u0.valorFuera(Fuera.FAMA)) },
+            nivelGente = if (u0.nivelGente < 0) u0.nivelActual.ordinal else u0.nivelGente,
+            comps = u0.comps.ifEmpty { u0.clubInfo?.takeIf { it.confirmado && it.es(u0.club) }?.competiciones.orEmpty() },
+            compsDe = u0.compsDe.ifBlank { if (u0.clubInfo?.competiciones?.isNotEmpty() == true) u0.club else "" }))
         val fallo = en(u.id) {
             try {
                 val r = Narrador.leeInicio(pide(Narrador.inicio(u)))
-                u = Carreras.guarda(u.copy(entorno = u.entorno + r.gente.filter { g -> u.entorno.none { Vida.mismo(it.nombre, g.nombre) } }))
+                // (sin repetir a nadie, ni una segunda madre, padre o representante si ya los pusiste tú)
+                u = Carreras.guarda(u.copy(entorno = u.entorno + r.gente.filter { g -> u.entorno.none { Vida.mismo(it.nombre, g.nombre) } &&
+                    (Gente.rolUnico(g.rol) == null || u.entorno.none { Gente.rolUnico(it.rol) == Gente.rolUnico(g.rol) }) }))
                 Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.INICIO, reloj(), u.paso, r.titulo, r.texto, posts = r.posts, dms = r.dms, prensa = r.prensa,
                     tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts))
                 null
@@ -100,8 +105,13 @@ object Motor {
         caduca(universo)
         revela(universo, forzar = true)
         var u = Carreras.de(universo) ?: error("No encuentro esa carrera")
+        // (las carreras de antes de la gente nueva: desde ahora, al subir de nivel, entra gente nueva)
+        if (u.nivelGente < 0) u = Carreras.guarda(u.copy(nivelGente = u.nivelActual.ordinal))
         // Sin fecha: la del anterior + 7 días (si la hay), marcada como estimada
-        val p = if (Fechas.lee(p0.fecha) != null) p0 else fechaEstimada(universo)?.let { p0.copy(fecha = Fechas.iso(it), fechaEstimada = true) } ?: p0
+        val p1 = if (Fechas.lee(p0.fecha) != null) p0 else fechaEstimada(universo)?.let { p0.copy(fecha = Fechas.iso(it), fechaEstimada = true) } ?: p0
+        // La competición, la de la lista (si lo que se puso es una variante: «liga» → «LaLiga EA Sports»)
+        val canon = Competiciones.sinPreguntar(p1.competicion, Competiciones.lista(u, Carreras.partidos(universo).map { it.second }), u.compAlias)
+        val p = if (canon != null && canon != p1.competicion) p1.copy(competicion = canon, competicionOriginal = p1.competicion) else p1
         // Con fecha de nacimiento y fecha del partido, su edad (años cumplidos) es la de ese día
         Fechas.lee(u.personaje.nacimiento)?.let { nac -> Fechas.lee(p.fecha)?.let { f -> Fechas.edad(nac, f).first.takeIf { it in 10..80 && it != u.personaje.edad }?.let { a ->
             u = Carreras.guarda(u.copy(personaje = u.personaje.copy(edad = a))) } } }
@@ -250,8 +260,15 @@ object Motor {
         if ("red" in e.pendiente) {
             try {
                 val u = Carreras.de(e.universo) ?: return@en e to null
-                val r = Narrador.leeRed(pide(Narrador.red(u, p, contexto(u))))
-                e = Carreras.guarda(e.copy(posts = r.posts, dms = r.dms, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts,
+                // Gente nueva: al subir de nivel (o tras batir un récord histórico), entra gente en su vida y le escribe por primera vez
+                val nuevas = when {
+                    Gente.tocaNueva(u) -> maxOf(1, Gente.cuantas(u.nivelActual))
+                    u.hitos.any { it.paso == u.paso && it.real > 0 && it.id.contains("_bate_") } -> 1
+                    else -> 0
+                }
+                val r = Narrador.leeRed(pide(Narrador.red(u, p, contexto(u), nuevas)))
+                val extra = if (nuevas > 0) entraGente(u, r.nuevas, nuevas) else emptyList()
+                e = Carreras.guarda(e.copy(posts = r.posts, dms = Gente.sinExpulsados(u, r.dms) + extra, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts,
                     pendiente = e.pendiente.split(',').filter { it != "red" }.joinToString(",")))
             } catch (x: Exception) { fallo = mensaje(x) }
         }
@@ -279,6 +296,29 @@ object Motor {
             } catch (x: Exception) { fallo = mensaje(x) }
         }
         e to fallo
+    }
+
+    /**
+     * Entra gente nueva (la que propone Claude o, si no trae a nadie, la de las plantillas de su nivel): se apunta en su gente con la
+     * jornada en que llega y sale como «Gente nueva». Devuelve los mensajes de presentación de las de las plantillas (los de Claude ya vienen).
+     */
+    private fun entraGente(u: Universo, propuestas: List<Persona>, n: Int): List<Dm> {
+        val paso = maxOf(1, u.paso)
+        val extra = ArrayList<Dm>()
+        var nuevas = propuestas.map { it.copy(desde = paso) }.take(n)
+        if (nuevas.isEmpty()) nuevas = Gente.plantillas(u, u.nivelActual, n).map { t ->
+            val q = Persona(Universo.nuevoId("p"), t.nombre, t.rol, 50, t.nota, desde = paso)
+            extra += t.mensajes.map { Dm(q.nombre, it, chat = q.nombre, pid = q.id) }
+            q
+        }
+        var nu = Gente.anade(u, nuevas, n)
+        val entraron = nu.entorno.filter { x -> u.entorno.none { it.id == x.id } }
+        nu = Carreras.guarda(nu.copy(nivelGente = maxOf(nu.nivelGente, nu.nivelActual.ordinal)))
+        if (entraron.isNotEmpty()) Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.GENTE, reloj() - 1, nu.paso,
+            if (entraron.size == 1) "Entra en tu vida: ${entraron.first().nombre}" else "Gente nueva en tu vida",
+            entraron.joinToString("\n") { "${it.nombre} (${it.rol}): ${it.nota.ifBlank { "te ha escrito por primera vez" }}." } +
+                "\nCon tu nivel de ahora (${nu.nivelActual.nombre.lowercase()}) te escribe otra gente. Si alguien no te interesa, en su chat puedes darle puerta."))
+        return extra.filter { d -> entraron.any { it.id == d.pid } }
     }
 
     fun reintenta(id: String): String? = synchronized(cerrojo) {
@@ -326,7 +366,7 @@ object Motor {
                 val m = runCatching { resp.json() }.getOrNull() ?: return@forEachIndexed
                 // Si ya metiste otro partido, salen ya: se quedaron atrás (en modo prueba, los dos salen ya: no hay que esperar horas para ver cómo va)
                 val visible = if (u.paso > l.paso || Prueba.activo) ahora else ahora + i * separacion
-                var ev = Narrador.leeEvento(m, u, ahora, visible).copy(paso = l.paso)
+                var ev = Narrador.leeEvento(m, u, ahora, visible).let { it.copy(paso = l.paso, dms = Gente.sinExpulsados(u, it.dms)) }
                 if (ev.decision != null) { if (abiertas >= Narrador.MAX_ABIERTAS) ev = ev.copy(decision = null) else abiertas++ }
                 Carreras.guarda(ev)
                 llegados++
@@ -362,7 +402,7 @@ object Motor {
         val u = Carreras.de(universo) ?: return@en null to null
         try {
             val m = pide(Narrador.evento(u, contexto(u), 0))
-            var ev = Narrador.leeEvento(m, u, reloj(), reloj())
+            var ev = Narrador.leeEvento(m, u, reloj(), reloj()).let { it.copy(dms = Gente.sinExpulsados(u, it.dms)) }
             if (ev.decision != null && !cabeDecision(universo)) ev = ev.copy(decision = null)
             val e = Carreras.guarda(ev)
             revela(universo)
@@ -411,10 +451,10 @@ object Motor {
             var nu = Vida.aplica(u, r.efectos)
             val ahora = reloj()
             Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.TEMPORADA, ahora, u.paso, r.titulo.ifBlank { "Cierre de la temporada $t" }, r.balance,
-                posts = r.posts, dms = r.dms, prensa = r.prensa, ofertas = r.ofertas, efectos = ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts, premios = r.premios))
+                posts = r.posts, dms = Gente.sinExpulsados(u, r.dms), prensa = r.prensa, ofertas = r.ofertas, efectos = ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts, premios = r.premios))
             if (r.vacacionesTexto.isNotBlank()) Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, ahora + 1, u.paso, r.vacacionesTitulo.ifBlank { "Vacaciones" },
                 r.vacacionesTexto, decision = r.vacacionesDecision?.takeIf { cabeDecision(u.id) }))
-            nu = (Carreras.de(u.id) ?: nu).let { x -> x.copy(dinero = nu.dinero, fuera = nu.fuera, entorno = nu.entorno, famaJornada = nu.famaJornada, famaHist = nu.famaHist) }
+            nu = (Carreras.de(u.id) ?: nu).let { x -> x.copy(dinero = nu.dinero, fuera = nu.fuera, entorno = nu.entorno, exEntorno = nu.exEntorno, famaJornada = nu.famaJornada, famaHist = nu.famaHist) }
             nu = nu.copy(temporada = siguienteTemporada(t), cerradas = (nu.cerradas + t).filter { it.isNotBlank() }.distinct(), personaje = nu.personaje.copy(edad = nu.personaje.edad + 1))
             // El contrato que se acaba: libre (o, si era una cesión, de vuelta a su club)
             val c = u.contrato
@@ -450,7 +490,7 @@ object Motor {
                 val ef = Vida.recorta(u, r.efectos)
                 Carreras.guarda(Vida.aplica(u, r.efectos))
                 Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.RESPUESTA, reloj(), u.paso, r.titular.ifBlank { "Lo que pasó después" }, r.texto,
-                    posts = r.posts, dms = listOf(Dm("Tú", t, mio = true, chat = d.de)) + r.dms, efectos = ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts))
+                    posts = r.posts, dms = listOf(Dm("Tú", t, mio = true, chat = Gente.chatDeNombre(u, d.de))) + Gente.sinExpulsados(u, r.dms), efectos = ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts))
                 // Si era pedir la renovación y dijo que sí, el club hace su oferta
                 if (d.accion == "renegociar" && t == d.opciones.firstOrNull()) Carreras.de(u.id)?.let { ofreceRenovacion(it, "Tu representante lo pidió y el club ha contestado con una oferta.") }
                 null
@@ -484,7 +524,7 @@ object Motor {
         val fallo = en(u.id) {
             try {
                 val r = Narrador.leeRed(pide(Narrador.oficial(nu, contexto(nu), o)))
-                of = Carreras.guarda(of.copy(posts = r.posts, dms = r.dms, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts)); null
+                of = Carreras.guarda(of.copy(posts = r.posts, dms = Gente.sinExpulsados(nu, r.dms), tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts)); null
             } catch (x: Exception) { mensaje(x) }
         }
         // Club nuevo: se busca qué club es (queda esperando a que digas «Sí, es este»; si no se puede, lo pides tú desde Inicio o Perfil)
@@ -507,7 +547,173 @@ object Motor {
     fun confirmaClub(universo: String, c: InfoClub? = null) {
         val u = Carreras.de(universo) ?: return
         val info = (c ?: u.clubInfo ?: return).copy(confirmado = true)
-        Carreras.guarda(u.copy(clubInfo = info, liga = u.liga.ifBlank { info.liga }))
+        // Sus competiciones (las de la búsqueda) pasan a ser las del desplegable, y los partidos de antes se agrupan con ellas (sin gastar nada)
+        val cs = if (info.competiciones.isNotEmpty()) info.competiciones + u.comps.filter { c0 -> info.competiciones.none { Competiciones.norm(it) == Competiciones.norm(c0) } && Vida.mismo(u.compsDe, u.club) } else u.comps
+        Carreras.guarda(u.copy(clubInfo = info, liga = u.liga.ifBlank { info.liga }, comps = cs, compsDe = if (info.competiciones.isNotEmpty()) u.club else u.compsDe))
+        if (info.competiciones.isNotEmpty()) normalizaCompeticiones(universo, conIa = false)
+    }
+
+    // ---------------------------------------------------------------- las competiciones
+
+    /** ¿Faltan las competiciones de su club de ahora? (para ofrecer «Buscar sus competiciones»). */
+    fun faltanCompeticiones(u: Universo): Boolean = u.comps.isEmpty() || (u.compsDe.isNotBlank() && !Vida.mismo(u.compsDe, u.club))
+
+    /** Busca en la web qué competiciones juega su club y las pone en el desplegable (y agrupa los partidos de antes). Devuelve por qué no, si no se pudo. */
+    fun buscaCompeticiones(universo: String): String? {
+        val u = Carreras.de(universo) ?: return null
+        return try {
+            val club = u.clubInfo?.takeIf { it.es(u.club) }?.nombre ?: u.club
+            val (l, _) = Clubes.competiciones(club, u.liga)
+            val nu = Carreras.de(universo) ?: u
+            Carreras.guarda(nu.copy(comps = l + nu.comps.filter { c0 -> l.none { Competiciones.norm(it) == Competiciones.norm(c0) } && Vida.mismo(nu.compsDe, nu.club) },
+                compsDe = nu.club, clubInfo = nu.clubInfo?.let { if (it.es(nu.club)) it.copy(competiciones = l) else it }))
+            normalizaCompeticiones(universo, conIa = true)
+            null
+        } catch (e: Exception) { mensaje(e) }
+    }
+
+    /** «Otra…»: una competición que no estaba (se añade a la lista). Devuelve cómo queda escrita. */
+    fun anadeCompeticion(universo: String, nombre: String): String {
+        val u = Carreras.de(universo) ?: return nombre.trim()
+        val t = Competiciones.bonita(nombre)
+        if (t.isBlank()) return t
+        val ya = Competiciones.lista(u).firstOrNull { Competiciones.norm(it) == Competiciones.norm(t) }
+        if (ya != null) return ya
+        Carreras.guarda(u.copy(comps = u.comps + t, compsDe = u.compsDe.ifBlank { u.club }))
+        return t
+    }
+
+    /** Corregir un partido ya guardado: su competición (y si fue el MVP). */
+    fun corrigePartido(entrada: String, competicion: String, mvp: Boolean? = null) {
+        val e = Carreras.entrada(entrada) ?: return
+        val p = e.partido ?: return
+        val c = competicion.trim().ifBlank { p.competicion }
+        Carreras.guarda(e.copy(partido = p.copy(competicion = c, competicionOriginal = p.competicionOriginal.ifBlank { if (c != p.competicion) p.competicion else "" }, mvp = mvp ?: p.mvp)))
+    }
+
+    /**
+     * Agrupa las competiciones de los partidos ya guardados con las de la lista: primero por reglas (gratis); lo que no encaje y aún no se
+     * haya preguntado, Haiku (una vez por nombre, si [conIa] y hay clave); lo que Haiku diga que no es ninguna, a «Otra». Devuelve cuántos
+     * partidos ha cambiado.
+     */
+    fun normalizaCompeticiones(universo: String, conIa: Boolean = false): Int = synchronized(cerrojo) {
+        var u = Carreras.de(universo) ?: return 0
+        val ps = Carreras.partidos(universo)
+        if (ps.isEmpty()) return 0
+        val base = Competiciones.lista(u)
+        val propias = base.size > 2
+        // Sin lista propia (club sin identificar), las variantes se agrupan entre ellas
+        val lista = if (propias) base else Competiciones.lista(u, ps.map { it.second })
+        fun canon(raw: String) = Competiciones.sinPreguntar(raw, lista, u.compAlias)
+        val sueltos = ps.map { it.second.competicion.trim() }.filter { it.isNotBlank() && it != Competiciones.OTRA && canon(it) == null }.distinctBy { Competiciones.norm(it) }
+        val porPreguntar = sueltos.filter { Competiciones.norm(it) !in u.compsPreguntadas }
+        if (propias && conIa && porPreguntar.isNotEmpty() && ClaveApi.hayDeVerdad && !Prueba.activo) {
+            runCatching {
+                val m = Competiciones.leeAgrupa(pide(Competiciones.peticionAgrupa(u.club, lista.filter { it != Competiciones.SELECCION }, porPreguntar)), lista)
+                u = Carreras.guarda((Carreras.de(universo) ?: u).let { x ->
+                    x.copy(compAlias = x.compAlias + porPreguntar.associate { r -> Competiciones.norm(r) to (m[Competiciones.norm(r)] ?: Competiciones.OTRA) },
+                        compsPreguntadas = (x.compsPreguntadas + porPreguntar.map { Competiciones.norm(it) }).distinct())
+                })
+            }
+        }
+        var n = 0
+        ps.forEach { (e, p) ->
+            val c = canon(p.competicion) ?: return@forEach
+            if (c != p.competicion) { Carreras.guarda(e.copy(partido = p.copy(competicion = c, competicionOriginal = p.competicionOriginal.ifBlank { p.competicion }))); n++ }
+        }
+        n
+    }
+
+    /** Al abrir la app: agrupa las competiciones de todas las carreras (con Haiku, si hay clave y algo por preguntar). */
+    fun normalizaTodas(conIa: Boolean) { Carreras.todas().forEach { runCatching { normalizaCompeticiones(it.id, conIa) } } }
+
+    // ---------------------------------------------------------------- tu gente: hablar, dar puerta, juntar y separar
+
+    private fun persona(u: Universo, id: String) = u.entorno.firstOrNull { it.id == id }
+
+    /** La conversación con alguien (todos sus mensajes, con los nombres juntados). */
+    private fun conversacionCon(u: Universo, p: Persona): List<Dm> =
+        conversaciones(u, Carreras.entradasDe(u.id, ahora = reloj())).firstOrNull { Vida.mismo(it.nombre, p.nombre) }?.dms.orEmpty()
+
+    /**
+     * Le escribes a alguien de tu gente lo que quieras: contesta en su papel (Sonnet), y puede cambiar su afinidad y su actitud (si le
+     * convences) y tener consecuencias. Devuelve por qué no se pudo, si no se pudo.
+     */
+    fun charla(universo: String, personaId: String, texto: String): String? = synchronized(cerrojo) { en(universo) {
+        val u = Carreras.de(universo) ?: return@en null
+        val p = persona(u, personaId) ?: return@en "Esa persona ya no está en tu vida."
+        val t = texto.trim().ifBlank { return@en "Escribe algo." }
+        try {
+            val r = Narrador.leeCharla(pide(Narrador.charla(u, contexto(u), p, conversacionCon(u, p), t)))
+            var nu = Carreras.de(universo) ?: u
+            val q = nu.entorno.firstOrNull { it.id == p.id } ?: p
+            val q2 = q.copy(afinidad = (q.afinidad + r.afinidad).coerceIn(0, 100), actitud = r.actitud.ifBlank { q.actitud })
+            nu = nu.copy(entorno = nu.entorno.map { if (it.id == q.id) q2 else it })
+            val efs = r.efectos.copy(relaciones = r.efectos.relaciones.filter { (n, _) -> Gente.quien(listOf(q), n) == null })
+            val ef = Vida.recorta(nu, efs).let { it.copy(relaciones = it.relaciones + (if (r.afinidad != 0) mapOf(q.nombre to r.afinidad) else emptyMap())) }
+            nu = Vida.aplica(nu, efs)
+            Carreras.guarda(nu)
+            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.CHARLA, reloj(), u.paso, "Hablaste con ${q.nombre}",
+                r.resumen.ifBlank { "Le escribiste a ${q.nombre}." } + (if (r.convencido) " Le has hecho cambiar." else ""),
+                posts = r.posts, dms = listOf(Dm("Tú", t, mio = true, chat = q.nombre, pid = q.id)) + r.respuesta.map { Dm(q.nombre, it, chat = q.nombre, pid = q.id) } +
+                    Gente.sinExpulsados(nu, r.dms).filter { !Vida.mismo(Gente.chatDe(nu, it), q.nombre) }, efectos = ef))
+            null
+        } catch (x: Exception) { mensaje(x) }
+    } }
+
+    /**
+     * Le das puerta a alguien: sale de tu gente («Ya no está en tu vida») y no vuelve a escribirte. Claude cuenta su reacción y lo que pasa
+     * (si era tu representante, llegan candidatos). Si no se puede pedir (sin clave, el tope…), sale igual, sin lo de después. Devuelve
+     * por qué no se pudo contar, si no se pudo.
+     */
+    fun puerta(universo: String, personaId: String, porque: String): String? = synchronized(cerrojo) { en(universo) {
+        val u = Carreras.de(universo) ?: return@en null
+        val p = persona(u, personaId) ?: return@en null
+        val conv = conversacionCon(u, p)
+        val r = try { Narrador.leePuerta(pide(Narrador.puerta(u, contexto(u), p, conv, porque))) } catch (x: Exception) {
+            var nu = Gente.fuera(Carreras.de(universo) ?: u, p, porque)
+            nu = Carreras.guarda(nu)
+            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PUERTA, reloj(), u.paso, "Le das puerta a ${p.nombre}",
+                "${p.nombre} (${p.rol}) ya no está en tu vida." + (if (porque.isNotBlank()) " Le dijiste: «${porque.trim()}»." else ""),
+                dms = if (porque.isNotBlank()) listOf(Dm("Tú", porque.trim(), mio = true, chat = p.nombre, pid = p.id)) else emptyList()))
+            return@en "${p.nombre} ya no está en tu vida, pero lo de después no se ha podido escribir: ${mensaje(x)}"
+        }
+        var nu = Gente.fuera(Carreras.de(universo) ?: u, p, porque)
+        val efs = r.efectos.copy(relaciones = r.efectos.relaciones.filter { (n, _) -> Gente.quien(listOf(p), n) == null })
+        val ef = Vida.recorta(nu, efs)
+        nu = Vida.aplica(nu, efs)
+        val paso = maxOf(1, nu.paso)
+        nu = Gente.anade(nu, r.candidatos.map { it.copy(desde = paso) }, 3)
+        Carreras.guarda(nu)
+        Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PUERTA, reloj(), u.paso, r.titular.ifBlank { "Le das puerta a ${p.nombre}" },
+            r.texto.ifBlank { "${p.nombre} ya no está en tu vida." }, posts = r.posts,
+            dms = (if (porque.isNotBlank()) listOf(Dm("Tú", porque.trim(), mio = true, chat = p.nombre, pid = p.id)) else emptyList()) +
+                r.despedida.map { Dm(p.nombre, it, chat = p.nombre, pid = p.id) } + r.dms.filter { d -> Gente.quien(listOf(p), d.de) == null },
+            efectos = ef.copy(nuevas = r.candidatos), tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts))
+        null
+    } }
+
+    /** Vuelve a tu vida (con la relación tocada). */
+    fun recupera(universo: String, personaId: String) {
+        val u = Carreras.de(universo) ?: return
+        val p = u.exEntorno.firstOrNull { it.id == personaId } ?: return
+        Carreras.guarda(Gente.recupera(u, p))
+        Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.GENTE, reloj(), u.paso, "${p.nombre} vuelve a tu vida",
+            "Le has vuelto a abrir la puerta a ${p.nombre} (${p.rol}). La relación no está como antes: tocará ganársela."))
+    }
+
+    /** «Es la misma persona que…»: el chat (o nombre) [nombre] es de [personaId]. */
+    fun junta(universo: String, nombre: String, personaId: String) {
+        val u = Carreras.de(universo) ?: return
+        val p = Gente.todos(u).firstOrNull { it.id == personaId } ?: return
+        Carreras.guarda(Gente.junta(u, nombre, p))
+    }
+
+    /** «Separar»: [nombre] no es [personaId]. */
+    fun separa(universo: String, nombre: String, personaId: String) {
+        val u = Carreras.de(universo) ?: return
+        val p = Gente.todos(u).firstOrNull { it.id == personaId } ?: return
+        Carreras.guarda(Gente.separa(u, nombre, p))
     }
 
     /** Leer la foto de la pantalla de estadísticas. */

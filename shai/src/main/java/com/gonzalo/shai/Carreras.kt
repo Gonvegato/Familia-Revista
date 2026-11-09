@@ -111,7 +111,11 @@ object Carreras {
 
     fun entrada(id: String): Entrada? { lee(); return Entrada.deJson(almacen.nodo(id)?.get("o").comoTexto()) }
 
-    fun guarda(e: Entrada): Entrada {
+    fun guarda(e0: Entrada): Entrada {
+        // Cada mensaje, con el id de la persona de su gente que lo escribe (si se sabe): así «mamá» y «Marisa» van al mismo chat
+        val e = if (e0.dms.any { !it.mio && it.pid.isBlank() }) de(e0.universo)?.let { u ->
+            e0.copy(dms = e0.dms.map { d -> if (d.mio || d.pid.isNotBlank()) d else Gente.quien(Gente.todos(u), d.de)?.let { p -> d.copy(pid = p.id) } ?: d })
+        } ?: e0 else e0
         almacen.pon(e.id, mapOf("un" to e.universo, "o" to e.aJson()))
         avisa()
         return e

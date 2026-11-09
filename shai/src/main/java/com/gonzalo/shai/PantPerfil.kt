@@ -128,7 +128,7 @@ fun edadExacta(u: Universo): String {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
+fun TabPerfil(u: Universo, alBorrada: () -> Unit, alChat: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     var editando by rememberSaveable { mutableStateOf(false) }
     var borrar by remember { mutableStateOf(false) }
@@ -211,27 +211,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
     }
 
-    Seccion("Tu gente", if (u.entorno.isNotEmpty()) "afinidad" else null)
-    if (u.entorno.isEmpty()) Tarjeta { TextoTarjeta("Todavía no hay nadie: llegarán con la presentación y con lo que pase.") }
-    else Tarjeta {
-        u.entorno.sortedByDescending { it.afinidad }.forEachIndexed { i, p ->
-            if (i > 0) Filete(1.dp, Line, Modifier.padding(vertical = 10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Avatar(p.nombre, 40.dp)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(p.nombre, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
-                    Text(p.rol, color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
-                    if (p.nota.isNotBlank()) Text(p.nota, color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                }
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.width(56.dp), horizontalAlignment = Alignment.End) {
-                    Text("${p.afinidad}", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Barra(p.afinidad / 100f, Modifier.padding(top = 4.dp), when { p.afinidad >= 60 -> Acento; p.afinidad < 35 -> Coral; else -> Muted }, 5.dp)
-                }
-            }
-        }
-    }
+    TuGente(u, alChat)
 
     TusRivales(u)
 
@@ -257,6 +237,57 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
         text = { Text("Se borra con sus partidos, su prensa y sus mensajes, en todos tus dispositivos. No tiene vuelta atrás.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({ borrar = false; Carreras.borra(u.id); Fotos.borra(ctx, u.id); alBorrada() }) { Text("BORRAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
         dismissButton = { TextButton({ borrar = false }) { Text("NO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } })
+}
+
+/** «Tu gente» (con los nuevos marcados; al tocar a alguien, su chat) y «Ya no está en tu vida» (con «Que vuelva»). */
+@Composable
+fun TuGente(u: Universo, alChat: (String) -> Unit = {}) {
+    Seccion("Tu gente", if (u.entorno.isNotEmpty()) "${u.entorno.size} · afinidad" else null)
+    if (u.entorno.isEmpty()) Tarjeta { TextoTarjeta("Todavía no hay nadie: llegarán con la presentación y con lo que pase.") }
+    else Tarjeta {
+        TextoTarjeta("Toca a alguien para escribirle lo que quieras (o, si sobra, darle puerta desde su chat). Con más fama, entra gente nueva.", Modifier.padding(bottom = 10.dp))
+        u.entorno.sortedWith(compareByDescending<Persona> { Gente.nueva(u, it) }.thenByDescending { it.afinidad }).forEachIndexed { i, p ->
+            if (i > 0) Filete(1.dp, Line, Modifier.padding(vertical = 10.dp))
+            Row(Modifier.tocable { alChat(p.nombre) }, verticalAlignment = Alignment.CenterVertically) {
+                Avatar(p.nombre, 40.dp)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(p.nombre, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp, modifier = Modifier.weight(1f, fill = false))
+                        if (Gente.nueva(u, p)) { Spacer(Modifier.width(6.dp)); Sello("Nuevo") }
+                    }
+                    Text(p.rol, color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
+                    if (p.nota.isNotBlank()) Text(p.nota, color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    if (p.actitud.isNotBlank()) Text("Ahora: ${p.actitud}", color = Muted, fontFamily = Body, fontStyle = FontStyle.Italic, fontSize = 12.sp, lineHeight = 17.sp)
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.width(56.dp), horizontalAlignment = Alignment.End) {
+                    Text("${p.afinidad}", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Barra(p.afinidad / 100f, Modifier.padding(top = 4.dp), when { p.afinidad >= 60 -> Acento; p.afinidad < 35 -> Coral; else -> Muted }, 5.dp)
+                }
+            }
+        }
+    }
+
+    if (u.exEntorno.isNotEmpty()) {
+        Seccion("Ya no está en tu vida", "${u.exEntorno.size}")
+        Tarjeta {
+            u.exEntorno.sortedByDescending { it.salio }.forEachIndexed { i, p ->
+                if (i > 0) Filete(1.dp, Line, Modifier.padding(vertical = 10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Avatar(p.nombre, 34.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(p.nombre, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
+                        Text("${p.rol} · le diste puerta en la jornada ${p.salio}" + (if (p.porque.isNotBlank()) ": «${p.porque}»" else ""), color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    PildoraMarco("Que vuelva") { Motor.recupera(u.id, p.id) }
+                }
+            }
+        }
+    }
+
 }
 
 /** La carta de FC: la media grande y los atributos en rejilla (o las cifras del míster). */
@@ -542,6 +573,7 @@ fun TabCifras(u: Universo) {
             Text("${pl(l.victorias, "ganado")} · ${pl(l.empates, "empatado")} · ${pl(l.derrotas, "perdido")}", color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.weight(1f))
         }
         if (u.modo == Rol.JUGADOR && l.minutos > 0) Text("${Formato.cifra(l.minutos)} minutos" + (if (l.goles > 0) " · un gol cada ${l.minutos / l.goles}'" else ""), color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
+        if (u.modo == Rol.JUGADOR && l.mvps > 0) Text("🏅 MVP del partido ${if (l.mvps == 1) "1 vez" else "${l.mvps} veces"}", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
         Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Últimos", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
             Spacer(Modifier.width(8.dp))
@@ -556,8 +588,8 @@ fun TabCifras(u: Universo) {
         Tarjeta {
             Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
                 Text("Competición", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                (if (u.modo == Rol.JUGADOR) listOf("PJ", "G", "A", "Nota") else listOf("PJ", "V", "E", "D")).forEach { h ->
-                    Text(h, color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = TextAlign.End, modifier = Modifier.width(if (h == "Nota") 44.dp else 32.dp))
+                (if (u.modo == Rol.JUGADOR) listOf("PJ", "G", "A", "MVP", "Nota") else listOf("PJ", "V", "E", "D")).forEach { h ->
+                    Text(h, color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = TextAlign.End, modifier = Modifier.width(if (h == "Nota" || h == "MVP") 40.dp else 30.dp))
                 }
             }
             comps.forEach { c ->
@@ -565,21 +597,23 @@ fun TabCifras(u: Universo) {
                 Filete(1.dp, Line)
                 Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(c, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 18.sp, modifier = Modifier.weight(1f))
-                    val vals = if (u.modo == Rol.JUGADOR) listOf("${x.jugados}", "${x.goles}", "${x.asistencias}", if (x.notaMedia > 0) Formato.decimal(x.notaMedia) else "—")
+                    val vals = if (u.modo == Rol.JUGADOR) listOf("${x.jugados}", "${x.goles}", "${x.asistencias}", "${x.mvps}", if (x.notaMedia > 0) Formato.decimal(x.notaMedia) else "—")
                         else listOf("${x.jugados}", "${x.victorias}", "${x.empates}", "${x.derrotas}")
-                    vals.forEachIndexed { i, v -> Text(v, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.End, modifier = Modifier.width(if (u.modo == Rol.JUGADOR && i == 3) 44.dp else 32.dp)) }
+                    vals.forEachIndexed { i, v -> Text(v, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.End, modifier = Modifier.width(if (u.modo == Rol.JUGADOR && i >= 3) 40.dp else 30.dp)) }
                 }
             }
         }
     }
     RecordsEHitos(u, todos.map { it.second })
     RecordsHistoricos(u, todos.map { it.second })
-    // Los partidos
+    // Los partidos (al tocar uno, se corrige su competición o lo del MVP)
+    var corrige by remember { mutableStateOf<String?>(null) }
     Seccion("Los partidos", "${lista.size}")
     Tarjeta {
+        TextoTarjeta("Toca un partido para corregir su competición" + (if (u.modo == Rol.JUGADOR) " o si fuiste el MVP." else "."), Modifier.padding(bottom = 8.dp))
         lista.reversed().take(40).forEachIndexed { i, (e, p) ->
             if (i > 0) Filete(1.dp, Line, Modifier.padding(vertical = 8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.tocable { corrige = e.id }, verticalAlignment = Alignment.CenterVertically) {
                 Letra(p.letra, 30.dp)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
@@ -588,14 +622,33 @@ fun TabCifras(u: Universo) {
                         if (u.modo == Rol.JUGADOR) "${p.minutos}'" + (if (p.goles > 0) " · ${p.goles} G" else "") + (if (p.asistencias > 0) " · ${p.asistencias} A" else "") else p.goleadores.ifBlank { null }).joinToString(" · "),
                         color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
                     if (p.titulo.isNotBlank()) Text("🏆 ${p.titulo}", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp)
+                    if (p.mvp) Text("🏅 MVP", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp)
                 }
                 if (p.nota > 0) { Spacer(Modifier.width(8.dp)); Text(Formato.decimal(p.nota), color = if (p.nota >= 8) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp) }
             }
         }
         if (lista.size > 40) TextoTarjeta("Y ${lista.size - 40} más.", Modifier.padding(top = 8.dp))
     }
+    corrige?.let { id -> todos.firstOrNull { it.first.id == id }?.let { (e, p) -> CorrigePartido(u, e, p) { corrige = null } } }
     Spacer(Modifier.height(16.dp))
     CerrarTemporada(u)
+}
+
+/** Corregir un partido ya guardado: su competición (de la lista) y si fue el MVP. */
+@Composable
+fun CorrigePartido(u: Universo, e: Entrada, p: Partido, alCerrar: () -> Unit) {
+    var comp by remember(e.id) { mutableStateOf(p.competicion) }
+    var mvp by remember(e.id) { mutableStateOf(p.mvp) }
+    val lista = Competiciones.lista(u, Carreras.partidos(u.id).map { it.second })
+    AlertDialog(onDismissRequest = alCerrar, containerColor = Paper, shape = RoundedCornerShape(16.dp),
+        title = { Text("${if (p.local) "vs" else "en"} ${p.rival} · ${p.resultado}", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 23.sp) },
+        text = { Column {
+            if (p.competicionOriginal.isNotBlank() && p.competicionOriginal != p.competicion) Text("Lo metiste como «${p.competicionOriginal}».", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+            ElegirCompeticion(u, lista, comp) { comp = it }
+            if (u.modo == Rol.JUGADOR) SiNo("Fui el MVP", null, mvp) { mvp = it }
+        } },
+        confirmButton = { TextButton({ Motor.corrigePartido(e.id, comp, mvp); alCerrar() }) { Text("GUARDAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.sp) } },
+        dismissButton = { TextButton(alCerrar) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.sp) } })
 }
 
 /** El botón de cerrar la temporada (con su confirmación): balance, premios, vacaciones y mercado de verano. */

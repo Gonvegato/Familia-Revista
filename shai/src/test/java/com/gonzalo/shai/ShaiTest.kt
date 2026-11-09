@@ -114,7 +114,7 @@ class ShaiTest {
         // Sin salida estructurada (la API la rechaza por grande: «compiled grammar is too large»): el esquema va en el mensaje
         assertEquals("low", oc["effort"]); assertNull(oc["format"])
         val sch = Peticion.esquemaDe(h)!!
-        assertEquals(false, sch["additionalProperties"]); assertEquals(listOf("tendencia", "posts", "mensajes"), sch["required"])
+        assertEquals(false, sch["additionalProperties"]); assertEquals(listOf("tendencia", "posts", "mensajes", "gente_nueva"), sch["required"])
         val sistema = h["system"].comoLista().first().comoMapa()
         assertEquals(mapOf("type" to "ephemeral"), sistema["cache_control"])
         assertTrue(sistema["text"].comoTexto().contains("Personas reales"))

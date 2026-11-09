@@ -5,6 +5,35 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.7.0
+
+Lo que pidió tras usarla de verdad:
+
+- **Competiciones de verdad.** Al identificar el club (búsqueda web) también se buscan las competiciones que juega esta temporada (liga
+  con su nombre oficial, copa, supercopa, Europa…). En el partido, la competición es un **desplegable** con esas, **Amistoso** y
+  **Selección** siempre, y «Otra…» para escribir una (se añade a la lista). Si el club ya estaba identificado, «Buscar sus competiciones»
+  (búsqueda corta: Sonnet y hasta dos búsquedas). Con un traspaso, se vuelven a buscar las del club nuevo.
+- **Los partidos de antes se agrupan** (`Competiciones.kt`): «LaLiga», «La Liga», «liga» y «LaLiga EA Sports» → la de la lista; «amistoso»,
+  «amistosos», «pretemporada», «Trofeo…» → Amistoso; sin lista, las variantes se juntan entre ellas. Lo que no encaja por reglas lo
+  empareja Haiku una sola vez por nombre (al abrir la app, si hay clave); lo que sigue sin encajar, a «Otra». Lo que se metió se guarda
+  (`competicionOriginal`) y en Cifras → Los partidos se puede corregir la competición de cualquier partido. Cifras, hitos, récords y el
+  contexto de Claude usan la competición agrupada (y Claude recibe las cifras por competición).
+- **MVP.** «He sido el MVP» en las dos plantillas (la foto lo marca si se ve). Cuenta en Cifras (por temporada y competición), en los
+  hitos (primer MVP, 5, 10, 25…), en la fama (sube algo más) y Claude lo sabe («FUE EL MVP DEL PARTIDO»).
+- **Una persona, un chat** (`Gente.kt`): «Marisa», «Marisa Bloise» y «mamá» son la misma persona y van al mismo chat (por nombre, nombre de
+  pila, apellido, alias y rol: «mamá» → quien es madre). A Claude se le pasa su gente con un id y se le pide el nombre exacto y el id en cada
+  mensaje; lo guardado se agrupa solo. En el chat (⋮): «Es la misma persona que…» y «Separar a alguien de este chat…».
+- **Hablar con cualquiera.** En el chat de cualquiera de tu gente (o desde Perfil → Tu gente, o «Escribir a…» en Mensajes), una caja para
+  escribirle lo que quieras: contesta Claude (Sonnet) en su papel, coherente con cómo es y vuestra historia, y puede cambiar su afinidad y su
+  actitud (lo que te insiste: «presiona para que cambies de club»), que se ve en su chat y en tu gente. Unos 2-3 céntimos por mensaje.
+- **Darle puerta** (⋮ en su chat, con confirmación y lo que le dices): sale de tu gente a «Ya no está en tu vida», no vuelve a escribirte y
+  Claude cuenta su reacción y lo que pasa (representante → candidatos; el amigo que te liaba → sube la disciplina; familia → drama).
+  Puede volver («Que vuelva»), con la relación tocada.
+- **Gente nueva con la fama.** Al subir de nivel entran 1-3 personas acordes (otro agente, un compañero de selección, una presentadora,
+  una cantante, un magnate… siempre inventados) que te escriben por primera vez; también tras batir un récord histórico. Marcadas como
+  «Nuevo» en Tu gente. Como mucho 16 activas.
+- Modo prueba: charlas (convencer, no convencer, ofenderse) y portazos con plantillas por tipo de persona.
+
 ## 0.6.0
 
 - **Fuera de la familia y con otro nombre: FcFeed** (antes Shai). Sin la cuenta, sin entrar con las demás, sin la revista ni la Apariencia

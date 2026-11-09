@@ -11,15 +11,21 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -57,36 +63,12 @@ object Leidos {
 
 // ---------------------------------------------------------------- las conversaciones (los mensajes y las decisiones, por persona o grupo)
 
-/** Lo de una vez en una conversación: los mensajes de una entrada y, si es de aquí, su decisión. */
-class ItemChat(val entrada: Entrada, val dms: List<Dm>, val decision: Decision?)
-
-class Conversacion(val nombre: String, val items: List<ItemChat>) {
-    val ultima: Long get() = items.maxOf { maxOf(it.entrada.creado, it.entrada.visibleDesde) }
-    /** Los mensajes que te han mandado (para lo de «sin leer»). */
-    val recibidos: Int get() = items.sumOf { i -> i.dms.count { !it.mio } }
-    val abierta: Pair<Entrada, Decision>? get() = items.lastOrNull { it.decision?.abierta == true }?.let { it.entrada to it.decision!! }
-    /** Quién escribe (sin ti). */
-    val personas: List<String> get() = items.flatMap { i -> i.dms.filter { !it.mio }.map { it.de } }.distinct()
-    val grupo: Boolean get() = personas.size > 1
-}
-
-/** El chat de una decisión: el de quien la manda. */
-private fun chatDe(d: Decision): String = d.de.ifBlank { "Tu gente" }
-
-fun conversaciones(entradas: List<Entrada>): List<Conversacion> {
-    val mapa = LinkedHashMap<String, MutableList<ItemChat>>()
-    entradas.sortedBy { maxOf(it.creado, it.visibleDesde) }.forEach { e ->
-        val porChat = e.dms.groupBy { it.conversacion.ifBlank { "Alguien" } }
-        val dc = e.decision?.let { chatDe(it) }
-        porChat.forEach { (c, ms) -> mapa.getOrPut(c) { mutableListOf() }.add(ItemChat(e, ms, if (c == dc) e.decision else null)) }
-        if (dc != null && dc !in porChat) mapa.getOrPut(dc) { mutableListOf() }.add(ItemChat(e, emptyList(), e.decision))
-    }
-    return mapa.map { Conversacion(it.key, it.value) }.sortedByDescending { it.ultima }
-}
+/** El chat de una decisión: el de quien la manda (con su nombre de verdad). */
+private fun chatDe(u: Universo, d: Decision): String = Gente.chatDeNombre(u, d.de.ifBlank { "Tu gente" })
 
 /** Quién es alguien de un chat («Representante · afinidad 66», «Grupo · 4 personas», «Rival · Real Madrid»). */
 private fun rolDe(u: Universo, c: Conversacion): String {
-    u.entorno.firstOrNull { Vida.mismo(it.nombre, c.nombre) }?.let { return it.rol.replaceFirstChar { x -> x.uppercase() } + " · afinidad ${it.afinidad}" }
+    c.persona?.let { p -> return if (p.salio > 0) "Ya no está en tu vida · ${p.rol}" else p.rol.replaceFirstChar { x -> x.uppercase() } + " · afinidad ${p.afinidad}" }
     u.rivales.firstOrNull { Vida.mismo(it.nombre, c.nombre) }?.let { return "Rival · ${it.club}" }
     if (c.grupo) return "Grupo · ${c.personas.size + 1} personas"
     return ""
@@ -99,21 +81,23 @@ private fun rolDe(u: Universo, c: Conversacion): String {
  * Mensajes, Ofertas y Más (Cifras, Vida y Perfil). Una conversación se abre a pantalla completa, como en el móvil.
  */
 @Composable
-fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjustes: (Int) -> Unit, inicial: Int = 0, articuloAbierto: Boolean = false, chatInicial: String? = null) {
+fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjustes: (Int) -> Unit, inicial: Int = 0, articuloAbierto: Boolean = false, chatInicial: String? = null,
+                chatPuerta: Boolean = false, chatBorrador: String = "") {
     Carreras.version
     val ctx = LocalContext.current
     var pestana by rememberSaveable { mutableIntStateOf(inicial) }
     var chat by rememberSaveable { mutableStateOf(chatInicial) }
     val u = Carreras.de(id) ?: run { PaginaRevista { RevistaTopBar(alVolver, "Volver"); Nota("Esta carrera ya no está.") }; return }
     val entradas = Carreras.entradasDe(id)
-    val convs = conversaciones(entradas)
+    val convs = conversaciones(u, entradas)
     Leidos.version
     val decisiones = entradas.count { it.decision?.abierta == true }
     val sinLeer = convs.count { it.recibidos > Leidos.vistos(ctx, u.id, it.nombre) }
     val ofertas = entradas.sumOf { e -> e.ofertas.count { it.estado == Oferta.ABIERTA } }
     chat?.let { c ->
         BackHandler { chat = null }
-        PantChat(u, convs.firstOrNull { it.nombre == c } ?: Conversacion(c, emptyList())) { chat = null }
+        PantChat(u, convs.firstOrNull { it.nombre == c } ?: Conversacion(c, emptyList(), Gente.todos(u).firstOrNull { Vida.mismo(it.nombre, c) }), { chat = null },
+            puerta0 = chatPuerta, borrador0 = chatBorrador)
         return
     }
     BackHandler(enabled = pestana != 0) { pestana = 0 }
@@ -133,7 +117,7 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
                     1 -> TabInicio(u, entradas, convs, alPestana = { pestana = it }, alChat = { chat = it }, alAjustes = alAjustes, articuloAbierto = articuloAbierto)
                     2 -> TabOfertas(u, entradas)
                     3 -> TabMensajes(u, entradas, convs) { chat = it }
-                    4 -> TabPerfil(u, alBorrada = alVolver)
+                    4 -> TabPerfil(u, alBorrada = alVolver, alChat = { chat = it })
                     5 -> TabCifras(u)
                     else -> TabVida(u)
                 }
@@ -265,12 +249,13 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
     aviso?.let { Nota(it, Modifier.padding(top = 6.dp), color = Acento) }
     // Esta semana (lo de la última jornada) y lo de antes, más recogido
     if (entradas.isEmpty()) { Nota("Aún nada. Mete tu primer partido.", Modifier.padding(vertical = 14.dp)); return }
-    val esta = entradas.filter { it.paso == u.paso }
-    val antes = entradas.filter { it.paso != u.paso }
+    // (las charlas van en su chat, no aquí)
+    val esta = entradas.filter { it.paso == u.paso && it.tipo != TipoEntrada.CHARLA }
+    val antes = entradas.filter { it.paso != u.paso && it.tipo != TipoEntrada.CHARLA }
     fun abre(e: Entrada): () -> Unit = {
         when {
-            e.decision?.abierta == true -> alChat(chatDe(e.decision))
-            e.dms.isNotEmpty() -> alChat(e.dms.first().conversacion)
+            e.decision?.abierta == true -> alChat(chatDe(u, e.decision))
+            e.dms.isNotEmpty() -> alChat(Gente.chatDe(u, e.dms.first()))
             e.posts.isNotEmpty() -> alPestana(0)
         }
     }
@@ -330,7 +315,7 @@ fun TarjetaEntrada(u: Universo, e: Entrada, expandida: Boolean = true, alRed: ()
         val enlaces = buildList {
             if (decide) add("Responder →" to alResponder)
             if (e.posts.isNotEmpty()) add("${e.posts.size} en la red →" to alRed)
-            if (e.dms.isNotEmpty() && !decide) { val c = e.dms.first().conversacion; add("${e.dms.size} mensaje${if (e.dms.size > 1) "s" else ""} →" to { alChat(c) }) }
+            if (e.dms.isNotEmpty() && !decide) { val c = Gente.chatDe(u, e.dms.first()); add("${e.dms.size} mensaje${if (e.dms.size > 1) "s" else ""} →" to { alChat(c) }) }
         }
         if (enlaces.isNotEmpty()) Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             enlaces.forEach { (t, f) -> Text(t, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.tocable(onClick = f)) }
@@ -396,22 +381,23 @@ private fun TabRed(u: Universo, entradas: List<Entrada>) {
 
 // ---------------------------------------------------------------- Mensajes
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun TabMensajes(u: Universo, entradas: List<Entrada>, convs: List<Conversacion>, alChat: (String) -> Unit) {
     val ctx = LocalContext.current
     val abiertas = entradas.filter { it.decision?.abierta == true }
-    if (convs.isEmpty() && abiertas.isEmpty()) { Nota("Ningún mensaje todavía."); return }
+    if (convs.isEmpty() && abiertas.isEmpty() && u.entorno.isEmpty()) { Nota("Ningún mensaje todavía."); return }
     if (abiertas.isNotEmpty()) {
         Rotulo("Por decidir · ${abiertas.size}")
         abiertas.forEach { e ->
             val d = e.decision!!
             Spacer(Modifier.height(8.dp))
-            Tarjeta(bordeIzq = Coral, alHacer = { alChat(chatDe(d)) }) {
+            Tarjeta(bordeIzq = Coral, alHacer = { alChat(chatDe(u, d)) }) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Avatar(chatDe(d), 36.dp); Spacer(Modifier.width(10.dp))
+                    Avatar(chatDe(u, d), 36.dp); Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(chatDe(d), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
-                        val rol = u.entorno.firstOrNull { Vida.mismo(it.nombre, chatDe(d)) }?.rol?.replaceFirstChar { it.uppercase() }
+                        Text(chatDe(u, d), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
+                        val rol = Gente.quien(u.entorno, chatDe(u, d))?.rol?.replaceFirstChar { it.uppercase() }
                         Text(listOfNotNull(rol, hace(maxOf(e.creado, e.visibleDesde))).joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
                     }
                 }
@@ -423,6 +409,16 @@ private fun TabMensajes(u: Universo, entradas: List<Entrada>, convs: List<Conver
         Spacer(Modifier.height(18.dp))
     }
     val lista = convs.filter { c -> c.items.any { it.dms.isNotEmpty() } || c.abierta == null }
+    // Escribir a alguien de tu gente con quien aún no hay chat
+    val sinChat = u.entorno.filter { p -> convs.none { Vida.mismo(it.nombre, p.nombre) } }
+    if (sinChat.isNotEmpty()) {
+        Rotulo("Escribir a…")
+        Spacer(Modifier.height(8.dp))
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            sinChat.forEach { p -> ChipFiltro(p.nombre.substringBefore(' ') + " · " + p.rol.substringBefore(' ').substringBefore('('), false) { alChat(p.nombre) } }
+        }
+        Spacer(Modifier.height(18.dp))
+    }
     if (lista.isNotEmpty()) Rotulo("Conversaciones")
     lista.forEach { c ->
         val sin = (c.recibidos - Leidos.vistos(ctx, u.id, c.nombre)).coerceAtLeast(0)
@@ -448,13 +444,27 @@ private fun TabMensajes(u: Universo, entradas: List<Entrada>, convs: List<Conver
     }
 }
 
-/** Una conversación entera, como en el móvil: burbujas por jornada, lo que decidiste o no contestaste, y la decisión abierta al final. */
+/**
+ * Una conversación entera, como en el móvil: burbujas por jornada, lo que decidiste o no contestaste, la decisión abierta al final y, con
+ * alguien de tu gente, una caja para escribirle lo que quieras. Arriba, el menú: darle puerta, «es la misma persona que…» y separar.
+ */
 @Composable
-fun PantChat(u: Universo, c: Conversacion, alVolver: () -> Unit) {
+fun PantChat(u: Universo, c: Conversacion, alVolver: () -> Unit, menu0: Boolean = false, puerta0: Boolean = false, borrador0: String = "") {
     val ctx = LocalContext.current
+    val ambito = rememberCoroutineScope()
     LaunchedEffect(c.nombre, c.recibidos) { Leidos.marca(ctx, u.id, c.nombre, c.recibidos) }
     val scroll = rememberScrollState()
-    LaunchedEffect(c.nombre) { scroll.scrollTo(scroll.maxValue) }
+    LaunchedEffect(c.nombre, c.items.size) { scroll.scrollTo(scroll.maxValue) }
+    val p = c.persona
+    val fuera = p != null && p.salio > 0
+    var menu by remember { mutableStateOf(menu0) }
+    var puerta by remember { mutableStateOf(puerta0) }
+    var porque by remember { mutableStateOf("") }
+    var junta by remember { mutableStateOf(false) }
+    var separa by remember { mutableStateOf(false) }
+    var escrito by rememberSaveable(c.nombre) { mutableStateOf(borrador0) }
+    var aviso by remember(c.nombre) { mutableStateOf<String?>(null) }
+    val va = p?.let { EnCurso.ids["h" + it.id] }
     val mg = margen()
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().imePadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = mg).padding(top = 14.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -464,28 +474,112 @@ fun PantChat(u: Universo, c: Conversacion, alVolver: () -> Unit) {
             Column(Modifier.weight(1f)) {
                 Text(c.nombre, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 21.sp)
                 rolDe(u, c).takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp) }
+                p?.actitud?.takeIf { it.isNotBlank() && !fuera }?.let { Text(it, color = Muted, fontFamily = Body, fontStyle = FontStyle.Italic, fontSize = 12.sp, lineHeight = 16.sp) }
+            }
+            if (!c.grupo) Box {
+                Icon(Icons.Filled.MoreVert, "Más", tint = Charcoal, modifier = Modifier.size(26.dp).tocable { menu = true })
+                DropdownMenu(menu, { menu = false }, containerColor = Crudo) {
+                    if (p != null && !fuera) DropdownMenuItem(text = { Text("Darle puerta", color = Coral, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 16.sp) }, onClick = { menu = false; puerta = true })
+                    if (p != null && fuera) DropdownMenuItem(text = { Text("Que vuelva a tu vida", color = Charcoal, fontFamily = Body, fontSize = 16.sp) }, onClick = { menu = false; Motor.recupera(u.id, p.id) })
+                    DropdownMenuItem(text = { Text("Es la misma persona que…", color = Charcoal, fontFamily = Body, fontSize = 16.sp) }, onClick = { menu = false; junta = true })
+                    if (p != null && Gente.nombresJuntados(u, p, c.items.map { it.entrada }).isNotEmpty())
+                        DropdownMenuItem(text = { Text("Separar a alguien de este chat…", color = Charcoal, fontFamily = Body, fontSize = 16.sp) }, onClick = { menu = false; separa = true })
+                }
             }
         }
         Filete(1.dp, Line)
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll).padding(horizontal = mg)) {
-            if (c.items.isEmpty()) Nota("Aún no hay nada en esta conversación.", Modifier.padding(top = 16.dp))
+            if (c.items.isEmpty()) Nota("Aún no hay nada en esta conversación." + if (p != null && !fuera) " Escríbele tú." else "", Modifier.padding(top = 16.dp))
             var corte = ""
             val abierta = c.abierta
             c.items.forEach { it ->
                 val e = it.entrada
-                val t = "Jornada ${e.paso} · " + (e.partido?.let { p -> "tras el ${p.resultado} ante el ${p.rival}" } ?: e.titulo.ifBlank { e.tipo.nombre })
+                val t = "Jornada ${e.paso} · " + (e.partido?.let { x -> "tras el ${x.resultado} ante el ${x.rival}" } ?: e.titulo.ifBlank { e.tipo.nombre })
                 if (t != corte) { Separador(t); corte = t }
-                it.dms.forEach { m -> Burbuja(m.texto, m.mio, if (c.grupo && !m.mio) m.de else null) }
+                it.dms.forEach { m -> Burbuja(m.texto, m.mio, if (c.grupo && !m.mio) (Gente.deMensaje(u, m)?.nombre ?: m.de) else null) }
                 val d = it.decision
                 if (d != null && !d.abierta) {
                     if (d.caducada) AvisoChat("No contestaste · ${d.titulo.ifBlank { d.texto }}", d.consecuencia.ifBlank { "Lo que pase por no contestar lo contará la prensa del próximo partido." }, Coral)
                     else AvisoChat("Decidiste · ${d.titulo.ifBlank { d.texto }}", "«${d.elegida}»" + if (d.consecuencia.isNotBlank()) "\n\n${d.consecuencia}" else "", Acento)
                 }
+                if (e.tipo == TipoEntrada.CHARLA && e.texto.isNotBlank()) AvisoChat("Lo que ha pasado", e.texto + (textoEfectos(e.efectos).takeIf { it.isNotBlank() }?.let { "\n$it" } ?: ""), Muted)
+                if (e.tipo == TipoEntrada.PUERTA) AvisoChat(e.titulo, e.texto, Coral)
             }
             abierta?.let { (e, d) -> Spacer(Modifier.height(12.dp)); TarjetaDecision(e, d) }
+            if (fuera) AvisoChat("${p!!.nombre} ya no está en tu vida", "Le diste puerta en la jornada ${p.salio}" + (if (p.porque.isNotBlank()) ": «${p.porque}»" else ".") + " No te volverá a escribir.", Coral)
+            va?.let { Nota("${p?.nombre.orEmpty()} está escribiendo…", Modifier.padding(top = 8.dp)) }
+            aviso?.let { Nota(it, Modifier.padding(top = 6.dp), color = Acento) }
             Spacer(Modifier.height(20.dp))
         }
+        // Darle puerta: abajo, con confirmación y, si quieres, lo que le dices
+        if (puerta && p != null && !fuera) {
+            Filete(1.dp, Line)
+            Column(Modifier.fillMaxWidth().padding(horizontal = mg, vertical = 10.dp)) {
+                Text("¿Darle puerta a ${p.nombre}?", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 23.sp)
+                Text("Sale de tu gente y no te volverá a escribir (podrás hacer que vuelva desde su chat o tu Perfil). " + when {
+                    p.rol.contains("represent", true) || p.rol.contains("agente", true) -> "Era tu representante: te quedas sin él y llegarán candidatos."
+                    p.rol.contains("amig", true) -> "Si te arrastraba a donde no debías, se notará para bien."
+                    else -> "Habrá reacción y, quizá, ruido."
+                } + if (Prueba.activo) " (Modo prueba: plantillas, gratis.)" else " (Claude cuenta lo que pasa: unos céntimos.)", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp,
+                    modifier = Modifier.padding(top = 4.dp))
+                Campo("Lo que le dices (si quieres)", porque, "Por qué le das puerta…", lineas = 3) { porque = it.take(400) }
+                Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BotonRedondo("No", Modifier.weight(1f), lleno = false) { puerta = false }
+                    Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(Coral).tocable {
+                        puerta = false; val t = porque; porque = ""; EnCurso.ids["h" + p.id] = "…"
+                        ambito.launch { aviso = withContext(Dispatchers.IO) { Motor.puerta(u.id, p.id, t) }; EnCurso.ids.remove("h" + p.id) }
+                    }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        Text("Darle puerta", color = Color.White, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 20.sp)
+                    }
+                }
+            }
+        } else
+        // Escribirle lo que quieras (con alguien de tu gente, si no hay una decisión esperando: esa tiene su caja)
+        if (p != null && !fuera && c.abierta == null) {
+            Filete(1.dp, Line)
+            Row(Modifier.fillMaxWidth().padding(horizontal = mg, vertical = 8.dp), verticalAlignment = Alignment.Bottom) {
+                Box(Modifier.weight(1f).clip(RoundedCornerShape(22.dp)).background(FondoBurbuja).padding(horizontal = 16.dp, vertical = 11.dp)) {
+                    if (escrito.isEmpty()) Text("Escríbele a ${p.nombre.substringBefore(' ')}…", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 20.sp)
+                    androidx.compose.foundation.text.BasicTextField(escrito, { escrito = it.take(1200) }, maxLines = 6,
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 20.sp),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(Acento), modifier = Modifier.fillMaxWidth())
+                }
+                Spacer(Modifier.width(8.dp))
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(50)).background(if (escrito.isNotBlank() && va == null) Acento else Line)
+                    .tocable { if (escrito.isBlank() || va != null) return@tocable
+                        val t = escrito; escrito = ""; aviso = null; EnCurso.ids["h" + p.id] = "…"
+                        ambito.launch { aviso = withContext(Dispatchers.IO) { Motor.charla(u.id, p.id, t) }; EnCurso.ids.remove("h" + p.id) } }, contentAlignment = Alignment.Center) {
+                    Icon(Icons.AutoMirrored.Filled.Send, "Enviar", tint = if (escrito.isNotBlank() && va == null) SobreAcento else Muted, modifier = Modifier.size(20.dp))
+                }
+            }
+            Text(if (Prueba.activo) "Modo prueba: contesta una plantilla, gratis." else "Contesta Claude (Sonnet) en su papel: unos 2-3 céntimos por mensaje.", color = Muted, fontFamily = Body, fontSize = 11.sp,
+                lineHeight = 15.sp, modifier = Modifier.padding(horizontal = mg).padding(bottom = 6.dp))
+        }
     }
+    // «Es la misma persona que…»: elegir quién
+    if (junta) AlertDialog(onDismissRequest = { junta = false }, containerColor = Paper, shape = RoundedCornerShape(16.dp),
+        title = { Text("«${c.nombre}» es la misma persona que…", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 23.sp) },
+        text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+            Gente.todos(u).filter { it.id != p?.id }.forEach { x ->
+                Row(Modifier.fillMaxWidth().tocable { junta = false; Motor.junta(u.id, c.nombre, x.id); alVolver() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Avatar(x.nombre, 34.dp); Spacer(Modifier.width(10.dp))
+                    Column { Text(x.nombre, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
+                        Text(x.rol, color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp) }
+                }
+            }
+        } },
+        confirmButton = {}, dismissButton = { TextButton({ junta = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.sp) } })
+    // Separar: un nombre que se juntó aquí y no es esta persona
+    if (separa && p != null) AlertDialog(onDismissRequest = { separa = false }, containerColor = Paper, shape = RoundedCornerShape(16.dp),
+        title = { Text("¿Quién no es ${p.nombre}?", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 23.sp) },
+        text = { Column {
+            Text("Sus mensajes vuelven a su propio chat.", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
+            Gente.nombresJuntados(u, p, c.items.map { it.entrada }).forEach { n ->
+                Text(n, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 21.sp,
+                    modifier = Modifier.fillMaxWidth().tocable { separa = false; Motor.separa(u.id, n, p.id) }.padding(vertical = 10.dp))
+            }
+        } },
+        confirmButton = {}, dismissButton = { TextButton({ separa = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.sp) } })
 }
 
 /** La decisión abierta, al final del chat: qué ha pasado, qué te juegas, las opciones (enteras) y lo que tú quieras escribir. */

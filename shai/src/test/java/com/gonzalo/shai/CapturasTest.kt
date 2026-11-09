@@ -79,6 +79,10 @@ abstract class CapturasBase {
                             63 -> PaginaRevista { Carreras.de(otra)?.let { TusRivales(it) } }
                             64 -> PantCarrera(otra, {}, {}, {}, inicial = 0)
                             in 70..71 -> PantCarrera(otra, {}, {}, {}, chatInicial = chatAbierto)
+                            90 -> PantPartido(otra, {}, {}, desplegable = true)
+                            92 -> PantCarrera(otra, {}, {}, {}, chatInicial = chatAbierto, chatBorrador = "Mamá, te quiero mucho, pero deja de contarle mis cosas a la revista, por favor. Lo de la semana pasada me sentó fatal.")
+                            93 -> PantCarrera(otra, {}, {}, {}, chatInicial = chatAbierto, chatPuerta = true)
+                            95 -> PaginaRevista { Carreras.de(otra)?.let { TuGente(it) } }
                             80 -> PaginaRevista { ConfirmaClub(betis, false, {}, {}) }
                             62 -> PaginaRevista { Carreras.de(otra)?.let { RecordsHistoricos(it, Carreras.partidos(otra).map { x -> x.second }) } }
                         }
@@ -93,7 +97,7 @@ abstract class CapturasBase {
         if (largas) { cual = 15; foto("14-cifras-entera"); cual = 14; foto("16-perfil-entero"); ClaveApi.fija = null; Gasto.mesFijo = null; return }
         cual = 17; foto("17-carrera-noticia")
         // Un chat con una decisión abierta y uno sin ella (un grupo, si lo hay)
-        val convs = conversaciones(Carreras.entradasDe(u.id))
+        val convs = conversaciones(Carreras.de(u.id)!!, Carreras.entradasDe(u.id))
         chatAbierto = convs.firstOrNull { it.abierta != null }?.nombre ?: convs.first().nombre
         cual = 70; foto("70-chat-decision")
         chatAbierto = (convs.firstOrNull { it.grupo } ?: convs.firstOrNull { it.abierta == null } ?: convs.last()).nombre
@@ -135,6 +139,35 @@ abstract class CapturasBase {
         // El cierre de la temporada
         Motor.cierraTemporada(u.id)
         cual = 11; foto("19-carrera-fin-de-temporada")
+        // 0.7.0: las competiciones del club (desplegable), el MVP, la misma persona en un solo chat, hablar con alguien, darle puerta y la gente nueva
+        val madre = Persona("p0madre001", "Marisa Bloise", "madre", 85, "Lo ve todo y lo comenta todo en el grupo de la familia")
+        val agente = Persona("p0agente01", "Toni Vidal", "representante", 45, "Siempre al teléfono, siempre con un negocio", actitud = "Presiona para que cambies de club este verano")
+        val (g0, _) = Motor.crea(Ejemplo.universo().copy(entorno = listOf(madre, agente), fuera = Fuera.INICIAL + (Fuera.FAMA to 30), nivel = Nivel.PROMESA.name))
+        Motor.confirmaClub(g0.id, betis.copy(competiciones = listOf("LaLiga EA Sports", "Copa del Rey", "UEFA Europa League")))
+        listOf(Partido("2026/27", "liga", "Girona FC", true, 2, 0, 90, 1, 1, 8.4, mvp = true), Partido("2026/27", "Copa", "UD Logroñés", false, 3, 1, 90, 2, 0, 8.9, mvp = true),
+            Partido("2026/27", "Europa League", "Olympique de Lyon", true, 1, 1, 90, 0, 1, 7.2), Partido("2026/27", "LaLiga EA Sports", "Sevilla FC", true, 2, 1, 90, 1, 0, 7.8))
+            .forEach { Motor.partido(g0.id, it); Motor.miraLotes(); Motor.revela(forzar = true) }
+        // Lo de antes: la madre salía como «Marisa» y como «mamá» (ahora, en un solo chat)
+        Carreras.guarda(Entrada(Universo.nuevoId("e"), g0.id, TipoEntrada.EVENTO, System.currentTimeMillis() - 90_000, 2, "La entrevista", dms = listOf(
+            Dm("Marisa", "Hijo, me ha llamado una chica de una revista para hacerme una entrevista"), Dm("mamá", "Le he dicho que sí, que solo le iba a hablar bien de ti", chat = "mamá"))))
+        Motor.charla(g0.id, agente.id, "Toni, entiendo que quieres lo mejor para mí, pero quiero quedarme aquí y triunfar. Te pido que lo respetes y que dejes de mover lo de fuera.")
+        // Sube de nivel (de promesa a titular): entra gente nueva
+        Carreras.guarda(Carreras.de(g0.id)!!.copy(fuera = Fuera.INICIAL + (Fuera.FAMA to 46)))
+        Motor.partido(g0.id, Partido("2026/27", "LaLiga EA Sports", "Real Sociedad", false, 1, 0, 90, 1, 0, 8.1, mvp = true)); Motor.miraLotes(); Motor.revela(forzar = true)
+        // Y le da puerta a alguien (el amigo que le liaba, si lo hay; si no, a otro)
+        Carreras.de(g0.id)!!.entorno.let { ent -> ent.firstOrNull { it.rol.contains("amig", true) } ?: ent.firstOrNull { it.id != madre.id && it.id != agente.id } }
+            ?.let { Motor.puerta(g0.id, it.id, "Me estás llevando por mal camino. Lo siento, pero hasta aquí.") }
+        otra = g0.id
+        cual = 90; foto("90-partido-competicion")
+        cual = 15; foto("91-cifras-competiciones")
+        chatAbierto = "Marisa Bloise"
+        cual = 92; foto("92-chat-misma-persona-escribiendo")
+        chatAbierto = "Toni Vidal"
+        cual = 71; foto("93-chat-charla")
+        cual = 93; foto("94-chat-darle-puerta")
+        cual = 95; foto("95-perfil-tu-gente")
+        cual = 13; foto("96-mensajes")
+        otra = u.id
         // El modo prueba (sin IA): una carrera nueva con sus plantillas de ejemplo
         Prueba.pon(ctx, true)
         val (p, _) = Motor.crea(Ejemplo.universo())

@@ -7,6 +7,7 @@ import kotlin.math.roundToLong
 data class Linea(
     val temporada: String, val competicion: String, val jugados: Int, val victorias: Int, val empates: Int, val derrotas: Int,
     val golesFavor: Int, val golesContra: Int, val minutos: Int, val goles: Int, val asistencias: Int, val notaMedia: Double,
+    val mvps: Int = 0,
 )
 
 object Estadisticas {
@@ -14,7 +15,7 @@ object Estadisticas {
         val conNota = ps.filter { it.nota > 0 }
         return Linea(temporada, competicion, ps.size, ps.count { it.ganado }, ps.count { it.empatado }, ps.count { !it.ganado && !it.empatado },
             ps.sumOf { it.golesFavor }, ps.sumOf { it.golesContra }, ps.sumOf { it.minutos }, ps.sumOf { it.goles }, ps.sumOf { it.asistencias },
-            if (conNota.isEmpty()) 0.0 else conNota.sumOf { it.nota } / conNota.size)
+            if (conNota.isEmpty()) 0.0 else conNota.sumOf { it.nota } / conNota.size, ps.count { it.mvp })
     }
 
     /** Por temporada (la más nueva primero): el total y cada competición. */
@@ -239,6 +240,8 @@ object Vida {
             puntos += when { p.nota >= 8.5 -> 2.0; p.nota >= 7.5 -> 1.2; p.nota >= 6.5 -> 0.5; p.nota in 0.1..5.5 -> -1.0; else -> 0.0 }
             puntos += minOf(2, p.goles) * 0.9 + minOf(2, p.asistencias) * 0.5
             if (p.ganado) puntos += 0.4 else if (!p.empatado) puntos -= 0.3
+            // Ser el MVP se nota (sube algo más)
+            if (p.mvp) puntos += 0.8
         } else puntos += if (p.ganado) 1.2 else if (p.empatado) 0.2 else -0.8
         val freno = 1.0 - fama.coerceIn(0, 100) / 115.0
         val g = if (puntos > 0) puntos * freno * pesoEdad(edad, true) else puntos * pesoEdad(edad, false)
@@ -258,16 +261,14 @@ object Vida {
             if (k == Fuera.FAMA && d > 0) { d = minOf(d, maxOf(0, topeFama(u.personaje.edad) - famaJornada)); famaJornada += d }
             fuera[k] = (u.valorFuera(k) + d).coerceIn(0, 100)
         }
-        var entorno = u.entorno.map { p ->
-            val d = e.relaciones.entries.firstOrNull { (n, _) -> mismo(n, p.nombre) }?.value ?: 0
+        val entorno = u.entorno.map { p ->
+            val d = e.relaciones.entries.firstOrNull { (n, _) -> Gente.quien(listOf(p), n) != null && Gente.quien(u.entorno, n)?.id == p.id }?.value ?: 0
             if (d == 0) p else p.copy(afinidad = (p.afinidad + d.coerceIn(-15, 15)).coerceIn(0, 100))
-        }
-        e.nuevas.filter { n -> n.nombre.isNotBlank() && entorno.none { mismo(it.nombre, n.nombre) } }.take(3).forEach { n ->
-            entorno = entorno + n.copy(id = n.id.ifBlank { Universo.nuevoId("p") }, afinidad = n.afinidad.coerceIn(0, 100))
         }
         val f = fuera[Fuera.FAMA] ?: u.valorFuera(Fuera.FAMA)
         val hist = if (f != u.valorFuera(Fuera.FAMA)) (u.famaHist.ifEmpty { listOf(u.paso to u.valorFuera(Fuera.FAMA)) }.filter { it.first != u.paso } + (u.paso to f)).takeLast(80) else u.famaHist
-        val r = u.copy(dinero = u.dinero + dinero, fuera = fuera, entorno = entorno.takeLast(40), famaJornada = famaJornada, famaHist = hist)
+        // La gente nueva entra si hay sitio (y no es nadie que ya esté o que se fue): [Gente.anade]
+        val r = Gente.anade(u.copy(dinero = u.dinero + dinero, fuera = fuera, entorno = entorno, famaJornada = famaJornada, famaHist = hist), e.nuevas)
         return if (e.rivales.isEmpty()) r else Rivales.aplica(r, e.rivales)
     }
 

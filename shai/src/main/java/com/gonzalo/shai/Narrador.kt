@@ -33,6 +33,8 @@ Reglas que no se rompen nunca:
 11. La red tiene vida: posts con opinión, chiste o polémica, de 120 a 280 caracteres, que reaccionan a lo que ha pasado de verdad; respuestas debajo de los más gordos; citas con comentario.
 12. Rivales: los de «TUS RIVALES» existen y pesan; úsalos en la prensa, la red y los eventos cuando venga a cuento (un duelo directo con su club, la carrera de goleadores, la pelea por el puesto), y en efectos.rivales cuenta cada choque (nombre exacto, cambio de -15 a +15 en la intensidad, choque en una frase, tipo deportivo o personal). Con los marcados INVENTADO vale lo personal: pullas en redes, declaraciones, mal rollo, chicas de por medio. Con los marcados REAL (futbolistas de verdad), SOLO rivalidad deportiva vista por la prensa con cifras (comparar goles, la carrera por un trofeo): nunca les pongas frases, pullas, opiniones, mal rollo ni nada personal, y su tipo es siempre deportivo. Puedes proponer un rival nuevo (nuevo = true) cuando surja solo de lo que pasa (uno que le provoca tras una decisión suya, el que le roba protagonismo), pero SIEMPRE inventado (nombre inventado, de un club real), con su club, su posición y su origen en una frase; nunca un futbolista real. Si no hay nada de rivales, deja la lista vacía.
 13. El club: si viene «LO QUE SE SABE DEL CLUB», son datos reales sacados de una búsqueda: úsalos (su estadio, su ciudad, sus derbis, su momento, cómo es su afición) y no te inventes otros datos reales del club. Sus medios de verdad solo te sirven de estilo para inventar los tuyos.
+14. Su gente: cada persona de «Su gente» tiene un id entre corchetes. Cuando escriba alguien de su gente, en «de» pon su nombre EXACTO tal como sale ahí (nunca «mamá», «mi madre», solo el nombre de pila o el nombre con otro apellido) y en «id» su id; el «chat» de una conversación con una sola persona es también su nombre exacto. Respeta cómo es cada uno y su actitud de ahora. Los de «YA NO ESTÁN EN SU VIDA» no le escriben (como mucho se habla de ellos en la prensa o la red).
+15. Temas delicados (drogas, alcohol, apuestas, peleas): solo como drama de prensa rosa y de entorno, sin glorificarlos, sin detalles ni instrucciones, y con consecuencias; si él se aleja de eso o de quien le arrastra, que tenga efecto positivo (disciplina, afición, su gente sana).
 """.trim()
 
     // ---------------------------------------------------------------- el contexto de la carrera
@@ -66,19 +68,27 @@ Reglas que no se rompen nunca:
         appendLine("- Fuera del campo (0-100): " + Fuera.TODOS.joinToString(", ") { (k, n) -> "$n ${u.valorFuera(k)}" })
         if (u.bienes.isNotEmpty()) appendLine("- Tiene: " + u.bienes.joinToString(", ") { it.nombre })
         if (u.entorno.isNotEmpty()) {
-            appendLine("- Su gente (todos inventados; afinidad 0-100):")
-            u.entorno.forEach { p -> appendLine("  · ${p.nombre}, ${p.rol}, afinidad ${p.afinidad}" + (if (p.nota.isNotBlank()) ": ${p.nota}" else "")) }
+            appendLine("- Su gente (todos inventados; afinidad 0-100; [id] para «id» en los mensajes):")
+            u.entorno.forEach { p -> appendLine("  · [${p.corto}] ${p.nombre}, ${p.rol}, afinidad ${p.afinidad}" + (if (p.nota.isNotBlank()) ": ${p.nota}" else "") +
+                (if (p.alias.isNotEmpty()) " (también le llaman: ${p.alias.joinToString(", ")})" else "") + (if (p.actitud.isNotBlank()) ". Ahora: ${p.actitud}" else "") +
+                (if (Gente.nueva(u, p)) ". NUEVO en su vida" else "")) }
         }
+        if (u.exEntorno.isNotEmpty()) appendLine("- YA NO ESTÁN EN SU VIDA (les dio puerta; no le escriben): " + u.exEntorno.joinToString("; ") { "${it.nombre} (${it.rol}, desde la jornada ${it.salio}" + (if (it.porque.isNotBlank()) ": «${it.porque.take(120)}»" else "") + ")" })
         if (partidos.isNotEmpty()) {
-            val s = Estadisticas.linea(u.temporada, "", partidos.filter { it.temporada == u.temporada }.ifEmpty { partidos })
+            val deTemp = partidos.filter { it.temporada == u.temporada }.ifEmpty { partidos }
+            val s = Estadisticas.linea(u.temporada, "", deTemp)
             appendLine("- Esta temporada: ${s.jugados} partidos (${s.victorias}V ${s.empates}E ${s.derrotas}D)" +
-                (if (u.modo == Rol.JUGADOR) ", ${s.goles} goles, ${s.asistencias} asistencias" + (if (s.notaMedia > 0) ", nota media ${Formato.decimal(s.notaMedia)}" else "") else "") +
+                (if (u.modo == Rol.JUGADOR) ", ${s.goles} goles, ${s.asistencias} asistencias" + (if (s.notaMedia > 0) ", nota media ${Formato.decimal(s.notaMedia)}" else "") +
+                    (if (s.mvps > 0) ", ${s.mvps} veces MVP" else "") else "") +
                 ". Racha: ${Estadisticas.racha(partidos)}")
+            val porComp = deTemp.groupBy { it.competicion.ifBlank { Competiciones.OTRA } }
+            if (porComp.size > 1) appendLine("- Por competición: " + porComp.entries.sortedByDescending { it.value.size }.joinToString("; ") { (c, l) ->
+                val x = Estadisticas.linea(u.temporada, c, l); "$c ${x.jugados} PJ" + (if (u.modo == Rol.JUGADOR) ", ${x.goles} G, ${x.asistencias} A" + (if (x.mvps > 0) ", ${x.mvps} MVP" else "") else ", ${x.victorias}V ${x.empates}E ${x.derrotas}D") })
         }
         val r = Hitos.records(u, partidos)
         if (partidos.isNotEmpty()) appendLine("- Sus récords en FcFeed: ${r.partidos} partidos" + (if (u.modo == Rol.JUGADOR) ", ${r.goles} goles, ${r.hatTricks} hat-tricks, racha más larga marcando: ${r.rachaMarcando}" else ", ${r.victorias} victorias") +
             ", racha invicto más larga: ${r.rachaInvicto}" + (r.mejorTemporada?.let { ", mejor temporada: ${it.first} (${it.second}${if (u.modo == Rol.JUGADOR) " goles" else " victorias"})" } ?: "") +
-            (if (r.titulos.isNotEmpty()) ", títulos: ${r.titulos.joinToString(", ")}" else ""))
+            (if (r.titulos.isNotEmpty()) ", títulos: ${r.titulos.joinToString(", ")}" else "") + (if (r.mvps > 0) ", MVP del partido ${r.mvps} veces" else ""))
         val recienReales = u.hitos.filter { it.paso == u.paso && it.real > 0 && it.linea.isNotBlank() }
         val aTiro = runCatching { Historicos.aTiro(u, partidos) }.getOrDefault(emptyList()).take(3)
         if (recienReales.isNotEmpty()) appendLine("RÉCORDS HISTÓRICOS REALES (comparados por la app con la lista de récords del fútbol de verdad; cítalos SOLO así, con estas cifras):\n" +
@@ -136,7 +146,7 @@ Reglas que no se rompen nunca:
     private val POST = obj("autor" to TEXTO, "usuario" to TEXTO, "texto" to TEXTO, "megusta" to ENTERO, "reposts" to ENTERO, "tipo" to TIPO_POST,
         "respuestas" to lista(RESPUESTA_POST), "cita" to CITA)
     private val TENDENCIA = obj("hashtag" to TEXTO, "posts" to ENTERO)
-    private val DM = obj("chat" to TEXTO, "de" to TEXTO, "texto" to TEXTO)
+    private val DM = obj("chat" to TEXTO, "de" to TEXTO, "id" to TEXTO, "texto" to TEXTO)
     private val PERSONA = obj("nombre" to TEXTO, "rol" to TEXTO, "nota" to TEXTO)
     private val RIVAL = obj("nombre" to TEXTO, "club" to TEXTO, "posicion" to TEXTO, "origen" to TEXTO, "cambio" to ENTERO, "choque" to TEXTO,
         "tipo" to enumerado(Choque.DEPORTIVO, Choque.PERSONAL), "nuevo" to SINO)
@@ -148,7 +158,7 @@ Reglas que no se rompen nunca:
     private val PRENSA = obj("cabecera" to TEXTO, "titular" to TEXTO, "entradilla" to TEXTO, "articulo" to TEXTO,
         "secundarios" to lista(obj("titular" to TEXTO, "entradilla" to TEXTO)))
 
-    val ESQUEMA_RED = obj("tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM))
+    val ESQUEMA_RED = obj("tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM), "gente_nueva" to lista(PERSONA))
     val ESQUEMA_PRENSA = obj("prensa" to PRENSA, "ofertas" to lista(OFERTA), "decision" to DECISION,
         "sin_contestar" to lista(obj("n" to ENTERO, "consecuencia" to TEXTO, "efectos" to EFECTOS)), "efectos" to EFECTOS, "gente_nueva" to lista(PERSONA))
     val ESQUEMA_EVENTO = obj("titulo" to TEXTO, "texto" to TEXTO, "tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM), "decision" to DECISION,
@@ -157,7 +167,13 @@ Reglas que no se rompen nunca:
     val ESQUEMA_INICIO = obj("titulo" to TEXTO, "texto" to TEXTO, "gente" to lista(obj("nombre" to TEXTO, "rol" to TEXTO, "afinidad" to ENTERO, "nota" to TEXTO)),
         "prensa" to PRENSA, "tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM))
     val ESQUEMA_FOTO = obj("se_ve" to SINO, "goles_favor" to ENTERO, "goles_contra" to ENTERO, "rival" to TEXTO, "minutos" to ENTERO, "goles" to ENTERO,
-        "asistencias" to ENTERO, "nota" to NUMERO, "datos_equipo" to lista(obj("dato" to TEXTO, "valor" to TEXTO)), "rendimiento" to TEXTO, "dudas" to TEXTO)
+        "asistencias" to ENTERO, "nota" to NUMERO, "mvp" to SINO, "datos_equipo" to lista(obj("dato" to TEXTO, "valor" to TEXTO)), "rendimiento" to TEXTO, "dudas" to TEXTO)
+    /** Una charla con alguien de su gente: lo que contesta, cómo cambia y lo que pasa. */
+    val ESQUEMA_CHARLA = obj("respuesta" to lista(TEXTO), "cambio_afinidad" to ENTERO, "actitud" to TEXTO, "convencido" to SINO, "resumen" to TEXTO,
+        "posts" to lista(POST), "mensajes" to lista(DM), "efectos" to EFECTOS)
+    /** Darle puerta a alguien: su reacción y lo que pasa. */
+    val ESQUEMA_PUERTA = obj("despedida" to lista(TEXTO), "titular" to TEXTO, "texto" to TEXTO, "tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM),
+        "candidatos" to lista(PERSONA), "efectos" to EFECTOS)
     val ESQUEMA_MEMORIA = obj("memoria" to TEXTO)
     val ESQUEMA_TEMPORADA = obj("titulo" to TEXTO, "balance" to TEXTO, "premios" to lista(obj("premio" to TEXTO, "medio" to TEXTO, "ganado" to SINO, "texto" to TEXTO)),
         "prensa" to PRENSA, "tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM),
@@ -173,7 +189,7 @@ LA RED (tipo X): $cuantos posts, de 120 a 280 caracteres cada uno, con vida: opi
 """.trim()
 
     private val COMO_MENSAJES = """
-MENSAJES PRIVADOS: conversaciones de verdad, no frases sueltas: cada una con 2 a 5 mensajes seguidos, en «chat» el nombre de la conversación (la persona, o un grupo como «Los del barrio» o «Familia» con varias personas que hablan entre ellas) y en «de» quién escribe cada mensaje. Con contexto: que se sepa de qué hablan y por qué. No escribas mensajes de él: solo de los demás.
+MENSAJES PRIVADOS: conversaciones de verdad, no frases sueltas: cada una con 2 a 5 mensajes seguidos, en «chat» el nombre de la conversación (la persona, con su nombre EXACTO de «Su gente», o un grupo como «Los del barrio» o «Familia» con varias personas que hablan entre ellas), en «de» quién escribe cada mensaje (su nombre EXACTO de «Su gente») y en «id» su id de «Su gente» (vacío si no es de su gente). Con contexto: que se sepa de qué hablan y por qué. No escribas mensajes de él: solo de los demás.
 """.trim()
 
     private val COMO_DECISION = """
@@ -181,7 +197,7 @@ UNA DECISIÓN (si hay = true): «titulo» corto; «contexto» de 4 a 7 frases qu
 """.trim()
 
     /** Tras un partido: la red y los mensajes (Haiku). */
-    fun red(u: Universo, p: Partido, ctx: String) = Peticion(Claude.HAIKU, sistema(), listOf(Peticion.texto("""
+    fun red(u: Universo, p: Partido, ctx: String, nuevas: Int = 0) = Peticion(Claude.HAIKU, sistema(), listOf(Peticion.texto("""
 $ctx
 
 ACABA DE JUGAR ESTE PARTIDO:
@@ -190,7 +206,9 @@ ${p.resumen(u.modo)}
 Escribe lo que pasa en la red justo después de este partido, que se note su repercusión según su nivel y lo que ha pasado antes.
 ${comoRed(u, "De 10 a 14")}
 $COMO_MENSAJES Escribe de 2 a 3 conversaciones (su gente, alguna chica inventada, un grupo).
-""".trim())), maxTokens = 7000, esquema = ESQUEMA_RED)
+""".trim() + (if (nuevas > 0) "\n" + """
+GENTE NUEVA: con su nivel de ahora (${u.nivelActual.nombre.lowercase()}) entra gente nueva en su vida. En «gente_nueva», $nuevas persona${if (nuevas > 1) "s" else ""} INVENTADA${if (nuevas > 1) "S" else ""} que encaje${if (nuevas > 1) "n" else ""} con ese nivel (por ejemplo: ${Gente.quienEntra(u.nivelActual)}), con nombre y apellido, su rol y una nota corta de cómo es; y en «mensajes», por cada una, una conversación nueva (su nombre como chat, «id» vacío) en la que le escribe por primera vez y se presenta: quién es, por qué le escribe ahora y qué quiere de él.
+""".trim() else "\n«gente_nueva»: vacío."))), maxTokens = 7000, esquema = ESQUEMA_RED)
 
     /** Tras un partido: la portada con su noticia, las ofertas (si tocan), una decisión (si toca), lo que no contestó y lo que cambia (Sonnet). */
     fun prensa(u: Universo, p: Partido, ctx: String, sinContestar: List<Entrada> = emptyList()) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto(buildString {
@@ -295,7 +313,7 @@ Escribe:
     fun foto(u: Universo, base64: String, tipo: String) = Peticion(Claude.HAIKU, listOf(Peticion.Bloque("""
 Lees capturas o fotos de pantallas de EA Sports FC 26 (datos del partido o rendimiento de un jugador) y sacas las cifras tal cual se ven. No inventes nada: lo que no se lea, a 0 o vacío, y dilo en «dudas». Si la imagen no es una pantalla de estadísticas de FC, se_ve = false.
 """.trim())), listOf(Peticion.imagen(base64, tipo), Peticion.texto("""
-El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es ${u.personaje.nombre}" else ""}. Saca de esta imagen: el marcador (goles a favor de ${u.club} y en contra), el rival, y, si salen, los minutos, goles, asistencias y nota de ${if (u.modo == Rol.JUGADOR) u.personaje.nombre else "su equipo"}; los datos del partido que se vean (posesión, tiros, tiros a puerta, precisión de pase, faltas, córners… con el valor de los dos equipos, «nuestro / suyo»), y lo demás del rendimiento en una frase.
+El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es ${u.personaje.nombre}" else ""}. Saca de esta imagen: el marcador (goles a favor de ${u.club} y en contra), el rival, y, si salen, los minutos, goles, asistencias y nota de ${if (u.modo == Rol.JUGADOR) u.personaje.nombre else "su equipo"}; los datos del partido que se vean (posesión, tiros, tiros a puerta, precisión de pase, faltas, córners… con el valor de los dos equipos, «nuestro / suyo»), y lo demás del rendimiento en una frase. «mvp»: true solo si en la imagen se ve claramente que ${if (u.modo == Rol.JUGADOR) u.personaje.nombre else "alguien de su equipo"} es el jugador del partido (MVP).
 """.trim())), maxTokens = 1500, esquema = ESQUEMA_FOTO)
 
     // ---------------------------------------------------------------- leer lo que contesta
@@ -311,7 +329,7 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
             }.filter { it.texto.isNotBlank() }.take(5), ci)
     }.filter { it.texto.isNotBlank() }
 
-    private fun dms(l: Any?) = l.comoLista().map { it.comoMapa() }.map { Dm(it["de"].comoTexto(), it["texto"].comoTexto(), chat = it["chat"].comoTexto()) }.filter { it.texto.isNotBlank() }
+    private fun dms(l: Any?) = l.comoLista().map { it.comoMapa() }.map { Dm(it["de"].comoTexto(), it["texto"].comoTexto(), chat = it["chat"].comoTexto(), pid = it["id"].comoTexto().trim()) }.filter { it.texto.isNotBlank() }
 
     private fun tendencia(m: Map<String, Any?>): Pair<String, Int> {
         val h = m["hashtag"].comoTexto().trim().let { if (it.isNotBlank() && !it.startsWith("#")) "#$it" else it }
@@ -349,8 +367,10 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
     )
 
     /** La red y los mensajes. */
-    class LoDeLaRed(val posts: List<Post>, val dms: List<Dm>, val tendencia: String, val tendenciaPosts: Int)
-    fun leeRed(r: Map<String, Any?>): LoDeLaRed { val (h, n) = tendencia(r["tendencia"].comoMapa()); return LoDeLaRed(posts(r["posts"]), dms(r["mensajes"]), h, n) }
+    class LoDeLaRed(val posts: List<Post>, val dms: List<Dm>, val tendencia: String, val tendenciaPosts: Int, val nuevas: List<Persona> = emptyList())
+    fun leeRed(r: Map<String, Any?>): LoDeLaRed { val (h, n) = tendencia(r["tendencia"].comoMapa())
+        return LoDeLaRed(posts(r["posts"]), dms(r["mensajes"]), h, n, r["gente_nueva"].comoLista().map { it.comoMapa() }
+            .map { Persona("", it["nombre"].comoTexto().trim(), it["rol"].comoTexto(), 50, it["nota"].comoTexto()) }.filter { it.nombre.isNotBlank() }) }
 
     class SinContestar(val n: Int, val consecuencia: String, val efectos: Efectos)
     class LoDePrensa(val prensa: Prensa?, val ofertas: List<Oferta>, val decision: Decision?, val efectos: Efectos, val sinContestar: List<SinContestar> = emptyList())
@@ -398,9 +418,68 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
 
     /** Lo leído de la foto, para rellenar la plantilla (que revisas antes de guardar). */
     class LoDeLaFoto(val seVe: Boolean, val golesFavor: Int, val golesContra: Int, val rival: String, val minutos: Int, val goles: Int, val asistencias: Int,
-                     val nota: Double, val equipo: Map<String, String>, val rendimiento: String, val dudas: String)
+                     val nota: Double, val equipo: Map<String, String>, val rendimiento: String, val dudas: String, val mvp: Boolean = false)
     fun leeFoto(r: Map<String, Any?>) = LoDeLaFoto(r["se_ve"].comoBool(), r["goles_favor"].comoLong().toInt().coerceAtLeast(0), r["goles_contra"].comoLong().toInt().coerceAtLeast(0),
         r["rival"].comoTexto(), r["minutos"].comoLong().toInt().coerceIn(0, 130), r["goles"].comoLong().toInt().coerceAtLeast(0), r["asistencias"].comoLong().toInt().coerceAtLeast(0),
         r["nota"].comoDouble().coerceIn(0.0, 10.0), r["datos_equipo"].comoLista().map { it.comoMapa() }.associate { it["dato"].comoTexto() to it["valor"].comoTexto() }.filter { it.key.isNotBlank() && it.value.isNotBlank() },
-        r["rendimiento"].comoTexto(), r["dudas"].comoTexto())
+        r["rendimiento"].comoTexto(), r["dudas"].comoTexto(), r["mvp"].comoBool())
+
+    // ---------------------------------------------------------------- hablar con alguien y darle puerta
+
+    /** Lo último de la conversación con alguien (para que Claude sepa de qué venís hablando). */
+    private fun historial(conv: List<Dm>, p: Persona): String = conv.takeLast(24).joinToString("\n") { d -> (if (d.mio) "ÉL" else d.de.ifBlank { p.nombre }) + ": " + d.texto }
+
+    /** Él le escribe a alguien de su gente lo que quiere: esa persona contesta en su papel, y puede cambiar (o no) (Sonnet). */
+    fun charla(u: Universo, ctx: String, p: Persona, conv: List<Dm>, mensaje: String) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""
+$ctx
+
+CHARLA PRIVADA con [${p.corto}] ${p.nombre} (${p.rol}, afinidad ${p.afinidad}/100). Cómo es: ${p.nota.ifBlank { "—" }}. Su actitud de ahora: ${p.actitud.ifBlank { "la de siempre" }}.
+LO ÚLTIMO QUE SE HAN DICHO (de más viejo a más nuevo):
+${historial(conv, p).ifBlank { "(nada todavía)" }}
+
+ÉL LE ESCRIBE AHORA: «${mensaje.trim()}»
+
+Contesta EN EL PAPEL de ${p.nombre}, como en un chat de verdad: en «respuesta», de 1 a 4 mensajes seguidos suyos, con su forma de hablar, coherentes con su carácter, su historia con él, su afinidad y lo que acaba de leer. Que no sea un muñeco: si él tiene razón y se lo dice bien, puede convencerle (o a medias); si le habla mal o no le convence, se mantiene, se ofende o insiste. Nada de cambiar de golpe sin motivo.
+- «cambio_afinidad»: de -15 a +15 según cómo le ha sentado.
+- «actitud»: cómo queda su actitud con él DESPUÉS de esta charla, en una frase (qué le insiste o qué ha cambiado; por ejemplo «ha dejado de presionarle con lo del cambio de club, pero no lo ve claro»).
+- «convencido»: true si ha cambiado de verdad lo que le insistía o su forma de comportarse.
+- «resumen»: una frase de lo que ha pasado en esta charla (para recordarlo).
+- Si lo que se dicen trasciende (alguien se entera, sale en la red), unos pocos posts (de 0 a 3) y en «mensajes» de 0 a 2 conversaciones de otros que se enteran; si es algo privado, vacíos.
+- «efectos»: pequeños (de -4 a +4; dinero solo si hay motivo), y en «relaciones», el cambio de ${p.nombre} NO (va en «cambio_afinidad»), solo el de otros si les afecta.
+""".trim())), maxTokens = 1800, esquema = ESQUEMA_CHARLA)
+
+    /** Le da puerta a alguien de su gente: su reacción, las consecuencias y, si era su representante, los candidatos para sustituirle (Sonnet). */
+    fun puerta(u: Universo, ctx: String, p: Persona, conv: List<Dm>, porque: String) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""
+$ctx
+
+LE DA PUERTA a [${p.corto}] ${p.nombre} (${p.rol}, afinidad ${p.afinidad}/100): deja de estar en su vida. Cómo es: ${p.nota.ifBlank { "—" }}. Su actitud: ${p.actitud.ifBlank { "—" }}.
+Lo último que se dijeron:
+${historial(conv, p).ifBlank { "(nada)" }}
+${if (porque.isNotBlank()) "LO QUE ÉL LE DICE (o el porqué): «${porque.trim()}»" else "No le da explicaciones."}
+
+Cuenta qué pasa:
+- «despedida»: de 1 a 3 últimos mensajes de ${p.nombre} al enterarse (enfado, pena, amenaza, indiferencia… lo que pegue con cómo es).
+- «titular» corto y «texto» de 3 a 5 frases con las consecuencias explicadas: quién se entera, qué se dice y qué cambia. ${when {
+    p.rol.contains("represent", true) || p.rol.contains("agente", true) -> "Era su representante: se queda sin representante (las negociaciones, en el aire) y en «candidatos» de 2 a 3 representantes INVENTADOS que quieren llevarle (con nombre, rol «representante (candidato)» y una nota de cómo trabajan)."
+    p.rol.contains("madre", true) || p.rol.contains("padre", true) || p.rol.contains("herman", true) || p.rol.contains("abuel", true) || p.rol.contains("tí", true) -> "Es familia: drama familiar, alguien de la familia intenta mediar, la prensa rosa huele algo. «candidatos» vacío."
+    p.rol.contains("amig", true) -> "Era un amigo: si le arrastraba a malos hábitos o le pedía cosas, alejarse le sienta bien (sube la disciplina) aunque haya alguna pulla en redes; si era un buen amigo, le duele a los dos. «candidatos» vacío."
+    else -> "«candidatos» vacío."
+}}
+- ${comoRed(u, "De 2 a 5")} (si trasciende; si es algo muy privado, menos).
+- $COMO_MENSAJES De 0 a 2 conversaciones de otros de su gente que reaccionan (nunca de ${p.nombre}, que ya no le escribe).
+- «efectos»: de -8 a +8; su gente, por su nombre exacto (sin ${p.nombre}).
+""".trim())), maxTokens = 3500, esquema = ESQUEMA_PUERTA)
+
+    class LoDeLaCharla(val respuesta: List<String>, val afinidad: Int, val actitud: String, val convencido: Boolean, val resumen: String, val posts: List<Post>, val dms: List<Dm>, val efectos: Efectos)
+    fun leeCharla(r: Map<String, Any?>) = LoDeLaCharla(r["respuesta"].comoLista().map { it.comoTexto().trim() }.filter { it.isNotBlank() }.take(5),
+        r["cambio_afinidad"].comoLong().toInt().coerceIn(-15, 15), r["actitud"].comoTexto().trim(), r["convencido"].comoBool(), r["resumen"].comoTexto().trim(),
+        posts(r["posts"]), dms(r["mensajes"]), efectos(r["efectos"].comoMapa()))
+
+    class LoDeLaPuerta(val despedida: List<String>, val titular: String, val texto: String, val tendencia: String, val tendenciaPosts: Int, val posts: List<Post>, val dms: List<Dm>,
+                       val candidatos: List<Persona>, val efectos: Efectos)
+    fun leePuerta(r: Map<String, Any?>): LoDeLaPuerta { val (h, n) = tendencia(r["tendencia"].comoMapa())
+        return LoDeLaPuerta(r["despedida"].comoLista().map { it.comoTexto().trim() }.filter { it.isNotBlank() }.take(4), r["titular"].comoTexto(), r["texto"].comoTexto(), h, n,
+            posts(r["posts"]), dms(r["mensajes"]),
+            r["candidatos"].comoLista().map { it.comoMapa() }.map { Persona("", it["nombre"].comoTexto().trim(), it["rol"].comoTexto().ifBlank { "representante (candidato)" }, 45, it["nota"].comoTexto()) }
+                .filter { it.nombre.isNotBlank() }.take(3), efectos(r["efectos"].comoMapa())) }
 }

@@ -8,7 +8,13 @@ import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,8 +51,62 @@ fun fotoParaClaude(ctx: Context, uri: Uri): String {
  * goleadores), completo (además, los datos del partido, el rendimiento, lo que pasó y la media) o con una foto de la pantalla de FC (Claude
  * la lee y tú lo revisas antes de guardar).
  */
+/**
+ * La competición, en un desplegable: las de tu club (de la búsqueda), las que has añadido, «Amistoso» y «Selección», y «Otra…» para
+ * escribir una que no está (se añade a la lista).
+ */
 @Composable
-fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoInicial: Int = 0) {
+fun ElegirCompeticion(u: Universo, lista: List<String>, valor: String, abierto0: Boolean = false, alCambiar: (String) -> Unit) {
+    var abierto by remember { mutableStateOf(abierto0) }
+    var otra by remember { mutableStateOf(false) }
+    var texto by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Etiqueta("Competición")
+        Box {
+            Row(Modifier.fillMaxWidth().tocable { abierto = true }.padding(top = 4.dp, bottom = 6.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(valor.ifBlank { "Elige la competición" }, color = if (valor.isBlank()) Muted else Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic,
+                    fontSize = 18.sp, lineHeight = 22.sp, modifier = Modifier.weight(1f))
+                Icon(Icons.Filled.ArrowDropDown, "Elegir", tint = Muted)
+            }
+            DropdownMenu(abierto, { abierto = false }, containerColor = Crudo) {
+                lista.forEach { c ->
+                    DropdownMenuItem(text = { Text(c, color = Charcoal, fontFamily = Body, fontWeight = if (c == valor) FontWeight.Bold else FontWeight.Normal, fontSize = 16.sp, lineHeight = 21.sp) },
+                        onClick = { alCambiar(c); abierto = false; otra = false })
+                }
+                DropdownMenuItem(text = { Text("Otra…", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 16.sp) }, onClick = { abierto = false; otra = true })
+            }
+        }
+        Filete(1.5.dp)
+        if (otra) {
+            Campo("¿Cuál?", texto, "El nombre de la competición") { texto = it.take(60) }
+            if (texto.isNotBlank()) BotonRedondo("Añadirla a la lista", Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                alCambiar(Motor.anadeCompeticion(u.id, texto)); otra = false; texto = ""
+            }
+        }
+    }
+}
+
+/** «Busca las competiciones de tu club»: si aún no están (o son las de tu club de antes). */
+@Composable
+fun BuscarCompeticiones(u: Universo, modifier: Modifier = Modifier) {
+    if (!Motor.faltanCompeticiones(u) || !ClaveApi.hay) return
+    val ambito = rememberCoroutineScope()
+    val va = EnCurso.ids["k" + u.id]
+    var aviso by remember { mutableStateOf<String?>(null) }
+    Column(modifier.fillMaxWidth()) {
+        Text("Para elegirlas aquí, busca las competiciones que juega ${u.club} esta temporada" + (if (Prueba.activo) " (modo prueba: de ejemplo, gratis)." else " (Sonnet y una o dos búsquedas web: unos céntimos)."),
+            color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+        PildoraMarco(va ?: "Buscar sus competiciones", Modifier.padding(top = 6.dp)) {
+            if (va != null) return@PildoraMarco
+            EnCurso.ids["k" + u.id] = "Buscando sus competiciones…"; aviso = null
+            ambito.launch { aviso = withContext(Dispatchers.IO) { Motor.buscaCompeticiones(u.id) }; EnCurso.ids.remove("k" + u.id) }
+        }
+        aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp)) }
+    }
+}
+
+@Composable
+fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoInicial: Int = 0, desplegable: Boolean = false) {
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
     val u = Carreras.de(id) ?: run { PaginaRevista { RevistaTopBar(alVolver); Nota("Esta carrera ya no está.") }; return }
@@ -74,6 +134,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
     var aviso by remember { mutableStateOf<String?>(null) }
     var guardado by remember { mutableStateOf(false) }
     var deFoto by rememberSaveable { mutableStateOf(false) }
+    var mvp by rememberSaveable { mutableStateOf(false) }
 
     val elegirFoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
@@ -95,6 +156,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
                     nuestro[clave] = partes.getOrElse(0) { v }; if (partes.size > 1) suyo[clave] = partes[1]
                 }
                 if (f.rendimiento.isNotBlank()) rendimiento = f.rendimiento
+                if (f.mvp) mvp = true
                 deFoto = true; como = 1
                 aviso = "Revisa lo leído antes de guardar." + (if (f.dudas.isNotBlank()) " Claude no está seguro de esto: ${f.dudas}" else "")
             }
@@ -113,9 +175,9 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
         if (deFoto) Cuerpo("Relleno con la foto. Revísalo.", Modifier.padding(top = 4.dp), color = Acento)
 
         BloqueEditor("El resultado")
-        Campo("Competición", competicion, "LaLiga, Champions, Copa…") { competicion = it }
-        val usadas = anteriores.map { it.competicion }.filter { it.isNotBlank() }.distinct().takeLast(6)
-        if (usadas.isNotEmpty()) FiltrosRevista(usadas, usadas.indexOf(competicion)) { competicion = usadas[it] }
+        val lista = Competiciones.lista(u, anteriores)
+        ElegirCompeticion(u, lista, competicion, desplegable) { competicion = it }
+        BuscarCompeticiones(u, Modifier.padding(top = 6.dp))
         Campo("Rival", rival, "Contra quién") { rival = it }
         MagChoice(listOf("En casa", "Fuera"), if (local) 0 else 1, "Dónde") { local = it == 0 }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -132,6 +194,8 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
                 Campo("Goles", goles, "0", Modifier.weight(1f), teclado = KeyboardType.Number) { goles = it.filter { c -> c.isDigit() }.take(2) }
                 Campo("Asistencias", asist, "0", Modifier.weight(1f), teclado = KeyboardType.Number) { asist = it.filter { c -> c.isDigit() }.take(2) }
             }
+            Spacer(Modifier.height(4.dp))
+            SiNo("He sido el MVP", "El jugador del partido: cuenta en tus cifras, tus hitos y tu fama", mvp) { mvp = it }
         } else Campo("Goleadores", goleadores, "Quién marcó (y el minuto, si quieres)", lineas = 2) { goleadores = it }
 
         if (como == 1) {
@@ -167,7 +231,8 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
             val p = Partido(temporada.trim().ifBlank { u.temporada }, competicion.trim(), rival.trim(), local, gf.toIntOrNull() ?: 0, gc.toIntOrNull() ?: 0,
                 if (u.modo == Rol.JUGADOR) minutos.toIntOrNull() ?: 0 else 90, goles.toIntOrNull() ?: 0, asist.toIntOrNull() ?: 0, nota(laNota), goleadores.trim(),
                 if (como == 1) equipo else emptyMap(), if (como == 1) rendimiento.trim() else "", if (como == 1) momentos.trim() else "",
-                if (como == 1) media.toIntOrNull() ?: 0 else 0, Fechas.lee(fecha)?.let { Fechas.iso(it) } ?: "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim())
+                if (como == 1) media.toIntOrNull() ?: 0 else 0, Fechas.lee(fecha)?.let { Fechas.iso(it) } ?: "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim(),
+                mvp = u.modo == Rol.JUGADOR && mvp)
             ocupado = "Escribiendo la prensa…"; aviso = null
             ambito.launch {
                 val r = withContext(Dispatchers.IO) { runCatching { Motor.partido(id, p) } }

@@ -19,7 +19,7 @@ class ApiDeMentira : Transporte {
     var textoClub: String = """Aquí va lo que he encontrado: {"encontrado": true, "nombre": "Real Betis Balompié", "apodo": "Los verdiblancos", "ciudad": "Sevilla", "pais": "España",
         |"estadio": "Benito Villamarín", "aforo": 60721, "liga": "LaLiga", "division": "Primera", "entrenador": "Entrenador de verdad", "presidente": "Presidente de verdad",
         |"colores": "verde y blanco", "rivales": ["Sevilla FC"], "palmares": "Una Liga y tres Copas del Rey.", "contexto": "En Europa y con la economía saneada.",
-        |"aficion": "Fiel y ruidosa.", "medios": ["Diario de ejemplo"], "dudas": ""}""".trimMargin()
+        |"aficion": "Fiel y ruidosa.", "medios": ["Diario de ejemplo"], "competiciones": ["LaLiga EA Sports", "Copa del Rey", "UEFA Europa League"], "dudas": ""}""".trimMargin()
     var pausaClub = false
     private val lotes = LinkedHashMap<String, List<Map<String, Any?>>>()
 
@@ -77,6 +77,15 @@ class ApiDeMentira : Transporte {
         val props = Peticion.esquemaDe(c).orEmpty()["properties"].comoMapa().keys
         val texto = c["messages"].comoLista().flatMap { it.comoMapa()["content"].comoLista() }.joinToString { it.comoMapa()["text"].comoTexto() }
         val respuesta: Any = when {
+            "respuesta" in props && "actitud" in props -> mapOf("respuesta" to listOf("Vale, te he escuchado.", "Dejo de insistirte con lo del cambio de club. De momento."),
+                "cambio_afinidad" to 8, "actitud" to "Ha dejado de presionarle con el cambio de club", "convencido" to true, "resumen" to "Le convenció para que dejara de insistir.",
+                "posts" to emptyList<Any>(), "mensajes" to emptyList<Any>(), "efectos" to mapOf("dinero" to 0, "fama" to 0, "aficion" to 0, "disciplina" to 0, "carisma" to 1, "relaciones" to emptyList<Any>()))
+            "despedida" in props -> mapOf("despedida" to listOf("¿Me despides por WhatsApp?", "Mis abogados lo mirarán."), "titular" to "Se queda sin representante",
+                "texto" to "Rompe con su agente y llegan candidatos.", "tendencia" to mapOf("hashtag" to "#SinAgente", "posts" to 900), "posts" to listOf(post("Diario Gol", "diariogol", "Rompe con su agente")),
+                "mensajes" to emptyList<Any>(), "candidatos" to listOf(mapOf("nombre" to "Elena Sanz", "rol" to "representante (candidata)", "nota" to "Abogada deportiva")),
+                "efectos" to mapOf("dinero" to 0, "fama" to 1, "aficion" to 1, "disciplina" to 2, "carisma" to 0, "relaciones" to emptyList<Any>()))
+            "grupos" in props -> mapOf("grupos" to texto.substringAfter("Los nombres que hay que agrupar: ").substringBefore("\n").split(" | ").map { n ->
+                mapOf("nombre" to n, "competicion" to if (n.contains("Gamper", true)) "Amistoso" else if (n.contains("UCL", true) || n.contains("orejona", true)) "UEFA Europa League" else "Otra") })
             "se_ve" in props -> mapOf("se_ve" to true, "goles_favor" to 3, "goles_contra" to 1, "rival" to "Sevilla FC", "minutos" to 90, "goles" to 2, "asistencias" to 1, "nota" to 8.7,
                 "datos_equipo" to listOf(mapOf("dato" to "Posesión", "valor" to "58 / 42"), mapOf("dato" to "Tiros", "valor" to "15 / 7")), "rendimiento" to "6 tiros, 4 a puerta", "dudas" to "")
             "gente" in props -> mapOf("titulo" to "Llega el Niño", "texto" to "Presentado ante cuatro mil personas y una pancarta con faltas de ortografía.",
