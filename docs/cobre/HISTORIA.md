@@ -17,7 +17,7 @@ y widgets en C. ESPN, las listas M3U y Xtream, la guía, la calidad automática,
 rivales, las selecciones y el mando de la tele no cambian.
 
 - **Colores**: los de Nut (en «A tu manera»): fondo granate #3D0E19, letra crema #F1DCB5 y acento dorado #D4A06A. La cabecera de tinta
-  sale crema con las letras granate. El dorado sobre el granate da 6,9:1 (se lee tal cual); si eliges otro acento que no llegue al 4,5:1,
+  sale crema con las letras granate. El dorado sobre el granate da 7,1:1 y el crema 12,3:1 (se leen tal cual); si eliges otro acento que no llegue al 4,5:1,
   el texto en acento se aclara u oscurece lo justo (`acentoLegible`); en los bloques va tal cual.
 - **Una pantalla, cinco páginas**: la cabecera («NUT.» en grotesca, BUSCAR CANAL · + EQUIPOS · fecha · ⚙) que se pliega sin cortar ni dejar
   hueco, y una fila de pestañas: PORTADA · HOY · COMPETICIONES · TUS EQUIPOS · IPTV, que se pasan con el dedo. HOY son los partidos del
