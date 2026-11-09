@@ -209,9 +209,9 @@ abstract class CapturasBase {
             MostazaTheme {
                 Surface(Modifier.fillMaxSize(), color = Paper) {
                     when (cual) {
-                        0 -> PantPortada(alAbrir = {}, alIr = {})
-                        1 -> PantSecciones(Destino.Viendo, alVolver = {}, alAbrir = {}, alIr = {})
-                        2 -> PantSecciones(Destino.Visto, alVolver = {}, alAbrir = {}, alIr = {})
+                        0 -> PantPrincipal(0, {}, {}, {}, {}, {})
+                        1 -> PantPrincipal(1, {}, {}, {}, {}, {})
+                        2 -> PantPrincipal(3, {}, {}, {}, {}, {})
                         3 -> PantExplorar(alVolver = {}, alAbrir = {})
                         4 -> PantBuscar(alVolver = {}, alAbrir = {})
                         5 -> PantFicha(Biblioteca.titulos[2].breve(), alCerrar = {}, alAbrir = {})

@@ -160,6 +160,11 @@ object TmdbDatos {
         return null
     }
 
+    /** De `<película o serie>/images`: (miniatura, grande) de sus pósteres o de sus fondos («backdrops»), en el orden de TMDB. */
+    fun imagenes(json: String, fondos: Boolean): List<Pair<String, String>> =
+        lee(json)[if (fondos) "backdrops" else "posters"].comoLista().map { it.comoMapa()["file_path"].comoTexto() }.filter { it.isNotBlank() }.distinct()
+            .map { img(it, if (fondos) "w780" else "w342") to img(it, if (fondos) "w1280" else "w780") }
+
     /** Lo que dice TMDB cuando algo va mal (`status_message`), para un aviso. */
     fun error(json: String): String = runCatching { lee(json)["status_message"].comoTexto() }.getOrDefault("")
 
@@ -332,6 +337,16 @@ object Tmdb {
 
     suspend fun busca(q: String): List<MetaBreve> = withContext(Dispatchers.IO) {
         if (q.isBlank()) emptyList() else lista("search/multi", false, listOf("query" to q.trim(), "include_adult" to "false"))
+    }
+
+    /** Las propuestas de «Imágenes»: los pósteres o los fondos de un título (en castellano, en inglés y sin texto). Vacío sin clave. */
+    suspend fun imagenes(t: Titulo, fondos: Boolean): List<Pair<String, String>> = withContext(Dispatchers.IO) {
+        if (!activo) return@withContext emptyList()
+        val imdb = t.imdb.ifBlank { t.id.substringBefore(':').takeIf { it.startsWith("tt") }.orEmpty() }
+        val id = TmdbDatos.deId(t.id) ?: (if (t.tmdb > 0) TmdbDatos.IdTmdb(t.esSerie, t.tmdb) else null)
+            ?: imdb.takeIf { it.isNotBlank() }?.let { runCatching { TmdbDatos.encontrado(pide("find/$it", listOf("external_source" to "imdb_id"), vida = 7 * 24 * 3600_000L)) }.getOrNull() }
+            ?: return@withContext emptyList()
+        TmdbDatos.imagenes(pide(id.ruta + "/images", listOf("include_image_language" to "es,en,null")), fondos)
     }
 
     /**

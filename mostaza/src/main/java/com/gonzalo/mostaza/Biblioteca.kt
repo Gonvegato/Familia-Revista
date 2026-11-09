@@ -27,7 +27,19 @@ data class Titulo(
     val fav: Boolean = false, val anadido: Long = 0L, val ultima: Long = 0L, val fin: Long = 0L, val poster: String = "", val portada: String = "",
     val fondo: String = "", val minutos: Int = 0, val generos: List<String> = emptyList(), val imdb: String = "", val tmdb: Long = 0L, val tvmaze: Long = 0L,
     val mod: Long = 0L,
+    /**
+     * El fondo ELEGIDO (en «Imágenes»): una imagen a lo ancho para el cartel «Ahora ves» y la apertura de la ficha (archivo de la app, o la
+     * dirección de la que salió mientras no ha bajado). En la cuenta, como la portada: `fimg` (hash) y `fu` (de dónde salió). "" = no has
+     * elegido ninguno: entonces se usa el fondo de TMDB o del addon ([fondo]), si lo hay. [sinFondo]: lo quitaste a propósito (`fimg` = "-").
+     */
+    val fondoImg: String = "", val sinFondo: Boolean = false,
+    /** Qué parte se ve de la portada y del fondo ([Encuadre]): las imágenes viajan con la cuenta; el encuadre es de CADA dispositivo. */
+    val encPortada: Encuadre = Encuadre(), val encFondo: Encuadre = Encuadre(),
+    /** La portada la elegiste tú (en «Imágenes»): `pp` en la cuenta. Si no, es la del póster de TMDB o del addon. */
+    val portadaPropia: Boolean = false,
 ) {
+    /** El fondo que se ve: el elegido; si no, el de TMDB o del addon; "" si lo quitaste o no hay (entonces, el color de la portada). */
+    val fondoVer: String get() = if (sinFondo) "" else fondoImg.ifBlank { fondo }
     val esSerie: Boolean get() = tipo == "series"
     /** El id con el que se le piden cosas a los addons (el de IMDb si se sabe: es el que usan casi todos). */
     val idStremio: String get() = imdb.ifBlank { id }
@@ -116,7 +128,9 @@ object Biblioteca {
         poster = n.texto("pu"), portada = appCtx?.let { PortadasFamilia.archivo(it, n.texto("portada")) }.orEmpty(), fondo = n.texto("fondo"),
         minutos = n.entero("dur").toInt(), generos = n.lista("gen").map { it.toString() }, imdb = n.texto("imdb"), tmdb = n.entero("tmdb"), tvmaze = n.entero("tvmaze"),
         mod = n.m.values.maxOrNull() ?: 0L,
-    )
+        fondoImg = n.texto("fimg").let { h -> if (h.isBlank() || h == SIN_FONDO) "" else appCtx?.let { PortadasFamilia.archivo(it, h) }.orEmpty().ifBlank { n.texto("fu").takeIf { it.startsWith("http") }.orEmpty() } },
+        sinFondo = n.texto("fimg") == SIN_FONDO, portadaPropia = n.si("pp"),
+    ).let { t -> appCtx?.let { c -> t.copy(encPortada = Encuadres.de(c, t.ref, false, t.portada), encFondo = Encuadres.de(c, t.ref, true, t.fondoImg)) } ?: t }
 
     /** Vuelve a montar la lista con lo que hay en la cuenta (se llama sola cuando cambia algo, venga de donde venga). */
     fun refresca() {
@@ -128,6 +142,8 @@ object Biblioteca {
         // Los widgets, al día (venga el cambio de aquí o de otro dispositivo por la cuenta; también cuando llega un póster)
         appCtx?.let { c -> Widgets.pedir(c) }
         appCtx?.let { c -> PortadasFamilia.baja(cc.vivos().filter { PortadasFamilia.archivo(c, it.texto("portada")).isBlank() }.map { it.texto("portada") }) { refresca() } }
+        // Los fondos elegidos que aún no están en este dispositivo
+        appCtx?.let { c -> PortadasFamilia.baja(cc.vivos().map { it.texto("fimg") }.filter { it.isNotBlank() && it != SIN_FONDO && PortadasFamilia.archivo(c, it).isBlank() }) { refresca() } }
     }
 
     /** Los nodos de un id (por su ref, su id o su código de IMDb: lo que vino de Azabache puede tener otra ref). */
@@ -223,6 +239,47 @@ object Biblioteca {
         val c = LinkedHashMap<String, Any?>(); c["estado"] = e.cuenta
         if (e == Estado.VISTO && (cc.nodo(r)?.entero("fin") ?: 0L) <= 0L) c["fin"] = ahora
         cc.cambia(r, c); refresca()
+    }
+
+    // ---------------------------------------------------------------- las imágenes (portada y fondo, como en Seshat y Bastet)
+
+    /** «Sin fondo, a propósito» (en la cuenta un campo vacío no existe, y entonces volvería el de TMDB). */
+    const val SIN_FONDO = "-"
+
+    /** Cambia un título en la lista de las pruebas (sin cuenta debajo). */
+    private fun enPruebas(r: String, f: (Titulo) -> Titulo) { val i = titulos.indexOfFirst { it.ref == r }; if (i >= 0) titulos[i] = f(titulos[i]) }
+
+    /** El fondo elegido (el hash de una imagen ya guardada en la cuenta; "" = sin fondo, a propósito) y de dónde salió. */
+    fun ponerFondo(r: String, hash: String, url: String) {
+        if (congelada || col == null) { val c = appCtx; enPruebas(r) { it.copy(fondoImg = if (hash.isBlank()) "" else c?.let { x -> PortadasFamilia.archivo(x, hash) }.orEmpty().ifBlank { url }, sinFondo = hash.isBlank(), encFondo = Encuadre()) }; return }
+        col?.cambia(r, mapOf("fimg" to hash.ifBlank { SIN_FONDO }, "fu" to url)); refresca()
+    }
+
+    /** Vuelve al fondo de TMDB o del addon (el elegido se olvida). */
+    fun fondoAutomatico(r: String) {
+        if (congelada || col == null) { enPruebas(r) { it.copy(fondoImg = "", sinFondo = false, encFondo = Encuadre()) }; return }
+        col?.cambia(r, mapOf("fimg" to "", "fu" to "")); refresca()
+    }
+
+    /** La portada elegida (el hash de una imagen ya guardada en la cuenta): sale igual en tus otros dispositivos y en Jonsu. */
+    fun ponerPortada(r: String, hash: String, archivo: String = "") {
+        if (congelada || col == null) { enPruebas(r) { it.copy(portada = archivo, portadaPropia = true, encPortada = Encuadre()) }; return }
+        col?.cambia(r, mapOf("portada" to hash, "pp" to true)); refresca()
+    }
+
+    /** Vuelve a la portada automática (el póster de TMDB o del addon). */
+    fun portadaAutomatica(r: String) {
+        val t = porRef(r) ?: titulos.firstOrNull { it.ref == r } ?: return
+        if (congelada || col == null) { enPruebas(r) { it.copy(portada = "", portadaPropia = false, encPortada = Encuadre()) }; return }
+        col?.cambia(r, mapOf("pp" to false)); ponPortada(r, t.poster)
+    }
+
+    /** Guarda el encuadre de la portada ([fondo] = false) o del fondo, en ESTE dispositivo (la cuenta no se toca). */
+    fun ponerEncuadre(r: String, fondo: Boolean, e: Encuadre) {
+        val t = titulos.firstOrNull { it.ref == r } ?: return
+        appCtx?.let { c -> Encuadres.poner(c, r, fondo, if (fondo) t.fondoImg else t.portada, e) }
+        enPruebas(r) { if (fondo) it.copy(encFondo = e) else it.copy(encPortada = e) }
+        if (!congelada) refresca()
     }
 
     fun ponFavorito(r: String, f: Boolean) { col?.cambia(r, mapOf("fav" to f)); refresca() }
@@ -339,7 +396,7 @@ object Biblioteca {
     }
 
     /** Lo visto de un título, sumando tus dispositivos (ms). */
-    fun msVistos(r: String): Long = tiempo?.vivos()?.filter { it.texto("ref") == r }?.sumOf { it.entero("total") } ?: 0L
+    fun msVistos(r: String): Long = if (congelada) ratosFijos.filter { it.ref == r }.sumOf { it.ms } else tiempo?.vivos()?.filter { it.texto("ref") == r }?.sumOf { it.entero("total") } ?: 0L
 
     fun hoy(ahora: Long = System.currentTimeMillis()) = dia(ahora)
 

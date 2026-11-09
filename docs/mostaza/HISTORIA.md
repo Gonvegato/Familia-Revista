@@ -17,6 +17,52 @@ tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar,
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 Y en la tele, la sala (`CapturasTeleTest`, 1920 × 1080 en modo de tele).
 
+## 0.7.0 · La cara de Seshat y Bastet (dirección C) y los colores «Palomitas»
+
+Hathor pasa a la misma altura que Seshat 0.20.3 y Bastet 0.8.1: toda la app en una pantalla, el cartel «Ahora ves», la ficha a doble página,
+imágenes propias con encuadre por dispositivo, el reto del año y los widgets en C. El reproductor, «se corta» / «no cambiar», torrents,
+Real-Debrid, addons, las reglas de 10 minutos y del 90 %, TMDB, la migración desde Jonsu y la sala de la tele no cambian.
+
+- **Colores «Palomitas»**: papel crema #F4ECDD, tinta casi negra #1B1A1F y el rojo de la caja de palomitas #D7263D, como paleta propia de
+  Hathor (con su noche: negro #16131A y el mismo rojo). Son los de serie. Quien tenía los de antes (marrón #715021, blanco y rosa #D4C1C0
+  puestos en «A tu manera», o la paleta Revista con acento mostaza que venía de serie) pasa a Palomitas una vez, y viaja a tus otros
+  dispositivos; lo elegido a mano distinto se queda. El rojo tal cual, sobre el crema, da 4,2:1: para el texto se oscurece lo justo
+  (`acentoLegible`, 4,5:1); en los bloques (pestaña, botón, etiqueta) va tal cual con letra blanca (5:1).
+- **Una pantalla, seis páginas**: la cabecera de tinta («HATHOR.» en grotesca, BUSCAR · EXPLORAR · fecha · ⚙) que se pliega sin cortar ni
+  dejar hueco, y una fila de pestañas: PORTADA · VIENDO · PENDIENTES · VISTAS · ABANDONADAS · PRÓXIMOS, que se pasan con el dedo. Explorar,
+  Buscar, Addons y Ajustes van encima; la ficha, encima de todo. Atrás vuelve a la portada. Los widgets y los avisos llevan a su página
+  (`seccion=` con el nombre del destino o de la pestaña; «Próximos capítulos» abre Próximos).
+- **Portada**: el cartel «AHORA VES» (lo último que viste: la película, o la serie con «T2 · E5» y lo que queda) con su portada grande y
+  paspartú crema sobre su fondo (el tuyo o el de TMDB) o su color; debajo, «SEGUIR VIENDO →», que abre la ficha y hace lo de su botón (la
+  mejor fuente, el episodio que toca). Luego el reto del año, «Esta semana» en barras que se tocan (sale lo que viste ese día) y los días
+  seguidos; los próximos capítulos; «También ves» y «Pendientes» (lado a lado si hay pocos); «Tu 2026», el mosaico de lo terminado; y lo de
+  siempre: tu kDrive y el catálogo (TMDB o tus addons).
+- **Reto del año**: películas y series terminadas (una película vista cuenta 1; una serie, 1 cuando la terminas). En Ajustes → Avanzado; va
+  con tu cuenta (`ajustes/cine_reto`), como el de Seshat y Bastet. «VAS N POR DELANTE/DETRÁS · TE QUEDAN X EN Y DÍAS» o «PONERTE UN RETO →».
+- **Listas**: portadas de 84×126, número, título en grotesca, «película · año» o «serie · T2 E5» y, abajo, según el estado: por dónde vas y
+  su barra (y «SEGUIR →»), cuánto dura y cuándo la añadiste, cuándo la terminaste y lo visto, dónde la dejaste. Arriba, la rejilla de
+  cifras (películas · series · horas vistas), el menú pequeño de siempre (Películas · Series, en bloques) y solo los órdenes que dicen algo
+  en cada página (Viendo: última vez, título; Pendientes: añadidos, año, título; Vistas: terminadas, año, título; Abandonadas: última vez,
+  título). Próximos: cada capítulo que viene, con su fecha.
+- **Ficha a doble página**: el fondo (o el póster ampliado) como foto de apertura con un velo arriba (← Volver · Imágenes · Editar · Borrar),
+  el póster con paspartú asomando, la etiqueta del estado (en Viendo nunca dice «terminado»), el título enorme, «de <dirección o
+  creadores> · año», el botón principal (VER, SEGUIR VIENDO · T2 · E5, VOLVER A VER) y las secciones numeradas: 01 Tu visionado (barra,
+  visto en total, capítulos, estado, favorita), 02 Temporadas y capítulos, 03 Dónde verlo (tus fuentes y las plataformas), En Jonsu y la
+  película o la serie (sinopsis, tráiler, datos, reparto, «Más como esta»). «Editar» cambia el estado y la favorita; «Borrar» es el «Quitar
+  de Hathor» de siempre.
+- **Imágenes**: la portada y el fondo de cada título (`Imagenes.kt`): buscar en internet, de tu móvil, usar la portada como fondo, la
+  automática / «El de TMDB», quitar, y las propuestas de TMDB (sus pósteres y sus fondos). Viajan con tu cuenta (portada: `portada` + `pp`;
+  fondo: `fimg` + `fu`; "-" = quitado). **El encuadre es de cada dispositivo** (`Encuadre.kt`): la imagen es la misma en todos, y en cada uno
+  eliges qué parte se ve; si la imagen cambia, vuelve al centro. (Hathor no tenía encuadre antes: no hay nada que pasar.)
+- **Icono «H.» con la franja «CINE»** en los colores nuevos (adaptable y monocromo, `herramientas/familia-c/icono-c.py`), el cartel de la tele
+  igual, y la hoja de comprobación en `docs/mostaza/iconos/comprobacion-icono.png` (`herramientas/familia-c/comprobar-icono.py`).
+- **Widgets en C**: sin reborde fino ni esquinas en las portadas, antetítulos en el acento legible, titulares en grotesca; la cabecera
+  «HATHOR.» en un bloque de tinta; las portadas, con su encuadre; el fondo, el que eliges.
+- Capturas: `CapturasCTest` (normal, noche y letra 1,3): portada (con y sin fondo, con un día tocado, con pocos, vacía), plegado por pasos,
+  cada página, fichas (serie viendo, película vista, pendiente, con fondo, abandonada), Imágenes, Encuadre y el reto en Ajustes. Pruebas:
+  `DireccionCTest` (Palomitas y el paso desde los de antes, acento AA, reto, semana, encuadre por dispositivo, paspartú, órdenes, páginas,
+  estado, fondo).
+
 ## 0.4.0 · En la tele: la sala
 
 **Hathor también en Android TV y Google TV**, con el mismo APK que el móvil (en la tele sale en la fila de las apps, con su banner).

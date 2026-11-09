@@ -31,7 +31,7 @@ son **páginas a la derecha** de la portada, como pasar hojas.
 | Bastet | Portada · Jugando · Pendientes · Pasados · Abandonados · Sagas · Sistemas (hecho; Tu PC y Ajustes, encima) |
 | Thot | Portada · Escribiendo · En pausa · Terminadas · Archivo |
 | Jonsu | Portada · las secciones de su diario |
-| Hathor | Portada · Viendo · Pendientes · Vistas · Próximos… |
+| Hathor | Portada · Viendo · Pendientes · Vistas · Abandonadas · Próximos (hecho, 0.7.0; Explorar, Buscar, Addons y Ajustes, encima) |
 | Nut | Hoy · Competiciones · Tus equipos · IPTV… |
 
 Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSonPaginas`).
@@ -113,3 +113,18 @@ El marco de la portada que va sobre un fondo (cartel de la portada y apertura de
 del tema, de la noche ni de «A tu manera» (en las apps de página oscura, el color de la página no se veía). Solo si la portada es muy
 clara — luminancia media de la portada encuadrada ≥ 0,78 (`UMBRAL_PASPARTU`; con el crema ≈0,93, una diferencia < 0,15) — el marco
 pasa a un oscuro fijo #141210. Funciones: `colorPaspartu(lPortada)`, `paspartuOscuro`, `PASPARTU_CREMA`, `PASPARTU_OSCURO`.
+
+## Lo aprendido al pasarlo a Hathor (0.7.0; para Thot, Jonsu y Nut)
+
+- **Los colores de serie como paleta, no como «A tu manera»**: Hathor trae «Palomitas» (#F4ECDD · #1B1A1F · #D7263D) como paleta propia
+  (`PALETTES`, `palomitas`, con su versión de noche), predeterminada; los colores de antes puestos a mano (#715021 · #FFFFFF · #D4C1C0) y la
+  paleta que venía de serie pasan a ella UNA vez (`Skin.aPalomitas`, también al llegar la apariencia de un Hathor viejo). Lo demás elegido a
+  mano se queda.
+- **El rojo sobre crema da 4,2:1**: el acento de serie no llega a AA para letra pequeña; `acentoLegible` lo oscurece lo justo para el texto y
+  los bloques (pestaña activa, botón, etiqueta del estado) llevan el rojo tal cual con letra blanca (5:1).
+- **Un fondo automático**: si la app ya tiene una imagen ancha de fuera (el «backdrop» de TMDB o del addon), es el fondo mientras no elijas
+  otro; el elegido va aparte en la cuenta (`fimg` + `fu`, "-" = quitado a propósito, para que no vuelva el automático). «El de TMDB»
+  devuelve el automático. Las propuestas de «Imágenes» salen de la misma fuente (`/images` de TMDB).
+- **El botón del cartel hace lo de siempre**: «SEGUIR VIENDO →» abre la ficha y pulsa su botón principal (la mejor fuente, el episodio que
+  toca); así no hay dos caminos para reanudar.
+- **Una página que no es un estado** (Próximos) va en el pager igual que las demás, con su rejilla de cifras y su lista.

@@ -9,7 +9,7 @@ APPS = {  # nombre: (fondo, texto, acento, lo que hace)
     "Seshat": ("#F8F0D4", "#050404", "#C68B00", "LIBROS"),
     "Thot":   ("#171E2B", "#F1EBE0", "#A79530", "ESCRITOS"),
     "Jonsu":  ("#1C1F22", "#F1EBE0", "#8F3232", "DIARIO"),
-    "Hathor": ("#715021", "#FFFFFF", "#D4C1C0", "CINE"),
+    "Hathor": ("#F4ECDD", "#1B1A1F", "#D7263D", "CINE"),
     "Nut":    ("#3D0E19", "#F1DCB5", "#D4A06A", "IPTV"),
 }
 def rgb(h): return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))

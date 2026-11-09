@@ -71,6 +71,11 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Hathor 0.7.0: «Palomitas», la predeterminada. Papel crema, tinta casi negra y el rojo de la caja de palomitas; de noche, el negro de
+    // la pantalla apagada con el mismo rojo (el texto en rojo se aclara o se oscurece solo lo justo para leerse: acentoLegible).
+    Palette("palomitas", "Palomitas", "Hathor",
+        t(0xF4ECDD, 0xFAF5EA, 0x1B1A1F, 0xD7263D, 0x1B1A1F, 0x5A524A, 0x968C80, 0x8E241C, 0xB8861B, 0xE9E0CF, 0xDBD0BC, 0xBFB3A0, 0x6E6860),
+        t(0x16131A, 0x1F1B24, 0xF3ECE0, 0xD7263D, 0xF3ECE0, 0xBDB2A0, 0x847B70, 0xF08A78, 0xE0B456, 0x221E26, 0x2E2932, 0x4A4450, 0x9C95A0)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)

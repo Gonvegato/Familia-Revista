@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 
 /**
  * Formas: cómo dibuja cada estilo las esquinas y los bordes. Son las mismas ideas que las «formas» de Atrio, más simples:
- * en Mostaza la portada es un ARCO (la puerta de Atrio, repetida), y según la forma el arco es redondo, biselado o recto.
+ * en Hathor la portada es un ARCO (la puerta de Atrio, repetida), y según la forma el arco es redondo, biselado o recto.
  */
 enum class Esq { Redonda, Cortada, Recta }
 data class Forma(val id: String, val esq: Esq, val radio: Float, val borde: Dp, val bordeTinta: Boolean, val sombraDura: Boolean, val arco: Float)
@@ -81,7 +81,7 @@ fun pildora(): Shape = when (Skin.forma.esq) {
 }
 
 /**
- * La portada de Mostaza: un arco. Arriba, media circunferencia (o menos, según la forma); abajo, esquinas pequeñas.
+ * La portada de Hathor: un arco. Arriba, media circunferencia (o menos, según la forma); abajo, esquinas pequeñas.
  * En las formas rectas es un rectángulo con borde; en las biseladas, el arco es un chaflán.
  */
 class ArcoShape(private val f: Forma) : Shape {
@@ -117,17 +117,20 @@ object Modo {
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "revista" })
+    var palette by mutableStateOf(PALETTES.first { it.id == "palomitas" })
     var display by mutableStateOf("Atrio")
     var body by mutableStateOf("Atrio")
     var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
     /** Id de [ACCENT_COLORS] o "paleta" (el de la paleta). */
-    var accentId by mutableStateOf("mostaza")
+    var accentId by mutableStateOf("paleta")
     /** Tamaño del texto en por ciento. */
     var escala by mutableStateOf(100)
     /** Colores invertidos: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene. */
     var invertido by mutableStateOf(false)
-    /** Colores de Atrio (los que tienes puestos allí) en lugar de los de la paleta de Mostaza. */
+    /** Hathor es siempre la revista (papel y tinta): las pantallas del estudio lo preguntan. */
+    val revista: Boolean get() = true
+
+    /** Colores de Atrio (los que tienes puestos allí) en lugar de los de la paleta de Hathor. */
     var origenAtrio by mutableStateOf(false)
     /** Colores elegidos a mano, como «A tu manera» de Atrio (0 = automático): por encima de todo lo demás. */
     var fondoPropio by mutableStateOf(0L)
@@ -153,14 +156,14 @@ object Skin {
         return r
     }
 
-    /** La paleta de Mostaza (con su acento elegido), en claro o en oscuro. */
+    /** La paleta de Hathor (con su acento elegido), en claro o en oscuro. */
     private fun propiosPara(noche: Boolean): Tones = (if (noche) palette.dark else palette.light).let { b ->
         ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> b.copy(general = (if (noche) a.dark else a.light) or 0xFF000000) } ?: b
     }
 
     /**
      * Los colores que se ven en claro o en oscuro ([noche]): los de Atrio (si se piden y se han leído; ya vienen en el modo que
-     * tengas allí) o los de Mostaza, y al revés si está «invertidos». Los widgets los piden de las dos maneras.
+     * tengas allí) o los de Hathor, y al revés si está «invertidos». Los widgets los piden de las dos maneras.
      */
     fun tonosPara(noche: Boolean): Tones {
         val fondo = FONDOS.firstOrNull { it.id == fondoId }
@@ -230,11 +233,11 @@ object Skin {
     fun cargar(c: Context) {
         val p = p(c)
         if (!p.getBoolean("revista_v1", false)) { p.edit().clear().putBoolean("revista_v1", true).apply() }
-        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "revista") } ?: palette
+        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "palomitas") } ?: palette
         display = p.getString("display", "Atrio") ?: "Atrio"
         body = p.getString("body", "Atrio") ?: "Atrio"
         forma = FORMAS.firstOrNull { it.id == p.getString("forma", "revista") } ?: forma
-        accentId = p.getString("acento", "mostaza")?.takeIf { id -> id == "paleta" || ACCENT_COLORS.any { it.id == id } } ?: "mostaza"
+        accentId = p.getString("acento", if (p.contains("paleta")) "mostaza" else "paleta")?.takeIf { id -> id == "paleta" || ACCENT_COLORS.any { it.id == id } } ?: "paleta"
         escala = p.getInt("escala", 100).coerceIn(80, 140)
         // La primera vez: los colores de Atrio (sin invertir)
         if (!p.getBoolean("atrio_v1", false)) p.edit().putBoolean("atrio_v1", true).putBoolean("invertido", false).putBoolean("origen_atrio", false).apply()
@@ -244,12 +247,32 @@ object Skin {
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
+        // Hathor 0.7.0, una vez: los colores de antes pasan a Palomitas (y viajan a tus otros dispositivos)
+        if (!p.getBoolean("palomitas_v1", false)) {
+            p.edit().putBoolean("palomitas_v1", true).apply()
+            if (aPalomitas()) { ajustesAt = System.currentTimeMillis(); persistir(c) }
+        }
     }
 
-    /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros Mostazaes gana la más reciente. */
+    /**
+     * Los colores de antes pasan a «Palomitas»: los de Hathor hasta la 0.6 (fondo marrón #715021, texto blanco y acento rosa #D4C1C0, puestos
+     * en «A tu manera») vuelven a automático, y la paleta que venía puesta (Revista con acento mostaza) pasa a Palomitas. Lo demás elegido a
+     * mano se queda. Devuelve true si ha cambiado algo.
+     */
+    fun aPalomitas(): Boolean {
+        var cambio = false
+        val viejoFondo = (fondoPropio and 0xFFFFFFL) == 0x715021L && fondoPropio != 0L
+        if (viejoFondo) { fondoPropio = 0L; cambio = true }
+        if (viejoFondo && tintaPropia != 0L && (tintaPropia and 0xFFFFFFL) == 0xFFFFFFL) { tintaPropia = 0L; cambio = true }
+        if (acentoPropio != 0L && (acentoPropio and 0xFFFFFFL) == 0xD4C1C0L) { acentoPropio = 0L; cambio = true }
+        if (palette.id == "revista" && accentId == "mostaza") { palette = PALETTES.first { it.id == "palomitas" }; accentId = "paleta"; cambio = true }
+        return cambio
+    }
+
+    /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros Hathor gana la más reciente. */
     var ajustesAt = 0L
 
-    /** Guarda la apariencia (y la marca como cambiada ahora, para que viaje a tus otros Mostazaes). */
+    /** Guarda la apariencia (y la marca como cambiada ahora, para que viaje a tus otros Hathor). */
     fun guardar(c: Context) {
         ajustesAt = System.currentTimeMillis()
         persistir(c)
@@ -262,7 +285,7 @@ object Skin {
         .put("invertido", invertido).put("origenAtrio", origenAtrio).put("modo", Modo.eleccion)
         .put("fondoId", fondoId).put("fondoPropio", fondoPropio).put("tintaPropia", tintaPropia).put("acentoPropio", acentoPropio))
 
-    /** Aplica la apariencia de otro de tus Mostazaes si es más nueva que la de aquí. Devuelve true si ha cambiado algo. */
+    /** Aplica la apariencia de otro de tus Hathor si es más nueva que la de aquí. Devuelve true si ha cambiado algo. */
     fun aplicarAjustes(c: Context, o: JSONObject): Boolean {
         val at = o.optLong("at", 0L)
         if (at <= ajustesAt) return false
@@ -275,13 +298,13 @@ object Skin {
         Modo.eleccion = k.optInt("modo", Modo.eleccion).coerceIn(0, 2)
         fondoId = k.optString("fondoId").takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         fondoPropio = k.optLong("fondoPropio", 0L); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = k.optLong("acentoPropio", 0L)
+        aPalomitas()  // (si llega de un Hathor de antes)
         ajustesAt = at
         persistir(c)
         return true
     }
 
     private fun persistir(c: Context) {
-        // Los widgets llevan la apariencia (cambiada aquí o llegada de otro dispositivo): se repintan
         Widgets.pedir(c)
         p(c).edit().putLong("ajustes_at", ajustesAt).putString("paleta", palette.id).putString("display", display).putString("body", body).putString("forma", forma.id)
             .putString("acento", accentId).putBoolean("invertido", invertido).putBoolean("origen_atrio", origenAtrio).putInt("escala", escala).putInt("modo", Modo.eleccion)
@@ -297,8 +320,33 @@ val Line: Color get() = Skin.tones.cLine
 val Charcoal: Color get() = Skin.tones.cInk
 val Edge: Color get() = Skin.tones.cEdge
 val Muted: Color get() = Skin.tones.cMuted
-/** El acento (el coral de Vitrina). */
-val Acento: Color get() = Color(Skin.tones.general)
+/** El acento tal cual lo eliges (el de la paleta o «A tu manera»): para los bloques de color y el icono. */
+val AcentoBloque: Color get() = Color(Skin.tones.general)
+/**
+ * El acento legible: el elegido, aclarado (u oscurecido) lo justo para leerse sobre la página con contraste AA (4,5:1).
+ * Es el que llevan las letras, las cifras grandes, la pestaña activa y el botón principal; con un acento que ya se lee, es el mismo.
+ */
+val Acento: Color get() = acentoLegible(AcentoBloque, Paper, Charcoal)
+/** Texto sobre un bloque del acento elegido ([AcentoBloque]). */
+val SobreBloque: Color get() = if (AcentoBloque.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
+
+/** Contraste WCAG entre dos colores (1 a 21). */
+fun contraste(a: Color, b: Color): Float {
+    val la = a.luminance(); val lb = b.luminance()
+    return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+}
+
+private var cacheLegible = Triple(0L, 0L, 0L) to Color.Unspecified
+/** [c] mezclado poco a poco con [hacia] (la tinta: clara de noche, oscura de día) hasta leerse sobre [fondo] con 4,5:1. */
+fun acentoLegible(c: Color, fondo: Color, hacia: Color, minimo: Float = 4.5f): Color {
+    val k = Triple(c.value.toLong(), fondo.value.toLong(), hacia.value.toLong())
+    val cc = cacheLegible
+    if (cc.first == k) return cc.second
+    var x = c; var t = 0f
+    while (contraste(x, fondo) < minimo && t < 1f) { t += 0.04f; x = androidx.compose.ui.graphics.lerp(c, hacia, t.coerceAtMost(1f)) }
+    cacheLegible = k to x
+    return x
+}
 val Dorado: Color get() = Color(Skin.tones.gold)
 /** Texto sobre el acento: blanco o tinta oscura, el que se lea. */
 val SobreAcento: Color get() = if (Acento.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
@@ -326,7 +374,8 @@ val AtrioDisplay = FontFamily(
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 val VitrinaDisplay = FontFamily(
     listOf(400, 500, 600, 700, 800).map { w ->
-        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(if (w >= 700) 92f else 100f)))
+        // opsz 48: el tamaño óptico de titular (el de serie, 96, es el de cartel, con remates de distinta altura que se ven irregulares); ancho normal
+        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(100f), FontVariation.Setting("opsz", 48f)))
     }
 )
 
@@ -369,3 +418,9 @@ fun MostazaTheme(content: @Composable () -> Unit) {
         }
     }
 }
+
+// ───── dirección C (editorial moderna) ─────
+/** La letra de la dirección C: Bricolage Grotesque (grotesca), para la cabecera, los titulares y las cifras grandes. La serif queda para citas. */
+val Grotesca: FontFamily get() = VitrinaDisplay
+/** El segundo color de los bloques de cifras de la dirección C (el azul de las maquetas). */
+val Bloque2: Color get() = Color(0xFF1F3A5F)

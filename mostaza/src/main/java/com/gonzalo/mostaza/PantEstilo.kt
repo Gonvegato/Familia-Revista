@@ -31,12 +31,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.6.1"
+const val VERSION = "0.7.0"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Catálogo · Reproductor · Fuentes · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
-fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}) {
-    var pestana by rememberSaveable { mutableIntStateOf(0) }
+fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}, pestanaInicial: Int = 0) {
+    var pestana by rememberSaveable { mutableIntStateOf(pestanaInicial) }
     EspejoCuenta.version
     val mg = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
@@ -216,6 +216,13 @@ private fun SeccionAvanzado() {
     val ctx = LocalContext.current
     Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
     SeccionActualizaciones()
+    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Antetitulo("Reto del año", Modifier.padding(bottom = 4.dp))
+    var reto by remember { mutableIntStateOf(RetoCine.meta(ctx)) }
+    val retos = remember { (listOf(0, 12, 24, 36, 50, 75, 100, 150) + RetoCine.meta(ctx)).distinct().sorted() }
+    MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Películas y series terminadas al año") { i -> reto = retos[i]; RetoCine.poner(ctx, reto) }
+    Text("Una película vista cuenta 1; una serie, 1 cuando la terminas (todos sus capítulos estrenados vistos). Va con tu cuenta: sale igual en tus otros Hathor.",
+        color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo("La portada", Modifier.padding(bottom = 4.dp))
     var cuantas by remember { mutableIntStateOf(AjustesPortada.cuantas(ctx)) }
