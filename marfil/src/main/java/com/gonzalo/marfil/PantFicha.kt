@@ -133,12 +133,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         else -> elegirArchivo.launch(arrayOf("*/*"))
     }
 
-    val deck = listOfNotNull(
-        if (l.terminado > 0) "terminado el ${fecha(l.terminado)}" + if (l.terminados.size > 1) " · ${l.terminados.size}.ª vez" else "" else null,
-        // Si ya lo terminaste, la fecha de terminado dice lo importante: no se repite «leído por última vez»
-        if (l.ultima > 0 && l.terminado == 0L) "leído por última vez ${haceCuando(l.ultima)}" else null,
-        if (l.msLeidos >= 60_000) "${tiempoDe(l.msLeidos)} leídos" else null
-    ).joinToString(" · ")
+    val deck = lineaDeLectura(l, { fecha(it) }, { haceCuando(it) })
     val miSaga = Sagas.de(l.clave)
     val frac = l.fraccion
 
@@ -150,17 +145,17 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         // ---- «Doble página»: la tapa ampliada como foto de apertura, a todo el ancho y recortada, sobre su color medio
         val tela = remember(l.portada, l.titulo) { colorDePortada(l.portada) ?: telaDe(l.titulo) }
         val conFondo = l.fondo.isNotBlank()
-        Box(Modifier.fillMaxWidth().height(300.dp).clipToBounds()
+        Box(Modifier.fillMaxWidth().height(ALTO_APERTURA).clipToBounds()
             .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(lerpColor(tela, androidx.compose.ui.graphics.Color.White, 0.12f), lerpColor(tela, androidx.compose.ui.graphics.Color.Black, 0.55f))))) {
             // (más ancha que la pantalla y recortada: la tapa como foto de apertura)
             // Con fondo elegido: el fondo es la foto de apertura (y la portada asoma abajo a la derecha, más abajo)
-            if (conFondo) ImagenRecortada(l.fondo, Modifier.fillMaxSize().clickable(enabled = !l.esEscrito) { imagenesFondo = true; portada = true }, "Fondo de ${l.titulo}")
+            if (conFondo) ImagenEncuadrada(l.fondo, l.encFondo, Modifier.fillMaxSize().clickable(enabled = !l.esEscrito) { imagenesFondo = true; portada = true }, "Fondo de ${l.titulo}")
             else BoxWithConstraints(Modifier.fillMaxSize()) {
                 val w = maxWidth + 24.dp
                 PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f).clickable(enabled = !l.esEscrito) { imagenesFondo = false; portada = true }, radio = 0, conAutor = false)
             }
             // Un velo arriba para que se lean «Volver» y las acciones sobre cualquier tapa
-            Box(Modifier.fillMaxWidth().height(110.dp).background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f), androidx.compose.ui.graphics.Color.Transparent))))
+            Box(Modifier.fillMaxWidth().height(VELO_APERTURA).background(veloArriba()))
             Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp).padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 EnlaceRevista("← Volver", color = PAPEL_CLARO) { alCerrar() }
                 Spacer(Modifier.weight(1f))
@@ -190,8 +185,8 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
             }
             // (en una caja de 116 dp que la deja salir 64 dp por arriba: así no estira el hueco hasta el botón)
             if (conFondo) Box(Modifier.align(Alignment.TopEnd).padding(end = 20.dp).width(120.dp).height(116.dp)) {
-                PortadaLibro(l, Modifier.align(Alignment.BottomCenter).wrapContentHeight(Alignment.Bottom, unbounded = true).requiredHeight(180.dp).fillMaxWidth().shadow(14.dp)
-                    .clickable(enabled = !l.esEscrito) { imagenesFondo = false; portada = true }, radio = 0, conAutor = false)
+                PortadaSobreFondo(l, Modifier.align(Alignment.BottomCenter).wrapContentHeight(Alignment.Bottom, unbounded = true).requiredHeight(180.dp).fillMaxWidth(), sombra = 14.dp,
+                    alTocar = if (l.esEscrito) null else ({ imagenesFondo = false; portada = true }))
             }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
@@ -395,3 +390,24 @@ fun colorDePortada(ruta: String): androidx.compose.ui.graphics.Color? = runCatch
     val p = android.graphics.Bitmap.createScaledBitmap(b, 1, 1, true).getPixel(0, 0)
     androidx.compose.ui.graphics.Color(p)
 }.getOrNull()
+
+
+/**
+ * La línea en cursiva de «Tu lectura». «Terminado el …» solo en un libro Leído (uno que vuelves a leer, o que pasó a Leyendo, puede guardar
+ * fechas de fin de antes: ahí manda cuándo lo leíste por última vez).
+ */
+fun lineaDeLectura(l: Libro, fecha: (Long) -> String, hace: (Long) -> String): String {
+    val terminado = l.estado == Estado.LEIDO && l.terminado > 0
+    return listOfNotNull(
+        if (terminado) "terminado el ${fecha(l.terminado)}" + if (l.terminados.size > 1) " · ${l.terminados.size}.ª vez" else "" else null,
+        // Si ya lo terminaste, la fecha de terminado dice lo importante: no se repite «leído por última vez»
+        if (l.ultima > 0 && !terminado) "leído por última vez ${hace(l.ultima)}" else null,
+        if (l.msLeidos >= 60_000) "${tiempoDe(l.msLeidos)} leídos" else null
+    ).joinToString(" · ")
+}
+
+/** El alto del velo de arriba de la apertura (para que se lean «Volver» y las acciones sobre cualquier foto). */
+val VELO_APERTURA = 110.dp
+
+/** El velo: negro al 80 % arriba, transparente abajo. */
+fun veloArriba() = androidx.compose.ui.graphics.Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f), androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.35f), androidx.compose.ui.graphics.Color.Transparent))

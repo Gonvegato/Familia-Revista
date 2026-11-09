@@ -35,6 +35,12 @@ data class Libro(
      */
     val fondo: String = "",
     val fondoUrl: String = "",
+    /**
+     * Qué parte se ve de la portada y del fondo ([Encuadre]): la imagen se guarda entera y viaja con la cuenta; el encuadre es de CADA
+     * dispositivo (un móvil y una tableta tienen otra forma) y se guarda solo en él ([Encuadres]).
+     */
+    val encPortada: Encuadre = Encuadre(),
+    val encFondo: Encuadre = Encuadre(),
     /** Dirección del archivo en este dispositivo ("" = aún no está aquí). */
     val uri: String = "",
     /** Nombre del archivo (con su extensión). */
@@ -164,7 +170,9 @@ object Biblioteca {
         val (fondo, fondoUrl) = fondoDe(c, n)
         return Libro(
             id = n.ref, titulo = n.texto("t"), autor = n.texto("a"), clave = n.texto("clave").ifBlank { claveDe(n.texto("t"), n.texto("a")) },
-            portada = c?.let { archivoPortada(it, hash) }.orEmpty(), portadaUrl = n.texto("pu"), fondo = fondo, fondoUrl = fondoUrl, uri = uris[n.ref].orEmpty(), archivo = n.texto("archivo"),
+            portada = c?.let { archivoPortada(it, hash) }.orEmpty(), portadaUrl = n.texto("pu"), fondo = fondo, fondoUrl = fondoUrl,
+            encPortada = c?.let { Encuadres.de(it, n.ref, false, archivoPortada(it, hash)) } ?: Encuadre(),
+            encFondo = c?.let { Encuadres.de(it, n.ref, true, fondo) } ?: Encuadre(), uri = uris[n.ref].orEmpty(), archivo = n.texto("archivo"),
             favorito = n.si("fav"), estado = estadoDeCuenta(n.texto("estado")), anadido = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("an")), ultima = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("ul")),
             fraccion = n.decimal("fr").toFloat().coerceIn(0f, 1f), fraccionFijada = n.entero("ff"), mod = n.m.values.maxOrNull() ?: 0L,
             paginas = n.entero("pg").toInt(), paginasOrigen = n.texto("po"), terminados = terminadosDe(n),
@@ -200,6 +208,16 @@ object Biblioteca {
         }
         val hero = n.texto("az").takeIf { it.startsWith("{") }?.let { runCatching { JSONObject(it).optString("hero") }.getOrNull() }.orEmpty()
         return if (hero.startsWith("http")) hero to hero else "" to ""
+    }
+
+    /** Guarda el encuadre de la portada ([fondo] = false) o del fondo de un libro, en ESTE dispositivo (la cuenta no se toca). */
+    fun ponerEncuadre(id: String, fondo: Boolean, e: Encuadre) {
+        val l = por(id) ?: return
+        val c = appCtx ?: return
+        Encuadres.poner(c, id, fondo, if (fondo) l.fondo else l.portada, e)
+        val i = libros.indexOfFirst { it.id == id }
+        if (i >= 0) libros[i] = if (fondo) libros[i].copy(encFondo = e) else libros[i].copy(encPortada = e)
+        refresca()
     }
 
     /** El hash del fondo de un libro en la cuenta ("" si no tiene). */
@@ -282,15 +300,16 @@ object Biblioteca {
 
     /** La portada de un libro (el hash de una imagen ya guardada en la cuenta) y de dónde salió. */
     fun ponerPortada(id: String, hash: String, url: String) {
+        // (una imagen nueva empieza centrada: el encuadre de la anterior no le vale)
         col?.cambia(id, mapOf("portada" to hash, "pu" to url))
-        if (congelada || col == null) { val i = libros.indexOfFirst { it.id == id }; val c = appCtx; if (i >= 0 && c != null) libros[i] = libros[i].copy(portada = archivoPortada(c, hash), portadaUrl = url) }
+        if (congelada || col == null) { val i = libros.indexOfFirst { it.id == id }; val c = appCtx; if (i >= 0 && c != null) libros[i] = libros[i].copy(portada = archivoPortada(c, hash), portadaUrl = url, encPortada = Encuadre()) }
         refresca()
     }
 
     /** El fondo de un libro (el hash de una imagen ya guardada en la cuenta; "" = sin fondo) y de dónde salió. */
     fun ponerFondo(id: String, hash: String, url: String) {
         col?.cambia(id, mapOf("fondo" to hash.ifBlank { SIN_FONDO }, "fu" to url))
-        if (congelada || col == null) { val i = libros.indexOfFirst { it.id == id }; val c = appCtx; if (i >= 0 && c != null) libros[i] = libros[i].copy(fondo = archivoPortada(c, hash), fondoUrl = url) }
+        if (congelada || col == null) { val i = libros.indexOfFirst { it.id == id }; val c = appCtx; if (i >= 0 && c != null) libros[i] = libros[i].copy(fondo = archivoPortada(c, hash), fondoUrl = url, encFondo = Encuadre()) }
         refresca()
     }
 
@@ -335,7 +354,8 @@ object Biblioteca {
     fun guardar() { refresca() }
 
     fun aJson(l: Libro) = JSONObject().apply {
-        put("id", l.id); put("clave", l.clave); put("titulo", l.titulo); put("autor", l.autor); put("portada", l.portada); put("pu", l.portadaUrl); put("fondo", l.fondo); put("fu", l.fondoUrl); put("uri", l.uri); put("archivo", l.archivo)
+        put("id", l.id); put("clave", l.clave); put("titulo", l.titulo); put("autor", l.autor); put("portada", l.portada); put("pu", l.portadaUrl); put("fondo", l.fondo); put("fu", l.fondoUrl)
+        put("uri", l.uri); put("archivo", l.archivo)
         put("favorito", l.favorito); put("estado", l.estado.name); put("anadido", l.anadido); put("ultima", l.ultima); put("fraccion", l.fraccion.toDouble()); put("ff", l.fraccionFijada)
         put("mod", l.mod); put("msp", l.msPropios); put("pg", l.paginas); put("po", l.paginasOrigen)
         put("tm", JSONArray().also { a -> l.terminados.forEach { a.put(it) } })

@@ -98,6 +98,62 @@ class CapturasTest {
         rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("c7_ficha_con_fondo_letra_grande")
     }
 
+    /** Encuadrar (0.20.0): el editor de la portada y del fondo, y el cartel y la ficha con el fondo acercado al sol y la portada encuadrada. */
+    private fun siembraEncuadrada() {
+        siembraConFondo()
+        val i1 = Biblioteca.libros.indexOfFirst { it.id == "1" }; val i2 = Biblioteca.libros.indexOfFirst { it.id == "2" }
+        Biblioteca.libros[i1] = Biblioteca.libros[i1].copy(encFondo = Encuadre(1.6f, 0.68f, 0.45f), encPortada = Encuadre(1.8f, 0.3f, 0.8f))
+        Biblioteca.libros[i2] = Biblioteca.libros[i2].copy(encFondo = Encuadre(1.4f, 0.7f, 0.4f), encPortada = Encuadre(1.6f, 0.35f, 0.75f))
+    }
+
+    private fun editores(sufijo: String) {
+        siembraEncuadrada(); Skin.cargar(ctx); coloresSeshat(false)
+        coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
+        val dune = Biblioteca.por("2")!!
+        val fondo = androidx.compose.runtime.mutableStateOf(false)
+        rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { androidx.compose.runtime.key(fondo.value) {
+            if (fondo.value) ContenidoEncuadre(dune.fondo, dune.encFondo, true, {}, {}) else ContenidoEncuadre(dune.portada, dune.encPortada, false, {}, {})
+        } } } }
+        foto("7d_encuadre_portada$sufijo")
+        fondo.value = true; rule.waitForIdle(); foto("7e_encuadre_fondo$sufijo")
+    }
+
+    @Test fun encuadre() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        editores("")
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun encuadreLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        editores("_letra_grande")
+    }
+
+    @Test fun conFondoEncuadrado() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraEncuadrada(); montar(false); foto("1g_portada_encuadrada")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4j_ficha_encuadrada")
+    }
+
+    /** Paspartú (0.20.0): crema con la portada oscura, en la tinta con una portada casi blanca; y el velo arriba de la ficha. */
+    private fun paspartu(sufijo: String, oscuro: Boolean) {
+        siembraConFondo()
+        val blanca = portada("", 0xFFF8F6F0.toInt(), 0xFFEDE9E0.toInt())
+        val i2 = Biblioteca.libros.indexOfFirst { it.id == "2" }
+        Biblioteca.libros[i2] = Biblioteca.libros[i2].copy(portada = blanca)
+        montar(oscuro); foto("1h_portada_paspartu$sufijo")
+        val i1 = Biblioteca.libros.indexOfFirst { it.id == "1" }
+        Biblioteca.libros[i1] = Biblioteca.libros[i1].copy(portada = blanca); rule.waitForIdle(); foto("1i_portada_paspartu_blanca$sufijo")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4k_ficha_paspartu_blanca$sufijo")
+    }
+
+    @Test fun paspartu() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); paspartu("", false) }
+    @Test fun paspartuNoche() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); paspartu("_oscuro", true) }
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun paspartuLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); paspartu("_letra_grande", false)
+    }
+
     @Test fun imagenes() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembraConFondo(); Skin.cargar(ctx); coloresSeshat(false)

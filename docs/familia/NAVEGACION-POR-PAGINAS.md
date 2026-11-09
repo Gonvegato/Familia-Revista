@@ -73,3 +73,17 @@ Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSo
 - El fondo va a la cuenta como la portada (hash en `fondo`, origen en `fu`; quitado = `"-"`), y se lee el `az.hero` de Jonsu si no hay.
 - Con fondo: el cartel de la portada lleva el fondo detrás y la portada encima a la izquierda; la cabecera de la ficha lleva el fondo de
   apertura y la portada asomando abajo a la derecha (en una caja que no estira el hueco). Sin fondo, la portada sobre su color, como antes.
+
+## Encuadre, paspartú y velo (Seshat 0.20.0; aplicar igual en las demás)
+
+- Encuadre — patrón: `marfil/.../Encuadre.kt`. La imagen se guarda entera; aparte, el encuadre = punto de la imagen en el centro del hueco
+  (`cx`, `cy`, fracciones) + `zoom` (1 = cubre el hueco). `colocarEncuadre` lo aplica a cualquier hueco y ajusta para que nunca quede borde
+  vacío; `recortarEncuadre` hace lo mismo con bitmaps (widgets).
+- El encuadre es POR DISPOSITIVO (`Encuadres`, SharedPreferences): clave libro|portada-o-fondo|nombre del archivo de la imagen (su hash). La
+  imagen viaja con la cuenta; si cambia, el encuadre viejo no casa y vuelve a verse centrada en todos.
+- El editor (`EditorEncuadre`) enseña la ventana con la forma real en que se verá: la portada a 2:3 y el fondo con la forma del sitio más
+  grande donde sale (el cartel); los huecos de otra forma (la cabecera de la ficha) se centran en el mismo punto. Dice «solo para este
+  dispositivo».
+- Paspartú: la portada sobre una imagen o un color va en `PortadaSobreFondo`: marco liso del color de la página (token `Paper`), ~5,4 % del
+  ancho (4–14 dp); si la portada es casi blanca (luminancia > 0,85), en la tinta (`Charcoal`). Sombra por fuera.
+- Velo: sobre una foto con botones encima, `veloArriba()` (negro 80 % → transparente en 110 dp) y los botones en crema.

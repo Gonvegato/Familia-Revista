@@ -191,7 +191,7 @@ fun Barra(f: Float, modifier: Modifier = Modifier) {
 }
 
 /** El color del texto sobre el acento (claro u oscuro, según lo claro que sea el acento). */
-private fun sobreAcento(): Color = if (Acento.red * 0.299f + Acento.green * 0.587f + Acento.blue * 0.114f > 0.55f) Color(0xFF050404) else Color.White
+internal fun sobreAcento(): Color = if (Acento.red * 0.299f + Acento.green * 0.587f + Acento.blue * 0.114f > 0.55f) Color(0xFF050404) else Color.White
 
 /** «5 h 20 min», «51 min». */
 private fun tiempo(ms: Long): String { val m = (ms / 60_000L).toInt(); return if (m >= 60) "${m / 60} h ${m % 60} min" else "$m min" }
@@ -208,13 +208,13 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
     val oscuro = lerpColor(base, Color.Black, 0.72f)
     val acentoClaro = lerpColor(Acento, Color.White, 0.35f)
     // (la portada acaba justo donde empieza el texto: lo que lleve pintado abajo —título, autor— no se pisa con el del cartel)
-    Box(Modifier.fillMaxWidth().height(470.dp).background(Brush.verticalGradient(listOf(claro, oscuro))).clickable { alAbrir(l) }) {
+    Box(Modifier.fillMaxWidth().height(ALTO_CARTEL).background(Brush.verticalGradient(listOf(claro, oscuro))).clickable { alAbrir(l) }) {
         if (l.fondo.isNotBlank()) {
             // Con fondo elegido: el fondo ocupa el cartel (recortado) y la portada va encima, grande, arriba a la izquierda
-            ImagenRecortada(l.fondo, Modifier.fillMaxSize())
+            ImagenEncuadrada(l.fondo, l.encFondo, Modifier.fillMaxSize())
             Box(Modifier.fillMaxWidth().height(120.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Transparent))))
-            PortadaLibro(l, Modifier.align(Alignment.TopStart).padding(start = 20.dp, top = 20.dp).shadow(22.dp).width(150.dp).height(225.dp), radio = 0, conAutor = false)
-        } else PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 16.dp).shadow(22.dp).width(220.dp).height(330.dp), radio = 0, conAutor = false)
+            PortadaSobreFondo(l, Modifier.align(Alignment.TopStart).padding(start = 20.dp, top = 20.dp).width(150.dp).height(225.dp), sombra = 22.dp)
+        } else PortadaSobreFondo(l, Modifier.align(Alignment.TopCenter).padding(top = 16.dp).width(220.dp).height(330.dp), sombra = 22.dp)
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(170.dp).background(Brush.verticalGradient(0f to Color.Transparent, 0.25f to Color(0xCC050404), 1f to Color(0xF2050404))))
         Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
             Text("AHORA LEES · ${porcentaje(l.fraccion)}", color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp, maxLines = 1)

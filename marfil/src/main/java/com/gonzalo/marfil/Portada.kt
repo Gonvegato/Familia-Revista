@@ -39,7 +39,8 @@ fun PortadaLibro(l: Libro, modifier: Modifier = Modifier, radio: Int = 5, conTit
         val ancho = maxWidth
         if (f != null || url != null) {
             Box(Modifier.fillMaxSize().background(Sand))
-            AsyncImage(f ?: url, l.titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            if (f != null && !l.encPortada.neutro) ImagenEncuadrada(f.path, l.encPortada, Modifier.fillMaxSize(), l.titulo)
+            else AsyncImage(f ?: url, l.titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         } else {
             val tela = telaDe(l.titulo)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(lerpColor(tela, Color.White, 0.10f), lerpColor(tela, Color.Black, 0.32f)))))

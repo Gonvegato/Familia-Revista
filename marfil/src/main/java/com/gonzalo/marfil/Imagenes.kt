@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -60,6 +61,7 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, h
     var buscando by remember { mutableStateOf(false) }
     var guardando by remember { mutableStateOf(false) }
     var web by remember { mutableStateOf(false) }
+    var encuadrar by remember { mutableStateOf(false) }
     fun dice(t: String) = Toast.makeText(ctx, t, Toast.LENGTH_LONG).show()
     val consulta = listOf(l.titulo, l.autor).filter { it.isNotBlank() }.joinToString(" ")
 
@@ -84,6 +86,12 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, h
     // Buscar en internet (la misma búsqueda de imágenes que la portada): para el fondo, con «fondo» detrás, como hace Jonsu
     if (web) InternetPicker(if (esFondo) "$consulta fondo" else consulta, alElegir = { bytes -> web = false; guardando = true; ambito.launch { guardar(bytes) } }, alCerrar = { web = false })
 
+    // Encuadrar la imagen de la pestaña (solo una imagen ya guardada en el móvil: se sabe cómo es entera)
+    val rutaActual = if (esFondo) l.fondo else l.portada
+    val sePuedeEncuadrar = rutaActual.isNotBlank() && !rutaActual.startsWith("http") && File(rutaActual).isFile
+    if (encuadrar && sePuedeEncuadrar) EditorEncuadre(rutaActual, if (esFondo) l.encFondo else l.encPortada, esFondo,
+        alGuardar = { e -> Biblioteca.ponerEncuadre(l.id, esFondo, e) }, alCerrar = { encuadrar = false })
+
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding()) {
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
             EnlaceRevista("← " + l.titulo, Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alCerrar() }
@@ -94,13 +102,14 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, h
             Text("AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (esFondo) {
                 Box(Modifier.fillMaxWidth().aspectRatio(3f).clipToBounds().background(lerpColor(telaDe(l.titulo), androidx.compose.ui.graphics.Color.Black, 0.4f)).clickable { galeria.launch("image/*") }, contentAlignment = Alignment.Center) {
-                    if (l.fondo.isNotBlank()) ImagenRecortada(l.fondo, Modifier.fillMaxSize(), "Fondo de ${l.titulo}")
+                    if (l.fondo.isNotBlank()) ImagenEncuadrada(l.fondo, l.encFondo, Modifier.fillMaxSize(), "Fondo de ${l.titulo}")
                     else Text("Sin fondo", color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
                 }
             } else {
                 PortadaLibro(l, Modifier.width(150.dp).height(225.dp).clickable { galeria.launch("image/*") }, radio = 0)
             }
             FlowRow(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (sePuedeEncuadrar) BotonMarco("Encuadrar") { encuadrar = true }
                 BotonMarco("Buscar en internet") { web = true }
                 BotonMarco("De tu móvil") { galeria.launch("image/*") }
                 if (esFondo && l.portada.isNotBlank() && File(l.portada).isFile) BotonMarco("Usar la portada") {
@@ -113,7 +122,7 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, h
             }
             if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
             if (esFondo) {
-                Text("Se recorta a lo ancho. Sin fondo, se usa el color de la portada como ahora. Sale en «Ahora lees» de la portada y arriba en la ficha.",
+                Text("Se recorta a lo ancho: con «Encuadrar» eliges qué parte se ve. Sin fondo, se usa el color de la portada como ahora. Sale en «Ahora lees» de la portada y arriba en la ficha.",
                     color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 14.dp, bottom = 24.dp))
             } else {
                 Text("PROPUESTAS", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
@@ -146,3 +155,35 @@ fun BotonMarco(texto: String, onClick: () -> Unit) {
     Text(texto.uppercase(), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.8.sp, maxLines = 1,
         modifier = Modifier.border(2.dp, Charcoal).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 9.dp))
 }
+
+/**
+ * La portada de un libro encima de una imagen o de un color (el cartel «Ahora lees» de la portada y la apertura de la ficha), en un solo sitio:
+ * con un PASPARTÚ, un marco liso del color de la página (crema de serie; sigue «A tu manera» y la noche) para que se despegue de lo que
+ * tenga detrás. Si la portada se parece demasiado a ese color ([paspartuEnTinta]: una portada casi blanca sobre el crema, o una muy oscura de
+ * noche), el marco pasa a la tinta de la app. Sin esquinas; la sombra, por fuera.
+ * El grosor va con el tamaño de la tapa (unos 8 dp en una de 150).
+ */
+@Composable
+fun PortadaSobreFondo(l: Libro, modifier: Modifier, sombra: androidx.compose.ui.unit.Dp, alTocar: (() -> Unit)? = null) {
+    val lPortada = remember(l.portada, l.titulo) { luminanciaDePortada(l.portada) ?: luminancia(telaDe(l.titulo)) }
+    val marco = if (paspartuEnTinta(luminancia(Paper), lPortada)) Charcoal else Paper
+    BoxWithConstraints(modifier.shadow(sombra).background(marco).then(if (alTocar != null) Modifier.clickable(onClick = alTocar) else Modifier)) {
+        PortadaLibro(l, Modifier.fillMaxSize().padding(grosorPaspartu(maxWidth)), radio = 0, conAutor = false)
+    }
+}
+
+/** El grosor del paspartú para una tapa de [ancho]: un 5,4 % (8 dp en una de 150), entre 4 y 14 dp. */
+fun grosorPaspartu(ancho: androidx.compose.ui.unit.Dp): androidx.compose.ui.unit.Dp = (ancho * 0.054f).coerceIn(4.dp, 14.dp)
+
+/**
+ * Si la portada y el color de la página se parecen menos que esto (en luminancia, 0–1), el paspartú va en la tinta. Con el crema de serie
+ * (≈0,94) eso es una portada de luminancia media > ≈0,8 (casi blanca); de noche, con la página oscura, una portada muy oscura.
+ */
+const val PARECIDO_PASPARTU = 0.15f
+
+fun paspartuEnTinta(lPagina: Float, lPortada: Float): Boolean = kotlin.math.abs(lPagina - lPortada) < PARECIDO_PASPARTU
+
+fun luminancia(c: androidx.compose.ui.graphics.Color): Float = 0.2126f * c.red + 0.7152f * c.green + 0.0722f * c.blue
+
+/** La luminancia media (0–1) de la imagen de una portada, o null si no hay imagen. */
+fun luminanciaDePortada(ruta: String): Float? = colorDePortada(ruta)?.let { luminancia(it) }

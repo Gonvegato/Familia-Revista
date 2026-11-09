@@ -79,6 +79,24 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.20.0 — encuadrar la portada y el fondo, paspartú y velo
+
+- **Encuadrar**, como en Bastet: la imagen se guarda entera y tú eliges qué parte se ve. En «Imágenes», en cada pestaña, «Encuadrar» abre
+  la imagen en una ventana con la forma en que se verá (la portada a 2:3; el fondo, con la forma del cartel «Ahora lees»): arrastra para
+  moverla y pellizca (o la barra de zoom) para acercarla; «Listo» guarda y «Restablecer» la vuelve a centrar.
+- El encuadre es el **punto de la imagen que queda en el centro** y el zoom: así vale para huecos de otra forma. El del fondo se elige con la
+  forma del cartel y la cabecera de la ficha (más baja) enseña una franja centrada en el mismo punto. La imagen siempre cubre el hueco entero.
+- **Cada dispositivo encuadra a su manera** (un móvil y una tableta tienen otra forma): las imágenes viajan con la cuenta como siempre, pero el
+  encuadre se guarda solo en el dispositivo, por libro y por imagen. Si la imagen cambia, en todos vuelve a verse centrada.
+- Sale en todas partes: cartel, ficha, listas, estantes, mosaico, sagas y widgets (que recortan el bitmap con el mismo encuadre).
+- **Paspartú**: la portada que va encima del cartel «Ahora lees» (con y sin fondo) y la que asoma en la apertura de la ficha llevan un marco
+  liso del color de la página (crema de serie; sigue «A tu manera» y la noche), de unos 8 dp en una tapa de 150; con una portada casi blanca
+  (luminancia media > 0,85), el marco va en la tinta. Se dibuja en un solo sitio (`PortadaSobreFondo`).
+- **Velo** arriba de la ficha: negro al 80 % arriba, transparente a los 110 dp, para que «Volver · Imágenes · Editar · Borrar» se lean sobre
+  cualquier foto.
+- Arreglo: un libro en Leyendo con una fecha de fin de antes decía «terminado el …» en «01 Tu lectura»; ahora eso solo sale en un libro Leído
+  y en los demás, «leído por última vez …».
+
 ## 0.19.0 — portada y fondo elegibles, como en Jonsu
 
 - **Fondo por libro**: una imagen a lo ancho, además de la portada. Se guarda como la portada: en la cuenta, por su hash (`fondo`) y de dónde

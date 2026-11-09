@@ -601,7 +601,7 @@ object Widgets {
                     val r = ctx.imageLoader.execute(ImageRequest.Builder(ctx).data(l.portada).allowHardware(false).size(lado).build())
                     ((r as? SuccessResult)?.drawable as? BitmapDrawable)?.bitmap
                 }
-            } else decodificar(l.portada, lado)
+            } else decodificar(l.portada, lado)?.let { recortarEncuadre(it, l.encPortada) }
         } catch (e: CancellationException) { throw e } catch (e: Exception) { null }
     }
 
