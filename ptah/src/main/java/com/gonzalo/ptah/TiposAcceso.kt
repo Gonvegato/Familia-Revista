@@ -68,7 +68,7 @@ object Buscador : TipoWidget {
     override val id = "buscador"
     override val nombre = "Buscador"
     override val grupo = "Buscar y abrir"
-    override val descripcion = "Una barra de revista para buscar en internet. Un toque y estás buscando."
+    override val descripcion = "Una barra para buscar en internet. Un toque y estás buscando."
     override val muestra = Tamanos.Celdas(4, 1)
     override val piezas = listOf("barra" to "La barra", "dentro" to "El fondo de la barra", "lupa" to "La lupa y el micrófono", "pista" to "El texto de la barra")
     override val partes = listOf("ante" to "El antetítulo", "lupa" to "La lupa")
@@ -287,7 +287,7 @@ object Accesos : TipoWidget {
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(if (a.esWeb) a.nombre.ifBlank { Acceso.nombreWeb(a.destino) } else nombres[a.destino] ?: a.destino, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text((if (a.esWeb) a.destino else "App").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text((if (a.esWeb) a.destino else "App"), color = Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 if (i > 0) EnlaceRevista("↑", Modifier.padding(horizontal = 8.dp)) { pon(lista.toMutableList().also { m -> m.add(i - 1, m.removeAt(i)) }) }
                 EnlaceRevista("Quitar", Modifier.padding(start = 6.dp)) { pon(lista.filterIndexed { j, _ -> j != i }) }
@@ -329,6 +329,6 @@ fun ElegirApp(alElegir: (String) -> Unit, alCerrar: () -> Unit) {
                 }
             }
         },
-        confirmButton = { TextButton(alCerrar) { Text("CERRAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        confirmButton = { TextButton(alCerrar) { Text("Cerrar", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold) } }
     )
 }

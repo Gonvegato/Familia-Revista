@@ -50,7 +50,7 @@ object Eventos {
         val u = Carreras.de(e.universo)
         val abre = Intent(ctx, MainActivity::class.java).putExtra(MainActivity.EXTRA_CARRERA, e.universo).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pi = PendingIntent.getActivity(ctx, e.id.hashCode(), abre, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val n = Notification.Builder(ctx, CANAL).setSmallIcon(R.drawable.ic_launcher_shai_mono)
+        val n = Notification.Builder(ctx, CANAL).setSmallIcon(R.drawable.ic_launcher_fcfeed_mono)
             .setContentTitle(e.titulo.ifBlank { "Ha pasado algo" })
             .setContentText(listOfNotNull(u?.nombre, e.decision?.let { "tienes que decidir" }).joinToString(" · ").ifBlank { e.texto.take(80) })
             .setStyle(Notification.BigTextStyle().bigText(e.texto + (e.decision?.let { "\n\n${it.texto}" } ?: "")))
@@ -62,9 +62,7 @@ object Eventos {
 class EventosWorker(ctx: Context, p: WorkerParameters) : CoroutineWorker(ctx, p) {
     override suspend fun doWork(): Result {
         iniciar(applicationContext)
-        runCatching { com.gonzalo.familia.LaFamilia.sincronizaYa() }
         Eventos.vuelta(applicationContext)
-        runCatching { com.gonzalo.familia.LaFamilia.sincronizaYa() }
         Eventos.programa(applicationContext)
         return Result.success()
     }

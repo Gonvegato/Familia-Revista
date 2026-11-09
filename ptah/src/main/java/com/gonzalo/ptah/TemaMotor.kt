@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 
 /**
  * Formas: cómo dibuja cada estilo las esquinas y los bordes. Son las mismas ideas que las «formas» de Atrio, más simples:
- * (las de Mostaza, tal cual: en Mostaza la portada es un ARCO; en Ptah se usan las esquinas y las píldoras).
+ * (las de Mostaza, tal cual: en Mostaza la portada es un ARCO; en Widgets se usan las esquinas y las píldoras).
  */
 enum class Esq { Redonda, Cortada, Recta }
 data class Forma(val id: String, val esq: Esq, val radio: Float, val borde: Dp, val bordeTinta: Boolean, val sombraDura: Boolean, val arco: Float)
@@ -63,22 +63,10 @@ val FORMAS: List<Forma> = listOf(
 )
 
 /** Esquina normal de radio [r] según la forma. */
-fun esquina(r: Dp): Shape {
-    val f = Skin.forma
-    val k = (r.value * f.radio).dp
-    return when (f.esq) {
-        Esq.Recta -> if (k.value < 0.5f) RectangleShape else RoundedCornerShape(k)
-        Esq.Cortada -> if (k.value < 0.5f) RectangleShape else CutCornerShape(k)
-        Esq.Redonda -> RoundedCornerShape(k)
-    }
-}
+fun esquina(r: Dp): Shape = RoundedCornerShape(r)
 
 /** Botones y chips «píldora». */
-fun pildora(): Shape = when (Skin.forma.esq) {
-    Esq.Redonda -> if (Skin.forma.radio < 0.6f) RoundedCornerShape(10.dp) else RoundedCornerShape(50)
-    Esq.Cortada -> CutCornerShape(30)
-    Esq.Recta -> RectangleShape
-}
+fun pildora(): Shape = RoundedCornerShape(50)
 
 /**
  * El arco de Mostaza (aquí, para los carteles de las películas y las series). Arriba, media circunferencia (o menos, según la forma); abajo, esquinas pequeñas.
@@ -127,7 +115,7 @@ object Skin {
     var escala by mutableStateOf(100)
     /** Colores invertidos: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene. */
     var invertido by mutableStateOf(false)
-    /** Colores de Atrio (los que tienes puestos allí) en lugar de los de la paleta de Ptah. */
+    /** Colores de Atrio (los que tienes puestos allí) en lugar de los de la paleta de Widgets. */
     var origenAtrio by mutableStateOf(false)
     /** Colores elegidos a mano, como «A tu manera» de Atrio (0 = automático): por encima de todo lo demás. */
     var fondoPropio by mutableStateOf(0L)
@@ -153,14 +141,14 @@ object Skin {
         return r
     }
 
-    /** La paleta de Ptah (con su acento elegido), en claro o en oscuro. */
+    /** La paleta de Widgets (con su acento elegido), en claro o en oscuro. */
     private fun propiosPara(noche: Boolean): Tones = (if (noche) palette.dark else palette.light).let { b ->
         ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> b.copy(general = (if (noche) a.dark else a.light) or 0xFF000000) } ?: b
     }
 
     /**
      * Los colores que se ven en claro o en oscuro ([noche]): los de Atrio (si se piden y se han leído; ya vienen en el modo que
-     * tengas allí) o los de Ptah, y al revés si está «invertidos».
+     * tengas allí) o los de Widgets, y al revés si está «invertidos».
      */
     fun tonosPara(noche: Boolean): Tones {
         val fondo = FONDOS.firstOrNull { it.id == fondoId }
@@ -253,7 +241,6 @@ object Skin {
     fun guardar(c: Context) {
         ajustesAt = System.currentTimeMillis()
         persistir(c)
-        SincroP.cambio(c)
     }
 
     /** La apariencia que viaja con la cuenta (tema, fondo, acento, colores a mano, letras, tamaño…). */
@@ -289,22 +276,22 @@ object Skin {
     }
 }
 
-// ───── colores (los mismos nombres que en Atrio) ─────
-val Paper: Color get() = Skin.tones.cPaper
-val Crudo: Color get() = Skin.tones.cCrudo
-val Sand: Color get() = Skin.tones.cSand
-val Line: Color get() = Skin.tones.cLine
-val Charcoal: Color get() = Skin.tones.cInk
-val Edge: Color get() = Skin.tones.cEdge
-val Muted: Color get() = Skin.tones.cMuted
-/** El acento (el coral de Vitrina). */
-val Acento: Color get() = Color(Skin.tones.general)
-val Dorado: Color get() = Color(Skin.tones.gold)
-/** Texto sobre el acento: blanco o tinta oscura, el que se lea. */
-val SobreAcento: Color get() = if (Acento.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
+// ───── los colores de la app (minimal oscuro, fijos) ─────
+// (Los de los widgets son otra cosa: el estilo de serie de [Skin], que se elige en Estilo y que pinta Lienzo.)
+val Paper: Color get() = Color(0xFF0B0B0D)
+val Crudo: Color get() = Color(0xFF151518)
+val Sand: Color get() = Color(0xFF1E1E22)
+val Line: Color get() = Color(0xFF26262B)
+val Charcoal: Color get() = Color(0xFFEDEDF0)
+val Edge: Color get() = Color(0xFF3A3A41)
+val Muted: Color get() = Color(0xFF8E8E96)
+/** El acento de la app (lavanda). */
+val Acento: Color get() = Color(0xFF8B9CFF)
+val Dorado: Color get() = Color(0xFFE6C36A)
+val SobreAcento: Color get() = Color(0xFF0B0B0D)
 fun Color.luminance2(): Float = 0.299f * red + 0.587f * green + 0.114f * blue
 
-fun appColors() = if (Skin.tones.darkBg) darkColorScheme(
+fun appColors() = if (true) darkColorScheme(
     primary = Charcoal, onPrimary = Crudo, secondary = Acento, onSecondary = SobreAcento,
     background = Paper, onBackground = Charcoal, surface = Crudo, onSurface = Charcoal,
     surfaceVariant = Sand, onSurfaceVariant = Charcoal, surfaceContainer = Crudo, surfaceContainerHigh = Crudo,
@@ -333,15 +320,16 @@ val VitrinaDisplay = FontFamily(
 val AtrioBody = FontFamily(
     Font(R.font.body_regular, FontWeight.Normal), Font(R.font.body_italic, FontWeight.Normal, FontStyle.Italic),
     Font(R.font.body_medium, FontWeight.Medium), Font(R.font.body_semibold, FontWeight.SemiBold),
-    Font(R.font.body_bold, FontWeight.Bold), Font(R.font.body_bold, FontWeight.ExtraBold)
+    Font(R.font.body_bold, FontWeight.Bold), Font(R.font.body_bold, FontWeight.ExtraBold), Font(R.font.body_bold, FontWeight.Black)
 )
 
-val Display: FontFamily get() = Skin.family(Skin.display)?.takeIf { Skin.lista(Skin.display) } ?: AtrioDisplay
-val Body: FontFamily get() = Skin.family(Skin.body)?.takeIf { Skin.lista(Skin.body) } ?: AtrioBody
+/** La letra de la app: Inter, siempre (las de los widgets las elige cada diseño y [Letras]). */
+val Display: FontFamily get() = AtrioBody
+val Body: FontFamily get() = AtrioBody
 
 private val base = Typography()
 private fun TextStyle.body() = copy(fontFamily = Body)
-private fun TextStyle.display() = copy(fontFamily = Display, fontWeight = FontWeight.Normal)
+private fun TextStyle.display() = copy(fontFamily = Display, fontWeight = FontWeight.SemiBold)
 
 val AppTypography: Typography get() = Typography(
     displayLarge = base.displayLarge.display(), displayMedium = base.displayMedium.display(), displaySmall = base.displaySmall.display(),
@@ -354,9 +342,7 @@ val AppTypography: Typography get() = Typography(
 
 /** La raíz del tema: modo claro/oscuro, colores, letras y tamaño del texto. */
 @Composable
-fun PtahTheme(content: @Composable () -> Unit) {
-    val letras = androidx.compose.ui.platform.LocalFontFamilyResolver.current
-    androidx.compose.runtime.LaunchedEffect(Skin.display, Skin.body) { Skin.preparaLetras(letras) }
+fun WidgetsTheme(content: @Composable () -> Unit) {
     val sistema = isSystemInDarkTheme()
     Modo.oscuro = when (Modo.eleccion) { 1 -> false; 2 -> true; else -> sistema }
     val d = LocalDensity.current

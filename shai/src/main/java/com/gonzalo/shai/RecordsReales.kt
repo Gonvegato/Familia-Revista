@@ -11,7 +11,7 @@ package com.gonzalo.shai
  * #198 (Mundial 2026, 308 goles). Los marcados [RecordReal.dudoso] (cifras que no cuadran entre fuentes, marcas «+» que ya han subido,
  * nunca verificados) no se usan para decir que se bate nada. El resto, sin comprobar uno a uno: su fuente es la lista.
  *
- * [RecordReal.clave] dice con qué cifra de la carrera en Shai se puede comparar (null: es para leerlo, no se compara). Ver [Historicos].
+ * [RecordReal.clave] dice con qué cifra de la carrera en FcFeed se puede comparar (null: es para leerlo, no se compara). Ver [Historicos].
  */
 data class RecordReal(
     val n: Int,

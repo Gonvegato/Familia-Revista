@@ -39,7 +39,7 @@ private val ES = Locale("es", "ES")
 
 /** Lo que pasa al tocar una zona de un widget. */
 sealed class Accion {
-    /** Abre Ptah (su portada). */
+    /** Abre Widgets (su portada). */
     data object AbrirPtah : Accion()
     /** Abre el editor de ese diseño. */
     data class Editar(val id: String) : Accion()

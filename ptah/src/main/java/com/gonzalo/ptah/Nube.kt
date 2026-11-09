@@ -13,55 +13,51 @@ import java.net.URL
 import java.net.URLEncoder
 
 /**
- * Tu kDrive (API de Infomaniak), la misma que usa Atrio: por ahora para lo que hace falta aquí, que es leer la carpeta
- * «Mi carpeta/versiones» y bajar de ella las versiones nuevas de Ptah. El token (y el número del kDrive) son de la
- * cuenta: se ponen una vez en Azabache y los usan todas las apps.
+ * Tu kDrive (API de Infomaniak): para leer la carpeta «Mi carpeta/widgets» y bajar de ella las versiones nuevas de Widgets. El token
+ * y el número del kDrive se guardan en este móvil (el token, cifrado: [Secretos]); se ponen en Ajustes → Avanzado. Los de la cuenta
+ * de antes se traen una vez al actualizar ([Migracion]).
  */
 object KDrive {
     /** Se cambia en las pruebas por un kDrive simulado. */
     var api = "https://api.infomaniak.com"
+    /** La carpeta de «Mi carpeta» donde están las versiones de esta app. */
+    const val CARPETA = "widgets"
 
     class Fail(msg: String) : IOException(msg)
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("nube", Context.MODE_PRIVATE)
-    /**
-     * El token y el número de tu kDrive son de la cuenta (`/claves`, se ponen una vez en Azabache y los usan todas las apps).
-     * Si este móvil tenía uno guardado de antes y la cuenta aún no, se sube una vez ([migraALaCuenta]).
-     */
-    private fun clave(n: String) = runCatching { com.gonzalo.familia.LaFamilia.familia.clave(n) }.getOrDefault("")
-    /** Lo que acabas de pegar, mientras se comprueba: hasta que [confirma] no pasa a la cuenta (un token malo nunca pisa el bueno). */
+    /** Lo que acabas de pegar, mientras se comprueba: hasta que [confirma] no pasa a ser el bueno (un token malo nunca pisa el bueno). */
     private fun probando(ctx: Context) = prefs(ctx).getBoolean("probando", false)
-    fun token(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("token", "").orEmpty() else clave("kdrive_token").ifBlank { prefs(ctx).getString("token", "").orEmpty() }
-    fun drive(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("drive", "").orEmpty() else clave("kdrive_id").ifBlank { prefs(ctx).getString("drive", "").orEmpty() }
+    fun token(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("token", "").orEmpty() else Secretos.lee("kdrive_token")
+    fun drive(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("drive", "").orEmpty() else prefs(ctx).getString("drive_ok", "").orEmpty()
     fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
 
     fun save(ctx: Context, token: String, drive: String) {
         // El id del kDrive puede venir con la dirección entera («…/app/drive/123456/…»)
         val d = Regex("""drive/(\d+)""").find(drive)?.groupValues?.get(1) ?: drive.filter { it.isDigit() }
-        // Primero solo aquí: se comprueba ([test]) y, si vale, [confirma] lo pasa a la cuenta
+        // Primero, a prueba: se comprueba ([test]) y, si vale, [confirma] lo guarda de verdad
         prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).putBoolean("probando", true).remove("dirs").remove("home").remove("versDir").apply()
     }
 
-    /** El token pegado funciona: pasa a la cuenta y lo tienen todas las apps. */
+    /** El token pegado funciona: se guarda (cifrado). */
     fun confirma(ctx: Context) {
         val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
-        prefs(ctx).edit().remove("probando").apply()
-        if (t.isNotBlank() && d.isNotBlank()) runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
+        prefs(ctx).edit().remove("probando").remove("token").remove("drive").apply()
+        if (t.isNotBlank() && d.isNotBlank()) ponLocal(ctx, t, d)
     }
 
-    /** El token pegado no vale: se olvida aquí y la cuenta se queda como estaba. */
+    /** Guarda el token (cifrado) y el número del kDrive. */
+    fun ponLocal(ctx: Context, token: String, drive: String) {
+        Secretos.pon("kdrive_token", token.trim())
+        prefs(ctx).edit().putString("drive_ok", drive.trim()).remove("dirs").remove("home").remove("versDir").apply()
+    }
+
+    /** El token pegado no vale: se olvida y se queda el de antes. */
     fun descarta(ctx: Context) { prefs(ctx).edit().remove("probando").remove("token").remove("drive").remove("dirs").remove("home").remove("versDir").apply() }
 
     fun forget(ctx: Context) {
         prefs(ctx).edit().clear().apply()
-        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", ""); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", "") }
-    }
-
-    /** El token de antes, guardado solo en este móvil, pasa a la cuenta (si la cuenta aún no tiene uno). */
-    fun migraALaCuenta(ctx: Context) {
-        val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
-        if (probando(ctx) || t.isBlank() || d.isBlank() || clave("kdrive_token").isNotBlank()) return
-        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
+        Secretos.pon("kdrive_token", "")
     }
 
     private fun call(ctx: Context, method: String, path: String, body: String? = null): JSONObject {
@@ -94,7 +90,7 @@ object KDrive {
         return o ?: JSONObject()
     }
 
-    /** Comprueba el token y el kDrive: busca tu carpeta privada («Mi carpeta»), donde está «versiones». */
+    /** Comprueba el token y el kDrive: busca tu carpeta privada («Mi carpeta»), donde está «widgets». */
     suspend fun test(ctx: Context): String = withContext(Dispatchers.IO) {
         prefs(ctx).edit().remove("home").remove("versDir").apply()
         home(ctx)
@@ -221,14 +217,14 @@ object KDrive {
         return fin?.optJSONObject("file")?.optLong("id")?.takeIf { it > 0 } ?: throw Fail("kDrive no ha cerrado la subida")
     }
 
-    /** Los archivos de «Mi carpeta/versiones» (nombre, id): ahí se sube cada versión de la app para que se actualice sola. */
+    /** Los archivos de «Mi carpeta/widgets» (nombre, id): ahí se sube cada versión de la app para que se actualice sola. */
     fun versiones(ctx: Context): List<Pair<String, Long>> {
         // El id de la carpeta se recuerda: así cada comprobación es una sola consulta (y si ya no vale, se busca de nuevo)
         prefs(ctx).getLong("versDir", 0L).takeIf { it > 0 }?.let { id ->
             runCatching { return children(ctx, id).filter { !it.dir }.map { it.name to it.id } }
             prefs(ctx).edit().remove("versDir").apply()
         }
-        val dir = children(ctx, home(ctx)).firstOrNull { it.dir && it.name == "versiones" } ?: return emptyList()
+        val dir = children(ctx, home(ctx)).firstOrNull { it.dir && it.name == CARPETA } ?: return emptyList()
         prefs(ctx).edit().putLong("versDir", dir.id).apply()
         return children(ctx, dir.id).filter { !it.dir }.map { it.name to it.id }
     }

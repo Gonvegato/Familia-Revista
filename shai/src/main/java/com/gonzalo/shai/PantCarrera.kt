@@ -26,6 +26,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,7 +40,7 @@ object EnCurso {
 }
 
 /** Las secciones de una carrera (los índices de [PantCarrera]): las cuatro primeras van en la barra de abajo; las tres últimas, en «Más». */
-val PESTANAS = listOf("Portada", "Red", "Mensajes", "Ofertas", "Cifras", "Vida", "Perfil")
+val PESTANAS = listOf("Inicio", "Explorar", "Ofertas", "Mensajes", "Perfil", "Cifras", "Vida")
 
 /** Lo que ya has leído de cada conversación (en este móvil): cuántos mensajes suyos has visto. */
 object Leidos {
@@ -101,7 +104,7 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
     val ctx = LocalContext.current
     var pestana by rememberSaveable { mutableIntStateOf(inicial) }
     var chat by rememberSaveable { mutableStateOf(chatInicial) }
-    val u = Carreras.de(id) ?: run { PaginaRevista { RevistaTopBar(alVolver, "Shai"); Nota("Esta carrera ya no está.") }; return }
+    val u = Carreras.de(id) ?: run { PaginaRevista { RevistaTopBar(alVolver, "Volver"); Nota("Esta carrera ya no está.") }; return }
     val entradas = Carreras.entradasDe(id)
     val convs = conversaciones(entradas)
     Leidos.version
@@ -114,40 +117,33 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
         return
     }
     BackHandler(enabled = pestana != 0) { pestana = 0 }
+    val mg = margen()
     Box(Modifier.fillMaxSize().background(Paper)) {
-        PaginaRevista(pie = 100.dp) {
-            RevistaTopBar(alVolver, "Shai") { EnlaceRevista("Ajustes") { alAjustes(0) } }
-            Antetitulo(listOfNotNull(u.club, u.temporada.ifBlank { null }, "jornada ${u.paso}").joinToString(" · "), Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
-            FitTitle(u.nombre, 48.sp, 52.sp, letterSpacing = (-1.4).sp, modifier = Modifier.padding(top = 2.dp))
-            Filete(3.dp)
-            if (Prueba.activo) AvisoPrueba(alAjustes, corto = true)
-            Spacer(Modifier.height(12.dp))
-            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Acento).tocable { alPartido() }.padding(vertical = 15.dp),
-                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.SportsSoccer, null, tint = SobreAcento, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp))
-                Text("METER EL PARTIDO", color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 1.2.sp)
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding()) {
+            BarraArriba({ alAjustes(0) }) {
+                Box(Modifier.clip(CircleShape).tocable { alVolver() }.semantics { contentDescription = "Tus carreras" }) { Avatar(u.nombre, 34.dp) }
             }
-            Spacer(Modifier.height(14.dp))
-            when (pestana) {
-                0 -> TabInicio(u, entradas, convs, alPestana = { pestana = it }, alChat = { chat = it }, alAjustes = alAjustes, articuloAbierto = articuloAbierto)
-                1 -> TabRed(u, entradas)
-                2 -> TabMensajes(u, entradas, convs) { chat = it }
-                3 -> TabOfertas(u, entradas)
-                else -> {
-                    // «Más»: Cifras, Vida y Perfil
-                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(4 to "Cifras", 5 to "Vida", 6 to "Perfil").forEach { (i, n) -> ChipFiltro(n, pestana == i) { pestana = i } }
-                    }
-                    Spacer(Modifier.height(14.dp))
-                    when (pestana) {
-                        4 -> TabCifras(u)
-                        5 -> TabVida(u)
-                        else -> TabPerfil(u, alBorrada = alVolver)
-                    }
+            if (Prueba.activo) Box(Modifier.padding(horizontal = mg)) { AvisoPrueba(alAjustes, corto = true) }
+            // Perfil, Cifras y Vida: las pestañas del perfil
+            if (pestana >= 4) PestanasRevista(listOf("Perfil", "Cifras", "Vida"), pestana - 4) { pestana = 4 + it }
+            Column(Modifier.padding(horizontal = mg).widthIn(max = 760.dp)) {
+                Spacer(Modifier.height(10.dp))
+                when (pestana) {
+                    0 -> TabRed(u, entradas)
+                    1 -> TabInicio(u, entradas, convs, alPestana = { pestana = it }, alChat = { chat = it }, alAjustes = alAjustes, articuloAbierto = articuloAbierto)
+                    2 -> TabOfertas(u, entradas)
+                    3 -> TabMensajes(u, entradas, convs) { chat = it }
+                    4 -> TabPerfil(u, alBorrada = alVolver)
+                    5 -> TabCifras(u)
+                    else -> TabVida(u)
                 }
+                Spacer(Modifier.height(110.dp))
             }
         }
-        BarraNav(itemsNav(decisiones + sinLeer, ofertas), minOf(pestana, 4), Modifier.align(Alignment.BottomCenter)) { i -> pestana = if (i == 4) (if (pestana >= 4) pestana else 4) else i }
+        Column(Modifier.align(Alignment.BottomCenter)) {
+            BotonFlotante("Meter el partido", Modifier.align(Alignment.End).padding(end = 18.dp, bottom = 14.dp)) { alPartido() }
+            BarraNav(itemsNav(decisiones + sinLeer, ofertas), minOf(pestana, 4)) { i -> pestana = if (i == 4) (if (pestana >= 4) pestana else 4) else i }
+        }
     }
 }
 
@@ -198,16 +194,16 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
     val decisiones = entradas.count { it.decision?.abierta == true }
     val ofertas = entradas.sumOf { e -> e.ofertas.count { it.estado == Oferta.ABIERTA } }
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Contador("$decisiones", if (decisiones == 1) "decisión espera" else "decisiones esperan", Modifier.weight(1f).fillMaxHeight(), destacado = decisiones > 0) { alPestana(2) }
-        Contador("$ofertas", if (ofertas == 1) "oferta abierta" else "ofertas abiertas", Modifier.weight(1f).fillMaxHeight(), destacado = ofertas > 0) { alPestana(3) }
-        Contador(Alcance.texto(Alcance.seguidores(u)), "seguidores", Modifier.weight(1f).fillMaxHeight()) { alPestana(1) }
+        Contador("$decisiones", if (decisiones == 1) "decisión espera" else "decisiones esperan", Modifier.weight(1f).fillMaxHeight(), destacado = decisiones > 0) { alPestana(3) }
+        Contador("$ofertas", if (ofertas == 1) "oferta abierta" else "ofertas abiertas", Modifier.weight(1f).fillMaxHeight(), destacado = ofertas > 0) { alPestana(2) }
+        Contador(Alcance.texto(Alcance.seguidores(u)), "seguidores", Modifier.weight(1f).fillMaxHeight()) { alPestana(0) }
     }
     if (!ClaveApi.hay) {
         Spacer(Modifier.height(10.dp))
-        Tarjeta(bordeIzq = Coral, alHacer = { alAjustes(2) }) {
+        Tarjeta(bordeIzq = Coral, alHacer = { alAjustes(1) }) {
             TituloTarjeta("Falta tu clave de la API")
             TextoTarjeta("Sin ella, los partidos se guardan pero nadie escribe lo de fuera del campo.", Modifier.padding(top = 4.dp))
-            Text("Ponerla en Ajustes → IA →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
+            Text("Ponerla en Ajustes → IA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
         }
     }
     // El club de verdad: si espera tu «Sí, es este» (tras un traspaso) o aún no está identificado
@@ -229,7 +225,7 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
     val tiro = remember(Carreras.version, u.id) { runCatching { Historicos.aTiro(u, ps) }.getOrDefault(emptyList()) }.take(3)
     if (tiro.isNotEmpty()) {
         Spacer(Modifier.height(18.dp)); Rotulo("Récords a tiro"); Spacer(Modifier.height(8.dp))
-        Tarjeta(alHacer = { alPestana(4) }) {
+        Tarjeta(alHacer = { alPestana(5) }) {
             tiro.forEachIndexed { i, c ->
                 if (i > 0) Filete(1.dp, Line, Modifier.padding(vertical = 10.dp))
                 val urg = Historicos.urgencia(u, c)
@@ -275,16 +271,16 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
         when {
             e.decision?.abierta == true -> alChat(chatDe(e.decision))
             e.dms.isNotEmpty() -> alChat(e.dms.first().conversacion)
-            e.posts.isNotEmpty() -> alPestana(1)
+            e.posts.isNotEmpty() -> alPestana(0)
         }
     }
     if (esta.isNotEmpty()) {
         Spacer(Modifier.height(18.dp)); Rotulo("Esta semana · jornada ${u.paso}")
-        esta.forEach { e -> Spacer(Modifier.height(8.dp)); TarjetaEntrada(u, e, expandida = true, alRed = { alPestana(1) }, alChat = alChat, alResponder = abre(e)) }
+        esta.forEach { e -> Spacer(Modifier.height(8.dp)); TarjetaEntrada(u, e, expandida = true, alRed = { alPestana(0) }, alChat = alChat, alResponder = abre(e)) }
     }
     if (antes.isNotEmpty()) {
         Spacer(Modifier.height(18.dp)); Rotulo("Antes")
-        antes.forEach { e -> Spacer(Modifier.height(8.dp)); TarjetaEntrada(u, e, expandida = false, alRed = { alPestana(1) }, alChat = alChat, alResponder = abre(e)) }
+        antes.forEach { e -> Spacer(Modifier.height(8.dp)); TarjetaEntrada(u, e, expandida = false, alRed = { alPestana(0) }, alChat = alChat, alResponder = abre(e)) }
     }
 }
 

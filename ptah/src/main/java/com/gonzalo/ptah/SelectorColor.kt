@@ -41,7 +41,7 @@ import androidx.compose.ui.window.DialogProperties
 fun nombreColor(spec: String, deSerie: String = "El de serie"): String = when {
     spec.isBlank() -> deSerie
     spec == Col.TRANSPARENTE -> "Transparente"
-    Col.esDelTema(spec) -> (Col.ROLES.firstOrNull { it.first == spec }?.second ?: "") + " de tu Apariencia"
+    Col.esDelTema(spec) -> (Col.ROLES.firstOrNull { it.first == spec }?.second ?: "") + " de tu estilo"
     else -> spec.uppercase()
 }
 
@@ -67,7 +67,7 @@ fun FilaColor(nombre: String, spec: String, efectivo: Int, deSerie: String = "El
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(nombre, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, lineHeight = 22.sp, color = Charcoal)
-            Text(nombreColor(spec, deSerie).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(nombreColor(spec, deSerie), color = Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
         Text("▾", color = Muted, fontSize = 16.sp)
     }
@@ -116,14 +116,14 @@ fun ContenidoSelector(titulo: String, spec: String, efectivo: Int, conSerie: Boo
     Spacer(Modifier.height(14.dp)); Filete(2.dp)
 
     // ---- Los de tu Apariencia (y transparente, y el de serie)
-    Etiqueta("De tu Apariencia (cambian con ella)", Modifier.padding(top = 12.dp, bottom = 8.dp))
+    Etiqueta("De tu estilo (cambian con él)", Modifier.padding(top = 12.dp, bottom = 8.dp))
     val tonos = Skin.tones
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         val ops = Col.ROLES + listOf(Col.TRANSPARENTE to "Transparente") + (if (conSerie) listOf("" to deSerie) else emptyList())
         ops.forEach { (sp, nombre) ->
             Column(Modifier.widthIn(min = 56.dp).tocable { elegido = sp }, horizontalAlignment = Alignment.CenterHorizontally) {
                 Muestra(Color(if (sp.isBlank()) efectivo else Col.resuelve(sp, tonos, efectivo)), Modifier.size(40.dp), marcado = elegido == sp)
-                Text(nombre.uppercase(), color = if (elegido == sp) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp,
+                Text(nombre, color = if (elegido == sp) Acento else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                     lineHeight = 11.sp, maxLines = 1, softWrap = false, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
             }
         }

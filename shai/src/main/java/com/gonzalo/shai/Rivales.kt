@@ -18,7 +18,7 @@ data class Choque(val paso: Int, val texto: String, val cambio: Int, val tipo: S
 
 /**
  * Un rival: surge solo por lo que pasa (o lo metes tú). [real]: un futbolista de verdad (solo lo metes tú): con él, solo rivalidad
- * deportiva vista por la prensa, con cifras; nada de piques ni frases. Los que inventa Shai (o Claude) son siempre ficticios, de clubes reales.
+ * deportiva vista por la prensa, con cifras; nada de piques ni frases. Los que inventa FcFeed (o Claude) son siempre ficticios, de clubes reales.
  */
 data class Rival(
     val id: String, val nombre: String, val club: String, val posicion: String = "", val origen: String = "", val intensidad: Int = 30,

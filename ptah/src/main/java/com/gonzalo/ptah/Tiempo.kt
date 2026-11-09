@@ -88,7 +88,7 @@ object OpenMeteo {
     fun pide(url: String): String {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = 10_000; c.readTimeout = 15_000
-        c.setRequestProperty("User-Agent", "Ptah (widgets de la familia)")
+        c.setRequestProperty("User-Agent", "Widgets (app de widgets para Android)")
         try {
             val code = c.responseCode
             val txt = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
@@ -98,7 +98,7 @@ object OpenMeteo {
     }
 }
 
-/** Los iconos del tiempo de Ptah (dibujados aquí, de línea, como los de una revista). */
+/** Los iconos del tiempo de Widgets (dibujados aquí, de línea, como los de una revista). */
 enum class IconoTiempo { DESPEJADO, POCAS_NUBES, NUBES, CUBIERTO, NIEBLA, LLOVIZNA, LLUVIA, CHUBASCOS, NIEVE, TORMENTA }
 
 /** Los códigos del tiempo de la OMM (WMO) que da Open-Meteo: lo que dicen y su icono. */

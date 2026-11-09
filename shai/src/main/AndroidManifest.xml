@@ -8,22 +8,11 @@
     <!-- Los avisos: «ha pasado algo en tu carrera» (los eventos de entre partidos) y los del actualizador -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <queries>
-        <!-- Las hermanas y los colores de Jonsu -->
-        <package android:name="com.gonzalo.hiedra" />
-        <package android:name="com.gonzalo.marfil" />
-        <package android:name="com.gonzalo.cobalto" />
-        <package android:name="com.gonzalo.gamerate" />
-        <package android:name="com.gonzalo.mostaza" />
-        <package android:name="com.gonzalo.cobre" />
-        <package android:name="com.gonzalo.ptah" />
-        <provider android:authorities="com.gonzalo.gamerate.tema" />
-    </queries>
     <application
-        android:label="Shai"
+        android:label="FcFeed"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:theme="@style/Shai"
+        android:theme="@style/FcFeed"
         android:allowBackup="false">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"

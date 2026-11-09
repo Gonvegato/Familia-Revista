@@ -5,7 +5,7 @@ import com.gonzalo.familia.nucleo.comoLong
 import com.gonzalo.familia.nucleo.comoTexto
 
 /**
- * Un hito o un récord de tu carrera en Shai (con las cifras que tú metes: no son récords del mundo real). [precoz]: conseguido muy joven
+ * Un hito o un récord de tu carrera en FcFeed (con las cifras que tú metes: no son récords del mundo real). [precoz]: conseguido muy joven
  * para lo que es.
  */
 data class Hito(val id: String, val titulo: String, val texto: String, val paso: Int, val edad: Int, val precoz: Boolean = false, val temporada: String = "",
@@ -19,7 +19,7 @@ data class Hito(val id: String, val titulo: String, val texto: String, val paso:
     }
 }
 
-/** Los récords de la carrera (de Shai), sacados de sus partidos. */
+/** Los récords de la carrera (de FcFeed), sacados de sus partidos. */
 class Records(
     val partidos: Int, val goles: Int, val asistencias: Int, val hatTricks: Int, val masGolesPartido: Int,
     val rachaMarcando: Int, val rachaInvicto: Int, val mejorTemporada: Pair<String, Int>?, val victorias: Int, val titulos: List<String>,
@@ -57,18 +57,18 @@ object Hitos {
         val t = p.temporada
         val l = mutableListOf<Hito>()
         fun h(id: String, titulo: String, texto: String, pre: Boolean = false) {
-            if (u.hitos.none { it.id == id }) l += Hito(id, titulo, texto + if (pre) " Con $e años: de los más precoces de su carrera en Shai." else "", paso, e, pre, t)
+            if (u.hitos.none { it.id == id }) l += Hito(id, titulo, texto + if (pre) " Con $e años: de los más precoces de su carrera en FcFeed." else "", paso, e, pre, t)
         }
         // Partidos
         PARTIDOS.firstOrNull { it == ps.size }?.let { n ->
-            if (n == 1) h("debut", "Debut en Shai", "Su primer partido en la carrera: ${p.rival} (${p.competicion}).", precoz(e, 19))
-            else h("partidos_$n", "$n partidos", "Llega a los $n partidos en su carrera en Shai.", precoz(e, if (n <= 100) 21 else 24))
+            if (n == 1) h("debut", "Debut en FcFeed", "Su primer partido en la carrera: ${p.rival} (${p.competicion}).", precoz(e, 19))
+            else h("partidos_$n", "$n partidos", "Llega a los $n partidos en su carrera en FcFeed.", precoz(e, if (n <= 100) 21 else 24))
         }
         if (u.modo == Rol.JUGADOR) {
             val g0 = antes.sumOf { it.goles }; val g1 = g0 + p.goles
             GOLES.filter { it in (g0 + 1)..g1 }.forEach { n ->
                 if (n == 1) h("gol_1", "Primer gol", "Su primer gol en la carrera, ante el ${p.rival}.", precoz(e, 19))
-                else h("goles_$n", "$n goles", "Llega a los $n goles en su carrera en Shai.", precoz(e, when { n <= 25 -> 20; n <= 50 -> 21; n <= 100 -> 23; else -> 25 }))
+                else h("goles_$n", "$n goles", "Llega a los $n goles en su carrera en FcFeed.", precoz(e, when { n <= 25 -> 20; n <= 50 -> 21; n <= 100 -> 23; else -> 25 }))
             }
             if (p.goles >= 3) {
                 val n = ps.count { it.goles >= 3 }

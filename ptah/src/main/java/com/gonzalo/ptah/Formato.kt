@@ -5,7 +5,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Fechas y cifras, iguales en Hiedra, Mostaza, Cobalto, Azabache y Ptah:
+ * Fechas y cifras, iguales en Hiedra, Mostaza, Cobalto, Azabache y Widgets:
  *  - en fichas y textos corridos: «16 oct 2026» ([fecha]);
  *  - en tablas de datos: «16/10/2026» ([fechaTabla]);
  *  - las cifras, siempre con punto de millar: «4.010 palabras», «80.000» ([cifra]).

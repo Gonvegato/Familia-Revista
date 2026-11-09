@@ -81,7 +81,7 @@ class ContenidoTest {
         repeat(3) { i -> Motor.partido(u.id, partido(2, 1, i)) }
         val m = Carreras.de(u.id)!!
         assertTrue(m.memoria.contains("Su gente:")); assertEquals(3, m.memoriaPaso)
-        assertTrue(Narrador.contexto(m, Carreras.entradasDe(u.id), emptyList()).contains("LO QUE SHAI RECUERDA"))
+        assertTrue(Narrador.contexto(m, Carreras.entradasDe(u.id), emptyList()).contains("LO QUE FCFEED RECUERDA"))
         assertNull(Motor.cierraTemporada(u.id))
         val c = Carreras.de(u.id)!!
         assertEquals("2027/28", c.temporada); assertEquals(listOf("2026/27"), c.cerradas); assertEquals(20, c.personaje.edad)

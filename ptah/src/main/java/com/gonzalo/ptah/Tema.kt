@@ -22,7 +22,7 @@ import androidx.compose.ui.text.googlefonts.Font as GFont
 import androidx.compose.ui.text.googlefonts.GoogleFont
 
 /*
- * El tema de Ptah es el de Atrio: las mismas paletas (cada una con su versión clara y oscura), las mismas letras
+ * El tema de Widgets es el de Atrio: las mismas paletas (cada una con su versión clara y oscura), las mismas letras
  * (las que van dentro de la app y las de Google Fonts) y las mismas combinaciones listas («estilos»).
  * Así las dos apps se ven de la misma familia, como dos programas de la misma suite.
  * Las paletas y los estilos de abajo son una copia de los de Atrio (Skin.kt); si añades uno allí, copia aquí la línea.
@@ -264,10 +264,10 @@ val BODY_FONTS: List<FontChoice> = listOf(
 
 /** Combinaciones listas (paleta + letras). «Atrio» en una letra = la que viene con la app. */
 val STYLES: List<SkinStyle> = listOf(
-    SkinStyle("atrio-revista", "Revista de Atrio", "Como Atrio: papel crema, serif cálida y rojo de imprenta", "revista", "Atrio", "Atrio", "revista"),
+    SkinStyle("atrio-revista", "Editorial", "Papel crema, serif cálida y rojo de imprenta", "revista", "Atrio", "Atrio", "revista"),
     SkinStyle("vitrina", "Vitrina", "Atrio 6: portadas a lo grande, letra con carácter y coral", "vitrina", "Vitrina", "Atrio", "vitrina"),
     SkinStyle("clasico", "Atrio", "El de siempre: serif cálida y texto limpio", "atrio", "Atrio", "Atrio", "clasico"),
-    SkinStyle("revista", "Revista", "Portadas de papel y titulares con carácter", "papel", "Playfair Display", "Source Serif 4", "editorial"),
+    SkinStyle("revista", "Editorial", "Papel y titulares con carácter", "papel", "Playfair Display", "Source Serif 4", "editorial"),
     SkinStyle("nocturno", "Editorial nocturno", "Serif elegante sobre azul noche", "medianoche", "DM Serif Display", "DM Sans", "editorial"),
     SkinStyle("arcade", "Arcade", "Píxeles y verde de Game Boy", "gameboy", "Press Start 2P", "Space Mono", "pixel"),
     SkinStyle("pixel", "Píxel neón", "Recreativa de los 80", "neon", "Silkscreen", "JetBrains Mono", "pixel"),
@@ -321,8 +321,8 @@ val ACCENT_COLORS = listOf(
     Accent("coral", "Coral", 0xFFD2574A, 0xFFF08A7C),
     Accent("terracota", "Terracota", 0xFFB5562F, 0xFFE0936A),
     Accent("cobre", "Cobre", 0xFF9A5B2E, 0xFFD7A06B),
-    // El de Ptah (el de su icono): un cobre anaranjado, más hondo sobre papel claro
-    Accent("ptah", "Ptah", 0xFFB0661F, 0xFFD98A3D),
+    // El de Widgets (el de su icono): un cobre anaranjado, más hondo sobre papel claro
+    Accent("ptah", "Ámbar", 0xFFB0661F, 0xFFD98A3D),
     Accent("marron", "Marrón", 0xFF5B3A1E, 0xFFC9A27A),
     Accent("chocolate", "Chocolate", 0xFF3E2A1F, 0xFFB79B88),
     Accent("ocre", "Ocre", 0xFF9C7A12, 0xFFD9B646),

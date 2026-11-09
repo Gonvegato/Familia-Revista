@@ -33,20 +33,33 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.shadow
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.MailOutline
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 /*
- * Las piezas de la interfaz de 0.4.0: menos purismo de revista y más app de móvil (tarjetas, avatares, burbujas, barra de abajo), con los
- * colores de Apariencia de siempre (Paper, Charcoal, Muted, Acento, Dorado…). La cabecera de revista se queda.
+ * Las piezas de una red social: tarjetas con su línea fina, avatares de colores, burbujas, la barra de abajo solo con iconos, el botón
+ * flotante. Los colores son los del tema (Paper, Charcoal, Muted, Acento…): negro de noche y blanco de día.
  */
 
 /** El fondo de una tarjeta (un pelo más claro u oscuro que el papel). */
-val FondoTarjeta: Color get() = lerp(Paper, Charcoal, 0.075f)
+val FondoTarjeta: Color get() = Crudo
 /** Las burbujas de los demás (un poco más que la tarjeta). */
-val FondoBurbuja: Color get() = lerp(Paper, Charcoal, 0.13f)
+val FondoBurbuja: Color get() = Sand
 /** Lo urgente (lo que hay que decidir). */
-val Coral = Color(0xFFD9705B)
+val Coral = Color(0xFFF4212E)
 /** El sello de la prensa (como el de una cuenta verificada). */
-val AzulPrensa = Color(0xFF7FB2D9)
+val AzulPrensa: Color get() = Acento
 private val TintaAvatar = Color(0xFF14201A)
 private val COLORES_AVATAR = listOf(0xFFC9A227, 0xFFD9A07B, 0xFFD98CA8, 0xFF8FC0A0, 0xFF7FB2D9, 0xFFC9B8E0, 0xFFE0C08F, 0xFFB4C4B8, 0xFFE89A8A, 0xFF9FD0C8)
 
@@ -56,7 +69,7 @@ fun Tarjeta(modifier: Modifier = Modifier, bordeIzq: Color? = null, borde: Color
     val forma = RoundedCornerShape(16.dp)
     Column(
         modifier.fillMaxWidth().clip(forma).background(FondoTarjeta)
-            .let { if (borde != null) it.border(1.5.dp, borde, forma) else it }
+            .border(if (borde != null) 1.5.dp else 1.dp, borde ?: Line, forma)
             .let { m -> bordeIzq?.let { c -> m.drawBehind { drawRect(c, Offset.Zero, Size(4.dp.toPx(), size.height)) } } ?: m }
             .let { if (alHacer != null) it.tocable(onClick = alHacer) else it }
             .padding(start = if (bordeIzq != null) relleno + 4.dp else relleno, end = relleno, top = relleno, bottom = relleno),
@@ -64,10 +77,10 @@ fun Tarjeta(modifier: Modifier = Modifier, bordeIzq: Color? = null, borde: Color
     )
 }
 
-/** Un rótulo de sección («ESTA SEMANA», «POR DECIDIR · 2»). */
+/** Un rótulo de sección («Esta semana», «Por decidir · 2»). */
 @Composable
 fun Rotulo(t: String, modifier: Modifier = Modifier, color: Color = Acento) =
-    Text(t.uppercase(), modifier, color = color, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.6.sp, lineHeight = 16.sp)
+    Text(t, modifier, color = if (color == Acento) Charcoal else color, fontFamily = Body, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, lineHeight = 23.sp)
 
 /** Las iniciales de un nombre («Toni Vidal» → «TV»; «el Niño» → «N»). */
 fun iniciales(n: String): String {
@@ -100,16 +113,17 @@ fun Insignia(n: Int, modifier: Modifier = Modifier, color: Color = Acento) {
 @Composable
 fun Sello(t: String, color: Color = Acento, modifier: Modifier = Modifier) {
     Box(modifier.clip(RoundedCornerShape(50)).background(color).padding(horizontal = 9.dp, vertical = 2.dp)) {
-        Text(t.uppercase(), color = if (color == Acento) SobreAcento else Color.White, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.6.sp, lineHeight = 15.sp)
+        Text(t, color = if (color == Acento) SobreAcento else Color.White, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 15.sp)
     }
 }
 
 /** Un filtro en píldora. */
 @Composable
 fun ChipFiltro(t: String, on: Boolean, modifier: Modifier = Modifier, cuenta: Int? = null, alHacer: () -> Unit) {
-    Row(modifier.clip(RoundedCornerShape(50)).background(if (on) Acento else FondoTarjeta).tocable(onClick = alHacer).padding(horizontal = 14.dp, vertical = 8.dp),
+    Row(modifier.clip(RoundedCornerShape(50)).background(if (on) Charcoal else Color.Transparent).border(1.dp, if (on) Charcoal else Edge, RoundedCornerShape(50))
+        .tocable(onClick = alHacer).padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Text(t, color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 18.sp)
+        Text(t, color = if (on) Paper else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 18.sp)
         if (cuenta != null && cuenta > 0) { Spacer(Modifier.width(6.dp)); Insignia(cuenta, color = if (on) Charcoal else Acento) }
     }
 }
@@ -129,27 +143,38 @@ fun hace(t: Long, ahora: Long = System.currentTimeMillis()): String {
 
 // ---------------------------------------------------------------- la barra de abajo
 
-class ItemNav(val icono: ImageVector, val nombre: String, val cuenta: Int = 0)
-
+/** Las cinco de abajo: el feed, explorar (la portada, lo de esta semana, los récords), las ofertas, los mensajes y el perfil. */
 fun itemsNav(mensajes: Int, ofertas: Int) = listOf(
-    ItemNav(Icons.Outlined.Home, "Inicio"), ItemNav(Icons.Outlined.Forum, "Red"), ItemNav(Icons.Outlined.ChatBubbleOutline, "Mensajes", mensajes),
-    ItemNav(Icons.Outlined.WorkOutline, "Ofertas", ofertas), ItemNav(Icons.Outlined.MoreHoriz, "Más"))
+    ItemNav(Icons.Outlined.Home, "Inicio", iconoOn = Icons.Filled.Home), ItemNav(Icons.Outlined.Search, "Explorar", iconoOn = Icons.Filled.Search),
+    ItemNav(Icons.Outlined.Notifications, "Ofertas y avisos", ofertas, Icons.Filled.Notifications), ItemNav(Icons.Outlined.MailOutline, "Mensajes", mensajes, Icons.Filled.Mail),
+    ItemNav(Icons.Outlined.Person, "Perfil", iconoOn = Icons.Filled.Person))
 
+class ItemNav(val icono: ImageVector, val nombre: String, val cuenta: Int = 0, val iconoOn: ImageVector = icono)
+
+/** La barra de abajo, como la de una red social: solo iconos (el nombre, para la accesibilidad), con su número si hay algo nuevo. */
 @Composable
 fun BarraNav(items: List<ItemNav>, sel: Int, modifier: Modifier = Modifier, alElegir: (Int) -> Unit) {
     val linea = Line
-    Row(modifier.fillMaxWidth().background(lerp(Paper, Color.Black, 0.18f)).drawBehind { drawRect(linea, Offset.Zero, Size(size.width, 1.dp.toPx())) }
-        .navigationBarsPadding().padding(top = 8.dp, bottom = 8.dp), horizontalArrangement = Arrangement.SpaceAround) {
+    Row(modifier.fillMaxWidth().background(Paper).drawBehind { drawRect(linea, Offset.Zero, Size(size.width, 1.dp.toPx())) }
+        .navigationBarsPadding().padding(top = 10.dp, bottom = 10.dp), horizontalArrangement = Arrangement.SpaceAround) {
         items.forEachIndexed { i, it ->
             val on = i == sel
-            Column(Modifier.weight(1f).tocable { alElegir(i) }.padding(vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.weight(1f).tocable { alElegir(i) }.padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
                 Box {
-                    Icon(it.icono, it.nombre, tint = if (on) Acento else Muted, modifier = Modifier.padding(horizontal = 10.dp).size(26.dp))
-                    if (it.cuenta > 0) Insignia(it.cuenta, Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp))
+                    Icon(if (on) it.iconoOn else it.icono, it.nombre, tint = Charcoal, modifier = Modifier.size(27.dp))
+                    if (it.cuenta > 0) Insignia(it.cuenta, Modifier.align(Alignment.TopEnd).offset(x = 9.dp, y = (-6).dp))
                 }
-                Text(it.nombre, color = if (on) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, softWrap = false)
             }
         }
+    }
+}
+
+/** El botón flotante «+» (meter el partido), abajo a la derecha. */
+@Composable
+fun BotonFlotante(descripcion: String, modifier: Modifier = Modifier, alHacer: () -> Unit) {
+    Box(modifier.size(58.dp).clip(CircleShape).background(Acento).tocable(onClick = alHacer).semantics { contentDescription = descripcion },
+        contentAlignment = Alignment.Center) {
+        Icon(Icons.Filled.Add, null, tint = Color.White, modifier = Modifier.size(30.dp))
     }
 }
 
@@ -234,8 +259,8 @@ fun PostX(p: Post, cuando: String, abierto0: Boolean = false, destacado: Boolean
 /** Un separador centrado («JORNADA 3 · TRAS EL 3-1 AL SEVILLA FC»). */
 @Composable
 fun Separador(t: String, modifier: Modifier = Modifier) =
-    Text(t.uppercase(), modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp), color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 11.sp,
-        letterSpacing = 1.sp, lineHeight = 15.sp, textAlign = TextAlign.Center)
+    Text(t, modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp), color = Muted, fontFamily = Body, fontWeight = FontWeight.Medium, fontSize = 13.sp,
+        lineHeight = 17.sp, textAlign = TextAlign.Center)
 
 // ---------------------------------------------------------------- los mensajes
 
@@ -257,7 +282,7 @@ fun Burbuja(texto: String, mia: Boolean, quien: String? = null) {
 fun AvisoChat(titulo: String, texto: String, color: Color = Muted) {
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, Line, RoundedCornerShape(12.dp)).padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(titulo.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, lineHeight = 15.sp, textAlign = TextAlign.Center)
+        Text(titulo, color = color, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 17.sp, textAlign = TextAlign.Center)
         if (texto.isNotBlank()) Text(texto, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp))
     }
 }
@@ -265,8 +290,8 @@ fun AvisoChat(titulo: String, texto: String, color: Color = Muted) {
 /** Un botón con marco, con el texto entero (las opciones de una decisión). */
 @Composable
 fun BotonMarco(t: String, modifier: Modifier = Modifier, alHacer: () -> Unit) {
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).border(1.5.dp, lerp(Paper, Charcoal, 0.3f), RoundedCornerShape(12.dp)).tocable(onClick = alHacer)
-        .padding(horizontal = 14.dp, vertical = 12.dp)) {
+    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).border(1.dp, Edge, RoundedCornerShape(22.dp)).tocable(onClick = alHacer)
+        .padding(horizontal = 16.dp, vertical = 11.dp)) {
         Text(t, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 20.sp)
     }
 }
@@ -274,9 +299,9 @@ fun BotonMarco(t: String, modifier: Modifier = Modifier, alHacer: () -> Unit) {
 /** Un botón lleno (el acento) o con marco. */
 @Composable
 fun BotonRedondo(t: String, modifier: Modifier = Modifier, lleno: Boolean = true, alHacer: () -> Unit) {
-    Box(modifier.clip(RoundedCornerShape(12.dp)).let { if (lleno) it.background(Acento) else it.border(1.5.dp, lerp(Paper, Charcoal, 0.3f), RoundedCornerShape(12.dp)) }
-        .tocable(onClick = alHacer).padding(horizontal = 12.dp, vertical = 13.dp), contentAlignment = Alignment.Center) {
-        Text(t, color = if (lleno) SobreAcento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp, textAlign = TextAlign.Center)
+    Box(modifier.clip(RoundedCornerShape(50)).let { if (lleno) it.background(Charcoal) else it.border(1.dp, Edge, RoundedCornerShape(50)) }
+        .tocable(onClick = alHacer).padding(horizontal = 12.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
+        Text(t, color = if (lleno) Paper else Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp, textAlign = TextAlign.Center)
     }
 }
 
@@ -292,7 +317,7 @@ fun Contador(valor: String, nombre: String, modifier: Modifier = Modifier, desta
 /** Título de tarjeta (con la letra de los titulares). */
 @Composable
 fun TituloTarjeta(t: String, modifier: Modifier = Modifier, tam: Int = 19) =
-    Text(t, modifier, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = tam.sp, lineHeight = (tam + 4).sp)
+    Text(t, modifier, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (tam - 2).sp, lineHeight = (tam + 3).sp)
 
 @Composable
 fun TextoTarjeta(t: String, modifier: Modifier = Modifier, color: Color = Muted) =
@@ -305,7 +330,7 @@ fun Cursiva(t: String, modifier: Modifier = Modifier, color: Color = Charcoal, t
 /** Una píldora con marco (las acciones pequeñas dentro de una tarjeta: «Comprar 10»). */
 @Composable
 fun PildoraMarco(t: String, modifier: Modifier = Modifier, alHacer: () -> Unit) {
-    Box(modifier.clip(RoundedCornerShape(50)).border(1.5.dp, lerp(Paper, Charcoal, 0.3f), RoundedCornerShape(50)).tocable(onClick = alHacer).padding(horizontal = 14.dp, vertical = 7.dp)) {
+    Box(modifier.clip(RoundedCornerShape(50)).border(1.dp, Edge, RoundedCornerShape(50)).tocable(onClick = alHacer).padding(horizontal = 14.dp, vertical = 7.dp)) {
         Text(t, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 18.sp)
     }
 }

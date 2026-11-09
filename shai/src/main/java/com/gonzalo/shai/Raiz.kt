@@ -18,13 +18,14 @@ import androidx.compose.ui.Modifier
 
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
-    Cuenta.cargar(c)
+    Secretos.inicia(c)
+    Carreras.abre(c)
     // (en modo prueba, las carreras de prueba: ver Prueba.kt)
-    if (!Prueba.activo) Carreras.almacen = AlmacenCuenta()
     Prueba.cargar(c)
-    Gasto.dispositivo = Cuenta.dispositivo
-    Skin.cargar(c); TemaAtrio.cargarGuardado(c)
-    SincroP.iniciar(c)
+    Skin.cargar(c)
+    Migracion.cargaAviso(c)
+    // Una sola vez: lo que había en la cuenta de antes, a este móvil
+    if (!Migracion.hecha(c)) kotlin.concurrent.thread { runCatching { Migracion.haz(c.applicationContext) } }
 }
 
 /** Dónde estás: tus carreras, una carrera (en una de sus pestañas), meter un partido, empezar una carrera, los ajustes. */
@@ -51,7 +52,7 @@ val PILA: androidx.compose.runtime.saveable.Saver<List<Pagina>, ArrayList<String
 class Pedido(val carrera: String?)
 
 @Composable
-fun ShaiApp(pedido: Pedido? = null, inicial: List<Pagina> = listOf(Pagina.Portada)) {
+fun FcApp(pedido: Pedido? = null, inicial: List<Pagina> = listOf(Pagina.Portada)) {
     var pila by rememberSaveable(stateSaver = PILA) { mutableStateOf(inicial) }
     val arriba = pila.last()
     fun ir(p: Pagina) { pila = pila + p }

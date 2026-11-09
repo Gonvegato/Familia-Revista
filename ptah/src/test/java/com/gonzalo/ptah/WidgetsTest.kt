@@ -168,7 +168,7 @@ class WidgetsTest {
         Disenos.fijos = emptyList()
         Widgets.asigna(ctx, 9, "dborrado0000")
         val v = Widgets.vistas(ctx, 9, Disenos.de(ctx, "dborrado0000"), 130f, 130f).apply(ctx, FrameLayout(ctx))
-        assertTrue(vistas(v).any { it.contentDescription?.contains("Elige un diseño") == true || it.contentDescription?.contains("Ptah") == true })
+        assertTrue(vistas(v).any { it.contentDescription?.contains("Elige un diseño") == true || it.contentDescription?.contains("Widgets") == true })
         val l = Pintor.pinta(ctx, Diseno("sin9", "Elige un diseño", TipoNota.id), 130f, 130f, false, 1f, DatosDeMentira(ctx), enWidget = true)
         assertEquals("sin9", (l.zonas.first().accion as Accion.Editar).id)
         assertEquals(ConfigWidgetActivity::class.java.name, Widgets.intent(ctx, l.zonas.first().accion, 9)!!.component!!.className)
@@ -276,14 +276,14 @@ class WidgetsTest {
         kotlinx.coroutines.runBlocking { Widgets.pintarUno(ctx, id) }
         val t = Diagnostico.texto(ctx)
         println(t)
-        for (que in listOf("== Ptah y este móvil ==", "Android", "Lanzador", "== La hora de los relojes ==", "Ahora: dibujada", "== Widget $id ==", "Mi reloj (${d.id}",
+        for (que in listOf("== Widgets y este móvil ==", "Android", "Lanzador", "== La hora de los relojes ==", "Ahora: dibujada", "== Widget $id ==", "Mi reloj (${d.id}",
             "Ancho mín. / máx.", "Tamaños (OPTION_APPWIDGET_SIZES)", "Lo que se pintó", "hora dibujada", "== Tus diseños ==", "guardado aquí: ${d.id}")) assertTrue(que, t.contains(que))
         // Con la letra del móvil, lo dice y dice por qué
         Minutero.ponLetraDelMovil(ctx, true)
         assertTrue(Diagnostico.texto(ctx).contains("con la letra del móvil (TextClock), porque lo has elegido"))
         Minutero.ponLetraDelMovil(ctx, false)
         org.robolectric.shadows.ShadowAlarmManager.setCanScheduleExactAlarms(false)
-        assertTrue(Diagnostico.texto(ctx).contains("porque Android no deja a Ptah poner alarmas exactas"))
+        assertTrue(Diagnostico.texto(ctx).contains("porque Android no deja a Widgets poner alarmas exactas"))
         // Nada secreto: ni el uid, ni el usuario, ni el correo, ni claves
         assertFalse(t.contains("@")); assertFalse(t.lowercase().contains("token"))
         Disenos.borra(ctx, d.id)

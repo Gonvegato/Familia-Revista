@@ -9,15 +9,15 @@ import com.gonzalo.familia.nucleo.comoMapa
 import com.gonzalo.familia.nucleo.comoTexto
 
 /*
- * Lo de Shai: tus carreras de EA Sports FC (cada una, un universo aparte) y lo que pasa en ellas. Kotlin puro (sin Android), para
- * probarlo todo sin móvil. Lo del campo (resultados, minutos, goles, la media y las cifras del juego) lo pones tú; Shai no se inventa
+ * Lo de FcFeed: tus carreras de EA Sports FC (cada una, un universo aparte) y lo que pasa en ellas. Kotlin puro (sin Android), para
+ * probarlo todo sin móvil. Lo del campo (resultados, minutos, goles, la media y las cifras del juego) lo pones tú; FcFeed no se inventa
  * nada del campo: ni lesiones, ni suplencias, ni resultados. Lo de fuera (la prensa, la red, los mensajes, las ofertas, el dinero, la
  * fama, tu gente) lo escribe Claude a partir de lo que pones, y tus decisiones lo cambian.
  */
 
 enum class Rol(val nombre: String) { JUGADOR("Jugador"), MISTER("Míster") }
 
-/** Lo de fuera del campo que lleva Shai (0–100). Lo del juego (la media y sus cifras) lo pones tú. */
+/** Lo de fuera del campo que lleva FcFeed (0–100). Lo del juego (la media y sus cifras) lo pones tú. */
 object Fuera {
     const val FAMA = "fama"
     const val AFICION = "aficion"
@@ -30,7 +30,7 @@ object Fuera {
 /** Las cifras de la carta de FC del jugador (las pones tú, de tu partida) y las del míster. */
 object Cifras {
     val JUGADOR = listOf("RIT" to "Ritmo", "TIR" to "Tiro", "PAS" to "Pase", "REG" to "Regate", "DEF" to "Defensa", "FIS" to "Físico")
-    /** Para el míster no hay carta en FC: las cifras de Shai, para que tengan algo que contar. */
+    /** Para el míster no hay carta en FC: las cifras de FcFeed, para que tengan algo que contar. */
     val MISTER = listOf("TAC" to "Táctica", "MOT" to "Motivación", "CAN" to "Cantera", "MER" to "Mercado")
 }
 
@@ -186,7 +186,7 @@ data class Universo(
     val autoEventos: Boolean = true,
     val creado: Long = 0,
     val cambiado: Long = 0,
-    /** Lo que Shai recuerda de la carrera (tramas abiertas, relaciones, hechos clave): lo resume Claude cada 3 jornadas y al cerrar temporada. */
+    /** Lo que FcFeed recuerda de la carrera (tramas abiertas, relaciones, hechos clave): lo resume Claude cada 3 jornadas y al cerrar temporada. */
     val memoria: String = "",
     /** La jornada en que se escribió [memoria]. */
     val memoriaPaso: Int = 0,
@@ -200,15 +200,15 @@ data class Universo(
     val famaJornada: Int = 0,
     /** Cómo ha ido la fama: (jornada, fama). */
     val famaHist: List<Pair<Int, Int>> = emptyList(),
-    /** Su contrato (el de Shai). Null: es agente libre. */
+    /** Su contrato (el de FcFeed). Null: es agente libre. */
     val contrato: Contrato? = null,
     /** Lo que le dan sus patrocinios a la semana (euros). */
     val patrocinio: Long = 0,
     /** La jornada en que se habló de renovar por última vez. */
     val renovacionPaso: Int = 0,
-    /** Sus hitos y récords (de Shai: con sus cifras). */
+    /** Sus hitos y récords (de FcFeed: con sus cifras). */
     val hitos: List<Hito> = emptyList(),
-    /** Los récords reales que ha batido o igualado en su carrera de Shai: desde entonces, la marca a batir es la suya ([Historicos]). */
+    /** Los récords reales que ha batido o igualado en su carrera de FcFeed: desde entonces, la marca a batir es la suya ([Historicos]). */
     val recordsSuyos: List<RecordSuyo> = emptyList(),
     /** Sus rivales (surgen solos por lo que pasa, o los mete él): [Rivales]. */
     val rivales: List<Rival> = emptyList(),
@@ -296,7 +296,7 @@ data class Partido(
     val como: String = "rapida",
     /** Si con este partido ganó un título (lo que tú pongas: «LaLiga», «Copa del Rey»…). */
     val titulo: String = "",
-    /** Si [fecha] la puso Shai (la del partido anterior + 7 días) y no tú. */
+    /** Si [fecha] la puso FcFeed (la del partido anterior + 7 días) y no tú. */
     val fechaEstimada: Boolean = false,
 ) {
     val resultado: String get() = "$golesFavor-$golesContra"
@@ -405,7 +405,7 @@ data class Decision(
     val contexto: String = "",
     /** Qué te juegas. */
     val enJuego: String = "",
-    /** Lo que hace Shai si eliges la primera opción («renegociar»: el club te hace una oferta de renovación). */
+    /** Lo que hace FcFeed si eliges la primera opción («renegociar»: el club te hace una oferta de renovación). */
     val accion: String = "",
 ) {
     fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to texto, "o" to opciones, "el" to elegida, "cq" to consecuencia, "e" to estado,

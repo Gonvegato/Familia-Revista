@@ -43,7 +43,7 @@ object TipoNota : TipoWidget {
     override val piezas = listOf("titulo" to "El titular", "texto" to "El texto")
     override val partes = listOf("ante" to "El antetítulo", "titulo" to "El titular", "rayas" to "La raya")
     override fun opcionesDeSerie() = mapOf("ante" to "Nota", "titulo" to "Lo de hoy", "texto" to "Comprar pan, llamar a mamá y regar las plantas.")
-    override fun descripcionToque(d: Diseno) = if (d.id.startsWith("sin")) "Elige un diseño para este widget" else "Cambiar la nota en Ptah"
+    override fun descripcionToque(d: Diseno) = if (d.id.startsWith("sin")) "Elige un diseño para este widget" else "Cambiar la nota en Widgets"
 
     override fun pinta(l: Lienzo) {
         val a = l.area; val e = l.e; val d = l.d
@@ -82,7 +82,7 @@ object CuentaAtras : TipoWidget {
     override val piezas = listOf("cifra" to "La cifra", "titulo" to "Para qué", "fecha" to "La fecha")
     override val partes = listOf("ante" to "Faltan / Hace", "titulo" to "Para qué", "fecha" to "La fecha")
     override fun necesita(d: Diseno) = setOf(Necesidad.MEDIANOCHE)
-    override fun descripcionToque(d: Diseno) = "Cambiar la cuenta atrás en Ptah"
+    override fun descripcionToque(d: Diseno) = "Cambiar la cuenta atrás en Widgets"
 
     override fun opcionesDeSerie(): Map<String, Any?> {
         val hoy = LocalDate.now()
@@ -166,8 +166,8 @@ object CuentaAtras : TipoWidget {
                 confirmButton = { TextButton({
                     st.selectedDateMillis?.let { ms -> cambia(d.con("fecha", java.time.Instant.ofEpochMilli(ms).atZone(ZoneOffset.UTC).toLocalDate().toEpochDay())) }
                     abierto = false
-                }) { Text("PONERLA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-                dismissButton = { TextButton({ abierto = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+                }) { Text("Ponerla", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold) } },
+                dismissButton = { TextButton({ abierto = false }) { Text("Cancelar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold) } }
             ) { DatePicker(st, colors = DatePickerDefaults.colors(containerColor = Paper, selectedDayContainerColor = Acento, todayDateBorderColor = Acento, todayContentColor = Acento)) }
         }
         Nota("Se vuelve a contar sola cada medianoche.", Modifier.padding(top = 4.dp))
@@ -217,12 +217,12 @@ object Foto : TipoWidget {
     override val id = "foto"
     override val nombre = "Foto"
     override val grupo = "Lo tuyo"
-    override val descripcion = "Una foto tuya con su marco de revista y su pie. Se queda en este móvil."
+    override val descripcion = "Una foto tuya con su marco y su pie. Se queda en este móvil."
     override val muestra = Tamanos.Celdas(2, 2)
     override val piezas = listOf("pie" to "El pie de foto", "filo" to "El filo de la foto")
     override val partes = listOf("pie" to "El pie de foto")
     override fun opcionesDeSerie() = mapOf("pie" to "", "sangre" to false)
-    override fun descripcionToque(d: Diseno) = "Cambiar la foto en Ptah"
+    override fun descripcionToque(d: Diseno) = "Cambiar la foto en Widgets"
 
     override fun pinta(l: Lienzo) {
         val a = l.area; val e = l.e; val d = l.d
@@ -280,7 +280,7 @@ object Foto : TipoWidget {
                 }
             }
         }
-        MagLink(if (Fotos.hay(ctx, d.id)) "Elegir otra foto" else "Elegir la foto", "De tu galería: se queda en este móvil, no va a tu cuenta", accent = true) {
+        MagLink(if (Fotos.hay(ctx, d.id)) "Elegir otra foto" else "Elegir la foto", "De tu galería: se queda en este móvil", accent = true) {
             elige.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
         aviso?.let { Nota(it, color = Acento) }

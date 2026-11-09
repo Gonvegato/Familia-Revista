@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         iniciar(this)
         Actualizador.init(this)
         if (savedInstanceState == null) atiende(intent)
-        setContent { ShaiTheme { BarrasDelSistema(this); ShaiApp(pedido = pedido) } }
+        setContent { FcTheme { BarrasDelSistema(this); FcApp(pedido = pedido) } }
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
@@ -34,13 +34,12 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         val c = applicationContext
-        // Los colores de Jonsu pueden haber cambiado; y lo de entre partidos que haya llegado o le toque salir
-        kotlin.concurrent.thread { TemaAtrio.refrescar(c); Eventos.vuelta(c); Eventos.programa(c) }
-        SincroP.iniciar(c)
+        // Lo de entre partidos que haya llegado o le toque salir
+        kotlin.concurrent.thread { Eventos.vuelta(c); Eventos.programa(c) }
     }
 }
 
-/** Las barras del sistema (arriba y abajo), claras u oscuras según el papel. */
+/** Las barras del sistema (arriba y abajo), claras u oscuras según el fondo. */
 @androidx.compose.runtime.Composable
 fun BarrasDelSistema(a: ComponentActivity) {
     SideEffect {

@@ -32,7 +32,7 @@ class TransporteHttp(private val espera: Int = 30_000, private val lectura: Int 
     private fun pide(url: String, metodo: String, cabeceras: Map<String, String>, cuerpo: String?): Transporte.Respuesta {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = espera; c.readTimeout = lectura; c.requestMethod = metodo
-        c.setRequestProperty("User-Agent", "Shai/$VERSION (Android)")
+        c.setRequestProperty("User-Agent", "FcFeed/$VERSION (Android)")
         cabeceras.forEach { (k, v) -> c.setRequestProperty(k, v) }
         try {
             if (cuerpo != null) {
@@ -65,7 +65,7 @@ data class Peticion(
     val usuario: List<Map<String, Any?>>,
     val maxTokens: Int,
     /**
-     * El esquema JSON de la respuesta. NO va como salida estructurada (`output_config.format`): con esquemas como los de Shai la API
+     * El esquema JSON de la respuesta. NO va como salida estructurada (`output_config.format`): con esquemas como los de FcFeed la API
      * contesta 400 «The compiled grammar is too large». Va en el mensaje, como instrucción, y lo que vuelve se lee con tolerancia
      * ([Respuesta.json]); si no se puede leer, [Motor.pide] lo pide otra vez.
      */

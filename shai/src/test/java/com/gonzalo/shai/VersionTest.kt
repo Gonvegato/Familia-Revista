@@ -20,26 +20,31 @@ class VersionTest {
         assertTrue(Regex("versionCode = \\d+").containsMatchIn(g))
     }
 
-    @Test fun elActualizadorSoloCogeLasDeShai() {
-        assertEquals(listOf(0, 1, 0), Actualizador.versionDe("Shai-0.1.0.apk"))
+    @Test fun elActualizadorSoloCogeLasDeFcFeed() {
+        assertEquals(listOf(0, 6, 0), Actualizador.versionDe("FcFeed-0.6.0.apk"))
+        assertEquals(null, Actualizador.versionDe("Shai-0.6.0.apk"))
         assertEquals(null, Actualizador.versionDe("Nut-0.1.0.apk"))
-        assertEquals(null, Actualizador.versionDe("Cobre-0.1.0.apk"))
-        assertEquals(null, Actualizador.versionDe("Shai-0.1.0.apk.part"))
-        assertEquals(null, Actualizador.versionDe("Shai-0.1.0-linux.tar.gz"))
-        val ult = Actualizador.ultima(listOf("Shai-0.1.0.apk" to 1L, "Shai-0.10.0.apk" to 2L, "Shai-0.9.1.apk" to 3L, "Hathor-9.0.0.apk" to 4L))!!
-        assertEquals("Shai-0.10.0.apk", ult.first)
+        assertEquals(null, Actualizador.versionDe("FcFeed-0.1.0.apk.part"))
+        val ult = Actualizador.ultima(listOf("FcFeed-0.6.0.apk" to 1L, "FcFeed-0.10.0.apk" to 2L, "FcFeed-0.9.1.apk" to 3L, "Widgets-9.0.0.apk" to 4L))!!
+        assertEquals("FcFeed-0.10.0.apk", ult.first)
+        assertEquals("fcfeed", KDrive.CARPETA)
     }
 
-    @Test fun esDeLaFamiliaPeroNoSaleEnJonsu() {
-        // Entra con la cuenta (es una de las apps de la familia, con su proveedor de «entrar una vez»)...
+    @Test fun noEsDeLaFamilia() {
+        // Ni en la lista de la familia, ni con su proveedor de «entrar una vez», ni dependiendo de su módulo
         val fam = File(raiz(), "familia/src/main/java/com/gonzalo/familia/LaFamilia.kt").readText()
-        assertTrue(fam.contains("\"com.gonzalo.shai\""))
-        assertTrue(File(raiz(), "familia/src/main/AndroidManifest.xml").readText().contains("com.gonzalo.shai"))
-        // ...pero Jonsu no la lee ni la enseña
-        val jonsu = File(raiz(), "azabache/src/main").walkTopDown().filter { it.isFile && (it.extension == "kt" || it.extension == "xml") }
-        assertFalse(jonsu.any { f -> f.readText().let { it.contains("com.gonzalo.shai") || it.contains("shai_") || it.contains("\"Shai\"") } })
-        // La firma: la de la familia, sin linaje (nace con ella)
+        assertFalse(fam.contains("\"com.gonzalo.shai\""))
+        assertFalse(File(raiz(), "familia/src/main/AndroidManifest.xml").readText().contains("com.gonzalo.shai"))
+        assertFalse(archivo("build.gradle.kts").readText().contains("project(\":familia\")"))
+        val man = archivo("src/main/AndroidManifest.xml").readText()
+        assertTrue(man.contains("android:label=\"FcFeed\"")); assertFalse(man.contains("queries"))
+        // Lo que se ve: ni rastro de los nombres de antes ni de la familia
+        val main = File(raiz(), "shai/src/main/java/com/gonzalo/shai").listFiles()!!.filter { it.extension == "kt" && it.name != "Migracion.kt" && it.name != "Caja.kt" }
+        val cadenas = Regex("\"([^\"\\n]*)\"")
+        val malas = main.flatMap { f -> cadenas.findAll(f.readText()).map { it.groupValues[1] }.filter { t -> listOf("Shai", "Jonsu", "Ptah", "Hathor", "la familia de", "cuenta de la familia").any { t.contains(it) } }.map { "${f.name}: $it" } }
+        assertTrue(malas.joinToString("\n"), malas.isEmpty())
+        // La firma: la misma de siempre (para instalarse encima de la que hay), con su nombre nuevo
         val firmar = File(raiz(), "herramientas/firmar.py").readText()
-        assertTrue(firmar.contains("\"shai\": None") && firmar.contains("\"shai\": \"Shai\""))
+        assertTrue(firmar.contains("\"shai\": None") && firmar.contains("\"shai\": \"FcFeed\""))
     }
 }

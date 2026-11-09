@@ -19,10 +19,10 @@ import java.io.File
 import kotlinx.coroutines.launch
 
 /**
- * Actualizarse sola desde tu kDrive (igual que Atrio). Cada versión se sube a «Mi carpeta/versiones» (Shai-<versión>.apk, junto a las de Atrio). Se mira si hay
+ * Actualizarse sola desde tu kDrive. Cada versión se sube a «Mi carpeta/fcfeed» (FcFeed-<versión>.apk). Se mira si hay
  * una más nueva al abrir la app, cada minuto mientras se ve (cualquier pantalla suya, también el lector) y, con la app
  * cerrada, cada pocas horas en segundo plano. Si la hay, se baja (con wifi o con datos móviles) y se comprueba que es
- * Shai y que está firmada con la misma clave. Se instala:
+ * FcFeed y que está firmada con la misma clave. Se instala:
  *  - sin preguntar, cuando no la estás usando (al salir de la app, o en segundo plano): Android lo permite a una app que
  *    se actualiza a sí misma (Android 12 o más, con el permiso de instalar apps y apuntando a una versión reciente);
  *  - si Android no lo deja, con un aviso para actualizar ahora (Android pide su confirmación), y al terminar se vuelve a
@@ -33,7 +33,7 @@ object Actualizador {
 
     /** La versión descargada y lista (la pantalla pregunta si no puede instalarse sola). */
     var nueva by mutableStateOf<Nueva?>(null)
-    /** Falta el permiso de «instalar apps desconocidas» para Shai. */
+    /** Falta el permiso de «instalar apps desconocidas» para FcFeed. */
     var faltaPermiso by mutableStateOf(false)
     /** La app está delante (si no, un aviso en lugar de abrir pantallas). */
     @Volatile var primerPlano = false
@@ -83,15 +83,14 @@ object Actualizador {
     /** Ya hay una comprobación o una descarga en marcha. */
     private val ocupado = java.util.concurrent.atomic.AtomicBoolean(false)
 
-    /** «Actualizar sola» es tuyo y viaja con la cuenta (`ajustes/shai_actualizador`); lo que pasó en la última comprobación es de aquí. */
-    val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("shai_actualizador", "shai_actualizador", { k -> if (k == "on") EspejoCuenta.Tipo.SI_NO else null })
-    private fun prefs(ctx: Context) = EspejoCuenta.prefs(ctx, GRUPO)
+    /** «Actualizar sola» y lo que pasó en la última comprobación (en este móvil; el archivo es el de siempre). */
+    private fun prefs(ctx: Context) = ctx.getSharedPreferences("shai_actualizador", Context.MODE_PRIVATE)
     fun activo(ctx: Context) = prefs(ctx).getBoolean("on", true)
     fun ponActivo(ctx: Context, v: Boolean) = prefs(ctx).edit().putBoolean("on", v).apply()
 
-    /** «Shai-0.8.0.apk» → [0, 8, 0]. */
+    /** «FcFeed-0.8.0.apk» → [0, 8, 0]. */
     fun versionDe(nombre: String): List<Int>? =
-        Regex("""^Shai-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
+        Regex("""^FcFeed-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
 
     /** ¿[a] es más nueva que [b]? («6.67» > «6.9» > «6.10» como números, no como texto). */
     fun mayor(a: List<Int>, b: List<Int>): Boolean {
@@ -113,7 +112,7 @@ object Actualizador {
     @Suppress("DEPRECATION")
     private fun instalada(ctx: Context) = ctx.packageManager.getPackageInfo(ctx.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
 
-    /** Que el archivo bajado sea de verdad una versión más nueva de Shai, firmada con la misma clave que la instalada. */
+    /** Que el archivo bajado sea de verdad una versión más nueva de FcFeed, firmada con la misma clave que la instalada. */
     @Suppress("DEPRECATION")
     fun valida(ctx: Context, f: File): Long? {
         val pm = ctx.packageManager
@@ -170,7 +169,7 @@ object Actualizador {
                             primerPlano = false; dejoDeVerseEn = System.currentTimeMillis()
                             bucle?.cancel(); bucle = null
                             // Se espera un poco: si solo has ido a la galería o al selector de archivos (otra app encima),
-                            // al volver se cancela; instalar ahí cerraría Shai a mitad de elegir una foto. (Con WorkManager y
+                            // al volver se cancela; instalar ahí cerraría FcFeed a mitad de elegir una foto. (Con WorkManager y
                             // no con una espera aquí: Android congela las apps que no se ven, y su tarea llega igual.)
                             if (nueva?.silenciosa == true) programaAlSalir(app)
                         }
@@ -224,14 +223,14 @@ object Actualizador {
         if (!ctx.packageManager.canRequestPackageInstalls()) {
             faltaPermiso = true
             runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            return "Permite a Shai instalar apps y vuelve a pulsar «Actualizar ahora»"
+            return "Permite a FcFeed instalar apps y vuelve a pulsar «Actualizar ahora»"
         }
         return try { instala(ctx, n); "Instalando la ${n.nombre.removeSuffix(".apk")}…" } catch (e: Throwable) { "No se pudo instalar: ${e.message ?: e.javaClass.simpleName}" }
     }
 
     private fun compruebaYa(ctx: Context) {
         val lista = KDrive.versiones(ctx)
-        val ult = ultima(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu kDrive" else "en «versiones» no hay ningún Shai-<versión>.apk"); return }
+        val ult = ultima(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «fcfeed» (o está vacía) en tu kDrive" else "en «fcfeed» no hay ningún FcFeed-<versión>.apk"); return }
         val actual = instalada(ctx).versionName?.split('.')?.mapNotNull { it.toIntOrNull() } ?: return
         val dir = File(ctx.cacheDir, "actualizaciones").apply { mkdirs() }
         dir.listFiles()?.filter { it.name != ult.first }?.forEach { it.delete() }
@@ -274,7 +273,7 @@ object Actualizador {
         ctx.getSharedPreferences("shai_act", Context.MODE_PRIVATE).edit().putLong("act_reabrir", if (si) System.currentTimeMillis() else 0L).apply()
     }
 
-    /** Lo llama el receptor de «app actualizada»: reabre Shai si la actualización se hizo con ella delante. */
+    /** Lo llama el receptor de «app actualizada»: reabre FcFeed si la actualización se hizo con ella delante. */
     fun reabre(ctx: Context) {
         val sp = ctx.getSharedPreferences("shai_act", Context.MODE_PRIVATE)
         val t = sp.getLong("act_reabrir", 0L)
@@ -284,10 +283,10 @@ object Actualizador {
         // Con el permiso «Mostrar sobre otras apps», Android deja abrirla directamente; sin él (o si el móvil lo bloquea), queda el aviso
         if (puedeReabrirSola(ctx)) runCatching { ctx.startActivity(abrir) }
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel("reabrir", "Shai actualizada", NotificationManager.IMPORTANCE_HIGH))
+        nm.createNotificationChannel(NotificationChannel("reabrir", "FcFeed actualizada", NotificationManager.IMPORTANCE_HIGH))
         val pi = PendingIntent.getActivity(ctx, 2006, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         nm.notify(AVISO_REABRIR, Notification.Builder(ctx, "reabrir").setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Shai se ha actualizado").setContentText("Toca para abrirla").setContentIntent(pi).setAutoCancel(true).build())
+            .setContentTitle("FcFeed se ha actualizado").setContentText("Toca para abrirla").setContentIntent(pi).setAutoCancel(true).build())
     }
 
     const val AVISO_REABRIR = 2006
@@ -325,10 +324,10 @@ class ActualizadorReceiver : BroadcastReceiver() {
         conf.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (Actualizador.seVe()) { runCatching { ctx.startActivity(conf) }; return }
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel("actualizar", "Actualizaciones de Shai", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel("actualizar", "Actualizaciones de FcFeed", NotificationManager.IMPORTANCE_DEFAULT))
         val pi = PendingIntent.getActivity(ctx, 2005, conf, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         nm.notify(2005, Notification.Builder(ctx, "actualizar").setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Shai tiene una versión nueva").setContentText("Toca para actualizar").setContentIntent(pi).setAutoCancel(true).build())
+            .setContentTitle("FcFeed tiene una versión nueva").setContentText("Toca para actualizar").setContentIntent(pi).setAutoCancel(true).build())
     }
 }
 

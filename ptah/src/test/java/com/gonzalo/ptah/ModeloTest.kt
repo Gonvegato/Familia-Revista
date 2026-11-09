@@ -42,12 +42,10 @@ class ModeloTest {
         assertEquals("holograma", nuevo.tipo); assertNull(Tipos.de(nuevo.tipo)); assertEquals(1, nuevo.entero("x"))
     }
 
-    @Test fun losIdsSonDeLaCuenta() {
+    @Test fun losIdsNoSeRepiten() {
         val ids = (1..200).map { Diseno.nuevoId() }.toSet()
         assertEquals(200, ids.size)
         assertTrue(ids.all { it.matches(Regex("d[0-9a-f]{10}")) })
-        // (un campo de la cuenta: sin . $ # [ ] /)
-        assertTrue(ids.all { EspejoCuenta.campo(it) == it })
     }
 
     @Test fun losColores() {

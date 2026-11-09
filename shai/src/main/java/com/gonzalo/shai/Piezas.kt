@@ -17,9 +17,9 @@ fun esAncha(): Boolean = LocalConfiguration.current.screenWidthDp >= 700
 
 /** El margen de las páginas: en la tablet, más. */
 @Composable
-fun margen(): Dp = if (LocalConfiguration.current.screenWidthDp >= 900) 48.dp else if (esAncha()) 36.dp else 22.dp
+fun margen(): Dp = if (LocalConfiguration.current.screenWidthDp >= 900) 48.dp else if (esAncha()) 32.dp else 16.dp
 
-/** Un texto de espera o de aviso, en cursiva (como en la revista). */
+/** Un texto de espera o de aviso, en gris. */
 @Composable
 fun Nota(t: String, modifier: Modifier = Modifier, color: Color = Muted) =
-    Text(t, color = color, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, modifier = modifier)
+    Text(t, color = color, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = modifier)

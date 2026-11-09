@@ -4,7 +4,7 @@ import com.gonzalo.familia.nucleo.comoLong
 import com.gonzalo.familia.nucleo.comoTexto
 
 /**
- * Tu contrato, el de Shai (no el de FC): lo pone la app al crear la carrera según tu nivel y tu club, y lo cambia cuando renuevas, fichas por
+ * Tu contrato, el de FcFeed (no el de FC): lo pone la app al crear la carrera según tu nivel y tu club, y lo cambia cuando renuevas, fichas por
  * otro club o te quedas libre. De él sale lo que cobras cada jornada. [hasta] es la última temporada que cubre («2028/29»).
  */
 data class Contrato(

@@ -17,7 +17,7 @@ import kotlin.math.sin
 /*
  * Los relojes: el digital (con tres cabeceras de revista), el de agujas (una esfera de revista, con romanos, árabes o rayas y cada pieza de
  * su color) y el calendario del mes (con hoy en el acento). En el widget, la hora y la fecha son un `TextClock` y las agujas un
- * `AnalogClock` ([Vivo]): se ponen al día solos, sin despertar a Ptah.
+ * `AnalogClock` ([Vivo]): se ponen al día solos, sin despertar a Widgets.
  */
 
 /** El formato de la hora con el móvil en 24 horas y en 12 (los dos iguales, salvo «como el móvil»). */
@@ -215,7 +215,7 @@ object RelojDigital : TipoWidget {
         Elige("La cabecera", CABECERAS, d.texto("cabecera", "portada")) { cambia(d.con("cabecera", it)) }
         Elige("Las horas", OPCIONES_FORMATO, d.texto("formato", "24")) { cambia(d.con("formato", it)) }
         Elige("La letra de la hora", OPCIONES_LETRA_HORA, d.texto("letraHora")) { cambia(d.con("letraHora", it)) }
-        Nota("En tu pantalla de inicio, Ptah vuelve a pintar el reloj al empezar cada minuto, con la pantalla encendida (Ajustes → Avanzado: «La hora de tus relojes»).",
+        Nota("En tu pantalla de inicio, Widgets vuelve a pintar el reloj al empezar cada minuto, con la pantalla encendida (Ajustes → General: «La hora de tus relojes»).",
             Modifier.padding(top = 4.dp))
         Campo("Antetítulo", d.texto("ante"), "La hora") { cambia(d.con("ante", it)) }
     }
@@ -225,7 +225,7 @@ object RelojAgujas : TipoWidget {
     override val id = "agujas"
     override val nombre = "Reloj de agujas"
     override val grupo = "Relojes"
-    override val descripcion = "Una esfera de revista, con romanos, números o rayas, y cada aguja del color que quieras. Un toque y estás en tus alarmas."
+    override val descripcion = "Una esfera clásica, con romanos, números o rayas, y cada aguja del color que quieras. Un toque y estás en tus alarmas."
     override val muestra = Tamanos.Celdas(2, 2)
     override val piezas = listOf("esfera" to "La esfera", "aro" to "El aro", "numeros" to "Los números", "marcas" to "Las rayas de la esfera",
         "horaria" to "La aguja de las horas", "minutera" to "La de los minutos", "segundero" to "El segundero", "texto" to "El nombre de la esfera", "fecha" to "La fecha")
@@ -233,7 +233,7 @@ object RelojAgujas : TipoWidget {
     val NUMEROS = listOf("romanos" to "Romanos", "arabes" to "Números", "cuatro" to "Solo 12, 3, 6 y 9", "rayas" to "Solo rayas")
     private val ROMANOS = listOf("XII", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI")
 
-    override fun opcionesDeSerie() = mapOf("numeros" to "romanos", "forma" to FormaAgujas.HOJA.name, "segundero" to false, "texto" to "Ptah")
+    override fun opcionesDeSerie() = mapOf("numeros" to "romanos", "forma" to FormaAgujas.HOJA.name, "segundero" to false, "texto" to "Widgets")
     override fun necesita(d: Diseno) = setOf(Necesidad.MEDIANOCHE)
     override fun accion(d: Diseno) = Accion.Alarmas
     override fun descripcionToque(d: Diseno) = "Abrir las alarmas"

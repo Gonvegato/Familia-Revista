@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Fondo del arranque oscuro: sin destello blanco al abrir -->
-    <style name="Shai" parent="android:Theme.Material.NoActionBar">
+    <!-- Fondo del arranque: blanco de día, negro de noche (values-night), sin destellos al abrir -->
+    <style name="FcFeed" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
-    <color name="paper">#515151</color>
+    <color name="paper">#FFFFFF</color>
 </resources>

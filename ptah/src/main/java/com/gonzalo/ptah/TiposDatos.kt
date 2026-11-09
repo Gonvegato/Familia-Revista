@@ -32,7 +32,7 @@ object Tiempo : TipoWidget {
     override val id = "tiempo"
     override val nombre = "El tiempo"
     override val grupo = "Datos"
-    override val descripcion = "El tiempo de ahora en tu ciudad, las máximas y las mínimas y los próximos días. Un toque y lo cambias en Ptah."
+    override val descripcion = "El tiempo de ahora en tu ciudad, las máximas y las mínimas y los próximos días. Un toque y lo cambias en Widgets."
     override val muestra = Tamanos.Celdas(4, 2)
     override val piezas = listOf("temp" to "La temperatura", "icono" to "Los iconos", "sol" to "El sol (y el rayo)", "dias" to "Los próximos días")
     override val partes = listOf("lugar" to "El nombre del sitio", "estado" to "Cómo está el cielo", "maxmin" to "Máxima y mínima", "dias" to "Los próximos días")
@@ -55,7 +55,7 @@ object Tiempo : TipoWidget {
             if (e.ve("lugar")) y += l.seccion(nombreSitio(d), a.left, y, a.width()) + 5f
             val t = l.titular(if (sitioDe(l.ctx, d) == null) "Elige dónde" else "Sin datos todavía", a.width(), (bajo.bottom - y) * 0.6f, 22f, 10f, 2)
             y += l.pon(t, a.left, y) + 3f
-            if (bajo.bottom - y > 28f && a.width() >= 100f) l.pon(l.capa(if (sitioDe(l.ctx, d) == null) "Un toque y lo eliges en Ptah." else "Llegan en cuanto haya conexión.", l.tpk(l.fCursiva, 11f, l.gris), a.width(), max(1, ((bajo.bottom - y) / 14f).toInt())), a.left, y)
+            if (bajo.bottom - y > 28f && a.width() >= 100f) l.pon(l.capa(if (sitioDe(l.ctx, d) == null) "Un toque y lo eliges en Widgets." else "Llegan en cuanto haya conexión.", l.tpk(l.fCursiva, 11f, l.gris), a.width(), max(1, ((bajo.bottom - y) / 14f).toInt())), a.left, y)
             return
         }
         val est = Wmo.de(p.codigo)
@@ -145,8 +145,8 @@ object Tiempo : TipoWidget {
         if (d.texto("lugar") == "aqui") {
             var permitida by remember { mutableStateOf(Ubicacion.permitida(ctx)) }
             val pide = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> permitida = ok; if (ok) kotlin.concurrent.thread { Ubicacion.actualiza(ctx.applicationContext); Widgets.pedir(ctx) } }
-            if (!permitida) MagLink("Dejar a Ptah saber dónde estás", "Solo la ubicación aproximada; no sale de este móvil", accent = true) { pide.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
-            else Nota("Se usa la ubicación aproximada de este móvil (no va a tu cuenta). Se mira cada vez que abres Ptah.", Modifier.padding(top = 4.dp))
+            if (!permitida) MagLink("Dejar a Widgets saber dónde estás", "Solo la ubicación aproximada; no sale de este móvil", accent = true) { pide.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
+            else Nota("Se usa la ubicación aproximada de este móvil (no sale de él). Se mira cada vez que abres Widgets.", Modifier.padding(top = 4.dp))
         } else {
             var busca by remember { mutableStateOf("") }
             var res by remember { mutableStateOf<List<Lugar>?>(null) }
@@ -253,7 +253,7 @@ object TipoBateria : TipoWidget {
 
     @Composable override fun Editor(d: Diseno, cambia: (Diseno) -> Unit) {
         Campo("Antetítulo", d.texto("ante"), "Batería") { cambia(d.con("ante", it)) }
-        Nota("En la pantalla de inicio se pone al día cada 15 minutos y cada vez que abres Ptah (Android no deja a los widgets saberlo al momento).", Modifier.padding(top = 6.dp))
+        Nota("En la pantalla de inicio se pone al día cada 15 minutos y cada vez que abres Widgets (Android no deja a los widgets saberlo al momento).", Modifier.padding(top = 6.dp))
     }
 }
 

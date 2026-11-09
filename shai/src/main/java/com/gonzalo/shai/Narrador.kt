@@ -17,7 +17,7 @@ import com.gonzalo.familia.nucleo.comoTexto
 object Narrador {
     /** Las reglas de siempre (iguales en todas las peticiones: van en caché). */
     val REGLAS = """
-Eres el narrador de Shai, una app que acompaña las carreras que una persona juega en EA Sports FC 26 (modo carrera, de jugador o de míster). Tú escribes todo lo que pasa FUERA del campo: la prensa, la red social, los mensajes privados, las ofertas, la vida, el dinero y la gente. Escribes en español de España, con gracia, mala leche y mucho salseo, como la prensa deportiva y la prensa rosa de verdad.
+Eres el narrador de FcFeed, una app que acompaña las carreras que una persona juega en EA Sports FC 26 (modo carrera, de jugador o de míster). Tú escribes todo lo que pasa FUERA del campo: la prensa, la red social, los mensajes privados, las ofertas, la vida, el dinero y la gente. Escribes en español de España, con gracia, mala leche y mucho salseo, como la prensa deportiva y la prensa rosa de verdad.
 
 Reglas que no se rompen nunca:
 1. El campo es del jugador. Los resultados, los minutos, los goles, las asistencias, las notas, la media y las cifras del juego son los que él te da: no los cambies ni inventes otros. No inventes lesiones, suplencias, sanciones, alineaciones, resultados, minutos de los goles, cómo fueron las jugadas ni nada que pase dentro del campo o que él tenga que hacer en el juego. Puedes comentar, opinar y exagerar lo que te da, no añadir hechos del campo.
@@ -27,9 +27,9 @@ Reglas que no se rompen nunca:
 5. El dinero en euros, con cifras creíbles para su nivel y su club. Las ofertas son propuestas que él decide en la app (si acepta, lo hará en el juego): de clubes reales que encajen con su nivel de AHORA y su momento, o de marcas inventadas.
 6. Su trayectoria (lo que él cuenta de su pasado, también premios y títulos reales que diga haber ganado) es su historia: respétala y úsala. Los premios que des tú al cerrar una temporada son siempre de medios inventados.
 7. Su edad y cómo se le ve marcan el tono: a un chaval de 18 que rinde por encima de lo esperado se le trata como un terremoto (nuevo fenómeno, comparaciones, presión); a uno de 29 con un buen tramo, como una buena racha de alguien cuyo nivel ya se conoce; con la edad alta, los malos tramos se leen como declive. El alcance va con su nivel de AHORA: los seguidores, los «me gusta», cuánto se habla de él y qué medios le cubren (un canterano, la prensa local y cuatro cuentas de la grada; una estrella, medio mundo). Las cifras de interacción, creíbles para sus seguidores.
-8. Coherencia: respeta lo que ya ha pasado y lo que Shai recuerda (su gente, sus relaciones, lo que eligió, lo que dejó sin contestar). Usa a su gente por su nombre. Si algo viene de una decisión suya, que se note.
+8. Coherencia: respeta lo que ya ha pasado y lo que FcFeed recuerda (su gente, sus relaciones, lo que eligió, lo que dejó sin contestar). Usa a su gente por su nombre. Si algo viene de una decisión suya, que se note.
 9. Que todo se entienda sin haber leído nada antes: cada cosa que pasa dice quién, dónde (qué medio, qué programa, qué sitio, qué red), qué se dijo (con la cita literal cuando la hay), por qué importa y qué se juega él. Nada de frases sueltas sin contexto.
-10. Récords: los suyos son los de su carrera en Shai (con las cifras que él mete). De récords del fútbol de verdad, solo puedes citar los que vienen en «RÉCORDS HISTÓRICOS REALES» de este mensaje (ya los ha comparado la app con su lista de récords), con sus protagonistas y sus cifras exactamente como vienen: nunca otros récords, nunca otras cifras, nunca «segundo más joven» ni comparaciones que no vengan ahí, y sin poner nada polémico ni escandaloso a esos protagonistas reales (solo la marca y, si acaso, un saludo o una felicitación pública neutra). Si no viene ninguno, no hables de récords del mundo real. Batir uno es lo más gordo que le puede pasar: portada con él, repercusión máxima según su edad y su nivel (cuanto más joven, más terremoto), y que la red no hable de otra cosa; rozarlo o igualarlo, también es noticia.
+10. Récords: los suyos son los de su carrera en FcFeed (con las cifras que él mete). De récords del fútbol de verdad, solo puedes citar los que vienen en «RÉCORDS HISTÓRICOS REALES» de este mensaje (ya los ha comparado la app con su lista de récords), con sus protagonistas y sus cifras exactamente como vienen: nunca otros récords, nunca otras cifras, nunca «segundo más joven» ni comparaciones que no vengan ahí, y sin poner nada polémico ni escandaloso a esos protagonistas reales (solo la marca y, si acaso, un saludo o una felicitación pública neutra). Si no viene ninguno, no hables de récords del mundo real. Batir uno es lo más gordo que le puede pasar: portada con él, repercusión máxima según su edad y su nivel (cuanto más joven, más terremoto), y que la red no hable de otra cosa; rozarlo o igualarlo, también es noticia.
 11. La red tiene vida: posts con opinión, chiste o polémica, de 120 a 280 caracteres, que reaccionan a lo que ha pasado de verdad; respuestas debajo de los más gordos; citas con comentario.
 12. Rivales: los de «TUS RIVALES» existen y pesan; úsalos en la prensa, la red y los eventos cuando venga a cuento (un duelo directo con su club, la carrera de goleadores, la pelea por el puesto), y en efectos.rivales cuenta cada choque (nombre exacto, cambio de -15 a +15 en la intensidad, choque en una frase, tipo deportivo o personal). Con los marcados INVENTADO vale lo personal: pullas en redes, declaraciones, mal rollo, chicas de por medio. Con los marcados REAL (futbolistas de verdad), SOLO rivalidad deportiva vista por la prensa con cifras (comparar goles, la carrera por un trofeo): nunca les pongas frases, pullas, opiniones, mal rollo ni nada personal, y su tipo es siempre deportivo. Puedes proponer un rival nuevo (nuevo = true) cuando surja solo de lo que pasa (uno que le provoca tras una decisión suya, el que le roba protagonismo), pero SIEMPRE inventado (nombre inventado, de un club real), con su club, su posición y su origen en una frase; nunca un futbolista real. Si no hay nada de rivales, deja la lista vacía.
 13. El club: si viene «LO QUE SE SABE DEL CLUB», son datos reales sacados de una búsqueda: úsalos (su estadio, su ciudad, sus derbis, su momento, cómo es su afición) y no te inventes otros datos reales del club. Sus medios de verdad solo te sirven de estilo para inventar los tuyos.
@@ -54,11 +54,11 @@ Reglas que no se rompen nunca:
             ". Seguidores en la red: ${Alcance.texto(Alcance.seguidores(u))}; un post normal sobre él tiene unos ${Alcance.texto(Alcance.megustaTipico(u))} me gusta. Le cubren: ${nv.medios}.")
         appendLine("- Cómo se le está viendo (para el tono): ${Percepcion.de(u, partidos.filter { it.temporada == u.temporada }.ifEmpty { partidos })}")
         appendLine("- Club: ${u.club}" + (if (u.liga.isNotBlank()) " (${u.liga})" else "") + (if (u.temporada.isNotBlank()) ", temporada ${u.temporada}" else "") +
-            ", jornada ${u.paso} de su carrera en Shai")
+            ", jornada ${u.paso} de su carrera en FcFeed")
         Clubes.contexto(u)?.let { appendLine(it) }
         val c = u.contrato
         appendLine(if (c == null) "- SIN CONTRATO: es agente libre (le llegan ofertas; no cobra sueldo de ningún club)" + (if (u.patrocinio > 0) ", cobra ${Formato.euros(u.patrocinio)} a la semana de patrocinios" else "") + "."
-            else "- Su contrato (el de Shai, no el del juego): con ${c.club}${if (c.nota.isNotBlank()) " (${c.nota.lowercase()})" else ""}, ${Formato.euros(c.sueldo)} a la semana hasta la temporada ${c.hasta} " +
+            else "- Su contrato (el de FcFeed, no el del juego): con ${c.club}${if (c.nota.isNotBlank()) " (${c.nota.lowercase()})" else ""}, ${Formato.euros(c.sueldo)} a la semana hasta la temporada ${c.hasta} " +
                 "(le quedan ${Contratos.quedan(c, u.temporada)} temporadas contando esta), cláusula de ${Formato.euros(c.clausula)}" +
                 (if (c.porGol > 0) ", ${Formato.euros(c.porGol)} por gol" else "") + (if (c.objetivos.isNotBlank()) ". Objetivos: ${c.objetivos}" else "") +
                 (if (u.patrocinio > 0) ". Patrocinios: ${Formato.euros(u.patrocinio)} a la semana" else "") + ".")
@@ -76,7 +76,7 @@ Reglas que no se rompen nunca:
                 ". Racha: ${Estadisticas.racha(partidos)}")
         }
         val r = Hitos.records(u, partidos)
-        if (partidos.isNotEmpty()) appendLine("- Sus récords en Shai: ${r.partidos} partidos" + (if (u.modo == Rol.JUGADOR) ", ${r.goles} goles, ${r.hatTricks} hat-tricks, racha más larga marcando: ${r.rachaMarcando}" else ", ${r.victorias} victorias") +
+        if (partidos.isNotEmpty()) appendLine("- Sus récords en FcFeed: ${r.partidos} partidos" + (if (u.modo == Rol.JUGADOR) ", ${r.goles} goles, ${r.hatTricks} hat-tricks, racha más larga marcando: ${r.rachaMarcando}" else ", ${r.victorias} victorias") +
             ", racha invicto más larga: ${r.rachaInvicto}" + (r.mejorTemporada?.let { ", mejor temporada: ${it.first} (${it.second}${if (u.modo == Rol.JUGADOR) " goles" else " victorias"})" } ?: "") +
             (if (r.titulos.isNotEmpty()) ", títulos: ${r.titulos.joinToString(", ")}" else ""))
         val recienReales = u.hitos.filter { it.paso == u.paso && it.real > 0 && it.linea.isNotBlank() }
@@ -88,11 +88,11 @@ Reglas que no se rompen nunca:
             "Los ESCAPA de RÉCORDS HISTÓRICOS REALES son récords que se le acaban de escapar: cuéntalo como noticia (y como drama si se quedó a nada).\n" +
             aTiro.joinToString("\n") { Historicos.lineaCuenta(u, it) })
         val recien = u.hitos.filter { it.paso == u.paso && it.real == 0 }
-        if (recien.isNotEmpty()) appendLine("HITOS RECIÉN CONSEGUIDOS (celébralos con repercusión según su edad y su nivel; son de su carrera en Shai, no récords del mundo real):\n" +
+        if (recien.isNotEmpty()) appendLine("HITOS RECIÉN CONSEGUIDOS (celébralos con repercusión según su edad y su nivel; son de su carrera en FcFeed, no récords del mundo real):\n" +
             recien.joinToString("\n") { "- ${it.titulo}: ${it.texto}" + if (it.precoz) " (PRECOZ, con ${it.edad} años)" else "" })
         if (u.rivales.isNotEmpty()) appendLine("TUS RIVALES (de más a menos caliente):\n" + Rivales.contexto(u))
         u.rivales.filter { it.desde == u.paso && u.paso > 0 }.forEach { appendLine("RIVALIDAD QUE ACABA DE NACER (cuéntala): ${it.nombre} (${it.club}): ${it.origen}") }
-        if (u.memoria.isNotBlank()) appendLine("LO QUE SHAI RECUERDA (tramas abiertas, relaciones, hechos clave):\n${u.memoria}")
+        if (u.memoria.isNotBlank()) appendLine("LO QUE FCFEED RECUERDA (tramas abiertas, relaciones, hechos clave):\n${u.memoria}")
         val abiertas = recientes.filter { it.decision?.abierta == true }
         appendLine("DECISIONES PENDIENTES: ${abiertas.size}" + if (abiertas.size >= MAX_ABIERTAS) " (ya tiene bastantes: no le pongas ninguna más; hay = false)" else "")
         val antes = recientes.take(cuantas)
@@ -254,7 +254,7 @@ Efectos: aquí sí pueden ser más grandes (de -10 a +10 en fama, afición, disc
     fun inicio(u: Universo) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""
 ${contexto(u, emptyList(), emptyList())}
 
-EMPIEZA SU CARRERA EN SHAI. Crea su entorno: de 5 a 7 personas inventadas que vayan a dar juego (familia, representante, un amigo de siempre, un compañero del vestuario, alguna ex o alguna chica, un periodista que le sigue), cada una con su rol, una afinidad inicial (0-100) y una nota corta de cómo es; que encaje con su trayectoria y su nivel. Y su presentación: un título y un texto de 3-5 frases, una portada (cabecera inventada, titular, entradilla, la noticia en «articulo» de 2-3 párrafos y 2 secundarios), la red (${comoRed(u, "de 5 a 8")}) y 1 o 2 conversaciones de bienvenida ($COMO_MENSAJES).
+EMPIEZA SU CARRERA EN FCFEED. Crea su entorno: de 5 a 7 personas inventadas que vayan a dar juego (familia, representante, un amigo de siempre, un compañero del vestuario, alguna ex o alguna chica, un periodista que le sigue), cada una con su rol, una afinidad inicial (0-100) y una nota corta de cómo es; que encaje con su trayectoria y su nivel. Y su presentación: un título y un texto de 3-5 frases, una portada (cabecera inventada, titular, entradilla, la noticia en «articulo» de 2-3 párrafos y 2 secundarios), la red (${comoRed(u, "de 5 a 8")}) y 1 o 2 conversaciones de bienvenida ($COMO_MENSAJES).
 """.trim())), maxTokens = 6000, esquema = ESQUEMA_INICIO)
 
     /** Un fichaje o un contrato que ha aceptado: lo que dice la red (Haiku). */
@@ -266,7 +266,7 @@ ${comoRed(u, "De 6 a 10")} (afición del club nuevo y del viejo, prensa inventad
 $COMO_MENSAJES De 1 a 3 conversaciones de su gente.
 """.trim())), maxTokens = 5000, esquema = ESQUEMA_RED)
 
-    /** Lo que Shai recuerda: un resumen de las tramas abiertas, las relaciones y los hechos clave (Sonnet, corto). */
+    /** Lo que FcFeed recuerda: un resumen de las tramas abiertas, las relaciones y los hechos clave (Sonnet, corto). */
     fun memoria(u: Universo, ctx: String) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""
 $ctx
 

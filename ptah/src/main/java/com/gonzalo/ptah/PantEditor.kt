@@ -34,7 +34,7 @@ const val PESTANA_COLORES = 1
 fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVolver: () -> Unit, alGuardar: (Diseno) -> Unit, pestanaInicial: Int = 0) {
     val ctx = LocalContext.current
     val tipo = Tipos.de(inicial.tipo)
-    // (lo que llevas cambiado sobrevive a que Android cierre Ptah por detrás: se guarda como JSON)
+    // (lo que llevas cambiado sobrevive a que Android cierre Widgets por detrás: se guarda como JSON)
     var d by rememberSaveable(inicial.id, stateSaver = androidx.compose.runtime.saveable.Saver<Diseno, String>(
         save = { it.aJson() }, restore = { Diseno.deJson(it) })) { mutableStateOf(inicial) }
     var pestana by rememberSaveable { mutableIntStateOf(pestanaInicial) }
@@ -50,7 +50,7 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
 
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = mg, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            VolverRevista({ if (cambiado) salir = true else alVolver() }, "Ptah")
+            VolverRevista({ if (cambiado) salir = true else alVolver() }, "Widgets")
             Spacer(Modifier.weight(1f))
             EnlaceRevista(if (eligiendo) "Guardar y ponerlo aquí" else "Guardar diseño", acento = true) { guarda() }
         }
@@ -58,7 +58,7 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
         BoxWithConstraints(Modifier.fillMaxWidth().height(262.dp).background(FondoDePantalla)) {
             val k = minOf(1f, (maxWidth.value - 24f) / w, 222f / h)
             Box(Modifier.fillMaxWidth().height(238.dp), contentAlignment = Alignment.Center) { VistaPrevia(d, w, h, noche, mostrar = k) }
-            Text("${w.roundToInt()} × ${h.roundToInt()} dp · ${celdas ?: Tamanos.celdas(w, h)}".uppercase(), color = androidx.compose.ui.graphics.Color(0xCCFFFFFF), fontFamily = Body,
+            Text("${w.roundToInt()} × ${h.roundToInt()} dp · ${celdas ?: Tamanos.celdas(w, h)}", color = androidx.compose.ui.graphics.Color(0xCCFFFFFF), fontFamily = Body,
                 fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp))
         }
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = mg)) {
@@ -74,16 +74,16 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
                 Barra("Ancho", w, Tamanos.MIN..420f, { "${it.roundToInt()} dp" }) { w = it }
                 Barra("Alto", h, Tamanos.MIN..480f, { "${it.roundToInt()} dp" }) { h = it }
             }
-            if (d.estilo.delTema) MagChoice(listOf("Claro", "Oscuro"), if (noche) 1 else 0, "Con tu Apariencia en") { noche = it == 1 }
+            if (d.estilo.delTema) MagChoice(listOf("Claro", "Oscuro"), if (noche) 1 else 0, "Con tu estilo en") { noche = it == 1 }
 
             // ---- El nombre
             Campo("El nombre", d.nombre, tipo?.nombre ?: "Sin nombre") { d = d.copy(nombre = it) }
-            Antetitulo(tipo?.nombre ?: "De otra versión de Ptah", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
+            Antetitulo(tipo?.nombre ?: "De otra versión de Widgets", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
             if (tipo != null) Text(tipo.descripcion, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp)
             Spacer(Modifier.height(8.dp))
             PestanasRevista(listOf("Contenido", "Colores", "Forma", "Letras", "Partes"), pestana) { pestana = it }
             Spacer(Modifier.height(6.dp))
-            if (tipo == null) Nota("Este diseño es de una versión más nueva de Ptah: actualízala para cambiarlo.")
+            if (tipo == null) Nota("Este diseño es de una versión más nueva de Widgets: actualízala para cambiarlo.")
             else when (pestana) {
                 0 -> tipo.Editor(d) { d = it }
                 1 -> EditorColores(d, tipo, noche) { d = it }
@@ -95,7 +95,7 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
             Spacer(Modifier.height(22.dp))
             AccionGrande(null, if (eligiendo) "Guardar y ponerlo aquí" else "Guardar diseño", Modifier.fillMaxWidth()) { guarda() }
             Text(if (eligiendo) "Se guarda en «Tus diseños» y se pone en el widget que estás añadiendo."
-                else "Se guarda en «Tus diseños» (y en tu cuenta). Si ya está en tu pantalla de inicio, se cambia allí al momento.",
+                else "Se guarda en «Tus diseños». Si ya está en tu pantalla de inicio, se cambia allí al momento.",
                 color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(30.dp))
         }
@@ -104,8 +104,8 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
     if (salir) AlertDialog(onDismissRequest = { salir = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Salir sin guardar?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
         text = { Text("Lo que has cambiado no está guardado.", color = Muted, fontFamily = Body) },
-        confirmButton = { TextButton({ salir = false; guarda() }) { Text("GUARDAR DISEÑO", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ salir = false; alVolver() }) { Text("SALIR SIN GUARDAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } })
+        confirmButton = { TextButton({ salir = false; guarda() }) { Text("Guardar diseño", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold) } },
+        dismissButton = { TextButton({ salir = false; alVolver() }) { Text("Salir sin guardar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold) } })
 }
 
 /** Los colores con los que se dibuja ahora (para enseñar el efectivo de cada pieza). */
@@ -129,7 +129,7 @@ private fun EditorColores(d: Diseno, tipo: TipoWidget, noche: Boolean, cambia: (
             FilaColor("Hasta", e.colorFondo2, Col.resuelve(e.colorFondo2, l.tonos, l.acento), conSerie = false) { pon(e.copy(colorFondo2 = it)) }
             Barra("La dirección", e.angulo.toFloat(), 0f..315f, { when (it.roundToInt()) { 0 -> "De arriba abajo"; 90 -> "De izquierda a derecha"; 180 -> "De abajo arriba"; 270 -> "De derecha a izquierda"; else -> "En diagonal (${it.roundToInt()}°)" } }, pasos = 6) { pon(e.copy(angulo = it.roundToInt())) }
         }
-        TipoFondo.PAPEL -> Nota("El papel de tu Apariencia (cambia con ella, también con el claro y el oscuro).", Modifier.padding(top = 4.dp))
+        TipoFondo.PAPEL -> Nota("El papel de tu estilo (cambia con él, también con el claro y el oscuro).", Modifier.padding(top = 4.dp))
         TipoFondo.TRANSPARENTE -> Nota("Sin fondo: lo de encima, sobre tu fondo de pantalla.", Modifier.padding(top = 4.dp))
     }
     if (e.fondo != TipoFondo.TRANSPARENTE) Barra("Lo que se ve del fondo", e.opacidad.toFloat(), 0f..100f, { "${it.roundToInt()} %" }) { pon(e.copy(opacidad = it.roundToInt())) }
@@ -140,8 +140,8 @@ private fun EditorColores(d: Diseno, tipo: TipoWidget, noche: Boolean, cambia: (
     if (e.fondo != TipoFondo.TRANSPARENTE && flojos.isNotEmpty()) Text("Poco contraste con el fondo: ${flojos.joinToString(", ") { it.lowercase() }} casi no se ${if (flojos.size > 1) "leerán" else "leerá"}. Prueba con uno más claro o más oscuro.",
         color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 10.dp))
     BloqueEditor("La tinta")
-    FilaColor("La tinta", e.tinta, l.tinta, "La de tu Apariencia") { pon(e.copy(tinta = it)) }
-    FilaColor("El acento", e.acento, l.acento, "El de tu Apariencia") { pon(e.copy(acento = it)) }
+    FilaColor("La tinta", e.tinta, l.tinta, "La de tu estilo") { pon(e.copy(tinta = it)) }
+    FilaColor("El acento", e.acento, l.acento, "El de tu estilo") { pon(e.copy(acento = it)) }
     FilaColor("El gris (lo secundario)", e.secundario, l.gris, "Entre el fondo y la tinta") { pon(e.copy(secundario = it)) }
     if (tipo.piezas.isNotEmpty()) {
         BloqueEditor("Cada pieza")
@@ -165,8 +165,8 @@ private fun EditorForma(d: Diseno, noche: Boolean, cambia: (Diseno) -> Unit) {
     }
     BloqueEditor("Las esquinas")
     Barra("Lo redondas", e.radio, 0f..60f, { if (it < 0.5f) "Rectas" else "${it.roundToInt()} dp" }) { pon(e.copy(radio = it.roundToInt().toFloat())) }
-    BloqueEditor("El marco de revista")
-    SiNo("Marco interior", "Un filete fino un poco por dentro del borde, como en las páginas de una revista.", e.marco) { pon(e.copy(marco = it)) }
+    BloqueEditor("El marco")
+    SiNo("Marco interior", "Una línea fina un poco por dentro del borde.", e.marco) { pon(e.copy(marco = it)) }
     if (e.marco) FilaColor("Su color", e.pieza("marco"), l.pieza("marco", l.tinta), "El de la tinta") { v -> pon(e.copy(piezas = if (v.isBlank()) e.piezas - "marco" else e.piezas + ("marco" to v))) }
 }
 
@@ -204,7 +204,7 @@ fun SelectorLetraDiseno(nombre: String, valor: String, opciones: List<String>, o
         Text("Aa", fontFamily = valor.takeIf { it.isNotBlank() }?.let { if (it == "Atrio") AtrioDisplay else Skin.family(it) } ?: Display, fontSize = 28.sp, color = Charcoal, modifier = Modifier.width(54.dp))
         Column(Modifier.weight(1f)) {
             Text(nombre, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, color = Charcoal)
-            Text((valor.ifEmpty { "La de tu Apariencia" }).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text((valor.ifEmpty { "La de tu estilo" }), color = Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
         Text("▾", color = Muted, fontSize = 16.sp)
     }
@@ -213,7 +213,7 @@ fun SelectorLetraDiseno(nombre: String, valor: String, opciones: List<String>, o
         title = { Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
         text = {
             androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 460.dp)) {
-                item { Text("La de tu Apariencia", fontSize = 18.sp, color = if (valor.isEmpty()) Acento else Charcoal, modifier = Modifier.fillMaxWidth().tocable { onCambia(""); abierto = false }.padding(vertical = 10.dp)) }
+                item { Text("La de tu estilo", fontSize = 18.sp, color = if (valor.isEmpty()) Acento else Charcoal, modifier = Modifier.fillMaxWidth().tocable { onCambia(""); abierto = false }.padding(vertical = 10.dp)) }
                 items(opciones.size) { i ->
                     val o = opciones[i]
                     Text(o, fontFamily = if (o == "Atrio") AtrioDisplay else Skin.family(o), fontSize = 20.sp, maxLines = 1, color = if (o == valor) Acento else Charcoal,
@@ -221,7 +221,7 @@ fun SelectorLetraDiseno(nombre: String, valor: String, opciones: List<String>, o
                 }
             }
         },
-        confirmButton = { TextButton({ abierto = false }) { Text("CERRAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        confirmButton = { TextButton({ abierto = false }) { Text("Cerrar", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold) } }
     )
 }
 

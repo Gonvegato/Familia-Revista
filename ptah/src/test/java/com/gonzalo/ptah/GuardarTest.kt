@@ -18,9 +18,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.core.app.ApplicationProvider
-import com.gonzalo.familia.LaFamilia
-import com.gonzalo.familia.nucleo.Emulador
-import com.gonzalo.familia.nucleo.Familia
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Rule
@@ -33,16 +30,15 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Guardar de verdad, tocando la app como el usuario (lo que en el OPPO «no se guardaba»): una plantilla → cambiar el fondo, la tinta, la
- * letra y el tamaño del texto → «Guardar diseño» → el diseño guardado lleva los cambios (aquí, en la cuenta —el emulador de Firebase— y en
- * otro móvil); después, editar ese diseño desde su ficha y guardarlo; y el widget que lo lleva se vuelve a pintar con lo nuevo. Y sin
- * cuenta (sin red), lo mismo.
+ * letra y el tamaño del texto → «Guardar diseño» → el diseño guardado lleva los cambios (en la app y en el disco); después, editar ese
+ * diseño desde su ficha y guardarlo; y el widget que lo lleva se vuelve a pintar con lo nuevo.
  */
 @RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = "w411dp-h1400dp-xhdpi")
 class GuardarTest {
     @get:Rule val rule = createComposeRule()
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
 
-    @After fun suelta() { Widgets.datos = null; LaFamilia.reiniciaParaPruebas(); LaFamilia.configPruebas = null }
+    @After fun suelta() { Widgets.datos = null }
 
     private fun toca(t: String) {
         rule.mainClock.advanceTimeBy(1_000); rule.waitForIdle()
@@ -57,35 +53,33 @@ class GuardarTest {
         error("No puedo tocar «$t»")
     }
 
+    /** El último que hay con ese texto (el del diálogo de encima, si lo hay). */
+    private fun tocaUltimo(t: String) {
+        rule.mainClock.advanceTimeBy(1_000); rule.waitForIdle()
+        val todos = rule.onAllNodesWithText(t, useUnmergedTree = true)
+        val n = todos.fetchSemanticsNodes().size
+        check(n > 0) { "No hay «$t»" }
+        todos[n - 1].performClick(); rule.waitForIdle()
+    }
+
     private fun imagenes(v: View): List<android.graphics.Bitmap> =
         ((v as? ImageView)?.drawable as? BitmapDrawable)?.bitmap?.let { listOf(it) }.orEmpty() +
             ((v as? ViewGroup)?.let { g -> (0 until g.childCount).flatMap { imagenes(g.getChildAt(it)) } } ?: emptyList())
 
-    /** El flujo entero; con [cuenta], contra el emulador (y otro móvil de la misma cuenta). */
-    private fun flujo(cuenta: Boolean) {
-        var otro: Familia? = null
-        if (cuenta) {
-            Emulador.limpia(); Emulador.cuenta("gonzalo")
-            LaFamilia.reiniciaParaPruebas(); LaFamilia.configPruebas = Emulador.cfg
-            EspejoCuenta.olvidaParaPruebas(); Cuenta.cargar(ctx)
-            kotlinx.coroutines.runBlocking { Cuenta.entrar("gonzalo", "secreto1") }
-            otro = Emulador.dispositivo("gonzalo").also { it.coleccion("ajustes") }
-        }
+    /** El flujo entero (todo en este móvil). */
+    private fun flujo() {
+        ctx.getSharedPreferences("widgets_migracion", Context.MODE_PRIVATE).edit().putBoolean("hecha", true).apply()
         iniciar(ctx)
-        if (cuenta) {
-            val hasta = System.currentTimeMillis() + 15_000
-            while (System.currentTimeMillis() < hasta) { LaFamilia.sincronizaYa(); if (EspejoCuenta.intenta(ctx)) break; Thread.sleep(100) }
-        }
         Widgets.datos = { DatosDeMentira(it) }
-        rule.setContent { PtahTheme { Surface(Modifier.fillMaxSize()) { PtahApp() } } }
+        rule.setContent { WidgetsTheme { Surface(Modifier.fillMaxSize()) { WidgetsApp() } } }
 
         // Una plantilla → el fondo de un color, la tinta del acento, la letra de títulos Vitrina y el texto al 140 %
         toca("Usar esta →")
-        toca("COLORES"); toca("COLOR")
-        toca("La tinta"); toca("ACENTO"); toca("PONERLO")
-        toca("LETRAS"); toca("De los títulos"); toca("Vitrina")
+        toca("Colores"); toca("Color")
+        toca("Tinta de tu estilo"); tocaUltimo("Acento"); toca("Ponerlo")
+        toca("Letras"); toca("De los títulos"); toca("Vitrina")
         rule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress))[0].performSemanticsAction(SemanticsActions.SetProgress) { it(1.4f) }
-        toca("GUARDAR DISEÑO")
+        toca("Guardar diseño")
         fun comprueba(d: Diseno?, que: String) {
             assertNotNull(que, d)
             assertEquals(que, TipoFondo.COLOR, d!!.estilo.fondo); assertEquals(que, Col.ACENTO, d.estilo.tinta)
@@ -93,14 +87,8 @@ class GuardarTest {
         }
         val guardado = Disenos.todos(ctx).single()
         comprueba(guardado, "en la app")
-        // De disco: lo que hay en las preferencias (lo que se lee al volver a abrir Ptah)
+        // De disco: lo que hay en las preferencias (lo que se lee al volver a abrir la app)
         comprueba(Diseno.deJson(ctx.getSharedPreferences(Disenos.GRUPO.archivo, Context.MODE_PRIVATE).getString(guardado.id, null)), "en el disco")
-        if (otro != null) {
-            assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otro.sincroniza().ok)
-            comprueba(Diseno.deJson(otro.coleccion("ajustes").nodo("ptah_disenos")!!.texto(guardado.id)), "en la cuenta")
-            shadowOf(Looper.getMainLooper()).idle()
-            comprueba(Disenos.de(ctx, guardado.id), "aquí, tras sincronizar")
-        }
 
         // Ese diseño en un widget de la pantalla de inicio
         val mgr = shadowOf(AppWidgetManager.getInstance(ctx))
@@ -111,15 +99,11 @@ class GuardarTest {
 
         // Su ficha → Editar → un degradado → Guardar diseño
         toca("Aún no está en tu pantalla").also { } // (o «En tu pantalla de inicio: 1»: la tarjeta del diseño)
-        toca("Editar →")
-        toca("COLORES"); toca("DEGRADADO")
-        toca("GUARDAR DISEÑO")
+        toca("Editar")
+        toca("Colores"); toca("Degradado")
+        toca("Guardar diseño")
         assertEquals(TipoFondo.DEGRADADO, Disenos.de(ctx, guardado.id)!!.estilo.fondo)
         assertEquals("sigue con la letra de antes", "Vitrina", Disenos.de(ctx, guardado.id)!!.estilo.letraTitulos)
-        if (otro != null) {
-            assertTrue(LaFamilia.sincronizaYa().ok); assertTrue(otro.sincroniza().ok)
-            assertEquals(TipoFondo.DEGRADADO, Diseno.deJson(otro.coleccion("ajustes").nodo("ptah_disenos")!!.texto(guardado.id))!!.estilo.fondo)
-        }
         // El widget se ha vuelto a pintar con lo nuevo
         val hasta = System.currentTimeMillis() + 10_000
         var despues = imagenes(mgr.getViewFor(id))
@@ -127,7 +111,5 @@ class GuardarTest {
         assertFalse("el widget lleva el diseño nuevo", antes.zip(despues).all { (a, b) -> a.sameAs(b) })
     }
 
-    @Test fun conLaCuenta() { Emulador.exige(); flujo(cuenta = true) }
-
-    @Test fun sinCuentaNiRed() = flujo(cuenta = false)
+    @Test fun guardaYRepinta() = flujo()
 }

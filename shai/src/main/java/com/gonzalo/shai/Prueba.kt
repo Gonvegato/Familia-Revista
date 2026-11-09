@@ -9,7 +9,7 @@ import java.io.File
 import kotlin.random.Random
 
 /**
- * El modo prueba: Shai entero sin IA y sin gastar nada. Lo de fuera del campo lo escriben unas plantillas de ejemplo (no Claude), con
+ * El modo prueba: FcFeed entero sin IA y sin gastar nada. Lo de fuera del campo lo escriben unas plantillas de ejemplo (no Claude), con
  * los nombres de tu carrera, tu gente, el rival y el marcador; por lo demás, es la app de verdad (las mismas pantallas, la misma
  * lógica de dinero, decisiones, ofertas y eventos). Las carreras de prueba van aparte, en este móvil (no en tu cuenta), así que no se
  * mezclan con las de verdad; y el gasto es siempre 0. Para ver las funciones, no para jugar en serio: los textos se repiten.
@@ -48,19 +48,6 @@ object Prueba {
         real = null
         activo = false
     }
-}
-
-/** Un [Almacen] en un archivo de este móvil (las carreras de prueba). */
-class AlmacenArchivo(private val archivo: File) : Almacen {
-    private val datos = HashMap<String, Map<String, Any?>>()
-    init {
-        runCatching { Json.lee(archivo.readText()).comoMapa().forEach { (k, v) -> datos[k] = v.comoMapa() } }
-    }
-    @Synchronized override fun nodos(): Map<String, Map<String, Any?>> = HashMap(datos)
-    @Synchronized override fun pon(ref: String, campos: Map<String, Any?>) { datos[ref] = (datos[ref].orEmpty() + campos).filterValues { it != null && it != "" }; guarda() }
-    @Synchronized override fun borra(ref: String) { datos.remove(ref); guarda() }
-    @Synchronized fun vacia() { datos.clear(); guarda() }
-    private fun guarda() { runCatching { archivo.writeText(Json.escribe(datos)) } }
 }
 
 /**
@@ -254,7 +241,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         cot.forEach { (_, a, t) -> posts += post(d, a, t, "prensa") }
         posts += post(d, nA, nT, "prensa")
         // Los hitos de esta jornada: la red los celebra (más si es precoz)
-        Regex("""(?m)^- ([^:\n]+): ([^\n]+?)( \(PRECOZ, con (\d+) años\))?$""").findAll(texto.substringAfter("HITOS RECIÉN CONSEGUIDOS", "").substringBefore("LO QUE SHAI RECUERDA").substringBefore("DECISIONES PENDIENTES"))
+        Regex("""(?m)^- ([^:\n]+): ([^\n]+?)( \(PRECOZ, con (\d+) años\))?$""").findAll(texto.substringAfter("HITOS RECIÉN CONSEGUIDOS", "").substringBefore("LO QUE FCFEED RECUERDA").substringBefore("DECISIONES PENDIENTES"))
             .forEach { m ->
                 val precoz = m.groupValues[3].isNotBlank()
                 posts.add(0, post(d, medio(d), (if (precoz) "PRECOZ. " else "") + "{A}: ${m.groupValues[1].lowercase()}. " + m.groupValues[2].replace(" Con ", " con ").substringBefore(" de los más precoces") +
@@ -644,7 +631,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
                 mapOf("chat" to alguien(d, "Toni Vidal", "representante"), "de" to alguien(d, "Toni Vidal", "representante"), "texto" to "Firmado. Ahora a demostrar que valía cada euro")))
     }
 
-    /** Lo que Shai recuerda, hecho a mano a partir de lo que ha pasado (sin IA). */
+    /** Lo que FcFeed recuerda, hecho a mano a partir de lo que ha pasado (sin IA). */
     private fun memoria(texto: String, d: Datos): String {
         val lineas = texto.substringAfter("LO ÚLTIMO QUE HA PASADO", "").lineSequence().map { it.trim() }.filter { it.startsWith("- ") }.map { it.removePrefix("- ") }.toList()
         val abiertas = lineas.mapNotNull { Regex("""decisión pendiente: ([^)]+)\)""").find(it)?.groupValues?.get(1) }.take(3)

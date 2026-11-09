@@ -38,58 +38,69 @@ import androidx.compose.ui.layout.positionInParent
 import kotlin.math.roundToInt
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
 
 /*
- * Las piezas de la interfaz «Revista» de Atrio (RevistaUI.kt, Revista.kt, Ediciones.kt, Vitrina.kt), tal cual y con los mismos
- * nombres: papel, serif, filetes, antetítulos en versalitas con su cuadradito de acento, pestañas subrayadas, enlaces con flecha,
- * cifras enormes y puntos guía. Todas las pantallas de Ptah usan estas, para que se vean como las de Atrio.
+ * Las piezas de la interfaz, al estilo de una red social: una sola letra (Inter), líneas finas, pestañas con su raya azul, filas de
+ * ajustes con su flecha y nada de mayúsculas espaciadas. (Los nombres de las funciones son los de antes: así las pantallas no cambian.)
  */
 
-/** Filete de la revista (horizontal). */
+/** Una línea fina de separación. */
 @Composable
-fun Filete(alto: Dp = 2.dp, color: Color = Charcoal, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(alto).background(color))
+fun Filete(alto: Dp = 1.dp, color: Color = Charcoal, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxWidth().height(if (alto > 1.dp) 1.dp else alto).background(if (color == Charcoal) Line else color))
 }
 
-/** El filete bajo la cabecera. */
+/** La línea bajo la cabecera. */
 @Composable
-fun FileteCabecera(alto: Dp = 3.dp) = Filete(alto)
+fun FileteCabecera(alto: Dp = 1.dp) = Filete(alto)
 
-/** Antetítulo de casilla o de sección: cuadradito de acento y versalitas espaciadas. */
+/** Título de sección («Tus rivales», «Lo gastado»…): en negrita; en acento, más pequeño y gris (lo que va encima de un título). */
 @Composable
 fun Antetitulo(texto: String, modifier: Modifier = Modifier, tam: TextUnit = 13.sp, color: Color = Charcoal, conCuadro: Boolean = true) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        if (conCuadro) { Box(Modifier.size((tam.value * 0.77f).dp).background(Acento)); Spacer(Modifier.width(8.dp)) }
-        Text(texto.uppercase(), color = color, fontFamily = Body, fontSize = tam, fontWeight = FontWeight.Black, letterSpacing = (tam.value * 0.15f).sp, lineHeight = (tam.value * 1.35f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis)  // (dos líneas antes que cortar)
-    }
+    if (color == Acento) Text(texto, color = Muted, fontFamily = Body, fontSize = tam, fontWeight = FontWeight.Medium, lineHeight = (tam.value * 1.35f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = modifier)
+    else Text(texto, color = color, fontFamily = Body, fontSize = (tam.value + 5f).sp, fontWeight = FontWeight.Bold, lineHeight = ((tam.value + 5f) * 1.3f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = modifier)
 }
 
-/** Un enlace de acción en versalitas («BUSCAR», «EDITAR», «+ AÑADIR»…). */
+/** Un enlace de acción («Editar», «+ Añadir»…): en azul. */
 @Composable
 fun EnlaceRevista(texto: String, modifier: Modifier = Modifier, acento: Boolean = false, onClick: () -> Unit) {
-    Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
+    Text(texto, color = Acento, fontFamily = Body, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
         modifier = modifier.semantics { role = Role.Button }.tocable(onClick = onClick).padding(vertical = 10.dp))
 }
 
-/** «← VOLVER» (o «← LECTURA» en lo que cuelga de la portada). */
+/** Volver: la flecha. */
 @Composable
-fun VolverRevista(onClick: () -> Unit, texto: String = "Volver") = EnlaceRevista("← $texto", onClick = onClick)
+fun VolverRevista(onClick: () -> Unit, texto: String = "Volver") {
+    Box(Modifier.size(44.dp).clip(CircleShape).tocable(onClick = onClick).semantics { role = Role.Button }, contentAlignment = Alignment.Center) {
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, texto, tint = Charcoal, modifier = Modifier.size(22.dp))
+    }
+}
 
-/** Las pestañas de una página: versalitas; la elegida en tinta con el subrayado de acento; su número, en acento. */
+/** Pestañas como las de una red social: el nombre, la elegida en negrita con su raya azul debajo; su número al lado. */
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifier, cuentas: List<Int?>? = null, onSel: (Int) -> Unit) {
-    // Todas a la vista: si no caben en una línea (letra grande, pantalla estrecha), siguen en la siguiente; nunca cortadas
     Column(modifier.fillMaxWidth()) {
-        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        val reparte = nombres.size <= 4
+        Row(Modifier.fillMaxWidth().let { if (reparte) it else it.horizontalScroll(rememberScrollState()) }) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.semantics { selected = on; role = Role.Tab }.tocable { onSel(i) }
-                    .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
-                    .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-                    Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1, softWrap = false)
-                    cuentas?.getOrNull(i)?.let { c -> Text(" $c", color = if (on) Charcoal else Muted,  // (el rojo, solo para lo que se toca: la pestaña activa y los enlaces)
-                         fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1) }
+                Box(Modifier.let { if (reparte) it.weight(1f) else it }.semantics { selected = on; role = Role.Tab }.tocable { onSel(i) }
+                    .padding(horizontal = if (reparte) 4.dp else 14.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Row(Modifier.padding(top = 14.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(n, color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 15.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Medium, maxLines = 1, softWrap = false)
+                            cuentas?.getOrNull(i)?.let { c -> Spacer(Modifier.width(6.dp)); Insignia(c) }
+                        }
+                        Box(Modifier.width(if (on) 44.dp else 0.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(if (on) Acento else Color.Transparent))
+                    }
                 }
             }
         }
@@ -97,155 +108,131 @@ fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifi
     }
 }
 
-/** Filtros u opciones de una sola elección, todas a la vista (en una línea o en varias): versalitas; el elegido en acento y subrayado. */
+/** Filtros de una sola elección, en píldoras (en una línea o en varias). */
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun FiltrosRevista(opciones: List<String>, sel: Int, modifier: Modifier = Modifier, onSel: (Int) -> Unit) {
-    // Todas a la vista: si no caben en una línea, siguen en la siguiente (una fila que se desliza dentro de una página que también
-    // se desliza no se dejaba mover: el gesto se lo llevaba la página, y la última opción se veía cortada)
-    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         opciones.forEachIndexed { i, o -> FiltroRevista(o, i == sel) { onSel(i) } }
     }
 }
 
-/** Un filtro suelto (que se enciende y se apaga): versalitas, encendido en acento y subrayado. */
+/** Un filtro suelto: una píldora (encendida, en tinta llena). */
 @Composable
 fun FiltroRevista(texto: String, on: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Text(texto.uppercase(), color = if (on) Acento else Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1,
-        modifier = modifier.semantics { selected = on }.tocable(onClick = onClick).padding(top = 8.dp, bottom = 13.dp)
-            .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 4.dp.toPx()), size = Size(size.width, 1.5.dp.toPx())) })
+    Text(texto, color = if (on) Paper else Charcoal, fontFamily = Body, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
+        modifier = modifier.semantics { selected = on }.clip(RoundedCornerShape(50)).background(if (on) Charcoal else Color.Transparent)
+            .border(1.dp, if (on) Charcoal else Edge, RoundedCornerShape(50)).tocable(onClick = onClick).padding(horizontal = 14.dp, vertical = 7.dp))
 }
 
-/** Barra de arriba de las páginas: «← Volver» a la izquierda y los enlaces de la derecha. */
+/** La barra de arriba de una página: la flecha de volver, el título y lo de la derecha. */
 @Composable
-fun RevistaTopBar(onBack: () -> Unit, texto: String = "Volver", actions: @Composable RowScope.() -> Unit = {}) {
-    Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+fun RevistaTopBar(onBack: () -> Unit, texto: String = "Volver", actions: @Composable RowScope.() -> Unit = {}, titulo: String? = null) {
+    Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         VolverRevista(onBack, texto)
-        Spacer(Modifier.weight(1f))
+        if (titulo != null) Text(titulo, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 12.dp).weight(1f))
+        else Spacer(Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically, content = actions)
     }
 }
 
-/** Tamaño del titular de revista según lo largo que sea. */
+/** Tamaño de un título grande según lo largo que sea. */
 fun headlineSize(title: String): Pair<TextUnit, TextUnit> {
     val longest = title.split(' ').maxOfOrNull { it.length } ?: 0
     return when {
-        title.length <= 8 && longest <= 8 -> 86.sp to 84.sp
-        title.length <= 16 && longest <= 10 -> 66.sp to 66.sp
-        title.length <= 30 && longest <= 13 -> 50.sp to 52.sp
-        else -> 38.sp to 41.sp
+        title.length <= 8 && longest <= 8 -> 34.sp to 40.sp
+        title.length <= 16 && longest <= 10 -> 30.sp to 36.sp
+        title.length <= 30 && longest <= 13 -> 26.sp to 32.sp
+        else -> 22.sp to 28.sp
     }
 }
 
-/** Titular de ficha: antetítulo de acento y el nombre enorme, a todo lo ancho. */
+/** Título de una ficha: lo de encima, en gris, y el nombre grande. */
 @Composable
 fun RevistaHeadline(title: String, overline: String?) {
     val (fs, lh) = headlineSize(title)
     Column(Modifier.fillMaxWidth()) {
-        if (overline != null) Text(overline.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        FitTitle(title, fs, lh, letterSpacing = (-1.5).sp)
+        if (overline != null) Text(overline, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        FitTitle(title, fs, lh)
     }
 }
 
-/** La cabecera de la revista (el nombre, enorme) en una sola línea. */
+/** El nombre de la app, como logotipo. */
 @Composable
-fun Cabecera(tam: TextUnit, modifier: Modifier = Modifier, color: Color = Charcoal, texto: String = "PTAH") {
-    Box(modifier.fillMaxWidth()) {
-        FitTitle(texto, tam, tam, color = color, letterSpacing = (-0.03).em, maxLines = 1, modifier = Modifier.fillMaxWidth(), minSize = 12f, unaLinea = true)
-    }
+fun Cabecera(tam: TextUnit, modifier: Modifier = Modifier, color: Color = Charcoal, texto: String = "Widgets") {
+    Text(texto, color = color, fontFamily = Body, fontWeight = FontWeight.ExtraBold, fontSize = minOf(tam.value, 30f).sp, letterSpacing = (-0.5).sp, maxLines = 1, modifier = modifier)
 }
-private val Float.em get() = androidx.compose.ui.unit.TextUnit(this, androidx.compose.ui.unit.TextUnitType.Em)
-private val Double.em get() = this.toFloat().em
 
-/** Un enlace de texto (serif, con flecha): «Cambiar emulador →». */
+/** Una fila de ajuste o de acción: el texto, lo de debajo en gris y la flecha. */
 @Composable
 fun MagLink(text: String, sub: String? = null, accent: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Column(modifier.fillMaxWidth().tocable(onClick = onClick).padding(vertical = 5.dp)) {
-        Text("$text →", fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp, color = if (accent) Acento else Charcoal)
-        if (sub != null) Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+    Row(modifier.fillMaxWidth().tocable(onClick = onClick).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(text, fontFamily = Body, fontWeight = if (accent) FontWeight.Bold else FontWeight.Medium, fontSize = 16.sp, lineHeight = 21.sp, color = if (accent) Acento else Charcoal)
+            if (sub != null) Text(sub, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 2.dp))
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Muted, modifier = Modifier.padding(start = 8.dp).size(22.dp))
     }
 }
 
-/** Elegir una de pocas opciones: mayúsculas pequeñas, la elegida en acento y subrayada. */
+/** Elegir una de pocas opciones: píldoras. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MagChoice(options: List<String>, selected: Int, label: String? = null, onPick: (Int) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        if (label != null) Text(label.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            options.forEachIndexed { i, o ->
-                val on = i == selected
-                Text(
-                    o.uppercase(), color = if (on) Acento else Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
-                    modifier = Modifier.tocable(enabled = !on) { onPick(i) }.padding(vertical = 8.dp)
-                        .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 6.dp.toPx()), size = Size(size.width, 1.5.dp.toPx())) }
-                )
-            }
+        if (label != null) Text(label, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 6.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEachIndexed { i, o -> FiltroRevista(o, i == selected) { if (i != selected) onPick(i) } }
         }
     }
 }
 
-/** Una línea dato · valor con puntos guía (como el índice de una revista). */
+/** Una línea dato · valor: el dato en gris a la izquierda y el valor en negrita a la derecha. */
 @Composable
 fun MagFact(label: String, value: String) {
     Layout(
         content = {
-            Text(label, fontFamily = Body, fontSize = 14.sp, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Box(Modifier.drawBehind {
-                drawLine(Muted.copy(alpha = 0.6f), Offset(0f, size.height - 2), Offset(size.width, size.height - 2), 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2f, 6f)))
-            })
-            Text(value, fontFamily = Body, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Charcoal, maxLines = 1, softWrap = false)
+            Text(label, fontFamily = Body, fontSize = 15.sp, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Box(Modifier)
+            Text(value, fontFamily = Body, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Charcoal, maxLines = 1, softWrap = false)
         },
-        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp)
     ) { ms, c ->
         val v = ms[2].measure(Constraints())
-        val hueco = 6.dp.roundToPx()
+        val hueco = 8.dp.roundToPx()
         val ancho = if (c.hasBoundedWidth) c.maxWidth else null
         val anchoEtiqueta = ms[0].maxIntrinsicWidth(Constraints.Infinity)
-        if (ancho == null || anchoEtiqueta + v.width + hueco * 2 <= ancho) {
-            // Cabe en una línea: etiqueta, puntos y cifra
-            val l = ms[0].measure(Constraints(maxWidth = ancho?.let { (it - v.width - hueco * 2).coerceAtLeast(0) } ?: Constraints.Infinity))
-            val w = ancho ?: (l.width + v.width + hueco * 6)
-            val puntos = (w - l.width - v.width - hueco * 2).coerceAtLeast(0)
+        ms[1].measure(Constraints.fixed(0, 0))
+        if (ancho == null || anchoEtiqueta + v.width + hueco <= ancho) {
+            val l = ms[0].measure(Constraints(maxWidth = ancho?.let { (it - v.width - hueco).coerceAtLeast(0) } ?: Constraints.Infinity))
+            val w = ancho ?: (l.width + v.width + hueco * 4)
             val h = maxOf(l.height, v.height)
-            val d = ms[1].measure(Constraints.fixed(puntos, 12.dp.roundToPx().coerceAtMost(h)))
-            layout(w, h) {
-                l.place(0, h - l.height)
-                d.place(l.width + hueco, h - d.height - 3.dp.roundToPx())
-                v.place(w - v.width, h - v.height)
-            }
+            layout(w, h) { l.place(0, h - l.height); v.place(w - v.width, h - v.height) }
         } else {
-            // En una casilla estrecha no cabe todo: la etiqueta entera arriba (nada de «Termin…») y, debajo, los puntos y la cifra a la derecha
+            // Si no cabe en una línea: el dato entero arriba y el valor debajo, a la derecha
             val l = ms[0].measure(Constraints(maxWidth = ancho))
-            val puntos = (ancho - v.width - hueco).coerceAtLeast(0)
-            val d = ms[1].measure(Constraints.fixed(puntos, 12.dp.roundToPx().coerceAtMost(v.height)))
             val h = l.height + v.height
-            layout(ancho, h) {
-                l.place(0, 0)
-                d.place(0, h - d.height - 3.dp.roundToPx())
-                v.place(ancho - v.width, h - v.height)
-            }
+            layout(ancho, h) { l.place(0, 0); v.place(ancho - v.width, h - v.height) }
         }
     }
 }
 
-/** Final de la ficha: «Editar» grande, como pie de página. */
+/** Al final de una ficha: una acción grande. */
 @Composable
 fun MagFooter(text: String = "Editar", onClick: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Box(Modifier.fillMaxWidth().height(3.dp).background(Charcoal))
-        Text("${text.uppercase()} →", color = Acento, fontFamily = Body, fontSize = 14.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp,
-            modifier = Modifier.tocable(onClick = onClick).padding(vertical = 18.dp))
+        Filete(1.dp, Line)
+        Text(text, color = Acento, fontFamily = Body, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.tocable(onClick = onClick).padding(vertical = 16.dp))
     }
 }
 
-/** Una línea de la lista: título en serif, datos en versalitas y, a la derecha, lo que se pase. */
+/** Una línea de una lista: el título en negrita, los datos en gris y, a la derecha, lo que se pase. */
 @Composable
 fun FilaRevista(titulo: String, meta: String, modifier: Modifier = Modifier, derecha: @Composable RowScope.() -> Unit = {}, onClick: () -> Unit) {
     Row(modifier.fillMaxWidth().tocable(onClick = onClick).padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            FitTitle(titulo, 26.sp, 28.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (meta.isNotBlank()) Text(meta.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 2, modifier = Modifier.padding(top = 3.dp))
+            Text(titulo, color = Charcoal, fontFamily = Body, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (meta.isNotBlank()) Text(meta, color = Muted, fontFamily = Body, fontSize = 14.sp, maxLines = 2, modifier = Modifier.padding(top = 2.dp))
         }
         derecha()
     }
@@ -261,17 +248,21 @@ fun FitTitle(
     text: String, fontSize: TextUnit, lineHeight: TextUnit,
     modifier: Modifier = Modifier, color: Color = Color.Unspecified,
     letterSpacing: TextUnit = TextUnit.Unspecified,
-    fontWeight: FontWeight = FontWeight.Bold, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = TextOverflow.Clip,
+    fontWeight: FontWeight = FontWeight.ExtraBold, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = TextOverflow.Clip,
     fontStyle: FontStyle? = null, minSize: Float = 14f,
     family: FontFamily = Display, align: TextAlign? = null,
     unaLinea: Boolean = false,
 ) {
+    // (los tamaños que piden las pantallas son los de unos titulares de revista: aquí, más contenidos)
+    val fontSize = if (fontSize.value > 30f) (fontSize.value * 0.58f).coerceAtLeast(26f).sp else fontSize
+    val lineHeight = if (lineHeight.isSp && lineHeight.value > 34f) (lineHeight.value * 0.62f).coerceAtLeast(30f).sp else lineHeight
+    val letterSpacing = if (letterSpacing.isSp && letterSpacing.value < -0.5f) (-0.5).sp else letterSpacing
     val claveAncho = "$text|${fontSize.value}"
     var maxPx by remember { mutableStateOf(anchosFit[claveAncho] ?: 0) }
     // (sin caché: la medida de antes de que llegue la letra no debe volver a servir)
     val measurer = rememberTextMeasurer(cacheSize = 0)
     // La letra puede ser de Google Fonts (la de tu apariencia) y llegar un momento después de abrir la app: medido con la de mientras, más
-    // estrecha, el título salía cortado («Marfi» en vez de «Ptah») hasta volver a la pantalla. Cuando llega, se vuelve a medir.
+    // estrecha, el título salía cortado («Marfi» en vez de «FcFeed») hasta volver a la pantalla. Cuando llega, se vuelve a medir.
     val resolutor = androidx.compose.ui.platform.LocalFontFamilyResolver.current
     val letra = remember(resolutor, family, fontWeight, fontStyle) { resolutor.resolve(family, fontWeight, fontStyle ?: FontStyle.Normal) }
     fun estilo(s: Float) = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = s.sp, letterSpacing = letterSpacing, fontStyle = fontStyle)
@@ -316,20 +307,17 @@ private class AnchoDelTitulo(private val alMedir: (Int) -> Unit) : androidx.comp
     override fun androidx.compose.ui.layout.IntrinsicMeasureScope.maxIntrinsicWidth(measurable: androidx.compose.ui.layout.IntrinsicMeasurable, height: Int) = measurable.maxIntrinsicWidth(height)
 }
 
-/**
- * La cabecera plegada de la portada: al bajar, el nombre y las acciones de arriba (buscar, añadir) se quedan fijos en una barra fina, y el
- * resto de la cabecera (Nº, fecha, barras, menú) se va con la página. Igual en Hiedra, Mostaza, Cobalto y Ptah.
- */
+/** La barra fina que queda arriba al bajar en una lista: el nombre y las acciones. */
 @Composable
 fun BarraPlegada(nombre: String, visible: Boolean, acciones: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
     androidx.compose.animation.AnimatedVisibility(visible, enter = androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.fadeOut()) {
-        Column(Modifier.fillMaxWidth().background(Paper).statusBarsPadding().padding(horizontal = 28.dp)) {
+        Column(Modifier.fillMaxWidth().background(Paper).statusBarsPadding().padding(horizontal = 16.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(nombre.uppercase(), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 1.sp, maxLines = 1)
+                Text(nombre, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1)
                 Spacer(Modifier.weight(1f))
                 acciones()
             }
-            Filete(2.dp)
+            Filete(1.dp)
         }
     }
 }

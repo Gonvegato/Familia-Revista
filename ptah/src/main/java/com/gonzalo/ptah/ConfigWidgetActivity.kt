@@ -9,7 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 
 /**
- * Al poner un widget de Ptah en la pantalla de inicio (y al tocar uno que no tiene diseño, o al reconfigurarlo desde el lanzador): eliges
+ * Al poner un widget de Widgets en la pantalla de inicio (y al tocar uno que no tiene diseño, o al reconfigurarlo desde el lanzador): eliges
  * cuál de tus diseños va en él, o haces uno (de una plantilla o desde cero). Hasta que eliges, el widget no se pone.
  */
 class ConfigWidgetActivity : ComponentActivity() {
@@ -26,9 +26,9 @@ class ConfigWidgetActivity : ComponentActivity() {
         // Si viene de «Ponerlo en la pantalla de inicio» (y el lanzador abre esto igualmente), ya se sabe qué diseño va
         AlFijar.pendiente(this)?.let { d -> Disenos.de(this, d)?.let { AlFijar.pendiente(this, null); elige(id, it); return } }
         setContent {
-            PtahTheme {
+            WidgetsTheme {
                 BarrasDelSistema(this)
-                PtahApp(eligiendo = true, alElegir = { d -> elige(id, d) })
+                WidgetsApp(eligiendo = true, alElegir = { d -> elige(id, d) })
             }
         }
     }

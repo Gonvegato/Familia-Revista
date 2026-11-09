@@ -15,7 +15,7 @@ enum class Necesidad {
     MEDIANOCHE,
     /** El tiempo (Open-Meteo): se baja cada 30–60 minutos. */
     TIEMPO,
-    /** La batería: se repinta cada 15 minutos (y al abrir Ptah). */
+    /** La batería: se repinta cada 15 minutos (y al abrir Widgets). */
     BATERIA,
 }
 
@@ -41,7 +41,7 @@ interface TipoWidget {
 
     /** Lo que pasa al tocar el widget (donde no haya otra zona). */
     fun accion(d: Diseno): Accion = Accion.Editar(d.id)
-    fun descripcionToque(d: Diseno): String = "Abrir ${d.nombre.ifBlank { nombre }} en Ptah"
+    fun descripcionToque(d: Diseno): String = "Abrir ${d.nombre.ifBlank { nombre }} en Widgets"
 
     /** Dibuja el diseño (el fondo y el borde los pone quien llama: [Pintor]). */
     fun pinta(l: Lienzo)
@@ -70,10 +70,10 @@ object Pintor {
         val t = Tipos.de(d.tipo)
         l.fondo()
         if (t == null) {
-            // Un tipo de una versión más nueva de Ptah: se dice, sin romper nada
-            val tl = l.titular("Este widget es de una versión más nueva de Ptah", l.area.width(), l.area.height(), 16f, 9f, 4, l.tinta)
+            // Un tipo de una versión más nueva de Widgets: se dice, sin romper nada
+            val tl = l.titular("Este widget es de una versión más nueva de Widgets", l.area.width(), l.area.height(), 16f, 9f, 4, l.tinta)
             l.pon(tl, l.area.left, l.area.top)
-            l.toque(android.graphics.RectF(0f, 0f, w, h), Accion.AbrirPtah, "Abrir Ptah")
+            l.toque(android.graphics.RectF(0f, 0f, w, h), Accion.AbrirPtah, "Abrir Widgets")
         } else {
             runCatching { if (!Chico.pinta(l, t)) t.pinta(l) }.onFailure { x -> if (x is OutOfMemoryError) throw x }
             // Lo que no tenga zona propia, abre lo de su tipo (lo de encima se toca antes: las zonas van detrás de esta)

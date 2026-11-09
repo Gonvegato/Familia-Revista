@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * «Qué ve tu móvil»: lo que Ptah sabe de este móvil y de sus widgets, para saber por qué algo no sale como debería, sin adivinar. Se ve
+ * «Qué ve tu móvil»: lo que Widgets sabe de este móvil y de sus widgets, para saber por qué algo no sale como debería, sin adivinar. Se ve
  * en pantalla y se copia o se comparte como texto. **Nada secreto**: ni tu usuario, ni tu correo, ni tu uid, ni ninguna clave; solo la
  * versión, el móvil, los tamaños que da el lanzador, los ids y los nombres de tus diseños y lo que ha pasado al guardarlos.
  */
@@ -50,8 +50,8 @@ object Diagnostico {
         val lanzador = runCatching { pm.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)?.activityInfo?.packageName }.getOrNull()
         val dm = ctx.resources.displayMetrics
         val r = ArrayList<Seccion>()
-        r += Seccion("Ptah y este móvil", listOf(
-            "Ptah" to "${info?.versionName ?: "?"} (${info?.longVersionCode ?: "?"})",
+        r += Seccion("Widgets y este móvil", listOf(
+            "Widgets" to "${info?.versionName ?: "?"} (${info?.longVersionCode ?: "?"})",
             "Móvil" to "${Build.MANUFACTURER} ${Build.MODEL}",
             "Android" to "${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})",
             "Lanzador" to (lanzador ?: "no se sabe"),
@@ -63,12 +63,12 @@ object Diagnostico {
             "Ahora" to (if (motivo == null) "dibujada con la letra del diseño, repintada cada minuto" else "con la letra del móvil (TextClock), porque $motivo"),
             "Alarmas exactas" to if (Minutero.puedeExactas(ctx)) "sí (se pueden poner)" else "no",
             "Última vez que se pusieron en hora" to Registro.horaDe(Minutero.ultimo(ctx)) + if (Minutero.atrasado(ctx)) " (¡atrasado!)" else "",
-            "Segundo plano restringido" to if (Minutero.restringida(ctx)) "sí (Android frena a Ptah)" else "no",
+            "Segundo plano restringido" to if (Minutero.restringida(ctx)) "sí (Android frena a Widgets)" else "no",
             "Sin optimización de batería" to if (Minutero.sinOptimizar(ctx)) "sí" else "no (la batería puede frenarlo)",
         ))
         val mgr = runCatching { AppWidgetManager.getInstance(ctx) }.getOrNull()
         val ids = Widgets.ids(ctx)
-        if (ids.isEmpty()) r += Seccion("Tus widgets", listOf("Widgets de Ptah" to "ninguno en la pantalla de inicio"))
+        if (ids.isEmpty()) r += Seccion("Tus widgets", listOf("Widgets de Widgets" to "ninguno en la pantalla de inicio"))
         ids.forEach { id ->
             val dId = Widgets.disenoDe(ctx, id)
             val d = dId?.let { Disenos.de(ctx, it) }
@@ -89,17 +89,17 @@ object Diagnostico {
             "${d.nombre} (${d.id})" to listOf(
                 "${Tipos.de(d.tipo)?.nombre ?: d.tipo} · guardado ${Registro.horaDe(d.cambiado)} · ${Registro.origenDe(ctx, d.id)}",
                 "fondo ${e.fondo.nombre.lowercase()} ${if (e.fondo == TipoFondo.PAPEL || e.fondo == TipoFondo.TRANSPARENTE) "" else nombreColor(e.colorFondo)}${if (e.fondo == TipoFondo.DEGRADADO) " → " + nombreColor(e.colorFondo2) else ""}",
-                "tinta ${nombreColor(e.tinta, "la de tu Apariencia")} · acento ${nombreColor(e.acento, "el de tu Apariencia")}" + if (e.piezas.isNotEmpty()) " · piezas ${e.piezas.entries.joinToString { "${it.key} ${it.value}" }}" else "",
-                "letras ${e.letraTitulos.ifBlank { "las de tu Apariencia" }} / ${e.letraTexto.ifBlank { "las de tu Apariencia" }} · texto al ${(e.escala * 100).toInt()} %",
+                "tinta ${nombreColor(e.tinta, "la de tu estilo")} · acento ${nombreColor(e.acento, "el de tu estilo")}" + if (e.piezas.isNotEmpty()) " · piezas ${e.piezas.entries.joinToString { "${it.key} ${it.value}" }}" else "",
+                "letras ${e.letraTitulos.ifBlank { "las de tu estilo" }} / ${e.letraTexto.ifBlank { "las de tu estilo" }} · texto al ${(e.escala * 100).toInt()} %",
             ).joinToString("\n")
         })
-        r += Seccion("Lo último que ha pasado (guardar y la cuenta)", Registro.ultimas(ctx).map { l -> l.substringBefore("  ") to l.substringAfter("  ") }.ifEmpty { listOf("Registro" to "nada todavía") })
+        r += Seccion("Lo último que ha pasado (al guardar)", Registro.ultimas(ctx).map { l -> l.substringBefore("  ") to l.substringAfter("  ") }.ifEmpty { listOf("Registro" to "nada todavía") })
         return r
     }
 
     /** Todo, como texto plano (para copiarlo o compartirlo). */
     fun texto(ctx: Context): String = buildString {
-        append("PTAH · QUÉ VE TU MÓVIL\n")
+        append("WIDGETS · QUÉ VE TU MÓVIL\n")
         secciones(ctx).forEach { s ->
             append("\n== ${s.titulo} ==\n")
             s.filas.forEach { (k, v) -> append("$k: ${v.replace("\n", "\n    ")}\n") }
@@ -120,11 +120,11 @@ fun PantDiagnostico(alVolver: () -> Unit) {
         Antetitulo("Diagnóstico", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Qué ve tu móvil", 44.sp, 48.sp, letterSpacing = (-1).sp)
         Filete(3.dp)
-        Text("Lo que Ptah sabe de este móvil y de tus widgets. Si algo no sale bien, cópialo y mándalo: no lleva nada secreto (ni tu usuario, ni tu correo, ni claves).",
+        Text("Lo que Widgets sabe de este móvil y de tus widgets. Si algo no sale bien, cópialo y mándalo: no lleva nada secreto (ni tu usuario, ni tu correo, ni claves).",
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 10.dp))
         Spacer(Modifier.height(12.dp))
         AccionGrande(null, "Copiar el informe", Modifier.fillMaxWidth()) {
-            runCatching { ctx.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Ptah: qué ve tu móvil", Diagnostico.texto(ctx))) }
+            runCatching { ctx.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Widgets: qué ve tu móvil", Diagnostico.texto(ctx))) }
             aviso = "Copiado. Pégalo donde quieras."
         }
         Spacer(Modifier.height(8.dp))
@@ -138,7 +138,7 @@ fun PantDiagnostico(alVolver: () -> Unit) {
             Antetitulo(s.titulo)
             s.filas.forEach { (k, v) ->
                 Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                    Text(k.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp)
+                    Text(k, color = Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 13.sp)
                     Text(v, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp)
                 }
                 Filete(1.dp, Line, Modifier.padding(top = 6.dp))

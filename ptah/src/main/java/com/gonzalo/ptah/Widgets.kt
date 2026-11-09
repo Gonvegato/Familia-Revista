@@ -37,7 +37,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /*
- * El widget de Ptah: uno solo para todos los diseños ([WPtah]), redimensionable a cualquier tamaño. Al ponerlo en la pantalla de inicio,
+ * El widget de Widgets: uno solo para todos los diseños ([WPtah]), redimensionable a cualquier tamaño. Al ponerlo en la pantalla de inicio,
  * [ConfigWidgetActivity] te deja elegir uno de tus diseños (o hacer uno). Cada widget se dibuja entero para su tamaño de verdad, en claro y
  * en oscuro ([Pintor], el mismo dibujo que la vista previa del editor), y encima lleva:
  *  - los relojes: la hora, la fecha y las agujas van **dibujadas** con la letra de verdad del diseño, y el widget se vuelve a pintar
@@ -47,7 +47,7 @@ import kotlin.math.sqrt
  *    respetan todos los lanzadores: en ColorOS sale Roboto);
  *  - las zonas para tocar ([Zona]): lo de cada tipo (abrir una app, buscar, las alarmas…).
  * Se vuelve a pintar al cambiar el diseño o la apariencia, a medianoche (lo que cambia cada día: el mes, la cuenta atrás), cada 15–30
- * minutos ([Refresco]: el tiempo y la batería) y al abrir Ptah. La configuración de cada widget (qué diseño lleva) es de este móvil: no viaja.
+ * minutos ([Refresco]: el tiempo y la batería) y al abrir Widgets. La configuración de cada widget (qué diseño lleva) es de este móvil: no viaja.
  */
 
 class WPtah : AppWidgetProvider() {
@@ -67,7 +67,7 @@ class WPtah : AppWidgetProvider() {
 
 object Widgets {
     const val ACCION_MEDIANOCHE = "com.gonzalo.ptah.MEDIANOCHE"
-    /** Abrir Ptah en el editor de un diseño. */
+    /** Abrir Widgets en el editor de un diseño. */
     const val EXTRA_EDITAR = "editar"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     @Volatile private var pendiente: Job? = null
@@ -120,7 +120,6 @@ object Widgets {
     fun preparar(ctx: Context) {
         Skin.cargar(ctx)
         if (TemaAtrio.tonos == null) TemaAtrio.cargarGuardado(ctx)
-        Cuenta.cargar(ctx)
     }
 
     /** De uno en uno: dos repintados a la vez (el del minuto y el de un cambio) se pisaban. */
@@ -257,7 +256,7 @@ object Widgets {
     }
 
     /** Lo que sale en un widget sin diseño (recién puesto sin elegir, o con el suyo borrado): un toque y eliges otro. */
-    private fun sinDiseno(id: Int) = Diseno("sin$id", "Elige un diseño", TipoNota.id, Estilo(radio = 22f), mapOf("ante" to "Ptah", "titulo" to "Elige un diseño", "texto" to "Un toque y eliges cuál de tus widgets va aquí."))
+    private fun sinDiseno(id: Int) = Diseno("sin$id", "Elige un diseño", TipoNota.id, Estilo(radio = 22f), mapOf("ante" to "Widgets", "titulo" to "Elige un diseño", "texto" to "Un toque y eliges cuál de tus widgets va aquí."))
 
     private fun huecos(r: android.graphics.RectF, w: Float, h: Float, d: Float): IntArray {
         fun px(v: Float) = (max(0f, v) * d).roundToInt()

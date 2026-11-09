@@ -153,7 +153,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
         val estimada = remember(id) { Motor.fechaEstimada(id) }
         Campo("Fecha del partido en FC", fecha, estimada?.let { "Si no la pones: ${Fechas.texto(it)} (la anterior + 7 días)" } ?: "dd/mm/aaaa, la del calendario del juego") { fecha = it.take(20) }
         if (fecha.isNotBlank() && Fechas.lee(fecha) == null) Nota("No entiendo esa fecha: ponla como 24/08/2026.", color = Acento)
-        else if (fecha.isBlank() && estimada == null) Text("Con poner la del primer partido, Shai calcula las siguientes (una semana después). Sirve para los récords de edad.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
+        else if (fecha.isBlank() && estimada == null) Text("Con poner la del primer partido, FcFeed calcula las siguientes (una semana después). Sirve para los récords de edad.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
         Campo("¿Has ganado un título con este partido?", titulo, "LaLiga, Copa del Rey… (si no, déjalo vacío)") { titulo = it }
         Spacer(Modifier.height(22.dp))
         val listo = rival.isNotBlank() && gf.isNotBlank() && gc.isNotBlank()

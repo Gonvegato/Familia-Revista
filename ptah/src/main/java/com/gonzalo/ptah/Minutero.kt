@@ -15,7 +15,7 @@ import android.os.Build
  * Coste: un dibujo y un envío al lanzador por minuto y por reloj con la pantalla encendida (`MinuteroTest` mide el dibujo).
  *
  * El permiso: `USE_EXACT_ALARM` (Android 13 o más; se concede al instalar, sin preguntar: Google Play lo limita a las apps de reloj y
- * alarmas, pero Ptah se instala desde tu kDrive, no desde Play) y `SCHEDULE_EXACT_ALARM` en Android 12 (concedido de serie, se puede
+ * alarmas, pero Widgets se instala desde tu kDrive, no desde Play) y `SCHEDULE_EXACT_ALARM` en Android 12 (concedido de serie, se puede
  * quitar en Ajustes del móvil). En Android 10 y 11 no hace falta. Si no se pueden poner alarmas exactas (o eliges en Ajustes «con la letra
  * del móvil»), la hora va como `TextClock`/`AnalogClock` ([Vivo]): siempre en hora, pero con la letra del sistema.
  */
@@ -57,18 +57,18 @@ object Minutero {
 
     /** Por qué la hora va ahora con la letra del móvil (null: va dibujada, con la letra del diseño). */
     fun motivo(ctx: Context): String? = when {
-        letraDelMovil(ctx) -> "lo has elegido en Ajustes → Avanzado («con la letra del móvil»)"
-        !puedeExactas(ctx) -> "Android no deja a Ptah poner alarmas exactas (canScheduleExactAlarms = no): falta el permiso «Alarmas y recordatorios»"
+        letraDelMovil(ctx) -> "lo has elegido en Ajustes → General («con la letra del móvil»)"
+        !puedeExactas(ctx) -> "Android no deja a Widgets poner alarmas exactas (canScheduleExactAlarms = no): falta el permiso «Alarmas y recordatorios»"
         else -> null
     }
 
-    /** ¿Ptah tiene limitada la actividad en segundo plano? (entonces el minutero puede no llegar) */
+    /** ¿Widgets tiene limitada la actividad en segundo plano? (entonces el minutero puede no llegar) */
     fun restringida(ctx: Context): Boolean = runCatching { ctx.getSystemService(android.app.ActivityManager::class.java)?.isBackgroundRestricted == true }.getOrDefault(false)
     fun sinOptimizar(ctx: Context): Boolean = runCatching { ctx.getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(ctx.packageName) == true }.getOrDefault(false)
 
     /**
      * ¿El minutero se ha quedado atrás? (hay relojes dibujados y la última vez que se pusieron en hora fue hace más de 10 minutos, con la
-     * pantalla encendida: el ahorro de batería no deja llegar las alarmas). Se mira al abrir Ptah.
+     * pantalla encendida: el ahorro de batería no deja llegar las alarmas). Se mira al abrir Widgets.
      */
     fun atrasado(ctx: Context): Boolean {
         if (relojVivo(ctx) || relojes(ctx).isEmpty()) return false
@@ -99,7 +99,7 @@ object Minutero {
     fun abreAlarmas(ctx: Context): Boolean = Build.VERSION.SDK_INT >= 31 &&
         runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
 
-    /** Pide que la batería no limite a Ptah (el cuadro de Android; si no sale, la lista de apps de la batería). */
+    /** Pide que la batería no limite a Widgets (el cuadro de Android; si no sale, la lista de apps de la batería). */
     @android.annotation.SuppressLint("BatteryLife")
     fun abreBateria(ctx: Context): Boolean =
         runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess ||

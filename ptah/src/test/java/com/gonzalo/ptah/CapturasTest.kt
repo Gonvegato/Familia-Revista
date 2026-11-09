@@ -40,7 +40,7 @@ abstract class CapturasBase {
 
     private fun foto(nombre: String) {
         rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
-        com.github.takahirom.roborazzi.captureScreenRoboImage("$dir/ptah-$tema-$nombre.png")
+        com.github.takahirom.roborazzi.captureScreenRoboImage("$dir/widgets-$tema-$nombre.png")
     }
 
     @Test fun pantallas() {
@@ -66,7 +66,7 @@ abstract class CapturasBase {
         val porTipo = Tipos.TODOS.map { t -> disenos.firstOrNull { it.tipo == t.id } ?: t.nuevo() }
         val accesos = Accesos.nuevo().copy(nombre = "Mis apps").con("items", listOf("app:com.android.chrome", "app:com.whatsapp", "web:elpais.com|El País"))
         rule.setContent {
-            PtahTheme {
+            WidgetsTheme {
                 Surface(Modifier.fillMaxSize(), color = Paper) {
                     when (cual) {
                         0 -> PantPortada(false, alAbrir = {}, alPlantilla = {}, alNuevo = {}, alAjustes = {})
@@ -89,7 +89,7 @@ abstract class CapturasBase {
                             ContenidoSelector("La aguja de las horas", "#12393A", 0xFF12393A.toInt(), true, "Con la tinta o el acento", {}, {})
                         }
                         in 300..302 -> androidx.compose.runtime.key(cual) { PantAjustes(alVolver = {}, inicial = cual - 300) }
-                        5 -> PtahApp(eligiendo = true)
+                        5 -> WidgetsApp(eligiendo = true)
                     }
                 }
             }

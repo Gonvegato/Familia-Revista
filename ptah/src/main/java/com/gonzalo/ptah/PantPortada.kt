@@ -14,11 +14,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 
 /*
- * La portada: la cabecera de la revista (PTAH, el número del día y la fecha), «Tus widgets» con la miniatura de cada diseño, «+ Nuevo» y,
+ * La portada: el nombre de la app y los ajustes, «Tus widgets» con la miniatura de cada diseño, «+ Nuevo» y,
  * para empezar, las plantillas. Al poner un widget en la pantalla de inicio es la misma, para elegir cuál va allí.
  */
 
@@ -40,24 +42,26 @@ fun PantPortada(eligiendo: Boolean, guardado: String? = null, alCerrarGuardado: 
     val cols = if (esAncha()) 3 else 2
     val recien = guardado?.let { id -> disenos.firstOrNull { it.id == id } }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
-        Spacer(Modifier.height(14.dp))
-        Cabecera(104.sp)
-        val hoy = LocalDate.now()
-        FileteCabecera()
-        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Etiqueta("Nº ${hoy.dayOfYear}", color = Charcoal)
-            Spacer(Modifier.width(12.dp))
-            Text("${Formatos.dia(hoy.dayOfWeek)} ${hoy.dayOfMonth} de ${Formatos.mes(hoy.monthValue)}".uppercase(), color = Charcoal, fontFamily = Body, fontSize = 10.sp,
-                fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Cabecera(30.sp, Modifier.weight(1f))
+            if (!eligiendo) BotonIcono(Icons.Outlined.Settings, "Ajustes") { alAjustes() }
         }
-        Filete(1.dp)
+        if (Migracion.aviso.isNotBlank()) {
+            Spacer(Modifier.height(10.dp))
+            Tarjeta(borde = Acento) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Text(Migracion.aviso, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.weight(1f))
+                    Text("Vale", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, modifier = Modifier.padding(start = 12.dp).tocable { Migracion.olvidaAviso(ctx) })
+                }
+                Text("Desde ahora todo se guarda solo en este móvil.", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
         if (eligiendo) {
             Text("¿Qué va en este widget?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp, modifier = Modifier.padding(top = 14.dp))
             Text("Un toque en uno de tus diseños y se pone. O empieza con una plantilla, o crea uno nuevo: al guardarlo, va a este widget.",
-                color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
+                color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
         } else {
-            Text("Tus widgets, a tu manera. Un toque y lo cambias.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 12.dp))
-            EnlaceRevista("Ajustes") { alAjustes() }
+            Text("Tus widgets, a tu manera. Un toque y lo cambias.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 2.dp))
             if (!Intro.vista(ctx)) Explicacion { Intro.cierra(ctx) }
         }
 
@@ -73,7 +77,7 @@ fun PantPortada(eligiendo: Boolean, guardado: String? = null, alCerrarGuardado: 
             Antetitulo("Tus diseños", Modifier.weight(1f))
             if (disenos.isNotEmpty()) Text("${disenos.size}", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
         }
-        Text(if (eligiendo) "Los que has hecho (están en tu cuenta)." else "Los que has hecho; están en tu cuenta. Un toque en uno: ponerlo en la pantalla de inicio, editarlo, copiarlo o borrarlo.",
+        Text(if (eligiendo) "Los que has hecho." else "Los que has hecho. Un toque en uno: ponerlo en la pantalla de inicio, editarlo, copiarlo o borrarlo.",
             color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
         if (disenos.isEmpty()) Nota("Aún no tienes ninguno: crea uno o empieza con una plantilla de las de abajo.", Modifier.padding(top = 8.dp))
         Rejilla(disenos, cols) { d ->
@@ -94,9 +98,9 @@ fun PantPortada(eligiendo: Boolean, guardado: String? = null, alCerrarGuardado: 
             Rejilla(Plantillas.TODAS, cols) { (p, c) -> Tarjeta(p, c, Tipos.de(p.tipo)?.nombre.orEmpty(), "Usar esta →", enPantalla = false, resaltada = false, deSerie = true) { alPlantilla(p) } }
         }
 
-        Spacer(Modifier.height(26.dp)); Filete(3.dp); Spacer(Modifier.height(10.dp))
-        Etiqueta("Ptah $VERSION")
-        Text("Ptah es hermana de Jonsu, Hathor, Nut, Bastet, Seshat y Thot. ${OpenMeteo.LICENCIA}", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
+        Spacer(Modifier.height(26.dp)); Filete(1.dp); Spacer(Modifier.height(10.dp))
+        Etiqueta("Widgets $VERSION")
+        Text(OpenMeteo.LICENCIA, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
     }
 }
@@ -108,8 +112,8 @@ private fun Explicacion(alCerrar: () -> Unit) {
         Antetitulo("Cómo va")
         listOf(
             "Crea un diseño o empieza con una plantilla" to "Un reloj, el tiempo, tus apps, una foto… con tus colores y tus letras.",
-            "Guárdalo" to "Va a «Tus diseños» (y a tu cuenta: lo tienes en todos tus móviles).",
-            "Ponlo en tu pantalla de inicio" to "Con «Ponerlo en la pantalla de inicio» o, desde el lanzador, en Widgets → Ptah.",
+            "Guárdalo" to "Va a «Tus diseños», en este móvil.",
+            "Ponlo en tu pantalla de inicio" to "Con «Ponerlo en la pantalla de inicio» o, desde el lanzador, en Widgets → Widgets.",
         ).forEachIndexed { i, (t, x) ->
             Row(Modifier.fillMaxWidth().padding(top = 10.dp)) {
                 Text("${i + 1}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 30.sp, modifier = Modifier.width(34.dp))
@@ -154,7 +158,7 @@ private fun Tarjeta(d: Diseno, c: Tamanos.Celdas, tipo: String, estado: String, 
         Miniatura(d, c, Modo.oscuro, alto = 124f)
         Text(d.nombre.ifBlank { "Sin nombre" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp,
             maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
-        Text("$tipo · $c".uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, lineHeight = 12.sp, maxLines = 3)
+        Text("$tipo · $c", color = Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, lineHeight = 12.sp, maxLines = 3)
         Text(estado, color = if (enPantalla || deSerie) Acento else Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp,
             fontWeight = if (enPantalla || deSerie) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.padding(top = 2.dp))
     }
@@ -178,7 +182,7 @@ fun PonerEnPantalla(d: Diseno, modifier: Modifier = Modifier) {
         title = { Text("Ponerlo a mano", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                listOf("Mantén pulsado un hueco del fondo de tu pantalla de inicio.", "Toca «Widgets».", "Busca «Ptah» y arrastra su widget a la pantalla.",
+                listOf("Mantén pulsado un hueco del fondo de tu pantalla de inicio.", "Toca «Widgets».", "Busca «Widgets» y arrastra su widget a la pantalla.",
                     "Elige «${d.nombre.ifBlank { "este diseño" }}» en la lista de tus diseños.").forEachIndexed { i, t ->
                     Row(Modifier.padding(vertical = 4.dp)) {
                         Text("${i + 1}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.width(26.dp))
@@ -187,7 +191,7 @@ fun PonerEnPantalla(d: Diseno, modifier: Modifier = Modifier) {
                 }
             }
         },
-        confirmButton = { androidx.compose.material3.TextButton({ pasos = false }) { Text("ENTENDIDO", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } })
+        confirmButton = { androidx.compose.material3.TextButton({ pasos = false }) { Text("Entendido", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold) } })
 }
 
 /** La ficha de un diseño: cómo se ve, dónde está, y ponerlo en la pantalla de inicio, editarlo, copiarlo o borrarlo. */
@@ -222,9 +226,9 @@ fun PantFicha(id: String, alVolver: () -> Unit, alEditar: (Diseno) -> Unit, alCo
     }
     if (borrar) androidx.compose.material3.AlertDialog(onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Borrar «${d.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text("Se borra de tu cuenta (en todos tus móviles). Los widgets que lo llevan te dejarán elegir otro.", color = Muted, fontFamily = Body) },
-        confirmButton = { androidx.compose.material3.TextButton({ Disenos.borra(ctx, d.id); borrar = false; alVolver() }) { Text("BORRAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { androidx.compose.material3.TextButton({ borrar = false }) { Text("NO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } })
+        text = { Text("Se borra de este móvil. Los widgets que lo llevan te dejarán elegir otro.", color = Muted, fontFamily = Body) },
+        confirmButton = { androidx.compose.material3.TextButton({ Disenos.borra(ctx, d.id); borrar = false; alVolver() }) { Text("Borrar", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold) } },
+        dismissButton = { androidx.compose.material3.TextButton({ borrar = false }) { Text("NO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } })
 }
 
 /** «+ Nuevo»: los tipos, por grupos, cada uno con su muestra y lo que hace. */
@@ -232,7 +236,7 @@ fun PantFicha(id: String, alVolver: () -> Unit, alEditar: (Diseno) -> Unit, alCo
 fun PantNuevo(alVolver: () -> Unit, alElegir: (TipoWidget) -> Unit) {
     val mg = margen()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
-        RevistaTopBar(alVolver, "Ptah")
+        RevistaTopBar(alVolver, "Widgets")
         Antetitulo("Nuevo", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("¿Qué widget?", 48.sp, 52.sp, letterSpacing = (-1.2).sp)
         Filete(3.dp)
@@ -258,13 +262,13 @@ fun PantNuevo(alVolver: () -> Unit, alElegir: (TipoWidget) -> Unit) {
 
 /**
  * El aviso de la portada para los relojes: si van con la letra del móvil porque falta un permiso, si se han quedado atrás o si Android
- * frena a Ptah en segundo plano. Con los botones que llevan a cada sitio (los de ColorOS incluidos).
+ * frena a Widgets en segundo plano. Con los botones que llevan a cada sitio (los de ColorOS incluidos).
  */
 @Composable
 fun AvisoReloj() {
     val ctx = LocalContext.current
     var vez by remember { mutableIntStateOf(0) }
-    // (se vuelve a mirar al volver a Ptah: el permiso se da fuera)
+    // (se vuelve a mirar al volver a Widgets: el permiso se da fuera)
     DisposableEffect(Unit) {
         val owner = androidx.lifecycle.ProcessLifecycleOwner.get()
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) vez++ }
@@ -279,14 +283,14 @@ fun AvisoReloj() {
     Column(Modifier.fillMaxWidth().padding(top = 14.dp).background(Acento.copy(alpha = 0.12f)).border(2.dp, Acento).padding(16.dp)) {
         Text("Tus relojes", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.sp)
         Text(when {
-            sinPermiso -> "Van con la letra del móvil: para dibujar la hora con la tuya, Ptah tiene que poder despertarse cada minuto, y Android no le deja poner alarmas exactas."
-            restringida -> "Android frena a Ptah en segundo plano: tus relojes pueden quedarse atrás."
-            else -> "Se han quedado atrás: el ahorro de batería no deja a Ptah ponerlos en hora cada minuto."
+            sinPermiso -> "Van con la letra del móvil: para dibujar la hora con la tuya, Widgets tiene que poder despertarse cada minuto, y Android no le deja poner alarmas exactas."
+            restringida -> "Android frena a Widgets en segundo plano: tus relojes pueden quedarse atrás."
+            else -> "Se han quedado atrás: el ahorro de batería no deja a Widgets ponerlos en hora cada minuto."
         }, color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.height(10.dp))
         if (sinPermiso && android.os.Build.VERSION.SDK_INT >= 31) AccionGrande(null, "Permitir las alarmas", Modifier.fillMaxWidth()) { Minutero.abreAlarmas(ctx) }
-        MagLink("Que la batería no frene a Ptah", "Sin restricciones de batería") { Minutero.abreBateria(ctx) }
-        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus; si no, los ajustes de Ptah") { Minutero.abreInicioAutomatico(ctx) }
+        MagLink("Que la batería no frene a Widgets", "Sin restricciones de batería") { Minutero.abreBateria(ctx) }
+        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus; si no, los ajustes de Widgets") { Minutero.abreInicioAutomatico(ctx) }
         if (sinPermiso) MagLink("Dejarlos con la letra del móvil", "Se ponen en hora solos y no gastan; este aviso no vuelve") { Minutero.ponLetraDelMovil(ctx, true); vez++ }
     }
 }

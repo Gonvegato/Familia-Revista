@@ -10,22 +10,14 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- Los relojes dibujados con tu letra se repintan cada minuto (Minutero.kt): una alarma exacta que no despierta al móvil.
-         USE_EXACT_ALARM (Android 13+) se concede al instalar; Google Play lo limita a apps de reloj, pero Ptah no va por Play. En Android 12, SCHEDULE_EXACT_ALARM -->
+         USE_EXACT_ALARM (Android 13+) se concede al instalar; Google Play lo limita a apps de reloj, pero esta app no va por Play. En Android 12, SCHEDULE_EXACT_ALARM -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <!-- Al encender el móvil, las alarmas se han perdido: se vuelven a poner -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Para pedir, con un botón, que el ahorro de batería no frene el minutero (Ptah no va por Google Play) -->
+    <!-- Para pedir, con un botón, que el ahorro de batería no frene el minutero (esta app no va por Google Play) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <queries>
-        <!-- Las hermanas y los colores de Jonsu -->
-        <package android:name="com.gonzalo.hiedra" />
-        <package android:name="com.gonzalo.marfil" />
-        <package android:name="com.gonzalo.cobalto" />
-        <package android:name="com.gonzalo.gamerate" />
-        <package android:name="com.gonzalo.mostaza" />
-        <package android:name="com.gonzalo.cobre" />
-        <provider android:authorities="com.gonzalo.gamerate.tema" />
         <!-- Los accesos directos: las apps del cajón de apps; y los navegadores, el buscador, las alarmas y el calendario -->
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -48,10 +40,10 @@
         <package android:name="com.coloros.oppoguardelf" />
     </queries>
     <application
-        android:label="Ptah"
+        android:label="Widgets"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:theme="@style/Ptah"
+        android:theme="@style/Widgets"
         android:allowBackup="false">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"

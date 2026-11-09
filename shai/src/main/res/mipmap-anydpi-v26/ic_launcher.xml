@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- El icono de Shai: la cabecera de la revista en pequeño (SHAI, la raya, ■ CARRERA y la raya fina, en un marco), sobre gris grafito, con el oro viejo de un trofeo. El monocromo es el mismo dibujo, para los iconos con tema. Lo saca herramientas/escritorio/icono-marca.py. -->
+<!-- El icono de FcFeed: un bocadillo blanco (una red social) con un balón, sobre negro. El monocromo es el mismo dibujo, para los iconos con tema. Lo saca herramientas/apartes/iconos.py. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@drawable/ic_launcher_shai_bg"/>
-    <foreground android:drawable="@drawable/ic_launcher_shai_fg"/>
-    <monochrome android:drawable="@drawable/ic_launcher_shai_mono"/>
+    <background android:drawable="@drawable/ic_launcher_fcfeed_bg"/>
+    <foreground android:drawable="@drawable/ic_launcher_fcfeed_fg"/>
+    <monochrome android:drawable="@drawable/ic_launcher_fcfeed_mono"/>
 </adaptive-icon>

@@ -58,11 +58,11 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
     }
 
     PaginaRevista {
-        RevistaTopBar(alVolver, "Shai")
+        RevistaTopBar(alVolver, "FcFeed")
         Antetitulo("Nueva carrera", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Empieza tu historia", 44.sp, 48.sp, letterSpacing = (-1.2).sp, modifier = Modifier.padding(top = 2.dp))
         Filete(3.dp)
-        Text("Pon lo de tu partida de FC tal cual: Shai no se inventa nada del campo.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic,
+        Text("Pon lo de tu partida de FC tal cual: FcFeed no se inventa nada del campo.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic,
             fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 8.dp))
         BloqueEditor("Tu carrera")
         MagChoice(Rol.entries.map { it.nombre }, modo.ordinal, "Modo carrera") { modo = Rol.entries[it] }
@@ -75,7 +75,7 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
         Campo("Fecha de nacimiento en FC (opcional)", nacimiento, "dd/mm/aaaa, la de tu jugador en el juego") { nacimiento = it.take(20) }
         val nac = Fechas.lee(nacimiento)
         Text(when {
-            nacimiento.isBlank() -> "Con ella (y la fecha de cada partido) Shai cuenta tu edad exacta, en años y días, para compararte con los récords del fútbol de verdad: el goleador más joven de la Champions, el debutante más joven de LaLiga…"
+            nacimiento.isBlank() -> "Con ella (y la fecha de cada partido) FcFeed cuenta tu edad exacta, en años y días, para compararte con los récords del fútbol de verdad: el goleador más joven de la Champions, el debutante más joven de LaLiga…"
             nac == null -> "No entiendo esa fecha: ponla como 12/08/2008."
             else -> "Nacido el ${Fechas.texto(nac)}. Con la fecha de cada partido, tu edad exacta para los récords."
         }, color = if (nacimiento.isNotBlank() && nac == null) Acento else Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
@@ -102,10 +102,10 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
         Text(nivel.explica + ". Fama de salida: ${nivel.fama}; seguidores: ${Alcance.texto(Alcance.seguidores(nivel.fama))}; te cubren ${nivel.medios}. Luego sube (o baja) poco a poco con lo que hagas.",
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
         Campo("Tu historia (opcional)", trayectoria, "«23 años, ganador del Balón de Oro», «canterano que debuta», «vuelve tras una cesión»…", lineas = 4) { trayectoria = it }
-        Text("Lo que cuentes aquí es tu pasado: Shai lo respeta (también los premios que digas haber ganado).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
+        Text("Lo que cuentes aquí es tu pasado: FcFeed lo respeta (también los premios que digas haber ganado).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
         Campo("Dinero en el banco (euros)", dinero, "Lo que tiene ahora", teclado = KeyboardType.Number) { dinero = it.filter { c -> c.isDigit() } }
         val contrato = Contratos.primero(nivel, club.trim().ifBlank { "tu club" }, temporada.trim(), modo)
-        Text("Tu primer contrato lo pone Shai (no el de FC): ${Formato.euros(contrato.sueldo)} a la semana hasta ${contrato.hasta}, prima de firma de ${Formato.euros(contrato.prima)} y cláusula de ${Formato.eurosCorto(contrato.clausula)}" +
+        Text("Tu primer contrato lo pone FcFeed (no el de FC): ${Formato.euros(contrato.sueldo)} a la semana hasta ${contrato.hasta}, prima de firma de ${Formato.euros(contrato.prima)} y cláusula de ${Formato.eurosCorto(contrato.clausula)}" +
             (if (contrato.porGol > 0) ", con ${Formato.euros(contrato.porGol)} por gol" else "") + ". Las renovaciones y los fichajes llegarán según te vaya.",
             color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 6.dp))
         BloqueEditor(if (modo == Rol.MISTER) "Tus cifras" else "Tu carta de FC")
@@ -117,7 +117,7 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
                 repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
             }
         }
-        Text(if (modo == Rol.MISTER) "En FC el míster no tiene carta: estas cifras son de Shai (de 1 a 99), para que la prensa tenga de qué hablar." else
+        Text(if (modo == Rol.MISTER) "En FC el míster no tiene carta: estas cifras son de FcFeed (de 1 a 99), para que la prensa tenga de qué hablar." else
             "Cuando cambien en tu partida, las pones en la plantilla del partido (la media) o en tu perfil.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         BloqueEditor("Cómo es")
         Campo("Su forma de ser", rasgos, "Ambicioso, fiestero y mujeriego", lineas = 3) { rasgos = it }

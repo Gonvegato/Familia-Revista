@@ -47,7 +47,7 @@ object Fechas {
 }
 
 /**
- * Un récord del fútbol de verdad que ha batido (o igualado) en su carrera de Shai: desde entonces, en su universo, la marca a batir es la
+ * Un récord del fútbol de verdad que ha batido (o igualado) en su carrera de FcFeed: desde entonces, en su universo, la marca a batir es la
  * suya ([valor]). [marca]: cómo se cuenta («17 años y 30 días», «51 goles»).
  */
 data class RecordSuyo(val n: Int, val valor: Double, val marca: String, val paso: Int, val temporada: String, val iguala: Boolean = false) {
@@ -58,7 +58,7 @@ data class RecordSuyo(val n: Int, val valor: Double, val marca: String, val paso
 }
 
 /**
- * Las comparaciones de su carrera en Shai con los récords reales de [RecordsReales] (solo los no dudosos, y solo con lo que se puede sacar
+ * Las comparaciones de su carrera en FcFeed con los récords reales de [RecordsReales] (solo los no dudosos, y solo con lo que se puede sacar
  * de lo que él mete: sus partidos, la competición de cada uno, sus fechas y su fecha de nacimiento). Lo de edad necesita las dos fechas:
  * sin fecha de nacimiento no se compara nada de días.
  */
@@ -149,7 +149,7 @@ object Historicos {
 
     // ---------------------------------------------------------------- las fechas de cada partido
 
-    /** La fecha de cada partido (la que metió o la que estimó Shai). */
+    /** La fecha de cada partido (la que metió o la que estimó FcFeed). */
     private fun fecha(p: Partido): LocalDate? = Fechas.lee(p.fecha)
 
     private fun nacimiento(u: Universo): LocalDate? = Fechas.lee(u.personaje.nacimiento)
@@ -206,7 +206,7 @@ object Historicos {
         val su = Fechas.textoEdad(a, d)
         val est = Fechas.lee(p.fecha) != null && p.fechaEstimada
         val nombre = u.personaje.nombreCorto
-        val cola = if (est) " (la fecha del partido la estimó Shai)" else ""
+        val cola = if (est) " (la fecha del partido la estimó FcFeed)" else ""
         if (r.dias < 0) {
             // Por años (Advocaat): lo bate si tiene más años cumplidos
             val objetivo = suyo?.valor?.toInt()?.div(1000) ?: r.anios

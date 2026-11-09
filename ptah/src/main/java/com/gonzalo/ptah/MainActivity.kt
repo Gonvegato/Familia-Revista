@@ -20,9 +20,9 @@ class MainActivity : ComponentActivity() {
         Actualizador.init(this)
         if (savedInstanceState == null) atiende(intent)
         setContent {
-            PtahTheme {
+            WidgetsTheme {
                 BarrasDelSistema(this)
-                PtahApp(pedido = pedido)
+                WidgetsApp(pedido = pedido)
             }
         }
     }
@@ -39,15 +39,13 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         val c = applicationContext
-        // Los colores de Jonsu pueden haber cambiado mientras estabas en ella; y la batería, el sitio y el tiempo, al día
+        // La batería, el sitio y el tiempo, al día
         kotlin.concurrent.thread {
-            TemaAtrio.refrescar(c)
             Ubicacion.actualiza(c)
             Refresco.tiempo(c)
             Widgets.pedir(c)
             Refresco.programa(c)
         }
-        SincroP.iniciar(c)
     }
 }
 

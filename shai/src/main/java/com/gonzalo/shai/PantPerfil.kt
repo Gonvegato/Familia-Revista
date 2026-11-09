@@ -195,7 +195,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit) {
     Seccion("Tu club")
     SeccionClub(u)
 
-    Seccion("Tu contrato", "el de Shai, no el de FC")
+    Seccion("Tu contrato", "el de FcFeed, no el de FC")
     TarjetaContrato(u)
 
     Seccion("Fuera del campo")
@@ -291,11 +291,11 @@ private fun CartaFC(u: Universo) {
                 }
             }
         }
-        if (pj.atributos.isEmpty() && pj.media == 0) TextoTarjeta(if (u.modo == Rol.MISTER) "En FC el míster no tiene carta: pon tus cifras de Shai en «Editar perfil y carta»." else "Pon tu media y tus atributos de FC en «Editar perfil y carta».", Modifier.padding(top = 8.dp))
+        if (pj.atributos.isEmpty() && pj.media == 0) TextoTarjeta(if (u.modo == Rol.MISTER) "En FC el míster no tiene carta: pon tus cifras de FcFeed en «Editar perfil y carta»." else "Pon tu media y tus atributos de FC en «Editar perfil y carta».", Modifier.padding(top = 8.dp))
     }
 }
 
-/** Tu contrato (el de Shai). */
+/** Tu contrato (el de FcFeed). */
 @Composable
 private fun TarjetaContrato(u: Universo) {
     val c = u.contrato
@@ -323,16 +323,16 @@ private fun TarjetaContrato(u: Universo) {
     }
 }
 
-/** Lo que Shai recuerda: plegado, con la jornada en que se escribió. */
+/** Lo que FcFeed recuerda: plegado, con la jornada en que se escribió. */
 @Composable
 private fun Memoria(u: Universo) {
     var abierta by rememberSaveable { mutableStateOf(false) }
     val ambito = rememberCoroutineScope()
     var aviso by remember { mutableStateOf<String?>(null) }
     val va = EnCurso.ids["m" + u.id]
-    Seccion("Lo que Shai recuerda", if (u.memoria.isNotBlank()) "jornada ${u.memoriaPaso}" else null)
+    Seccion("Lo que FcFeed recuerda", if (u.memoria.isNotBlank()) "jornada ${u.memoriaPaso}" else null)
     Tarjeta(alHacer = if (u.memoria.isNotBlank()) ({ abierta = !abierta }) else null) {
-        if (u.memoria.isBlank()) TextoTarjeta("Todavía nada: cada ${Motor.CADA_MEMORIA} jornadas y al cerrar la temporada, Shai resume las tramas abiertas, tu gente y lo que has decidido.")
+        if (u.memoria.isBlank()) TextoTarjeta("Todavía nada: cada ${Motor.CADA_MEMORIA} jornadas y al cerrar la temporada, FcFeed resume las tramas abiertas, tu gente y lo que has decidido.")
         else {
             val lineas = u.memoria.lines().filter { it.isNotBlank() }
             (if (abierta) lineas else lineas.take(2)).forEach { l -> Text("• " + l.trimStart('-', '•', ' '), color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 3.dp)) }
@@ -618,7 +618,7 @@ fun CerrarTemporada(u: Universo, preguntando0: Boolean = false) {
     aviso?.let { Nota(it, Modifier.padding(top = 4.dp), color = Acento) }
     if (preguntando) AlertDialog(onDismissRequest = { preguntando = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Cerrar la temporada $t?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text("Shai escribe el balance con tus cifras, los premios (de medios inventados), tus vacaciones y el mercado de verano, y pasas a ${Motor.siguienteTemporada(u.temporada).ifBlank { "la siguiente" }} con un año más." +
+        text = { Text("FcFeed escribe el balance con tus cifras, los premios (de medios inventados), tus vacaciones y el mercado de verano, y pasas a ${Motor.siguienteTemporada(u.temporada).ifBlank { "la siguiente" }} con un año más." +
             (u.contrato?.takeIf { Contratos.quedan(it, u.temporada) <= 1 }?.let { " Tu contrato con el ${it.club} acaba con esta temporada: si no has renovado, quedarás libre." } ?: "") +
             " No se puede deshacer.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
@@ -628,11 +628,11 @@ fun CerrarTemporada(u: Universo, preguntando0: Boolean = false) {
         dismissButton = { TextButton({ preguntando = false }) { Text("AÚN NO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } })
 }
 
-/** Récords e hitos: los de tu carrera en Shai (con tus cifras). */
+/** Récords e hitos: los de tu carrera en FcFeed (con tus cifras). */
 @Composable
 fun RecordsEHitos(u: Universo, ps: List<Partido>) {
     val r = Hitos.records(u, ps)
-    Seccion("Récords e hitos", "de tu carrera en Shai")
+    Seccion("Récords e hitos", "de tu carrera en FcFeed")
     // (de dos en dos: con cuatro en fila, «seguidos marcando» no cabe)
     val cifras = if (u.modo == Rol.JUGADOR) listOf("${r.goles}" to "goles", "${r.hatTricks}" to (if (r.hatTricks == 1) "hat-trick" else "hat-tricks"),
         "${r.rachaMarcando}" to "partidos seguidos marcando", "${r.rachaInvicto}" to "partidos seguidos sin perder")

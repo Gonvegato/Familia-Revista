@@ -10,8 +10,6 @@ Las apps de la familia en un solo sitio, alrededor de **una sola cuenta**:
 | `azabache/` | Jonsu | `com.gonzalo.gamerate` | La revista: valoraciones, diario, cifras, y donde se ponen las claves |
 | `mostaza/` | Hathor | `com.gonzalo.mostaza` | Tus películas y series: biblioteca y reproductor (con los addons de Stremio) |
 | `cobre/` | Nut | `com.gonzalo.cobre` | La tele (IPTV): tus listas M3U y tus logins de Xtream, con su guía y su videoclub; en el móvil, la tablet y Android TV |
-| `ptah/` | Ptah | `com.gonzalo.ptah` | Tus widgets de la pantalla de inicio, diseñados a tu manera (relojes, el tiempo, accesos, fotos…) |
-| `shai/` | Shai | `com.gonzalo.shai` | Tus carreras de EA Sports FC: la prensa, la red, los mensajes, las ofertas y la vida de fuera del campo, escritas por Claude |
 
 Cada app conserva su paquete de siempre, así que cada versión nueva se instala encima de la que ya tienes.
 
@@ -42,29 +40,6 @@ de tu cuenta (`/claves`: llevan tus contraseñas); tus favoritos, los grupos que
 cuenta como todo lo demás. Los canales y la guía son caché de cada dispositivo (se bajan a trozos: listas y guías enormes no se tienen
 enteras en memoria). Lo que no es pantalla está en `iptv/`, en Kotlin puro, y lo usa también Nut del ordenador (1.0.0, en `escritorio/cobre`). Todo en `docs/cobre/HISTORIA.md`.
 
-## Ptah (los widgets)
-
-La más nueva: un creador de widgets para la pantalla de inicio, con la revista de la familia. Haces tus diseños (relojes digitales y de
-agujas, el calendario del mes, un buscador, accesos a tus apps y webs, el tiempo de Open-Meteo, la batería, notas, cuentas atrás y fotos)
-con todos los colores, letras, bordes y esquinas que quieras, y los pones en la pantalla de inicio del tamaño que quieras. Los relojes se
-mueven solos (con `TextClock` y `AnalogClock`). Tus diseños van en tu cuenta (`ajustes/ptah_disenos`); las fotos se quedan en el móvil.
-Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Todo en `docs/ptah/HISTORIA.md`.
-
-## Shai (tu carrera de EA Sports FC)
-
-La más nueva: el acompañante de tus modos carrera de EA Sports FC 26 (de jugador o de míster), con varias carreras a la vez. Cada partido que
-juegas lo metes (rápido, completo o con una foto de la pantalla de estadísticas, que lee Claude y tú revisas) y Shai monta lo de fuera del
-campo: la portada del día siguiente, la red (como X), los mensajes, las ofertas («la app manda»: si aceptas aquí, lo haces en el juego), las
-decisiones con consecuencias, el dinero en euros, la bolsa y las compras (todo inventado), tu gente y tu fama. Entre partido y partido, dos
-cosas que pasan mientras tanto (por lotes, a mitad de precio). Lo del campo lo pones tú: Shai no se inventa ni lesiones, ni suplencias, ni
-resultados. Las personas reales solo salen de pasada; lo íntimo y lo escandaloso, siempre con personajes inventados.
-
-Lo escribe Claude con **tu clave de la API** (la de los créditos de tu plan, en Claude Console), que va solo a `/claves` (`shai_anthropic`):
-Haiku 5.5 para la red, los mensajes y las fotos; Sonnet 5.5 para lo demás. Shai cuenta lo gastado con lo que dice cada respuesta y se para al
-llegar al tope del mes (de serie, 100 $). Tus carreras van en tu cuenta (la colección `shai`); la foto de tu personaje se queda en el móvil.
-Entra con tu cuenta como las demás, pero Jonsu no enseña nada suyo. Solo Android. Desde la 0.2.0: contratos de Shai, nivel y alcance que suben poco a poco (la edad pesa), récords e hitos, decisiones que caducan, memoria y cierre de temporada. Desde la 0.4.0, una interfaz de app (barra abajo, chats con burbujas, la red como X) y la **cuenta atrás** de los récords que tienes a tiro. Desde la 0.5.0, Perfil y Cifras rehechos, colores de serie gris grafito, crema y oro viejo, y el **club identificado con una búsqueda web** (lo confirmas tú; va en lo que escribe Claude). Compara tu carrera con 200 **récords del fútbol de verdad** (con fecha de nacimiento y de partido, la edad exacta) y lleva tus **rivales**, que surgen solos. Con un **modo prueba** (Ajustes → IA) para ver
-todas las funciones sin IA y sin gastar (plantillas de ejemplo; carreras aparte, solo en el móvil). Todo en `docs/shai/HISTORIA.md`.
-
 ## En el ordenador (Linux y Mac)
 
 Jonsu, Thot, Bastet, Seshat, Hathor y Nut también son apps de escritorio, en tu kDrive («Mi carpeta/versiones»): `.dmg` para el Mac (Apple
@@ -92,7 +67,8 @@ una abierta a la vez, y desde cualquiera se abren las otras. Hathor y Nut ven co
 - `nucleo/`: la cuenta de la familia en Kotlin puro (sirve también para el PC). Sus pruebas van contra el emulador oficial de Firebase
   con las reglas de verdad (`herramientas/emulador.sh`).
 - `familia/`: lo común de Android (la cuenta en cada app, entrar una vez, los trabajos de fondo, las portadas).
-- `hiedra/`, `marfil/`, `cobalto/`, `azabache/`, `mostaza/`, `cobre/`, `ptah/`, `shai/`: las apps de Android.
+- `hiedra/`, `marfil/`, `cobalto/`, `azabache/`, `mostaza/`, `cobre/`: las apps de Android.
+- `ptah/` y `shai/`: **Widgets** y **FcFeed**, dos apps que no son de la familia (ver abajo).
 - `iptv/`: lo de Nut que no es pantalla (listas M3U, Xtream Codes, la guía XMLTV), en Kotlin puro (sirve también para el PC).
 - `escritorio/`: las seis para **Linux y Mac** (Compose Multiplatform), contra la misma cuenta (`docs/ESCRITORIO.md`), y el motor de
   torrents de Hathor para el ordenador (`escritorio/torrent`, los mismos archivos que `torrent/`).
@@ -101,3 +77,19 @@ una abierta a la vez, y desde cualquiera se abren las otras. Hathor y Nut ven co
 - `docs/<app>/`: el historial de cada app (`HISTORIA.md`) y sus capturas; `docs/RECONSTRUCCION.md`: cómo se hizo y qué falta;
   `docs/ESCRITORIO.md`: las versiones de Linux y Mac (cómo se instalan, qué hacen y qué todavía no).
 - `firma/`: las claves de firma (no están en el repositorio); `herramientas/firmar.py` firma cada versión con la de la familia.
+
+## Apps que no son de la familia
+
+Viven en este repositorio (comparten la herramienta de firma y el código común de Kotlin, `nucleo/`, para leer una vez la cuenta de antes),
+pero **no son de la familia**: sin cuenta, sin la revista, sin entrar con las demás, sin Jonsu. Todo lo suyo se guarda solo en el móvil.
+Se actualizan solas desde tu kDrive, cada una desde su carpeta. Conservan su paquete y su firma de siempre, así que se instalan encima.
+
+| Módulo | App | Paquete | Para qué | Carpeta en kDrive |
+|---|---|---|---|---|
+| `ptah/` | Widgets | `com.gonzalo.ptah` | Tus widgets de la pantalla de inicio, del tamaño que quieras (relojes, el tiempo, accesos, fotos…). Minimal oscuro | `Mi carpeta/widgets` (`Widgets-x.y.z.apk`) |
+| `shai/` | FcFeed | `com.gonzalo.shai` | Tus carreras de EA Sports FC como una red social: la red, los mensajes, la prensa, las ofertas y la vida de fuera del campo, escritas por Claude | `Mi carpeta/fcfeed` (`FcFeed-x.y.z.apk`) |
+
+Hasta la 0.5.x se llamaban Ptah y Shai y eran de la familia; desde la 0.6.0, la primera vez que se abren traen al móvil lo que tenían en la
+cuenta (diseños; carreras, gasto y clave de la API; el token de kDrive) y ya no la usan. Lo de antes se queda en la cuenta sin tocar.
+Todo en `docs/widgets/HISTORIA.md` y `docs/fcfeed/HISTORIA.md`; los iconos, en `herramientas/apartes/iconos.py`.
+

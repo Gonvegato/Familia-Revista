@@ -98,10 +98,10 @@ object Letras {
  * La hora de un diseño con una letra de Google Fonts va con la de la familia que más se le parece.
  */
 enum class LetraFija(val nombre: String, val fuente: Int, val diseno: Int, val mayusculas: Boolean = false, val espaciado: Float = 0f) {
-    TITULOS("Atrio de títulos", R.font.display_semibold, R.layout.w_vivo_titulos),
-    CURSIVA("Atrio en cursiva", R.font.display_italic, R.layout.w_vivo_cursiva),
-    TEXTO("Atrio de texto", R.font.body_medium, R.layout.w_vivo_texto),
-    NEGRITA("Atrio en negrita", R.font.body_bold, R.layout.w_vivo_negrita),
+    TITULOS("Clásica de títulos", R.font.display_semibold, R.layout.w_vivo_titulos),
+    CURSIVA("Clásica en cursiva", R.font.display_italic, R.layout.w_vivo_cursiva),
+    TEXTO("Clásica de texto", R.font.body_medium, R.layout.w_vivo_texto),
+    NEGRITA("Clásica en negrita", R.font.body_bold, R.layout.w_vivo_negrita),
     VITRINA("Vitrina", R.font.bricolage, R.layout.w_vivo_vitrina),
     /** Versalitas (mayúsculas espaciadas, como los antetítulos): para la fecha. */
     VERSALITAS("Versalitas", R.font.body_bold, R.layout.w_vivo_versalitas, mayusculas = true, espaciado = 0.16f);

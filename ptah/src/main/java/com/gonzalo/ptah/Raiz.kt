@@ -19,16 +19,11 @@ import androidx.compose.ui.platform.LocalContext
 
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
-    // (el diagnóstico: lo que llega de la cuenta y lo que sube, de los diseños)
-    EspejoCuenta.registro = { ctx, g, k, v, que ->
-        if (g.nodo == Disenos.GRUPO.nodo) {
-            Registro.apunta(ctx, "$que: ${if (v == null) k else Registro.corto(v)}")
-            if (que.endsWith("aplicado")) Registro.origen(ctx, k, "llegó de la cuenta")
-        }
-    }
-    Cuenta.cargar(c)
+    Secretos.inicia(c)
     Skin.cargar(c); TemaAtrio.cargarGuardado(c)
-    SincroP.iniciar(c)
+    Migracion.cargaAviso(c)
+    // Una sola vez: lo que había en la cuenta de antes, a este móvil
+    if (!Migracion.hecha(c)) kotlin.concurrent.thread { runCatching { Migracion.haz(c.applicationContext) } }
 }
 
 /** Dónde estás: la portada, la ficha de un diseño, elegir el tipo de uno nuevo, el editor y los ajustes. */
@@ -65,9 +60,9 @@ class Pedido(val editar: String?)
  * a la portada con él resaltado y con «Ponerlo en la pantalla de inicio» a mano.
  */
 @Composable
-fun PtahApp(pedido: Pedido? = null, eligiendo: Boolean = false, alElegir: (Diseno) -> Unit = {}, inicial: List<Pagina> = listOf(Pagina.Portada), guardadoInicial: String? = null) {
+fun WidgetsApp(pedido: Pedido? = null, eligiendo: Boolean = false, alElegir: (Diseno) -> Unit = {}, inicial: List<Pagina> = listOf(Pagina.Portada), guardadoInicial: String? = null) {
     val ctx = LocalContext.current
-    // (guardadas aunque Android cierre Ptah por detrás, como hace ColorOS al irte a la pantalla de inicio: al volver, sigues donde estabas,
+    // (guardadas aunque Android cierre Widgets por detrás, como hace ColorOS al irte a la pantalla de inicio: al volver, sigues donde estabas,
     // también a medio editar)
     var pila by rememberSaveable(stateSaver = PILA) { mutableStateOf(inicial) }
     /** El diseño que se acaba de guardar (la portada lo resalta y ofrece ponerlo en la pantalla). */

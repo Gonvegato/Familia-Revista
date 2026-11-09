@@ -126,7 +126,7 @@ fun SeccionClub(u: Universo, enInicio: Boolean = false) {
                 Spacer(Modifier.width(10.dp))
                 TituloTarjeta(if (u.clubInfo != null && !u.clubInfo.es(u.club)) "Identifica tu club nuevo: ${u.club}" else "Identifica tu club: ${u.club}", Modifier.weight(1f))
             }
-            TextoTarjeta("Shai busca en la web qué club es (su estadio, su ciudad, su entrenador, sus derbis, su momento) para que la prensa y la red hablen de él de verdad. " +
+            TextoTarjeta("FcFeed busca en la web qué club es (su estadio, su ciudad, su entrenador, sus derbis, su momento) para que la prensa y la red hablen de él de verdad. " +
                 (if (Prueba.activo) "Modo prueba: datos de ejemplo, gratis." else "Cuesta unos céntimos (Sonnet y hasta tres búsquedas web)."), Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(10.dp))
             if (!ClaveApi.hay) TextoTarjeta("Pon tu clave en Ajustes → IA para poder buscarlo.", color = Acento)

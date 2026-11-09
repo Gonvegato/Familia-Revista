@@ -9,12 +9,12 @@ android {
     namespace = "com.gonzalo.ptah"
     compileSdk = 35
     defaultConfig {
-        // Los widgets de la familia: otro paquete, otra app, la misma cuenta y la misma revista
+        // Widgets: tus widgets, del tamaño que quieras (el paquete de siempre, para instalarse encima)
         applicationId = "com.gonzalo.ptah"
         minSdk = 29
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.5.0"
+        versionCode = 7
+        versionName = "0.6.0"
     }
     buildTypes {
         getByName("release") {
@@ -22,7 +22,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Sin firmar aquí: la firma de la familia (sin linaje: Ptah nace ya con ella) la pone herramientas/firmar.py
+            // Sin firmar aquí: la firma (la misma de siempre, para instalarse encima) la pone herramientas/firmar.py
             signingConfig = null
         }
     }
@@ -49,7 +49,8 @@ tasks.register<Copy>("copyRobolectricDeps") { from(robolectricDeps); into(layout
 
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
-    implementation(project(":familia"))
+    // Solo lo común de Kotlin (Json, el disco) y, una vez, leer la cuenta de antes (Migracion.kt)
+    implementation(project(":nucleo"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")

@@ -31,14 +31,13 @@ abstract class CapturasBase {
 
     private fun foto(nombre: String) {
         rule.waitForIdle(); Thread.sleep(300); rule.waitForIdle()
-        com.github.takahirom.roborazzi.captureScreenRoboImage("$dir/shai-$tema-$nombre.png")
+        com.github.takahirom.roborazzi.captureScreenRoboImage("$dir/fcfeed-$tema-$nombre.png")
     }
 
     @Test fun pantallas() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
-        Cuenta.cargar(ctx); Skin.cargar(ctx)
+        Skin.cargar(ctx)
         Ejemplo.prepara()
-        Cuenta.dentroFijo = true
         // Con las plantillas del modo prueba (lo más parecido a lo que escribe Claude), sin el aviso del modo prueba
         Motor.claude = Claude({ ClaveApi.lee() }, TransporteDePrueba(kotlin.random.Random(11)))
         Motor.separacion = 0
@@ -63,22 +62,22 @@ abstract class CapturasBase {
         var otra by androidx.compose.runtime.mutableStateOf(u.id)
         var chatAbierto by androidx.compose.runtime.mutableStateOf<String?>(null)
         rule.setContent {
-            ShaiTheme {
+            FcTheme {
                 Surface(Modifier.fillMaxSize(), color = Paper) {
                     key(cual) {
                         when (cual) {
                             0 -> PantPortada({}, {}, {})
                             in 10..16 -> PantCarrera(otra, {}, {}, {}, inicial = cual - 10)
-                            17 -> PantCarrera(otra, {}, {}, {}, inicial = 0, articuloAbierto = true)
+                            17 -> PantCarrera(otra, {}, {}, {}, inicial = 1, articuloAbierto = true)
                             18 -> PaginaRevista { CerrarTemporada(Carreras.de(otra)!!, preguntando0 = true) }
                             20 -> PantPartido(u.id, {}, {})
                             21 -> PantPartido(u.id, {}, {}, comoInicial = 1)
                             30 -> PantNueva({}, {})
-                            40 -> PantAjustes({}, inicial = 2)
+                            40 -> PantAjustes({}, inicial = 1)
                             41 -> PantAjustes({}, inicial = 0)
-                            in 60..61 -> PantCarrera(otra, {}, {}, {}, inicial = 0, articuloAbierto = cual == 61)
+                            in 60..61 -> PantCarrera(otra, {}, {}, {}, inicial = 1, articuloAbierto = cual == 61)
                             63 -> PaginaRevista { Carreras.de(otra)?.let { TusRivales(it) } }
-                            64 -> PantCarrera(otra, {}, {}, {}, inicial = 1)
+                            64 -> PantCarrera(otra, {}, {}, {}, inicial = 0)
                             in 70..71 -> PantCarrera(otra, {}, {}, {}, chatInicial = chatAbierto)
                             80 -> PaginaRevista { ConfirmaClub(betis, false, {}, {}) }
                             62 -> PaginaRevista { Carreras.de(otra)?.let { RecordsHistoricos(it, Carreras.partidos(otra).map { x -> x.second }) } }
@@ -91,7 +90,7 @@ abstract class CapturasBase {
         PESTANAS.forEachIndexed { i, n -> cual = 10 + i; foto("1$i-carrera-${n.lowercase()}") }
         cual = 80; foto("80-club-confirmacion")
         // (en un móvil larguísimo: Cifras y Perfil enteros, y nada más)
-        if (largas) { cual = 14; foto("14-cifras-entera"); cual = 16; foto("16-perfil-entero"); Cuenta.dentroFijo = null; ClaveApi.fija = null; Gasto.mesFijo = null; return }
+        if (largas) { cual = 15; foto("14-cifras-entera"); cual = 14; foto("16-perfil-entero"); ClaveApi.fija = null; Gasto.mesFijo = null; return }
         cual = 17; foto("17-carrera-noticia")
         // Un chat con una decisión abierta y uno sin ella (un grupo, si lo hay)
         val convs = conversaciones(Carreras.entradasDe(u.id))
@@ -105,7 +104,7 @@ abstract class CapturasBase {
         cual = 21; foto("21-partido-completo")
         cual = 30; foto("30-nueva-carrera")
         cual = 40; foto("40-ajustes-ia")
-        cual = 41; foto("41-ajustes-apariencia")
+        cual = 41; foto("41-ajustes-aspecto")
         // Un récord histórico (el goleador más joven de la Champions, con 17 años y 30 días) y la sección de récords reales
         val dia = java.time.LocalDate.of(2026, 10, 21)
         val (rc, _) = Motor.crea(Ejemplo.universo().let { it.copy(personaje = it.personaje.copy(edad = 17, nacimiento = Fechas.iso(dia.minusDays(30).minusYears(17)))) })
@@ -130,24 +129,24 @@ abstract class CapturasBase {
         val (ct, _) = Motor.crea(Ejemplo.universo().let { it.copy(personaje = it.personaje.copy(edad = 17, nacimiento = Fechas.iso(dct.minusDays(20).minusYears(17)))) })
         Motor.partido(ct.id, Partido("2026/27", "LaLiga EA Sports", "Girona FC", true, 1, 0, 90, 0, 0, 7.0, fecha = Fechas.iso(dct)))
         otra = ct.id
-        cual = 10; foto("65-cuenta-atras-inicio")
-        cual = 11; foto("66-cuenta-atras-red")
+        cual = 11; foto("65-cuenta-atras-explorar")
+        cual = 10; foto("66-cuenta-atras-feed")
         otra = u.id
         // El cierre de la temporada
         Motor.cierraTemporada(u.id)
-        cual = 10; foto("19-carrera-fin-de-temporada")
+        cual = 11; foto("19-carrera-fin-de-temporada")
         // El modo prueba (sin IA): una carrera nueva con sus plantillas de ejemplo
         Prueba.pon(ctx, true)
         val (p, _) = Motor.crea(Ejemplo.universo())
         Motor.partido(p.id, Ejemplo.partido(1, 0, "Valencia CF")); Motor.partido(p.id, Ejemplo.partido(0, 2, "Girona FC"))
         cual = 0; foto("50-prueba-portada")
         otra = p.id
-        cual = 10; foto("51-prueba-carrera")
-        cual = 11; foto("52-prueba-red")
-        cual = 12; foto("53-prueba-mensajes")
+        cual = 10; foto("51-prueba-feed")
+        cual = 11; foto("52-prueba-explorar")
+        cual = 13; foto("53-prueba-mensajes")
         cual = 40; foto("54-prueba-ajustes-ia")
         Prueba.vacia(); Prueba.pon(ctx, false); Motor.separacion = 6 * 3600_000L
-        Cuenta.dentroFijo = null; ClaveApi.fija = null; Gasto.mesFijo = null
+        ClaveApi.fija = null; Gasto.mesFijo = null
     }
 }
 
@@ -166,3 +165,7 @@ class CapturasLargasTest : CapturasBase() { override val tema = "larga"; overrid
 
 @RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = "w411dp-h6000dp-xhdpi", fontScale = 1.3f)
 class CapturasLargasLetraGrandeTest : CapturasBase() { override val tema = "larga-letra-grande"; override val largas = true }
+
+/** De noche (el modo oscuro del sistema): negro puro. */
+@RunWith(RobolectricTestRunner::class) @GraphicsMode(GraphicsMode.Mode.NATIVE) @Config(sdk = [34], qualifiers = "w411dp-h2000dp-night-xhdpi")
+class CapturasNocheTest : CapturasBase() { override val tema = "noche" }

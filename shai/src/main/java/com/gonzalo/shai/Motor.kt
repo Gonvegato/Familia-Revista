@@ -1,29 +1,30 @@
 package com.gonzalo.shai
 
-import com.gonzalo.familia.LaFamilia
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 /**
- * Tu clave de la API de Claude (la de tu organización de Claude Console, la de los créditos del plan): es tuya y va con tu cuenta,
- * **solo en `/claves/<uid>`** (`shai_anthropic`), que no puede leer nadie más (ni tu pareja). Nunca va a `/users`, ni a un registro, ni a
- * un mensaje de error. Se manda en la cabecera `x-api-key`.
+ * Tu clave de la API de Claude (la de tu organización de Claude Console, la de los créditos del plan): se guarda **cifrada en este
+ * móvil** ([Secretos], con una clave del almacén de Android que no sale de él). Nunca va a un registro ni a un mensaje de error. Se
+ * manda en la cabecera `x-api-key`.
  */
 object ClaveApi {
     const val CLAVE = "shai_anthropic"
-    /** En las pruebas: la clave, sin cuenta. */
+    /** En las pruebas: la clave, sin caja. */
     @Volatile var fija: String? = null
+    /** Sube al cambiarla (las pantallas lo leen para volver a pintarse). */
+    var version by androidx.compose.runtime.mutableIntStateOf(0)
 
-    fun lee(): String { fija?.let { return it }; return runCatching { LaFamilia.familia.clave(CLAVE) }.getOrDefault("").trim() }
+    fun lee(): String { fija?.let { return it }; return runCatching { Secretos.lee(CLAVE) }.getOrDefault("").trim() }
     /** ¿Se puede pedir? (en modo prueba, siempre: no hace falta clave). */
     val hay: Boolean get() = Prueba.activo || hayDeVerdad
     /** ¿Hay una clave puesta de verdad? */
-    val hayDeVerdad: Boolean get() { runCatching { LaFamilia.cambios }; return lee().isNotBlank() }
+    val hayDeVerdad: Boolean get() { version; return lee().isNotBlank() }
 
     fun guarda(k: String) {
         val t = k.trim()
-        if (fija != null) { fija = t; return }
-        val f = LaFamilia.familia
-        check(f.sesion.dentro) { "Entra en tu cuenta primero (Ajustes → Cuenta)." }
-        f.ponClave(CLAVE, t)
+        if (fija != null) { fija = t } else Secretos.pon(CLAVE, t)
+        version++
     }
 
     /** «sk-ant-…a1B2» (para enseñar cuál tienes puesta sin enseñarla). */
@@ -31,7 +32,7 @@ object ClaveApi {
 }
 
 /**
- * Lo que hace Shai con lo que metes: guardar el partido, pedir la red, la prensa y lo demás, aplicarlo a tu carrera y mandar los dos
+ * Lo que hace FcFeed con lo que metes: guardar el partido, pedir la red, la prensa y lo demás, aplicarlo a tu carrera y mandar los dos
  * eventos de entre partidos (por lotes). Todo bloquea: se llama fuera del hilo principal. Si algo no llega (sin conexión, el tope…), lo
  * del partido queda guardado igual y se puede volver a pedir lo que falta ([reintenta]).
  */
@@ -41,7 +42,7 @@ object Motor {
     @Volatile var reloj: () -> Long = { System.currentTimeMillis() }
     /** Cuánto tarda en salir el segundo evento de entre partidos tras el primero. */
     @Volatile var separacion: Long = 6 * 3600_000L
-    /** Cada cuántas jornadas se rehace lo que Shai recuerda. */
+    /** Cada cuántas jornadas se rehace lo que FcFeed recuerda. */
     const val CADA_MEMORIA = 3
 
     /** La carrera de la que se está pidiendo algo ahora (en este hilo): el modo prueba la usa para no repetir. */
@@ -91,7 +92,7 @@ object Motor {
     /**
      * Guarda el partido (y la jornada: sueldo, bolsa, la fama que da…), caduca las decisiones que no contestaste, saca los eventos que
      * estaban esperando y pide la red y la prensa (que cuenta también lo que dejaste sin contestar). Luego, si toca, manda los dos eventos
-     * de entre partidos por lotes y, cada [CADA_MEMORIA] jornadas, rehace lo que Shai recuerda. Devuelve la entrada del partido y, si algo
+     * de entre partidos por lotes y, cada [CADA_MEMORIA] jornadas, rehace lo que FcFeed recuerda. Devuelve la entrada del partido y, si algo
      * no llegó, por qué.
      */
     fun partido(universo: String, p0: Partido): Pair<Entrada, String?> = synchronized(cerrojo) { en(universo) {
@@ -106,7 +107,7 @@ object Motor {
             u = Carreras.guarda(u.copy(personaje = u.personaje.copy(edad = a))) } } }
         u = Carreras.guarda(Vida.jornada(u, p))
         var e = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PARTIDO, reloj(), u.paso, partido = p, pendiente = "red,prensa"))
-        // Los hitos y récords (los de Shai, con sus cifras): se apuntan, dan algo de fama y la red y la prensa los cuentan
+        // Los hitos y récords (los de FcFeed, con sus cifras): se apuntan, dan algo de fama y la red y la prensa los cuentan
         val hitos = Hitos.nuevos(u, Carreras.partidos(u.id).map { it.second }, u.paso)
         if (hitos.isNotEmpty()) {
             val ef = Efectos(fuera = mapOf(Fuera.FAMA to hitos.sumOf { Hitos.fama(it) }))
@@ -369,9 +370,9 @@ object Motor {
         } catch (x: Exception) { null to mensaje(x) }
     } }
 
-    // ---------------------------------------------------------------- lo que Shai recuerda
+    // ---------------------------------------------------------------- lo que FcFeed recuerda
 
-    /** Rehace lo que Shai recuerda de la carrera (Sonnet, corto). Devuelve por qué no se pudo, si no se pudo. */
+    /** Rehace lo que FcFeed recuerda de la carrera (Sonnet, corto). Devuelve por qué no se pudo, si no se pudo. */
     fun recuerda(universo: String): String? = en(universo) {
         val u = Carreras.de(universo) ?: return@en null
         try {
@@ -396,7 +397,7 @@ object Motor {
 
     /**
      * Cierra la temporada: el balance (con tus cifras), los premios (de medios inventados), las vacaciones con su decisión y el mercado de
-     * verano; luego pasa a la temporada siguiente (y un año más) y rehace lo que Shai recuerda. Devuelve por qué no se pudo, si no se pudo.
+     * verano; luego pasa a la temporada siguiente (y un año más) y rehace lo que FcFeed recuerda. Devuelve por qué no se pudo, si no se pudo.
      */
     fun cierraTemporada(universo: String): String? = synchronized(cerrojo) { en(universo) {
         val u = Carreras.de(universo) ?: return@en null
