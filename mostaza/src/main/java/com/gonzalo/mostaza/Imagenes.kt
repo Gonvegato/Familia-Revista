@@ -229,10 +229,10 @@ fun BotonMarco(texto: String, modifier: Modifier = Modifier, color: Color = Char
  * una tapa de tela con el título en grotesca (como las de Seshat y Bastet).
  */
 @Composable
-fun PortadaTitulo(t: Titulo, modifier: Modifier = Modifier) {
+fun PortadaTitulo(t: Titulo, modifier: Modifier = Modifier, conTexto: Boolean = true) {
     val local = remember(t.portada) { t.portada.takeIf { it.isNotBlank() && File(it).isFile } }
     Box(modifier.clipToBounds().background(telaDe(t.nombre))) {
-        @Composable fun Tapa() = TapaDeTela(t.nombre, Modifier.fillMaxSize())
+        @Composable fun Tapa() = TapaDeTela(t.nombre, Modifier.fillMaxSize(), conTexto)
         when {
             local != null -> ImagenEncuadrada(local, t.encPortada, Modifier.fillMaxSize(), t.nombre)
             t.poster.isNotBlank() -> SubcomposeAsyncImage(model = t.poster, contentDescription = t.nombre, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(), loading = { Tapa() }, error = { Tapa() })
@@ -241,10 +241,11 @@ fun PortadaTitulo(t: Titulo, modifier: Modifier = Modifier) {
     }
 }
 
-/** Una tapa de tela (sin imagen): su color, sacado del título, y el título en grotesca clara. */
+/** Una tapa de tela (sin imagen): su color, sacado del título, y el título en grotesca clara (sin él, [conTexto] = false: ampliada como foto de apertura). */
 @Composable
-fun TapaDeTela(nombre: String, modifier: Modifier = Modifier) {
+fun TapaDeTela(nombre: String, modifier: Modifier = Modifier, conTexto: Boolean = true) {
     val c = telaDe(nombre)
+    if (!conTexto) { Box(modifier.background(c)); return }
     BoxWithConstraints(modifier.background(c).padding(8.dp), contentAlignment = Alignment.BottomStart) {
         val tam = (maxWidth.value * 0.15f).coerceIn(10f, 26f)
         Text(nombre.uppercase(), color = sobre(c), fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = tam.sp, lineHeight = (tam * 1.08f).sp,

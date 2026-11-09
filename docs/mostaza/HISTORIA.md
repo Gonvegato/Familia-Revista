@@ -17,6 +17,18 @@ tablet tumbada y de pie, en claro y en oscuro: portada, Viendo, Visto, Explorar,
 fuentes, los addons, Ajustes (también la pestaña de las fuentes) y el reproductor (sus controles, los subtítulos y el episodio siguiente).
 Y en la tele, la sala (`CapturasTeleTest`, 1920 × 1080 en modo de tele).
 
+## 0.7.1 · Arreglos de las capturas de 0.7.0
+
+- **La apertura de la ficha sin fondo:** el póster ampliado no pinta el título de la tapa generada, y su parte de abajo se funde con su
+  color: lo que lleve escrito un póster a esa altura ya no asoma cortado junto a la etiqueta de estado.
+- **Pestañas de Ajustes (y todas las filas de pestañas):** en bloque de la dirección C, como las páginas, y al desplazarse la fila
+  empieza siempre en el borde de una pestaña (si hace falta, deja un hueco al final para poder llegar): nada de «…TOR» cortado a la
+  izquierda con la letra grande. El degradado de los bordes, más estrecho.
+- **La semana:** la etiqueta del día tocado va por encima de todas las barras (antes, una barra vecina más alta la tapaba).
+- **Viendo:** en la lista, la línea de abajo dice solo lo que queda («QUEDAN 23 MIN»: el capítulo ya va arriba) y cabe junto a
+  «SEGUIR →»; bajo los pósters de la portada, «T1 · E3» o lo que queda, sin cortarse.
+- **Capturas:** el fondo de prueba de las fichas es ahora una imagen apaisada sin texto, como los de TMDB (antes era el póster).
+
 ## 0.7.0 · La cara de Seshat y Bastet (dirección C) y los colores «Palomitas»
 
 Hathor pasa a la misma altura que Seshat 0.20.3 y Bastet 0.8.1: toda la app en una pantalla, el cartel «Ahora ves», la ficha a doble página,

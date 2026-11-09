@@ -1,5 +1,6 @@
 package com.gonzalo.mostaza
 
+import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -83,30 +84,35 @@ fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifi
     val desplazamiento = rememberScrollState()
     val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
     var anchoFila by remember { mutableIntStateOf(0) }
+    var relleno by remember { mutableIntStateOf(0) }   // hueco al final para que la fila pueda empezar en el borde de una pestaña
     LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
-        val (x, w) = sitios[sel] ?: return@LaunchedEffect
-        if (anchoFila <= 0) return@LaunchedEffect
-        if (x < desplazamiento.value || x + w > desplazamiento.value + anchoFila) desplazamiento.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, desplazamiento.maxValue))
+        if (anchoFila <= 0 || sitios[sel] == null) return@LaunchedEffect
+        val obj = desplazamientoPestanas(sitios, sel, anchoFila, desplazamiento.value)
+        val contenido = desplazamiento.maxValue + anchoFila - relleno
+        relleno = (obj + anchoFila - contenido).coerceAtLeast(0)
+        kotlinx.coroutines.withTimeoutOrNull(600) { androidx.compose.runtime.snapshotFlow { desplazamiento.maxValue }.first { it >= obj } }
+        if (obj != desplazamiento.value) desplazamiento.animateScrollTo(obj)
     }
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().onGloballyPositioned { anchoFila = it.size.width }.drawWithContent {
                 // Un degradado en los bordes cuando hay más pestañas por un lado o por otro (para que no parezcan cortadas)
                 drawContent()
-                val f = 28.dp.toPx()
+                val f = 14.dp.toPx()
                 if (desplazamiento.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
                 if (desplazamiento.value < desplazamiento.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-            }.horizontalScroll(desplazamiento), verticalAlignment = Alignment.Bottom) {
+            }.horizontalScroll(desplazamiento).height(IntrinsicSize.Max), verticalAlignment = Alignment.CenterVertically) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }
+                Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }
                     .semantics { selected = on; role = Role.Tab }.tocable(fuera = 0.dp) { onSel(i) }
-                    .background(if (on) Acento else Color.Transparent)
-                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.Bottom) {
-                    // Dirección C: la elegida, en un bloque del acento
-                    Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    cuentas?.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Muted, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                    .background(if (on) AcentoBloque else Color.Transparent)
+                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // Dirección C: la elegida, en un bloque del acento (como las pestañas de las páginas)
+                    Text(n.uppercase(), color = if (on) SobreBloque else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
+                    cuentas?.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreBloque else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
                 }
             }
+            if (relleno > 0) Spacer(Modifier.width(with(androidx.compose.ui.platform.LocalDensity.current) { relleno.toDp() }))
         }
         Filete(2.dp)
     }
@@ -387,4 +393,19 @@ fun BotonC(texto: String, modifier: Modifier = Modifier, fondo: Color = Charcoal
         Text(texto.uppercase(), color = letra, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = 1.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(end = 8.dp))
         Text("→", color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 18.sp)
     }
+}
+
+
+/**
+ * A dónde desplazar una fila de pestañas para que la elegida se vea entera y la fila empiece siempre en el borde de una pestaña (nunca
+ * con un trozo de otra cortado a la izquierda, como «…TOR» de «Reproductor»). Devuelve el sitio (en px del contenido); puede pasar del
+ * máximo actual: entonces la fila añade un hueco al final para poder llegar ([relleno]).
+ */
+fun desplazamientoPestanas(sitios: Map<Int, Pair<Int, Int>>, sel: Int, ancho: Int, actual: Int): Int {
+    val (x, w) = sitios[sel] ?: return actual
+    val bordes = sitios.values.map { it.first }.sorted()
+    val alineado = actual == 0 || actual in bordes
+    if (alineado && x >= actual && x + w <= actual + ancho) return actual
+    // El primer borde que deja ver entera la elegida (por la derecha); si la elegida es más ancha que la fila, ella misma
+    return bordes.firstOrNull { it >= x + w - ancho && it <= x } ?: x
 }

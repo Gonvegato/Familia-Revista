@@ -294,7 +294,9 @@ private fun TapaConPie(t: Titulo, ancho: Int, alAbrir: (Titulo) -> Unit) {
         val p = Biblioteca.ultimo(t.ref)
         if (t.estado == Estado.VIENDO) {
             if (p != null && !p.visto && p.fraccion > 0f) Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(p.fraccion).fillMaxHeight().background(Acento)) }
-            Text(porDonde(p, t.esSerie).uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.6.sp, lineHeight = 14.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
+            // Corto, para que quepa bajo el póster: «T1 · E3» o «QUEDAN 1 H 48» (sin «min», que se cortaba)
+            val corto = porDonde(p, t.esSerie).split(" · ").let { ps -> ps.filter { it.matches(Regex("T\\d+|E\\d+")) }.joinToString(" · ").ifBlank { ps.joinToString(" · ") } }
+            Text((if (" h " in corto) corto.removeSuffix(" min") else corto).uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.6.sp, lineHeight = 14.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
         } else Text(lineaTipo(t).uppercase(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.4.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
     }
 }

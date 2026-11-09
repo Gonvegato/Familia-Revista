@@ -72,8 +72,8 @@ fun SemanaTocable(d: SemanaCine, modifier: Modifier = Modifier, alto: Int = 74) 
                         .background(if (sel) Acento else if (m >= 1) Charcoal else Line)
                         .then(if (sel) Modifier.border(2.dp, Charcoal) else Modifier))
                     if (sel) {
-                        // La etiqueta, encima de la barra (puede salirse de su columna; no se recorta)
-                        val arriba = if (m >= 1) maxOf(4f, alto * m / tope) else 3f
+                        // La etiqueta, por encima de todas las barras (puede salirse de su columna; así ninguna barra vecina más alta la tapa)
+                        val arriba = alto.toFloat()
                         Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, maxLines = 1, softWrap = false,
                             modifier = Modifier.align(when (i) { 0 -> Alignment.BottomStart; d.semana.lastIndex -> Alignment.BottomEnd; else -> Alignment.BottomCenter })
                                 .offset(y = (-(arriba + 6)).dp)

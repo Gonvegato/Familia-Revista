@@ -72,11 +72,24 @@ class Escaparate(private val ctx: Context) : Http {
         return f.absolutePath
     }
 
+    /** Un fondo a lo ancho de ejemplo (como los backdrops de TMDB: una imagen sin el título escrito), con los colores del póster. */
+    fun fondo(p: P): String {
+        val f = File(ctx.cacheDir, "fondo_${p.id}.png")
+        if (f.exists()) return f.absolutePath
+        val bmp = Bitmap.createBitmap(640, 360, Bitmap.Config.ARGB_8888)
+        Canvas(bmp).apply {
+            drawRect(0f, 0f, 640f, 360f, Paint().apply { shader = LinearGradient(0f, 0f, 640f, 360f, p.b, p.a, Shader.TileMode.CLAMP) })
+            drawCircle(460f, 120f, 60f, Paint().apply { color = 0x33FFFFFF; isAntiAlias = true })
+        }
+        f.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        return f.absolutePath
+    }
+
     private fun breve(p: P) = mapOf("id" to p.id, "type" to p.tipo, "name" to p.nombre, "poster" to poster(p), "releaseInfo" to p.ano, "genres" to p.generos)
 
     private fun meta(p: P): Map<String, Any?> {
         val m = LinkedHashMap<String, Any?>(breve(p))
-        m["description"] = p.desc; m["runtime"] = p.dur; m["imdbRating"] = "8.4"; m["background"] = poster(p)
+        m["description"] = p.desc; m["runtime"] = p.dur; m["imdbRating"] = "8.4"; m["background"] = fondo(p)
         m["cast"] = listOf("Timothée Chalamet", "Zendaya", "Rebecca Ferguson"); m["director"] = listOf("Denis Villeneuve"); m["country"] = "Estados Unidos"
         if (p.tipo == "series") {
             val ahora = System.currentTimeMillis()

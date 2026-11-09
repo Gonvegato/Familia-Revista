@@ -187,7 +187,10 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                 if (conFondo) ImagenEncuadrada(fondo, vista.encFondo, Modifier.fillMaxSize(), "Fondo de $nombre")
                 else BoxWithConstraints(Modifier.fillMaxSize()) {
                     val w = minOf(maxWidth, 720.dp) + 24.dp
-                    Box(Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f)) { PortadaTitulo(vista, Modifier.matchParentSize()) }
+                    // (la tapa generada, sin su título: ampliada, su texto asomaba cortado detrás de la etiqueta)
+                    Box(Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f)) { PortadaTitulo(vista, Modifier.matchParentSize(), conTexto = false) }
+                    // Y abajo se funde con su color: lo que el póster lleve escrito a esa altura no queda cortado a medias junto a la etiqueta
+                    Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.45f).background(Brush.verticalGradient(listOf(Color.Transparent, lerpColor(tela, Color.Black, 0.55f)))))
                 }
                 // Un velo arriba para que se lean «Volver» y las acciones sobre cualquier imagen
                 Box(Modifier.fillMaxWidth().height(VELO_APERTURA).background(veloArriba()))

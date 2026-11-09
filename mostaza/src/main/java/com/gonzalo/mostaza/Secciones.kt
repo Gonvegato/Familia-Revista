@@ -1,5 +1,6 @@
 package com.gonzalo.mostaza
 
+import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -127,7 +128,8 @@ private fun PieFila(t: Titulo, alVer: (() -> Unit)?) {
     val p = Biblioteca.ultimo(t.ref)
     val ms = Biblioteca.msVistos(t.ref)
     val izq = when (t.estado) {
-        Estado.VIENDO -> porDonde(p, t.esSerie).takeIf { p != null }?.uppercase() ?: "SIN EMPEZAR"
+        // (el capítulo ya va arriba, «SERIE · T2 E5»: aquí solo lo que queda, para que quepa en una línea junto a «SEGUIR →»)
+        Estado.VIENDO -> if (p == null) "SIN EMPEZAR" else porDonde(p, t.esSerie).split(" · ").filterNot { it.matches(Regex("T\\d+|E\\d+")) }.joinToString(" · ").ifBlank { porDonde(p, t.esSerie) }.uppercase()
         Estado.ABANDONADO -> (if (p != null) "LA DEJASTE EN " + porDonde(p, t.esSerie).substringBefore(" · quedan").uppercase() else "ABANDONADA") + (if (ms >= 60_000L) " · " + horasCortas(ms) else "")
         Estado.PENDIENTE -> listOfNotNull(if (!t.esSerie && t.minutos > 0) "DURA ${duracion(t.minutos).uppercase()}" else null, if (t.anadido > 0) "AÑADIDA EL ${fechaJunta(t.anadido).uppercase()}" else null).joinToString(" · ").ifBlank { "PENDIENTE" }
         Estado.VISTO -> listOfNotNull(if (t.fin > 0) "TERMINADA EL ${fechaJunta(t.fin).uppercase()}" else "VISTA", if (ms >= 60_000L) horasCortas(ms) else null).joinToString(" · ")
@@ -353,16 +355,20 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>
     val scroll = rememberScrollState()
     val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
     var anchoFila by remember { mutableIntStateOf(0) }
+    var relleno by remember { mutableIntStateOf(0) }   // hueco al final para que la fila pueda empezar en el borde de una pestaña
     LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
-        val (x, w) = sitios[sel] ?: return@LaunchedEffect
-        if (anchoFila <= 0) return@LaunchedEffect
-        if (x < scroll.value || x + w > scroll.value + anchoFila) scroll.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, scroll.maxValue))
+        if (anchoFila <= 0 || sitios[sel] == null) return@LaunchedEffect
+        val obj = desplazamientoPestanas(sitios, sel, anchoFila, scroll.value)
+        val contenido = scroll.maxValue + anchoFila - relleno
+        relleno = (obj + anchoFila - contenido).coerceAtLeast(0)
+        kotlinx.coroutines.withTimeoutOrNull(600) { androidx.compose.runtime.snapshotFlow { scroll.maxValue }.first { it >= obj } }
+        if (obj != scroll.value) scroll.animateScrollTo(obj)
     }
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().onGloballyPositioned { anchoFila = it.size.width }.drawWithContent {
                 // Un degradado en los bordes cuando hay más pestañas por un lado o por otro (para que no parezcan cortadas)
                 drawContent()
-                val f = 28.dp.toPx()
+                val f = 14.dp.toPx()
                 if (scroll.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
                 if (scroll.value < scroll.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
             }.horizontalScroll(scroll).height(IntrinsicSize.Max), verticalAlignment = Alignment.CenterVertically) {
@@ -375,6 +381,7 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>
                     cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreBloque else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
                 }
             }
+            if (relleno > 0) Spacer(Modifier.width(with(androidx.compose.ui.platform.LocalDensity.current) { relleno.toDp() }))
         }
         Filete(2.dp)
     }
