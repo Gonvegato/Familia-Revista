@@ -3,11 +3,16 @@
 @font-face { font-family: AtrioSerif; src: url("fuentes/display_regular.ttf"); font-weight: 400; }
 @font-face { font-family: AtrioSerif; src: url("fuentes/display_semibold.ttf"); font-weight: 600 900; }
 @font-face { font-family: AtrioSerif; src: url("fuentes/display_italic.ttf"); font-style: italic; }
+/* Dirección C («editorial moderna», como la app): la grotesca de la app para titulares, cifras y botones; Inter para el resto */
+@font-face { font-family: SeshatGrot; src: url("fuentes/grotesca.ttf"); font-weight: 200 800; }
+@font-face { font-family: SeshatCuerpo; src: url("fuentes/cuerpo_regular.ttf"); font-weight: 400; }
+@font-face { font-family: SeshatCuerpo; src: url("fuentes/cuerpo_bold.ttf"); font-weight: 600 900; }
 
 :root {
   --bg: #FBF8F1; --fg: #1F1D1A; --muted: #7A746A; --surface: #FFFFFF; --line: rgba(0,0,0,.12);
   --accent: #C8372D;
-  --font-ui: system-ui, "Roboto", sans-serif;
+  --font-ui: SeshatCuerpo, system-ui, "Roboto", sans-serif;
+  --font-grot: SeshatGrot, SeshatCuerpo, system-ui, sans-serif;
   --font-titulo: AtrioSerif, Georgia, "Noto Serif", serif;
   --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -232,3 +237,117 @@ body.menu .volver { bottom: calc(var(--safe-bottom) + 132px); }
   .panel.on { transform: none; }
   .panel .asa { visibility: hidden; }
 }
+
+
+/* ================================================================================================================
+   Dirección C («editorial moderna»), como la app: bloques de tinta, la grotesca en titulares y cifras, filetes de 2 px,
+   botones rectos. La tinta es el color de la letra del tema (--fg) y el papel el de fondo (--bg): en los temas oscuros los
+   bloques se invierten solos.
+   ================================================================================================================ */
+.grot, .panel h2, .titulo b, .pct-grande, .botones button, .paso b, .lectura b, .pal-cab b, .arriba-fila .txt {
+  font-family: var(--font-grot); font-variation-settings: "opsz" 48, "wdth" 100; }
+/* Versalitas en la grotesca */
+.estado, .reloj, .titulo small, .prog, .acc button, .mini button, .boton, .pie-cab b, .pie-cab button, .pal-links button, .pal-cab span,
+.pend button, .voz button, .voz-t, .aviso, .volver, .mas, .ir span, .lista li .sub, .lista li.cap .pct, .lectura span, #imagen-cerrar, .panel h3 {
+  font-family: var(--font-grot); font-variation-settings: "opsz" 48, "wdth" 100; }
+
+/* Arriba: el bloque de tinta */
+#arriba { flex-direction: column; align-items: stretch; gap: 0; background: var(--fg); color: var(--bg); border-bottom: 0;
+  padding: calc(var(--safe-top) + 8px) 18px 14px; }
+.arriba-fila { display: flex; align-items: center; gap: 4px; margin: 0 -6px; }
+.arriba-fila .hueco { flex: 1; }
+.arriba-fila .txt { min-height: 40px; padding: 0 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--bg); opacity: .82; white-space: nowrap; }
+.arriba-fila .txt:active { background: rgba(127,127,127,.25); }
+#b-marca.on { color: var(--accent); opacity: 1; }
+#b-marca.on::before { content: "★ "; }
+#arriba .titulo { padding: 2px 0 0; }
+#arriba .titulo b { font-weight: 800; font-size: 26px; line-height: 1.05; letter-spacing: -.01em; text-transform: uppercase; white-space: normal;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#arriba .titulo b::after { content: "."; color: var(--accent); }
+#arriba .titulo small { color: var(--bg); opacity: .72; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; margin-top: 6px; }
+#arriba .titulo small:empty { display: none; }
+
+/* Abajo: el % en grande, la barra gruesa con las marcas de los capítulos y cuatro bloques */
+#abajo { padding: 0; border-top: 2px solid var(--fg); background: var(--surface); }
+#abajo .prog { gap: 14px; padding: 12px 18px 10px; color: var(--muted); }
+.pct-grande { flex: none; color: var(--accent); font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: 0; font-variant-numeric: tabular-nums; min-width: 2.6ch; }
+.prog-der { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.prog-pie { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.prog-pie span { overflow: hidden; text-overflow: ellipsis; }
+/* La barra: una pista gruesa del color de la línea, lo leído en el acento */
+.pista input { -webkit-appearance: none; appearance: none; height: 22px; background: transparent; }
+.pista input::-webkit-slider-runnable-track { height: 8px; background: linear-gradient(var(--accent), var(--accent)) 0 0 / calc(var(--leido, 0) * 100%) 100% no-repeat, var(--line); }
+.pista input::-webkit-slider-thumb { -webkit-appearance: none; width: 6px; height: 22px; margin-top: -7px; background: var(--fg); border: 0; border-radius: 0; }
+.marcas { left: 3px; right: 3px; }
+.marcas i { top: -7px; width: 2px; height: 14px; margin-left: -1px; background: var(--fg); opacity: .8; }
+.marcas i.leido { background: var(--surface); opacity: 1; }
+.botones { margin-top: 0; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 2px solid var(--fg); padding-bottom: var(--safe-bottom); }
+.botones button { flex-direction: row; justify-content: center; padding: 14px 4px; font-size: 12.5px; font-weight: 800; letter-spacing: .06em; border-right: 2px solid var(--fg); }
+.botones button:last-child { border-right: 0; }
+.botones button.on { background: var(--fg); color: var(--bg); }
+
+/* En reposo: la hora y la batería arriba; lo que queda del capítulo y el % abajo, en versalitas pequeñas */
+.estado { font-size: 10.5px; letter-spacing: .1em; }
+.reloj { font-size: 11px; }
+
+/* Paneles: título en grotesca con su punto, filetes de 2 px, sin esquinas */
+.panel { border-top: 2px solid var(--fg); }
+.asa { width: 40px; height: 4px; background: var(--fg); opacity: .25; }
+.panel h2 { font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -.01em; text-transform: uppercase; border-bottom: 2px solid var(--fg); padding-bottom: 10px; margin: 6px 0 14px; }
+.panel h2::after { content: "."; color: var(--accent); }
+.panel h3 { font-weight: 800; letter-spacing: .14em; font-size: 11px; }
+/* Opciones: cada una en su bloque con filete; la elegida, rellena de tinta */
+.fila { gap: 6px; }
+.chip { padding: 9px 12px; border: 2px solid var(--fg); color: var(--fg); font-family: var(--font-grot); font-variation-settings: "opsz" 48, "wdth" 100;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; line-height: 1.2; }
+.chip.on { background: var(--fg); color: var(--bg); border-bottom-color: var(--fg); font-weight: 800; }
+.pestanas { gap: 0; }
+.pestanas .chip { flex: 1; text-align: center; margin-right: -2px; }
+.pestanas .chip.on { background: var(--accent); color: #fff; border-color: var(--fg); }
+/* Temas en cuadros con filete */
+.tema { width: 54px; height: 54px; border: 2px solid var(--fg); font-family: AtrioSerif, serif; }
+.tema.on { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* Pasos − / + en bloques */
+.paso { gap: 0; }
+.paso button { width: 48px; height: 44px; border: 2px solid var(--fg); font-family: var(--font-grot); font-weight: 800; font-size: 20px; }
+.paso b { min-width: 72px; font-weight: 800; font-size: 22px; }
+/* Listas con filetes de 2 px; el índice numerado 01, 02… y el capítulo actual resaltado */
+.lista li { border-bottom: 2px solid var(--fg); padding: 12px 2px; }
+.lista li.cap .num { flex: none; width: 2.4ch; font-family: var(--font-grot); font-variation-settings: "opsz" 48, "wdth" 100; font-weight: 800; font-size: 17px; color: var(--accent); }
+.lista li.cap .t { font-family: var(--font-grot); font-variation-settings: "opsz" 48, "wdth" 100; font-weight: 600; font-size: 16px; }
+.lista li.cap.actual { color: var(--fg); background: color-mix(in srgb, var(--accent) 18%, transparent); margin: 0 -20px; padding-left: 22px; padding-right: 22px; }
+.lista li.cap.actual .t { font-weight: 800; }
+.lista .n1 { padding-left: 26px; } .lista .n2 { padding-left: 42px; } .lista .n3 { padding-left: 58px; }
+.lista li.cap.actual.n1 { padding-left: 46px; } .lista li.cap.actual.n2 { padding-left: 62px; }
+/* Lo leído: rejilla dura de cifras */
+.lectura { border: 2px solid var(--fg); gap: 0; }
+.lectura div { padding: 10px 12px; }
+.lectura div:nth-child(even) { border-left: 2px solid var(--fg); padding-left: 12px; }
+.lectura div:nth-child(n+3) { border-top: 2px solid var(--fg); }
+.lectura b { font-weight: 800; font-size: 24px; }
+/* Botones rectos */
+.boton { font-family: var(--font-grot); font-variation-settings: "opsz" 48, "wdth" 100; font-weight: 800; padding: 13px 18px; }
+.boton.suave { border: 2px solid var(--fg); }
+.buscador input, .ir input { border-bottom-width: 2px; }
+textarea { border-width: 2px; }
+/* Subrayado, palabra y pie: hoja con filete de 2 px, acciones en bloques */
+.sel, .pal, .pie { border-top: 2px solid var(--fg); }
+.pal.arriba { border-bottom: 2px solid var(--fg); }
+.sel .acc, .pal .acc { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 0; border: 2px solid var(--fg); padding: 0; margin-top: 8px; }
+.sel .acc button, .pal .acc button { padding: 12px 2px; border-right: 2px solid var(--fg); font-weight: 800; font-size: 11px; letter-spacing: .06em; }
+.sel .acc button:last-child, .pal .acc button:last-child { border-right: 0; }
+.sel-cita, .pal .acc { border-bottom: 0; }
+.pal-cab b { font-weight: 800; font-size: 30px; }
+.pie-cab { border-bottom: 2px solid var(--fg); }
+.pie-cab b::after { content: "."; color: var(--fg); }
+/* Voz: bloque de tinta con los botones en fila */
+.voz { padding-top: 14px; }
+.voz button { font-weight: 800; }
+/* El aviso y «volver»: bloques rectos */
+.volver { border-width: 2px; box-shadow: none; }
+/* En reposo, la línea de abajo en una sola línea: lo de la derecha entero y lo de la izquierda, si no cabe, con «…» */
+.estado span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#e-izq { flex: 1 1 auto; min-width: 0; }
+#e-der { flex: none; }
+.sel .acc button, .pal .acc button { font-size: 10.5px; letter-spacing: .02em; }
+.lectura b { font-size: 22px; }

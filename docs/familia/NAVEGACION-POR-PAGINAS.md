@@ -128,3 +128,14 @@ pasa a un oscuro fijo #141210. Funciones: `colorPaspartu(lPortada)`, `paspartuOs
 - **El botón del cartel hace lo de siempre**: «SEGUIR VIENDO →» abre la ficha y pulsa su botón principal (la mejor fuente, el episodio que
   toca); así no hay dos caminos para reanudar.
 - **Una página que no es un estado** (Próximos) va en el pager igual que las demás, con su rejilla de cifras y su lista.
+
+
+## El lector en la dirección C (Seshat 0.21.0; para Thot, que también tiene lector/estudio)
+
+- Barras «de bloques de tinta»: arriba, bloque de tinta (`--fg` de fondo, `--bg` de letra) con la fila pequeña en versalitas
+  (← APP · acciones) y el título en grotesca grande con punto de acento; abajo, % grande en el acento, barra gruesa con marcas y cuatro
+  bloques con filetes de 2 px. Con los temas oscuros del lector se invierte sola (la tinta es la letra del tema).
+- Paneles: título en grotesca con punto, opciones en bloques con filete (la elegida rellena de tinta), pasos − / + en bloques, listas con
+  filetes de 2 px y numeradas en el acento; sin esquinas.
+- La grotesca y la de cuerpo de la app se copian a los assets del lector (la web no ve `res/font`); la serif, para el texto y las citas.
+- Capturas con Chromium y un `window.Atrio` de mentira (`herramientas/marfil/capturas-lector.js`): rápidas y sin emulador.

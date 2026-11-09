@@ -79,6 +79,24 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.21.0
+
+- **El lector, en la dirección C («bloques de tinta»)**, como la app (solo la interfaz: la paginación, el progreso, las notas, la voz y el
+  diccionario no cambian):
+  - Arriba, con el menú abierto, un bloque de tinta con la fila pequeña «← SESHAT · BUSCAR · MARCAR» (con ★ si la página está marcada),
+    el título del libro en la grotesca grande con su punto de acento y el capítulo en versalitas.
+  - Abajo, el % en grande en el acento, la barra gruesa con lo leído en el acento y una marca por capítulo, «página · quedan X» del
+    libro, y cuatro bloques ÍNDICE · NOTAS · LETRA · VOZ separados por filetes de 2 px.
+  - Paneles con su título en la grotesca y su punto («LETRA Y PÁGINA.», «ÍNDICE.», «TUS NOTAS.»…), opciones en bloques con filete (la
+    elegida, rellena de tinta), temas en cuadros, pasos − / + en bloques, la rejilla de lo leído con filetes, el índice numerado 01, 02…
+    con el capítulo actual resaltado, y las acciones de un subrayado o una palabra en bloques.
+  - La tinta es la letra del tema del lector y el papel su fondo: en Gris, Noche y Negro los bloques se invierten solos.
+  - En reposo, la línea de abajo en una sola línea (lo de la izquierda, con «…» si no cabe).
+  - Letras: la grotesca de la app (Bricolage, `opsz` 48 y ancho 100) y la de cuerpo (Inter) van ahora en el lector; la serif sigue para
+    el texto y las citas.
+- Capturas del lector (papel y noche: en reposo, menú, Letra, Índice, Notas, subrayado) en `docs/marfil/capturas/lector/`, hechas con
+  `herramientas/marfil/capturas-lector.js` (Chromium, un `window.Atrio` de mentira y un EPUB de prueba).
+
 ## 0.20.3
 
 - **El paspartú, siempre crema.** El marco de la portada en el cartel y en la ficha deja de ir del color de la página: es un crema fijo

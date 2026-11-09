@@ -557,18 +557,23 @@ function onRelocate({ detail }) {
     drawStatus(detail)
     $('#b-marca-cinta')?.classList.toggle('oculta', !currentMark())
     $('#p-barra').value = detail.fraction ?? 0
+    $('#p-barra').style.setProperty('--leido', detail.fraction ?? 0)
     pintaMarcas()
     $('#p-pct').textContent = pct(detail.fraction)
     const pg = detail.pageItem?.label ? 'pág. ' + detail.pageItem.label
         : detail.location ? `${detail.location.current + 1} / ${detail.location.total}` : ''
     $('#p-pag').textContent = pg
+    // Lo que queda del libro (a tu ritmo si ya se conoce), al lado de la página
+    const rq = !isPDF ? remaining(detail) : null
+    const dq = rq && rq.total >= 1 ? durTxt(rq.total) : ''
+    $('#p-queda').textContent = dq ? 'quedan ' + dq : ''
     $('#t-cap').textContent = label()
     $('#b-marca').classList.toggle('on', !!currentMark())
     saveProgress()
 }
 $('#p-barra').addEventListener('pointerdown', () => { if (!vuelta || vuelta.pasos > 0) saltoDesde(); arrastra = true })
 $('#p-barra').addEventListener('change', () => { arrastra = false })
-$('#p-barra').addEventListener('input', e => view?.goToFraction(parseFloat(e.target.value)))
+$('#p-barra').addEventListener('input', e => { e.target.style.setProperty('--leido', e.target.value); view?.goToFraction(parseFloat(e.target.value)) })
 
 /** El capítulo (o la página del PDF) que se ve. */
 const idxAhora = () => last?.section?.current ?? last?.index ?? null
@@ -1482,7 +1487,7 @@ async function openToc() {
       <div class="ir"><span>Ir a</span><input id="ir-n" type="number" inputmode="numeric" min="${isPDF ? 1 : 0}" max="${isPDF ? pages : 100}"
         placeholder="${isPDF ? 'página (1–' + pages + ')' : '%'}"><button class="boton" id="ir-si">Ir</button></div>
       ${items.length ? `<ul class="lista">${items.map(([t, d], i) =>
-        `<li class="cap n${Math.min(d, 3)} ${t.href === cur ? 'actual' : ''}" data-i="${i}"><span class="t">${esc(t.label?.trim() || 'Sin título')}</span><span class="pct">${t.href === cur ? 'Estás aquí' : frs.has(t) ? pct(frs.get(t)) : ''}</span></li>`).join('')}</ul>`
+        `<li class="cap n${Math.min(d, 3)} ${t.href === cur ? 'actual' : ''}" data-i="${i}"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="t">${esc(t.label?.trim() || 'Sin título')}</span><span class="pct">${t.href === cur ? 'Estás aquí' : frs.has(t) ? pct(frs.get(t)) : ''}</span></li>`).join('')}</ul>`
         : '<p class="vacio">Este libro no trae índice.</p>'}`, el => {
         el.querySelectorAll('li[data-i]').forEach(li => li.onclick = () => irA(items[li.dataset.i][0].href))
         el.querySelector('.actual')?.scrollIntoView({ block: 'center' })
