@@ -392,7 +392,8 @@ fun PantPrincipal(
                     if (h > 0) p.placeWithLayer(0, 0) {
                         scaleX = escala; scaleY = escala
                         transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
-                        alpha = ((escala - 0.35f) / 0.65f).coerceIn(0f, 1f)
+                        // (sin desvanecerse: el nombre ocupa siempre su hueco, que va menguando con él; antes se apagaba a media altura y
+                        // quedaba una banda negra vacía)
                     }
                 }
             }) {

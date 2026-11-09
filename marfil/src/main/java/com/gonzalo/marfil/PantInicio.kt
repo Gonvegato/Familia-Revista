@@ -209,16 +209,23 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
     val claro = lerpColor(base, Color.White, 0.12f)
     val oscuro = lerpColor(base, Color.Black, 0.72f)
     val acentoClaro = lerpColor(Acento, Color.White, 0.35f)
-    // (la portada acaba justo donde empieza el texto: lo que lleve pintado abajo —título, autor— no se pisa con el del cartel)
+    // La portada (con su paspartú) va entera en el hueco de arriba y acaba antes del texto: el oscurecido solo queda detrás del texto, nunca
+    // encima de la portada (antes el degradado de abajo se comía el pie del marco y parecía cortado). El hueco se ajusta al tamaño de letra.
     Box(Modifier.fillMaxWidth().height(ALTO_CARTEL).background(Brush.verticalGradient(listOf(claro, oscuro))).clickable { alAbrir(l) }) {
-        if (l.fondo.isNotBlank()) {
+        val conFondo = l.fondo.isNotBlank()
+        if (conFondo) {
             // Con fondo elegido: el fondo ocupa el cartel (recortado) y la portada va encima, grande, arriba a la izquierda
             ImagenEncuadrada(l.fondo, l.encFondo, Modifier.fillMaxSize())
             Box(Modifier.fillMaxWidth().height(120.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Transparent))))
-            PortadaSobreFondo(l, Modifier.align(Alignment.TopStart).padding(start = 20.dp, top = 20.dp).width(150.dp).height(225.dp), sombra = 22.dp)
-        } else PortadaSobreFondo(l, Modifier.align(Alignment.TopCenter).padding(top = 16.dp).width(220.dp).height(330.dp), sombra = 22.dp)
+        }
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(170.dp).background(Brush.verticalGradient(0f to Color.Transparent, 0.25f to Color(0xCC050404), 1f to Color(0xF2050404))))
-        Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
+        Column(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f).fillMaxWidth().padding(top = if (conFondo) 20.dp else 16.dp, bottom = 14.dp, start = 20.dp, end = 20.dp),
+            contentAlignment = if (conFondo) Alignment.TopStart else Alignment.TopCenter) {
+            val tope = if (conFondo) 225.dp else 330.dp
+            PortadaSobreFondo(l, Modifier.heightIn(max = tope).fillMaxHeight().aspectRatio(2f / 3f, matchHeightConstraintsFirst = true), sombra = 22.dp)
+        }
+        Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
             Text("AHORA LEES · ${porcentaje(l.fraccion)}", color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp, maxLines = 1)
             Text(l.titulo.uppercase(), color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 4.dp))
@@ -228,6 +235,7 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
                 val derecha = listOf(Paginas.texto(l), if (l.msLeidos > 0) tiempo(l.msLeidos) else "").filter { it.isNotBlank() }.joinToString(" · ")
                 if (derecha.isNotBlank()) Text(derecha.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.8.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp))
             }
+        }
         }
     }
 }

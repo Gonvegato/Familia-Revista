@@ -79,6 +79,13 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.20.2 — la portada entera en el cartel y la cabecera sin hueco
+
+- **Cartel:** la portada (con su paspartú) va entera en el hueco de arriba y acaba antes del texto; el oscurecido de abajo queda detrás
+  del texto y nunca encima de la portada (antes se comía el pie del marco y parecía cortado). El hueco se ajusta al tamaño de letra. Igual
+  con fondo elegido.
+- **Cabecera al plegarse:** el nombre ya no se apaga a media altura; encoge a la vez que su hueco, así que la banda negra nunca queda vacía.
+
 ## 0.20.1 — el reto y la semana en la portada, y el icono centrado
 
 - **Debajo de «Seguir leyendo»**, el reto del año: «Reto 2026 · 13 / 30», su barra y cómo vas («VAS 2 POR DETRÁS · TE QUEDAN 17 EN

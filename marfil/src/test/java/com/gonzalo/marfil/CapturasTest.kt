@@ -251,6 +251,20 @@ class CapturasTest {
         foto("1c_portada_abajo")
     }
 
+    /** El plegado por pasos (≈25 %, 50 %, 75 % y 100 %): en cada paso la banda negra mide lo que el nombre, nunca un hueco vacío. */
+    @Test fun portadaPlegadoPorPasos() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); siembra(); montar(false); pasos("1p") }
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun portadaPlegadoPorPasosLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); siembra(); montar(false); pasos("c9")
+    }
+    private fun pasos(prefijo: String) {
+        // (el primer gesto se come el umbral de arrastre; los siguientes mueven ~60 px cada uno, una cuarta parte del nombre)
+        listOf(25, 50, 75, 100).forEachIndexed { i, pct ->
+            val d = if (i == 0) 85f else if (pct == 100) 400f else 62f
+            rule.onRoot().performTouchInput { swipeUp(startY = centerY, endY = centerY - d, durationMillis = 900) }
+            foto("${prefijo}_plegado_$pct")
+        }
+    }
+
     @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun portadaPlegandoLetraGrande() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(false)
