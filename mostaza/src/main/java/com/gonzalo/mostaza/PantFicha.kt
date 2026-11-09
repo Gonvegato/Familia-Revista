@@ -257,10 +257,9 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                             BloqueCifra(when { t.estado == Estado.VISTO && t.fin > 0 -> Formato.fecha(t.fin).substringBeforeLast(' '); t.anadido > 0 -> Formato.fecha(t.anadido).substringBeforeLast(' '); else -> "—" },
                                 if (t.estado == Estado.VISTO && t.fin > 0) "terminada" else "añadida", Bloque2, Color.White),
                         ), Modifier.padding(top = 10.dp))
-                        MagChoice(listOf(Estado.PENDIENTE, Estado.VIENDO, Estado.VISTO, Estado.ABANDONADO).map { it.nombre }, listOf(Estado.PENDIENTE, Estado.VIENDO, Estado.VISTO, Estado.ABANDONADO).indexOf(t.estado)) { i ->
-                            Biblioteca.cambiaEstado(t.ref, listOf(Estado.PENDIENTE, Estado.VIENDO, Estado.VISTO, Estado.ABANDONADO)[i])
-                        }
-                        EnlaceRevista(if (t.fav) "★ Favorita" else "☆ Favorita", acento = t.fav) { Biblioteca.ponFavorito(t.ref, !t.fav) }
+                        Spacer(Modifier.height(14.dp))
+                        EstadosEnBloque(t.estado) { e -> Biblioteca.cambiaEstado(t.ref, e) }
+                        EnlaceRevista(if (t.fav) "★ Favorita" else "☆ Favorita", acento = t.fav, modifier = Modifier.padding(top = 4.dp)) { Biblioteca.ponFavorito(t.ref, !t.fav) }
                     }
                     // ---- 02 Temporadas y capítulos (en una serie)
                     if (serie && m != null && m.videos.isNotEmpty()) {
@@ -435,4 +434,22 @@ private fun FilaFuente(c: Candidata, elegida: Boolean, alPoner: () -> Unit) {
         if (f.descripcion.isNotBlank()) Text(f.descripcion, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
     }
     Filete(1.dp, Line)
+}
+
+
+/** Los cuatro estados en bloque (dirección C, como Seshat y Bastet): borde de 2 dp y el elegido relleno de tinta. */
+@Composable
+fun EstadosEnBloque(actual: Estado, alElegir: (Estado) -> Unit) {
+    val todos = listOf(Estado.PENDIENTE, Estado.VIENDO, Estado.VISTO, Estado.ABANDONADO)
+    androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min).border(2.dp, Charcoal)) {
+        todos.forEach { e ->
+            val on = e == actual
+            androidx.compose.foundation.layout.Box(Modifier.weight(1f).fillMaxHeight().background(if (on) Charcoal else Paper).tocable(enabled = !on) { alElegir(e) }.padding(vertical = 12.dp, horizontal = 2.dp),
+                contentAlignment = androidx.compose.ui.Alignment.Center) {
+                // (si no cabe, la letra se encoge: nada de «ABANDONAD»)
+                FitTitle(e.nombre.uppercase(), 11.sp, 13.sp, color = if (on) Paper else Charcoal, family = Body, fontWeight = FontWeight.Black, letterSpacing = 0.4.sp, maxLines = 1, unaLinea = true, minSize = 6f,
+                    align = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        }
+    }
 }

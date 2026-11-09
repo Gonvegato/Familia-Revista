@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.7.1"
+const val VERSION = "0.7.2"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Catálogo · Reproductor · Fuentes · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
@@ -39,12 +39,14 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}, pestanaInicial: 
     var pestana by rememberSaveable { mutableIntStateOf(pestanaInicial) }
     EspejoCuenta.version
     val mg = margen()
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
-        RevistaTopBar(alVolver, "Hathor")
-        Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
-        FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-        Filete(3.dp)
+    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+        // Dirección C (como Seshat y Bastet): la cabecera en un bloque de tinta con «AJUSTES.» en grotesca
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = mg).padding(bottom = 14.dp)) {
+            EnlaceRevista("← Hathor", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
+            NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp))
+        }
         PestanasRevista(listOf("Apariencia", "Catálogo", "Reproductor", "Fuentes", "Cuenta", "Avanzado"), pestana) { pestana = it }
+        Column(Modifier.fillMaxWidth().padding(horizontal = mg)) {
         Spacer(Modifier.height(14.dp))
         Column(Modifier.widthIn(max = 760.dp)) {
             when (pestana) {
@@ -63,6 +65,7 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}, pestanaInicial: 
         Text("Hathor es hermana de Jonsu, Bastet, Seshat y Thot. Habla el protocolo abierto de los addons de Stremio; reproduce con AndroidX Media3 (Apache 2.0). " + Tmdb.AVISO_TMDB,
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
+        }
     }
 }
 

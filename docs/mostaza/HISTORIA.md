@@ -10,6 +10,12 @@ las fichas salen de Cinemeta (el oficial de Stremio, el único que viene puesto)
 fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, que Hathor reproduce al momento). Hathor no trae ningún
 addon de fuentes ni de torrents: los pones tú.
 
+
+## 0.7.2
+
+- **Ajustes, como Seshat y Bastet**: la cabecera es el bloque de tinta con «AJUSTES.» en grotesca (antes, «Ajustes» en serif).
+- **Ficha**: el estado (Pendiente · Viendo · Visto · Abandonado) va en bloque, con borde de 2 dp y el elegido relleno de tinta, como en las hermanas (antes, texto subrayado).
+
 ## Capturas
 
 Hechas en el ordenador con catálogos y fuentes de mentira (`CapturasTest`, solo con `-Proborazzi.test.record=true`), en el móvil, en la
