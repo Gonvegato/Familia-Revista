@@ -32,8 +32,19 @@ class SeccionesTest {
         Biblioteca.fijaParaPruebas(Biblioteca.libros + Libro("a", "Dune", "Frank Herbert", estado = Estado.LEIDO, anadido = 1))
         Biblioteca.fijaParaPruebas(Biblioteca.libros + Libro("b", "Ubik", "Philip K. Dick", estado = Estado.LEIDO, anadido = 2))
         rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { PantPrincipal(pagina = Destino.Leidos.ordinal, alPagina = {}, alAbrir = {}, alLeer = {}, alAbrirSaga = {}, alAnadir = {}, alAjustes = {}) } } }
-        toca("AUTOR")
+        toca("AUTOR A-Z")
         assertEquals(OrdenLibros.AUTOR, OrdenGuardado.de(ctx, Estado.LEIDO))
+    }
+
+    /** Cada estante, solo con los órdenes que tienen sentido (en Leídos no hay «Última lectura», que era la fecha de fin repetida). */
+    @Test fun losOrdenesDeCadaEstante() {
+        assertEquals(listOf(OrdenLibros.TERMINADO, OrdenLibros.TITULO, OrdenLibros.AUTOR, OrdenLibros.PAGINAS), ordenesDe(Estado.LEIDO))
+        assertFalse(OrdenLibros.TERMINADO in ordenesDe(Estado.PENDIENTE) || OrdenLibros.RECIENTES in ordenesDe(Estado.PENDIENTE) || OrdenLibros.AVANCE in ordenesDe(Estado.PENDIENTE))
+        assertTrue(OrdenLibros.AVANCE in ordenesDe(Estado.LEYENDO))
+        Estado.entries.forEach { e -> assertEquals(ordenesDe(e).first(), ordenInicial(e)); assertEquals(ordenesDe(e).size, ordenesDe(e).distinct().size) }
+        // Un orden guardado que ya no vale en ese estante vuelve al de serie
+        OrdenGuardado.pon(ctx, Estado.LEIDO, OrdenLibros.RECIENTES)
+        assertEquals(OrdenLibros.TERMINADO, OrdenGuardado.de(ctx, Estado.LEIDO))
     }
 
     /** Una sola fila de pestañas: la portada es la primera página y cada sección es una página más (sin submenús ni otra cabecera). */

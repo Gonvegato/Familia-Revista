@@ -159,7 +159,7 @@ fun RevistaHeadline(title: String, overline: String?) {
     val (fs, lh) = headlineSize(title)
     Column(Modifier.fillMaxWidth()) {
         if (overline != null) Text(overline.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        FitTitle(title.uppercase(), fs * 0.82f, lh * 0.82f, letterSpacing = (-1).sp, family = Grotesca, fontWeight = FontWeight.ExtraBold)
+        FitTitle(title.uppercase(), fs * 0.82f, lh * 0.82f, letterSpacing = (-0.5).sp, family = Grotesca, fontWeight = FontWeight.ExtraBold)
     }
 }
 
@@ -167,7 +167,7 @@ fun RevistaHeadline(title: String, overline: String?) {
 @Composable
 fun Cabecera(tam: TextUnit, modifier: Modifier = Modifier, color: Color = Charcoal, texto: String = "SESHAT") {
     Box(modifier.fillMaxWidth()) {
-        FitTitle(texto.uppercase(), tam, tam * 0.9f, color = color, letterSpacing = (-0.04).em, maxLines = 1, modifier = Modifier.fillMaxWidth(), minSize = 12f, unaLinea = true, family = Grotesca, fontWeight = FontWeight.ExtraBold)
+        FitTitle(texto.uppercase(), tam, tam * 1.0f, color = color, letterSpacing = (-0.015).em, maxLines = 1, modifier = Modifier.fillMaxWidth(), minSize = 12f, unaLinea = true, family = Grotesca, fontWeight = FontWeight.ExtraBold)
     }
 }
 private val Float.em get() = androidx.compose.ui.unit.TextUnit(this, androidx.compose.ui.unit.TextUnitType.Em)
@@ -355,7 +355,8 @@ fun NombreConPunto(nombre: String, tam: TextUnit, color: Color = Charcoal, modif
     Text(androidx.compose.ui.text.buildAnnotatedString {
         append(nombre.uppercase())
         withStyle(androidx.compose.ui.text.SpanStyle(color = Acento)) { append(".") }
-    }, modifier, color = color, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = tam, lineHeight = tam * 0.92f, letterSpacing = (-0.04f * tam.value).sp, maxLines = 1, softWrap = false)
+    }, modifier, color = color, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = tam, lineHeight = tam * 1.0f, letterSpacing = (-0.015f * tam.value).sp, maxLines = 1, softWrap = false,
+        style = androidx.compose.ui.text.TextStyle(lineHeightStyle = androidx.compose.ui.text.style.LineHeightStyle(androidx.compose.ui.text.style.LineHeightStyle.Alignment.Center, androidx.compose.ui.text.style.LineHeightStyle.Trim.None)))
 }
 
 /** Un bloque de la rejilla de cifras: la cifra, su etiqueta y sus colores. */
@@ -368,7 +369,7 @@ fun RejillaCifras(bloques: List<BloqueCifra>, modifier: Modifier = Modifier) {
         bloques.forEachIndexed { i, b ->
             if (i > 0) Box(Modifier.fillMaxHeight().width(2.dp).background(Charcoal))
             Column(Modifier.weight(1f).fillMaxHeight().background(b.fondo).let { m -> if (b.alHacer != null) m.clickable(onClick = b.alHacer) else m }.padding(horizontal = 12.dp, vertical = 12.dp)) {
-                FitTitle(b.cifra, 32.sp, 32.sp, color = b.letra, family = Grotesca, fontWeight = FontWeight.ExtraBold, maxLines = 1, unaLinea = true, minSize = 14f, letterSpacing = (-0.5).sp)
+                FitTitle(b.cifra, 32.sp, 34.sp, color = b.letra, family = Grotesca, fontWeight = FontWeight.ExtraBold, maxLines = 1, unaLinea = true, minSize = 14f, letterSpacing = 0.sp)
                 Text(b.etiqueta.uppercase(), color = b.letra.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, lineHeight = 13.sp, modifier = Modifier.padding(top = 4.dp))
             }
         }

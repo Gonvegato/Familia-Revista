@@ -35,3 +35,20 @@ son **páginas a la derecha** de la portada, como pasar hojas.
 | Nut | Hoy · Competiciones · Tus equipos · IPTV… |
 
 Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSonPaginas`).
+
+## Criterios de la dirección C aprendidos en Seshat 0.17.0 (aplicar igual en las demás)
+
+- **Cifras y titulares en grotesca, sin espaciado negativo fuerte.** Las cifras van con `letterSpacing = 0` (nunca −5 sp: los dígitos se
+  tocaban, «15» pegado). Los nombres con punto («SESHAT.») a −0,015 em como mucho.
+- **La grotesca con su tamaño óptico.** Bricolage es variable: fijar `opsz 48` y ancho 100 en todos los pesos (`FontVariation`). Sin eso se
+  dibuja con el de cartel (96), con remates de distinta altura que se ven irregulares en mayúsculas.
+- **La cabecera se pliega sin cortar.** Al recogerse, el nombre grande encoge (escala desde arriba a la izquierda) y se desvanece con su
+  hueco; nunca un `clip` que lo corte a media letra. Plegada del todo, la fila queda compacta: el nombre pequeño a la izquierda, Buscar /
+  Añadir y ⚙ (sin la fecha), y ningún hueco negro debajo.
+- **Pestañas de la misma altura.** La fila con `height(IntrinsicSize.Max)` y cada pestaña `fillMaxHeight()` centrada: si una lleva número
+  y otra no, la activa (en bloque de acento) llega igual hasta arriba, sin rendija.
+- **Portada en «estantes de portadas»** (la elegida): Leyendo (portadas grandes con avance) → botón «SEGUIR CON …» → Pendientes (medianas,
+  el siguiente de cada saga) → «Tu año · X de Y» (barra del reto + mosaico de lo leído, 6 por fila, hasta 3 filas y «+N») → en pequeño hoy,
+  racha y semana. Cada título lleva a su página.
+- **Órdenes solo los que tienen sentido en cada página**, con nombre que diga qué ordenan («Última lectura», «Más avanzado», «Último
+  añadido», «Fecha de fin», «Título A-Z», «Autor A-Z», «Más páginas»); nada repetido (en Leídos, «Recientes» era la fecha de fin otra vez).

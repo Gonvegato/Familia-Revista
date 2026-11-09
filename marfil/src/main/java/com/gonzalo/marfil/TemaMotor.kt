@@ -325,7 +325,8 @@ val AtrioDisplay = FontFamily(
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 val VitrinaDisplay = FontFamily(
     listOf(400, 500, 600, 700, 800).map { w ->
-        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(if (w >= 700) 92f else 100f)))
+        // opsz 48: el tamaño óptico de titular (el de serie, 96, es el de cartel, con remates de distinta altura que se ven irregulares); ancho normal
+        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(100f), FontVariation.Setting("opsz", 48f)))
     }
 )
 

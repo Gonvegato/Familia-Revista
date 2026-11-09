@@ -79,6 +79,29 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.17.0 — portada de estantes, cifras sin pegarse y la cabecera que se pliega sin cortar
+
+- **Portada en «estantes de portadas»** (la idea 3 de las maquetas, `docs/familia/maquetas-revista/revista-seshat-portadas.png`): fuera
+  «En la mesilla» y «En la estantería» como listas y el bloque del porcentaje gigante. Ahora:
+  - **Leyendo · N →**: todo lo que lees en portadas grandes (96 × 144 dp, sin esquinas) que se deslizan, cada una con su barra de avance y
+    el % en el acento; un toque abre la ficha; el título lleva a la página Leyendo.
+  - El botón negro **«SEGUIR CON <título> →»** (el último que abriste).
+  - **Pendientes · N →**: portadas medianas en el orden que tengas elegido en Pendientes; de cada saga, el siguiente que te queda
+    («+N DE LA SAGA» debajo).
+  - **Tu año · X de Y →**: la barra gruesa del reto y el mosaico de portadas de lo leído este año (6 por fila, hasta 3 filas; si hay
+    más, la última casilla dice «+N» y lleva a Leídos).
+  - Debajo, en pequeño: hoy, la racha y la semana en barras.
+  - Vacíos con su mensaje y un botón para añadir.
+- **Cifras que no se pegan**: las cifras de grotesca tenían el espaciado demasiado negativo (el «15» de la portada iba a −5 sp y los
+  dígitos se tocaban). Las cifras van ahora sin espaciado negativo y los titulares, mucho menos apretados.
+- **La cabecera se pliega sin cortar**: al bajar, el nombre «SESHAT.» se recortaba por arriba y se veía la mitad inferior de las letras
+  (cada letra cortada a una altura distinta: parecía que «unas subían y otras bajaban»). Ahora el nombre encoge y se desvanece con el
+  hueco; nunca se corta a media letra.
+- **La grotesca, más regular**: Bricolage Grotesque es variable y, sin decirle el tamaño óptico, se dibujaba con el de cartel (96), con
+  remates de distinta altura y un ancho estrecho (92). Ahora va con el de titular (opsz 48) y el ancho normal: las mayúsculas quedan
+  parejas («AJUSTES.» incluida).
+- **Escritos**, del todo en la dirección C: títulos en grotesca, lista numerada, filetes de 2 px y botones rectos («LEER →» / «ESCRIBIR →»).
+
 ## 0.16.1 — navegación por páginas
 
 - **Una sola fila de pestañas**: PORTADA · LEYENDO · PENDIENTES · LEÍDOS · ABANDONADOS · AUTORES · SAGAS · ESCRITOS. La portada es la

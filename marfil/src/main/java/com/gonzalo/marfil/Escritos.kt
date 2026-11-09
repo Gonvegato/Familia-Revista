@@ -2,6 +2,7 @@ package com.gonzalo.marfil
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -235,7 +236,7 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
             RevistaTopBar(alVolver, "Seshat") { EnlaceRevista(if (mirando) "Mirando…" else "Actualizar", acento = !mirando) { actualizar() } }
             Filete(3.dp)
             Antetitulo("Sección · ${obras.size} ${if (obras.size == 1) "obra" else "obras"}", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
-            FitTitle("Escritos", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
+            NombreConPunto("Escritos", 52.sp, Charcoal, Modifier.padding(top = 2.dp))
         }
         Text("Lo que escribes en Thot, aquí, con el lector: cada obra con los capítulos que has dado por terminados.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
         if (mensaje.isNotBlank()) Text(mensaje, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(bottom = 8.dp))
@@ -244,28 +245,33 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
             when { !Cuenta.vinculada -> "Vincula tu cuenta de Atrio (Ajustes) para ver tus obras de Thot."; Escritos.ultimaVez(ctx) == 0L -> "Todavía no se ha leído tu cuenta."; else -> "Thot aún no ha publicado ningún capítulo terminado. Se publican al marcarlos como terminados allí." },
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(vertical = 14.dp)
         )
-        obras.forEach { o ->
+        obras.forEachIndexed { i, o ->
             val libro = Biblioteca.por(Escritos.idDe(o.id))
             // Lo nuevo desde la última vez que la leíste (los capítulos que Cobalto publicó después) y por dónde vas
             val nuevos = Escritos.nuevosDesde(o, libro?.ultima ?: 0L)
             val porDonde = remember(libro?.id, libro?.ultima) { libro?.let { EstadoLectura.estado(ctx, it.id).optString("label").trim() }.orEmpty() }
-            Column(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
+            // Dirección C: lista numerada en el acento
+            Text("%02d".format(i + 1), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(46.dp))
+            Column(Modifier.weight(1f)) {
                 if (nuevos > 0) Text(if (nuevos == 1) "1 CAPÍTULO NUEVO" else "$nuevos CAPÍTULOS NUEVOS", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(bottom = 4.dp))
-                Text(o.titulo, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 30.sp, color = Charcoal)
-                Text(listOfNotNull(o.autor.ifBlank { null }, "${o.capitulos.size} ${if (o.capitulos.size == 1) "capítulo terminado" else "capítulos terminados"}", "${Formato.cifra(o.palabras)} palabras").joinToString(" · "),
-                    color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+                Text(o.titulo, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, lineHeight = 26.sp, color = Charcoal)
+                Text(listOfNotNull(o.autor.ifBlank { null }, "${o.capitulos.size} ${if (o.capitulos.size == 1) "capítulo terminado" else "capítulos terminados"}", "${Formato.cifra(o.palabras)} palabras").joinToString(" · ").uppercase(),
+                    color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.8.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 4.dp))
                 libro?.takeIf { it.fraccion > 0.005f }?.let { l ->
                     Text(listOfNotNull("vas por el ${(l.fraccion * 100).toInt()} %", porDonde.ifBlank { null }).joinToString(" · "),
                         color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 2.dp))
                 }
-                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                    EnlaceRevista(if (libro != null && libro.fraccion > 0.005f) "Seguir leyendo →" else "Leer →", acento = true) {
+                // Botones rectos de la dirección C: leer (en tinta) y escribir en Thot (con borde)
+                Row(Modifier.padding(top = 10.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BotonC(if (libro != null && libro.fraccion > 0.005f) "Seguir leyendo" else "Leer", Modifier.weight(1f)) {
                         ambito.launch { val l = withContext(Dispatchers.IO) { runCatching { Escritos.preparar(ctx, o) }.getOrNull() }; if (l != null) alLeer(l) else mensaje = "No he podido preparar el libro." }
                     }
-                    if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot →") { Escritos.abrirCobalto(ctx, o.id) }
+                    if (Escritos.instaladoCobalto(ctx)) BotonC("Escribir", Modifier.weight(1f).border(2.dp, Charcoal), fondo = Paper, letra = Charcoal) { Escritos.abrirCobalto(ctx, o.id) }
                 }
             }
-            Filete(1.dp, Line)
+            }
+            Filete(2.dp)
         }
         Spacer(Modifier.height(30.dp))
     }

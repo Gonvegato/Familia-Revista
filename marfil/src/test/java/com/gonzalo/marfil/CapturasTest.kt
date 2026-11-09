@@ -20,6 +20,9 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.Dispatchers
 import org.junit.Rule
@@ -122,6 +125,27 @@ class CapturasTest {
     @Test fun portada() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(false); foto("1_portada")
+    }
+
+    /** La cabecera a mitad de plegarse (el nombre encoge y se desvanece; nunca se corta) y la portada entera, abajo del todo. */
+    @Test fun portadaPlegando() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onRoot().performTouchInput { swipeUp(startY = centerY, endY = centerY - 110f, durationMillis = 900) }
+        foto("1b_portada_plegando")
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        foto("1c_portada_abajo")
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun portadaPlegandoLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onRoot().performTouchInput { swipeUp(startY = centerY, endY = centerY - 110f, durationMillis = 900) }
+        foto("c4_portada_plegando_letra_grande")
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        foto("c5_portada_abajo_letra_grande")
     }
 
     @Test fun portadaOscuro() {

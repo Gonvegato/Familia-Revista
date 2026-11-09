@@ -36,14 +36,31 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 
 /** Cómo se puede ordenar un estante. */
-enum class OrdenLibros(val nombre: String) { RECIENTES("Recientes"), ANADIDOS("Añadidos"), TERMINADO("Terminado"), TITULO("Título"), AUTOR("Autor"), PAGINAS("Páginas") }
+enum class OrdenLibros(val nombre: String) {
+    RECIENTES("Última lectura"), AVANCE("Más avanzado"), ANADIDOS("Último añadido"), TERMINADO("Fecha de fin"), TITULO("Título A-Z"), AUTOR("Autor A-Z"), PAGINAS("Más páginas")
+}
 
-/** El orden con el que empieza cada estante: lo pendiente, por lo último añadido; el resto, por lo último abierto. */
-fun ordenInicial(e: Estado): OrdenLibros = when (e) { Estado.PENDIENTE -> OrdenLibros.ANADIDOS; Estado.LEIDO -> OrdenLibros.TERMINADO; else -> OrdenLibros.RECIENTES }
+/**
+ * Los órdenes que tienen sentido en cada estante (y solo esos):
+ *  - Leyendo: última lectura, más avanzado, título, autor, más páginas (el «añadido» de algo que ya lees no dice nada).
+ *  - Pendientes: último añadido, título, autor, más páginas (sin lectura ni avance: aún no los has empezado).
+ *  - Leídos: fecha de fin, título, autor, más páginas (la «última lectura» de un leído es su fecha de fin: estaba repetido).
+ *  - Abandonados: última lectura, más avanzado (hasta dónde llegaste), título, autor.
+ */
+fun ordenesDe(e: Estado): List<OrdenLibros> = when (e) {
+    Estado.LEYENDO -> listOf(OrdenLibros.RECIENTES, OrdenLibros.AVANCE, OrdenLibros.TITULO, OrdenLibros.AUTOR, OrdenLibros.PAGINAS)
+    Estado.PENDIENTE -> listOf(OrdenLibros.ANADIDOS, OrdenLibros.TITULO, OrdenLibros.AUTOR, OrdenLibros.PAGINAS)
+    Estado.LEIDO -> listOf(OrdenLibros.TERMINADO, OrdenLibros.TITULO, OrdenLibros.AUTOR, OrdenLibros.PAGINAS)
+    Estado.ABANDONADO -> listOf(OrdenLibros.RECIENTES, OrdenLibros.AVANCE, OrdenLibros.TITULO, OrdenLibros.AUTOR)
+}
+
+/** El orden con el que empieza cada estante: lo pendiente, por lo último añadido; lo leído, por la fecha de fin; el resto, por lo último abierto. */
+fun ordenInicial(e: Estado): OrdenLibros = ordenesDe(e).first()
 
 /** Ordena una lista de libros. Los que no tienen autor (o páginas) van al final. */
 fun ordenar(o: OrdenLibros, l: List<Libro>): List<Libro> = when (o) {
     OrdenLibros.RECIENTES -> l.sortedWith(compareByDescending<Libro> { it.ultima }.thenByDescending { it.anadido })
+    OrdenLibros.AVANCE -> l.sortedWith(compareByDescending<Libro> { it.fraccion }.thenByDescending { it.ultima })
     OrdenLibros.ANADIDOS -> l.sortedByDescending { it.anadido }
     OrdenLibros.TERMINADO -> l.sortedWith(compareByDescending<Libro> { it.terminado }.thenByDescending { it.ultima })
     OrdenLibros.TITULO -> l.sortedBy { norm(it.titulo) }
@@ -55,7 +72,7 @@ fun ordenar(o: OrdenLibros, l: List<Libro>): List<Libro> = when (o) {
 object OrdenGuardado {
     val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("marfil_orden", "marfil_orden", { EspejoCuenta.Tipo.TEXTO })
     private fun prefs(c: android.content.Context) = EspejoCuenta.prefs(c, GRUPO)
-    fun de(c: android.content.Context, e: Estado): OrdenLibros = OrdenLibros.entries.firstOrNull { it.name == prefs(c).getString(e.name, null) && (it != OrdenLibros.TERMINADO || e == Estado.LEIDO) } ?: ordenInicial(e)
+    fun de(c: android.content.Context, e: Estado): OrdenLibros = ordenesDe(e).firstOrNull { it.name == prefs(c).getString(e.name, null) } ?: ordenInicial(e)
     fun pon(c: android.content.Context, e: Estado, o: OrdenLibros) { prefs(c).edit().putString(e.name, o.name).apply() }
 }
 
@@ -178,7 +195,7 @@ private fun PaginaEstante(estado: Estado, titulo: String, todos: List<Libro>, al
                 ), Modifier.padding(top = 8.dp))
                 // Cómo se ordena este estante (se recuerda)
                 // («Terminado» solo en Leídos)
-                val ordenes = OrdenLibros.entries.filter { it != OrdenLibros.TERMINADO || estado == Estado.LEIDO }
+                val ordenes = ordenesDe(estado)
                 FiltrosRevista(ordenes.map { it.nombre }, ordenes.indexOf(orden).coerceAtLeast(0), Modifier.padding(top = 6.dp)) { i -> orden = ordenes[i]; OrdenGuardado.pon(ctx, estado, orden) }
                 Filete(2.dp)
             }
@@ -330,19 +347,30 @@ fun PantPrincipal(
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         // ---- La cabecera de la dirección C: un bloque de tinta con la fila pequeña y «SESHAT.» en grotesca enorme
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = if (altoNombre > 0 && recogido >= altoNombre - 1) 4.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
+                // Plegada del todo: el nombre, pequeño, a la izquierda de la fila (y ningún hueco negro debajo)
+                if (altoNombre > 0 && recogido >= altoNombre - 1) NombreConPunto("Seshat", 22.sp, Paper, Modifier.padding(end = 14.dp))
                 EnlaceRevista("Buscar", color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) { buscando = !buscando; if (!buscando) busca = "" }
                 EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = Acento) { alAnadir() }
                 Spacer(Modifier.weight(1f))
-                Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
-                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 6.dp).clickable(onClick = alAjustes).padding(8.dp).size(20.dp))
+                if (!(altoNombre > 0 && recogido >= altoNombre - 1)) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 4.dp).clickable(onClick = alAjustes).padding(6.dp).size(20.dp))
             }
             // El nombre: su alto se mide una vez y se va quitando según se recoge
-            Box(Modifier.fillMaxWidth().clipToBounds().layout { m, c ->
+            // Al recogerse, el hueco se encoge y el nombre encoge con él (desde la esquina de arriba a la izquierda) y se desvanece: nunca se
+            // corta a media letra (antes se recortaba por arriba y se veían las letras partidas a distintas alturas)
+            Box(Modifier.fillMaxWidth().layout { m, c ->
                 val p = m.measure(c.copy(minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
                 if (altoNombre != p.height) altoNombre = p.height
                 val h = (p.height - recogido.toInt()).coerceAtLeast(0)
-                layout(p.width, h) { p.place(0, h - p.height) }
+                val escala = if (p.height > 0) h.toFloat() / p.height else 1f
+                layout(p.width, h) {
+                    if (h > 0) p.placeWithLayer(0, 0) {
+                        scaleX = escala; scaleY = escala
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                        alpha = ((escala - 0.35f) / 0.65f).coerceIn(0f, 1f)
+                    }
+                }
             }) {
                 NombreConPunto("Seshat", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
@@ -389,12 +417,12 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>
                 val f = 28.dp.toPx()
                 if (scroll.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
                 if (scroll.value < scroll.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-            }.horizontalScroll(scroll), verticalAlignment = Alignment.Bottom) {
+            }.horizontalScroll(scroll).height(IntrinsicSize.Max), verticalAlignment = Alignment.CenterVertically) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).let { kotlin.math.round(it).toInt() } to c.size.width }.clickable { onSel(i) }
+                Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).let { kotlin.math.round(it).toInt() } to c.size.width }.clickable { onSel(i) }
                     .background(if (on) Acento else Color.Transparent)
-                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.Bottom) {
+                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                     // Dirección C: la elegida, en un bloque del acento
                     Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
                     cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }

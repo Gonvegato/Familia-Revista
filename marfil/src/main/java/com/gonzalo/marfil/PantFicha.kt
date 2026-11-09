@@ -148,7 +148,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
                     Column(Modifier.weight(1f).padding(end = 14.dp)) {
                         val ante = listOfNotNull(l.autor.ifBlank { null }, l.formato.uppercase().ifBlank { null }).joinToString(" · ")
                         if (ante.isNotBlank()) Text(ante.uppercase(), color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 2)
-                        FitTitle(l.titulo.uppercase(), 40.sp, 38.sp, color = PAPEL_CLARO, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-1).sp, maxLines = 5, minSize = 18f, modifier = Modifier.padding(top = 6.dp))
+                        FitTitle(l.titulo.uppercase(), 40.sp, 38.sp, color = PAPEL_CLARO, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 5, minSize = 18f, modifier = Modifier.padding(top = 6.dp))
                     }
                     PortadaLibro(l, Modifier.width(112.dp).height(168.dp).clickable { portada = true }, radio = 0)
                 }
