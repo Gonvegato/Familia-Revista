@@ -79,6 +79,13 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.20.3
+
+- **El paspartú, siempre crema.** El marco de la portada en el cartel y en la ficha deja de ir del color de la página: es un crema fijo
+  (#F4EBD6), igual de día y de noche y con cualquier «A tu manera», en todas las apps de la familia. Solo si la portada es muy clara
+  (luminancia media ≥ 0,78: casi blanca o crema) pasa a un oscuro fijo (#141210). En Bastet, con la página verde oscura, el marco antes casi
+  no se veía sobre fondos oscuros.
+
 ## 0.20.2 — la portada entera en el cartel y la cabecera sin hueco
 
 - **Cartel:** la portada (con su paspartú) va entera en el hueco de arriba y acaba antes del texto; el oscurecido de abajo queda detrás

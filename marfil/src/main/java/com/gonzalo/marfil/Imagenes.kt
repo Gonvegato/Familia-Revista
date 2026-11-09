@@ -158,15 +158,14 @@ fun BotonMarco(texto: String, onClick: () -> Unit) {
 
 /**
  * La portada de un libro encima de una imagen o de un color (el cartel «Ahora lees» de la portada y la apertura de la ficha), en un solo sitio:
- * con un PASPARTÚ, un marco liso del color de la página (crema de serie; sigue «A tu manera» y la noche) para que se despegue de lo que
- * tenga detrás. Si la portada se parece demasiado a ese color ([paspartuEnTinta]: una portada casi blanca sobre el crema, o una muy oscura de
- * noche), el marco pasa a la tinta de la app. Sin esquinas; la sombra, por fuera.
+ * con un PASPARTÚ, un marco liso crema fijo (igual de día y de noche) para que se despegue de lo que
+ * tenga detrás. Si la portada es muy clara ([paspartuOscuro]), el marco pasa a un oscuro fijo. Sin esquinas; la sombra, por fuera.
  * El grosor va con el tamaño de la tapa (unos 8 dp en una de 150).
  */
 @Composable
 fun PortadaSobreFondo(l: Libro, modifier: Modifier, sombra: androidx.compose.ui.unit.Dp, alTocar: (() -> Unit)? = null) {
     val lPortada = remember(l.portada, l.titulo) { luminanciaDePortada(l.portada) ?: luminancia(telaDe(l.titulo)) }
-    val marco = if (paspartuEnTinta(luminancia(Paper), lPortada)) Charcoal else Paper
+    val marco = colorPaspartu(lPortada)
     BoxWithConstraints(modifier.shadow(sombra).background(marco).then(if (alTocar != null) Modifier.clickable(onClick = alTocar) else Modifier)) {
         PortadaLibro(l, Modifier.fillMaxSize().padding(grosorPaspartu(maxWidth)), radio = 0, conAutor = false)
     }
@@ -176,12 +175,17 @@ fun PortadaSobreFondo(l: Libro, modifier: Modifier, sombra: androidx.compose.ui.
 fun grosorPaspartu(ancho: androidx.compose.ui.unit.Dp): androidx.compose.ui.unit.Dp = (ancho * 0.054f).coerceIn(4.dp, 14.dp)
 
 /**
- * Si la portada y el color de la página se parecen menos que esto (en luminancia, 0–1), el paspartú va en la tinta. Con el crema de serie
- * (≈0,94) eso es una portada de luminancia media > ≈0,8 (casi blanca); de noche, con la página oscura, una portada muy oscura.
+ * El paspartú es SIEMPRE el mismo, en todas las apps de la familia, de día y de noche, sin depender del tema ni de «A tu manera»: un crema
+ * claro fijo ([PASPARTU_CREMA]). Solo si la portada es muy clara ([paspartuOscuro]: su luminancia media llega a [UMBRAL_PASPARTU], lo que
+ * con el crema (≈0,93) es una diferencia menor que 0,15: casi blanca o crema) pasa a un oscuro fijo ([PASPARTU_OSCURO]).
  */
-const val PARECIDO_PASPARTU = 0.15f
+val PASPARTU_CREMA = androidx.compose.ui.graphics.Color(0xFFF4EBD6)
+val PASPARTU_OSCURO = androidx.compose.ui.graphics.Color(0xFF141210)
+const val UMBRAL_PASPARTU = 0.78f
 
-fun paspartuEnTinta(lPagina: Float, lPortada: Float): Boolean = kotlin.math.abs(lPagina - lPortada) < PARECIDO_PASPARTU
+fun paspartuOscuro(lPortada: Float): Boolean = lPortada >= UMBRAL_PASPARTU
+
+fun colorPaspartu(lPortada: Float): androidx.compose.ui.graphics.Color = if (paspartuOscuro(lPortada)) PASPARTU_OSCURO else PASPARTU_CREMA
 
 fun luminancia(c: androidx.compose.ui.graphics.Color): Float = 0.2126f * c.red + 0.7152f * c.green + 0.0722f * c.blue
 

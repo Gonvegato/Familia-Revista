@@ -234,14 +234,14 @@ fun BotonMarco(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit
 
 /**
  * La portada de un juego encima de una imagen o de un color (el cartel «Ahora juegas» de la portada y la apertura de la ficha), como en
- * Seshat: con un PASPARTÚ, un marco liso del color de la página (sigue «A tu manera» y la noche) para que se despegue de lo que tenga detrás.
- * Si la portada se parece demasiado a ese color ([paspartuEnTinta]), el marco pasa a la tinta de la app. Sin esquinas; la sombra, por fuera.
+ * Seshat: con un PASPARTÚ, un marco liso crema fijo (igual de día y de noche) para que se despegue de lo que tenga detrás.
+ * Si la portada es muy clara ([paspartuOscuro]), el marco pasa a un oscuro fijo. Sin esquinas; la sombra, por fuera.
  * El grosor va con el tamaño de la tapa (unos 8 dp en una de 150).
  */
 @Composable
 fun PortadaSobreFondo(j: Juego, modifier: Modifier, sombra: Dp, alTocar: (() -> Unit)? = null) {
     val lPortada = remember(j.portada, j.titulo) { luminanciaDePortada(j.portada) ?: luminancia(telaDe(j.titulo)) }
-    val marco = if (paspartuEnTinta(luminancia(Paper), lPortada)) Charcoal else Paper
+    val marco = colorPaspartu(lPortada)
     BoxWithConstraints(modifier.shadow(sombra).background(marco).then(if (alTocar != null) Modifier.tocable(onClick = alTocar) else Modifier)) {
         val w = maxWidth
         Box(Modifier.fillMaxSize().padding(grosorPaspartu(w))) {
@@ -253,10 +253,18 @@ fun PortadaSobreFondo(j: Juego, modifier: Modifier, sombra: Dp, alTocar: (() -> 
 /** El grosor del paspartú para una tapa de [ancho]: un 5,4 % (8 dp en una de 150), entre 4 y 14 dp. */
 fun grosorPaspartu(ancho: Dp): Dp = (ancho * 0.054f).coerceIn(4.dp, 14.dp)
 
-/** Si la portada y el color de la página se parecen menos que esto (en luminancia, 0–1), el paspartú va en la tinta. */
-const val PARECIDO_PASPARTU = 0.15f
+/**
+ * El paspartú es SIEMPRE el mismo, en todas las apps de la familia, de día y de noche, sin depender del tema ni de «A tu manera»: un crema
+ * claro fijo ([PASPARTU_CREMA]). Solo si la portada es muy clara ([paspartuOscuro]: su luminancia media llega a [UMBRAL_PASPARTU], lo que
+ * con el crema (≈0,93) es una diferencia menor que 0,15: casi blanca o crema) pasa a un oscuro fijo ([PASPARTU_OSCURO]).
+ */
+val PASPARTU_CREMA = Color(0xFFF4EBD6)
+val PASPARTU_OSCURO = Color(0xFF141210)
+const val UMBRAL_PASPARTU = 0.78f
 
-fun paspartuEnTinta(lPagina: Float, lPortada: Float): Boolean = kotlin.math.abs(lPagina - lPortada) < PARECIDO_PASPARTU
+fun paspartuOscuro(lPortada: Float): Boolean = lPortada >= UMBRAL_PASPARTU
+
+fun colorPaspartu(lPortada: Float): Color = if (paspartuOscuro(lPortada)) PASPARTU_OSCURO else PASPARTU_CREMA
 
 fun luminancia(c: Color): Float = 0.2126f * c.red + 0.7152f * c.green + 0.0722f * c.blue
 

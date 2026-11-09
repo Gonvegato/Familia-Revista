@@ -106,3 +106,10 @@ Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSo
 - **Órdenes**: solo los que dicen algo en cada sección; un orden guardado que ya no vale allí vuelve al de serie sin romper nada.
 - Las capturas de cada app nueva, en una prueba aparte con sus colores «A tu manera» (normal, noche y letra 1,3) y leídas todas antes de dar
   nada por bueno.
+
+## Paspartú: crema fijo en todas las apps (Seshat 0.20.3, Bastet 0.8.1)
+
+El marco de la portada que va sobre un fondo (cartel de la portada y apertura de la ficha) es SIEMPRE un crema fijo #F4EBD6, sin depender
+del tema, de la noche ni de «A tu manera» (en las apps de página oscura, el color de la página no se veía). Solo si la portada es muy
+clara — luminancia media de la portada encuadrada ≥ 0,78 (`UMBRAL_PASPARTU`; con el crema ≈0,93, una diferencia < 0,15) — el marco
+pasa a un oscuro fijo #141210. Funciones: `colorPaspartu(lPortada)`, `paspartuOscuro`, `PASPARTU_CREMA`, `PASPARTU_OSCURO`.

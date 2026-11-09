@@ -110,11 +110,13 @@ class EncuadreTest {
     @Test fun elPaspartuVaEnTintaSoloSiLaPortadaSeParecePagina() {
         val blanca = java.io.File(ctx.cacheDir, "blanca.png").apply { writeBytes(png(0xFFF7F5F0.toInt(), 60, 90)) }
         val oscura = java.io.File(ctx.cacheDir, "oscura.png").apply { writeBytes(png(0xFF20304A.toInt(), 60, 90)) }
-        val crema = luminancia(androidx.compose.ui.graphics.Color(0xFFF8F0D4)); val nocheP = luminancia(androidx.compose.ui.graphics.Color(0xFF1A1816))
-        assertTrue("portada casi blanca sobre el crema: tinta", paspartuEnTinta(crema, luminanciaDePortada(blanca.path)!!))
-        assertFalse("portada oscura sobre el crema: crema", paspartuEnTinta(crema, luminanciaDePortada(oscura.path)!!))
-        assertTrue("de noche, una portada muy oscura: tinta (clara)", paspartuEnTinta(nocheP, 0.05f))
-        assertFalse("de noche, la blanca: el color de la página", paspartuEnTinta(nocheP, luminanciaDePortada(blanca.path)!!))
+        // Crema fijo salvo portadas muy claras; no depende del tema (ni de la noche)
+        assertEquals(PASPARTU_OSCURO, colorPaspartu(luminanciaDePortada(blanca.path)!!))
+        assertEquals(PASPARTU_CREMA, colorPaspartu(luminanciaDePortada(oscura.path)!!))
+        assertEquals("una portada media, crema", PASPARTU_CREMA, colorPaspartu(0.5f))
+        assertEquals("una crema como el paspartú, oscuro", PASPARTU_OSCURO, colorPaspartu(luminancia(PASPARTU_CREMA)))
+        assertEquals("una muy oscura (de noche también), crema", PASPARTU_CREMA, colorPaspartu(0.03f))
+        assertTrue("el oscuro se distingue del crema", kotlin.math.abs(luminancia(PASPARTU_CREMA) - luminancia(PASPARTU_OSCURO)) > 0.8f)
         assertNull("sin imagen no hay luminancia de portada", luminanciaDePortada(""))
         assertEquals(8.1f, grosorPaspartu(androidx.compose.ui.unit.Dp(150f)).value, 0.01f)
         assertEquals("tope en las tapas grandes", 14f, grosorPaspartu(androidx.compose.ui.unit.Dp(400f)).value, 0.01f)

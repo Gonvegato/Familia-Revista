@@ -15,6 +15,13 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.8.1
+
+- **El paspartú, siempre crema.** El marco de la portada en el cartel y en la ficha deja de ir del color de la página: es un crema fijo
+  (#F4EBD6), igual de día y de noche y con cualquier «A tu manera», en todas las apps de la familia. Solo si la portada es muy clara
+  (luminancia media ≥ 0,78: casi blanca o crema) pasa a un oscuro fijo (#141210). En Bastet, con la página verde oscura, el marco antes casi
+  no se veía sobre fondos oscuros.
+
 ## 0.8.0 — la cara de Seshat: portada cartel, páginas y ficha a doble página
 
 - **Una sola pantalla con páginas, como Seshat.** Arriba, la cabecera de tinta (BUSCAR · + AÑADIR · la fecha · ⚙ y «BASTET.» en grande,

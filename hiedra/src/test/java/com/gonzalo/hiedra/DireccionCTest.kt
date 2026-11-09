@@ -111,12 +111,13 @@ class DireccionCTest {
         Encuadres.almacen = "encuadres"
     }
 
-    @Test fun elPaspartuVaEnTintaSoloSiLaPortadaSeParecePagina() {
-        assertFalse("portada oscura sobre página crema: crema", paspartuEnTinta(0.94f, 0.2f))
-        assertTrue("portada casi blanca sobre crema: tinta", paspartuEnTinta(0.94f, 0.88f))
-        // Bastet de noche (#1C241B): una portada muy oscura, en la tinta
-        val pagina = luminancia(Color(0xFF1C241B))
-        assertTrue(paspartuEnTinta(pagina, 0.05f)); assertFalse(paspartuEnTinta(pagina, 0.6f))
+    @Test fun elPaspartuEsCremaFijoSalvoPortadasMuyClaras() {
+        // Igual en Bastet (página oscura) que en Seshat, de día y de noche: crema fijo; oscuro solo si la portada es muy clara
+        assertEquals(PASPARTU_CREMA, colorPaspartu(0.2f))
+        assertEquals(PASPARTU_CREMA, colorPaspartu(0.05f))
+        assertEquals(PASPARTU_CREMA, colorPaspartu(0.6f))
+        assertEquals(PASPARTU_OSCURO, colorPaspartu(0.88f))
+        assertEquals(PASPARTU_OSCURO, colorPaspartu(luminancia(Color(0xFFFFFFFF))))
         assertEquals(8.1f, grosorPaspartu(androidx.compose.ui.unit.Dp(150f)).value, 0.01f)
         assertEquals(4f, grosorPaspartu(androidx.compose.ui.unit.Dp(40f)).value, 0f)
     }
