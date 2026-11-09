@@ -121,6 +121,8 @@ private fun AppContenido(
     var tab by remember { mutableStateOf(0) }
     // Atrio 6: destino del dock (0 Inicio, 1 Juegos, 2 Libros, 3 Cine, 4 Diario) y apartado de la biblioteca
     var dest by remember { mutableStateOf(0) }
+    /** El buscador de todo, abierto desde la cabecera (encima de las páginas). */
+    var buscandoTodo by remember { mutableStateOf(false) }
     /** En la interfaz Revista: la biblioteca se ha abierto a propósito. */
     var shellLib by remember { mutableStateOf(false) }
     var segment by remember { mutableStateOf(0) }
@@ -961,7 +963,8 @@ private fun AppContenido(
     val sectionKey = when { dest == 4 -> "diario"; dest == 5 -> "escribir"; kind.isMovie || kind.isTv -> "cine"; else -> "$section" }
     // (la clave lleva también si se ve la portada o la biblioteca: cada capa de la transición pinta su página, no la nueva
     // las dos; antes la que salía se volvía la nueva al instante y luego se fundía consigo misma: un parpadeo)
-    val shown: Any = if (screen is Screen.Home) "top:$dest:$sectionKey:$pv:${if (shellLib && section >= 0) "lib" else "portada"}:${kind.id}" else screen
+    // (con las páginas, cambiar de pestaña no rehace la pantalla: la clave de la portada ya no lleva la página)
+    val shown: Any = if (screen is Screen.Home) "top:$pv" else screen
     val topLevel = screen is Screen.Home
     // Al volver de una ficha abierta desde Feed, Revista o Escritorio, se vuelve a esa pantalla (no a la biblioteca)
     LaunchedEffect(screen is Screen.Home) {
@@ -1085,10 +1088,60 @@ private fun AppContenido(
                     )
                 }
 
-                when {
-                    // Escritos: los capítulos que diste por terminados en Cobalto, para leerlos aquí
-                    dest == 5 -> LecturaCobaltoScreen(onBack = { go(0) })
-                    dest == 4 -> {
+                // ---- Jonsu 1.8: una sola pantalla con páginas (la cabecera «JONSU.», las pestañas y las páginas que se pasan con el dedo)
+                        val ongoing = sectionKinds.flatMap { k -> ps(k).filter { it.status == 1 }.map { Ongoing(k, it) } }
+                            .sortedByDescending { it.play.activity }
+                            .let { l -> if (pv) l.filter { !Photos.isLocal(it.play.cover) } else l }
+                val m = ShellModel(
+                                name = if (pv) p!!.name else store.myName.ifBlank { "Jonsu" },
+                                readOnly = pv,
+                                kinds = sectionKinds,
+                                entries = { k -> (gs(k).map { ShellEntry(k, null, it) } + ps(k).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
+                                ongoing = ongoing,
+                                paired = !pv && store.paired,
+                                partnerName = p?.name,
+                                open = { e ->
+                                    shellLib = false
+                                    if (e.play != null) openPlay(e.kind, e.play)
+                                    else { section = e.kind.id; screen = if (pv) Screen.PartnerItem(e.kind.id, e.id) else Screen.Edit(e.game!!, false) }
+                                },
+                                primary = { o -> primaryAction(o) { sc -> section = o.kind.id; screen = sc } },
+                                primaryLabel = { o -> primaryLabel(o) },
+                                // (cada categoría es una página: «Ver todo» lleva a su pestaña)
+                                library = { k -> if (k.isMovie || k.isTv) cineTv = k.isTv; go(when { k.isGame -> 1; k.isBook -> 2; k.isMovie || k.isTv -> 3; else -> 100 + k.id }) },
+                                diary = { go(4) },
+                                write = if (pv) null else ({ go(5) }),
+                                discover = null,
+                                profile = if (pv) null else ({ screen = Screen.Profile }),
+                                add = if (pv) null else ({ k -> if (k.isGame) Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) else if (k.isBook) Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL)
+                                    // Las películas y las series se añaden en Mostaza (si está; si no, aquí, y van igual a la cuenta de Mostaza)
+                                    else if ((k.isMovie || k.isTv) && CosasMostaza.activa(ctx) && Hermanas.abrir(ctx, Hermanas.PAQ_MOSTAZA)) {}
+                                    else { section = k.id; screen = Screen.Search(true) } }),
+                                partner = if (p != null) ({ togglePartner() }) else null,
+                                // (desde la portada, al salir de Estadísticas se vuelve a la portada, no a la biblioteca)
+                                stats = { k -> section = k.id; shellLib = false; screen = Screen.Stats },
+                                pc = null,
+                                pickImage = if (pv) null else ({ o ->
+                                    val pl = o.play
+                                    section = o.kind.id
+                                    screen = Screen.Art(Game(pl.id, pl.name, pl.cover, hero = pl.hero, creator = pl.creator), o.kind.admiteFondo, false, false, pl, home = true)
+                                }),
+                                recs = pendingRecs, onRecAdd = { recAdd(it) }, onRecDismiss = { recDone(it) },
+                                acts = acts, onAct = { a -> withReveal { screen = Screen.PartnerItem(a.kind, a.id) } }
+                            )
+                PantPaginas(
+                    nombre = if (pv) p!!.name else "Jonsu",
+                    paginas = paginasJonsu(sectionKinds, { k -> (gs(k).map { it.id } + ps(k).map { it.id }).distinct().size }, conEscritos = !pv),
+                    destino = dest, alDestino = { d -> go(d) },
+                    alBuscar = { buscandoTodo = !buscandoTodo }, buscando = buscandoTodo,
+                    alPareja = m.partner, alAjustes = m.profile,
+                    buscador = { BuscadorGeneral(m) { buscandoTodo = false } }
+                ) { pg ->
+                    when {
+                        pg.destino == 0 -> ShellHome(m)
+                        // Escritos: los capítulos que diste por terminados en Cobalto, para leerlos aquí
+                        pg.destino == 5 -> LecturaCobaltoScreen(onBack = { go(0) })
+                        pg.destino == 4 -> {
                         // El Diario: lo de cada día (todo o una categoría); con tu pareja, también lo suyo
                         val dk = if (pv) p!!.kindById(diaryKind) else myKinds.find { it.id == diaryKind } ?: GAMES
                         val dks = if (diaryAll) sectionKinds else listOf(dk)
@@ -1154,53 +1207,18 @@ private fun AppContenido(
                                 abrirRef = { r -> refKind(r)?.let { (k, id) -> abrirFicha(k, id) } },
                                 aviso = { avisoDiario = true }
                             ),
-                            onBack = { go(0) }
+                            onBack = null
                         )
                     }
-                    dest in 1..3 && section >= 0 -> Library(kind, null)
-                    dest == 3 -> Box(Modifier.fillMaxSize().statusBarsPadding().padding(20.dp)) { Text("Aún no hay categoría de películas o series.", color = Muted) }
-                    capaLib -> Library(capaKind) { section = -1; shellLib = false }
-                    else -> {
-                        val ongoing = sectionKinds.flatMap { k -> ps(k).filter { it.status == 1 }.map { Ongoing(k, it) } }
-                            .sortedByDescending { it.play.activity }
-                            .let { l -> if (pv) l.filter { !Photos.isLocal(it.play.cover) } else l }
-                        run {
-                            ShellHome(ShellModel(
-                                name = if (pv) p!!.name else store.myName.ifBlank { "Jonsu" },
-                                readOnly = pv,
-                                kinds = sectionKinds,
-                                entries = { k -> (gs(k).map { ShellEntry(k, null, it) } + ps(k).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
-                                ongoing = ongoing,
-                                paired = !pv && store.paired,
-                                partnerName = p?.name,
-                                open = { e ->
-                                    shellLib = false
-                                    if (e.play != null) openPlay(e.kind, e.play)
-                                    else { section = e.kind.id; screen = if (pv) Screen.PartnerItem(e.kind.id, e.id) else Screen.Edit(e.game!!, false) }
-                                },
-                                primary = { o -> primaryAction(o) { sc -> section = o.kind.id; screen = sc } },
-                                primaryLabel = { o -> primaryLabel(o) },
-                                library = { k -> if (k.isMovie || k.isTv) cineTv = k.isTv; section = k.id; segment = 0; shellLib = true },
-                                diary = { go(4) },
-                                write = if (pv) null else ({ go(5) }),
-                                discover = null,
-                                profile = if (pv) null else ({ screen = Screen.Profile }),
-                                add = if (pv) null else ({ k -> if (k.isGame) Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) else if (k.isBook) Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL)
-                                    // Las películas y las series se añaden en Mostaza (si está; si no, aquí, y van igual a la cuenta de Mostaza)
-                                    else if ((k.isMovie || k.isTv) && CosasMostaza.activa(ctx) && Hermanas.abrir(ctx, Hermanas.PAQ_MOSTAZA)) {}
-                                    else { section = k.id; screen = Screen.Search(true) } }),
-                                partner = if (p != null) ({ togglePartner() }) else null,
-                                // (desde la portada, al salir de Estadísticas se vuelve a la portada, no a la biblioteca)
-                                stats = { k -> section = k.id; shellLib = false; screen = Screen.Stats },
-                                pc = null,
-                                pickImage = if (pv) null else ({ o ->
-                                    val pl = o.play
-                                    section = o.kind.id
-                                    screen = Screen.Art(Game(pl.id, pl.name, pl.cover, hero = pl.hero, creator = pl.creator), o.kind.admiteFondo, false, false, pl, home = true)
-                                }),
-                                recs = pendingRecs, onRecAdd = { recAdd(it) }, onRecDismiss = { recDone(it) },
-                                acts = acts, onAct = { a -> withReveal { screen = Screen.PartnerItem(a.kind, a.id) } }
-                            ))
+                        else -> {
+                            val pk = when {
+                                pg.destino == 1 -> sectionKinds.firstOrNull { it.isGame }
+                                pg.destino == 2 -> sectionKinds.firstOrNull { it.isBook }
+                                pg.destino == 3 -> sectionKinds.firstOrNull { if (cineTv) it.isTv else it.isMovie } ?: sectionKinds.firstOrNull { it.isMovie || it.isTv }
+                                else -> sectionKinds.firstOrNull { it.id == pg.destino - 100 }
+                            }
+                            if (pk != null) Library(pk, null)
+                            else Box(Modifier.fillMaxSize().padding(20.dp)) { Text("Aún no hay categoría de películas o series.", color = Muted) }
                         }
                     }
                 }

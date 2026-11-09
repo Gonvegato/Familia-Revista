@@ -45,7 +45,10 @@ class TemaProvider : ContentProvider() {
             val fondoPropio = p.getLong("skin_fondo_propio", 0L)
             val tintaPropia = p.getLong("skin_tinta_propia", 0L)
             val acentoPropio = p.getLong("skin_acento_propio", 0L)
-            val oscuro = (if (fondoPropio != 0L) Color(fondoPropio).luminance() < 0.4f else null) ?: fondo?.oscuro ?: own
+            val accentId0 = p.getString("skin_accent_id", "edicion") ?: "edicion"
+            // Sin nada elegido: los colores de Jonsu de serie (fondo casi negro, texto crema y el granate)
+            val deSerie = Skin.deSerieJonsu(p.getString("skin_fondo", ""), accentId0, fondoPropio, tintaPropia, acentoPropio)
+            val oscuro = (if (fondoPropio != 0L) Color(fondoPropio).luminance() < 0.4f else if (deSerie) Color(JONSU_FONDO).luminance() < 0.4f else null) ?: fondo?.oscuro ?: own
             val paleta = PALETTES.first { it.id == "revista" }
             val base = fondo?.tones ?: if (oscuro) paleta.dark else paleta.light
             val accentId = p.getString("skin_accent_id", "edicion") ?: "edicion"
@@ -53,6 +56,7 @@ class TemaProvider : ContentProvider() {
                 fondo != null && (accentId == "edicion" || accentId == "rojo") -> base
                 else -> ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> base.copy(general = if (oscuro) a.dark else a.light) } ?: base
             }
+            if (deSerie) return Skin.conPropios(conAcento, JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) to oscuro
             return Skin.conPropios(conAcento, fondoPropio, tintaPropia, acentoPropio) to oscuro
         }
     }

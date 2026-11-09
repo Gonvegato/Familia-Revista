@@ -165,6 +165,17 @@ object CuentaHermanas {
         }
         Hermanas.guardaPublico(c, "lectura_cobalto", lec.toString())
 
+        // ---- Hathor: lo visto cada día (título → {t, tipo, days}), para la portada del día y la semana de la portada
+        val titulos = LaFamilia.coleccion("titulos").vivos().associateBy { it.ref }
+        val tv = JSONObject()
+        for (n in tiempo) {
+            val t = titulos[n.texto("ref")] ?: continue
+            val x = tv.optJSONObject(t.ref) ?: JSONObject().put("t", t.texto("t")).put("tipo", t.texto("tipo").ifBlank { "movie" }).put("days", JSONObject()).also { tv.put(t.ref, it) }
+            val days = x.getJSONObject("days")
+            n.campos.forEach { (k, v) -> if (k.length == 11 && k[0] == 'd' && k[5] == '-') days.put(k.substring(1), days.optLong(k.substring(1)) + ((v as? Number)?.toLong() ?: 0L)) }
+        }
+        Hermanas.guardaPublico(c, "tiempo_mostaza", tv.toString())
+
         // Las portadas que aún no están en el móvil: se bajan y, al llegar, se vuelve a reflejar
         if (faltan.isNotEmpty()) PortadasFamilia.baja(faltan) { kotlin.concurrent.thread { runCatching { refrescar(c, Store(c)) } } }
         return cambio

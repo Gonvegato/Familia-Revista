@@ -9,6 +9,38 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.0 — la cara de sus hermanas (dirección C) y la portada del día
+
+- **Colores de Jonsu**: fondo casi negro #1C1F22, texto crema #F1EBE0 y el granate #8F3232, los del icono. Salen si no has elegido otros en
+  Apariencia (fondo de color, colores a mano o acento); lo que elegiste se queda. El granate sobre el casi negro no se lee (2,1:1): en letras,
+  cifras, la pestaña elegida y el botón principal va aclarado lo justo (4,5:1); en bloques y en el icono, tal cual. La cabecera es un bloque
+  crema con letra oscura y el punto granate oscurecido para leerse ahí.
+- **Una sola pantalla con páginas**, como Seshat, Bastet, Hathor, Nut y Thot: la cabecera con «JONSU.» (BUSCAR · PAREJA · la fecha · ⚙), que
+  se recoge al bajar sin cortarse, y una fila de pestañas —PORTADA · DIARIO · VIDEOJUEGOS · LIBROS · CINE · tus categorías · ESCRITOS— que se
+  pasan con el dedo. Atrás vuelve a la portada; las fichas, encima. «Cifras» está en la portada, debajo de la semana.
+- **La portada del día**: lo que más tiempo se llevó hoy entre todas (un juego de Bastet, un libro de Seshat, una película o serie de Hathor;
+  lo escrito en Thot, si no hubo nada con tiempo). Si hoy aún nada, lo de ayer o el último día de la semana con algo. Su portada grande con
+  paspartú sobre su fondo (o su color), «HOY · 1 H 35 EN BASTET», el título, «y 35′ leyendo, 812 palabras» y «ABRIR EN BASTET →», que abre
+  esa ficha en su app.
+- **Los retos de todas**, de la cuenta y solo para leer: libros del año (Seshat, `ajustes/lectura`), juegos terminados (Bastet,
+  `ajustes/juego_reto`), películas y series terminadas (Hathor, `ajustes/cine_reto`) y las palabras de hoy (Thot, `ajustes/cobalto_meta`,
+  de serie 500). Cada uno con su barra y cómo vas; tocar uno abre su app.
+- **Esta semana**: todo junto, en barras apiladas por hermana (cada una con su color y la leyenda); lo escrito, que no tiene tiempo, es un
+  cuadrado bajo la barra. Tocar un día enseña su reparto («J · 1 h 35 jugando · 35′ leyendo · 812 palabras»). Y los días seguidos con algo.
+- Debajo, lo de siempre: Ahora mismo (con «APUNTAR →» o lo que toque), Escritos, lo de tu pareja, los próximos episodios, las notas más
+  altas, la cita y tal día como hoy.
+- **Listas con portadas grandes** (84×126), numeradas, con el título en grotesca; arriba de cada categoría, sus cifras en bloques (que
+  llevan a su pestaña).
+- **La ficha, a doble página**: el fondo (o la portada ampliada) como foto de apertura con un velo arriba para «← Volver · Imágenes ·
+  Editar» (y Pareja y ★), la portada con su paspartú colgando del borde, la etiqueta del estado, el título enorme y el botón principal
+  (JUGAR EN BASTET, LEER EN SESHAT, VER EN HATHOR o VALORAR); debajo, la página de siempre, con sus secciones numeradas.
+- **Encuadrar el fondo es de cada dispositivo**: la imagen (el `hero` que leen Seshat y Bastet) es la misma en todos; qué parte se ve se elige
+  en cada móvil o tableta y vuelve al centro si la imagen cambia.
+- Icono nuevo: «J.» con el punto granate y la franja «DIARIO» (adaptable y monocromo). Widgets en la misma dirección: titulares en grotesca,
+  sin rebordes, tapas rectas, «JONSU.» con su punto y «JONSU en papel» con la cabecera en un bloque de tinta.
+- Lo de siempre, igual: lo que leen las hermanas de Jonsu (su apariencia en la cuenta para «Copiar de Jonsu», el `hero`, las notas), el
+  Diario, las valoraciones, la sincronización y «entrar una vez».
+
 ## 1.6.3 — las películas y las series, de Hathor
 
 - **Tus películas y tus series son las de Hathor**, la app nueva de la familia para verlas (como los juegos son los de Bastet y los

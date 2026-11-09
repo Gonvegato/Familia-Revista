@@ -144,14 +144,15 @@ class WidgetsTest {
         seed()
         val p = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE)
         for (e in EDICIONES) {
-            p.edit().putString("skin_edicion", e.id).putString("skin_accent_id", "edicion").commit()
+            // (con un acento elegido: sin nada elegido, los widgets llevan los colores de Jonsu, no el papel de la edición)
+            p.edit().putString("skin_edicion", e.id).putString("skin_accent_id", "rojo").commit()
             val b = Widgets.componer(ctx, WTipo.LEYENDO, 1, 330f, 165f).bitmap(ctx, 330f, 165f, false, 2f)
             guardar("edicion_${e.id}_leyendo", b)
             guardar("edicion_${e.id}_cita", Widgets.componer(ctx, WTipo.CITA, 1, 330f, 165f).bitmap(ctx, 330f, 165f, true, 2f))
             // el papel de la edición (un punto del borde, donde no hay nada dibujado)
             assertEquals("${e.id}: su papel", e.paleta.light.cPaper.toArgb(), b.getPixel(b.width / 2, 3))
         }
-        p.edit().putString("skin_edicion", "atrio").commit()
+        p.edit().putString("skin_edicion", "atrio").putString("skin_accent_id", "edicion").commit()
         Unit
     }
 

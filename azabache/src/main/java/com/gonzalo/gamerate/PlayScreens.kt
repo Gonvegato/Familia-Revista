@@ -84,20 +84,26 @@ fun PlayDetailScreen(
         if (Skin.revista && !editing) {
             // ---------------- Revista: la página en casillas, sin imágenes ----------------
             val ctx = androidx.compose.ui.platform.LocalContext.current
-            RevistaTopBar(onBack) {
-                if (partner != null) Text("PAREJA", fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.clickable { withReveal { viewP = true } }.padding(8.dp))
-                Text(if (designing) "LISTO" else "EDITAR", color = if (designing) ColGeneral else Charcoal, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
-                    modifier = Modifier.clickable { designing = !designing }.padding(8.dp))
-            }
-            Box(Modifier.padding(horizontal = 18.dp).fillMaxWidth().height(3.dp).background(Charcoal))
-            Spacer(Modifier.height(14.dp))
-            RevistaHeadline(p.name, listOfNotNull(kind.statuses.getOrNull(p.status), kind.title, p.creator.ifBlank { null }).joinToString(" · "))
+            // ---- Jonsu 1.8: la ficha a doble página (apertura con el fondo o la portada ampliada, portada con paspartú, estado y título enorme)
+            var encuadrando by remember { mutableStateOf(false) }
             val deck = listOfNotNull(
+                p.creator.ifBlank { null }?.let { "de $it" }, kind.title,
                 p.platform.ifBlank { null },
                 if (p.start > 0L) "desde el ${fmtDay(p.start)}" else null,
                 if (!kind.isBook && p.minutes > 0) hoursText(p.minutes) else null
-            ).joinToString(" · ")
-            if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp))
+            ).joinToString(" · ").replace(Regex("(\\d) (h|min|págs?\\.)"), "$1\u00A0$2")
+            val pct = if (kind.isBook) Hermanas.avanceMarfil(ctx, p.id)?.let { (it * 100).toInt() }?.takeIf { it in 1..99 } else p.percent()?.takeIf { it in 1..99 }
+            AperturaFicha(
+                "${kind.id}:${p.id}", p.cover, p.hero, p.name,
+                listOfNotNull(kind.statuses.getOrNull(p.status), pct?.let { "$it %" }).joinToString(" · "), deck, onBack,
+                acciones = listOfNotNull(
+                    if (partner != null) "Pareja" to { withReveal { viewP = true } } else null,
+                    "Imágenes" to { onArt(p, false) },
+                    (if (designing) "Listo" else "Editar") to { designing = !designing },
+                ),
+                principal = principalDe(ctx, kind, p.id), alEncuadrar = { encuadrando = true }
+            )
+            if (encuadrando) EditorEncuadreFondo(p.hero.ifBlank { p.cover }, "${kind.id}:${p.id}") { encuadrando = false }
             partner?.reactsToMe?.get(p.id)?.let { Box(Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) { TheirReaction(partnerName, it) } }
             Spacer(Modifier.height(14.dp))
             if (designing) DesignHint(onData = { designing = false; editing = true }, name = p.name, onDelete = { onDelete(p) }, onArt = { hero -> onArt(p, hero) }, hasHero = kind.admiteFondo)
@@ -121,7 +127,8 @@ fun PlayDetailScreen(
                     MagLink("Marcar «${kind.statuses[1]}»", accent = true) { empezar() }
                 }
             }
-            if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(p.cover, p.name, coverKey(kind.id, p.id)) }
+            // (la portada ya está en la apertura, con su paspartú: no se repite en la página)
+            if (false) defs["portada"] = MagDef("Portada") { MagPortada(p.cover, p.name, coverKey(kind.id, p.id)) }
             defs["estado"] = MagDef(if (b != null) "Nota" else "Estado") {
                 if (b != null) MagScore(b.general, b.scores(), kind)
                 else FitTitle(kind.statuses.getOrElse(p.status) { "" }, 30.sp, 32.sp)

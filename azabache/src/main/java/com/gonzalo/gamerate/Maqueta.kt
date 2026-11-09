@@ -265,16 +265,25 @@ fun MagPage(
     fun cellAt(p: Pair<Int, Int>) = rows.getOrNull(p.first)?.cells?.getOrNull(p.second)
     fun setCell(p: Pair<Int, Int>, c: MagCell) = set(rows.mapIndexed { i, r -> if (i != p.first) r else r.copy(cells = r.cells.mapIndexed { j, x -> if (j == p.second) c else x }) })
 
+    // Jonsu 1.8: las secciones de la ficha van numeradas (01, 02…), en el orden de lectura; las que no tienen título no cuentan
+    val numeros: Map<String, Int> = if (designing) emptyMap() else run {
+        var n = 0
+        buildMap { rows.forEachIndexed { i, r -> r.cells.forEachIndexed { j, c ->
+            val titulo = when (c.type) { "texto", "imagen" -> c.title.isNotBlank(); "vacio" -> false; else -> defs[c.type]?.label != null }
+            if (visible(c) && titulo) put("$i:$j", ++n)
+        } } }
+    }
+
     @Composable
     fun ColumnScope.CellView(c: MagCell, k: String) {
         when (c.type) {
             "texto" -> {
-                if (c.title.isNotBlank()) MagLabel(c.title)
+                if (c.title.isNotBlank()) MagLabel(c.title, numero = numeros[k])
                 if (c.text.isNotBlank()) Text(c.text, fontFamily = Display, fontSize = 18.sp, lineHeight = 27.sp)
                 else if (designing) Text("Texto libre", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
             }
             "imagen" -> {
-                if (c.title.isNotBlank()) MagLabel(c.title)
+                if (c.title.isNotBlank()) MagLabel(c.title, numero = numeros[k])
                 // Fila de alto fijo: la imagen llena la casilla. Si no, tiene la forma que dejó el encuadre (la misma que se vio al encuadrar)
                 val fixed = LocalRowFixed.current
                 val split = LocalCellFraction.current < 0.99f
@@ -296,7 +305,7 @@ fun MagPage(
             }
             "vacio" -> if (designing) Text("Vacía: toca para elegir", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
             else -> defs[c.type]?.let { d ->
-                if (d.label != null) MagLabel(d.label, d.action?.first, d.action?.second)
+                if (d.label != null) MagLabel(d.label, d.action?.first, d.action?.second, numeros[k])
                 d.content(this)
             }
         }

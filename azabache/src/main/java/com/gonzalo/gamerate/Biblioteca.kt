@@ -295,8 +295,12 @@ private fun RevistaLibrary(l: LibUi) {
             val total = l.counts.take(4).sum()
             Text("SECCIÓN · $total ${if (total == 1) l.kind.unit else l.kind.unit + "s"}".uppercase(), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, modifier = Modifier.padding(top = 10.dp))
             if (l.titleSwitch != null) Box(Modifier.padding(top = 2.dp)) { l.titleSwitch.invoke() }
+            // En una página (con la cabecera de Jonsu y su pestaña encima) el nombre ya está en la pestaña: en su lugar, sus cifras
+            else if (l.onBack == null) RejillaCifras(l.labels.take(3).mapIndexed { i, n ->
+                BloqueCifra("${l.counts.getOrElse(i) { 0 }}", n, when (i) { 0 -> AcentoBloque; 1 -> Paper; else -> Charcoal }, when (i) { 0 -> SobreBloque; 1 -> Charcoal; else -> Paper }) { l.onSegment(i) }
+            }, Modifier.padding(top = 8.dp))
             else FitTitle(l.kind.title, if (ancha) 76.sp else 52.sp, if (ancha) 78.sp else 54.sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
-            Box(Modifier.padding(top = 4.dp, bottom = 6.dp).fillMaxWidth().height(3.dp).background(Charcoal))
+            Box(Modifier.padding(top = if (l.onBack == null && l.titleSwitch == null) 10.dp else 4.dp, bottom = 6.dp).fillMaxWidth().height(2.dp).background(Charcoal))
             if (l.searching) SearchPill(l.query, "Buscar en ${l.kind.title.lowercase()}", Modifier.fillMaxWidth().padding(vertical = 8.dp)) { l.setQuery(it) }
             Segmented(l.labels, l.segment, counts = l.counts) { l.onSegment(it) }
             // Todas a la vista (en una línea o en varias): en una fila que se desliza, la última salía cortada
@@ -338,9 +342,11 @@ private fun ColumnScope.EntradaLista(l: LibUi, c: Cell, i: Int) {
             // Con «Portadas en las listas», su portada a la izquierda, como en las sagas
             Row(Modifier.fillMaxWidth().weight(1f).press(haptic = false) { l.open(c) }.padding(vertical = 14.dp).rise(i, i < 12), verticalAlignment = Alignment.CenterVertically) {
                 // (la portada viaja de la lista a la ficha al abrirla)
-                if (Skin.listCovers) { ListCover(c.cover, c.name, 44.dp, 62.dp, if (c.saga == null) coverKey(l.kind.id, c.id) else null); Spacer(Modifier.width(16.dp)) }
+                // (las portadas, grandes: 84×126, como en las listas de Seshat, Bastet y Thot)
+                if (Skin.listCovers) { ListCover(c.cover, c.name, 84.dp, 126.dp, if (c.saga == null) coverKey(l.kind.id, c.id) else null); Spacer(Modifier.width(16.dp)) }
                 Column(Modifier.weight(1f)) {
-                    FitTitle(c.name, 26.sp, 28.sp, letterSpacing = (-0.5).sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text("%02d".format(i + 1), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, letterSpacing = 0.sp)
+                    FitTitle(c.name, 22.sp, 25.sp, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, conEdicion = false)
                     val who = (c.game?.creator ?: c.play?.creator).orEmpty()
                     val line = listOf(who, if (c.sub != who) c.sub else "").filter { it.isNotBlank() }.joinToString(" · ")
                     if (line.isNotBlank()) Text(line.uppercase(), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
@@ -351,10 +357,10 @@ private fun ColumnScope.EntradaLista(l: LibUi, c: Cell, i: Int) {
                 if (c.game != null || c.sagaScore != null) {
                     Spacer(Modifier.width(12.dp))
                     if (c.game != null && Hermanas.sinValorar(c.game)) Text("Sin valorar", color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 16.sp)
-                    else Text("${c.game?.general ?: c.sagaScore}", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
+                    else Text("${c.game?.general ?: c.sagaScore}", fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 40.sp, lineHeight = 42.sp, letterSpacing = 0.sp)
                 }
             }
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Line))
+            Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
 }
 
 /** La portada de una entrada en las listas de la revista (con «Portadas en las listas»); sin imagen, su inicial. */

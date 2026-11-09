@@ -17,13 +17,23 @@ class TemaProviderTest {
     private val p get() = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).also { it.edit().clear().commit() }
     private val revista = PALETTES.first { it.id == "revista" }
 
-    @Test fun porDefectoSonLosDeLaRevistaClaraOOscura() {
-        val (t, oscuro) = TemaProvider.calcula(p, 1, sistemaOscuro = true)
-        assertFalse(oscuro); assertEquals(revista.light.paper, t.paper); assertEquals(revista.light.general, t.general)
-        val (d, os) = TemaProvider.calcula(p, 2, sistemaOscuro = false)
+    @Test fun porDefectoSonLosDeJonsu() {
+        // Jonsu 1.8: sin nada elegido, los colores de Jonsu (los del icono), oscuros elija el tema que elija
+        for (modo in 0..2) {
+            val (t, oscuro) = TemaProvider.calcula(p, modo, sistemaOscuro = false)
+            assertTrue(oscuro); assertEquals(JONSU_FONDO, t.paper); assertEquals(JONSU_TINTA, t.ink); assertEquals(JONSU_ACENTO, t.general)
+        }
+    }
+
+    @Test fun conAlgoElegidoSonLosDeLaRevistaClaraOOscura() {
+        val pr = p; pr.edit().putString("skin_accent_id", "rojo").commit()
+        val rojo = ACCENT_COLORS.first { it.id == "rojo" }
+        val (t, oscuro) = TemaProvider.calcula(pr, 1, sistemaOscuro = true)
+        assertFalse(oscuro); assertEquals(revista.light.paper, t.paper); assertEquals(rojo.light, t.general)
+        val (d, os) = TemaProvider.calcula(pr, 2, sistemaOscuro = false)
         assertTrue(os); assertEquals(revista.dark.paper, d.paper)
         // «como el sistema» sigue al sistema
-        assertTrue(TemaProvider.calcula(p, 0, sistemaOscuro = true).second); assertFalse(TemaProvider.calcula(p, 0, sistemaOscuro = false).second)
+        assertTrue(TemaProvider.calcula(pr, 0, sistemaOscuro = true).second); assertFalse(TemaProvider.calcula(pr, 0, sistemaOscuro = false).second)
     }
 
     @Test fun elAcentoElegidoSeVeEnClaroYEnOscuro() {

@@ -41,7 +41,8 @@ val Edge: Color get() = Skin.tones.cEdge
 /** Texto secundario. */
 val Muted: Color get() = Skin.tones.cMuted
 
-val ColGeneral: Color get() = Color(Skin.tones.general)
+/** El acento para letras, cifras y lo que se toca: el elegido, aclarado lo justo para leerse sobre la página (4,5:1; ver [Acento]). */
+val ColGeneral: Color get() = Acento
 val ColGfx: Color get() = Color(Skin.tones.gfx)
 val ColStory: Color get() = Color(Skin.tones.story)
 val ColMusic: Color get() = Color(Skin.tones.music)

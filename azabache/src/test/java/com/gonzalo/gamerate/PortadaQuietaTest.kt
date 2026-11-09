@@ -21,8 +21,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Al pasar de una portada a otra con el dedo, el marco no cambia de alto ni un fotograma (antes «tintineaba»: cada
- * página nueva del carrusel salía un fotograma con el titular sin ajustar y todas las imágenes cambiaban de alto).
+ * Jonsu 1.8: al bajar por la portada, la cabecera se recoge poco a poco y el nombre encoge con ella (nunca se corta ni deja una banda vacía);
+ * al subir, vuelve. Fotograma a fotograma, la cabecera nunca crece mientras se baja.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -31,15 +31,13 @@ class PortadaQuietaTest {
     @get:Rule val rule = createComposeRule()
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
 
-    @Test fun elMarcoNoSaltaAlDeslizar() {
+    @Test fun laCabeceraSeRecogeSinSaltos() {
         coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
         val s = Store(ctx)
-        // Titulares de largo distinto, con palabras largas (las que obligan a encoger la letra)
         s.savePlays(listOf(
             Play(201, "Cyberpunk 2077", "", "", 1, emptyList(), creator = "CD Projekt Red", minutes = 728, updated = System.currentTimeMillis()),
             Play(202, "Kingdom Come: Deliverance II", "", "", 1, emptyList(), creator = "Warhorse", updated = System.currentTimeMillis() - 1000),
             Play(203, "Hellblade: Senua's Sacrifice", "", "", 1, emptyList(), creator = "Ninja Theory", updated = System.currentTimeMillis() - 2000),
-            Play(204, "Supercalifragilisticoespialidoso", "", "", 1, emptyList(), updated = System.currentTimeMillis() - 3000),
         ), 0)
         Skin.load(ctx); Mode.dark = true; Mode.themeMode = 2; Skin.applyShell(2, ctx)
         rule.setContent {
@@ -48,33 +46,22 @@ class PortadaQuietaTest {
             }
         }
         rule.waitForIdle()
-        // Dónde está (en vertical) cada titular que se ve dentro del marco: al deslizar en horizontal, no debe moverse
-        val marco = { rule.onNodeWithTag("portada").fetchSemanticsNode().boundsInRoot }
-        val titulos = listOf("Cyberpunk 2077", "Kingdom Come: Deliverance II", "Hellblade: Senua's Sacrifice", "Supercalifragilisticoespialidoso")
-        val posiciones = mutableMapOf<String, MutableSet<Int>>()
-        val altos = mutableSetOf<Int>()
-        fun mira() {
-            val m = marco(); altos += Math.round(m.height)
-            for (t in titulos) for (n in rule.onAllNodesWithText(t, ignoreCase = true, useUnmergedTree = true).fetchSemanticsNodes()) {
-                val r = n.boundsInRoot
-                if (r.width > 0 && r.left >= m.left - 1 && r.right <= m.right + 1) posiciones.getOrPut(t) { mutableSetOf() } += Math.round(r.top)
-            }
-        }
-        mira()
+        val alto = { Math.round(rule.onNodeWithTag("cabecera").fetchSemanticsNode().boundsInRoot.height) }
+        val inicial = alto()
+        val altos = mutableListOf(inicial)
         rule.mainClock.autoAdvance = false
-        // Cuatro pasadas lentas con el dedo (una vuelta entera), fotograma a fotograma
-        repeat(4) {
-            rule.onNodeWithTag("portada").performTouchInput { down(center.copy(x = width * 0.9f)) }
-            repeat(30) {
-                rule.onNodeWithTag("portada").performTouchInput { moveBy(androidx.compose.ui.geometry.Offset(-width * 0.025f, 0f)) }
-                rule.mainClock.advanceTimeByFrame(); mira()
-            }
-            rule.onNodeWithTag("portada").performTouchInput { up() }
-            repeat(45) { rule.mainClock.advanceTimeByFrame(); mira() }
+        rule.onNodeWithTag("paginas").performTouchInput { down(center.copy(y = height * 0.8f)) }
+        repeat(30) {
+            rule.onNodeWithTag("paginas").performTouchInput { moveBy(androidx.compose.ui.geometry.Offset(0f, -height * 0.02f)) }
+            rule.mainClock.advanceTimeByFrame(); altos += alto()
         }
+        rule.onNodeWithTag("paginas").performTouchInput { up() }
+        repeat(30) { rule.mainClock.advanceTimeByFrame() }
         rule.mainClock.autoAdvance = true
-        assertTrue("el marco cambia de alto al deslizar: $altos", altos.size == 1)
-        for ((t, ys) in posiciones) assertTrue("«$t» salta de altura al deslizar: $ys", ys.size == 1)
-        assertTrue("se han visto las cuatro portadas: ${posiciones.keys}", posiciones.size == 4)
+        rule.waitForIdle()
+        assertTrue("la cabecera nunca crece al bajar: $altos", altos.zipWithNext().all { (a, b) -> b <= a })
+        assertTrue("la cabecera se recoge: $altos", altos.last() < inicial)
+        // Recogida del todo, queda la fila pequeña con «JONSU.» (sin banda vacía): no menos de una línea
+        assertTrue(rule.onAllNodesWithText("JONSU.").fetchSemanticsNodes().isNotEmpty())
     }
 }

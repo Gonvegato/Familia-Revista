@@ -405,6 +405,12 @@ object Hermanas {
         enHermana(c, "hiedra", id)?.let { i.putExtra("ficha", it).putExtra("jugar", true) }
         c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
     }
+    /** «Abrir en Bastet»: Hiedra, en la ficha de ese juego (sin ponerlo a jugar). */
+    fun abrirEnHiedra(c: Context, id: Long): Boolean {
+        val i = c.packageManager.getLaunchIntentForPackage(PAQ_HIEDRA) ?: return false
+        enHermana(c, "hiedra", id)?.let { i.putExtra("ficha", it) }
+        c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
+    }
     /** «Leer»: Marfil, en la ficha de ese libro si es suyo (Marfil 0.12.2 entiende «clave»). */
     fun leerEnMarfil(c: Context, id: Long): Boolean {
         val i = c.packageManager.getLaunchIntentForPackage(PAQ_MARFIL) ?: return false
@@ -422,6 +428,24 @@ object Hermanas {
         return diasLibros(lee(c, "tiempo_marfil"), enl.entries.associate { (k, v) -> kidDe(k) to v })
     }
     fun palabras(c: Context): Map<Long, Int> = palabrasPorDia(lee(c, "palabras_cobalto"))
+    /** Lo visto en Hathor: día → título (su ref en la cuenta) → ms. */
+    fun vistoPorDia(c: Context): Map<Long, Map<String, Long>> = diasVistos(lee(c, "tiempo_mostaza"))
+    /** El nombre de cada título de Hathor que tiene tiempo (ref → nombre). */
+    fun titulosVistos(c: Context): Map<String, String> = lee(c, "tiempo_mostaza")?.let { o -> o.keys().asSequence().associateWith { o.optJSONObject(it)?.optString("t").orEmpty() } } ?: emptyMap()
+    /** Lo de `tiempo_mostaza` (ref → {t, tipo, days: {fecha: ms}}): día → ref → ms. */
+    fun diasVistos(o: JSONObject?): Map<Long, Map<String, Long>> {
+        val out = HashMap<Long, HashMap<String, Long>>()
+        o ?: return out
+        for (ref in o.keys()) {
+            val days = o.optJSONObject(ref)?.optJSONObject("days") ?: continue
+            for (d in days.keys()) {
+                val ep = runCatching { LocalDate.parse(d).toEpochDay() }.getOrNull() ?: continue
+                val ms = days.optLong(d); if (ms <= 0) continue
+                val m = out.getOrPut(ep) { HashMap() }; m[ref] = (m[ref] ?: 0L) + ms
+            }
+        }
+        return out
+    }
     /** Los subrayados de Marfil, por ficha de aquí (solo los libros que tienen ficha). */
     fun subrayados(c: Context): Map<Long, List<BookNote>> {
         val enl = enlaces(c, "marfil")

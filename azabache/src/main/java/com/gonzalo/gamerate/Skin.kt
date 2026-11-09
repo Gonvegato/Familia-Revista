@@ -400,7 +400,13 @@ object Skin {
     var letraTitulos by mutableStateOf("")
     var letraTexto by mutableStateOf("")
     /** ¿El fondo propio es oscuro? (fija el modo, como los fondos de color); null sin fondo propio o en lo de tu pareja. */
-    val fondoPropioOscuro: Boolean? get() = if (revista && !Mode.partnerShown && fondoPropio != 0L) Color(fondoPropio).luminance() < 0.4f else null
+    val fondoPropioOscuro: Boolean? get() = if (!revista || Mode.partnerShown) null else if (fondoPropio != 0L) Color(fondoPropio).luminance() < 0.4f
+        else if (sinElegir) Color(JONSU_FONDO).luminance() < 0.4f else null
+    /** Sin nada elegido en Apariencia (ni fondo de color, ni colores a mano, ni acento): se ven los colores de Jonsu ([JONSU_FONDO]…). */
+    val sinElegir: Boolean get() = deSerieJonsu(fondoId, accentId, fondoPropio, tintaPropia, acentoPropio)
+    /** (también para los widgets y el proveedor de colores, que leen lo guardado) */
+    fun deSerieJonsu(fondoId: String?, accentId: String?, fondo: Long, tinta: Long, acento: Long): Boolean =
+        fondoId.isNullOrEmpty() && (accentId ?: "edicion") == "edicion" && fondo == 0L && tinta == 0L && acento == 0L
 
     /** Pone el papel de la edición (las letras las da Theme.kt según la edición). */
     fun ponEdicion() {
@@ -441,7 +447,7 @@ object Skin {
     }
     /** Los colores a mano por encima de todo: el fondo (las tarjetas, líneas y grises salen de él y del texto), el texto y el acento. */
     private fun propios(t: Tones): Tones =
-        if (!revista || Mode.partnerShown) t else conPropios(t, fondoPropio, tintaPropia, acentoPropio)
+        if (!revista || Mode.partnerShown) t else if (sinElegir) conPropios(t, JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) else conPropios(t, fondoPropio, tintaPropia, acentoPropio)
     /** (también para los widgets, que leen lo guardado) */
     fun conPropios(t: Tones, fondo: Long, tintaP: Long, acentoP: Long): Tones {
         var r = t

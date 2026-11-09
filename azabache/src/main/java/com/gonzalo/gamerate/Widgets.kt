@@ -1,6 +1,7 @@
 package com.gonzalo.gamerate
 
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.luminance
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -156,7 +157,9 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     // Con un fondo de color elegido en Apariencia, los widgets lo llevan también (igual de día que de noche)
     // …y los colores elegidos a mano (Apariencia → A tu manera) por encima de todo
     private val propios = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).let { p ->
-        Triple(p.getLong("skin_fondo_propio", 0L), p.getLong("skin_tinta_propia", 0L), p.getLong("skin_acento_propio", 0L)) }
+        Triple(p.getLong("skin_fondo_propio", 0L), p.getLong("skin_tinta_propia", 0L), p.getLong("skin_acento_propio", 0L)).let { t ->
+            // Sin nada elegido en Apariencia: los colores de Jonsu de serie
+            if (Skin.deSerieJonsu(p.getString("skin_fondo", ""), p.getString("skin_accent_id", "edicion"), t.first, t.second, t.third)) Triple(JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) else t } }
     private val tonos = Skin.conPropios(Widgets.fondo(ctx)?.tones ?: if (noche) edicion.paleta.dark else edicion.paleta.light,
         propios.first, propios.second, 0L)
     val papel = tonos.cPaper.toArgb()
@@ -165,23 +168,24 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     val gris = tonos.cMuted.toArgb()
     val linea = tonos.cLine.toArgb()
     val arena = tonos.cSand.toArgb()
-    val acento = if (propios.third != 0L) propios.third.toInt() else Widgets.acento(ctx, noche)
+    /** El acento tal cual (para los bloques de color) y, para las letras, aclarado lo justo para leerse sobre el papel (4,5:1). */
+    val acentoBloque: Int = if (propios.third != 0L) propios.third.toInt() else Widgets.acento(ctx, noche)
+    val acento: Int = acentoLegible(androidx.compose.ui.graphics.Color(acentoBloque), tonos.cPaper, tonos.cInk).toArgb()
     /** El acento sobre una foto oscura (el claro se lee mejor). */
-    val acentoFoto = if (propios.third != 0L) propios.third.toInt() else Widgets.acento(ctx, true)
+    val acentoFoto: Int = acentoLegible(androidx.compose.ui.graphics.Color(if (propios.third != 0L) propios.third.toInt() else Widgets.acento(ctx, true)), androidx.compose.ui.graphics.Color(0xFF050404), androidx.compose.ui.graphics.Color.White).toArgb()
     val radio = 22f
     /** El color del reborde (por defecto, el del texto; sobre una foto a sangre, blanco). */
     var reborde: Int? = null
 
-    val fTitular: Typeface get() = Widgets.fuente(ctx, edicion.widget.titular)
+    // (dirección C: los titulares, en la grotesca)
+    val fTitular: Typeface get() = Widgets.grotesca(ctx, 800)
     val fCursiva: Typeface get() = Widgets.fuente(ctx, edicion.widget.cursiva)
     val fNegrita: Typeface get() = Widgets.fuente(ctx, edicion.widget.negrita)
     val fTexto: Typeface get() = Widgets.fuente(ctx, edicion.widget.texto)
 
     /** Recorta las esquinas (suaves, con antialias) y traza el reborde: una línea fina del color del texto, metida hacia dentro. */
     fun terminar() {
-        val m = 6f
-        c.drawRoundRect(RectF(m, m, w - m, h - m), radio - m, radio - m, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE; strokeWidth = 1.1f; color = reborde ?: tinta })
+        // Dirección C: sin reborde (el papel llega al borde); solo se recortan las esquinas
         val p = Path().apply { addRoundRect(RectF(0f, 0f, w, h), radio, radio, Path.Direction.CW); fillType = Path.FillType.INVERSE_WINDING }
         c.drawPath(p, Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR) })
     }
@@ -230,33 +234,36 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     }
 
     /** Una portada recortada (centrada) con esquinas redondas; sin imagen, una portada de letra. */
-    fun portada(img: Bitmap?, r: RectF, nombre: String, rad: Float = 9f, filo: Boolean = true) {
+    fun portada(img: Bitmap?, r: RectF, nombre: String, @Suppress("UNUSED_PARAMETER") rad0: Float = 0f, filo: Boolean = true) {
+        val rad = 0f   // (tapas rectas, como en la app)
         if (img == null || img.width <= 0) { tapa(r, nombre, rad); return }
         val s = max(r.width() / img.width, r.height() / img.height)
         val m = Matrix().apply { setScale(s, s); postTranslate(r.left + (r.width() - img.width * s) / 2, r.top + (r.height() - img.height * s) / 2) }
         val p = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { shader = BitmapShader(img, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply { setLocalMatrix(m) } }
         c.drawRoundRect(r, rad, rad, p)
-        if (filo) c.drawRoundRect(r, rad, rad, Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 0.6f; color = 0x26000000 })
+        if (filo) c.drawRect(r, Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 0.6f; color = 0x26000000 })
     }
 
     /** Portada de letra (la de las fichas sin imagen): la inicial grande en acento y el nombre. */
-    fun tapa(r: RectF, nombre: String, rad: Float = 9f) {
-        c.drawRoundRect(r, rad, rad, lleno(arena))
+    fun tapa(r: RectF, nombre: String, @Suppress("UNUSED_PARAMETER") rad: Float = 0f) {
+        // Una tapa recta del acento, con la inicial y el nombre en la grotesca
+        c.drawRect(r, lleno(acentoBloque))
+        val sobreTapa = if (androidx.compose.ui.graphics.Color(acentoBloque).luminance() > 0.45f) 0xFF14151A.toInt() else 0xFFF4EBD6.toInt()
         val ini = nombre.trim().firstOrNull()?.uppercase() ?: "·"
-        val big = capa(ini, tp(fTitular, r.height() * 0.42f, acento), r.width(), 1, 1f, Layout.Alignment.ALIGN_CENTER)
+        val big = capa(ini, tp(fTitular, r.height() * 0.42f, sobreTapa), r.width(), 1, 1f, Layout.Alignment.ALIGN_CENTER)
         val conNombre = r.width() >= 56f && r.height() >= 70f
         pon(big, r.left, r.top + (r.height() - big.height) / 2 - if (conNombre) r.height() * 0.1f else 0f)
         if (conNombre) {
-            val n = capa(nombre, tp(fTitular, min(11f, r.width() / 6.5f), tinta), r.width() - 12f, 2, 0.95f, Layout.Alignment.ALIGN_CENTER)
+            val n = capa(nombre, tp(fTitular, min(11f, r.width() / 6.5f), sobreTapa), r.width() - 12f, 2, 0.95f, Layout.Alignment.ALIGN_CENTER)
             pon(n, r.left + 6f, r.bottom - n.height - 8f)
         }
     }
 
     /** Barra de progreso fina. */
     fun barra(x: Float, y: Float, ancho: Float, f: Float, grosor: Float = 3f, fondo: Int = linea, color: Int = acento) {
-        c.drawRoundRect(x, y, x + ancho, y + grosor, grosor / 2, grosor / 2, lleno(fondo))
+        c.drawRect(x, y, x + ancho, y + grosor, lleno(fondo))
         val v = f.coerceIn(0f, 1f)
-        if (v > 0f) c.drawRoundRect(x, y, x + max(grosor, ancho * v), y + grosor, grosor / 2, grosor / 2, lleno(color))
+        if (v > 0f) c.drawRect(x, y, x + max(grosor, ancho * v), y + grosor, lleno(color))
     }
 
     /** Degradado vertical (para leer encima de una foto). */
@@ -332,6 +339,15 @@ object Widgets {
 
     @Synchronized fun fuente(ctx: Context, id: Int): Typeface =
         fuentes.getOrPut(id) { runCatching { ctx.resources.getFont(id) }.getOrDefault(Typeface.SERIF) }
+
+    /** La grotesca de la dirección C (Bricolage con el tamaño óptico de titular, 48, y el ancho normal), con el grueso [peso]. */
+    @Synchronized fun grotesca(ctx: Context, peso: Int = 800): Typeface = fuentes.getOrPut(-peso) {
+        runCatching {
+            val f = java.io.File(ctx.cacheDir, "bricolage.ttf")
+            if (!f.exists()) ctx.resources.openRawResource(R.font.bricolage).use { i -> f.outputStream().use { o -> i.copyTo(o) } }
+            Typeface.Builder(f).setFontVariationSettings("'wght' $peso, 'wdth' 100, 'opsz' 48").build()
+        }.getOrNull() ?: fuente(ctx, R.font.bricolage)
+    }
 
     /** El acento elegido en Estilo (en oscuro, su versión clara). */
     /** El fondo de color elegido (o null: el papel de la edición). */
@@ -647,7 +663,7 @@ object Widgets {
         return Pagina(zonas) {
             fondo()
             seccion("En curso", pad, pad, w - 2 * pad)
-            pon(capa("Jonsu", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa(android.text.SpannableString("JONSU.").apply { setSpan(android.text.style.ForegroundColorSpan(acento), 5, 6, 0) }, tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
             items.forEachIndexed { k, e ->
                 val gap = 5f
@@ -814,7 +830,7 @@ object Widgets {
                 velo(h * 0.18f, h, 0x00000000, 0xF2000000.toInt(), 0x99000000.toInt())
             } else { fondo(0xFF15120F.toInt()) }
             // Cabecera de la revista
-            val mast = capa("Jonsu", tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
+            val mast = capa(android.text.SpannableString("JONSU.").apply { setSpan(android.text.style.ForegroundColorSpan(acentoFoto), 5, 6, 0) }, tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
             pon(mast, pad, pad - 4f)
             val fw = w - 2 * pad - mast.getLineWidth(0) - 8f
             ante(if (fw < anchoAnte(fecha, 8.5f)) fecha.substringBeforeLast(' ') else fecha, w - pad - fw, pad, fw, 0xDDFFFFFF.toInt(), 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
@@ -999,9 +1015,8 @@ object Widgets {
             val capH = s * 0.72f
             val base = (h - pie) / 2 + capH / 2
             c.drawText("JONSU", x, base, tpa)
-            // El punto de la revista: un cuadradito de acento
-            val q = s * 0.12f
-            c.drawRect(x + tw + s * 0.03f, base - q, x + tw + s * 0.03f + q, base, lleno(acento).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
+            // El punto de «JONSU.», en el acento (como en el icono y la cabecera)
+            c.drawText(".", x + tw, base, tp(fTitular, s, acentoFoto).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) })
             if (pie > 0f) {
                 val texto = (if (nombre.isNotEmpty()) "La revista de $nombre · " else "") + fecha
                 val l = capa(texto.uppercase(ES), tp(fNegrita, 8.5f, color, 0.2f).apply { setShadowLayer(2f, 0f, 0.6f, sombra) }, w - 8f, 1, 1f, Layout.Alignment.ALIGN_CENTER)
@@ -1024,19 +1039,18 @@ object Widgets {
             val conEntradilla = h >= 140f && nombre.isNotEmpty()
             val bajo = (if (conLinea) 22f else 0f) + (if (conEntradilla) 24f else 0f)
             val alto = h - 2 * pad - bajo
-            val p = tp(fTitular, 10f, tinta, -0.03f)
-            val s = min((w - 2 * pad) / (p.measureText("JONSU") / 10f), alto / 0.78f).coerceAtLeast(10f)
-            val tpa = tp(fTitular, s, tinta, -0.03f)
+            // Dirección C: «JONSU.» en un bloque de la tinta (crema), con letra del color del papel y el punto en el acento
+            val p = tp(fTitular, 10f, papel, -0.015f)
+            val s = min((w - 2 * pad) / (p.measureText("JONSU.") / 10f), alto / 0.86f).coerceAtLeast(10f)
+            val tpa = tp(fTitular, s, papel, -0.015f)
             val capH = s * 0.72f
-            // Todo el bloque centrado en el widget (el nombre se mide por sus mayúsculas, no por la caja de la letra)
-            val bloque = capH + s * 0.08f + 4f + bajo
-            val base = max(pad, (h - bloque) / 2) + capH
+            val base = pad + capH + (alto - capH * 1.1f).coerceAtLeast(0f) / 2
+            c.drawRect(0f, 0f, w, base + s * 0.18f + 2f, lleno(tinta))
             val tw = tpa.measureText("JONSU")
-            c.drawText("JONSU", (w - tw) / 2, base, tpa)
-            var y = base + s * 0.08f + 4f
+            c.drawText("JONSU", pad, base, tpa)
+            c.drawText(".", pad + tw, base, tp(fTitular, s, acentoLegible(androidx.compose.ui.graphics.Color(acentoBloque), androidx.compose.ui.graphics.Color(tinta), androidx.compose.ui.graphics.Color(papel)).toArgb(), -0.015f))
+            var y = base + s * 0.18f + 8f
             if (conLinea) {
-                c.drawRect(pad, y, w - pad, y + 1.6f, lleno(tinta))
-                y += 5f
                 val iz = "Nº ${hoy.dayOfYear}"
                 ante(iz, pad, y, w / 2, tinta, 8.5f)
                 val sitio = w - 2 * pad - anchoAnte(iz, 8.5f) - 12f

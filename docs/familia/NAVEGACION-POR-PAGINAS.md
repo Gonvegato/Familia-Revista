@@ -1,4 +1,4 @@
-# Navegación por páginas (hecho en Seshat 0.16.1, Bastet 0.8.0, Hathor 0.7.0, Nut 0.8.0 y Thot 0.6.0; pendiente en Jonsu)
+# Navegación por páginas (hecho en Seshat 0.16.1, Bastet 0.8.0, Hathor 0.7.0, Nut 0.8.0, Thot 0.6.0 y Jonsu 1.8.0)
 
 Lo que pidió Gonzalo: la pantalla de entrada es la **portada**, y las secciones (leyendo, pendientes…) no abren submenús ni otra pantalla:
 son **páginas a la derecha** de la portada, como pasar hojas.
@@ -30,7 +30,7 @@ son **páginas a la derecha** de la portada, como pasar hojas.
 | Seshat | Portada · Leyendo · Pendientes · Leídos · Abandonados · Autores · Sagas · Escritos (hecho) |
 | Bastet | Portada · Jugando · Pendientes · Pasados · Abandonados · Sagas · Sistemas (hecho; Tu PC y Ajustes, encima) |
 | Thot | Portada · Escribiendo · En pausa · Terminadas · Archivo (hecho, 0.6.0; la ficha de la obra, el estudio, la pareja y Ajustes, encima) |
-| Jonsu | Portada · las secciones de su diario |
+| Jonsu | Portada · Diario · Videojuegos · Libros · Cine · tus categorías · Escritos |
 | Hathor | Portada · Viendo · Pendientes · Vistas · Abandonadas · Próximos (hecho, 0.7.0; Explorar, Buscar, Addons y Ajustes, encima) |
 | Nut | Portada · Hoy · Competiciones · Tus equipos · IPTV (hecho, 0.8.0; Directo, Guía, Buscar, Listas y Ajustes, encima; lo de la tele vuelve a IPTV) |
 
@@ -180,4 +180,24 @@ pasa a un oscuro fijo #141210. Funciones: `colorPaspartu(lPortada)`, `paspartuOs
 - **Con muchos enlaces en la cabecera, se cortan con la letra grande**: «Importar» pasó de la cabecera a la página Escribiendo.
 - **Pruebas que tocan por texto**: la ficha sigue compuesta debajo del estudio, así que el texto «FICHAS» sale dos veces; se toca el último
   (lo de encima).
+
+## Lo aprendido al pasarlo a Jonsu (1.8.0; cierra la ronda)
+
+- **Otra base de código** (la de Atrio: `App.kt` con `dest`/`screen`/`AnimatedContent`, `Skin`, `Ediciones`, maquetas). No se copió la
+  `PantPrincipal` de las hermanas: se hizo `PaginasJonsu.kt` (cabecera + pestañas + `HorizontalPager`) y cada página pinta lo que ya pintaba
+  cada destino del dock (portada, Diario, `LibraryScreen` de cada categoría, Escritos). La clave del `AnimatedContent` de la portada ya no
+  lleva la página (`"top:$pv"`): si la llevara, cada cambio de pestaña rehacía el pager entero.
+- Las pantallas reutilizadas traían su `statusBarsPadding`: dentro del pager se anula con `consumeWindowInsets(WindowInsets.statusBars)`
+  en vez de tocarlas una a una. `LibraryScreen` sin `onBack` (es decir, como página) cambia el título enorme por la rejilla de cifras.
+- **Colores de serie solo si no hay nada elegido** (`Skin.deSerieJonsu`: sin fondo de color, sin colores a mano y con el acento de la
+  edición). Lo mismo en `TemaProvider` y en los widgets, que leen lo guardado. «Copiar de Jonsu» de las hermanas sigue leyendo lo de la
+  cuenta (lo «automático» no se escribe como color), así que no pisa los colores de serie nuevos de nadie.
+- `ColGeneral` pasa a ser el acento legible (lo usan cientos de letras de la app); para los bloques, `AcentoBloque`.
+- **La portada del día junta tiempos que no se miden igual**: juegos, libros y títulos por tiempo; lo escrito solo en palabras. Lo escrito
+  solo es portada si ese día no hay nada con tiempo, y en la semana apilada va como un cuadrado bajo la barra (no se inventa un tiempo).
+  Lo visto en Hathor sale de `tiempo/<ref>~<dispositivo>` de los títulos (se guarda como `tiempo_mostaza` al reflejar la cuenta).
+- Los retos de todas se leen de `ajustes/lectura` (`ano`), `ajustes/juego_reto` (`ano`), `ajustes/cine_reto` (`ano`) y `ajustes/cobalto_meta`
+  (`diaria`, de serie 500, como Thot). Sin sesión, salen «sin reto».
+- La ficha de Jonsu es una **maqueta** que eliges tú: la doble página es la apertura de arriba; las secciones son las casillas de siempre, ahora
+  numeradas en orden de lectura (las que no tienen título no cuentan). La casilla «Portada» ya no sale (la portada está en la apertura).
 

@@ -92,9 +92,13 @@ fun MagPortada(cover: String, name: String, clave: String? = null) {
 }
 
 @Composable
-fun MagLabel(text: String, action: String? = null, onAction: (() -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.weight(1f)) { Antetitulo(text, tam = 12.sp, conCuadro = false) }
+fun MagLabel(text: String, action: String? = null, onAction: (() -> Unit)? = null, numero: Int? = null) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = if (numero != null) Alignment.Bottom else Alignment.CenterVertically) {
+        // (numerada, como las secciones de las fichas de las hermanas: «01» en el acento y el nombre en grotesca)
+        if (numero != null) {
+            Text("%02d".format(numero), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, letterSpacing = 0.sp, modifier = Modifier.padding(end = 8.dp))
+            Text(text, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, modifier = Modifier.weight(1f))
+        } else Box(Modifier.weight(1f)) { Antetitulo(text, tam = 12.sp, conCuadro = false) }
         if (action != null && onAction != null) Text(action.uppercase(), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
             modifier = Modifier.clickable(onClick = onAction).padding(4.dp))
     }
@@ -336,27 +340,34 @@ fun RevistaGameRead(
 ) {
     val ctx = LocalContext.current
     var designing by remember(g.id) { mutableStateOf(false) }
-    RevistaTopBar(onBack) {
-        if (onPartner != null && !designing) Text("PAREJA", fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.clickable(onClick = onPartner).padding(8.dp))
-        if (!designing) Text(if (g.fav) "★" else "☆", color = if (g.fav) ColGeneral else Charcoal, fontSize = 18.sp, fontWeight = FontWeight.Black,
-            modifier = Modifier.clickable(onClick = onFav).padding(8.dp))
-        Text(if (designing) "LISTO" else "EDITAR", color = if (designing) ColGeneral else Charcoal, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
-            modifier = Modifier.clickable { designing = !designing }.padding(8.dp))
-    }
-    Box(Modifier.padding(horizontal = 18.dp).fillMaxWidth().height(3.dp).background(Charcoal))
-    Spacer(Modifier.height(14.dp))
-    RevistaHeadline(g.name, listOfNotNull(kind.title, g.creator.ifBlank { null }).joinToString(" · "))
+    // ---- Jonsu 1.8: la ficha a doble página
+    var encuadrando by remember { mutableStateOf(false) }
     val deck = listOfNotNull(
+        g.creator.ifBlank { null }?.let { "de $it" }, kind.title,
         g.platform.ifBlank { null },
         if (g.end > 0L) "terminado el ${fmtDay(g.end)}" else null
-    ).joinToString(" · ")
-    if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp))
+    ).joinToString(" · ").replace(Regex("(\\d) (h|min|págs?\\.)"), "$1\u00A0$2")
+    val sinNota = Hermanas.sinValorar(g)
+    AperturaFicha(
+        "${kind.id}:${g.id}", g.cover, g.hero, g.name,
+        listOfNotNull(if (kind.isGame) "Pasado" else if (kind.isBook) "Leído" else kind.doneWord.removeSuffix("s"), if (sinNota) "sin valorar" else "${g.general}").joinToString(" · "),
+        deck, onBack,
+        acciones = listOfNotNull(
+            if (onPartner != null && !designing) "Pareja" to onPartner else null,
+            if (!designing) (if (g.fav) "★" else "☆") to onFav else null,
+            if (onArt != null) "Imágenes" to { onArt(false) } else null,
+            (if (designing) "Listo" else "Editar") to { designing = !designing },
+        ),
+        principal = if (sinNota) ("Valorar" to onEdit) else principalDe(ctx, kind, g.id), alEncuadrar = { encuadrando = true }
+    )
+    if (encuadrando) EditorEncuadreFondo(g.hero.ifBlank { g.cover }, "${kind.id}:${g.id}") { encuadrando = false }
     if (theirs != null) Box(Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) { TheirReaction(partnerName, theirs) }
     if (designing) DesignHint(onData = onEdit, name = g.name, onDelete = onDelete, onArt = onArt, hasHero = kind.admiteFondo)
     Spacer(Modifier.height(14.dp))
 
     val defs = linkedMapOf<String, MagDef>()
-    if (kind.isGame || kind.isBook) defs["portada"] = MagDef("Portada") { MagPortada(g.cover, g.name, coverKey(kind.id, g.id)) }
+    // (la portada ya está en la apertura, con su paspartú: no se repite en la página)
+            if (false) defs["portada"] = MagDef("Portada") { MagPortada(g.cover, g.name, coverKey(kind.id, g.id)) }
     defs["nota"] = MagDef("Nota") {
         if (Hermanas.sinValorar(g)) {
             Text("Sin valorar", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)

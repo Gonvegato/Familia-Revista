@@ -138,188 +138,48 @@ private fun RevistaHome(m: ShellModel) {
     val intro = remember { !RevistaIntro.done }
     LaunchedEffect(Unit) { RevistaIntro.done = true }
     fun Modifier.llega(n: Int) = appear(n * 110, intro)
-    var buscando by remember { mutableStateOf(false) }
     val desplazado = rememberScrollState()
-    val umbral = with(androidx.compose.ui.platform.LocalDensity.current) { 300.dp.toPx() }
+    val ongoing = m.ongoing
+    val ctx = LocalContext.current
     Box(Modifier.fillMaxSize()) {
-    Column(Modifier.fillMaxSize().background(Paper2).verticalScroll(desplazado).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
-        if (buscando) BuscadorGeneral(m) { buscando = false }
-        Row(Modifier.fillMaxWidth().padding(top = 10.dp).llega(0), verticalAlignment = Alignment.CenterVertically) {
-            EnlaceRevista("Buscar") { buscando = true }
-            if (m.partner != null) RevLink("Pareja", m.partner)
-            Spacer(Modifier.weight(1f))
-            // Tu PC y Ajustes: dos iconos arriba a la derecha (fuera del menú de secciones)
-            m.pc?.let { f -> IconoRevista(androidx.compose.material.icons.Icons.Rounded.Computer, "Tu PC", f) }
-            m.profile?.let { f -> IconoRevista(androidx.compose.material.icons.Icons.Rounded.Settings, "Ajustes", f) }
-        }
-        // Tableta (OPPO Pad Mini…): con sitio de sobra, cabecera más grande y «En portada» a dos columnas
-        val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
-        val ancha = ancho >= 900
-        // Cabecera de revista
-        Column(Modifier.llega(0)) {
-            // (en horizontal, la cabecera llega de lado a lado, como en el quiosco)
-            Cabecera(if (ancho >= 960) 168.sp else if (ancho >= 700) 132.sp else 92.sp, Modifier.padding(top = 8.dp), color = Ink2)
-            FileteCabecera(3.dp)
-            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                Text("Nº ${today.dayOfYear}", color = Ink2, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Spacer(Modifier.weight(1f))
-                Text(today.format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale("es", "ES"))).uppercase(), color = Ink2, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            }
-            Rule(1.dp)
-        }
-        // Las secciones de la revista, como el menú de una web: sin título, justo antes de la portada
-        Box(Modifier.llega(1)) { RevistaMenu(m) }
-        // «Hoy», debajo del menú: lo leído, jugado y escrito entre las hermanas, con la semana en barras (antes solo la lectura, y la del lector de Atrio)
-        Box(Modifier.llega(2)) { RevistaHoy() }
-
-        // En portada: lo que llevas entre manos ahora mismo (leyendo, jugando, viendo). Se desliza con el dedo entre
-        // todas y, si no la tocas, pasa sola a la siguiente cada 7 s (después de deslizar, la cuenta vuelve a empezar)
-        val ongoing = m.ongoing
-        val ctx = LocalContext.current
-        // Las imágenes de todas, cargadas de antemano: al cambiar no se queda el hueco en blanco
-        LaunchedEffect(ongoing.map { it.play.id }) {
-            ongoing.forEach { o ->
-                val art = o.play.hero.ifBlank { o.play.cover }
-                if (art.isNotBlank()) coil.Coil.imageLoader(ctx).enqueue(coil.request.ImageRequest.Builder(ctx).data(art).build())
+    Column(Modifier.fillMaxSize().background(Paper2).verticalScroll(desplazado).navigationBarsPadding()) {
+        // ---- Jonsu 1.8: la portada del día, los retos de todas y la semana (lo de las hermanas, juntas)
+        Box(Modifier.llega(0)) {
+            Column {
+                PortadaFamilia(all, m.kinds.filter { it.isBook }.flatMap { k -> m.entries(k).mapNotNull { it.game } },
+                    m.kinds.filter { it.isGame }.flatMap { k -> m.entries(k).mapNotNull { it.game } },
+                    m.kinds.filter { it.isMovie || it.isTv }.flatMap { k -> m.entries(k).mapNotNull { it.game } }) { m.open(it) }
             }
         }
-        val n = ongoing.size
-        // Muchas páginas «virtuales» que dan la vuelta: de la última se pasa a la primera hacia delante, sin rebobinar
-        val vueltas = if (n > 1) n * 1000 else n
-        val pager = androidx.compose.runtime.key(n) { rememberPagerState(initialPage = if (n > 1) n * 500 else 0) { vueltas } }
-        LaunchedEffect(pager.settledPage, n) {
-            if (n < 2) return@LaunchedEffect
-            kotlinx.coroutines.delay(7_000)
-            if (!pager.isScrollInProgress) pager.animateScrollToPage(pager.settledPage + 1, animationSpec = tween(Motion.ms(700)))
-        }
-        val actual = if (n > 0) pager.currentPage % n else 0
-        val scope = rememberCoroutineScope()
-        if (n > 0) Spacer(Modifier.height(30.dp))
-        // La portada va enmarcada: un cuadrado del color del texto alrededor de todo
-        if (n > 0) Column(Modifier.llega(3).fillMaxWidth().border(1.5.dp, Ink2).padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RevSection("En portada")
-                Spacer(Modifier.weight(1f))
-                // Puntos: cuántas hay y cuál se ve (tocar uno la pone)
-                if (n > 1) Row(Modifier.padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    ongoing.forEachIndexed { i, _ ->
-                        Box(Modifier.size(if (i == actual) 8.dp else 6.dp).clip(CircleShape).background(if (i == actual) Red2 else Grey2.copy(alpha = 0.5f))
-                            .press(haptic = false) { scope.launch { pager.animateScrollToPage(pager.currentPage - actual + i) } })
-                    }
-                }
-            }
-            // Se componen todas las páginas a la vez: el marco mide lo de la más alta y no cambia de tamaño al pasar de una a otra.
-            // Para que ninguna deje hueco abajo, se apunta lo que mide el texto de cada una y, en las que tienen menos (un
-            // titular más corto), la imagen crece eso mismo: todas quedan llenas, con el texto siempre pegado abajo
-            val textoAlto = remember(ongoing.map { it.play.id }) { mutableStateMapOf<Long, Int>() }
-            val maxTexto = textoAlto.values.maxOrNull() ?: 0
-            val densidad = androidx.compose.ui.platform.LocalDensity.current
-            HorizontalPager(pager, Modifier.fillMaxWidth().testTag("portada"), pageSpacing = 18.dp, verticalAlignment = Alignment.Top,
-                beyondViewportPageCount = (n - 1).coerceIn(0, 6),
-                key = { p -> if (n > 1) p else ongoing.getOrNull(p)?.play?.id ?: p }) { page ->
-                val o = ongoing[page % n]
-                val e = ShellEntry(o.kind, o.play, null)
-                /** Lo que le falta al texto de esta portada para medir lo del más alto (lo que crece su imagen). */
-                fun hueco(id: Long) = with(densidad) { (maxTexto - (textoAlto[id] ?: maxTexto)).coerceAtLeast(0).toDp() }
-                val art = e.hero.ifBlank { e.cover }
-                val imagen: @Composable (Modifier) -> Unit = { mod ->
-                    // Sin fondo propio, la portada (vertical) no se recorta: va entera sobre sí misma, desenfocada
-                    if (art.isNotBlank() && e.hero.isBlank()) Box(mod.clipToBounds().press { m.open(e) }, contentAlignment = Alignment.Center) {
-                        AsyncImage(art, null, Modifier.fillMaxSize().blur(24.dp), contentScale = ContentScale.Crop, colorFilter = Ediciones.filtro)
-                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.18f)))
-                        AsyncImage(art, e.name, Modifier.fillMaxSize().padding(10.dp), contentScale = ContentScale.Fit, colorFilter = Ediciones.filtro)
-                    }
-                    else if (art.isNotBlank()) AsyncImage(art, e.name, mod.press { m.open(e) }, contentScale = ContentScale.Crop, colorFilter = Ediciones.filtro)
-                    else Box(mod.background(Sand).press { m.open(e) }, contentAlignment = Alignment.Center) {
-                        Text("Sin imagen", color = Grey2, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
-                    }
-                }
-                val textos: @Composable ColumnScope.() -> Unit = {
-                    if (!m.readOnly && m.pickImage != null) Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-                        Text("CAMBIAR IMAGEN", color = Ink2, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.press { m.pickImage.invoke(o) }.padding(vertical = 4.dp))
-                    }
-                    val (fs, lh) = headlineSize(e.name)
-                    FitTitle(e.name, fs, lh, color = Ink2, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().padding(top = 10.dp).press { m.open(e) })
-                    Text(
-                        listOf(kindShort(e.kind), e.creator, if (e.minutes > 0 && !e.kind.isBook) hoursText(e.minutes) else "").filter { it.isNotBlank() }.joinToString(" · "),
-                        color = Grey2, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp)
-                    )
-                    if (!m.readOnly) {
-                        val (label, _) = m.primaryLabel(o)
-                        Text("$label\u00A0→", color = Red2, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp).press { m.primary(o) })
-                    }
-                }
-                val ed = Ediciones.actual
-                val (fs0, lh0) = headlineSize(e.name)
-                val meta = listOf(kindShort(e.kind), e.creator, if (e.minutes > 0 && !e.kind.isBook) hoursText(e.minutes) else "").filter { it.isNotBlank() }.joinToString(" · ")
-                val cambiar: @Composable () -> Unit = {
-                    if (!m.readOnly && m.pickImage != null) Text("CAMBIAR IMAGEN", color = Grey2, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
-                        modifier = Modifier.padding(top = 6.dp).press { m.pickImage.invoke(o) }.padding(vertical = 4.dp))
-                }
-                when {
-                    // Moda, viajes, cine: la foto manda y el titular va encima, en blanco, sobre un degradado
-                    ed.portada == Portada.SOBRE_FOTO -> Column(Modifier.fillMaxWidth()) {
-                        Box(Modifier.fillMaxWidth().aspectRatio(if (ancha) 2.1f else if (ancho >= 700) 1.3f else 0.86f)) {
-                            imagen(Modifier.matchParentSize())
-                            Box(Modifier.matchParentSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(0.42f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.78f))))
-                            Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp)) {
-                                FitTitle(e.name, fs0, lh0, color = Color.White, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().press { m.open(e) })
-                                Text(meta, color = Color.White.copy(alpha = 0.82f), fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
-                                if (!m.readOnly) Text("${m.primaryLabel(o).first}\u00A0→", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                                    modifier = Modifier.padding(top = 10.dp).press { m.primary(o) })
-                            }
-                        }
-                        cambiar()
-                    }
-                    // Popular, música: el titular en un bloque del color de la edición, bajo la foto
-                    ed.portada == Portada.BLOQUE -> Column(Modifier.fillMaxWidth()) {
-                        val ratio = if (ancha) 2.4f else if (ancho >= 700) 1.7f else 1.3f
-                        BoxWithConstraints(Modifier.fillMaxWidth()) { imagen(Modifier.fillMaxWidth().height(maxWidth / ratio + hueco(e.id))) }
-                        val sobreColor = sobre(Red2, Paper2, Ink2)
-                        Column(Modifier.fillMaxWidth().onSizeChanged { textoAlto[e.id] = it.height }.background(Red2).padding(horizontal = 16.dp, vertical = 14.dp)) {
-                            FitTitle(e.name, fs0, lh0, color = sobreColor, letterSpacing = (-1).sp, modifier = Modifier.fillMaxWidth().press { m.open(e) })
-                            Text(meta, color = sobreColor.copy(alpha = 0.85f), fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 4.dp))
-                            if (!m.readOnly) Text("${m.primaryLabel(o).first.uppercase()}\u00A0→", color = sobreColor, fontWeight = FontWeight.Black, fontSize = 15.sp, letterSpacing = 1.sp,
-                                modifier = Modifier.padding(top = 10.dp).press { m.primary(o) })
-                        }
-                        cambiar()
-                    }
-                    // En horizontal (foto a un lado, texto al otro): todas igual de altas y las dos columnas centradas
-                    ancha -> BoxWithConstraints(Modifier.fillMaxWidth()) {
-                        val altoFoto = (maxWidth - 28.dp) * (1.35f / 2.35f) / 1.45f
-                        val alto = maxOf(altoFoto, with(densidad) { maxTexto.toDp() })
-                        Row(Modifier.fillMaxWidth().height(alto), verticalAlignment = Alignment.CenterVertically) {
-                            imagen(Modifier.weight(1.35f).aspectRatio(1.45f))
-                            Spacer(Modifier.width(28.dp))
-                            Column(Modifier.weight(1f).onSizeChanged { textoAlto[e.id] = it.height }, content = textos)
-                        }
-                    }
-                    else -> Column(Modifier.fillMaxWidth()) {
-                        val ratio = if (ancho >= 700) 1.6f else 1.35f
-                        BoxWithConstraints(Modifier.fillMaxWidth()) { imagen(Modifier.fillMaxWidth().height(maxWidth / ratio + hueco(e.id))) }
-                        Column(Modifier.fillMaxWidth().onSizeChanged { textoAlto[e.id] = it.height }, content = textos)
-                    }
-                }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+        // Cifras (lo que antes estaba en el menú de la portada): debajo de la semana
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.End) {
+            Row(Modifier.press(haptic = false) { m.stats(GAMES) }.padding(vertical = 10.dp)) {
+                Text("CIFRAS", color = Acento, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1)
+                Text(" →", color = Acento, fontSize = 11.sp, fontWeight = FontWeight.Black, maxLines = 1)
             }
         }
-
         // Ahora mismo: todo lo que llevas entre manos, en lista numerada (fija: no cambia con la portada)
-        if (ongoing.size > 1) Column(Modifier.llega(4)) {
-            Spacer(Modifier.height(38.dp))
-            RevSection("Ahora mismo")
+        if (ongoing.isNotEmpty()) Column(Modifier.llega(4)) {
+            Spacer(Modifier.height(26.dp))
+            Text("Ahora mismo", color = Ink2, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 21.sp, modifier = Modifier.padding(bottom = 4.dp))
+            Rule(2.dp)
             ongoing.take(8).forEachIndexed { i, o ->
                 val e = ShellEntry(o.kind, o.play, null)
                 Row(Modifier.fillMaxWidth().press(haptic = false) { m.open(e) }.padding(vertical = 14.dp), verticalAlignment = if (Skin.listCovers) Alignment.CenterVertically else Alignment.Top) {
-                    Text("%02d".format(i + 1), color = Red2, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.width(56.dp))
-                    if (Skin.listCovers) { ListCover(e.cover, e.name, 52.dp, 74.dp, if (m.readOnly) null else coverKey(e.kind.id, e.id)); Spacer(Modifier.width(14.dp)) }
+                    if (Skin.listCovers) { ListCover(e.cover, e.name, 84.dp, 126.dp, if (m.readOnly) null else coverKey(e.kind.id, e.id)); Spacer(Modifier.width(16.dp)) }
                     Column(Modifier.weight(1f)) {
-                        FitTitle(e.name, 22.sp, 25.sp, color = Ink2, fontWeight = FontWeight.SemiBold)
+                        Text("%02d".format(i + 1), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, letterSpacing = 0.sp)
+                        FitTitle(e.name, 22.sp, 25.sp, color = Ink2, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.sp, conEdicion = false)
                         // (los libros con su archivo: por dónde vas)
                         val pct = if (e.kind.isBook && BookFiles.get(ctx, e.id) != null) (BookFiles.progress(ctx, e.id) * 100).toInt() else 0
                         Text(listOf(kindShort(e.kind), e.creator, if (pct in 1..99) "$pct %" else "").filter { it.isNotBlank() }.joinToString(" · "), color = Grey2, fontSize = 13.sp)
+                        // Lo que se hace con él (apuntar, valorar…), como el botón de la portada de antes
+                        if (!m.readOnly) Text("${m.primaryLabel(o).first.uppercase()}\u00A0→", color = Acento, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp,
+                            modifier = Modifier.padding(top = 6.dp).press(haptic = false) { m.primary(o) }.padding(vertical = 4.dp))
                     }
                 }
-                Rule(1.dp, Line)
+                Rule(2.dp)
             }
         }
 
@@ -364,13 +224,7 @@ private fun RevistaHome(m: ShellModel) {
         val version = remember { runCatching { ctxV.packageManager.getPackageInfo(ctxV.packageName, 0).versionName }.getOrNull().orEmpty() }
         if (version.isNotBlank()) Text("versión $version", color = Grey2.copy(alpha = 0.7f), fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
         Spacer(Modifier.height(24.dp))
-    }
-    // Al bajar, la cabecera se pliega: arriba solo quedan el nombre, «Buscar» y Ajustes
-    // (solo cambia al cruzar el umbral: comparar el desplazamiento aquí repintaba la portada entera a cada píxel)
-    val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
-    BarraPlegada("Jonsu", plegada, Paper2) {
-        EnlaceRevista("Buscar") { buscando = true }
-        m.profile?.let { f -> IconoRevista(androidx.compose.material.icons.Icons.Rounded.Settings, "Ajustes", f) }
+        }
     }
     }
 }
@@ -458,7 +312,7 @@ private fun RevLink(t: String, f: () -> Unit) = EnlaceRevista(t, Modifier.paddin
  * tildes), y también en lo que has subrayado en tus libros (tocar una cita abre el libro justo ahí).
  */
 @Composable
-private fun BuscadorGeneral(m: ShellModel, onClose: () -> Unit) {
+internal fun BuscadorGeneral(m: ShellModel, onClose: () -> Unit) {
     val ctx = LocalContext.current
     var q by remember { mutableStateOf("") }
     val todo = remember(m.kinds) { m.kinds.flatMap { k -> m.entries(k) } }
