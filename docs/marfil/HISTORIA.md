@@ -79,6 +79,19 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.16.1 — navegación por páginas
+
+- **Una sola fila de pestañas**: PORTADA · LEYENDO · PENDIENTES · LEÍDOS · ABANDONADOS · AUTORES · SAGAS · ESCRITOS. La portada es la
+  primera página (y la que se abre); cada sección es una página más a su derecha: se pasa tocando la pestaña o deslizando el dedo, sin
+  abrir otra pantalla ni otra cabecera. Antes, la portada tenía su fila de pestañas (con «LEYENDO» marcada aunque estabas en la portada) y
+  cada sección se abría en otra pantalla con otra fila igual: de ahí el lío.
+- La cabecera (BUSCAR · + AÑADIR · fecha · ⚙ y «SESHAT.») es la misma en todas las páginas; el nombre grande se recoge al bajar y vuelve al
+  subir. Cada página dice su nombre en pequeño. La fila de pestañas se desliza sola para que la elegida se vea siempre.
+- Atrás, desde cualquier sección (o desde Ajustes), vuelve a la portada; desde la portada, sale. Las páginas conservan por dónde ibas, y
+  al cerrar una ficha (libro o saga) se vuelve a la misma página.
+- Lo que llevaba a una sección («Ver los que lees →», los widgets, los avisos, Jonsu y Thot con `go=…`) lleva a su página.
+- Escritos es también una página (con «Actualizar» arriba a la derecha).
+
 ## 0.16.0 — dirección C («editorial moderna»), la prueba de la familia
 
 La primera app de la familia con la estética nueva elegida en las maquetas (`docs/familia/maquetas-revista/`). Solo cambia cómo se ve; la

@@ -40,7 +40,6 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
     var destino by rememberSaveable { mutableIntStateOf(0) }
-    var buscar by rememberSaveable { mutableStateOf(false) }
     var fichaId by rememberSaveable { mutableStateOf<String?>(null) }
     var sagaId by rememberSaveable { mutableStateOf<String?>(null) }
     val d = Destino.entries[destino]
@@ -65,20 +64,18 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
     }
     fun anadir() = elegir.launch(arrayOf("application/epub+zip", "application/pdf", "application/x-mobipocket-ebook", "application/vnd.amazon.ebook", "application/x-fictionbook+xml", "application/vnd.comicbook+zip", "text/plain", "application/octet-stream"))
     fun leer(l: Libro) { Lector.abrir(ctx, l) }
-    fun ir(x: Destino, buscando: Boolean = false) { buscar = buscando; destino = x.ordinal }
 
     AvisoActualizacion()
+    // Desde cualquier página o desde Ajustes, Atrás vuelve a la portada (y desde la portada, sale)
     BackHandler(enabled = fichaId == null && sagaId == null && d != Destino.Portada) { destino = 0 }
     BackHandler(enabled = sagaId != null && fichaId == null) { sagaId = null }
     BackHandler(enabled = fichaId != null) { fichaId = null }
 
     Box(Modifier.fillMaxSize().background(Paper)) {
-        when (d) {
-            Destino.Portada -> PantInicio(alAbrir = { fichaId = it.id }, alLeer = ::leer, alAnadir = ::anadir, alIr = { ir(it) }, alBuscar = { ir(Destino.Leyendo, true) }, alAbrirSaga = { sagaId = it.id })
-            Destino.Ajustes -> PantEstilo(alVolver = { destino = 0 })
-            Destino.Escritos -> PantEscritos(alVolver = { destino = 0 }, alLeer = ::leer, abrir = escritoPedido, alAbierto = { escritoPedido = null })
-            else -> PantSecciones(d, alVolver = { destino = 0 }, alAbrir = { fichaId = it.id }, alAbrirSaga = { sagaId = it.id }, alAnadir = ::anadir, buscandoInicial = buscar)
-        }
+        // La portada y las secciones son páginas de una sola pantalla (se pasan con las pestañas o con el dedo); Ajustes va aparte
+        if (d == Destino.Ajustes) PantEstilo(alVolver = { destino = 0 })
+        else PantPrincipal(pagina = destino, alPagina = { destino = it }, alAbrir = { fichaId = it.id }, alLeer = ::leer, alAbrirSaga = { sagaId = it.id }, alAnadir = ::anadir,
+            alAjustes = { destino = Destino.Ajustes.ordinal }, escritoPedido = escritoPedido, alEscritoAbierto = { escritoPedido = null })
         AnimatedVisibility(sagaId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
             sagaId?.let { id -> PantSaga(id, alCerrar = { sagaId = null }, alAbrir = { fichaId = it.id }) }
         }

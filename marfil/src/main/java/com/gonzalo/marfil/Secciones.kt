@@ -30,6 +30,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 
 /** Cómo se puede ordenar un estante. */
 enum class OrdenLibros(val nombre: String) { RECIENTES("Recientes"), ANADIDOS("Añadidos"), TERMINADO("Terminado"), TITULO("Título"), AUTOR("Autor"), PAGINAS("Páginas") }
@@ -155,7 +159,7 @@ private fun vacioDe(e: Estado) = when (e) {
 
 /** Una página de un estante: título enorme y sus libros (con las sagas juntas). */
 @Composable
-private fun PaginaEstante(estado: Estado, todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit, alAnadir: () -> Unit) {
+private fun PaginaEstante(estado: Estado, titulo: String, todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit, alAnadir: () -> Unit) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var orden by remember(estado, EspejoCuenta.version) { mutableStateOf(OrdenGuardado.de(ctx, estado)) }
     val libros = remember(todos, estado, orden) { ordenar(orden, todos.filter { it.estado == estado }) }
@@ -163,6 +167,7 @@ private fun PaginaEstante(estado: Estado, todos: List<Libro>, alAbrir: (Libro) -
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Column {
+                Antetitulo(titulo, Modifier.padding(top = 14.dp), color = Acento, conCuadro = false)
                 // Dirección C: tres bloques de cifras (cuántos, horas, páginas)
                 val horas = libros.sumOf { it.msLeidos } / 3_600_000L
                 val paginas = libros.sumOf { it.paginas.coerceAtLeast(0) }
@@ -170,7 +175,7 @@ private fun PaginaEstante(estado: Estado, todos: List<Libro>, alAbrir: (Libro) -
                     BloqueCifra("${libros.size}", if (libros.size == 1) "libro" else "libros", Acento, SobreAcento),
                     BloqueCifra("${horas}H", "leídas", Paper, Charcoal),
                     BloqueCifra(if (paginas >= 10_000) "%.1fK".format(paginas / 1000.0) else "$paginas", "páginas", Bloque2, Color.White),
-                ), Modifier.padding(top = 14.dp))
+                ), Modifier.padding(top = 8.dp))
                 // Cómo se ordena este estante (se recuerda)
                 // («Terminado» solo en Leídos)
                 val ordenes = OrdenLibros.entries.filter { it != OrdenLibros.TERMINADO || estado == Estado.LEIDO }
@@ -198,7 +203,7 @@ private fun PaginaAutores(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirS
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Column {
-                Antetitulo("${autores.size} ${if (autores.size == 1) "autor" else "autores"}", Modifier.padding(top = 14.dp, bottom = 8.dp), color = Acento, conCuadro = false)
+                Antetitulo("Autores · ${autores.size}", Modifier.padding(top = 14.dp, bottom = 8.dp), color = Acento, conCuadro = false)
                 Filete(2.dp)
             }
         }
@@ -239,7 +244,7 @@ private fun PaginaSagas(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSag
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Column {
-                Antetitulo("${sagas.size} ${if (sagas.size == 1) "saga" else "sagas"}", Modifier.padding(top = 14.dp, bottom = 8.dp), color = Acento, conCuadro = false)
+                Antetitulo("Sagas · ${sagas.size}", Modifier.padding(top = 14.dp, bottom = 8.dp), color = Acento, conCuadro = false)
                 Filete(2.dp)
                 EnlaceRevista("+ Nueva saga", Modifier.padding(vertical = 4.dp), acento = true) { nueva = "" }
                 Filete(1.dp, Line)
@@ -274,54 +279,100 @@ private fun Resultados(busca: String, todos: List<Libro>, alAbrir: (Libro) -> Un
     }
 }
 
+/** Las páginas de Seshat, en el orden de las pestañas: la portada y luego las secciones (los índices son los de [Destino]). */
+val PAGINAS = listOf(Destino.Portada, Destino.Leyendo, Destino.Pendientes, Destino.Leidos, Destino.Abandonados, Destino.Autores, Destino.Sagas, Destino.Escritos)
+private val NOMBRES_PAGINAS = listOf("Portada", "Leyendo", "Pendientes", "Leídos", "Abandonados", "Autores", "Sagas", "Escritos")
+
 /**
- * Las secciones de la biblioteca como páginas por las que te mueves (con el dedo o con las pestañas): Leyendo, Pendientes, Leídos, Abandonados, Autores y Sagas.
- * Buscar mira en todos los estantes a la vez.
+ * Seshat entera en una pantalla: la cabecera fija (BUSCAR · + AÑADIR · fecha · ⚙ y «SESHAT.»), una sola fila de pestañas (Portada, Leyendo,
+ * Pendientes, Leídos, Abandonados, Autores, Sagas, Escritos) y las páginas, que se pasan tocando la pestaña o deslizando el dedo. No hay
+ * submenús: cada sección es una página más, a la derecha de la portada. [pagina] es la que toca (la de [Destino]); [alPagina] avisa cuando cambia.
+ * Al bajar en una página, el nombre grande se recoge y quedan la fila pequeña y las pestañas.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PantSecciones(inicial: Destino, alVolver: () -> Unit, alAbrir: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit, alAnadir: () -> Unit, buscandoInicial: Boolean = false) {
-    val paginas = listOf(Destino.Leyendo, Destino.Pendientes, Destino.Leidos, Destino.Abandonados, Destino.Autores, Destino.Sagas)
-    val pager = rememberPagerState(initialPage = paginas.indexOf(inicial).coerceAtLeast(0)) { paginas.size }
+fun PantPrincipal(
+    pagina: Int, alPagina: (Int) -> Unit, alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit, alAnadir: () -> Unit,
+    alAjustes: () -> Unit, escritoPedido: String? = null, alEscritoAbierto: () -> Unit = {},
+) {
+    val pager = rememberPagerState(initialPage = pagina.coerceIn(0, PAGINAS.size - 1)) { PAGINAS.size }
     val ambito = rememberCoroutineScope()
-    var buscando by rememberSaveable { mutableStateOf(buscandoInicial) }
+    // Lo que pide fuera (Atrás, un widget, otra app) mueve las páginas; lo que mueves tú con el dedo, se cuenta fuera
+    LaunchedEffect(pagina) { val p = pagina.coerceIn(0, PAGINAS.size - 1); if (pager.currentPage != p) pager.animateScrollToPage(p) }
+    LaunchedEffect(pager.settledPage) { alPagina(pager.settledPage) }
+    var buscando by rememberSaveable { mutableStateOf(false) }
     var busca by rememberSaveable { mutableStateOf("") }
     val todos = Biblioteca.propios()
-    val cuentas = listOf(Estado.LEYENDO, Estado.PENDIENTE, Estado.LEIDO, Estado.ABANDONADO).map { e -> todos.count { it.estado == e } } + todos.filter { it.autor.isNotBlank() }.map { norm(it.autor) }.distinct().size + Sagas.lista.size
-    val nombres = listOf("Leyendo", "Pendientes", "Leídos", "Abandonados", "Autores", "Sagas")
-    Column(Modifier.fillMaxSize().background(Paper).navigationBarsPadding()) {
-        // Dirección C: la cabecera en un bloque de tinta, con el nombre de la sección en grotesca enorme («LEÍDOS.»)
-        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+    val cuentas: List<Int?> = buildList {
+        add(null)
+        listOf(Estado.LEYENDO, Estado.PENDIENTE, Estado.LEIDO, Estado.ABANDONADO).forEach { e -> add(todos.count { it.estado == e }) }
+        add(todos.filter { it.autor.isNotBlank() }.map { norm(it.autor) }.distinct().size); add(Sagas.lista.size); add(null)
+    }
+    // El nombre grande se recoge al bajar (y vuelve al subir): lo que la página aún no ha movido, lo mueve la cabecera
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
+    var altoNombre by remember { mutableIntStateOf(0) }
+    var recogido by remember { mutableFloatStateOf(0f) }
+    val conexion = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): Offset {
+                if (available.y >= 0f || altoNombre == 0) return Offset.Zero
+                val antes = recogido; recogido = (recogido - available.y).coerceIn(0f, altoNombre.toFloat())
+                return Offset(0f, -(recogido - antes))
+            }
+            override fun onPostScroll(consumed: Offset, available: Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): Offset {
+                if (available.y <= 0f) return Offset.Zero
+                val antes = recogido; recogido = (recogido - available.y).coerceIn(0f, altoNombre.toFloat())
+                return Offset(0f, antes - recogido)
+            }
+        }
+    }
+    val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
+    Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
+        // ---- La cabecera de la dirección C: un bloque de tinta con la fila pequeña y «SESHAT.» en grotesca enorme
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                EnlaceRevista("← Seshat", color = Paper.copy(alpha = 0.75f)) { alVolver() }
-                Spacer(Modifier.weight(1f))
                 EnlaceRevista("Buscar", color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) { buscando = !buscando; if (!buscando) busca = "" }
                 EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = Acento) { alAnadir() }
+                Spacer(Modifier.weight(1f))
+                Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 6.dp).clickable(onClick = alAjustes).padding(8.dp).size(20.dp))
             }
-            NombreConPunto(if (busca.isNotBlank()) "Buscar" else nombres[pager.currentPage], 52.sp, Paper, Modifier.padding(top = 2.dp))
+            // El nombre: su alto se mide una vez y se va quitando según se recoge
+            Box(Modifier.fillMaxWidth().clipToBounds().layout { m, c ->
+                val p = m.measure(c.copy(minHeight = 0, maxHeight = androidx.compose.ui.unit.Constraints.Infinity))
+                if (altoNombre != p.height) altoNombre = p.height
+                val h = (p.height - recogido.toInt()).coerceAtLeast(0)
+                layout(p.width, h) { p.place(0, h - p.height) }
+            }) {
+                NombreConPunto("Seshat", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
+            }
         }
-        PestanasPaginas(nombres, pager.currentPage, cuentas) { i -> ambito.launch { pager.animateScrollToPage(i) } }
-        Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
-        if (buscando) CampoRevista("Buscar", busca, "título, autor o saga") { busca = it }
-        if (busca.isNotBlank()) Resultados(busca, todos, alAbrir)
+        PestanasPaginas(NOMBRES_PAGINAS, pager.currentPage, cuentas) { i -> buscando = false; busca = ""; ambito.launch { pager.animateScrollToPage(i) } }
+        if (buscando) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) { CampoRevista("Buscar", busca, "título, autor o saga") { busca = it } }
+        if (busca.isNotBlank()) Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) { Resultados(busca, todos, alAbrir) }
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
-        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { paginas[it].name }) { i ->
-            when (paginas[i]) {
-                Destino.Leyendo -> PaginaEstante(Estado.LEYENDO, todos, alAbrir, alAbrirSaga, alAnadir)
-                Destino.Pendientes -> PaginaEstante(Estado.PENDIENTE, todos, alAbrir, alAbrirSaga, alAnadir)
-                Destino.Leidos -> PaginaEstante(Estado.LEIDO, todos, alAbrir, alAbrirSaga, alAnadir)
-                Destino.Abandonados -> PaginaEstante(Estado.ABANDONADO, todos, alAbrir, alAbrirSaga, alAnadir)
-                Destino.Sagas -> PaginaSagas(todos, alAbrir, alAbrirSaga)
-                else -> PaginaAutores(todos, alAbrir, alAbrirSaga)
+        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }) { i ->
+            when (PAGINAS[i]) {
+                Destino.Portada -> PaginaPortada(alAbrir = alAbrir, alLeer = alLeer, alAnadir = alAnadir, alIr = { d -> ambito.launch { pager.animateScrollToPage(PAGINAS.indexOf(d).coerceAtLeast(0)) } })
+                Destino.Escritos -> PantEscritos(alVolver = {}, alLeer = alLeer, abrir = escritoPedido, alAbierto = alEscritoAbierto, enPagina = true)
+                else -> Box(Modifier.fillMaxSize().padding(horizontal = 20.dp).navigationBarsPadding()) {
+                    when (PAGINAS[i]) {
+                        Destino.Leyendo -> PaginaEstante(Estado.LEYENDO, "Leyendo", todos, alAbrir, alAbrirSaga, alAnadir)
+                        Destino.Pendientes -> PaginaEstante(Estado.PENDIENTE, "Pendientes", todos, alAbrir, alAbrirSaga, alAnadir)
+                        Destino.Leidos -> PaginaEstante(Estado.LEIDO, "Leídos", todos, alAbrir, alAbrirSaga, alAnadir)
+                        Destino.Abandonados -> PaginaEstante(Estado.ABANDONADO, "Abandonados", todos, alAbrir, alAbrirSaga, alAnadir)
+                        Destino.Sagas -> PaginaSagas(todos, alAbrir, alAbrirSaga)
+                        else -> PaginaAutores(todos, alAbrir, alAbrirSaga)
+                    }
+                }
             }
-        }
         }
     }
 }
 
 /** Las pestañas de las secciones (como las de Atrio): la elegida en tinta con el subrayado de acento; su número, en acento. Si no caben, se deslizan y la elegida siempre se ve. */
 @Composable
-private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int>, onSel: (Int) -> Unit) {
+private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>, onSel: (Int) -> Unit) {
     // La fila se desplaza sola solo si la pestaña elegida no se ve entera (y entonces la centra): así no se corta la de al lado
     val scroll = androidx.compose.foundation.rememberScrollState()
     val sitios = remember { androidx.compose.runtime.mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
@@ -346,7 +397,7 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int>,
                     .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.Bottom) {
                     // Dirección C: la elegida, en un bloque del acento
                     Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    Text(" ${cuentas.getOrElse(i) { 0 }}", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1)
+                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
                 }
             }
         }

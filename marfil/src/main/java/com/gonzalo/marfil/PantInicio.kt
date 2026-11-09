@@ -32,56 +32,25 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * La portada de Marfil. La cabecera y el menú, con las mismas medidas que los de Atrio (y que los de Pórtico); lo de debajo, propio:
+ * La portada de Seshat, la primera página (la cabecera y las pestañas son de [PantPrincipal]):
  * «Ahora» (el libro que estás leyendo, enmarcado, con lo que llevas y un botón para seguir) y «En la mesilla» (los pendientes, con la portada a la izquierda).
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun PantInicio(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -> Unit, alIr: (Destino) -> Unit, alBuscar: () -> Unit, alAbrirSaga: (Saga) -> Unit = {}) {
+fun PaginaPortada(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -> Unit, alIr: (Destino) -> Unit) {
     val hoy = remember { Calendar.getInstance() }
     val libros = Biblioteca.propios()
     val ahora = libros.filter { it.estado == Estado.LEYENDO }.maxByOrNull { it.ultima } ?: libros.firstOrNull { it.estado == Estado.LEYENDO }
     // En la mesilla: lo que estás leyendo, menos lo último que abriste (eso es «Ahora»). En la estantería: lo pendiente.
     val mesilla = libros.filter { it.estado == Estado.LEYENDO && it.id != ahora?.id }.sortedByDescending { it.ultima }.take(6)
     val estanteria = libros.filter { it.estado == Estado.PENDIENTE }.sortedByDescending { it.anadido }.take(6)
-    val secciones = listOf<Pair<String, () -> Unit>>(
-        "Leyendo" to { alIr(Destino.Leyendo) }, "Pendientes" to { alIr(Destino.Pendientes) }, "Leídos" to { alIr(Destino.Leidos) },
-        "Abandonados" to { alIr(Destino.Abandonados) }, "Autores" to { alIr(Destino.Autores) }, "Sagas" to { alIr(Destino.Sagas) }, "Escritos" to { alIr(Destino.Escritos) }
-    )
 
-    // La cabecera y el menú, exactamente como en la portada de Atrio (RevistaHome): mismos márgenes, mismo tamaño de cabecera, de filetes y de letra
-    val desplazado = rememberScrollState()
-    val umbral = with(androidx.compose.ui.platform.LocalDensity.current) { 300.dp.toPx() }
-    // (solo cambia al cruzar el umbral: leer el desplazamiento aquí recomponía la portada entera en cada píxel que bajabas)
-    val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val lectura = remember(libros.map { it.id to it.msPropios to it.ultima }) { datosLectura(ctx, libros) }
     val metaAnual = remember(libros) { Ajustes.metaAnual(ctx) }
     val ano = remember { anoDe(System.currentTimeMillis()) }
     val terminadosAno = terminadosEn(libros, ano)
-    Box(Modifier.fillMaxSize()) {
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(desplazado)) {
-        // ---- La cabecera de la dirección C: un bloque de tinta con la fila pequeña (Buscar · + Añadir · fecha · ⚙) y «SESHAT.» en grotesca enorme
-        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                EnlaceRevista("Buscar", color = Paper.copy(alpha = 0.75f)) { alBuscar() }
-                EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = Acento) { alAnadir() }
-                Spacer(Modifier.weight(1f))
-                Text(SimpleDateFormat("dd.MM.yy", Locale("es", "ES")).format(hoy.time), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
-                Icon(Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 6.dp).combinedClickable(onClick = { alIr(Destino.Ajustes) }).padding(8.dp).size(20.dp))
-            }
-            val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
-            NombreConPunto("Seshat", if (ancho >= 700) 120.sp else 72.sp, Paper, Modifier.padding(top = 4.dp))
-        }
-        // ---- Las secciones, en una fila de bloques que se desliza
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-            secciones.forEachIndexed { i, (t, f) ->
-                Text(t.uppercase(), color = if (i == 0) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1,
-                    modifier = Modifier.clickable(onClick = f).background(if (i == 0) Acento else Color.Transparent).padding(horizontal = 12.dp, vertical = 12.dp))
-            }
-        }
-        Filete(2.dp)
-
+    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState())) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
             Spacer(Modifier.height(20.dp))
             if (libros.isEmpty()) {
@@ -142,9 +111,6 @@ fun PantInicio(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
-    }
-    // Al bajar, la cabecera se pliega: arriba solo quedan «SESHAT.» y lo de siempre (Buscar · + Añadir)
-    BarraPlegada("Seshat", plegada) { EnlaceRevista("Buscar", color = Paper.copy(alpha = 0.8f)) { alBuscar() }; EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = Acento) { alAnadir() } }
     }
 }
 
