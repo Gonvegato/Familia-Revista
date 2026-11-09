@@ -358,9 +358,15 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         }
     }
 
+    /**
+     * Las conversaciones tras un partido: nunca se repiten en la misma carrera (si ya salieron todas las que encajan con el resultado, salen
+     * menos, o ninguna; mejor callados que repetidos).
+     */
     private fun conversaciones(u: Uso, d: Datos, r: Char, n: Int): List<Map<String, Any?>> {
-        val ok = BancoPrueba.CONVERSACIONES.filter { it.cuando.isEmpty() || it.cuando == "$r" }
-        return eligeVarios(u, ok, n) { it.id }.flatMap { c -> c.ms.map { (de, t) -> mapOf("chat" to rellena(c.chat, d), "de" to rellena(de, d), "texto" to rellena(t, d)) } }
+        val ok = BancoPrueba.CONVERSACIONES.filter { (it.cuando.isEmpty() || it.cuando == "$r") && it.id !in u.ya }
+        val elegidas = ok.shuffled(azar).take(n)
+        elegidas.forEach { u.ya += it.id; u.nuevas += it.id }
+        return elegidas.flatMap { c -> c.ms.map { (de, t) -> mapOf("chat" to rellena(c.chat, d), "de" to rellena(de, d), "texto" to rellena(t, d)) } }
     }
 
     // ---------------------------------------------------------------- las decisiones

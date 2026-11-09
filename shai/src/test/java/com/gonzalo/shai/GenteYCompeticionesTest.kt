@@ -237,3 +237,50 @@ class GenteYCompeticionesTest {
         } finally { Prueba.pon(RuntimeEnvironment.getApplication(), false) }
     }
 }
+
+/** FcFeed 0.7.1: el orden (cronológico, como un chat) y las conversaciones del modo prueba sin repetir. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class OrdenYSinRepetirTest {
+    @Before fun prepara() { Ejemplo.prepara() }
+    @After fun suelta() { ClaveApi.fija = null; Gasto.mesFijo = null }
+
+    @Test fun todoVaPorJornadaYDentroPorMomento() {
+        val madre = Persona("p0madre001", "Marisa Bloise", "madre", 85)
+        val u = Carreras.guarda(Ejemplo.universo().copy(entorno = listOf(madre), paso = 5))
+        // Creadas en desorden: lo de la jornada 2 se guardó antes que lo de la 1; el evento de la jornada 2 llegó (por lotes) después del partido 3
+        Carreras.guarda(Entrada("eB", u.id, TipoEntrada.EVENTO, 1_000, 2, "La entrevista", dms = listOf(Dm("Marisa", "Me han llamado de una revista"))))
+        Carreras.guarda(Entrada("eA", u.id, TipoEntrada.EVENTO, 5_000, 1, "Tu coche", dms = listOf(Dm("mamá", "Te ha llegado una multa"))))
+        Carreras.guarda(Entrada("eP2", u.id, TipoEntrada.PARTIDO, 500, 2, partido = Ejemplo.partido(), dms = listOf(Dm("Marisa Bloise", "¡Ese es mi niño!"))))
+        Carreras.guarda(Entrada("eP3", u.id, TipoEntrada.PARTIDO, 6_000, 3, partido = Ejemplo.partido(), dms = listOf(Dm("Marisa", "Bien jugado"))))
+        Carreras.guarda(Entrada("eC", u.id, TipoEntrada.EVENTO, 9_000, 2, "Llega tarde", dms = listOf(Dm("Marisa", "Lo de la cena"))))
+        val es = Carreras.entradasDe(u.id)
+        // Lo más nuevo primero (Red, Inicio): jornada 3, luego la 2 (lo de después del partido, encima del partido), luego la 1
+        assertEquals(listOf("eP3", "eC", "eB", "eP2", "eA"), es.map { it.id })
+        // El chat, de lo más viejo a lo más nuevo
+        val c = conversaciones(u, es).single()
+        assertEquals(listOf("Te ha llegado una multa", "¡Ese es mi niño!", "Me han llamado de una revista", "Lo de la cena", "Bien jugado"), c.dms.map { it.texto })
+        assertEquals("eP3", c.ultimaEntrada?.id)
+    }
+
+    @Test fun losChatsVanPorLoUltimoDeCadaUno() {
+        val u = Carreras.guarda(Ejemplo.universo().copy(entorno = listOf(Persona("p0madre001", "Marisa Bloise", "madre"), Persona("p0kike0001", "Kike Lozano", "amigo")), paso = 3))
+        Carreras.guarda(Entrada("e1", u.id, TipoEntrada.EVENTO, 9_000, 1, "x", dms = listOf(Dm("Kike", "Hola"))))
+        Carreras.guarda(Entrada("e2", u.id, TipoEntrada.EVENTO, 1_000, 3, "y", dms = listOf(Dm("Marisa", "Hola, hijo"))))
+        assertEquals(listOf("Marisa Bloise", "Kike Lozano"), conversaciones(u, Carreras.entradasDe(u.id)).map { it.nombre })
+    }
+
+    @Test fun enModoPruebaLasConversacionesNoSeRepitenEnLaCarrera() {
+        val ctx = RuntimeEnvironment.getApplication()
+        Prueba.pon(ctx, true)
+        try {
+            ClaveApi.fija = ""
+            val (u, _) = Motor.crea(Ejemplo.universo())
+            repeat(14) { i -> Motor.partido(u.id, Ejemplo.partido(2 + i % 2, 1, "Rival $i")) }
+            val textos = Carreras.entradasDe(u.id, todas = true).filter { it.tipo == TipoEntrada.PARTIDO }.flatMap { e -> e.dms.map { e.id to it.texto } }
+            assertTrue(textos.size > 20)
+            val repetidos = textos.groupBy { it.second }.filterValues { l -> l.map { it.first }.distinct().size > 1 }.keys
+            assertTrue(repetidos.joinToString("\n"), repetidos.isEmpty())
+        } finally { Prueba.pon(ctx, false) }
+    }
+}

@@ -432,7 +432,10 @@ private fun TabMensajes(u: Universo, entradas: List<Entrada>, convs: List<Conver
                 }
                 rolDe(u, c).takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp) }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
-                    val t = ultimo?.let { (if (it.mio) "Tú: " else if (c.grupo) "${it.de.substringBefore(' ')}: " else "") + it.texto } ?: c.abierta?.second?.texto.orEmpty()
+                    // Lo último: el último mensaje o, si lo último fue una decisión, qué pasó con ella
+                    val dec = c.items.lastOrNull { it.decision != null }?.decision
+                    val t = ultimo?.let { (if (it.mio) "Tú: " else if (c.grupo) "${(Gente.deMensaje(u, it)?.nombre ?: it.de).substringBefore(' ')}: " else "") + it.texto }
+                        ?: dec?.let { d -> when { d.abierta -> d.titulo.ifBlank { d.texto }; d.caducada -> "No contestaste: ${d.titulo.ifBlank { d.texto }}"; else -> "Decidiste: «${d.elegida}»" } }.orEmpty()
                     Text(t, color = if (sin > 0) Charcoal else Muted, fontFamily = Body, fontWeight = if (sin > 0) FontWeight.SemiBold else FontWeight.Normal, fontSize = 14.sp, lineHeight = 19.sp,
                         maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     if (sin > 0) { Spacer(Modifier.width(8.dp)); Insignia(sin) }
@@ -454,7 +457,8 @@ fun PantChat(u: Universo, c: Conversacion, alVolver: () -> Unit, menu0: Boolean 
     val ambito = rememberCoroutineScope()
     LaunchedEffect(c.nombre, c.recibidos) { Leidos.marca(ctx, u.id, c.nombre, c.recibidos) }
     val scroll = rememberScrollState()
-    LaunchedEffect(c.nombre, c.items.size) { scroll.scrollTo(scroll.maxValue) }
+    // Se abre abajo del todo, como un chat (y baja sola cuando llega algo nuevo)
+    LaunchedEffect(c.nombre, c.items.size, scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
     val p = c.persona
     val fuera = p != null && p.salio > 0
     var menu by remember { mutableStateOf(menu0) }

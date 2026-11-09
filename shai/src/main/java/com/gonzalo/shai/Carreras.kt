@@ -106,8 +106,14 @@ object Carreras {
         lee()
         return almacen.nodos().filter { (k, v) -> k.startsWith("e") && v["un"].comoTexto() == universo }.values
             .mapNotNull { Entrada.deJson(it["o"].comoTexto()) }.filter { todas || it.visible(ahora) }
-            .sortedWith(compareByDescending<Entrada> { maxOf(it.visibleDesde, it.creado) }.thenByDescending { it.paso })
+            .sortedWith(ORDEN.reversed())
     }
+
+    /**
+     * El orden de lo que pasa (de lo más viejo a lo más nuevo): por jornada y, dentro de cada una, por el momento en que salió (el partido,
+     * y luego lo de entre partidos de esa jornada, aunque llegara más tarde por lotes).
+     */
+    val ORDEN: Comparator<Entrada> = compareBy<Entrada> { it.paso }.thenBy { maxOf(it.visibleDesde, it.creado) }.thenBy { it.id }
 
     fun entrada(id: String): Entrada? { lee(); return Entrada.deJson(almacen.nodo(id)?.get("o").comoTexto()) }
 

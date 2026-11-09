@@ -5,6 +5,15 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.7.1
+
+- **Todo en orden, como un chat.** Lo que pasa va siempre por jornada y, dentro de cada una, por el momento en que salió (el partido, y
+  después lo de entre partidos de esa jornada aunque llegara más tarde por lotes) (`Carreras.ORDEN`). Los chats, de lo más viejo arriba a
+  lo más nuevo abajo, y se abren abajo del todo; la lista de Mensajes, por lo último de cada chat; la Red y el Inicio, de lo más nuevo a lo
+  más viejo con el mismo criterio. Antes, algo guardado antes de tiempo (o que llegó tarde) se colaba fuera de su jornada.
+- **Modo prueba: las conversaciones de después del partido ya no se repiten** en la misma carrera (como los eventos): si ya salieron todas las
+  que encajan con el resultado, salen menos. Y hay muchas más (de 15 a 41).
+
 ## 0.7.0
 
 Lo que pidió tras usarla de verdad:

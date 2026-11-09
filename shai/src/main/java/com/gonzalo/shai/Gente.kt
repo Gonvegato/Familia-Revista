@@ -231,7 +231,10 @@ class ItemChat(val entrada: Entrada, val dms: List<Dm>, val decision: Decision?)
  * quién escribe (sin ti), ya con su nombre de verdad.
  */
 class Conversacion(val nombre: String, val items: List<ItemChat>, val persona: Persona? = null, val personas: List<String> = emptyList()) {
-    val ultima: Long get() = items.maxOfOrNull { maxOf(it.entrada.creado, it.entrada.visibleDesde) } ?: 0L
+    /** Cuándo fue lo último (para «hace X»). */
+    val ultima: Long get() = items.lastOrNull()?.let { maxOf(it.entrada.creado, it.entrada.visibleDesde) } ?: 0L
+    /** Lo último de esta conversación (para ordenar los chats: el de lo más reciente, arriba). */
+    val ultimaEntrada: Entrada? get() = items.lastOrNull()?.entrada
     /** Los mensajes que te han mandado (para lo de «sin leer»). */
     val recibidos: Int get() = items.sumOf { i -> i.dms.count { !it.mio } }
     val abierta: Pair<Entrada, Decision>? get() = items.lastOrNull { it.decision?.abierta == true }?.let { it.entrada to it.decision!! }
@@ -244,7 +247,7 @@ class Conversacion(val nombre: String, val items: List<ItemChat>, val persona: P
 fun conversaciones(u: Universo, entradas: List<Entrada>): List<Conversacion> {
     val mapa = LinkedHashMap<String, MutableList<ItemChat>>()
     val quien = HashMap<String, MutableSet<String>>()
-    entradas.sortedBy { maxOf(it.creado, it.visibleDesde) }.forEach { e ->
+    entradas.sortedWith(Carreras.ORDEN).forEach { e ->
         val porChat = e.dms.groupBy { Gente.chatDe(u, it).ifBlank { "Alguien" } }
         val dc = e.decision?.let { Gente.chatDeNombre(u, it.de.ifBlank { "Tu gente" }) }
         porChat.forEach { (c, ms) ->
@@ -253,6 +256,7 @@ fun conversaciones(u: Universo, entradas: List<Entrada>): List<Conversacion> {
         }
         if (dc != null && dc !in porChat) mapa.getOrPut(dc) { mutableListOf() }.add(ItemChat(e, emptyList(), e.decision))
     }
+    val orden = Comparator<Conversacion> { a, b -> Carreras.ORDEN.compare(a.ultimaEntrada ?: return@Comparator -1, b.ultimaEntrada ?: return@Comparator 1) }
     return mapa.map { (c, items) -> Conversacion(c, items, Gente.todos(u).firstOrNull { Vida.mismo(it.nombre, c) }, quien[c]?.toList().orEmpty()) }
-        .sortedByDescending { it.ultima }
+        .sortedWith(orden.reversed())
 }
