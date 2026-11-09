@@ -11,6 +11,12 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.3
+
+Al cambiar una imagen (portada o fondo), la lista de títulos salía duplicada: cada título aparecía dos veces (en Bastet se veía en «También juegas»). La causa:
+la lista se rehacía a la vez desde dos sitios (el cambio de imagen, en segundo plano, y el aviso de la cuenta o la bajada del archivo) y los dos
+«vaciar + llenar» se cruzaban: vacía uno, vacía el otro, llena uno, llena el otro. Ahora el cambio de lista va con candado y sin repetidos. De paso, `MigracionTest` ya no falla al recoger cuando no hay emulador de cuenta (se saltaba antes de crear su servidor de mentira).
+
 ## 0.7.2
 
 - **Ajustes, como Seshat y Bastet**: la cabecera es el bloque de tinta con «AJUSTES.» en grotesca (antes, «Ajustes» en serif).

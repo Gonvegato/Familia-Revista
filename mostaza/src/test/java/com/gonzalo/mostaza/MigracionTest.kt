@@ -43,7 +43,7 @@ class MigracionTest : ConCuenta() {
         sincroniza(); sincroniza()
     }
 
-    @After fun fin() { web.close(); MigraAzabache.olvidaParaPruebas(ctx); suelta() }
+    @After fun fin() { if (::web.isInitialized) web.close(); MigraAzabache.olvidaParaPruebas(ctx); suelta() }
 
     /** Lo que deja Azabache 1.6.2 en la cuenta (`azabache/kinds` y cada ficha en `azabache/<lista>~<id>` con `o`), como lo escribe su `Propias`. */
     private fun siembraAzabache() {

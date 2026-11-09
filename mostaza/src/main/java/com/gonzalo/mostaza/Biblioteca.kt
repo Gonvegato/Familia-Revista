@@ -136,8 +136,9 @@ object Biblioteca {
     fun refresca() {
         if (congelada) return
         val cc = col ?: return
-        val nueva = cc.vivos().filter { it.texto("t").isNotBlank() }.map { deNodo(it) }.sortedByDescending { maxOf(it.ultima, it.anadido) }
-        if (nueva != titulos.toList()) { titulos.clear(); titulos.addAll(nueva) }
+        val nueva = cc.vivos().filter { it.texto("t").isNotBlank() }.map { deNodo(it) }.sortedByDescending { maxOf(it.ultima, it.anadido) }.distinctBy { it.ref }
+        // Se llama desde varios hilos a la vez (p. ej. al cambiar una imagen y al bajar su archivo): sin el candado, dos «vaciar + llenar» se cruzan y la lista sale duplicada
+        synchronized(titulos) { if (nueva != titulos.toList()) { titulos.clear(); titulos.addAll(nueva) } }
         version++
         // Los widgets, al día (venga el cambio de aquí o de otro dispositivo por la cuenta; también cuando llega un póster)
         appCtx?.let { c -> Widgets.pedir(c) }

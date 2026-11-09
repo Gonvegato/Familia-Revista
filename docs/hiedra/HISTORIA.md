@@ -15,6 +15,12 @@ móvil, la app, la web y el mismo juego en el PC, todo en una ficha, en los men�
 guardan **por fuente**: las de este móvil, las de cada uno de tus otros móviles (se suman) y las externas (Steam, cada PC con Atrio, lo jugado en
 Carmesí), que se mezclan por máximo y nunca se suman dos veces. Dónde está cada ROM es cosa de cada móvil y no viaja.
 
+## 0.8.2
+
+Al cambiar una imagen (portada o fondo), la lista de juegos salía duplicada: cada juego aparecía dos veces (en Bastet se veía en «También juegas»). La causa:
+la lista se rehacía a la vez desde dos sitios (el cambio de imagen, en segundo plano, y el aviso de la cuenta o la bajada del archivo) y los dos
+«vaciar + llenar» se cruzaban: vacía uno, vacía el otro, llena uno, llena el otro. Ahora el cambio de lista va con candado y sin repetidos. Prueba nueva en `ModeloTest`: ocho hilos rehaciendo la lista a la vez; sin el candado falla, con él no.
+
 ## 0.8.1
 
 - **El paspartú, siempre crema.** El marco de la portada en el cartel y en la ficha deja de ir del color de la página: es un crema fijo

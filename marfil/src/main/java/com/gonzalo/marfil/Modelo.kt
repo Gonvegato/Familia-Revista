@@ -215,8 +215,10 @@ object Biblioteca {
         val l = por(id) ?: return
         val c = appCtx ?: return
         Encuadres.poner(c, id, fondo, if (fondo) l.fondo else l.portada, e)
-        val i = libros.indexOfFirst { it.id == id }
-        if (i >= 0) libros[i] = if (fondo) libros[i].copy(encFondo = e) else libros[i].copy(encPortada = e)
+        synchronized(libros) {
+            val i = libros.indexOfFirst { it.id == id }
+            if (i >= 0) libros[i] = if (fondo) libros[i].copy(encFondo = e) else libros[i].copy(encPortada = e)
+        }
         refresca()
     }
 
@@ -255,8 +257,9 @@ object Biblioteca {
         val vivos = cc.vivos()
         reparaFechas(cc, vivos)
         val deCuenta = vivos.filter { it.texto("t").isNotBlank() }.map { deNodo(it) }
-        val nueva = (deCuenta + escritos.values).sortedByDescending { maxOf(it.anadido, 0L) }
-        if (nueva != libros.toList()) { libros.clear(); libros.addAll(nueva) }
+        val nueva = (deCuenta + escritos.values).sortedByDescending { maxOf(it.anadido, 0L) }.distinctBy { it.id }
+        // Se llama desde varios hilos a la vez (p. ej. al cambiar una imagen y al bajar su archivo): sin el candado, dos «vaciar + llenar» se cruzan y la lista sale duplicada
+        synchronized(libros) { if (nueva != libros.toList()) { libros.clear(); libros.addAll(nueva) } }
         appCtx?.let { c -> Widgets.pedir(c); Portadas.bajarQueFalten(c) }
     }
 

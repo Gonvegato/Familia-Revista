@@ -53,8 +53,9 @@ object Sagas {
     fun refresca() {
         val nuevas = col().vivos().filter { it.texto("tipo") == "juegos" }
             .map { Saga(it.ref, it.texto("n"), it.lista("refs").map { k -> k.toString() }, it.m.values.maxOrNull() ?: 0L) }
-            .sortedBy { it.nombre.lowercase() }
-        if (nuevas != lista.toList()) { lista.clear(); lista.addAll(nuevas) }
+            .sortedBy { it.nombre.lowercase() }.distinctBy { it.id }
+        // Puede llamarse desde varios hilos a la vez: el candado evita que dos «vaciar + llenar» se crucen y dupliquen
+        synchronized(lista) { if (nuevas != lista.toList()) { lista.clear(); lista.addAll(nuevas) } }
         appCtx?.let { Widgets.pedir(it) }
     }
 

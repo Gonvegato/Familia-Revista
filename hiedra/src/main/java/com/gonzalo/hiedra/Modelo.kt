@@ -381,13 +381,22 @@ object Biblioteca {
         val j = por(id) ?: return
         val c = appCtx ?: return
         Encuadres.poner(c, id, fondo, if (fondo) j.fondo else j.portada, e)
-        val i = juegos.indexOfFirst { it.id == id }
-        if (i >= 0) juegos[i] = if (fondo) juegos[i].copy(encFondo = e) else juegos[i].copy(encPortada = e)
+        synchronized(juegos) {
+            val i = juegos.indexOfFirst { it.id == id }
+            if (i >= 0) juegos[i] = if (fondo) juegos[i].copy(encFondo = e) else juegos[i].copy(encPortada = e)
+        }
         appCtx?.let { Widgets.pedir(it) }
     }
 
     /** Lo que Azabache dice de este juego: su nota (0–100; 0 = sin valorar) y su reseña. */
     fun valoracion(id: String): Pair<Int, String> = col?.nodo(id)?.let { it.entero("nota").toInt() to it.texto("resena") } ?: (0 to "")
+
+    /** Cambia la lista entera de una vez. Se llama desde varios hilos a la vez (p. ej. al cambiar una imagen y al bajar su archivo):
+     *  sin el candado, dos «vaciar + llenar» se cruzan y la lista sale duplicada (los juegos de «También juegas», dos veces). */
+    internal fun ponLista(nueva: List<Juego>) {
+        val sinRepetir = nueva.distinctBy { it.id }
+        synchronized(juegos) { if (sinRepetir != juegos.toList()) { juegos.clear(); juegos.addAll(sinRepetir) } }
+    }
 
     /** Vuelve a montar la lista con lo que hay en la cuenta (se llama sola cuando cambia algo, venga de donde venga). */
     fun refresca() {
@@ -402,7 +411,7 @@ object Biblioteca {
             if (c.isNotEmpty()) runCatching { cc.cambia(n.ref, c) }
         }
         val nueva = vivos.filter { it.texto("t").isNotBlank() }.map { deNodo(it, porJuego[it.ref].orEmpty()) }.sortedByDescending { it.anadido }
-        if (nueva != juegos.toList()) { juegos.clear(); juegos.addAll(nueva) }
+        ponLista(nueva)
         appCtx?.let { c ->
             Widgets.pedir(c)
             // Las portadas y los fondos de la cuenta que aún no están en este móvil

@@ -111,4 +111,20 @@ class ModeloTest {
         assertEquals("", s.portada); assertTrue(s.ajenas.isEmpty()); assertEquals(1.6f, s.zoom, 0.001f); assertEquals(1500, s.durCompleto); assertEquals(77L, s.finalizado)
         assertFalse(rom("Metroid").encuadrada); assertNull(rom("Metroid").avance)
     }
+
+    @Test fun laListaNoSeDuplicaAunqueSeRehagaDesdeVariosHilosALaVez() {
+        limpia()
+        val lista = (1..40).map { rom("Juego $it").copy(estado = Estado.JUGANDO) }
+        repeat(200) {
+            // Todos a la vez (como el refresco de la imagen en segundo plano y el de la cuenta en el hilo principal)
+            val salida = java.util.concurrent.CyclicBarrier(8)
+            val hilos = (1..8).map { k -> Thread { salida.await(); repeat(50) { Biblioteca.ponLista(if ((it + k) % 2 == 0) lista else lista.reversed()) } } }
+            hilos.forEach { it.start() }; hilos.forEach { it.join() }
+            assertEquals(lista.size, Biblioteca.juegos.size)
+            assertEquals(lista.size, Biblioteca.juegos.map { it.id }.distinct().size)
+        }
+        // Y si la cuenta trae el mismo juego dos veces, sale una
+        Biblioteca.ponLista(lista + lista.first())
+        assertEquals(lista.size, Biblioteca.juegos.size)
+    }
 }
