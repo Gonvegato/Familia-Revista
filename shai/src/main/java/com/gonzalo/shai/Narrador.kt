@@ -35,6 +35,7 @@ Reglas que no se rompen nunca:
 13. El club: si viene «LO QUE SE SABE DEL CLUB», son datos reales sacados de una búsqueda: úsalos (su estadio, su ciudad, sus derbis, su momento, cómo es su afición) y no te inventes otros datos reales del club. Sus medios de verdad solo te sirven de estilo para inventar los tuyos.
 14. Su gente: cada persona de «Su gente» tiene un id entre corchetes. Cuando escriba alguien de su gente, en «de» pon su nombre EXACTO tal como sale ahí (nunca «mamá», «mi madre», solo el nombre de pila o el nombre con otro apellido) y en «id» su id; el «chat» de una conversación con una sola persona es también su nombre exacto. Respeta cómo es cada uno y su actitud de ahora. Los de «YA NO ESTÁN EN SU VIDA» no le escriben (como mucho se habla de ellos en la prensa o la red).
 15. Temas delicados (drogas, alcohol, apuestas, peleas): solo como drama de prensa rosa y de entorno, sin glorificarlos, sin detalles ni instrucciones, y con consecuencias; si él se aleja de eso o de quien le arrastra, que tenga efecto positivo (disciplina, afición, su gente sana).
+16. Hechos históricos: los de «HECHOS HISTÓRICOS DE SU CARRERA» los cuenta él y son verdad en su carrera aunque toquen el campo (una convocatoria, una titularidad, la lesión de otros que le abre la puerta): es la única excepción a la regla 1. Respétalos tal cual, no les añadas nada del campo que no diga y no los contradigas nunca. Son lo más gordo que le ha pasado: la prensa, la red y su gente los recuerdan siempre, sobre todo en los partidos grandes.
 """.trim()
 
     // ---------------------------------------------------------------- el contexto de la carrera
@@ -102,6 +103,7 @@ Reglas que no se rompen nunca:
             recien.joinToString("\n") { "- ${it.titulo}: ${it.texto}" + if (it.precoz) " (PRECOZ, con ${it.edad} años)" else "" })
         if (u.rivales.isNotEmpty()) appendLine("TUS RIVALES (de más a menos caliente):\n" + Rivales.contexto(u))
         u.rivales.filter { it.desde == u.paso && u.paso > 0 }.forEach { appendLine("RIVALIDAD QUE ACABA DE NACER (cuéntala): ${it.nombre} (${it.club}): ${it.origen}") }
+        Hechos.contexto(recientes)?.let { appendLine(it) }
         if (u.memoria.isNotBlank()) appendLine("LO QUE FCFEED RECUERDA (tramas abiertas, relaciones, hechos clave):\n${u.memoria}")
         val abiertas = recientes.filter { it.decision?.abierta == true }
         appendLine("DECISIONES PENDIENTES: ${abiertas.size}" + if (abiertas.size >= MAX_ABIERTAS) " (ya tiene bastantes: no le pongas ninguna más; hay = false)" else "")
@@ -175,6 +177,11 @@ Reglas que no se rompen nunca:
     val ESQUEMA_PUERTA = obj("despedida" to lista(TEXTO), "titular" to TEXTO, "texto" to TEXTO, "tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM),
         "candidatos" to lista(PERSONA), "efectos" to EFECTOS)
     val ESQUEMA_MEMORIA = obj("memoria" to TEXTO)
+    /** Lo que la app entiende de un hecho histórico que cuentas (Haiku). */
+    val ESQUEMA_ENTENDER = obj("entendido" to lista(obj("hecho" to TEXTO, "detalle" to TEXTO)), "precocidad" to obj("hay" to SINO, "titulo" to TEXTO, "pregunta" to TEXTO))
+    /** La edición especial de un hecho histórico (Sonnet). */
+    val ESQUEMA_EDICION = obj("titulo" to TEXTO, "texto" to TEXTO, "prensa" to PRENSA, "tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM),
+        "decision" to DECISION, "ofertas" to lista(OFERTA), "nivel_tras" to enumerado(*Nivel.entries.map { it.name }.toTypedArray()), "efectos" to EFECTOS, "gente_nueva" to lista(PERSONA))
     val ESQUEMA_TEMPORADA = obj("titulo" to TEXTO, "balance" to TEXTO, "premios" to lista(obj("premio" to TEXTO, "medio" to TEXTO, "ganado" to SINO, "texto" to TEXTO)),
         "prensa" to PRENSA, "tendencia" to TENDENCIA, "posts" to lista(POST), "mensajes" to lista(DM),
         "vacaciones" to obj("titulo" to TEXTO, "texto" to TEXTO, "decision" to DECISION), "ofertas" to lista(OFERTA), "efectos" to EFECTOS, "gente_nueva" to lista(PERSONA))
@@ -290,6 +297,60 @@ $ctx
 
 RESUME LO QUE HAY QUE RECORDAR de esta carrera para seguir contándola con coherencia (lo de antes de las últimas cosas también: parte de lo que ya recordabas). En «memoria», de 120 a 220 palabras, en frases cortas y por apartados en líneas: «Tramas abiertas:», «Su gente:» (cómo está con cada uno que importe), «Lo que decidió y lo que dejó pasar:», «Hechos clave:». Solo lo que ha pasado de verdad: no inventes nada nuevo.
 """.trim())), maxTokens = 900, esquema = ESQUEMA_MEMORIA)
+
+    /** Lo que la app entiende de un hecho histórico, antes de mandarlo (Haiku, barato): los hechos uno a uno y si hay algo de precocidad que mirar. */
+    fun entender(u: Universo, texto: String) = Peticion(Claude.HAIKU, listOf(Peticion.Bloque("""
+Lees lo que alguien cuenta que le ha pasado en su carrera de EA Sports FC 26 (modo carrera) y lo separas en hechos cortos, para enseñárselo antes de que el resto de la app lo use. No añadas nada que no diga, no lo exageres y no lo interpretes: si algo no está claro, ponlo tal cual. Escribe en español de España.
+- «entendido»: de 1 a 5 hechos, cada uno en una frase corta («hecho», como mucho 70 caracteres) y, si hace falta, un «detalle» corto (la competición, cuándo, por qué); si no, «detalle» vacío.
+- «precocidad»: si lo que cuenta puede ser algo insólito o de precocidad en el fútbol de verdad (debutar o ser titular en algo muy grande muy joven o sin experiencia, saltarse pasos, la primera vez que pasa algo), hay = true, un «titulo» corto (como mucho 60 caracteres, como «Titular en un Mundial antes de debutar con su club») y una «pregunta» para buscar en la web si ha pasado antes de verdad (concreta, sin nombres inventados). Si no, hay = false y lo demás vacío.
+""".trim())), listOf(Peticion.texto("""
+EL JUGADOR: ${u.personaje.nombre}, ${u.personaje.edad} años${if (u.personaje.nacionalidad.isNotBlank()) ", ${u.personaje.nacionalidad}" else ""}, ${u.club}. Nivel de ahora: ${u.nivelActual.nombre}. Partidos metidos en FcFeed: ${Carreras.partidos(u.id).size}.
+LO QUE CUENTA: «${texto.trim()}»
+""".trim())), maxTokens = 900, esquema = ESQUEMA_ENTENDER)
+
+    class LoEntendido(val hechos: List<Pair<String, String>>, val hayPrecocidad: Boolean, val precocidad: String, val pregunta: String)
+    fun leeEntendido(r: Map<String, Any?>): LoEntendido {
+        val p = r["precocidad"].comoMapa()
+        val hechos = r["entendido"].comoLista().map { it.comoMapa() }.map { it["hecho"].comoTexto().trim() to it["detalle"].comoTexto().trim() }.filter { it.first.isNotBlank() }.take(5)
+        val hay = p["hay"].comoBool() && p["pregunta"].comoTexto().isNotBlank()
+        return LoEntendido(hechos, hay, if (hay) p["titulo"].comoTexto().trim() else "", if (hay) p["pregunta"].comoTexto().trim() else "")
+    }
+
+    /** La edición especial de un hecho histórico: la portada, la red desbordada, los mensajes, una decisión, ofertas y el nivel en que le deja (Sonnet). */
+    fun edicion(u: Universo, ctx: String, h: Hecho, ruido: Ruido) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto(buildString {
+        appendLine(ctx); appendLine()
+        appendLine("HA PASADO ALGO HISTÓRICO (lo cuenta él: es verdad en su carrera aunque sea del campo; no lo cambies ni le añadas nada del campo que no diga):")
+        appendLine("«${h.texto.trim()}»")
+        if (h.entendido.isNotEmpty()) appendLine("Lo que ha confirmado él, punto por punto:\n" + h.entendido.joinToString("\n") { "- $it" })
+        appendLine("HASTA DÓNDE LLEGA EL RUIDO: ${ruido.paraClaude}")
+        when {
+            h.precocidad.isNotBlank() && h.hayPrecedentes != null -> appendLine("COMPROBADO EN LA WEB («${h.precocidad}»; búsqueda real: usa esto tal cual y no añadas nombres, fechas ni cifras que no estén aquí): ${h.comprobado}")
+            h.precocidad.isNotBlank() -> appendLine("NO SE HA PODIDO COMPROBAR EN LA WEB «${h.precocidad}»: no digas que es la primera vez en la historia ni cites precedentes reales; puedes decir que es insólito y que nadie lo recuerda.")
+            else -> appendLine("No cites récords ni precedentes del fútbol de verdad (no se ha comprobado nada).")
+        }
+        appendLine()
+        appendLine("""
+Es una EDICIÓN ESPECIAL: lo más gordo que le ha pasado hasta ahora. Escribe:
+- «titulo» corto y «texto» de 4 a 7 frases que lo cuenten como una noticia que se entiende sola: qué ha pasado (lo que él cuenta), por qué es insólito, quién habla de ello y dónde, y qué se juega ahora.
+- La portada especial: cabecera de un diario inventado que cubra esto según el ruido, titular grande, entradilla (1-2 frases) y la noticia entera en «articulo» (4 párrafos separados por una línea en blanco, unas 320-420 palabras: qué ha pasado y cómo, de dónde viene él, qué dicen el vestuario, la afición y la prensa, qué viene ahora y qué presión tiene). Y 3 «secundarios» (titular y entradilla): uno de su gente, uno de fuera del campo, uno de lo que viene.
+- ${comoRed(u, "De 16 a 22")} OJO: sus seguidores y sus «me gusta» de ahora son de ANTES de esto: con este ruido los posts gordos se disparan (varias veces lo normal, y más cuanto más lejos llega el ruido), y la tendencia lleva muchos posts. Que se note la locura: gente que no le conocía, cuentas de otros países si el ruido llega, memes, la afición de su club, la de su selección, escépticos.
+- $COMO_MENSAJES De 3 a 5 conversaciones: su familia, su representante, sus amigos de siempre (un grupo), alguna chica o alguna ex que reaparece, alguien que de repente se acuerda de él.
+- $COMO_DECISION Una que salga de esto (la presión, una entrevista, un patrocinio, un mensaje que contestar), salvo que ya tenga ${MAX_ABIERTAS} o más pendientes.
+- «ofertas»: de 0 a 3 que salgan de esto (marcas que le quieren ya, algún club que pregunta), con lo que pediría con su nivel de después. ${Rangos.texto(ruido.tope)}
+- «nivel_tras»: el nivel en el que le deja esto (${Nivel.entries.joinToString(", ") { it.name }}), nunca por debajo del de ahora y ${if (ruido.sinTope) "como mucho ${ruido.tope.name}" else "el de ahora (con este ruido no cambia)"}.
+- Efectos en lo de fuera del campo: afición, disciplina y carisma (de -10 a +10) y su gente (por su nombre exacto, de -15 a +15); «fama»: 0 (la pone la app con el nivel). Dinero: 0 salvo un motivo claro.
+- «gente_nueva»: de 0 a 2 personas INVENTADAS que aparecen por esto (un representante de los grandes, una influencer, un periodista que le persigue…), con nombre y apellido, su rol y una nota corta; y en «mensajes», por cada una, una conversación nueva (su nombre como chat, «id» vacío) en la que se presenta.
+""".trim())
+    }.trim())), maxTokens = 10_000, esquema = ESQUEMA_EDICION)
+
+    class LoDeLaEdicion(val titulo: String, val texto: String, val prensa: Prensa?, val posts: List<Post>, val dms: List<Dm>, val tendencia: String, val tendenciaPosts: Int,
+                        val decision: Decision?, val ofertas: List<Oferta>, val nivelTras: Nivel?, val efectos: Efectos, val nuevas: List<Persona>)
+    fun leeEdicion(r: Map<String, Any?>): LoDeLaEdicion {
+        val (h, n) = tendencia(r["tendencia"].comoMapa())
+        return LoDeLaEdicion(r["titulo"].comoTexto().trim(), r["texto"].comoTexto().trim(), prensaDe(r["prensa"].comoMapa()), posts(r["posts"]), dms(r["mensajes"]), h, n,
+            decision(r["decision"].comoMapa()), ofertas(r["ofertas"], null), Nivel.de(r["nivel_tras"].comoTexto()), efectos(r["efectos"].comoMapa()),
+            r["gente_nueva"].comoLista().map { it.comoMapa() }.map { Persona("", it["nombre"].comoTexto().trim(), it["rol"].comoTexto(), 50, it["nota"].comoTexto()) }.filter { it.nombre.isNotBlank() }.take(2))
+    }
 
     /** El cierre de la temporada: balance, premios inventados, vacaciones y mercado de verano (Sonnet). */
     fun temporada(u: Universo, ctx: String, cifras: Linea, partidos: List<Partido>) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""

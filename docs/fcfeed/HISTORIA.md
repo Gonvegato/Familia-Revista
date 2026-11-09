@@ -5,6 +5,26 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.8.0
+
+- **Hecho histórico.** El botón + abre ahora dos cosas: «Meter el partido» y «Hecho histórico», para algo fuera de lo normal que lo cambia
+  todo (te convocan para el Mundial sin haber debutado, eres titular en octavos…). Lo cuentas con tus palabras y eliges hasta dónde llega
+  el ruido: **Su club** (la fama sube como siempre), **Su país** (salta de golpe, como mucho hasta estrella) o **Todo el mundo** (salta
+  de golpe hasta donde lo lleve la historia; mínimo +15). Antes de mandar nada, Haiku te enseña lo que ha entendido punto por punto y
+  puedes quitar lo que no sea así (`Motor.entiende`).
+- **Comprobado en la web.** Si suena a precocidad o a algo nunca visto, Sonnet lo busca en la web (hasta dos búsquedas): si ha pasado de
+  verdad, dice quién y cuándo; si no lo encuentra, lo dice así, sin afirmar que sea la primera vez (`Hechos.comprueba`). Queda en tus
+  hitos como «Precocidad: …». Si la búsqueda falla, sigue sin ella y lo dice, y Claude no cita precedentes.
+- **Edición especial.** Sonnet escribe la portada especial (noticia de 4 párrafos), 16-22 posts con la red desbordada, 3-5 conversaciones,
+  una decisión, ofertas de lo que pediría con su nivel nuevo y la gente que aparece por esto (`Narrador.edicion`). En Inicio sale arriba
+  del todo mientras sea de esta jornada: la portada, «Tu fama, de golpe» (de qué nivel a cuál), lo comprobado y lo que se mueve.
+- **Se recuerda siempre.** Los hechos históricos van en el contexto de todo lo que se escriba después («HECHOS HISTÓRICOS DE SU CARRERA»),
+  con una regla nueva: son la única excepción a «el campo es del jugador», y nadie los contradice. Y se rehace la memoria.
+- **Letra grande en un móvil estrecho:** los contadores de Inicio partían palabras («seguidore / s»). Ahora se encogen hasta que cabe la
+  palabra más larga. El mismo fallo de medida (no contaba el espaciado entre letras del tema) estaba en los titulares que se ajustan solos
+  (`FitTitle`) y también está arreglado.
+- Modo prueba: el hecho histórico también funciona sin gastar (lo entendido son tus frases; la edición, de ejemplo).
+
 ## 0.7.1
 
 - **Todo en orden, como un chat.** Lo que pasa va siempre por jornada y, dentro de cada una, por el momento en que salió (el partido, y

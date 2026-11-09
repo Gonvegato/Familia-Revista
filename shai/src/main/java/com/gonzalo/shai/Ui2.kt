@@ -307,10 +307,10 @@ fun BotonRedondo(t: String, modifier: Modifier = Modifier, lleno: Boolean = true
 
 /** Un dato grande en una tarjeta (los contadores del Inicio, las cifras de una oferta). */
 @Composable
-fun Contador(valor: String, nombre: String, modifier: Modifier = Modifier, destacado: Boolean = false, alHacer: (() -> Unit)? = null) {
+fun Contador(valor: String, nombre: String, modifier: Modifier = Modifier, destacado: Boolean = false, tamNombre: androidx.compose.ui.unit.TextUnit = 12.sp, alHacer: (() -> Unit)? = null) {
     Tarjeta(modifier, relleno = 12.dp, alHacer = alHacer) {
         FitTitle(valor, 22.sp, 26.sp, Modifier.fillMaxWidth(), color = if (destacado) Acento else Charcoal, unaLinea = true, minSize = 12f, fontWeight = FontWeight.Bold)
-        Text(nombre, color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp)
+        Text(nombre, color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = tamNombre, lineHeight = (tamNombre.value + 4).sp)
     }
 }
 
@@ -333,4 +333,25 @@ fun PildoraMarco(t: String, modifier: Modifier = Modifier, alHacer: () -> Unit) 
     Box(modifier.clip(RoundedCornerShape(50)).border(1.dp, Edge, RoundedCornerShape(50)).tocable(onClick = alHacer).padding(horizontal = 14.dp, vertical = 7.dp)) {
         Text(t, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 18.sp)
     }
+}
+
+/**
+ * El tamaño de las etiquetas de una fila de [n] contadores para que su palabra más larga quepa entera (con la letra grande, en un móvil
+ * estrecho, «seguidores» se partía en «seguidore / s»). Se calcula con el ancho de la fila, fuera de la fila (que mide con alto intrínseco).
+ */
+@Composable
+fun tamEtiquetas(anchoFila: Dp, n: Int, etiquetas: List<String>): androidx.compose.ui.unit.TextUnit {
+    val medidor = androidx.compose.ui.text.rememberTextMeasurer()
+    val d = androidx.compose.ui.platform.LocalDensity.current
+    val hueco = with(d) { ((anchoFila - 8.dp * (n - 1)) / n - 24.dp).roundToPx() }
+    // (con el estilo de texto del tema, que trae su espaciado entre letras: medido sin él, la palabra «cabía» y luego se partía)
+    val base = androidx.compose.material3.LocalTextStyle.current
+    val t = remember(etiquetas, hueco, Body, base) {
+        var x = 12f
+        fun cabe(v: Float) = etiquetas.flatMap { it.split(' ') }.filter { it.isNotBlank() }.all { p ->
+            medidor.measure(p, base.merge(androidx.compose.ui.text.TextStyle(fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = v.sp)), softWrap = false, maxLines = 1).size.width <= hueco }
+        while (x > 8f && !cabe(x)) x -= 0.5f
+        x
+    }
+    return t.sp
 }

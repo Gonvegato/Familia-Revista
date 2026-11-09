@@ -410,6 +410,60 @@ object Motor {
         } catch (x: Exception) { null to mensaje(x) }
     } }
 
+    // ---------------------------------------------------------------- los hechos históricos
+
+    /** Lo que la app entiende de un hecho histórico que cuentas (Haiku, barato), para que lo confirmes antes de mandarlo. */
+    fun entiende(universo: String, texto: String): Pair<Narrador.LoEntendido?, String?> = en(universo) {
+        val u = Carreras.de(universo) ?: return@en null to "Esta carrera ya no está."
+        try { Narrador.leeEntendido(pide(Narrador.entender(u, texto))).let { if (it.hechos.isEmpty()) null to "No he entendido qué ha pasado: cuéntalo de otra manera." else it to null } }
+        catch (x: Exception) { null to mensaje(x) }
+    }
+
+    /**
+     * Un hecho histórico: se comprueba en la web lo de precocidad (si lo hay), Sonnet escribe la edición especial y el mundo reacciona.
+     * Con [Ruido.PAIS] o [Ruido.MUNDO] la fama salta de golpe (sin el tope de la jornada) hasta el nivel en que le deja la historia, con un
+     * mínimo; con [Ruido.CLUB], como siempre. Queda en la carrera para siempre (va en el contexto de todo lo que se escriba después).
+     */
+    fun hecho(universo: String, texto: String, e: Narrador.LoEntendido, ruido: Ruido): Pair<Entrada?, String?> = synchronized(cerrojo) { en(universo) {
+        var u = Carreras.de(universo) ?: return@en null to "Esta carrera ya no está."
+        try {
+            // Lo de precocidad, en la web (si falla, se sigue sin ello y se dice)
+            val comp = if (e.hayPrecocidad) try { Hechos.comprueba(e.pregunta) } catch (x: Exception) { Hechos.Comprobacion(null, "No se pudo comprobar: " + mensaje(x), emptyList()) } else null
+            val f0 = u.valorFuera(Fuera.FAMA)
+            var h = Hecho(texto.trim(), e.hechos.map { (a, b) -> if (b.isBlank()) a else "$a ($b)" }, ruido.name, f0, f0, e.precocidad,
+                comp?.texto.orEmpty(), comp?.hay, comp?.fuentes.orEmpty())
+            val r = Narrador.leeEdicion(pide(Narrador.edicion(u, contexto(u), h, ruido)))
+            // La fama: de golpe hasta el nivel en que le deja (con un mínimo), o como siempre si solo llega a su club
+            val sinFama = r.efectos.copy(fuera = r.efectos.fuera - Fuera.FAMA)
+            var nu = Vida.aplica(u, sinFama)
+            val f1 = if (ruido.sinTope) {
+                val n0 = u.nivelActual
+                val n1 = (r.nivelTras ?: n0).let { if (it.ordinal < n0.ordinal) n0 else it }.let { if (it.ordinal > ruido.tope.ordinal) ruido.tope else it }
+                maxOf(f0 + ruido.minimo, if (n1.ordinal > n0.ordinal) n1.desde + 3 else f0).coerceAtMost(100)
+            } else Vida.aplica(nu, Efectos(fuera = mapOf(Fuera.FAMA to 5))).valorFuera(Fuera.FAMA)
+            nu = nu.copy(fuera = nu.fuera + (Fuera.FAMA to f1), famaJornada = maxOf(nu.famaJornada, f1 - f0), famaHist = (nu.famaHist + (nu.paso to f1)).takeLast(80))
+            h = h.copy(famaDespues = f1)
+            // Lo de precocidad comprobado: queda en sus hitos
+            if (h.precocidad.isNotBlank() && comp?.hay != null)
+                nu = nu.copy(hitos = nu.hitos + Hito("hecho_${reloj()}", "Precocidad: ${h.precocidad}", h.comprobado, nu.paso, nu.personaje.edad, precoz = true, temporada = nu.temporada))
+            nu = Carreras.guarda(nu)
+            val ef = Vida.recorta(u, sinFama).let { it.copy(fuera = it.fuera + (Fuera.FAMA to (f1 - f0))) }
+            // Gente nueva: la que trae la historia y, si ha subido de nivel, la de su nivel nuevo
+            val extra = when {
+                r.nuevas.isNotEmpty() -> entraGente(nu, r.nuevas, r.nuevas.size)
+                Gente.tocaNueva(nu) -> entraGente(nu, emptyList(), maxOf(1, Gente.cuantas(nu.nivelActual)))
+                else -> emptyList()
+            }
+            nu = Carreras.de(universo) ?: nu
+            val ofertas = r.ofertas.map { Rangos.recorta(it, nu.nivelActual) }
+            val ent = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.HISTORICO, reloj(), nu.paso,
+                r.titulo.ifBlank { r.prensa?.titular.orEmpty() }.ifBlank { "Hecho histórico" }, r.texto, null, r.posts, Gente.sinExpulsados(nu, r.dms) + extra,
+                r.prensa, ofertas, r.decision?.takeIf { cabeDecision(universo) }, ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts, hecho = h))
+            runCatching { recuerda(universo) }
+            ent to null
+        } catch (x: Exception) { null to mensaje(x) }
+    } }
+
     // ---------------------------------------------------------------- lo que FcFeed recuerda
 
     /** Rehace lo que FcFeed recuerda de la carrera (Sonnet, corto). Devuelve por qué no se pudo, si no se pudo. */

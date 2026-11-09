@@ -87,6 +87,8 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
     val ctx = LocalContext.current
     var pestana by rememberSaveable { mutableIntStateOf(inicial) }
     var chat by rememberSaveable { mutableStateOf(chatInicial) }
+    var mas by rememberSaveable { mutableStateOf(false) }
+    var hecho by rememberSaveable { mutableStateOf(false) }
     val u = Carreras.de(id) ?: run { PaginaRevista { RevistaTopBar(alVolver, "Volver"); Nota("Esta carrera ya no está.") }; return }
     val entradas = Carreras.entradasDe(id)
     val convs = conversaciones(u, entradas)
@@ -100,6 +102,12 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
             puerta0 = chatPuerta, borrador0 = chatBorrador)
         return
     }
+    if (hecho) {
+        BackHandler { hecho = false }
+        PantHecho(u, alVolver = { hecho = false }, alHecho = { hecho = false; pestana = 1 })
+        return
+    }
+    BackHandler(enabled = mas) { mas = false }
     BackHandler(enabled = pestana != 0) { pestana = 0 }
     val mg = margen()
     Box(Modifier.fillMaxSize().background(Paper)) {
@@ -125,9 +133,10 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
             }
         }
         Column(Modifier.align(Alignment.BottomCenter)) {
-            BotonFlotante("Meter el partido", Modifier.align(Alignment.End).padding(end = 18.dp, bottom = 14.dp)) { alPartido() }
+            BotonFlotante("Meter el partido o un hecho histórico", Modifier.align(Alignment.End).padding(end = 18.dp, bottom = 14.dp)) { mas = true }
             BarraNav(itemsNav(decisiones + sinLeer, ofertas), minOf(pestana, 4)) { i -> pestana = if (i == 4) (if (pestana >= 4) pestana else 4) else i }
         }
+        if (mas) MenuMas(alCerrar = { mas = false }, alHecho = { mas = false; hecho = true }, alPartido = { mas = false; alPartido() })
     }
 }
 
@@ -177,10 +186,15 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
     var aviso by remember { mutableStateOf<String?>(null) }
     val decisiones = entradas.count { it.decision?.abierta == true }
     val ofertas = entradas.sumOf { e -> e.ofertas.count { it.estado == Oferta.ABIERTA } }
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Contador("$decisiones", if (decisiones == 1) "decisión espera" else "decisiones esperan", Modifier.weight(1f).fillMaxHeight(), destacado = decisiones > 0) { alPestana(3) }
-        Contador("$ofertas", if (ofertas == 1) "oferta abierta" else "ofertas abiertas", Modifier.weight(1f).fillMaxHeight(), destacado = ofertas > 0) { alPestana(2) }
-        Contador(Alcance.texto(Alcance.seguidores(u)), "seguidores", Modifier.weight(1f).fillMaxHeight()) { alPestana(0) }
+    val et1 = if (decisiones == 1) "decisión espera" else "decisiones esperan"
+    val et2 = if (ofertas == 1) "oferta abierta" else "ofertas abiertas"
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val tam = tamEtiquetas(maxWidth, 3, listOf(et1, et2, "seguidores"))
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Contador("$decisiones", et1, Modifier.weight(1f).fillMaxHeight(), destacado = decisiones > 0, tamNombre = tam) { alPestana(3) }
+            Contador("$ofertas", et2, Modifier.weight(1f).fillMaxHeight(), destacado = ofertas > 0, tamNombre = tam) { alPestana(2) }
+            Contador(Alcance.texto(Alcance.seguidores(u)), "seguidores", Modifier.weight(1f).fillMaxHeight(), tamNombre = tam) { alPestana(0) }
+        }
     }
     if (!ClaveApi.hay) {
         Spacer(Modifier.height(10.dp))
@@ -190,6 +204,9 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
             Text("Ponerla en Ajustes → IA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
         }
     }
+    // Un hecho histórico de esta jornada: su edición especial, arriba del todo
+    val especial = entradas.firstOrNull { it.tipo == TipoEntrada.HISTORICO && it.hecho != null && it.paso == u.paso }
+    if (especial != null) { Spacer(Modifier.height(12.dp)); EdicionEspecial(u, especial, alRed = { alPestana(0) }, alMensajes = { alPestana(3) }) }
     // El club de verdad: si espera tu «Sí, es este» (tras un traspaso) o aún no está identificado
     if (ClaveApi.hay && !u.clubIdentificado) { Spacer(Modifier.height(10.dp)); SeccionClub(u, enInicio = true) }
     entradas.filter { it.pendiente.isNotBlank() }.take(3).forEach { e ->
@@ -226,7 +243,7 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
             }
         }
     }
-    entradas.firstOrNull { it.prensa != null }?.prensa?.let {
+    entradas.firstOrNull { it.prensa != null }?.takeIf { it.id != especial?.id }?.prensa?.let {
         Spacer(Modifier.height(18.dp)); Rotulo("La portada de hoy · ${it.cabecera}"); Spacer(Modifier.height(8.dp))
         PortadaPrensa(it, articuloAbierto)
     }
@@ -250,7 +267,7 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
     // Esta semana (lo de la última jornada) y lo de antes, más recogido
     if (entradas.isEmpty()) { Nota("Aún nada. Mete tu primer partido.", Modifier.padding(vertical = 14.dp)); return }
     // (las charlas van en su chat, no aquí)
-    val esta = entradas.filter { it.paso == u.paso && it.tipo != TipoEntrada.CHARLA }
+    val esta = entradas.filter { it.paso == u.paso && it.tipo != TipoEntrada.CHARLA && it.id != especial?.id }
     val antes = entradas.filter { it.paso != u.paso && it.tipo != TipoEntrada.CHARLA }
     fun abre(e: Entrada): () -> Unit = {
         when {
@@ -275,11 +292,13 @@ fun TarjetaEntrada(u: Universo, e: Entrada, expandida: Boolean = true, alRed: ()
     var abierta by rememberSaveable(e.id) { mutableStateOf(expandida) }
     val d = e.decision
     val decide = d?.abierta == true
-    Tarjeta(bordeIzq = when { decide -> Acento; e.tipo == TipoEntrada.RECORD -> Dorado; else -> null }, alHacer = { abierta = !abierta }) {
+    val historico = e.tipo == TipoEntrada.HISTORICO
+    Tarjeta(bordeIzq = when { decide -> Acento; e.tipo == TipoEntrada.RECORD || historico -> Dorado; else -> null }, alHacer = { abierta = !abierta }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (decide) { Sello("Decide"); Spacer(Modifier.width(8.dp)) }
             if (e.tipo == TipoEntrada.RECORD) { Sello("★ Récord", Dorado); Spacer(Modifier.width(8.dp)) }
-            Text(listOfNotNull(e.tipo.nombre.takeIf { e.tipo != TipoEntrada.RECORD }, if (e.paso > 0) "jornada ${e.paso}" else null).joinToString(" · ").uppercase(),
+            if (historico) { Sello("★ Histórico", Dorado); Spacer(Modifier.width(8.dp)) }
+            Text(listOfNotNull(e.tipo.nombre.takeIf { e.tipo != TipoEntrada.RECORD && !historico }, if (e.paso > 0) "jornada ${e.paso}" else null).joinToString(" · ").uppercase(),
                 color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, lineHeight = 15.sp)
         }
         val p = e.partido
@@ -291,6 +310,10 @@ fun TarjetaEntrada(u: Universo, e: Entrada, expandida: Boolean = true, alRed: ()
         e.prensa?.takeIf { p != null }?.let { Cursiva("«${it.titular}»", Modifier.padding(top = 6.dp)) }
         if (abierta) {
             if (e.texto.isNotBlank()) TextoTarjeta(e.texto, Modifier.padding(top = 6.dp), color = Charcoal)
+            e.hecho?.let { h ->
+                Text("Lo que contaste: «${h.texto}»", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 8.dp))
+                if (h.precocidad.isNotBlank() && h.comprobado.isNotBlank()) TextoTarjeta("${h.precocidad}: ${h.comprobado}", Modifier.padding(top = 6.dp))
+            }
             d?.let {
                 when {
                     it.abierta -> Text("Tienes que decidir: ${it.texto}", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))

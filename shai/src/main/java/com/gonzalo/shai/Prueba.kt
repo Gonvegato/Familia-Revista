@@ -387,7 +387,11 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         val texto = c["messages"].comoLista().flatMap { it.comoMapa()["content"].comoLista() }.joinToString("\n") { it.comoMapa()["text"].comoTexto() }
         val d = datos(texto)
         val u = Uso(uid)
+        val sistema = c["system"].comoLista().joinToString("\n") { it.comoMapa()["text"].comoTexto() }
         val r: Any = when {
+            sistema.startsWith("Compruebas en la web") -> mapOf("hay_precedentes" to false, "texto" to "Modo prueba: no se ha buscado nada en la web; con tu clave, aquí sale si ha pasado antes de verdad.", "dudas" to "")
+            "entendido" in props -> entender(texto)
+            "nivel_tras" in props -> edicion(u, d, texto)
             "respuesta" in props && "actitud" in props -> charla(u, d, texto)
             "despedida" in props -> puerta(u, d, texto)
             "se_ve" in props -> foto()
@@ -406,6 +410,47 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         return Json.escribe(mapOf("id" to "msg_prueba", "type" to "message", "role" to "assistant", "model" to c["model"].comoTexto(),
             "content" to listOf(mapOf("type" to "text", "text" to limpio)), "stop_reason" to "end_turn",
             "usage" to mapOf("input_tokens" to 0, "output_tokens" to 0, "cache_creation_input_tokens" to 0, "cache_read_input_tokens" to 0)))
+    }
+
+    // ---------------------------------------------------------------- los hechos históricos
+
+    /** Lo que se «entiende» de un hecho histórico: sus frases, tal cual (y precocidad si suena a eso). */
+    private fun entender(texto: String): Map<String, Any?> {
+        val cuenta = texto.substringAfter("LO QUE CUENTA: «", "").substringBeforeLast("»").trim()
+        val frases = cuenta.split(Regex("""(?<=[.!?])\s+|,\s+(?=y |pero |por )""")).map { it.trim().trimEnd('.', ',').replaceFirstChar { c -> c.uppercase() } }.filter { it.length > 3 }.take(4)
+        val precoz = Regex("debut|joven|sin haber|primer|nunca", RegexOption.IGNORE_CASE).containsMatchIn(cuenta)
+        return mapOf("entendido" to frases.map { mapOf("hecho" to it.take(70), "detalle" to "") },
+            "precocidad" to mapOf("hay" to precoz, "titulo" to if (precoz) "Lo nunca visto (modo prueba)" else "", "pregunta" to if (precoz) "¿Ha pasado esto antes en el fútbol de verdad? $cuenta" else ""))
+    }
+
+    /** La edición especial de un hecho histórico (de ejemplo, con lo de tu carrera). */
+    private fun edicion(u: Uso, d: Datos, texto: String): Map<String, Any?> {
+        val hecho = texto.substringAfter("HA PASADO ALGO HISTÓRICO", "").substringAfter("«", "").substringBefore("»").trim().trimEnd('.').ifBlank { "lo que ha pasado" }
+        val mundo = "TODO EL MUNDO" in texto
+        val tope = Regex("""como mucho (\p{Lu}+)""").find(texto)?.groupValues?.get(1)?.let { Nivel.de(it) }
+        val tras = Nivel.entries.getOrElse(minOf(d.nivel + (if (mundo) 2 else 1), Nivel.entries.size - 1)) { Nivel.LEYENDA }.let { if (tope != null && it.ordinal > tope.ordinal) tope else it }
+        val cab = if (mundo) "Planeta Fútbol" else "Tribuna Ancha"
+        val plantillas = listOf(
+            cab to "EDICIÓN ESPECIAL. {A}: «${hecho.take(140)}». Nadie lo vio venir y ya no se habla de otra cosa",
+            "Grada Joven" to "Que esto lo he vivido yo. Que {A} era el chaval del filial hace nada. Que me pellizquen",
+            "Analista de sofá" to "Los que decían que {A} no estaba para esto, ¿dónde están ahora? Calladitos, como debe ser",
+            "Cuenta de humor" to "Mi madre me ha preguntado quién es {A}. Mi abuela ya lo sabía. Así de rápido va esto",
+            "Datos y Fútbol" to "📊 Lo de {A} no sale en ninguna estadística porque no hay precedentes en su club. Guardad este tuit",
+            "Escéptico profesional" to "Calma con {A}. Un día histórico no hace una carrera. Ahora viene lo difícil: que no se le vaya la cabeza",
+            "Peña {C}" to "Desde la peña: orgullo. {A} es de los nuestros y hoy lo sabe el mundo entero",
+            "Fútbol Internacional" to "Who is {A}? Everybody is asking the same question tonight 👀",
+            "La Grada Rosa" to "Ojo al teléfono de {A} esta noche: nos cuentan que no para de sonar. Y no todo son llamadas de trabajo 👀",
+            "Cuenta de humor" to "{A} ayer: anónimo. {A} hoy: tendencia en cuatro países. {A} mañana: anuncio de champú",
+        )
+        val posts = plantillas.mapIndexed { i, (a, t) -> post(d, a, t, if (i == 0 || a == cab || a == "Datos y Fútbol") "prensa" else "aficion", gordo = i < 3, resp = if (i == 0) respuestas(u, d, 'V') else emptyList()) }
+        return mapOf("titulo" to "Hecho histórico: ${hecho.take(80)}",
+            "texto" to rellena("Lo que ha pasado con {A} ha corrido como la pólvora: $hecho. En $cab no se habla de otra cosa, la afición del {C} está en una nube y su teléfono no para. Modo prueba: esto es un ejemplo con tu carrera; con tu clave, lo escribe Sonnet.", d),
+            "prensa" to mapOf("cabecera" to cab, "titular" to rellena("{A}, de la nada a la historia", d).replaceFirstChar { it.uppercase() }, "entradilla" to rellena("Nadie le conocía hace una semana. Hoy le conoce ${if (mundo) "medio planeta" else "todo el país"}.", d),
+                "articulo" to rellena("$hecho.\n\nAsí lo cuenta {A}, y así lo están viviendo en el {C}: con la boca abierta. En el vestuario nadie se lo cree y en la grada ya hay quien pide su camiseta.\n\nModo prueba: este artículo es de ejemplo. Con tu clave, Sonnet escribe la edición especial entera con tu carrera.", d),
+                "secundarios" to listOf(mapOf("titular" to "Su familia, entre lágrimas", "entradilla" to "En casa no han dormido."), mapOf("titular" to "Las marcas ya preguntan", "entradilla" to "Su teléfono no para."))),
+            "tendencia" to tendencia(d, "{A} Histórico").let { it + ("posts" to ((it["posts"] as Number).toLong() * (if (mundo) 40 else 12))) },
+            "posts" to posts, "mensajes" to conversaciones(u, d, 'V', 3), "decision" to decision(d, null), "ofertas" to emptyList<Any>(),
+            "nivel_tras" to tras.name, "efectos" to efectos(EfP(aficion = 5, carisma = 3), d), "gente_nueva" to emptyList<Any>())
     }
 
     private fun foto() = mapOf("se_ve" to true, "goles_favor" to 2, "goles_contra" to 1, "rival" to "Valencia CF", "minutos" to 90, "goles" to 1, "asistencias" to 1, "nota" to 7.8,

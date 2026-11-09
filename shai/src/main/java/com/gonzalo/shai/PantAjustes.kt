@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.7.1"
+const val VERSION = "0.8.0"
 
 /** «Ajustes»: Aspecto · IA · Actualizar. Todo se guarda en este móvil. */
 @Composable

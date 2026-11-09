@@ -265,7 +265,9 @@ fun FitTitle(
     // estrecha, el título salía cortado («Marfi» en vez de «FcFeed») hasta volver a la pantalla. Cuando llega, se vuelve a medir.
     val resolutor = androidx.compose.ui.platform.LocalFontFamilyResolver.current
     val letra = remember(resolutor, family, fontWeight, fontStyle) { resolutor.resolve(family, fontWeight, fontStyle ?: FontStyle.Normal) }
-    fun estilo(s: Float) = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = s.sp, letterSpacing = letterSpacing, fontStyle = fontStyle)
+    // (con el estilo del tema debajo, que trae su espaciado entre letras: sin él, la palabra «cabía» al medir y luego se partía)
+    val base = androidx.compose.material3.LocalTextStyle.current
+    fun estilo(s: Float) = base.merge(TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = s.sp, letterSpacing = letterSpacing, fontStyle = fontStyle))
     fun ajusta(ancho: Int): Float {
         if (ancho <= 0 || ancho == Constraints.Infinity) return fontSize.value
         val words = if (unaLinea) listOf(text) else text.split(Regex("\\s+")).filter { it.isNotEmpty() }

@@ -478,7 +478,7 @@ data class Efectos(val dinero: Long = 0, val fuera: Map<String, Int> = emptyMap(
 enum class TipoEntrada(val nombre: String) {
     PARTIDO("Partido"), EVENTO("Mientras tanto"), RESPUESTA("Lo que pasó después"), OFICIAL("Oficial"), INICIO("El principio"),
     TEMPORADA("Fin de temporada"), SINCONTESTAR("No contestaste"), HITO("Hito"), RECORD("Récord histórico"), RIVAL("Rivalidad"),
-    CHARLA("Charla"), PUERTA("Fuera de tu vida"), GENTE("Gente nueva"),
+    CHARLA("Charla"), PUERTA("Fuera de tu vida"), GENTE("Gente nueva"), HISTORICO("Hecho histórico"),
 }
 
 /**
@@ -510,13 +510,15 @@ data class Entrada(
     val tendenciaPosts: Int = 0,
     /** Los premios (fin de temporada). */
     val premios: List<Premio> = emptyList(),
+    /** Si es un hecho histórico ([TipoEntrada.HISTORICO]): lo que contaste, lo que entendió la app, hasta dónde llegó y lo que se comprobó. */
+    val hecho: Hecho? = null,
 ) {
     fun visible(ahora: Long) = visibleDesde <= ahora
     fun aMapa(): Map<String, Any?> = mapOf(
         "v" to 1L, "id" to id, "un" to universo, "tp" to tipo.name, "c" to creado, "pa" to paso.toLong(), "ti" to titulo, "tx" to texto,
         "pt" to partido?.aMapa(), "po" to posts.map { it.aMapa() }, "dm" to dms.map { it.aMapa() }, "pr" to prensa?.aMapa(), "of" to ofertas.map { it.aMapa() },
         "de" to decision?.aMapa(), "ef" to efectos.aMapa(), "vd" to visibleDesde, "ap" to aplicada, "pe" to pendiente,
-        "tn" to tendencia, "tp2" to tendenciaPosts.toLong(), "pm" to premios.map { it.aMapa() },
+        "tn" to tendencia, "tp2" to tendenciaPosts.toLong(), "pm" to premios.map { it.aMapa() }, "hh" to hecho?.aMapa(),
     ).filterValues { it != null }
     fun aJson(): String = Json.escribe(aMapa())
 
@@ -532,6 +534,7 @@ data class Entrada(
                 m["de"]?.comoMapa()?.takeIf { it.isNotEmpty() }?.let { Decision.de(it) }, Efectos.de(m["ef"].comoMapa()), m["vd"].comoLong(),
                 if (m.containsKey("ap")) m["ap"].comoBool() else true, m["pe"].comoTexto(),
                 m["tn"].comoTexto(), m["tp2"].comoLong().toInt(), m["pm"].comoLista().map { Premio.de(it.comoMapa()) },
+                m["hh"]?.comoMapa()?.takeIf { it.isNotEmpty() }?.let { Hecho.de(it) },
             )
         }
     }
