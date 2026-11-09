@@ -88,7 +88,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
     private class Datos(
         val nombre: String, val apodo: String, val club: String, val rival: String, val marcador: String, val resultado: Char?, val goles: Int, val asistencias: Int,
         val nota: String, val competicion: String, val local: Boolean, val gente: List<Pair<String, String>>, val nivel: Int, val seguidores: Long, val megusta: Long,
-        val sueldo: Long, val pendientes: Int, val mister: Boolean,
+        val sueldo: Long, val pendientes: Int, val mister: Boolean, val seleccion: Boolean = false,
     ) { val alias: String get() = apodo.ifBlank { nombre.substringBefore(' ') } }
 
     private fun cifra(t: String, unidad: String): Long {
@@ -117,7 +117,7 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         val mg = Regex("""unos ([\d.,]+)( M| mil)? me gusta""").find(t)?.let { cifra(it.groupValues[1], it.groupValues[2]) } ?: maxOf(12, seg / 60)
         val sueldo = Regex("""([\d.]+) € a la semana""").find(t)?.groupValues?.get(1)?.replace(".", "")?.toLongOrNull() ?: 5_000
         val pend = Regex("""DECISIONES PENDIENTES: (\d+)""").find(t)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        return Datos(nombre, apodo, club, rival, marcador, res, goles, asist, nota, comp, "En casa contra" in partido, gente, nivel, seg, mg, sueldo, pend, "- Entrenador:" in t)
+        return Datos(nombre, apodo, club, rival, marcador, res, goles, asist, nota, comp, "En casa contra" in partido, gente, nivel, seg, mg, sueldo, pend, "- Entrenador:" in t, seleccion != null)
     }
 
     // ---------------------------------------------------------------- rellenar los huecos
@@ -408,7 +408,13 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         }
         u.guarda()
         // «de el Niño» → «del Niño», «a el Niño» → «al Niño» (los apodos con artículo)
-        val limpio = Json.escribe(r).replace(Regex("""(?<!\p{L})([Dd])e el(?!\p{L})"""), "$1el").replace(Regex("""(?<!\p{L})([Aa]) el(?!\p{L})"""), "$1l")
+        var limpio = Json.escribe(r).replace(Regex("""(?<!\p{L})([Dd])e el(?!\p{L})"""), "$1el").replace(Regex("""(?<!\p{L})([Aa]) el(?!\p{L})"""), "$1l")
+        // Con la selección, sin artículo: «España supera a Alemania», no «El España supera al Alemania»
+        if (d.seleccion) listOf(d.club, d.rival).filter { it.isNotBlank() }.forEach { n ->
+            val q = Regex.escape(n)
+            limpio = limpio.replace(Regex("""(?<!\p{L})El $q"""), n).replace(Regex("""(?<!\p{L})el $q"""), n)
+                .replace(Regex("""(?<!\p{L})([Aa])l $q"""), "$1 $n").replace(Regex("""(?<!\p{L})([Dd])el $q"""), "$1e $n")
+        }
         return Json.escribe(mapOf("id" to "msg_prueba", "type" to "message", "role" to "assistant", "model" to c["model"].comoTexto(),
             "content" to listOf(mapOf("type" to "text", "text" to limpio)), "stop_reason" to "end_turn",
             "usage" to mapOf("input_tokens" to 0, "output_tokens" to 0, "cache_creation_input_tokens" to 0, "cache_read_input_tokens" to 0)))

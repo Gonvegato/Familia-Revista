@@ -452,14 +452,22 @@ data class Prensa(
  */
 data class Oferta(val id: String, val de: String, val tipo: String, val salario: Long, val prima: Long, val anios: Int, val texto: String, val estado: String = ABIERTA,
                   /** Ya se pidió más una vez (no se puede volver a pedir). */
-                  val negociada: Boolean = false) {
-    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to tipo, "s" to salario, "p" to prima, "a" to anios.toLong(), "x" to texto, "e" to estado, "ng" to negociada)
+                  val negociada: Boolean = false,
+                  /** En una puja ([Pujas]): la oferta que esta mejora (o de la que se retira), y en qué ronda va. */
+                  val antes: String = "", val ronda: Int = 0) {
+    fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to tipo, "s" to salario, "p" to prima, "a" to anios.toLong(), "x" to texto, "e" to estado, "ng" to negociada,
+        "an" to antes, "ro" to ronda.toLong())
+    /** Lo que vale entera (para comparar en una puja): lo de todas las semanas de sus años y la prima. */
+    val valor: Long get() = salario * 52 * maxOf(1, anios) + prima
     val cambiaDeClub: Boolean get() = tipo == "traspaso" || tipo == "cesion" || tipo == "banquillo"
     companion object {
         const val ABIERTA = "abierta"; const val ACEPTADA = "aceptada"; const val RECHAZADA = "rechazada"
         val TIPOS = mapOf("traspaso" to "Traspaso", "cesion" to "Cesión", "renovacion" to "Renovación", "patrocinio" to "Patrocinio", "banquillo" to "Banquillo")
         const val NEGOCIADA = "negociada"
-        fun de(m: Map<String, Any?>) = Oferta(m["id"].comoTexto(), m["d"].comoTexto(), m["t"].comoTexto(), m["s"].comoLong(), m["p"].comoLong(), m["a"].comoLong().toInt(), m["x"].comoTexto(), m["e"].comoTexto().ifBlank { ABIERTA }, m["ng"].comoBool())
+        /** En una puja: la otra la ha mejorado (sale la nueva) o se ha retirado. */
+        const val MEJORADA = "mejorada"; const val RETIRADA = "retirada"
+        fun de(m: Map<String, Any?>) = Oferta(m["id"].comoTexto(), m["d"].comoTexto(), m["t"].comoTexto(), m["s"].comoLong(), m["p"].comoLong(), m["a"].comoLong().toInt(), m["x"].comoTexto(), m["e"].comoTexto().ifBlank { ABIERTA }, m["ng"].comoBool(),
+            m["an"].comoTexto(), m["ro"].comoLong().toInt())
     }
 }
 
@@ -512,7 +520,7 @@ data class Efectos(val dinero: Long = 0, val fuera: Map<String, Int> = emptyMap(
 enum class TipoEntrada(val nombre: String) {
     PARTIDO("Partido"), EVENTO("Mientras tanto"), RESPUESTA("Lo que pasó después"), OFICIAL("Oficial"), INICIO("El principio"),
     TEMPORADA("Fin de temporada"), SINCONTESTAR("No contestaste"), HITO("Hito"), RECORD("Récord histórico"), RIVAL("Rivalidad"),
-    CHARLA("Charla"), PUERTA("Fuera de tu vida"), GENTE("Gente nueva"), HISTORICO("Hecho histórico"),
+    CHARLA("Charla"), PUERTA("Fuera de tu vida"), GENTE("Gente nueva"), HISTORICO("Hecho histórico"), PUJA("Puja"),
 }
 
 /**

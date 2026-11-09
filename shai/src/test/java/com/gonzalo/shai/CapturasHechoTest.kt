@@ -50,6 +50,7 @@ abstract class CapturasHechoBase {
                             3 -> PantCarrera(u0.id, {}, {}, {}, inicial = 1)
                             5 -> PantNueva({}, {})
                             6 -> PantPartido(u0.id, {}, {}, comoInicial = 0)
+                            7 -> PantCarrera(u0.id, {}, {}, {}, inicial = 2)
                             4 -> PaginaRevista { Carreras.entradasDe(u0.id).first { it.tipo == TipoEntrada.HISTORICO }.let { EdicionEspecial(Carreras.de(u0.id)!!, it, abierta0 = true, {}, {}) } }
                         }
                     }
@@ -67,6 +68,17 @@ abstract class CapturasHechoBase {
         Motor.partido(u0.id, Partido("2026/27", "Mundial 2026", "Alemania", true, 2, 1, 90, 1, 0, 8.4, fecha = "2026-07-04"))
         cual = 6; foto("s2-partido-seleccion")
         cual = 3; foto("s3-inicio-tras-mundial")
+        // Una puja entre dos marcas: Aurum mejora sola entre jornadas
+        val uu = Carreras.de(u0.id)!!
+        val ofs = Carreras.guarda(Entrada(Universo.nuevoId("e"), uu.id, TipoEntrada.EVENTO, System.currentTimeMillis(), uu.paso, "Dos marcas te quieren", ofertas = listOf(
+            Oferta("pn", "Nova Sport", "patrocinio", 20_000, 500_000, 3, "La marca deportiva Nova Sport quiere hacerte su cara joven con un contrato de imagen de tres años."),
+            Oferta("pa", "Aurum Mobile", "patrocinio", 15_000, 300_000, 2, "La tecnológica Aurum Mobile te propone un patrocinio de dos años para una campaña global."))))
+        val ahora = System.currentTimeMillis()
+        val pj = (0 until 300).asSequence().mapNotNull { Pujas.calcula(Carreras.de(u0.id)!!, Carreras.entradasDe(u0.id), ahora, ahora, kotlin.random.Random(it)) }
+            .first { it.ofertas.first().estado == Oferta.ABIERTA }
+        Carreras.guarda(pj); Motor.revela(u0.id, forzar = true)
+        cual = 7; foto("p1-ofertas-puja")
+        cual = 3; foto("p2-inicio-puja")
         ClaveApi.fija = null; Gasto.mesFijo = null
     }
 }

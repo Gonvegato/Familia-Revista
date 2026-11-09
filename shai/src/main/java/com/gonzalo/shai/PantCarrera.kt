@@ -274,6 +274,7 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
     val antes = entradas.filter { it.paso != u.paso && it.tipo != TipoEntrada.CHARLA }
     fun abre(e: Entrada): () -> Unit = {
         when {
+            e.tipo == TipoEntrada.PUJA -> alPestana(2)
             e.decision?.abierta == true -> alChat(chatDe(u, e.decision))
             e.dms.isNotEmpty() -> alChat(Gente.chatDe(u, e.dms.first()))
             e.posts.isNotEmpty() -> alPestana(0)
@@ -340,6 +341,7 @@ fun TarjetaEntrada(u: Universo, e: Entrada, expandida: Boolean = true, alRed: ()
         // A dónde ir desde aquí
         val enlaces = buildList {
             if (decide) add("Responder →" to alResponder)
+            if (e.tipo == TipoEntrada.PUJA) add("Ver las ofertas →" to alResponder)
             if (e.posts.isNotEmpty()) add("${e.posts.size} en la red →" to alRed)
             if (e.dms.isNotEmpty() && !decide) { val c = Gente.chatDe(u, e.dms.first()); add("${e.dms.size} mensaje${if (e.dms.size > 1) "s" else ""} →" to { alChat(c) }) }
         }
@@ -648,6 +650,7 @@ private fun TarjetaDecision(e: Entrada, d: Decision) {
 
 // ---------------------------------------------------------------- Ofertas
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
     val ambito = rememberCoroutineScope()
@@ -661,7 +664,10 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
         }
     } ?: Tarjeta(bordeIzq = Acento) { TituloTarjeta("Eres agente libre"); TextoTarjeta("Cualquier club puede ficharte.", Modifier.padding(top = 2.dp)) }
     Nota("La app manda: si aceptas aquí, hazlo también en tu partida de FC.", Modifier.padding(top = 10.dp, bottom = 4.dp))
-    val todas = entradas.flatMap { e -> e.ofertas.map { e to it } }.filter { it.second.estado != Oferta.NEGOCIADA }
+    // (las superadas en una puja no salen: sale la nueva; tampoco las que ya tienen una nueva visible aunque la puja no se haya aplicado aún)
+    val superadas = entradas.flatMap { it.ofertas }.mapNotNull { it.antes.ifBlank { null } }.toSet()
+    val todas = entradas.flatMap { e -> e.ofertas.map { e to it } }.filter { it.second.estado != Oferta.NEGOCIADA && it.second.estado != Oferta.MEJORADA && it.second.id !in superadas }
+    val enPuja = Pujas.grupos(entradas).flatten().map { it.second.id }.toSet()
     if (todas.isEmpty()) { Nota("Ninguna oferta todavía. Ya llegarán.", Modifier.padding(top = 8.dp)); return }
     val abiertas = todas.filter { it.second.estado == Oferta.ABIERTA }
     val viejas = todas.filter { it.second.estado != Oferta.ABIERTA }
@@ -672,7 +678,10 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Avatar(Rangos.limpiaNombre(o.de), 46.dp); Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Sello(Oferta.TIPOS[o.tipo] ?: o.tipo)
+                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Sello(Oferta.TIPOS[o.tipo] ?: o.tipo)
+                        if (o.id in enPuja) Sello(if (o.ronda > 0) "En puja · mejorada ${o.ronda}" else "En puja", Dorado)
+                    }
                     Text(Rangos.limpiaNombre(o.de), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp, modifier = Modifier.padding(top = 4.dp))
                 }
             }
@@ -712,7 +721,7 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
                 Text(Rangos.limpiaNombre(o.de), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
                 Text(listOfNotNull(Oferta.TIPOS[o.tipo] ?: o.tipo, o.salario.takeIf { it > 0 }?.let { "${Formato.eurosCorto(it)}/semana" }).joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
             }
-            Sello(if (o.estado == Oferta.ACEPTADA) "Aceptada" else "Rechazada", if (o.estado == Oferta.ACEPTADA) Acento else Muted)
+            Sello(when (o.estado) { Oferta.ACEPTADA -> "Aceptada"; Oferta.RETIRADA -> "Se retiró"; else -> "Rechazada" }, if (o.estado == Oferta.ACEPTADA) Acento else Muted)
         }
         Filete(1.dp, Line)
     }

@@ -5,6 +5,16 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.9.0
+
+- **Pujas entre empresas (solas, sin botón).** Si tienes abiertas dos o más ofertas del mismo tipo (dos marcas que te quieren de imagen,
+  dos clubes que te quieren fichar o ceder), entre jornadas la que va por detrás mueve ficha: mejora la suya (sueldo, prima o un año más)
+  pasando a la otra o acercándose, se mantiene o se retira. Sale como «Puja» en Inicio («Aurum Mobile mueve ficha», con «Ver las
+  ofertas →»); en Ofertas, la nueva sustituye a la de antes, marcada «En puja · mejorada N», y la que se retira pasa a «Ya respondidas»
+  como «Se retiró». Como mucho 3 rondas por oferta, nunca por encima de lo que pide tu nivel, y si ya la habías contestado, la puja no
+  cuenta. Sin IA: no cuesta nada y funciona igual en el modo prueba (`Pujas.kt`).
+- Modo prueba: con la selección, «España supera a Alemania» (antes «El España supera al Alemania»).
+
 ## 0.8.1
 
 - **Con la selección, no con el club.** Si en el partido pones una competición de selecciones («Selección», «Mundial 2026», «Eurocopa»,

@@ -133,12 +133,23 @@ object Motor {
         e = r.first
         // El contrato: si toca hablar de renovar, el club (o tu representante) mueve ficha
         runCatching { revisaContrato(universo) }
+        // Las pujas entre las ofertas que compiten (sin IA): salen entre jornadas
+        runCatching { puja(universo) }
         if (e.pendiente.isEmpty()) {
             runCatching { mandaEventos(Carreras.de(universo) ?: u) }
             if (u.paso % CADA_MEMORIA == 0) runCatching { recuerda(universo) }
         }
         e to r.second
     } }
+
+    /** La puja de esta jornada entre las ofertas que compiten ([Pujas]), si toca y no hay otra por salir. Sale entre jornadas. */
+    fun puja(universo: String): Entrada? {
+        val u = Carreras.de(universo) ?: return null
+        if (Carreras.entradasDe(universo, todas = true).any { it.tipo == TipoEntrada.PUJA && !it.aplicada }) return null
+        val ahora = reloj()
+        val e = Pujas.calcula(u, Carreras.entradasDe(universo, ahora = ahora), ahora, if (Prueba.activo) ahora else ahora + separacion / 2) ?: return null
+        return Carreras.guarda(e)
+    }
 
     /** Los rivales tras el partido: cambian con los choques y, si nace uno, sale como «Rivalidad» (la prensa y la red lo cuentan). */
     private fun rivales(u0: Universo): Universo {
@@ -387,7 +398,9 @@ object Motor {
         val salen = ArrayList<Entrada>()
         for (u0 in Carreras.todas().filter { universo == null || it.id == universo }) {
             var u = u0
-            Carreras.entradasDe(u.id, todas = true, ahora = ahora).filter { !it.aplicada && (forzar || it.visible(ahora)) }.sortedBy { it.visibleDesde }.forEach { e ->
+            Carreras.entradasDe(u.id, todas = true, ahora = ahora).filter { !it.aplicada && (forzar || it.visible(ahora)) }.sortedBy { it.visibleDesde }.forEach { e0 ->
+                // Una puja: la oferta de antes queda superada o retirada (si aún estaba abierta)
+                val e = Pujas.aplica(e0, Carreras.entradasDe(u.id, todas = true, ahora = ahora))?.let { (pe, vieja) -> vieja?.let { Carreras.guarda(it) }; pe } ?: e0
                 val ef = Vida.recorta(u, e.efectos)
                 u = Vida.aplica(u, e.efectos)
                 salen += Carreras.guarda(e.copy(aplicada = true, efectos = ef, visibleDesde = minOf(e.visibleDesde, ahora)))
