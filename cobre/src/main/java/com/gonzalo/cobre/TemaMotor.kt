@@ -297,8 +297,33 @@ val Line: Color get() = Skin.tones.cLine
 val Charcoal: Color get() = Skin.tones.cInk
 val Edge: Color get() = Skin.tones.cEdge
 val Muted: Color get() = Skin.tones.cMuted
-/** El acento (el coral de Vitrina). */
-val Acento: Color get() = Color(Skin.tones.general)
+/** El acento tal cual lo eliges (el de la paleta o «A tu manera»): para los bloques de color y el icono. */
+val AcentoBloque: Color get() = Color(Skin.tones.general)
+/**
+ * El acento legible: el elegido, aclarado (u oscurecido) lo justo para leerse sobre la página con contraste AA (4,5:1).
+ * Es el que llevan las letras, las cifras grandes, la pestaña activa y el botón principal; con un acento que ya se lee, es el mismo.
+ */
+val Acento: Color get() = acentoLegible(AcentoBloque, Paper, Charcoal)
+/** Texto sobre un bloque del acento elegido ([AcentoBloque]). */
+val SobreBloque: Color get() = if (AcentoBloque.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
+
+/** Contraste WCAG entre dos colores (1 a 21). */
+fun contraste(a: Color, b: Color): Float {
+    val la = a.luminance(); val lb = b.luminance()
+    return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+}
+
+private var cacheLegible = Triple(0L, 0L, 0L) to Color.Unspecified
+/** [c] mezclado poco a poco con [hacia] (la tinta: clara de noche, oscura de día) hasta leerse sobre [fondo] con 4,5:1. */
+fun acentoLegible(c: Color, fondo: Color, hacia: Color, minimo: Float = 4.5f): Color {
+    val k = Triple(c.value.toLong(), fondo.value.toLong(), hacia.value.toLong())
+    val cc = cacheLegible
+    if (cc.first == k) return cc.second
+    var x = c; var t = 0f
+    while (contraste(x, fondo) < minimo && t < 1f) { t += 0.04f; x = androidx.compose.ui.graphics.lerp(c, hacia, t.coerceAtMost(1f)) }
+    cacheLegible = k to x
+    return x
+}
 val Dorado: Color get() = Color(Skin.tones.gold)
 /** Texto sobre el acento: blanco o tinta oscura, el que se lea. */
 val SobreAcento: Color get() = if (Acento.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
@@ -326,7 +351,7 @@ val AtrioDisplay = FontFamily(
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 val VitrinaDisplay = FontFamily(
     listOf(400, 500, 600, 700, 800).map { w ->
-        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(if (w >= 700) 92f else 100f)))
+        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(100f), FontVariation.Setting("opsz", 48f)))
     }
 )
 
@@ -369,3 +394,9 @@ fun CobreTheme(content: @Composable () -> Unit) {
         }
     }
 }
+
+// ───── dirección C (editorial moderna) ─────
+/** La letra de la dirección C: Bricolage Grotesque (grotesca), para la cabecera, los titulares y las cifras grandes. La serif queda para citas. */
+val Grotesca: FontFamily get() = VitrinaDisplay
+/** El segundo color de los bloques de cifras de la dirección C (el azul de las maquetas). */
+val Bloque2: Color get() = Color(0xFF1F3A5F)

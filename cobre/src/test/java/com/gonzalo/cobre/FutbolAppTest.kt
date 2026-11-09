@@ -63,7 +63,7 @@ class FutbolAppTest {
 
     @Test fun lasPelisYSeriesEscondidasDeSerie() {
         assertFalse("apagado de serie", AjustesDirecto.videoclub(ctx))
-        assertEquals("el menú: Partidos, Competiciones, Tus equipos y Tele", listOf(Destino.Portada, Destino.Competiciones, Destino.Futbol, Destino.Tele), seccionesMenu().map { it.second })
+        assertEquals("el menú: Partidos (la página Hoy), Competiciones, Tus equipos y Tele", listOf(Destino.Hoy, Destino.Competiciones, Destino.Futbol, Destino.Tele), seccionesMenu().map { it.second })
         val sin = seccionesTele(hayXtream = true, videoclub = false).map { it.second }
         assertFalse(Destino.Peliculas in sin); assertFalse(Destino.Series in sin); assertTrue(Destino.Directo in sin)
         AjustesDirecto.ponVideoclub(ctx, true)

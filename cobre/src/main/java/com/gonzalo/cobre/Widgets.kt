@@ -138,7 +138,10 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     val gris = tonos.cMuted.toArgb()
     val linea = tonos.cLine.toArgb()
     val arena = tonos.cSand.toArgb()
-    val acento = tonos.cGeneral().toArgb()
+    /** El acento tal cual (el elegido). */
+    val acentoBloque = tonos.cGeneral().toArgb()
+    /** El acento legible sobre el papel del widget (como en la app: aclarado u oscurecido lo justo para el 4,5:1). */
+    val acento = acentoLegible(androidx.compose.ui.graphics.Color(acentoBloque), androidx.compose.ui.graphics.Color(papel), androidx.compose.ui.graphics.Color(tinta)).toArgb()
     /** El acento sobre una foto oscura. */
     val acentoFoto = Skin.tonosPara(true).cGeneral().toArgb()
     val radio = 22f
@@ -154,9 +157,11 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
 
     /** Recorta las esquinas (suaves, con antialias) y traza el reborde: una línea fina del color del texto, metida hacia dentro. */
     fun terminar() {
-        val m = 6f
-        c.drawRoundRect(RectF(m, m, w - m, h - m), radio - m, radio - m, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE; strokeWidth = 1.1f; color = reborde ?: tinta })
+        // Dirección C (como Seshat, Bastet y Hathor): sin el reborde fino de la revista; solo una línea si se pide (sobre una foto)
+        reborde?.let { col ->
+            val m = 6f
+            c.drawRoundRect(RectF(m, m, w - m, h - m), radio - m, radio - m, Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.1f; color = col })
+        }
         val p = Path().apply { addRoundRect(RectF(0f, 0f, w, h), radio, radio, Path.Direction.CW); fillType = Path.FillType.INVERSE_WINDING }
         c.drawPath(p, Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR) })
     }
@@ -207,8 +212,8 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
 
     /** Cabecera de sección: el cuadradito de acento y el antetítulo. */
     fun seccion(t: String, x: Float, y: Float, ancho: Float, color: Int = tinta, cuadro: Int = acento) {
-        c.drawRect(x, y + 1.6f, x + 7.4f, y + 9f, lleno(cuadro))
-        ante(t, x + 12f, y, ancho - 12f, color)
+        // Dirección C: sin cuadradito; el antetítulo en el acento (o en el color que se pida, sobre una foto)
+        ante(t, x, y, ancho, if (color == tinta) cuadro else color)
     }
 
     /** Un póster recortado (centrado) con esquinas redondas; sin imagen, un póster de letra. */
@@ -297,7 +302,8 @@ object Widgets {
     @Volatile private var letras: Letras? = null
     private val bajadas = HashMap<String, Typeface>()
 
-    private fun porDefecto(ctx: Context) = Letras(fuente(ctx, R.font.display_semibold), fuente(ctx, R.font.display_italic), fuente(ctx, R.font.body_bold), fuente(ctx, R.font.body_medium))
+    // Dirección C: los titulares de los widgets, en grotesca (Bricolage, muy negra) como la cabecera de la app
+    private fun porDefecto(ctx: Context) = Letras(vitrina(ctx, 800) ?: fuente(ctx, R.font.display_semibold), fuente(ctx, R.font.display_italic), fuente(ctx, R.font.body_bold), fuente(ctx, R.font.body_medium))
 
     /** Las letras ya preparadas (las del tema) o, si aún no se han preparado, las que vienen con la app. */
     fun letrasActuales(ctx: Context): Letras = letras ?: porDefecto(ctx)
@@ -617,7 +623,7 @@ object Widgets {
     private fun hoy(d: WDatos, w: Float, h: Float): Pagina {
         val ctx = d.ctx
         val secs = d.hoy()
-        val zona = listOf(Zona(0f, 0f, w, h, abrirEn(ctx, Destino.Portada, 5), "Abrir los partidos de hoy"))
+        val zona = listOf(Zona(0f, 0f, w, h, abrirEn(ctx, Destino.Hoy, 5), "Abrir los partidos de hoy"))
         if (secs.isEmpty()) return Pagina(zona, vacio(ctx, "Hoy", "Sin partidos hoy", "En tus competiciones no se juega nada hoy (o aún no se ha mirado: abre Nut).", w, h).dibujo)
         val ahora = System.currentTimeMillis()
         val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()

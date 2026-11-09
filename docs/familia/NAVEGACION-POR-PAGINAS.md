@@ -32,7 +32,7 @@ son **páginas a la derecha** de la portada, como pasar hojas.
 | Thot | Portada · Escribiendo · En pausa · Terminadas · Archivo |
 | Jonsu | Portada · las secciones de su diario |
 | Hathor | Portada · Viendo · Pendientes · Vistas · Abandonadas · Próximos (hecho, 0.7.0; Explorar, Buscar, Addons y Ajustes, encima) |
-| Nut | Hoy · Competiciones · Tus equipos · IPTV… |
+| Nut | Portada · Hoy · Competiciones · Tus equipos · IPTV (hecho, 0.8.0; Directo, Guía, Buscar, Listas y Ajustes, encima; lo de la tele vuelve a IPTV) |
 
 Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSonPaginas`).
 
@@ -128,6 +128,22 @@ pasa a un oscuro fijo #141210. Funciones: `colorPaspartu(lPortada)`, `paspartuOs
 - **El botón del cartel hace lo de siempre**: «SEGUIR VIENDO →» abre la ficha y pulsa su botón principal (la mejor fuente, el episodio que
   toca); así no hay dos caminos para reanudar.
 - **Una página que no es un estado** (Próximos) va en el pager igual que las demás, con su rejilla de cifras y su lista.
+
+
+## Lo aprendido al pasarlo a Nut (0.8.0; para Thot y Jonsu)
+
+- **Una app que no es una biblioteca**: no hay estados (Viendo, Pendientes…); las páginas son lo que ya tenía el menú (la portada de antes
+  pasa a la página «Hoy» y «Tele» a «IPTV»). Las pantallas de siempre se reutilizan con `enPagina = true` (sin su cabecera ni su barra
+  plegada, sin el relleno de la barra de estado), así no se pierde nada.
+- **El cartel puede ser un acontecimiento**: en Nut es tu próximo partido o el que se juega AHORA (etiqueta «EN DIRECTO · 67'» y marcador);
+  sin equipos, invita a elegirlos. El botón ancho hace lo mismo que el botón principal de la ficha («VER EN TU CANAL →» = «Ver» de
+  «Dónde verlo»).
+- **En vez del reto, lo que mide la app**: la racha V/E/D de tus equipos en bloques y las horas vistas por día. El tiempo visto, en una
+  colección propia (`cobre_visto/<dispositivo>`) y no en `tiempo`, para no colarse en el Diario de Jonsu como si fuera un título.
+- **Sin imagen de fuera para el fondo**: el color del club sale del escudo (el color medio de lo que no es transparente) y va oscurecido
+  detrás del velo; el paspartú se decide con la luminancia de ese mismo color.
+- **Escudos, no portadas**: el paspartú es cuadrado y el escudo va dentro con su aire (contenido, sin recortar); el escudo propio se guarda
+  en PNG para no perder lo transparente.
 
 
 ## El lector en la dirección C (Seshat 0.21.0; para Thot, que también tiene lector/estudio)

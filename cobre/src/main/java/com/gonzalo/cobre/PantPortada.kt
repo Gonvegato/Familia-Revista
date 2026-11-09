@@ -41,7 +41,7 @@ import java.util.Locale
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () -> Unit = {}) {
+fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () -> Unit = {}, enPagina: Boolean = false) {
     val ctx = LocalContext.current
     val hoy = remember { Calendar.getInstance() }
     Listas.version; Tele.version
@@ -59,10 +59,15 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () 
     val plegada by remember(umbral) { derivedStateOf { desplazado.value > umbral } }
     val m = margen()
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().background(Paper).verticalScroll(desplazado).statusBarsPadding().padding(horizontal = m)) {
-            CabeceraSeccion("Tele", "Tus canales", alVolver) {
+        Column(Modifier.fillMaxSize().background(Paper).verticalScroll(desplazado).let { if (enPagina) it else it.statusBarsPadding() }.padding(horizontal = m)) {
+            if (!enPagina) CabeceraSeccion("Tele", "Tus canales", alVolver) {
                 EnlaceRevista("Buscar") { alIr(Destino.Buscar) }
                 EnlaceRevista("Guía", acento = true) { alIr(Destino.Guia) }
+            }
+            else Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("TUS CANALES", color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.weight(1f))
+                EnlaceRevista("Buscar") { alIr(Destino.Buscar) }
+                EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) }
             }
             Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
                 FlowRow(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -128,7 +133,7 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () 
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
-        BarraPlegada("Tele", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) } }
+        if (!enPagina) BarraPlegada("Tele", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) } }
     }
 }
 

@@ -85,7 +85,7 @@ object AjustesDirecto {
 
 /** El menú de la portada (los partidos del día): Partidos, Competiciones, Tus equipos y Tele (lo de la IPTV, completo). */
 fun seccionesMenu(): List<Pair<String, Destino>> =
-    listOf("Partidos" to Destino.Portada, "Competiciones" to Destino.Competiciones, "Tus equipos" to Destino.Futbol, "Tele" to Destino.Tele)
+    listOf("Partidos" to Destino.Hoy, "Competiciones" to Destino.Competiciones, "Tus equipos" to Destino.Futbol, "Tele" to Destino.Tele)
 
 /** El menú de «Tele»: Favoritos, Directo, Guía, (el videoclub, solo con Xtream y si lo enciendes), Listas y Buscar. */
 fun seccionesTele(hayXtream: Boolean, videoclub: Boolean): List<Pair<String, Destino>> =

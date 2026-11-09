@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -145,8 +146,8 @@ fun FilaDia(p: Partido, mios: Set<String>, rivales: Set<String>, alAbrir: () -> 
         }
         Column(Modifier.weight(1f)) {
             val gl = p.golesLocal; val gv = p.golesVisitante
-            LineaEquipo(p.local, gl, 22.dp, 16, gl != null && gv != null && gl > gv && p.estado.terminado, p.local.id in mios, p.local.id in rivales)
-            LineaEquipo(p.visitante, gv, 22.dp, 16, gl != null && gv != null && gv > gl && p.estado.terminado, p.visitante.id in mios, p.visitante.id in rivales)
+            LineaEquipo(p.local, gl, 30.dp, 16, gl != null && gv != null && gl > gv && p.estado.terminado, p.local.id in mios, p.local.id in rivales)
+            LineaEquipo(p.visitante, gv, 30.dp, 16, gl != null && gv != null && gv > gl && p.estado.terminado, p.visitante.id in mios, p.visitante.id in rivales)
         }
     }
     Filete(1.dp, Line)
@@ -167,7 +168,7 @@ private sealed class FilaPortada {
  * competiciones en tu orden (sin las que escondes), cada una plegable; su nombre abre su página. Arriba, la tira de días.
  */
 @Composable
-fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
+fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, enPagina: Boolean = false) {
     val ctx = LocalContext.current
     EspejoCuenta.version; Futbol.version
     var diaN by rememberSaveable { mutableLongStateOf(Hora.diaDe(System.currentTimeMillis()).toEpochDay()) }
@@ -191,11 +192,11 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     val plegada by remember { derivedStateOf { estado.firstVisibleItemIndex > 0 } }
     val m = margen()
     Box(Modifier.fillMaxSize().background(Paper)) {
-        LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), state = estado, contentPadding = PaddingValues(horizontal = m, vertical = 0.dp)) {
+        LazyColumn(Modifier.fillMaxSize().let { if (enPagina) it else it.statusBarsPadding() }, state = estado, contentPadding = PaddingValues(horizontal = m, vertical = 0.dp)) {
             items(filas.size, key = { k -> when (val x = filas[k]) { FilaPortada.Cabeza -> "cabeza"; is FilaPortada.Titulo -> "t" + x.s.clave; is FilaPortada.Uno -> "p" + x.p.id + (if (x.tuyo) "t" else ""); is FilaPortada.Aviso -> "a$k" } }) { k ->
                 when (val x = filas[k]) {
                     FilaPortada.Cabeza -> Column {
-                        Mancheta(Destino.Portada, alIr)
+                        if (!enPagina) Mancheta(Destino.Portada, alIr)
                         if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Nut entra sola). Tus equipos, tus canales y lo que ves van con tu cuenta.", Modifier.padding(top = 14.dp))
                         if (mios.isEmpty()) {
                             Nota("Elige tus equipos y sus partidos saldrán los primeros, con sus canales.", Modifier.padding(top = 14.dp))
@@ -233,7 +234,7 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
                 }
             }
         }
-        BarraPlegada("Nut", plegada) { EnlaceRevista("Tele") { alIr(Destino.Tele) }; EnlaceRevista("Hoy", Modifier.padding(start = 14.dp), acento = true) { diaN = Hora.diaDe(System.currentTimeMillis()).toEpochDay() } }
+        if (!enPagina) BarraPlegada("Nut", plegada) { EnlaceRevista("Tele") { alIr(Destino.Tele) }; EnlaceRevista("Hoy", Modifier.padding(start = 14.dp), acento = true) { diaN = Hora.diaDe(System.currentTimeMillis()).toEpochDay() } }
     }
 }
 
@@ -241,13 +242,13 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
 
 /** «Competiciones»: todas las que sigue Nut (las de clubes y las de selecciones); un toque abre su página. */
 @Composable
-fun PantCompeticiones(alVolver: () -> Unit, alFicha: (Ficha) -> Unit) {
+fun PantCompeticiones(alVolver: () -> Unit, alFicha: (Ficha) -> Unit, enPagina: Boolean = false) {
     val ctx = LocalContext.current
     EspejoCuenta.version
     val ocultas = AjustesFutbol.ocultas(ctx)
     val m = margen()
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = m)) {
-        CabeceraSeccion("Competiciones", "Fútbol", alVolver)
+    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).let { if (enPagina) it else it.statusBarsPadding() }.navigationBarsPadding().padding(horizontal = m)) {
+        if (!enPagina) CabeceraSeccion("Competiciones", "Fútbol", alVolver)
         val todas = AjustesFutbol.competiciones(ctx)
         listOf("De clubes" to todas.filter { !Competiciones.esDeSelecciones(it.slug) }, "De selecciones" to todas.filter { Competiciones.esDeSelecciones(it.slug) }).forEach { (t, l) ->
             Antetitulo(t, Modifier.padding(top = 18.dp, bottom = 4.dp)); Filete(1.dp)
@@ -304,48 +305,72 @@ fun PantCompeticion(liga: String, alCerrar: () -> Unit, alFicha: (Ficha) -> Unit
 
 // ---------------------------------------------------------------- un equipo
 
-/** La página de un equipo: lo que viene, lo último, su plantilla y la clasificación de su liga. */
+/**
+ * La ficha de un equipo, en doble página como la de un partido: su fondo (o el color del club) con un velo, el escudo con paspartú, el
+ * nombre enorme y su puesto; debajo, por secciones numeradas, su racha (los cinco últimos y los jugados), lo que viene, la plantilla y la
+ * clasificación de su liga.
+ */
 @Composable
-fun PantEquipo(e: Equipo, liga: String, alCerrar: () -> Unit, alFicha: (Ficha) -> Unit) {
+fun PantEquipo(e: Equipo, liga: String, alCerrar: () -> Unit, alFicha: (Ficha) -> Unit, alImagenes: (Equipo) -> Unit = {}) {
     val ctx = LocalContext.current
     EspejoCuenta.version
-    var pestana by rememberSaveable(e.id) { mutableIntStateOf(0) }
     val todos = rememberDato(e.id, liga) { f -> Futbol.deEquipo(ctx, e, liga, f) }
     val mios = AjustesFutbol.equipos(ctx).map { it.first.id }.toSet()
     val riv = AjustesFutbol.rivales(ctx).map { it.first.id }.toSet()
     val ahora = System.currentTimeMillis()
     val suLiga = Competiciones.para(liga).first().slug
+    val conTabla = Competiciones.tieneTabla(suLiga)
+    val tabla = if (conTabla) rememberDato(suLiga, "tabla") { f -> Futbol.clasificacion(ctx, suLiga, f) } else null
+    val puesto = tabla?.let { FormaEquipo.puesto(it, e.id) }
     val m = margen()
     Box(Modifier.fillMaxSize().background(Paper).atrapaFoco()) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = m)) {
-            RevistaTopBar(alCerrar, "Volver") {
-                val mio = e.id in mios; val esRival = e.id in riv
-                EnlaceRevista(if (mio) "✓ Tuyo" else "+ Seguir", acento = !mio) { AjustesFutbol.alterna(ctx, e, liga) }
-                EnlaceRevista(if (esRival) "✓ Rival" else "Rival") { AjustesFutbol.alterna(ctx, e, liga, rival = true) }
-            }
-            Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Escudo(e, 64.dp); Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Antetitulo(if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(suLiga).nombre, color = Acento, conCuadro = false)
-                    FitTitle(e.nombre, 40.sp, 44.sp, letterSpacing = (-1).sp, maxLines = 2)
-                }
-            }
-            Filete(3.dp, modifier = Modifier.padding(top = 8.dp))
-            val conTabla = Competiciones.tieneTabla(suLiga)
-            PestanasRevista(listOf("Próximos", "Últimos", "Plantilla") + if (conTabla) listOf("Clasificación") else emptyList(), pestana) { pestana = it }
-            Column(Modifier.widthIn(max = 900.dp)) {
-                when (pestana) {
-                    0, 1 -> {
-                        val l = todos?.let { if (pestana == 0) Orden.proximos(it, e.id, ahora) else Orden.jugados(it, e.id) }
-                        when {
-                            l == null -> Nota("Mirando el calendario…", Modifier.padding(top = 12.dp))
-                            l.isEmpty() -> Nota(if (pestana == 0) "Sin partidos a la vista." else "Sin partidos jugados todavía.", Modifier.padding(top = 12.dp))
-                            else -> l.take(15).forEach { p -> FilaPartido(p, ahora, mios, riv) { alFicha(Ficha.DePartido(p)) } }
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+            Box(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                FondoEquipo(e, Modifier.matchParentSize())
+                Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.45f)))
+                Box(Modifier.matchParentSize().background(veloArriba()))
+                Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = m).padding(bottom = 22.dp)) {
+                    val blanco = Color.White.copy(alpha = 0.85f)
+                    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        EnlaceRevista("← Volver", color = blanco) { alCerrar() }
+                        Spacer(Modifier.weight(1f))
+                        val mio = e.id in mios; val esRival = e.id in riv
+                        EnlaceRevista(if (mio) "✓ Tuyo" else "+ Seguir", color = if (mio) blanco else acentoSobreTinta(Color.Black)) { AjustesFutbol.alterna(ctx, e, liga) }
+                        EnlaceRevista(if (esRival) "✓ Rival" else "Rival", Modifier.padding(start = 14.dp), color = blanco) { AjustesFutbol.alterna(ctx, e, liga, rival = true) }
+                        EnlaceRevista("Imágenes", Modifier.padding(start = 14.dp), color = blanco) { alImagenes(e) }
+                    }
+                    Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        EscudoConPaspartu(e, if (esAncha()) 140.dp else 112.dp)
+                        Column(Modifier.weight(1f).padding(start = 16.dp)) {
+                            Text((if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(suLiga).nombre).uppercase(), color = blanco, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 2)
+                            if (puesto != null) EtiquetaBloque("${puesto}º en la tabla", Modifier.padding(top = 8.dp))
                         }
                     }
-                    2 -> Plantilla(e, liga)
-                    else -> ClasificacionDe(suLiga, setOf(e.id))
+                    FitTitle(e.nombre, 46.sp, 50.sp, color = Color.White, family = Grotesca, fontWeight = FontWeight.ExtraBold, maxLines = 2, minSize = 22f, letterSpacing = 0.sp, modifier = Modifier.padding(top = 14.dp))
                 }
+            }
+            val prox = todos?.let { Orden.proximos(it, e.id, ahora) }.orEmpty()
+            prox.firstOrNull()?.takeIf { !it.estado.terminado }?.let { BotonC(if (it.estado.enDirecto) "Su partido, en directo" else "Su próximo partido", fondo = AcentoBloque, letra = SobreBloque) { alFicha(Ficha.DePartido(it)) } }
+            Column(Modifier.padding(horizontal = m).widthIn(max = 900.dp)) {
+                val jugados = todos?.let { Orden.jugados(it, e.id) }
+                SeccionNumerada(1, "Su racha")
+                when {
+                    jugados == null -> Nota("Mirando el calendario…")
+                    jugados.isEmpty() -> Nota("Sin partidos jugados todavía.")
+                    else -> {
+                        BloquesForma(FormaEquipo.de(jugados, e.id), Modifier.padding(bottom = 8.dp), grande = true)
+                        jugados.take(8).forEach { p -> FilaPartido(p, ahora, mios, riv) { alFicha(Ficha.DePartido(p)) } }
+                    }
+                }
+                SeccionNumerada(2, "Lo que viene")
+                when {
+                    todos == null -> Nota("Mirando el calendario…")
+                    prox.isEmpty() -> Nota("Sin partidos a la vista.")
+                    else -> prox.take(10).forEach { p -> FilaPartido(p, ahora, mios, riv) { alFicha(Ficha.DePartido(p)) } }
+                }
+                SeccionNumerada(3, "Plantilla")
+                Plantilla(e, liga)
+                if (conTabla) { SeccionNumerada(4, "Clasificación"); ClasificacionDe(suLiga, setOf(e.id)) }
                 PieFuente()
             }
             Spacer(Modifier.height(40.dp))
@@ -354,7 +379,7 @@ fun PantEquipo(e: Equipo, liga: String, alCerrar: () -> Unit, alFicha: (Ficha) -
 }
 
 @Composable
-private fun Plantilla(e: Equipo, liga: String) {
+fun Plantilla(e: Equipo, liga: String) {
     val ctx = LocalContext.current
     val l: List<Jugador>? = rememberDato(e.id, "plantilla") { _ -> Futbol.plantilla(ctx, e, liga) }
     if (l == null) { Nota("Leyendo la plantilla…", Modifier.padding(top = 12.dp)); return }

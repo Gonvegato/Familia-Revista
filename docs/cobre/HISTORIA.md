@@ -9,6 +9,52 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.8.0 · La cara de Seshat, Bastet y Hathor (dirección C)
+
+Nut pasa a la misma altura que Seshat, Bastet y Hathor: toda la app en una pantalla, el cartel de tu próximo partido, la racha de tus
+equipos, lo que has visto esta semana, las fichas a doble página, imágenes propias de tus equipos con encuadre por dispositivo, icono «N.»
+y widgets en C. ESPN, las listas M3U y Xtream, la guía, la calidad automática, el sonido en segundo plano, «Dónde verlo», tus equipos y
+rivales, las selecciones y el mando de la tele no cambian.
+
+- **Colores**: los de Nut (en «A tu manera»): fondo granate #3D0E19, letra crema #F1DCB5 y acento dorado #D4A06A. La cabecera de tinta
+  sale crema con las letras granate. El dorado sobre el granate da 6,9:1 (se lee tal cual); si eliges otro acento que no llegue al 4,5:1,
+  el texto en acento se aclara u oscurece lo justo (`acentoLegible`); en los bloques va tal cual.
+- **Una pantalla, cinco páginas**: la cabecera («NUT.» en grotesca, BUSCAR CANAL · + EQUIPOS · fecha · ⚙) que se pliega sin cortar ni dejar
+  hueco, y una fila de pestañas: PORTADA · HOY · COMPETICIONES · TUS EQUIPOS · IPTV, que se pasan con el dedo. HOY son los partidos del
+  día (la portada de antes, con su tira de días); IPTV es la «Tele» de antes (favoritos, directo, guía, listas, películas y series).
+  Directo, Guía, Buscar, Listas y Ajustes van encima (y al volver, lo de la tele vuelve a IPTV); las fichas (un partido, un equipo, una
+  competición, una película), encima de todo. Atrás vuelve a la portada. El widget de los partidos de hoy abre HOY; el de tu próximo
+  partido, TUS EQUIPOS.
+- **Portada**: el cartel de **tu próximo partido** (o el que se juega ahora: «EN DIRECTO · 67'» y el marcador) sobre el fondo de tu
+  equipo (el que elijas) o el color de su club, con los dos escudos enfrentados en su paspartú, la competición, el día y la hora, el
+  estadio y tu canal («EN MOVISTAR»); debajo, «VER EN TU CANAL →» (lo mismo que «Ver» de «Dónde verlo»: el primer canal de tus grupos,
+  en la calidad que toque) o «ELEGIR CANAL →» si aún no tienes. Sin equipos, el cartel te invita a elegirlos. Luego las cifras (visto
+  hoy · en juego · días seguidos), **«La racha de tus equipos»** (los cinco últimos de cada uno en bloques: V verde, E gris, D rojo, con
+  su escudo y su puesto en la liga), **«Esta semana»** (las horas que has visto en Nut, en barras que se tocan, con el total), **«Hoy»**
+  (los partidos de hoy, lo que está en juego primero) y **«Tus equipos»** en grande.
+- **Lo que ves**: el reproductor apunta, día a día, el tiempo que suena con la imagen delante (canales, partidos, películas y series); se
+  guarda en el dispositivo y en tu cuenta (`cobre_visto/<dispositivo>`, campos `d<día>` en ms) y «Esta semana» suma tus dispositivos.
+  Días seguidos con la regla de la familia (un minuto; hasta hoy o hasta ayer). Lo que suena en segundo plano con la pantalla apagada no
+  cuenta.
+- **Listas**: escudos más grandes (30 dp en los partidos, 26 dp en las tablas), goles y puntos en grotesca.
+- **Ficha de un partido a doble página**: la apertura con el fondo del equipo de casa (o su color) y un velo oscuro, los escudos
+  enfrentados con su paspartú, la etiqueta del estado (PRÓXIMO · MAÑANA · 21:00 / EN DIRECTO · 67' / FINAL) y el marcador enorme;
+  «VER EN TU CANAL →»; y por secciones numeradas, todo lo de antes: 01 El partido · 02 Dónde verlo · 03 Alineaciones · 04 Estadísticas ·
+  05 Clasificación · 06 Cara a cara.
+- **Ficha de un equipo** igual: su fondo, el escudo con paspartú, su liga y su puesto, el nombre enorme, «SU PRÓXIMO PARTIDO →»; 01 Su
+  racha (los cinco últimos y los jugados) · 02 Lo que viene · 03 Plantilla · 04 Clasificación. Arriba, + Seguir / Rival / IMÁGENES.
+- **IMÁGENES de un equipo**: su escudo (el tuyo, de tu móvil, o las propuestas de ESPN: el de siempre y el de fondo oscuro si lo tiene) y
+  su fondo (de tu móvil; ESPN no da fondos de equipos), con «Encuadrar» (qué parte se ve, solo en este dispositivo) y «Quitar». Las
+  imágenes van con tu cuenta (`cobre_equipos/<id>`: `esc` y `fimg`). El **paspartú** es el de la familia: crema fijo #F4EBD6, oscuro
+  #141210 si el escudo es muy claro (luminancia ≥ 0,78).
+- **Icono «N.» FÚTBOL** (adaptable, monocromo y el cartel de la tele) y **widgets en C** (titulares en grotesca, sin el reborde fino).
+
+### Capturas de la 0.8.0
+
+En `capturas/c/` (`CapturasCTest`, con `-Proborazzi.test.record=true`; con los colores de Nut, de noche y con la letra al 130 %): la
+portada en directo, con el próximo partido y fondo, sin equipos y con un día de la semana tocado; el plegado de la cabecera; cada página;
+la ficha de un partido en directo, próximo con fondo y terminado; la de un equipo; IMÁGENES y el encuadre.
+
 ## 0.2.0
 
 Los favoritos, lo primero: es donde se está casi todo el rato. Una página propia, «Favoritos» (la primera del menú), con solo tus

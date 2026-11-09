@@ -1,5 +1,9 @@
 package com.gonzalo.cobre
 
+import kotlinx.coroutines.flow.first
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.withStyle
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -66,8 +70,8 @@ fun Antetitulo(texto: String, modifier: Modifier = Modifier, tam: TextUnit = 13.
 
 /** Un enlace de acción en versalitas («BUSCAR», «EDITAR», «+ AÑADIR»…). */
 @Composable
-fun EnlaceRevista(texto: String, modifier: Modifier = Modifier, acento: Boolean = false, onClick: () -> Unit) {
-    Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
+fun EnlaceRevista(texto: String, modifier: Modifier = Modifier, acento: Boolean = false, color: Color? = null, onClick: () -> Unit) {
+    Text(texto.uppercase(), color = color ?: if (acento) Acento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
         modifier = modifier.semantics { role = Role.Button }.tocable(onClick = onClick).padding(vertical = 10.dp))
 }
 
@@ -77,23 +81,42 @@ fun VolverRevista(onClick: () -> Unit, texto: String = "Volver") = EnlaceRevista
 
 /** Las pestañas de una página: versalitas; la elegida en tinta con el subrayado de acento; su número, en acento. */
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 fun PestanasRevista(nombres: List<String>, sel: Int, modifier: Modifier = Modifier, cuentas: List<Int?>? = null, onSel: (Int) -> Unit) {
-    // Todas a la vista: si no caben en una línea (letra grande, pantalla estrecha), siguen en la siguiente; nunca cortadas
+    // La fila se desplaza sola hasta la pestaña elegida si no se ve entera (al entrar en «Sagas» desde la portada, por ejemplo)
+    val desplazamiento = rememberScrollState()
+    val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
+    var anchoFila by remember { mutableIntStateOf(0) }
+    var relleno by remember { mutableIntStateOf(0) }   // hueco al final para que la fila pueda empezar en el borde de una pestaña
+    LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
+        if (anchoFila <= 0 || sitios[sel] == null) return@LaunchedEffect
+        val obj = desplazamientoPestanas(sitios, sel, anchoFila, desplazamiento.value)
+        val contenido = desplazamiento.maxValue + anchoFila - relleno
+        relleno = (obj + anchoFila - contenido).coerceAtLeast(0)
+        kotlinx.coroutines.withTimeoutOrNull(600) { androidx.compose.runtime.snapshotFlow { desplazamiento.maxValue }.first { it >= obj } }
+        if (obj != desplazamiento.value) desplazamiento.animateScrollTo(obj)
+    }
     Column(modifier.fillMaxWidth()) {
-        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        Row(Modifier.fillMaxWidth().onGloballyPositioned { anchoFila = it.size.width }.drawWithContent {
+                // Un degradado en los bordes cuando hay más pestañas por un lado o por otro (para que no parezcan cortadas)
+                drawContent()
+                val f = 14.dp.toPx()
+                if (desplazamiento.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
+                if (desplazamiento.value < desplazamiento.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
+            }.horizontalScroll(desplazamiento).height(IntrinsicSize.Max), verticalAlignment = Alignment.CenterVertically) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.semantics { selected = on; role = Role.Tab }.tocable { onSel(i) }
-                    .drawBehind { if (on) drawRect(Acento, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx())) }
-                    .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-                    Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1, softWrap = false)
-                    cuentas?.getOrNull(i)?.let { c -> Text(" $c", color = if (on) Charcoal else Muted,  // (el rojo, solo para lo que se toca: la pestaña activa y los enlaces)
-                         fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1) }
+                Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }
+                    .semantics { selected = on; role = Role.Tab }.tocable(fuera = 0.dp) { onSel(i) }
+                    .background(if (on) AcentoBloque else Color.Transparent)
+                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // Dirección C: la elegida, en un bloque del acento (como las pestañas de las páginas)
+                    Text(n.uppercase(), color = if (on) SobreBloque else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
+                    cuentas?.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreBloque else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
                 }
             }
+            if (relleno > 0) Spacer(Modifier.width(with(androidx.compose.ui.platform.LocalDensity.current) { relleno.toDp() }))
         }
-        Filete(1.dp, Line)
+        Filete(2.dp)
     }
 }
 
@@ -332,4 +355,58 @@ fun BarraPlegada(nombre: String, visible: Boolean, acciones: @Composable android
             Filete(2.dp)
         }
     }
+}
+
+
+/** «HATHOR.»: el nombre en grotesca con el punto del acento (la cabecera de la dirección C). */
+@Composable
+fun NombreConPunto(nombre: String, tam: TextUnit, color: Color = Charcoal, modifier: Modifier = Modifier) {
+    Text(androidx.compose.ui.text.buildAnnotatedString {
+        append(nombre.uppercase())
+        withStyle(androidx.compose.ui.text.SpanStyle(color = Acento)) { append(".") }
+    }, modifier, color = color, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = tam, lineHeight = tam * 1.0f, letterSpacing = (-0.015f * tam.value).sp, maxLines = 1, softWrap = false,
+        style = androidx.compose.ui.text.TextStyle(lineHeightStyle = androidx.compose.ui.text.style.LineHeightStyle(androidx.compose.ui.text.style.LineHeightStyle.Alignment.Center, androidx.compose.ui.text.style.LineHeightStyle.Trim.None)))
+}
+
+/** Un bloque de la rejilla de cifras: la cifra, su etiqueta y sus colores. */
+class BloqueCifra(val cifra: String, val etiqueta: String, val fondo: Color, val letra: Color, val alHacer: (() -> Unit)? = null)
+
+/** La rejilla dura de cifras de la dirección C: bloques de igual ancho con bordes de 2 px. */
+@Composable
+fun RejillaCifras(bloques: List<BloqueCifra>, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().height(IntrinsicSize.Min).border(2.dp, Charcoal)) {
+        bloques.forEachIndexed { i, b ->
+            if (i > 0) Box(Modifier.fillMaxHeight().width(2.dp).background(Charcoal))
+            Column(Modifier.weight(1f).fillMaxHeight().background(b.fondo).let { m -> if (b.alHacer != null) m.tocable(onClick = b.alHacer) else m }.padding(horizontal = 12.dp, vertical = 12.dp)) {
+                FitTitle(b.cifra, 32.sp, 34.sp, color = b.letra, family = Grotesca, fontWeight = FontWeight.ExtraBold, maxLines = 1, unaLinea = true, minSize = 14f, letterSpacing = 0.sp)
+                // (en una línea, encogiendo si no cabe: con la letra grande, «PLATAFORMAS» se partía a media palabra)
+                FitTitle(b.etiqueta.uppercase(), 10.sp, 13.sp, color = b.letra.copy(alpha = 0.85f), family = Body, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, unaLinea = true, minSize = 6f, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
+    }
+}
+
+/** El botón recto de ancho completo de la dirección C: texto a la izquierda y flecha a la derecha («SEGUIR LEYENDO →»). */
+@Composable
+fun BotonC(texto: String, modifier: Modifier = Modifier, fondo: Color = Charcoal, letra: Color = Paper, enabled: Boolean = true, onClick: () -> Unit) {
+    Row(modifier.fillMaxWidth().heightIn(min = 54.dp).background(if (enabled) fondo else fondo.copy(alpha = 0.35f)).tocable(enabled = enabled, onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Text(texto.uppercase(), color = letra, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = 1.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(end = 8.dp))
+        Text("→", color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 18.sp)
+    }
+}
+
+
+/**
+ * A dónde desplazar una fila de pestañas para que la elegida se vea entera y la fila empiece siempre en el borde de una pestaña (nunca
+ * con un trozo de otra cortado a la izquierda, como «…TOR» de «Reproductor»). Devuelve el sitio (en px del contenido); puede pasar del
+ * máximo actual: entonces la fila añade un hueco al final para poder llegar ([relleno]).
+ */
+fun desplazamientoPestanas(sitios: Map<Int, Pair<Int, Int>>, sel: Int, ancho: Int, actual: Int): Int {
+    val (x, w) = sitios[sel] ?: return actual
+    val bordes = sitios.values.map { it.first }.sorted()
+    val alineado = actual == 0 || actual in bordes
+    if (alineado && x >= actual && x + w <= actual + ancho) return actual
+    // El primer borde que deja ver entera la elegida (por la derecha); si la elegida es más ancha que la fila, ella misma
+    return bordes.firstOrNull { it >= x + w - ancho && it <= x } ?: x
 }

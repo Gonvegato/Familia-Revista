@@ -143,6 +143,9 @@ class ReproductorActivity : ComponentActivity() {
     /** En un grupo del fútbol: lo ya probado sin éxito (entrada, calidad), para pasar a la siguiente calidad y luego al siguiente canal. */
     private val probadas = HashSet<Pair<Int, com.gonzalo.iptv.futbol.Calidad>>()
 
+    /** Lo visto que aún no se ha guardado (ms). */
+    private var vistoMs = 0L
+
     private val pulso = object : Runnable {
         override fun run() {
             val p = player ?: return
@@ -150,6 +153,8 @@ class ReproductorActivity : ComponentActivity() {
             if (!estado.directo && p.isPlaying && SystemClock.elapsedRealtime() - guardadoEn > 15_000L) guarda()
             // La guía del canal, cada medio minuto (lo de ahora cambia)
             if (estado.directo && SystemClock.elapsedRealtime() - guiaEn > 30_000L) refrescaGuia()
+            // Lo que ves, día a día («Esta semana» de la portada): un segundo más mientras suena con la imagen delante; se guarda cada minuto
+            if (p.isPlaying) { vistoMs += 1_000L; if (vistoMs >= 60_000L) { TiempoVisto.suma(applicationContext, vistoMs); vistoMs = 0L } }
             if (estado.visibles && p.isPlaying && estado.eleccion == null && estado.lista == null && SystemClock.elapsedRealtime() - ultimaInteraccion > 5_000L) estado.visibles = false
             principal.postDelayed(this, 1_000L)
         }
@@ -598,6 +603,7 @@ class ReproductorActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        if (vistoMs > 0L) { TiempoVisto.suma(applicationContext, vistoMs); vistoMs = 0L }
         if (!estado.directo) guarda()
         val p = player
         // «Seguir sonando al salir»: el sonido sigue (el servicio con su notificación y los controles de la pantalla de bloqueo) y el vídeo se deja de pintar

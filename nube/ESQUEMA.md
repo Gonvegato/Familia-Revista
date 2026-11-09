@@ -170,6 +170,8 @@ de guía): son caché de cada dispositivo. Sin cuenta, Cobre no escribe nada de 
 | `cobre_grupos/<lista>~g<16 hex del SHA-256 del nombre del grupo>` | `lista`, `g` (el nombre del grupo, tal cual) y `oculto` (sí/no: volver a enseñarlo es `false`) |
 | `cobre_estado/ultimo` | El último canal que viste: `lista`, `canal`, `n` y `ul` (cuándo, ms) |
 | `cobre_progreso/<lista>~p<id>` y `…~e<id>` | Lo visto de una película (`p` + su `stream_id`) o de un episodio (`e` + su id) del videoclub de Xtream: `lista`, `v` (el vídeo, `p…`/`e…`), `tipo` (`pelicula` / `episodio`), `id`, `ext` (la extensión del archivo), `t` (el título), y en los episodios `serie` (el `series_id`), `st` (el nombre de la serie), `temp` y `ep`; `pos` y `dur` (ms), `visto` (al 90 %, o a mano) y `ul` (la última vez; gana lo más reciente entre esto y lo de cada dispositivo). «Seguir viendo» sale de aquí |
+| `cobre_visto/<dispositivo>` | Lo que has visto en Nut cada día en ese dispositivo (Nut 0.8.0, «Esta semana» de la portada): `d<AAAA-MM-DD>` (ms) y `t` (la última vez que se apuntó). Lo suma el reproductor mientras suena con la imagen delante; la portada suma todos los dispositivos |
+| `cobre_equipos/<id del equipo>` | Las imágenes de un equipo (Nut 0.8.0): `esc` (su escudo propio, hash de una imagen de la cuenta en PNG; vacío = el de ESPN) y `fimg` (su fondo, hash de un JPEG de hasta 1600×1000; vacío = el color del club). Qué parte del fondo se ve es de cada dispositivo (no viaja) |
 
 Lo que ves en Cobre se queda en Cobre: no pasa a `titulos`, `progreso` ni `tiempo` de Mostaza (el videoclub de un servidor de Xtream no
 trae ids de Stremio, y emparejarlo con la biblioteca de Mostaza con sus reglas —10 minutos, visto al 90 %, borrar es para siempre— sin

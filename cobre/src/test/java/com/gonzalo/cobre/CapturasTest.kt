@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -216,17 +217,17 @@ abstract class CapturasBase {
         cual = 31; esperaTexto("Dónde verlo"); foto("26-ficha-donde-ver")
         cual = 32; esperaTexto("Dónde verlo"); foto("27-ficha-donde-elegir")
         cual = 33; esperaTexto("Dónde verlo"); foto("28-ficha-donde-crear")
-        cual = 31; esperaTexto("Dónde verlo"); rule.onAllNodesWithText("CARA A CARA")[0].performClick(); esperaTexto("Entre los dos"); foto("29-ficha-cara-a-cara")
+        cual = 31; esperaTexto("Dónde verlo"); rule.onAllNodesWithText("Cara a cara")[0].performScrollTo(); esperaTexto("Entre los dos"); foto("29-ficha-cara-a-cara")
         cual = 34; esperaTexto("Partidos"); foto("30-competicion")
         rule.onAllNodesWithText("CLASIFICACIÓN")[0].performClick(); esperaTexto("Atlético"); foto("31-competicion-clasificacion")
-        cual = 35; esperaTexto("Próximos"); foto("32-equipo")
-        rule.onAllNodesWithText("PLANTILLA")[0].performClick(); esperaTexto("Porteros"); foto("33-equipo-plantilla")
+        cual = 35; esperaTexto("Su racha"); foto("32-equipo")
+        rule.onAllNodesWithText("Plantilla")[0].performScrollTo(); esperaTexto("Porteros"); foto("33-equipo-plantilla")
         cual = 36; esperaTexto("De clubes"); foto("34-competiciones")
         cual = 20; esperaTexto("Ahora y lo siguiente"); foto("17-tus-equipos")
         rule.onAllNodesWithText("EQUIPOS")[0].performClick(); esperaTexto("Tus rivales"); foto("18-tus-equipos-lista")
-        cual = 21; esperaTexto("Lo que pasa"); foto("20-ficha-partido")
-        rule.onAllNodesWithText("ALINEACIONES")[0].performClick(); esperaTexto("Joan García"); foto("21-ficha-alineaciones")
-        rule.onAllNodesWithText("CIFRAS")[0].performClick(); esperaTexto("Posesión"); foto("22-ficha-cifras")
+        cual = 21; esperaTexto("El partido"); foto("20-ficha-partido")
+        rule.onAllNodesWithText("Alineaciones")[0].performScrollTo(); esperaTexto("Joan García"); foto("21-ficha-alineaciones")
+        rule.onAllNodesWithText("Estadísticas")[0].performScrollTo(); esperaTexto("Posesión"); foto("22-ficha-cifras")
         cual = 22; esperaTexto("Tus equipos"); foto("23-ajustes-futbol")
         rule.onAllNodesWithText("+ AÑADIR UN EQUIPO")[0].performClick(); esperaTexto("SELECCIONES")
         rule.onAllNodesWithText("EUROPA")[0].performClick(); esperaTexto("Spain"); foto("23b-ajustes-futbol-selecciones")

@@ -40,7 +40,9 @@ fun iniciar(c: Context) {
 enum class Destino(val nombre: String) {
     Portada("Partidos"), Directo("Directo"), Guia("Guía"), Peliculas("Películas"), Series("Series"), Buscar("Buscar"), Listas("Listas"), Ajustes("Ajustes"), Favoritos("Favoritos"),
     /** «Tus equipos». */
-    Futbol("Tus equipos"), AjustesFutbol("Ajustes del fútbol"), Tele("Tele"), Competiciones("Competiciones");
+    Futbol("Tus equipos"), AjustesFutbol("Ajustes del fútbol"), Tele("Tele"), Competiciones("Competiciones"),
+    /** Los partidos del día (la portada de antes de la 0.8.0). */
+    Hoy("Hoy");
     /** Lo de la tele (IPTV): al volver, a «Tele». */
     val deLaTele: Boolean get() = this in setOf(Directo, Guia, Peliculas, Series, Buscar, Listas, Favoritos)
 }
@@ -54,6 +56,8 @@ sealed class Ficha {
     class DeCompeticion(val liga: String) : Ficha()
     /** La página de un equipo (próximos, últimos, plantilla, su clasificación). */
     class DeEquipo(val equipo: com.gonzalo.iptv.futbol.Equipo, val liga: String) : Ficha()
+    /** «IMÁGENES.» de un equipo: su escudo y su fondo. */
+    class ImagenesDeEquipo(val equipo: com.gonzalo.iptv.futbol.Equipo) : Ficha()
 }
 
 private val entraHoja = slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it / 10 } + fadeIn(tween(220))
@@ -90,27 +94,30 @@ fun rememberCargadas(l: List<Lista>): Map<String, Cargada?> {
  */
 @Composable
 fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
-    var destino by rememberSaveable { mutableIntStateOf(inicial.ordinal) }
+    // Las páginas (Portada · Hoy · Competiciones · Tus equipos · IPTV) van juntas en [PantPrincipal]; lo demás, encima
+    var encima by rememberSaveable { mutableIntStateOf(if (paginaDe(inicial) >= 0) -1 else inicial.ordinal) }
+    var pagina by rememberSaveable { mutableIntStateOf(paginaDe(inicial).coerceAtLeast(0)) }
     var fichas by remember { mutableStateOf(listOf<Ficha>()) }
-    val d = Destino.entries[destino]
-    fun ir(x: Destino) { fichas = emptyList(); destino = x.ordinal }
+    val d: Destino? = encima.takeIf { it >= 0 }?.let { Destino.entries[it] }
+    fun ir(x: Destino) { fichas = emptyList(); val p = paginaDe(x); if (p >= 0) { encima = -1; pagina = p } else encima = x.ordinal }
     val abre: (Ficha) -> Unit = { fichas = fichas + it }
     val cierra: () -> Unit = { fichas = fichas.dropLast(1) }
-    // (lo que pide un widget: abrir una página)
+    // (lo que pide un widget o un aviso: abrir una página)
     LaunchedEffect(pedido) { pedido?.destino?.let { ir(it) } }
     AvisoActualizacion()
     BackHandler(enabled = fichas.isNotEmpty()) { cierra() }
-    BackHandler(enabled = fichas.isEmpty() && d != Destino.Portada) { destino = if (d.deLaTele) Destino.Tele.ordinal else 0 }
+    // Atrás: lo de la tele vuelve a la página IPTV; lo demás, a la página en la que estabas; en una página, a la portada
+    BackHandler(enabled = fichas.isEmpty() && d != null) { if (d!!.deLaTele) pagina = paginaDe(Destino.Tele); encima = -1 }
+    BackHandler(enabled = fichas.isEmpty() && d == null && pagina != 0) { pagina = 0 }
     Box(Modifier.fillMaxSize().background(Paper)) {
         AnimatedContent(d, transitionSpec = {
-            val ida = targetState != Destino.Portada
+            val ida = targetState != null
             (fadeIn(tween(220, delayMillis = 40)) + slideInVertically(tween(300, easing = FastOutSlowInEasing)) { if (ida) it / 24 else -it / 24 }) togetherWith fadeOut(tween(140))
         }, label = "pagina") { x ->
-            val volver = { destino = 0 }
-            val aTele = { destino = Destino.Tele.ordinal }
+            val volver = { encima = -1 }
+            val aTele = { pagina = paginaDe(Destino.Tele); encima = -1 }
             when (x) {
-                Destino.Portada -> PantDia(alIr = ::ir, alFicha = abre)
-                Destino.Tele -> PantPortada(alIr = ::ir, alFicha = abre, alVolver = volver)
+                null -> PantPrincipal(pagina = pagina, alPagina = { pagina = it }, alIr = ::ir, alFicha = abre)
                 Destino.Directo -> PantDirecto(alVolver = aTele, alIr = ::ir)
                 Destino.Favoritos -> PantFavoritos(alVolver = aTele, alIr = ::ir)
                 Destino.Guia -> PantGuia(alVolver = aTele, alIr = ::ir)
@@ -120,8 +127,8 @@ fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
                 Destino.Listas -> PantListas(alVolver = aTele)
                 Destino.Ajustes -> PantAjustes(alVolver = volver, alListas = { ir(Destino.Listas) })
                 Destino.AjustesFutbol -> PantAjustes(alVolver = volver, alListas = { ir(Destino.Listas) }, inicial = PESTANA_FUTBOL)
-                Destino.Futbol -> PantFutbol(alVolver = volver, alIr = ::ir, alFicha = abre)
-                Destino.Competiciones -> PantCompeticiones(alVolver = volver, alFicha = abre)
+                // (las páginas no llegan aquí: van en PantPrincipal)
+                else -> PantPrincipal(pagina = pagina, alPagina = { pagina = it }, alIr = ::ir, alFicha = abre)
             }
         }
         // Las fichas, unas encima de otras (se pinta la de arriba)
@@ -133,7 +140,8 @@ fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
                     is Ficha.DeSerie -> PantFichaSerie(f.lista, f.serie, alCerrar = cierra)
                     is Ficha.DePartido -> PantFichaPartido(f.partido, alCerrar = cierra, alConfigurar = { ir(Destino.AjustesFutbol) }, alFicha = abre)
                     is Ficha.DeCompeticion -> PantCompeticion(f.liga, alCerrar = cierra, alFicha = abre)
-                    is Ficha.DeEquipo -> PantEquipo(f.equipo, f.liga, alCerrar = cierra, alFicha = abre)
+                    is Ficha.DeEquipo -> PantEquipo(f.equipo, f.liga, alCerrar = cierra, alFicha = abre, alImagenes = { e -> abre(Ficha.ImagenesDeEquipo(e)) })
+                    is Ficha.ImagenesDeEquipo -> ContenidoImagenesEquipo(f.equipo, alCerrar = cierra)
                     null -> {}
                 }
             }
