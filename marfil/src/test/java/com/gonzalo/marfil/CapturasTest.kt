@@ -148,6 +148,13 @@ class CapturasTest {
         foto("c5_portada_abajo_letra_grande")
     }
 
+    @Test fun portadaSinNadaALaMitad() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra()
+        for (i in Biblioteca.libros.indices) Biblioteca.libros[i].let { if (it.estado == Estado.LEYENDO) Biblioteca.libros[i] = it.copy(estado = Estado.PENDIENTE, fraccion = 0f) }
+        montar(false); foto("1d_portada_sin_leyendo")
+    }
+
     @Test fun portadaOscuro() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(true); foto("2_portada_oscuro")
@@ -187,12 +194,27 @@ class CapturasTest {
         rule.onNodeWithText("Añadido", useUnmergedTree = true).performScrollTo(); foto("4b_ficha_abajo")
     }
 
+    /** La ficha de un pendiente (la de una portada generada, recortada) y la de Dune de noche. */
+    @Test fun fichaPendienteYNoche() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onAllNodesWithText("PENDIENTES")[0].performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("La sombra del viento", useUnmergedTree = true)[0].performClick(); foto("4f_ficha_pendiente")
+    }
+
+    @Test fun fichaOscuro() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(true)
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4g_ficha_oscuro")
+    }
+
     @Test fun fichaSinArchivoNiPortada() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(false)
         Biblioteca.libros[5] = Biblioteca.libros[5].copy(uri = "")
         rule.onNodeWithText("PENDIENTES").performClick(); rule.waitForIdle()
-        rule.onNodeWithText("Los pilares de la Tierra", useUnmergedTree = true).performClick(); foto("4c_ficha_sin_archivo")
+        rule.onAllNodesWithText("Los pilares de la Tierra", useUnmergedTree = true)[0].performClick(); foto("4c_ficha_sin_archivo")
     }
 
     @Test fun tapas() {
@@ -250,7 +272,7 @@ class CapturasTest {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(false)
         rule.onNodeWithText("LEÍDOS").performClick(); rule.waitForIdle()
-        rule.onNodeWithText("Fahrenheit 451", useUnmergedTree = true).performClick(); foto("4d_ficha_leido")
+        rule.onAllNodesWithText("Fahrenheit 451", useUnmergedTree = true)[0].performClick(); foto("4d_ficha_leido")
         rule.onNodeWithText("Añadido", useUnmergedTree = true).performScrollTo(); foto("4e_ficha_leido_abajo")
     }
 }

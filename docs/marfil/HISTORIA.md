@@ -79,6 +79,28 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.18.0 — la portada «cartel», listas con portadas grandes y la ficha a doble página
+
+Gonzalo: «se le da muy poca importancia a la portada del libro que te estás leyendo… quiero que las portadas en todas las partes de la app
+sean más grandes». Vio maquetas y eligió el cartel, las listas con portadas grandes y, para la ficha, la «doble página».
+
+- **Portada · cartel**: lo que lees ahora (el último que has abierto) de protagonista, en un bloque de 470 dp sobre el color medio de su tapa,
+  con la portada a 220×330 dp centrada y con sombra, y encima, abajo, «AHORA LEES · N %», el título en grotesca, la barra gruesa y
+  autor · páginas · tiempo; pegado debajo, «SEGUIR LEYENDO →» en el acento a todo el ancho. La portada acaba donde empieza el texto (lo que lleve
+  pintado abajo no se pisa con el del cartel) y, si es de las generadas, sin autor. Si no lees nada, un cartel negro «Nada, de momento» con
+  «Añadir un libro». Debajo: «También lees» (los demás, 120×180), «Pendientes» (104×156) y «Tu año» con el mosaico a 4 columnas.
+- **Listas con portadas grandes**: en Leyendo, Pendientes, Leídos, Abandonados, autores, sagas y búsqueda cada libro va con su portada de
+  84×126 dp, el número (01…) pequeño en el acento encima del título, el título en grotesca, el autor en versalitas y, abajo, cómo va: el % y
+  las páginas con su barra (Leyendo, Abandonados), las páginas (Pendientes) o cuándo lo terminaste (Leídos). Las sagas agrupadas siguen igual,
+  con el abanico al mismo tamaño. Las portadas generadas se leen a ese tamaño (título más grande en proporción y sin autor).
+- **Ficha · doble página**: la tapa ampliada como foto de apertura (300 dp, a todo el ancho y recortada, sobre su color medio) con «← Volver» y
+  «Portada · Editar · Borrar» encima; una etiqueta en el acento pisando el borde con el estado y el % («LEYENDO · 80 %», «LEÍDO»…); el título
+  enorme en grotesca; «de <autor> · <saga>, n» en cursiva; el botón negro ancho de la acción principal (Seguir leyendo, Empezar a leer, Volver a
+  leer, Bajar de tu kDrive y leer, Elegir su archivo) con el menú del archivo al lado; y las secciones numeradas en el acento: **01 Tu lectura**
+  (barra gruesa, «486 de 608 págs · 9 h · te quedan ~2 h», la línea en cursiva, el estante para cambiar de estado y el favorito), **02 La saga**
+  (sus tapas en fila con esta remarcada, «1 de 3 →»), **03 Tiempo y páginas**, **En Jonsu**, **Subrayados y notas** y **Datos**. No se ha
+  quitado nada de lo que hacía la ficha.
+
 ## 0.17.0 — portada de estantes, cifras sin pegarse y la cabecera que se pliega sin cortar
 
 - **Portada en «estantes de portadas»** (la idea 3 de las maquetas, `docs/familia/maquetas-revista/revista-seshat-portadas.png`): fuera

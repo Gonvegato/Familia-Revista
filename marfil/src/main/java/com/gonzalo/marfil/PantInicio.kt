@@ -21,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,8 +34,9 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * La portada de Seshat, la primera página (la cabecera y las pestañas son de [PantPrincipal]), en «estantes de portadas»: las portadas mandan.
- *  - «Leyendo · N →»: todo lo que lees, en portadas grandes que se deslizan, con su avance; y el botón «SEGUIR CON …».
+ * La portada de Seshat, la primera página (la cabecera y las pestañas son de [PantPrincipal]): las portadas mandan.
+ *  - El cartel: lo que lees ahora (el último que has abierto), a lo grande sobre su color, con su avance; debajo, «SEGUIR LEYENDO →».
+ *  - «También lees · N →»: los demás que tienes a medias, en portadas grandes que se deslizan.
  *  - «Pendientes · N →»: lo que toca, en portadas medianas (de cada saga, el siguiente que te queda).
  *  - «Tu año · X de Y →»: el reto con su barra y el mosaico de lo leído este año.
  *  - Debajo, en pequeño: hoy, la racha y la semana.
@@ -64,24 +67,26 @@ fun PaginaPortada(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: (
             BotonC("Añadir un libro", onClick = alAnadir)
         }
 
-        // ---- Leyendo: las portadas grandes de todo lo que lees, con su avance
+        // ---- El cartel: lo que lees ahora, de protagonista; debajo, «Seguir leyendo» a todo el ancho
         if (libros.isNotEmpty()) {
-            TituloEstante("Leyendo", if (leyendo.isEmpty()) null else "${leyendo.size} →") { alIr(Destino.Leyendo) }
-            if (leyendo.isEmpty()) VacioEstante("No tienes nada a medias. Empieza uno de tus pendientes y saldrá aquí.")
-            else Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                leyendo.forEach { l ->
-                    Column(Modifier.width(96.dp).clickable { alAbrir(l) }) {
-                        PortadaLibro(l, Modifier.width(96.dp).height(144.dp), radio = 0)
+            if (ahora != null) {
+                Cartel(ahora, alAbrir)
+                if (ahora.enOtroDispositivo) BotonC("${ahora.titulo}: está en otro dispositivo", fondo = Charcoal, letra = Paper) { alAbrir(ahora) }
+                else BotonC("Seguir leyendo", fondo = Acento, letra = sobreAcento()) { alLeer(ahora) }
+            } else CartelVacio(alAnadir)
+        }
+
+        // ---- También lees: los demás que tienes a medias, en portadas grandes con su avance
+        val otros = leyendo.drop(1)
+        if (otros.isNotEmpty()) {
+            TituloEstante("También lees", "${otros.size} →") { alIr(Destino.Leyendo) }
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                otros.forEach { l ->
+                    Column(Modifier.width(120.dp).clickable { alAbrir(l) }) {
+                        PortadaLibro(l, Modifier.width(120.dp).height(180.dp), radio = 0)
                         Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
                         Text("${(l.fraccion * 100).toInt().coerceIn(0, 100)} %", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
                     }
-                }
-            }
-            if (ahora != null) {
-                Spacer(Modifier.height(14.dp))
-                Box(Modifier.padding(horizontal = 20.dp)) {
-                    if (ahora.enOtroDispositivo) BotonC("${ahora.titulo}: está en otro dispositivo", fondo = Charcoal, letra = Paper) { alAbrir(ahora) }
-                    else BotonC("Seguir con ${ahora.titulo}") { alLeer(ahora) }
                 }
             }
         }
@@ -92,8 +97,8 @@ fun PaginaPortada(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: (
             if (pendientes.isEmpty()) VacioEstante("No tienes nada pendiente. Lo que añadas sin empezar saldrá aquí.") { BotonC("Añadir un libro", Modifier.padding(top = 8.dp), onClick = alAnadir) }
             else Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 pendientes.forEach { (l, saga) ->
-                    Column(Modifier.width(72.dp).clickable { alAbrir(l) }) {
-                        PortadaLibro(l, Modifier.width(72.dp).height(108.dp), radio = 0)
+                    Column(Modifier.width(104.dp).clickable { alAbrir(l) }) {
+                        PortadaLibro(l, Modifier.width(104.dp).height(156.dp), radio = 0)
                         if (saga != null) Text("+${saga.miembros.size - 1} DE LA SAGA", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.4.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
@@ -153,10 +158,10 @@ private fun VacioEstante(texto: String, extra: @Composable ColumnScope.() -> Uni
     }
 }
 
-/** El mosaico de lo leído este año: 6 por fila, como mucho 3 filas; si hay más, la última casilla dice «+N» y lleva a Leídos. */
+/** El mosaico de lo leído este año: 4 por fila, como mucho 3 filas; si hay más, la última casilla dice «+N» y lleva a Leídos. */
 @Composable
 private fun MosaicoLeidos(libros: List<Libro>, alAbrir: (Libro) -> Unit, alVerTodos: () -> Unit) {
-    val col = 6
+    val col = 4
     val max = col * 3
     val sobran = (libros.size - max).coerceAtLeast(0)
     val vistos = if (sobran > 0) libros.take(max - 1) else libros
@@ -183,4 +188,50 @@ private fun MosaicoLeidos(libros: List<Libro>, alAbrir: (Libro) -> Unit, alVerTo
 @Composable
 fun Barra(f: Float, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().height(3.dp).background(Line)) { Box(Modifier.fillMaxWidth(f.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+}
+
+/** El color del texto sobre el acento (claro u oscuro, según lo claro que sea el acento). */
+private fun sobreAcento(): Color = if (Acento.red * 0.299f + Acento.green * 0.587f + Acento.blue * 0.114f > 0.55f) Color(0xFF050404) else Color.White
+
+/** «5 h 20 min», «51 min». */
+private fun tiempo(ms: Long): String { val m = (ms / 60_000L).toInt(); return if (m >= 60) "${m / 60} h ${m % 60} min" else "$m min" }
+
+/**
+ * El cartel de la portada: el libro que lees ahora, como un cartel. Su portada muy grande y centrada sobre su color (el medio de la imagen o el de
+ * su tela), oscurecido abajo; encima, abajo, «AHORA LEES · N %», el título en grotesca, la barra gruesa y autor · páginas · tiempo. Si la portada
+ * es de las generadas, sin el autor pintado (queda bajo el texto del cartel).
+ */
+@Composable
+private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
+    val base = remember(l.portada, l.titulo) { colorDePortada(l.portada) ?: telaDe(l.titulo) }
+    val claro = lerpColor(base, Color.White, 0.12f)
+    val oscuro = lerpColor(base, Color.Black, 0.72f)
+    val acentoClaro = lerpColor(Acento, Color.White, 0.35f)
+    // (la portada acaba justo donde empieza el texto: lo que lleve pintado abajo —título, autor— no se pisa con el del cartel)
+    Box(Modifier.fillMaxWidth().height(470.dp).background(Brush.verticalGradient(listOf(claro, oscuro))).clickable { alAbrir(l) }) {
+        PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 16.dp).shadow(22.dp).width(220.dp).height(330.dp), radio = 0, conAutor = false)
+        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(170.dp).background(Brush.verticalGradient(0f to Color.Transparent, 0.25f to Color(0xCC050404), 1f to Color(0xF2050404))))
+        Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
+            Text("AHORA LEES · ${porcentaje(l.fraccion)}", color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp, maxLines = 1)
+            Text(l.titulo.uppercase(), color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 4.dp))
+            Box(Modifier.padding(top = 10.dp).fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.22f))) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+            Row(Modifier.fillMaxWidth().padding(top = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(l.autor.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                val derecha = listOf(Paginas.texto(l), if (l.msLeidos > 0) tiempo(l.msLeidos) else "").filter { it.isNotBlank() }.joinToString(" · ")
+                if (derecha.isNotBlank()) Text(derecha.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.8.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp))
+            }
+        }
+    }
+}
+
+/** El cartel cuando no lees nada: un hueco claro y la manera de llenarlo. */
+@Composable
+private fun CartelVacio(alAnadir: () -> Unit) {
+    Column(Modifier.fillMaxWidth().background(Charcoal).padding(horizontal = 20.dp, vertical = 28.dp)) {
+        Text("AHORA LEES", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp)
+        Text("Nada, de momento.", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Empieza uno de tus pendientes o añade un libro, y su portada saldrá aquí en grande.", color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
+        BotonC("Añadir un libro", fondo = Acento, letra = sobreAcento(), onClick = alAnadir)
+    }
 }

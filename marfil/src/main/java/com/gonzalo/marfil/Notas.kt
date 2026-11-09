@@ -41,11 +41,11 @@ fun subrayadosLigeros(titulo: String, autor: String, st: JSONObject): JSONObject
 
 /** «Subrayados y notas» en la ficha: tocar uno abre el libro justo ahí (si el archivo está en tu kDrive, se baja antes). */
 @Composable
-fun SeccionNotas(l: Libro) {
+fun SeccionNotas(l: Libro, conTitulo: Boolean = true) {
     val ctx = LocalContext.current
     val notas = remember(l.id, l.ultima, l.msPropios) { notasDe(EstadoLectura.estado(ctx, l.id)) }
     var todas by remember { mutableStateOf(false) }
-    Antetitulo("Subrayados y notas", Modifier.padding(top = 18.dp, bottom = 6.dp))
+    if (conTitulo) Antetitulo("Subrayados y notas", Modifier.padding(top = 18.dp, bottom = 6.dp))
     if (notas.isEmpty()) {
         Text("Aún no has subrayado nada. En el lector, mantén pulsada una palabra y toca Subrayar o Nota.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp)
         return

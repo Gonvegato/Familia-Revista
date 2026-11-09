@@ -32,7 +32,7 @@ fun telaDe(titulo: String): Color = TELAS[(norm(titulo).hashCode() and 0x7ffffff
  * el título y el autor bien puestos, como en un libro de verdad. El lomo lleva una sombra fina.
  */
 @Composable
-fun PortadaLibro(l: Libro, modifier: Modifier = Modifier, radio: Int = 5, conTitulo: Boolean = true) {
+fun PortadaLibro(l: Libro, modifier: Modifier = Modifier, radio: Int = 5, conTitulo: Boolean = true, conAutor: Boolean = true) {
     val f = remember(l.portada) { l.portada.takeIf { it.isNotBlank() }?.let { File(it) }?.takeIf { it.exists() } }
     val url = l.portada.takeIf { f == null && it.startsWith("http") }
     BoxWithConstraints(modifier.clip(RoundedCornerShape(radio.dp))) {
@@ -46,16 +46,18 @@ fun PortadaLibro(l: Libro, modifier: Modifier = Modifier, radio: Int = 5, conTit
             // El marco fino de una tapa
             Box(Modifier.fillMaxSize().padding(ancho * 0.07f).border(0.8.dp, PAPEL_CLARO.copy(alpha = 0.32f)))
             fun sp(f: Float) = (ancho.value * f).sp
-            if (ancho < 96.dp || !conTitulo) {
+            if (ancho < 64.dp || !conTitulo) {
                 Text(l.titulo.trim().firstOrNull()?.uppercase() ?: "·", color = PAPEL_CLARO.copy(alpha = 0.88f), fontFamily = Display, fontWeight = FontWeight.SemiBold,
                     fontSize = sp(0.46f), modifier = Modifier.align(Alignment.Center))
             } else {
-                Column(Modifier.fillMaxSize().padding(horizontal = ancho * 0.15f, vertical = ancho * 0.16f), horizontalAlignment = Alignment.CenterHorizontally) {
+                // En pequeño (listas: ~84 dp) el título algo más grande en proporción y sin autor, para que se lea
+                val chica = ancho < 110.dp
+                Column(Modifier.fillMaxSize().padding(horizontal = ancho * (if (chica) 0.12f else 0.15f), vertical = ancho * 0.16f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        Text(l.titulo, color = PAPEL_CLARO, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = sp(0.115f), lineHeight = sp(0.135f), textAlign = TextAlign.Center,
-                            maxLines = 5, overflow = TextOverflow.Ellipsis)
+                        Text(l.titulo, color = PAPEL_CLARO, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = sp(if (chica) 0.14f else 0.115f), lineHeight = sp(if (chica) 0.165f else 0.135f),
+                            textAlign = TextAlign.Center, maxLines = 5, overflow = TextOverflow.Ellipsis)
                     }
-                    if (l.autor.isNotBlank()) {
+                    if (l.autor.isNotBlank() && conAutor && !chica) {
                         Box(Modifier.padding(vertical = ancho * 0.03f).width(ancho * 0.12f).height(1.dp).background(PAPEL_CLARO.copy(alpha = 0.55f)))
                         Text(l.autor.uppercase(), color = PAPEL_CLARO.copy(alpha = 0.78f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = sp(0.052f), letterSpacing = sp(0.006f),
                             textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)

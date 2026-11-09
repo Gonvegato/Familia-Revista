@@ -52,3 +52,16 @@ Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSo
   racha y semana. Cada título lleva a su página.
 - **Órdenes solo los que tienen sentido en cada página**, con nombre que diga qué ordenan («Última lectura», «Más avanzado», «Último
   añadido», «Fecha de fin», «Título A-Z», «Autor A-Z», «Más páginas»); nada repetido (en Leídos, «Recientes» era la fecha de fin otra vez).
+
+## Portadas grandes y protagonistas (Seshat 0.18.0; aplicar igual en las demás: juegos, series, obras…)
+
+- **Portada «cartel»**: lo actual (el libro que lees, el juego que juegas, la serie que ves…) de protagonista arriba, en un bloque de ~470 dp
+  sobre el color medio de su imagen, con la portada a ~220×330 dp centrada y con sombra; encima, abajo, sobre un degradado oscuro: «AHORA …
+  · N %», el título en grotesca mayúsculas, la barra gruesa y una línea de datos; pegado debajo, el botón de la acción en el acento a todo el
+  ancho. La portada termina donde empieza el texto (que lo pintado en la imagen no choque con el del cartel). Sin nada en curso: cartel negro
+  con un mensaje claro y el botón para añadir. Debajo, los demás en filas de portadas grandes (120×180, 104×156) y el mosaico del año a 4.
+- **Listas**: portada de 84×126 dp en cada fila; el número (01…) pequeño en el acento encima del título; título en grotesca; autor/creador en
+  versalitas; abajo, cómo va según el estado (%, barra y unidades; fecha de fin si está terminado).
+- **Ficha «doble página»**: la imagen ampliada como foto de apertura a todo el ancho (~300 dp, recortada), con las acciones encima sobre un velo;
+  una etiqueta en el acento pisando el borde con el estado; el título enorme; la línea en cursiva; el botón negro ancho de la acción principal;
+  y las secciones numeradas en el acento (01 Tu …, 02 La saga, …) con todo lo que la ficha ya tenía.

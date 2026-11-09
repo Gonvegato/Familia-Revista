@@ -84,35 +84,59 @@ fun metaLibro(l: Libro, conEstado: Boolean = false): String = listOf(
 ).filter { it.isNotBlank() }.joinToString(" · ")
 
 /**
- * Un libro en una lista: su portada, el título y el autor a la izquierda y, a la derecha y en el acento, sus páginas («320 págs», o «118/320» si lo
- * llevas empezado). [numero]: el que tiene dentro de su saga.
+ * Un libro en una lista, con la portada grande (84×126 dp de serie; las portadas mandan): encima del título, pequeño y en el acento, su número en
+ * la lista (01, 02…) o dentro de su saga; el título en grotesca, el autor en versalitas y, abajo, cómo va: el % y las páginas con su barra si lo
+ * lees o lo dejaste, sus páginas si está pendiente, y cuándo lo terminaste si está leído.
  */
 @Composable
-fun FilaLibro(l: Libro, alAbrir: (Libro) -> Unit, modifier: Modifier = Modifier, portada: Dp = 54.dp, numero: Int = 0, conEstado: Boolean = false, sangria: Dp = 0.dp, extra: String = "", orden: Int = 0) {
-    Row(modifier.fillMaxWidth().clickable { alAbrir(l) }.padding(start = sangria, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        // Dirección C: lista numerada (01, 02…) en el acento, en grotesca
-        if (orden > 0) Text("%02d".format(orden), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(46.dp))
-        if (numero > 0) Text("$numero", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, modifier = Modifier.width(26.dp))
-        PortadaLibro(l, Modifier.width(portada).aspectRatio(0.68f), radio = 0, conTitulo = false)
-        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(l.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = if (portada >= 54.dp) 18.sp else 17.sp, lineHeight = if (portada >= 54.dp) 21.sp else 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            val meta = listOf(metaLibro(l, conEstado), extra).filter { it.isNotBlank() }.joinToString(" · ")
-            if (meta.isNotBlank()) Text(meta.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2, lineHeight = 15.sp, modifier = Modifier.padding(top = 3.dp))
+fun FilaLibro(l: Libro, alAbrir: (Libro) -> Unit, modifier: Modifier = Modifier, portada: Dp = 84.dp, numero: Int = 0, conEstado: Boolean = false, sangria: Dp = 0.dp, extra: String = "", orden: Int = 0) {
+    val alto = portada * 1.5f
+    // (la fila mide lo que la portada o, si el texto no cabe —letra grande—, lo que el texto; así lo de abajo va abajo)
+    Row(modifier.fillMaxWidth().clickable { alAbrir(l) }.padding(start = sangria, top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
+        PortadaLibro(l, Modifier.width(portada).height(alto), radio = 0)
+        Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
+            val num = when { orden > 0 -> "%02d".format(orden); numero > 0 -> "Nº $numero"; else -> "" }
+            if (num.isNotEmpty()) Text(num, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
+            Text(l.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = if (portada >= 70.dp) 19.sp else 17.sp, lineHeight = if (portada >= 70.dp) 22.sp else 20.sp,
+                maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = if (num.isEmpty()) 0.dp else 2.dp))
+            if (l.autor.isNotBlank()) Text(l.autor.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.9.sp, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
+            val meta = listOf(if (conEstado) estadoTexto(l) else "", if (l.enOtroDispositivo) "en otro dispositivo" else "", extra).filter { it.isNotBlank() }.joinToString(" · ")
+            if (meta.isNotBlank()) Text(meta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2, lineHeight = 14.sp,
+                modifier = Modifier.padding(top = 3.dp))
+            Spacer(Modifier.weight(1f).heightIn(min = 8.dp))
+            PieFila(l)
         }
-        // A la derecha, en el acento: «TERMINADO» si lo has terminado; si no, sus páginas
-        val pag = if (l.estado == Estado.LEIDO) "TERMINADO" else Paginas.texto(l)
-        if (pag.isNotBlank()) Text(pag, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = if (l.estado == Estado.LEIDO) 1.sp else 0.6.sp, maxLines = 1)
     }
 }
 
-/** El abanico de portadas de una saga (hasta tres, una sobre otra). */
+private fun estadoTexto(l: Libro) = when (l.estado) { Estado.LEYENDO -> "leyendo"; Estado.PENDIENTE -> "pendiente"; Estado.LEIDO -> "leído"; Estado.ABANDONADO -> "abandonado" }
+
+/** Lo de abajo de una fila: cómo va el libro según su estado. */
+@Composable
+private fun PieFila(l: Libro) {
+    @Composable fun linea(izq: String, der: String) = Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+        Text(izq, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.weight(1f))
+        if (der.isNotBlank()) Text(der, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1)
+    }
+    when (l.estado) {
+        Estado.LEYENDO, Estado.ABANDONADO -> {
+            linea(porcentaje(l.fraccion), Paginas.texto(l))
+            Box(Modifier.padding(top = 5.dp).fillMaxWidth().height(5.dp).background(Line)) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+        }
+        Estado.PENDIENTE -> linea(Paginas.texto(l).uppercase(), "")
+        Estado.LEIDO -> linea(if (l.terminado > 0) "TERMINADO EL ${Formato.fecha(l.terminado).uppercase()}" else "TERMINADO", if (l.paginas > 0) "${Formato.cifra(l.paginas)} PÁGS" else "")
+    }
+}
+
+/** El abanico de portadas de una saga (hasta tres, una sobre otra), del tamaño de las portadas de las listas. */
 @Composable
 fun AbanicoSaga(libros: List<Libro>, modifier: Modifier = Modifier) {
     val v = libros.take(3)
-    Box(modifier.width(38.dp + 14.dp * (v.size - 1).coerceAtLeast(0)).height(56.dp)) {
+    Box(modifier.width(84.dp + 16.dp * (v.size - 1).coerceAtLeast(0)).height(126.dp)) {
         v.asReversed().forEachIndexed { i, l ->
             val k = v.size - 1 - i
-            PortadaLibro(l, Modifier.padding(start = 14.dp * k).width(38.dp).height(56.dp), radio = 0, conTitulo = false)
+            PortadaLibro(l, Modifier.padding(start = 16.dp * k).width(84.dp).height(126.dp), radio = 0)
         }
     }
 }
@@ -144,7 +168,7 @@ fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAb
             Column(Modifier.fillMaxWidth().padding(start = 10.dp)) {
                 f.miembros.forEach { l ->
                     Filete(1.dp, Line)
-                    FilaLibro(l, alAbrirLibro, portada = 46.dp, numero = f.saga.claves.indexOf(l.clave) + 1)
+                    FilaLibro(l, alAbrirLibro, portada = 64.dp, numero = f.saga.claves.indexOf(l.clave) + 1)
                 }
                 EnlaceRevista("Ver la saga →", acento = true) { alAbrirSaga(f.saga) }
             }

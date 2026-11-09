@@ -6,6 +6,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -39,6 +42,17 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.DateFormat
 import java.util.Date
+
+/** El encabezado de una sección de la ficha: su número (01, 02…) en el acento y el nombre en grotesca; a la derecha, su acción si la tiene. */
+@Composable
+private fun SeccionNumerada(n: Int, texto: String, accion: Pair<String, () -> Unit>? = null, arriba: Dp = 26.dp) {
+    Row(Modifier.fillMaxWidth().padding(top = arriba, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
+        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, maxLines = 1)
+        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, maxLines = 1, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
+        accion?.let { (t, f) -> Text(t.uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1,
+            modifier = Modifier.clickable(onClick = f).padding(start = 8.dp, top = 4.dp, bottom = 4.dp)) }
+    }
+}
 
 /** Dos casillas de revista, una al lado de la otra, con su filete en medio. */
 @Composable
@@ -126,126 +140,126 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
     val miSaga = Sagas.de(l.clave)
     val frac = l.fraccion
 
+    // Las secciones van numeradas (01, 02…) en el orden en que salen
+    var nSec = 0
+    fun sig() = ++nSec
+
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
-        // ---- Dirección C: la cabecera, del color de la portada, con el título en grotesca y la portada a la derecha
-        // El color de la cabecera: el de la portada (su media, si es una imagen) o el de su tela
+        // ---- «Doble página»: la tapa ampliada como foto de apertura, a todo el ancho y recortada, sobre su color medio
         val tela = remember(l.portada, l.titulo) { colorDePortada(l.portada) ?: telaDe(l.titulo) }
-        Box(Modifier.fillMaxWidth().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(lerpColor(tela, androidx.compose.ui.graphics.Color.White, 0.12f), lerpColor(tela, androidx.compose.ui.graphics.Color.Black, 0.38f))))) {
-            Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 20.dp)) {
-                Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    EnlaceRevista("← Volver", color = PAPEL_CLARO) { alCerrar() }
-                    Spacer(Modifier.weight(1f))
-                    // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
-                    if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", color = PAPEL_CLARO) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
-                    else Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        EnlaceRevista("Portada", color = PAPEL_CLARO) { portada = true }
-                        EnlaceRevista("Editar", color = PAPEL_CLARO) { renombrar = true }
-                        EnlaceRevista("Borrar", color = PAPEL_CLARO) { quitar = true }
-                    }
-                }
-                Spacer(Modifier.height(18.dp))
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                    Column(Modifier.weight(1f).padding(end = 14.dp)) {
-                        val ante = listOfNotNull(l.autor.ifBlank { null }, l.formato.uppercase().ifBlank { null }).joinToString(" · ")
-                        if (ante.isNotBlank()) Text(ante.uppercase(), color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 2)
-                        FitTitle(l.titulo.uppercase(), 40.sp, 38.sp, color = PAPEL_CLARO, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 5, minSize = 18f, modifier = Modifier.padding(top = 6.dp))
-                    }
-                    PortadaLibro(l, Modifier.width(112.dp).height(168.dp).clickable { portada = true }, radio = 0)
+        Box(Modifier.fillMaxWidth().height(300.dp).clipToBounds()
+            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(lerpColor(tela, androidx.compose.ui.graphics.Color.White, 0.12f), lerpColor(tela, androidx.compose.ui.graphics.Color.Black, 0.55f))))) {
+            // (más ancha que la pantalla y recortada: la tapa como foto de apertura)
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                val w = maxWidth + 24.dp
+                PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f).clickable(enabled = !l.esEscrito) { portada = true }, radio = 0, conAutor = false)
+            }
+            // Un velo arriba para que se lean «Volver» y las acciones sobre cualquier tapa
+            Box(Modifier.fillMaxWidth().height(110.dp).background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f), androidx.compose.ui.graphics.Color.Transparent))))
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp).padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                EnlaceRevista("← Volver", color = PAPEL_CLARO) { alCerrar() }
+                Spacer(Modifier.weight(1f))
+                // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
+                if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", color = PAPEL_CLARO) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
+                else Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    EnlaceRevista("Portada", color = PAPEL_CLARO) { portada = true }
+                    EnlaceRevista("Editar", color = PAPEL_CLARO) { renombrar = true }
+                    EnlaceRevista("Borrar", color = PAPEL_CLARO) { quitar = true }
                 }
             }
         }
-        // ---- El estante, en bloques (el elegido, de tinta)
-        if (!l.esEscrito) {
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                Estado.entries.forEachIndexed { i, e ->
-                    val on = e == l.estado
-                    Box(Modifier.weight(1f).fillMaxHeight().background(if (on) Charcoal else Paper).clickable { Biblioteca.poner(l.copy(estado = e)) }.padding(vertical = 12.dp, horizontal = 2.dp), contentAlignment = Alignment.Center) {
-                        // (si no cabe, la letra se encoge: nada de «ABANDONAD»)
-                        FitTitle(e.nombre.uppercase(), 11.sp, 13.sp, color = if (on) Paper else Charcoal, family = Body, fontWeight = FontWeight.Black, letterSpacing = 0.4.sp, maxLines = 1, unaLinea = true, minSize = 6f,
-                            align = androidx.compose.ui.text.style.TextAlign.Center)
-                    }
-                }
-            }
-            Filete(2.dp)
+        // La etiqueta del estado, en el acento, pisando el borde de la foto
+        val pct = (frac * 100).toInt().coerceIn(0, 100)
+        val etiqueta = when (l.estado) { Estado.LEYENDO, Estado.ABANDONADO -> "${l.estado.nombre.uppercase()} · $pct %"; else -> l.estado.nombre.uppercase() }
+        Box(Modifier.padding(start = 20.dp).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
+            Text(etiqueta, color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-        Spacer(Modifier.height(16.dp))
-        // ---- La rejilla de tres cifras: cómo vas, el tiempo y las páginas (o las veces que lo has leído)
-        val pct = (frac * 100).toInt().coerceIn(0, 100)
-        RejillaCifras(listOf(
-            if (l.estado == Estado.LEIDO) BloqueCifra("LEÍDO", if (l.terminado > 0) fecha(l.terminado) else "terminado", Acento, SobreAcento)
-            else BloqueCifra("$pct%", Paginas.texto(l).ifBlank { if (frac <= 0.001f) "sin empezar" else "leído" }, Acento, SobreAcento),
-            BloqueCifra(if (l.msLeidos >= 60_000) tiempoDe(l.msLeidos).uppercase().replace(" ", "") else "—", "leído en total", Paper, Charcoal),
-            if (l.terminados.size > 1) BloqueCifra("${l.terminados.size}ª", "vez", Bloque2, androidx.compose.ui.graphics.Color.White)
-            else BloqueCifra(if (l.paginas > 0) "${l.paginas}" else "—", "páginas", Bloque2, androidx.compose.ui.graphics.Color.White, alHacer = { renombrar = true }),
-        ))
-        if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
-        st.optString("label").takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp)) }
-        Spacer(Modifier.height(14.dp))
-
-        // Las acciones: la saga y el favorito (un escrito de Cobalto no va en sagas ni es favorito)
-        if (!l.esEscrito) {
-            Filete(2.dp)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                EnlaceRevista(if (miSaga != null) "Saga: ${miSaga.nombre} →" else "Saga →", acento = miSaga != null) { saga = true }
-                EnlaceRevista(if (l.favorito) "★ Favorito" else "☆ Favorito", acento = l.favorito) { Biblioteca.poner(l.copy(favorito = !l.favorito)) }
-            }
-            Filete(2.dp)
-        }
-        Spacer(Modifier.height(4.dp))
-        Filete(2.dp)
-
-        // La casilla de lectura (la de Atrio): bajar de tu kDrive, elegir archivo, seguir leyendo
-        Column(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 18.dp)) {
-            CabezaCasilla("Lectura")
-            if (l.enOtroDispositivo) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.AutoStories, null, tint = Acento, modifier = Modifier.size(28.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("Léelo aquí", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        Text(if (KDrive.on(ctx)) "Elige su EPUB o PDF: se guarda también en tu kDrive." else "Elige su EPUB o PDF del móvil: no se sube a ningún sitio.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
-                    }
+            FitTitle(l.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
+            val de = listOfNotNull(l.autor.ifBlank { null }?.let { "de $it" }, miSaga?.let { "${it.nombre}, ${it.claves.indexOf(l.clave) + 1}" }).joinToString(" · ")
+            if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
+            Spacer(Modifier.height(16.dp))
+            // La acción principal, ancha y negra; a su lado, lo del archivo
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val texto = when {
+                    l.enOtroDispositivo && enNube != null -> if (trabajando != null) "Bajando…" else "Bajar de tu kDrive (${tamanoLegible(enNube.s)}) y leer"
+                    l.enOtroDispositivo -> "Elegir su archivo"
+                    l.estado == Estado.LEIDO && frac >= 0.99f -> "Volver a leer"
+                    frac > 0.005f -> "Seguir leyendo"
+                    else -> "Empezar a leer"
                 }
-                Spacer(Modifier.height(10.dp))
-                if (enNube != null) {
-                    AccionGrande(Icons.Rounded.CloudDownload, if (trabajando != null) "Bajando…" else "Bajar de tu kDrive (${tamanoLegible(enNube.s)})", Modifier.fillMaxWidth()) { bajar(true) }
-                    Spacer(Modifier.height(8.dp))
-                }
-                AccionGrande(Icons.Rounded.AttachFile, "Elegir archivo", Modifier.fillMaxWidth(), acento = false) { elegirArchivo.launch(arrayOf("*/*")) }
-            } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AccionGrande(Icons.Rounded.AutoStories, if (l.estado == Estado.LEIDO && frac >= 0.99f) "Volver a leer" else if (frac > 0.005f) "Seguir leyendo" else "Empezar a leer", Modifier.weight(1f)) { alLeer(l) }
-                    Spacer(Modifier.width(8.dp))
-                    Box {
-                        Icon(Icons.Rounded.MoreVert, "Opciones del archivo", tint = Charcoal, modifier = Modifier.size(44.dp).clickable { menuArchivo = true }.padding(10.dp))
-                        DropdownMenu(menuArchivo, { menuArchivo = false }) {
-                            DropdownMenuItem({ Text("Cambiar de archivo") }, { menuArchivo = false; elegirArchivo.launch(arrayOf("*/*")) }, leadingIcon = { Icon(Icons.Rounded.SwapHoriz, null) })
-                            if (enNube != null) DropdownMenuItem({ Text("Quitar del móvil (sigue en tu kDrive)") }, { menuArchivo = false; quitarArchivo = true }, leadingIcon = { Icon(Icons.Rounded.CloudDone, null) })
-                            else {
-                                DropdownMenuItem({ Text("Quitar el archivo") }, { menuArchivo = false; quitarArchivo = true }, leadingIcon = { Icon(Icons.Rounded.LinkOff, null) })
-                                if (KDrive.on(ctx)) DropdownMenuItem({ Text("Subir a tu kDrive ahora") }, {
-                                    menuArchivo = false; trabajando = "Subiendo a tu kDrive…"
-                                    ambito.launch { val n = withContext(Dispatchers.IO) { runCatching { NubeLibros.subirPendientes(ctx, aMano = true) } }; trabajando = null; dice(n.fold({ if (it > 0) "Subido a tu kDrive." else "No he podido subirlo." }, { e -> e.message ?: "No he podido subirlo." })) }
-                                }, leadingIcon = { Icon(Icons.Rounded.CloudDownload, null) })
-                            }
+                BotonC(texto, Modifier.weight(1f)) { principal() }
+                if (!l.enOtroDispositivo) Box {
+                    Icon(Icons.Rounded.MoreVert, "Opciones del archivo", tint = Charcoal, modifier = Modifier.size(54.dp).clickable { menuArchivo = true }.padding(14.dp))
+                    DropdownMenu(menuArchivo, { menuArchivo = false }) {
+                        DropdownMenuItem({ Text("Cambiar de archivo") }, { menuArchivo = false; elegirArchivo.launch(arrayOf("*/*")) }, leadingIcon = { Icon(Icons.Rounded.SwapHoriz, null) })
+                        if (enNube != null) DropdownMenuItem({ Text("Quitar del móvil (sigue en tu kDrive)") }, { menuArchivo = false; quitarArchivo = true }, leadingIcon = { Icon(Icons.Rounded.CloudDone, null) })
+                        else {
+                            DropdownMenuItem({ Text("Quitar el archivo") }, { menuArchivo = false; quitarArchivo = true }, leadingIcon = { Icon(Icons.Rounded.LinkOff, null) })
+                            if (KDrive.on(ctx)) DropdownMenuItem({ Text("Subir a tu kDrive ahora") }, {
+                                menuArchivo = false; trabajando = "Subiendo a tu kDrive…"
+                                ambito.launch { val n = withContext(Dispatchers.IO) { runCatching { NubeLibros.subirPendientes(ctx, aMano = true) } }; trabajando = null; dice(n.fold({ if (it > 0) "Subido a tu kDrive." else "No he podido subirlo." }, { e -> e.message ?: "No he podido subirlo." })) }
+                            }, leadingIcon = { Icon(Icons.Rounded.CloudDownload, null) })
                         }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
-                Barra(frac)
-                Spacer(Modifier.height(6.dp))
-                val notas = st.optJSONArray("notes")?.length() ?: 0
-                val min = l.msLeidos / 60_000L
-                Text(listOfNotNull(if (l.estado == Estado.LEIDO) "terminado" else "${(frac * 100).toInt()} % leído", if (min >= 1) (if (frac >= 0.99f) "leído en ${readTime(min)}" else "${readTime(min)} leyendo") else null, st.optString("label").ifBlank { null }, if (notas > 0) "$notas subrayados" else null).joinToString(" · "),
-                    color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                if (frac in 0.02f..0.97f && min >= 5) Text("Te quedan unas ${readTime((min * (1 - frac) / frac).toLong().coerceAtLeast(1))} a tu ritmo", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
             }
+            if (l.enOtroDispositivo && enNube != null) {
+                Spacer(Modifier.height(8.dp))
+                BotonC("O elegir otro archivo", fondo = Paper, letra = Charcoal, modifier = Modifier.drawBehind { drawRect(Charcoal, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) }) { elegirArchivo.launch(arrayOf("*/*")) }
+            }
+            if (l.enOtroDispositivo) Text(if (KDrive.on(ctx)) "No está en este dispositivo. Bájalo de tu kDrive o elige su EPUB o PDF (se guarda también en tu kDrive)." else "No está en este dispositivo: elige su EPUB o PDF del móvil (no se sube a ningún sitio).",
+                color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 8.dp))
             trabajando?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 8.dp)) }
-        }
-        Filete(2.dp)
 
+            // ---- 01 Tu lectura: la barra gruesa, cómo vas, el estante (cambiar de estado) y el favorito
+            SeccionNumerada(sig(), if (l.esEscrito) "Tu lectura" else "Tu lectura")
+            Box(Modifier.fillMaxWidth().height(8.dp).background(Line)) { Box(Modifier.fillMaxWidth(frac.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+            val min = l.msLeidos / 60_000L
+            val notas = st.optJSONArray("notes")?.length() ?: 0
+            val linea = listOfNotNull(
+                if (l.paginas > 0) (if (l.estado == Estado.LEIDO || frac <= 0.001f) "${Formato.cifra(l.paginas)} págs" else "${Formato.cifra(Math.round(frac * l.paginas).coerceIn(0, l.paginas))} de ${Formato.cifra(l.paginas)} págs") else if (l.estado != Estado.LEIDO) "$pct %" else null,
+                if (min >= 1) (if (frac >= 0.99f) "leído en ${readTime(min)}" else readTime(min)) else null,
+                if (frac in 0.02f..0.97f && min >= 5) "te quedan ~${readTime((min * (1 - frac) / frac).toLong().coerceAtLeast(1))}" else null
+            ).joinToString(" · ")
+            if (linea.isNotBlank()) Text(linea.uppercase(), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 7.dp))
+            val otra = listOfNotNull(deck.ifBlank { null }, st.optString("label").ifBlank { null }, if (notas > 0) "$notas subrayados" else null).joinToString(" · ")
+            if (otra.isNotBlank()) Text(otra, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
+            if (!l.esEscrito) {
+                Spacer(Modifier.height(14.dp))
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).drawBehind { drawRect(Charcoal, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) }) {
+                    Estado.entries.forEach { e ->
+                        val on = e == l.estado
+                        Box(Modifier.weight(1f).fillMaxHeight().background(if (on) Charcoal else Paper).clickable { Biblioteca.poner(l.copy(estado = e)) }.padding(vertical = 12.dp, horizontal = 2.dp), contentAlignment = Alignment.Center) {
+                            // (si no cabe, la letra se encoge: nada de «ABANDONAD»)
+                            FitTitle(e.nombre.uppercase(), 11.sp, 13.sp, color = if (on) Paper else Charcoal, family = Body, fontWeight = FontWeight.Black, letterSpacing = 0.4.sp, maxLines = 1, unaLinea = true, minSize = 6f,
+                                align = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
+                }
+                Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    EnlaceRevista(if (l.favorito) "★ Favorito" else "☆ Marcar como favorito", acento = l.favorito) { Biblioteca.poner(l.copy(favorito = !l.favorito)) }
+                }
+            }
+
+            // ---- 02 La saga: sus tapas en fila, con esta remarcada
+            if (!l.esEscrito) {
+                SeccionNumerada(sig(), if (miSaga != null) "La saga" else "Saga", accion = (if (miSaga != null) "${miSaga.claves.indexOf(l.clave) + 1} de ${miSaga.claves.size} →" else "Añadir a una saga →") to { saga = true })
+                if (miSaga != null) {
+                    val deSaga = remember(miSaga, Biblioteca.libros.size) { Sagas.libros(miSaga) }
+                    Text(miSaga.nombre, color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        deSaga.forEach { x ->
+                            val esta = x.id == l.id
+                            Box(Modifier.then(if (esta) Modifier.border(3.dp, Acento) .padding(3.dp) else Modifier).clickable { saga = true }) {
+                                PortadaLibro(x, Modifier.width(56.dp).height(84.dp), radio = 0, conTitulo = false)
+                            }
+                        }
+                    }
+                } else Text("No está en ninguna saga.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+            }
         // Tiempo y páginas
+            SeccionNumerada(sig(), "Tiempo y páginas")
         DosCasillas(
             izq = {
                 CabezaCasilla("Tiempo")
@@ -270,7 +284,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
                 if (NotaAzabache.vieja(ctx)) withContext(Dispatchers.IO) { NotaAzabache.refrescar(ctx) }.let { nota = NotaAzabache.cargar(ctx)[l.clave] }
             }
             Column(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp)) {
-                CabezaCasilla("En Jonsu")
+                SeccionNumerada(sig(), "En Jonsu", arriba = 0.dp)
                 if (nota != null) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         FitTitle("${nota!!.general}", 48.sp, 50.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
@@ -288,13 +302,14 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         }
 
         // Subrayados y notas
-        SeccionNotas(l)
+        SeccionNumerada(sig(), "Subrayados y notas")
+        SeccionNotas(l, conTitulo = false)
         Spacer(Modifier.height(18.dp))
         Filete(2.dp)
 
         // Datos
         Column(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 12.dp)) {
-            CabezaCasilla("Datos", "Editar" to { renombrar = true })
+            SeccionNumerada(sig(), "Datos", "Editar" to { renombrar = true }, arriba = 0.dp)
             MagFact("Título", l.titulo)
             MagFact("Autor", l.autor.ifBlank { "—" })
             if (miSaga != null) MagFact("Saga", "${miSaga.nombre} · ${miSaga.claves.indexOf(l.clave) + 1}")
