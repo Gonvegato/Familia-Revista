@@ -74,15 +74,20 @@ fun JSONObject.ponVin(l: List<String>) { put("vin", JSONArray().also { a -> l.fo
 @Composable
 fun HojaEscribir(titulo: String, onCerrar: () -> Unit, acciones: @Composable RowScope.() -> Unit = {}, contenido: @Composable ColumnScope.() -> Unit) {
     Dialog(onDismissRequest = onCerrar, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().imePadding()) {
-            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 10.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                // (FitTitle: la letra baja hasta que cabe la palabra más larga; nunca se parte una palabra por la mitad)
-                FitTitle(titulo, 28.sp, 31.sp, Modifier.weight(1f), color = Charcoal, maxLines = 2, conEdicion = false)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically, content = acciones)
-                // (cerrar con texto, como el resto de la revista y los diálogos del PC)
-                EnlaceRevista("Cerrar", Modifier.padding(start = 12.dp).semantics { contentDescription = "Cerrar" }, onClick = onCerrar)
+        Column(Modifier.fillMaxSize().background(Paper).navigationBarsPadding().imePadding()) {
+            // Dirección C (los paneles del lector de Seshat, «LETRA.»): la cabecera, un bloque de tinta con el título en grotesca y el punto
+            // del acento; las acciones y «Cerrar», del color del papel
+            Row(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(androidx.compose.ui.text.buildAnnotatedString {
+                    append(titulo.uppercase())
+                    pushStyle(androidx.compose.ui.text.SpanStyle(color = acentoSobreTinta())); append("."); pop()
+                }, Modifier.weight(1f), color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, lineHeight = 28.sp, maxLines = 3)
+                CompositionLocalProvider(LocalSobreTinta provides true) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically, content = acciones)
+                    // (cerrar con texto, como el resto de la revista y los diálogos del PC)
+                    EnlaceRevista("Cerrar", Modifier.padding(start = 12.dp).semantics { contentDescription = "Cerrar" }, onClick = onCerrar)
+                }
             }
-            Box(Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(if (Skin.revista) 3.dp else 1.dp).background(if (Skin.revista) Charcoal else Line))
             Column(Modifier.weight(1f).fillMaxWidth().widthIn(max = 720.dp).align(Alignment.CenterHorizontally).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp), content = contenido)
         }
@@ -153,7 +158,8 @@ fun ObraDialogo(e: Escritos, obra: Doc?, onCerrar: () -> Unit, onCreada: (Doc) -
         if (obra != null) {
             // En qué menú va: Escribiendo · En pausa · Terminadas · Archivo
             EtiquetaEscribir("Estado")
-            Row(Modifier.fillMaxWidth().horizontalScrollSafe(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 EstadoObra.entries.forEach { x -> SoftChip(x.nombre, estado == x) { estado = x } }
             }
         }
@@ -215,6 +221,8 @@ object EscribirHub {
     var abrir by mutableStateOf<Pair<String, Long>?>(null)
     /** Una obra recién creada con la guía: se abre en la pestaña Guía (y cuándo se pidió). */
     var guiaAlEntrar: Pair<String, Long>? = null
+    /** La pestaña con la que abrir una obra (desde su ficha: «03 Fichas y notas» abre Fichas…): obra → pestaña. */
+    var pestanaAlEntrar: Pair<String, Int>? = null
     /** «Ver en el árbol» desde una parte o un capítulo: la ficha que enseñar al volver a la obra. */
     var irArbol by mutableStateOf<String?>(null)
     /** El manuscrito en lista (y no en cuadrados). */

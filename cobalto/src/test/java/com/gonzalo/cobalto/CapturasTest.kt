@@ -43,6 +43,9 @@ open class CapturasTest {
         if (!vacia) { Ejemplo.siembra(e); Ejemplo.estudio(e) }
     }
 
+    /** Lo de encima con ese texto (la ficha de la obra sigue compuesta debajo del estudio). */
+    private fun ultimo(t: String) = rule.onAllNodesWithText(t).let { n -> n[n.fetchSemanticsNodes().size - 1] }
+
     private fun foto(nombre: String) {
         rule.waitForIdle(); Thread.sleep(500); rule.waitForIdle()
         com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/$prefijo$nombre.png")
@@ -56,7 +59,7 @@ open class CapturasTest {
     @Test fun portada() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(false); foto("1_portada")
-        rule.onNodeWithText("Sobre la mesa".uppercase(), useUnmergedTree = true).performScrollTo(); foto("1b_portada_abajo")
+        rule.onNodeWithText("También escribes", useUnmergedTree = true).performScrollTo(); foto("1b_portada_abajo")
     }
 
     @Test fun portadaOscuro() {
@@ -76,14 +79,15 @@ open class CapturasTest {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(false)
         rule.onNodeWithText("ESCRIBIENDO").performClick(); rule.waitForIdle()
-        rule.onAllNodesWithText("La ciudad de cristal", useUnmergedTree = true)[0].performClick(); foto("4_obra_manuscrito")
-        rule.onAllNodesWithText("FICHAS")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("4b_obra_fichas")
-        rule.onAllNodesWithText("NOTAS")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("4c_obra_notas")
-        rule.onAllNodesWithText("ÁRBOL")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("4e_obra_arbol")
-        rule.onAllNodesWithText("LÍNEA")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("4f_obra_linea")
-        rule.onAllNodesWithText("CIFRAS")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("4g_obra_cifras")
-        rule.onAllNodesWithText("GUÍA")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("4h_obra_guia")
-        rule.onAllNodesWithText("MANUSCRITO")[0].performScrollTo().performClick(); rule.waitForIdle()
+        rule.onAllNodesWithText("La ciudad de cristal", useUnmergedTree = true)[0].performClick(); rule.waitForIdle()
+        ultimo("MANUSCRITO →").performClick(); foto("4_obra_manuscrito")
+        ultimo("FICHAS").performScrollTo().performClick(); rule.waitForIdle(); foto("4b_obra_fichas")
+        ultimo("NOTAS").performScrollTo().performClick(); rule.waitForIdle(); foto("4c_obra_notas")
+        ultimo("ÁRBOL").performScrollTo().performClick(); rule.waitForIdle(); foto("4e_obra_arbol")
+        ultimo("LÍNEA").performScrollTo().performClick(); rule.waitForIdle(); foto("4f_obra_linea")
+        ultimo("CIFRAS").performScrollTo().performClick(); rule.waitForIdle(); foto("4g_obra_cifras")
+        ultimo("GUÍA").performScrollTo().performClick(); rule.waitForIdle(); foto("4h_obra_guia")
+        ultimo("MANUSCRITO").performScrollTo().performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("Donde empieza todo")[0].performClick(); rule.waitForIdle(); foto("4i_capitulo")
     }
 
@@ -150,13 +154,14 @@ open class CapturasTest {
         siembra(); montar(false)
         rule.onNodeWithText("ESCRIBIENDO").performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("La ciudad de cristal", useUnmergedTree = true)[0].performClick(); rule.waitForIdle()
-        rule.onAllNodesWithText("FICHAS")[0].performScrollTo().performClick(); rule.waitForIdle()
+        ultimo("MANUSCRITO →").performClick(); rule.waitForIdle()
+        ultimo("FICHAS").performScrollTo().performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("Elena")[0].performClick(); foto("8_ficha_leer")
         rule.onAllNodesWithText("SALE EN")[0].performScrollTo(); foto("8b_ficha_leer_abajo")
         rule.onNodeWithContentDescription("Editar").performClick(); foto("8c_ficha_editar")
         rule.onAllNodesWithText("GUARDAR")[0].performScrollTo().performClick(); rule.waitForIdle()
         rule.onNodeWithContentDescription("Cerrar").performClick(); rule.waitForIdle()
-        rule.onAllNodesWithText("NOTAS")[0].performScrollTo().performClick(); rule.waitForIdle()
+        ultimo("NOTAS").performScrollTo().performClick(); rule.waitForIdle()
         rule.onAllNodesWithText("Cómo se afina un clavicordio")[0].performClick(); foto("8d_nota_leer")
     }
 

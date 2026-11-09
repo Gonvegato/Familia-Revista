@@ -2,6 +2,7 @@
 
 package com.gonzalo.cobalto
 
+import androidx.compose.ui.layout.layout
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -542,18 +543,26 @@ private fun CabeceraEditor(
     obra: Doc?, numCap: Int, titulo: String, onTitulo: (String) -> Unit, tableta: Boolean, onBack: () -> Unit,
     panel: Boolean, onPanel: () -> Unit, onFoco: () -> Unit, mas: @Composable () -> Unit
 ) {
-    Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    // Dirección C (el lector «bloques de tinta»): la barra del editor es un bloque de tinta que sube por detrás de la barra de estado; el
+    // título de la escena, en grotesca y del color del papel; la obra, en el acento; los botones, del color del papel
+    val arriba = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    CompositionLocalProvider(LocalSobreTinta provides true) {
+    Row(Modifier.fillMaxWidth().layout { m, c ->
+        val ar = arriba.roundToPx()
+        val p = m.measure(c)
+        layout(p.width, (p.height - ar).coerceAtLeast(0)) { p.place(0, -ar) }
+    }.background(Charcoal).padding(top = arriba).padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         VolverRevista(onBack, if (numCap > 0) "Cap. $numCap" else "Volver")
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(obra?.s("titulo").orEmpty().uppercase(), color = ColGeneral, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(obra?.s("titulo").orEmpty().uppercase(), color = acentoSobreTinta(), fontSize = 10.sp, lineHeight = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val t = if (tableta) 24.sp else 20.sp
             BasicTextField(
                 titulo, onTitulo, singleLine = true,
-                textStyle = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = t, color = Charcoal),
-                cursorBrush = SolidColor(ColGeneral),
+                textStyle = TextStyle(fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = t, color = Paper),
+                cursorBrush = SolidColor(Paper),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.semantics { contentDescription = "Título de la escena" },
-                decorationBox = { inner -> Box { if (titulo.isEmpty()) Text("Sin título", color = Muted, fontFamily = Display, fontSize = t, fontStyle = FontStyle.Italic); inner() } }
+                decorationBox = { inner -> Box { if (titulo.isEmpty()) Text("Sin título", color = Paper.copy(alpha = 0.6f), fontFamily = Grotesca, fontSize = t, fontStyle = FontStyle.Italic); inner() } }
             )
         }
         IconPill(Icons.Rounded.ViewSidebar, "Panel de la escena", active = panel, onClick = onPanel)
@@ -561,6 +570,7 @@ private fun CabeceraEditor(
         IconPill(Icons.Rounded.CenterFocusStrong, "Concentración", onClick = onFoco)
         Spacer(Modifier.width(4.dp))
         mas()
+    }
     }
 }
 

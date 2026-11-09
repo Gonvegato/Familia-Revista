@@ -67,11 +67,14 @@ class WidgetsTest {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra()
         Skin.origenAtrio = false; Skin.invertido = false
+        // (las vistas previas, con los colores de Thot: fondo azul noche, letra crema y acento cobre, como en «A tu manera»)
+        Skin.fondoPropio = 0xFF171E2B; Skin.tintaPropia = 0xFFF1EBE0; Skin.acentoPropio = 0xFFC8703F
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase().replace("_", "")}", t, s.first, s.second, false)
+        Skin.fondoPropio = 0L; Skin.tintaPropia = 0L
         for ((t, s) in tamanos) foto("noche_${t.name.lowercase()}", t, s.first, s.second, true)
         Skin.invertido = true
         for ((t, s) in tamanos) foto("inv_${t.name.lowercase()}", t, s.first, s.second, false)
-        Skin.invertido = false
+        Skin.invertido = false; Skin.acentoPropio = 0L
         siembra(vacia = true)
         foto("vacio_obra", WTipo.OBRA, 330f, 165f, false)
         foto("vacio_hoy", WTipo.HOY, 330f, 165f, false)

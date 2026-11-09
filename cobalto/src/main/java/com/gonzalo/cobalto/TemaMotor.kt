@@ -246,6 +246,25 @@ object Skin {
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
+        // Thot 0.6.0, una vez: el acento de serie de antes (el dorado #A79530) pasa al cobre (y viaja a tus otros dispositivos)
+        if (!p.getBoolean("cobre_v1", false)) {
+            p.edit().putBoolean("cobre_v1", true).apply()
+            if (aCobre()) { ajustesAt = System.currentTimeMillis(); persistir(c) }
+        }
+    }
+
+    /** El acento de Thot hasta la 0.5 (#A79530, puesto en «A tu manera»). */
+    const val ACENTO_VIEJO = 0xA79530L
+    /** El acento de Thot desde la 0.6: cobre. */
+    const val ACENTO_COBRE = 0xFFC8703FL
+
+    /**
+     * Quien tenga el acento de serie de antes (#A79530 en «A tu manera») pasa al cobre; el fondo (#171E2B) y el texto (#F1EBE0) se quedan,
+     * y lo demás elegido a mano también. Devuelve true si ha cambiado algo.
+     */
+    fun aCobre(): Boolean {
+        if (acentoPropio != 0L && (acentoPropio and 0xFFFFFFL) == ACENTO_VIEJO) { acentoPropio = ACENTO_COBRE; return true }
+        return false
     }
 
     /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros Cobaltos gana la más reciente. */
@@ -277,6 +296,7 @@ object Skin {
         Modo.eleccion = k.optInt("modo", Modo.eleccion).coerceIn(0, 2)
         fondoId = k.optString("fondoId").takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         fondoPropio = k.optLong("fondoPropio", 0L); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = k.optLong("acentoPropio", 0L)
+        aCobre()  // (si llega de un Thot de antes)
         ajustesAt = at
         persistir(c)
         return true
@@ -299,7 +319,34 @@ val Charcoal: Color get() = Skin.tones.cInk
 val Edge: Color get() = Skin.tones.cEdge
 val Muted: Color get() = Skin.tones.cMuted
 /** El acento (el coral de Vitrina). */
-val Acento: Color get() = Color(Skin.tones.general)
+/** El acento tal cual lo eliges (el de la paleta o «A tu manera»): para los bloques de color y el icono. */
+val AcentoBloque: Color get() = Color(Skin.tones.general)
+/**
+ * El acento legible: el elegido, aclarado (u oscurecido) lo justo para leerse sobre la página con contraste AA (4,5:1).
+ * Es el que llevan las letras, las cifras grandes, la pestaña activa y el botón principal; con un acento que ya se lee (el cobre de Thot
+ * sobre su azul noche da 4,7:1), es el mismo.
+ */
+val Acento: Color get() = acentoLegible(AcentoBloque, Paper, Charcoal)
+/** Texto sobre un bloque del acento elegido ([AcentoBloque]). */
+val SobreBloque: Color get() = if (AcentoBloque.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
+
+/** Contraste WCAG entre dos colores (1 a 21). */
+fun contraste(a: Color, b: Color): Float {
+    val la = a.luminance(); val lb = b.luminance()
+    return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+}
+
+private var cacheLegible = Triple(0L, 0L, 0L) to Color.Unspecified
+/** [c] mezclado poco a poco con [hacia] (la tinta: clara de noche, oscura de día) hasta leerse sobre [fondo] con 4,5:1. */
+fun acentoLegible(c: Color, fondo: Color, hacia: Color, minimo: Float = 4.5f): Color {
+    val k = Triple(c.value.toLong(), fondo.value.toLong(), hacia.value.toLong())
+    val cc = cacheLegible
+    if (cc.first == k && minimo == 4.5f) return cc.second
+    var x = c; var t = 0f
+    while (contraste(x, fondo) < minimo && t < 1f) { t += 0.04f; x = androidx.compose.ui.graphics.lerp(c, hacia, t.coerceAtMost(1f)) }
+    if (minimo == 4.5f) cacheLegible = k to x
+    return x
+}
 val Dorado: Color get() = Color(Skin.tones.gold)
 /** Texto sobre el acento: blanco o tinta oscura, el que se lea. */
 val SobreAcento: Color get() = if (Acento.luminance2() > 0.5f) Color(0xFF14151A) else Color.White
@@ -327,7 +374,8 @@ val AtrioDisplay = FontFamily(
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
 val VitrinaDisplay = FontFamily(
     listOf(400, 500, 600, 700, 800).map { w ->
-        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(if (w >= 700) 92f else 100f)))
+        // opsz 48: el tamaño óptico de titular (el de serie, 96, es el de cartel, con remates de distinta altura que se ven irregulares); ancho normal
+        Font(R.font.bricolage, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.width(100f), FontVariation.Setting("opsz", 48f)))
     }
 )
 
@@ -370,3 +418,9 @@ fun CobaltoTheme(content: @Composable () -> Unit) {
         }
     }
 }
+
+// ───── dirección C (editorial moderna) ─────
+/** La letra de la dirección C: Bricolage Grotesque (grotesca), para la cabecera, los titulares y las cifras grandes. La serif queda para citas. */
+val Grotesca: FontFamily get() = VitrinaDisplay
+/** El segundo color de los bloques de cifras de la dirección C (el azul de las maquetas). */
+val Bloque2: Color get() = Color(0xFF1F3A5F)

@@ -162,11 +162,16 @@ fun HojaLectura(
     Dialog(onDismissRequest = onCerrar, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Paper)) {
             val ancha = maxWidth >= 760.dp
-            Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-                Row(Modifier.fillMaxWidth().widthIn(max = 1080.dp).align(Alignment.CenterHorizontally).padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically) {
-                    EnlaceRevista("← Volver", Modifier.semantics { contentDescription = "Cerrar" }, onClick = onCerrar)
-                    Spacer(Modifier.weight(1f))
-                    EnlaceRevista("Editar", Modifier.semantics { contentDescription = "Editar" }, acento = true, onClick = onEditar)
+            Column(Modifier.fillMaxSize().navigationBarsPadding()) {
+                // Dirección C: la barra de arriba, un bloque de tinta (por detrás de la barra de estado) con «← VOLVER» y «EDITAR»
+                Box(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding()) {
+                    androidx.compose.runtime.CompositionLocalProvider(LocalSobreTinta provides true) {
+                        Row(Modifier.fillMaxWidth().widthIn(max = 1080.dp).align(Alignment.Center).padding(horizontal = 22.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                            EnlaceRevista("← Volver", Modifier.semantics { contentDescription = "Cerrar" }, onClick = onCerrar)
+                            Spacer(Modifier.weight(1f))
+                            EnlaceRevista("Editar", Modifier.semantics { contentDescription = "Editar" }, acento = true, onClick = onEditar)
+                        }
+                    }
                 }
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
                     Box(Modifier.fillMaxWidth().height(8.dp).background(color))
@@ -175,7 +180,8 @@ fun HojaLectura(
                             Box(Modifier.size(10.dp).background(color)); Spacer(Modifier.width(8.dp))
                             Text(ante.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.8.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
-                        FitTitle(titulo, if (ancha) 60.sp else 44.sp, if (ancha) 62.sp else 46.sp, Modifier.padding(top = 6.dp), color = Charcoal, letterSpacing = (-1).sp, maxLines = 3, overflow = TextOverflow.Ellipsis, conEdicion = false)
+                        FitTitle(titulo.uppercase(), if (ancha) 56.sp else 40.sp, if (ancha) 58.sp else 42.sp, Modifier.padding(top = 6.dp), color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.4).sp, maxLines = 3, overflow = TextOverflow.Ellipsis, minSize = 20f, conEdicion = false)
                         if (sub.isNotBlank()) Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
                         Filete(3.dp, modifier = Modifier.padding(top = 12.dp, bottom = 18.dp))
                         if (ancha && lateral != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(36.dp)) {

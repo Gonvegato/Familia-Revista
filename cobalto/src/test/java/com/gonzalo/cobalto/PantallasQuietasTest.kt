@@ -61,7 +61,8 @@ open class PantallasQuietasTest {
                 generateSequence(listOf(r)) { l -> l.flatMap { it.children }.takeIf { it.isNotEmpty() } }.flatten()
                     .mapNotNull { x -> x.config.getOrElseNullable(androidx.compose.ui.semantics.SemanticsProperties.Text) { null }?.joinToString(" ") }.joinToString(" · ")
             })
-        n[0].performSemanticsAction(SemanticsActions.OnClick)
+        // (el último: lo de encima; la ficha de la obra sigue debajo del estudio, como en Seshat)
+        n[n.fetchSemanticsNodes().size - 1].performSemanticsAction(SemanticsActions.OnClick)
         pasa(20)
     }
 
@@ -78,7 +79,8 @@ open class PantallasQuietasTest {
         val alEmpezar = cambios()
         quieta("portada", inquietas)
         toca("ESCRIBIENDO"); quieta("Escribiendo", inquietas)
-        toca("La ciudad de cristal"); quieta("manuscrito", inquietas)
+        toca("La ciudad de cristal"); quieta("ficha de la obra", inquietas)
+        toca("MANUSCRITO →"); quieta("manuscrito", inquietas)
         for (t in listOf("FICHAS", "ÁRBOL", "NOTAS", "LÍNEA", "CIFRAS", "GUÍA", "MANUSCRITO")) { toca(t); quieta("obra · $t", inquietas) }
         toca("FICHAS"); toca("Elena"); quieta("ficha de Elena (para leer)", inquietas)
         toca("Editar", descripcion = true); quieta("ficha de Elena (editando)", inquietas)

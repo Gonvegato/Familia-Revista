@@ -31,12 +31,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.5.1"
+const val VERSION = "0.6.0"
 
 /** «Ajustes»: Apariencia (como la de Atrio), cuenta de Atrio y pareja, actualizaciones, escritura y copias. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PantEstilo(alVolver: () -> Unit) {
+fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
     val ctx = LocalContext.current
     val e = remember { Escritos.get(ctx) }
     var mensaje by remember { mutableStateOf<String?>(null) }
@@ -47,18 +47,29 @@ fun PantEstilo(alVolver: () -> Unit) {
     val exportar = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { u ->
         if (u != null) mensaje = runCatching { ctx.contentResolver.openOutputStream(u)!!.use { it.write(e.volcado().toString().toByteArray()) }; "Copia guardada" }.getOrElse { "No se pudo guardar la copia" }
     }
-    var pestana by rememberSaveable { mutableIntStateOf(0) }
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 20.dp)) {
-        RevistaTopBar(alVolver, "Thot")
-        Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
-        FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-        Filete(3.dp)
+    var pestana by rememberSaveable { mutableIntStateOf(pestanaInicial) }
+    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+        // Dirección C: la cabecera en un bloque de tinta con «AJUSTES.» en grotesca y las pestañas en bloques
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+            EnlaceRevista("← Thot", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
+            NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp))
+        }
         PestanasRevista(listOf("Apariencia", "Escritura", "Cuenta", "Avanzado"), pestana) { pestana = it }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(14.dp))
 
         when (pestana) {
             0 -> SeccionApariencia()
             1 -> {
+                Antetitulo("Meta del día", Modifier.padding(bottom = 4.dp))
+                var meta by remember { mutableIntStateOf(MetaDiaria.de(ctx)) }
+                val metas = remember { (listOf(250, 500, 750, 1000, 1500, 2000, 3000) + MetaDiaria.de(ctx)).distinct().sorted() }
+                MagChoice(metas.map { "${cifraE(it)} palabras" }, metas.indexOf(meta).coerceAtLeast(0), "Palabras al día") { i -> meta = metas[i]; MetaDiaria.pon(ctx, meta) }
+                Text("Una para todas tus obras y la misma en todos tus dispositivos. La portada enseña cómo vas hoy, cuántos de los últimos 30 días la cumpliste y la semana con la meta como raya.",
+                    color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 6.dp))
+                Spacer(Modifier.height(10.dp))
+                Filete(2.dp)
+                Spacer(Modifier.height(12.dp))
                 Antetitulo("Escritura", Modifier.padding(bottom = 4.dp))
                 val enPapelera = remember(e.version) { e.papelera().size }
                 MagLink("La página del editor", "Letra, tamaño, interlineado, sangría, máquina de escribir y concentración") { hojaPagina = true }
@@ -100,6 +111,7 @@ fun PantEstilo(alVolver: () -> Unit) {
         Etiqueta("Thot $VERSION")
         Text("Thot es hermana de Jonsu, Seshat y Bastet. El tesauro de sinónimos es el de RLA-ES (LGPL 2.1).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
+        }
     }
     if (papelera) PapeleraEscribir(e, onCerrar = { papelera = false })
     if (hojaPagina) HojaPagina(pagina, androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700) { hojaPagina = false }

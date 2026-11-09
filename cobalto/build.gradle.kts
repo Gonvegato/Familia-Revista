@@ -17,8 +17,8 @@ android {
         applicationId = "com.gonzalo.cobalto"
         minSdk = 29
         targetSdk = 35
-        versionCode = 28
-        versionName = "0.5.1"
+        versionCode = 29
+        versionName = "0.6.0"
     }
     // Firma fija: cada versión nueva se instala encima de la anterior sin borrar tus obras.
     signingConfigs {
@@ -63,6 +63,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.documentfile:documentfile:1.0.1")
+    implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.lifecycle:lifecycle-process:2.8.3")
     testImplementation("junit:junit:4.13.2")

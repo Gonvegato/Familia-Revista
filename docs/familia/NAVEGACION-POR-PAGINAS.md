@@ -1,4 +1,4 @@
-# Navegación por páginas (hecho en Seshat 0.16.1 y Bastet 0.8.0; pendiente en las demás)
+# Navegación por páginas (hecho en Seshat 0.16.1, Bastet 0.8.0, Hathor 0.7.0, Nut 0.8.0 y Thot 0.6.0; pendiente en Jonsu)
 
 Lo que pidió Gonzalo: la pantalla de entrada es la **portada**, y las secciones (leyendo, pendientes…) no abren submenús ni otra pantalla:
 son **páginas a la derecha** de la portada, como pasar hojas.
@@ -29,7 +29,7 @@ son **páginas a la derecha** de la portada, como pasar hojas.
 |---|---|
 | Seshat | Portada · Leyendo · Pendientes · Leídos · Abandonados · Autores · Sagas · Escritos (hecho) |
 | Bastet | Portada · Jugando · Pendientes · Pasados · Abandonados · Sagas · Sistemas (hecho; Tu PC y Ajustes, encima) |
-| Thot | Portada · Escribiendo · En pausa · Terminadas · Archivo |
+| Thot | Portada · Escribiendo · En pausa · Terminadas · Archivo (hecho, 0.6.0; la ficha de la obra, el estudio, la pareja y Ajustes, encima) |
 | Jonsu | Portada · las secciones de su diario |
 | Hathor | Portada · Viendo · Pendientes · Vistas · Abandonadas · Próximos (hecho, 0.7.0; Explorar, Buscar, Addons y Ajustes, encima) |
 | Nut | Portada · Hoy · Competiciones · Tus equipos · IPTV (hecho, 0.8.0; Directo, Guía, Buscar, Listas y Ajustes, encima; lo de la tele vuelve a IPTV) |
@@ -155,3 +155,29 @@ pasa a un oscuro fijo #141210. Funciones: `colorPaspartu(lPortada)`, `paspartuOs
   filetes de 2 px y numeradas en el acento; sin esquinas.
 - La grotesca y la de cuerpo de la app se copian a los assets del lector (la web no ve `res/font`); la serif, para el texto y las citas.
 - Capturas con Chromium y un `window.Atrio` de mentira (`herramientas/marfil/capturas-lector.js`): rápidas y sin emulador.
+
+
+## Lo aprendido al pasarlo a Thot (0.6.0; para Jonsu)
+
+- **Una app de tinta clara** (fondo azul noche, texto crema): la cabecera es un bloque crema con la letra azul noche; lo que va en el acento
+  sobre ese bloque (`+ NUEVA`, el punto, «AHORA ESCRIBES» sin obras) usa `acentoSobreTinta()`, el cobre oscurecido lo justo para el 4,5:1.
+  El cobre (#C8703F) sobre el azul noche ya da 4,7:1: `Acento` es el mismo color; el texto sobre un bloque cobre va oscuro (5,1:1).
+- **El cartel es lo que haces, no lo que consumes**: la obra en la que escribes (la de la última escena tocada), con «AHORA ESCRIBES ·
+  CAP. N · NOMBRE», las palabras de hoy en esa obra y las totales, y la barra de su meta solo si la tiene. El botón ancho abre el editor en
+  la última escena (como los widgets); tocar el cartel o una lista abre la **ficha** de la obra (antes iba derecho al estudio).
+- **El reto es diario**: una meta de palabras al día para todas las obras (de serie 500), en la cuenta (`ajustes/cobalto_meta`, campo
+  `diaria`); «CUMPLIDA N DE LOS ÚLTIMOS 30 DÍAS»; la semana con la meta como raya del acento detrás de las barras.
+- **Tu año = capítulos terminados** (los que se publican para Seshat), por obra, en mosaico.
+- **Las imágenes van en el documento de la obra** (`pt` portada, `fd` fondo: hashes de `familia_img`), que es el de Atrio del PC: no los
+  mira y no le molestan. El encuadre, por dispositivo, como siempre.
+- **Lo que tenía su propia pantalla cabe en la ficha**: 01 Tu escritura (con el estado en bloques), 02 Capítulos (un toque abre ese
+  capítulo en el estudio), 03 Fichas y notas, 04 Línea temporal, 05 El estudio (Árbol · Cifras · Guía · Sprint), 06 Datos. Cada una abre el
+  estudio en su pestaña (`EscribirHub.pestanaAlEntrar`), sin tocar el estudio por dentro.
+- **El estudio en bloques de tinta**: la barra de la obra, la del editor y las de los paneles («AJUSTES DE LA OBRA.», la lectura de una
+  ficha) son bloques de tinta que suben por detrás de la barra de estado; dentro, los enlaces y los iconos se pintan del color del papel
+  con un `CompositionLocal` (`LocalSobreTinta`), así no hubo que tocar cada pantalla. Si las acciones no caben con la letra grande, bajan a
+  otra línea (`FlowRow`), nada se corta.
+- **Con muchos enlaces en la cabecera, se cortan con la letra grande**: «Importar» pasó de la cabecera a la página Escribiendo.
+- **Pruebas que tocan por texto**: la ficha sigue compuesta debajo del estudio, así que el texto «FICHAS» sale dos veces; se toca el último
+  (lo de encima).
+

@@ -33,7 +33,11 @@ object SincroP {
             val f = LaFamilia.familia
             val previo = f.alSincronizar
             f.alSincronizar = { inf -> previo?.invoke(inf); if (inf.ok) app?.getSharedPreferences("cobalto_sync", Context.MODE_PRIVATE)?.edit()?.putLong("ultima", System.currentTimeMillis())?.apply() }
-            ajustes().alCambiar { refs -> if ("cobalto" in refs) android.os.Handler(android.os.Looper.getMainLooper()).post { aplicaAjustes() } }
+            ajustes().alCambiar { refs ->
+                if ("cobalto" in refs) android.os.Handler(android.os.Looper.getMainLooper()).post { aplicaAjustes() }
+                // La meta de palabras al día, cambiada en otro dispositivo
+                if (MetaDiaria.NODO in refs) android.os.Handler(android.os.Looper.getMainLooper()).post { MetaDiaria.llega(); app?.let { Widgets.pedir(it) } }
+            }
             aplicaAjustes()
             // Lo que leen Azabache y Marfil: que estén abiertas para que se suban y se bajen solas
             listOf("obras", "capitulos", "palabras").forEach { LaFamilia.coleccion(it) }

@@ -9,6 +9,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -80,7 +82,9 @@ fun SoftChip(text: String, selected: Boolean, modifier: Modifier = Modifier, @Su
 @Composable
 fun IconPill(icon: ImageVector, desc: String, active: Boolean = false, onClick: () -> Unit) {
     Box(Modifier.size(40.dp).semantics { role = Role.Button; contentDescription = desc }.press(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, null, tint = if (active) Acento else Charcoal, modifier = Modifier.size(22.dp))
+        // (en una barra de tinta, del color del papel; el encendido, en el acento que se lee ahí)
+        val tinta = LocalSobreTinta.current
+        Icon(icon, null, tint = if (tinta) (if (active) acentoSobreTinta() else Paper) else if (active) Acento else Charcoal, modifier = Modifier.size(22.dp))
     }
 }
 
@@ -90,13 +94,28 @@ fun BackButton(onBack: () -> Unit) = VolverRevista(onBack)
 /** Cabecera de pantalla: «← VOLVER», la sección en acento y el título grande con filete grueso; botones a la derecha. */
 @Composable
 fun TopBar(back: String, onBack: () -> Unit, title: String, actions: @Composable RowScope.() -> Unit = {}) {
-    Column(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            VolverRevista(onBack); Spacer(Modifier.weight(1f)); actions()
+    // Dirección C (como el lector de Seshat, «bloques de tinta»): la barra es un bloque de tinta a todo lo ancho, que sube por detrás de la
+    // barra de estado; dentro, «← VOLVER» y las acciones del color del papel, el antetítulo en el acento y el título en grotesca.
+    val arriba = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val sangria = 18.dp
+    Column(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+        Column(Modifier.fillMaxWidth().layout { m, c ->
+            val ex = sangria.roundToPx(); val ar = arriba.roundToPx()
+            val p = m.measure(c.copy(minWidth = c.minWidth + 2 * ex, maxWidth = if (c.hasBoundedWidth) c.maxWidth + 2 * ex else c.maxWidth))
+            layout(p.width - 2 * ex, (p.height - ar).coerceAtLeast(0)) { p.place(-ex, -ar) }
+        }.background(Charcoal).padding(top = arriba).padding(horizontal = sangria).padding(bottom = 14.dp)) {
+            CompositionLocalProvider(LocalSobreTinta provides true) {
+                // (si «← VOLVER» y las acciones no caben en una línea —letra grande—, las acciones bajan a la siguiente: nada cortado)
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    VolverRevista(onBack)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { actions() }
+                }
+            }
+            Text(back.uppercase(), color = acentoSobreTinta(), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 2.dp))
+            FitTitle(title.uppercase(), 34.sp, 36.sp, color = Paper, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.3).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, minSize = 18f)
         }
-        Text(back.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, modifier = Modifier.padding(top = 6.dp))
-        FitTitle(title, 44.sp, 46.sp, letterSpacing = (-1).sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Filete(3.dp, modifier = Modifier.padding(top = 6.dp))
     }
 }
 

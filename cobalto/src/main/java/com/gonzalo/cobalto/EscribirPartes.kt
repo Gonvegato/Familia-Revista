@@ -141,10 +141,14 @@ fun ManuscritoObra(e: Escritos, obra: Doc, ver: Int, abrirParte: (String) -> Uni
         Column(Modifier.fillMaxWidth().padding(bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(cifraE(palabras) + (if (meta > 0) " de ${cifraE(meta)} palabras" else " palabras") + " · ${e.partes(pid).size} ${if (e.partes(pid).size == 1) "parte" else "partes"} · ${est.libro.size} ${if (est.libro.size == 1) "capítulo" else "capítulos"}", color = Muted, fontSize = 13.sp)
             if (meta > 0) Bar((palabras.toFloat() / meta).coerceIn(0f, 1f), colorEscrito(obra.s("color")), height = 4.dp)
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                ESTADOS_ESCENA.indices.forEach { i -> Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(9.dp).clip(CircleShape).background(colorEstado(i))); Spacer(Modifier.width(5.dp)); Text(cuentaEstado(i, estados[i] ?: 0), color = Muted, fontSize = 12.sp) } }
-                FiltroRevista("Cuadrados", !lista) { lista = false }
-                FiltroRevista("Lista", lista) { lista = true }
+            // (en varias líneas si no cabe: con la letra grande, «Cuadrados» se quedaba cortado en el borde)
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ESTADOS_ESCENA.indices.forEach { i -> Row(Modifier.align(Alignment.CenterVertically), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(9.dp).clip(CircleShape).background(colorEstado(i))); Spacer(Modifier.width(5.dp)); Text(cuentaEstado(i, estados[i] ?: 0), color = Muted, fontSize = 12.sp) } }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FiltroRevista("Cuadrados", !lista) { lista = false }
+                    FiltroRevista("Lista", lista) { lista = true }
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 EnlaceRevista("+ Nuevo capítulo", acento = true) { capNuevo = true }

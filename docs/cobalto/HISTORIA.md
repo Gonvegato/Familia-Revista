@@ -10,6 +10,32 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.6.0 — la cara de Seshat (dirección C)
+
+- **Colores**: el acento de Thot pasa a **cobre #C8703F** (fondo #171E2B y texto #F1EBE0, igual). Quien tenga puesto el dorado de antes
+  (#A79530 en «A tu manera») pasa al cobre solo, una vez, y viaja a sus otros dispositivos; lo demás elegido a mano se queda. El cobre se
+  lee sobre el azul noche (4,7:1); sobre la cabecera crema se oscurece lo justo.
+- **Una sola pantalla con páginas**: la cabecera de tinta con «THOT.» (que se recoge al bajar) y una fila de pestañas —PORTADA ·
+  ESCRIBIENDO · EN PAUSA · TERMINADAS · ARCHIVO— que se pasan con el dedo. Atrás vuelve a la portada. «Importar» está en Escribiendo.
+- **La portada**: el cartel es la obra en la que escribes, con su portada grande y su paspartú sobre su fondo o su color, «AHORA ESCRIBES ·
+  CAP. N · NOMBRE», las palabras de hoy y las de la obra y la barra de su meta; debajo, «SEGUIR ESCRIBIENDO →» (abre el editor donde lo
+  dejaste) y «EMPEZAR UN SPRINT →». Sin obras, una invitación a crear la primera.
+- **Meta del día**: una para todas tus obras y en todos tus dispositivos (de serie 500 palabras; Ajustes → Escritura): «507 / 500», su barra,
+  «CUMPLIDA N DE LOS ÚLTIMOS 30 DÍAS» y la semana en barras que se tocan (sale lo escrito ese día), con la meta como raya.
+- Debajo, «También escribes» y «En pausa» (lado a lado si son pocas) y «Tu 2026»: las obras con capítulos terminados este año.
+- **Listas** con la portada de cada obra (84×126), su número, género, palabras y lo que lleva de su meta; cifras arriba y órdenes de cada
+  página (última vez, más palabras, más avanzada, título, creadas).
+- **La ficha de la obra, a doble página**: el fondo o la portada ampliada, Volver · Imágenes · Editar · Borrar, el estado (ESCRIBIENDO ·
+  CAP. N / EN PAUSA / TERMINADA), el título enorme, el botón principal (SEGUIR ESCRIBIENDO / EMPEZAR A ESCRIBIR / LEER EN SESHAT) y las
+  secciones 01 Tu escritura, 02 Capítulos, 03 Fichas y notas, 04 Línea temporal, 05 El estudio y 06 Datos. Tocar una obra abre su ficha;
+  el estudio está a un toque, en la pestaña que toques.
+- **IMÁGENES**: portada y fondo de cada obra (de tu móvil, de internet o la portada como fondo), en tu cuenta; el **encuadre**, en cada
+  dispositivo. Sin portada, una tapa de su color con el título.
+- **El estudio, el editor y la lectura de fichas y notas**, con barras en bloques de tinta y títulos en grotesca; por dentro, todo igual.
+- Icono nuevo: «T.» con el punto cobre y la franja «ESCRITOS». Widgets en la dirección C (con la meta del día de la cuenta).
+- Lo de siempre, igual: sincronización de escritos, puente con Atrio del PC, capítulos publicados para Seshat y Jonsu, pareja, PDF,
+  versiones y copias.
+
 ## 0.4.2 — lo tuyo, en tu cuenta
 
 - **Los sprints están en tu cuenta.** Hasta ahora cada sprint se quedaba en el dispositivo donde lo hacías: en las cifras de la obra el

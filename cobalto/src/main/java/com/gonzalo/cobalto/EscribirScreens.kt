@@ -276,7 +276,9 @@ fun ObraScreen(e: Escritos, id: String, onBack: () -> Unit, abrir: (String) -> U
     val ver = e.version
     val obra = e.get(id) ?: return
     val nueva = EscribirHub.guiaAlEntrar
-    var pestana by rememberSaveable(id) { mutableIntStateOf(if (nueva != null && nueva.first == id && System.currentTimeMillis() - nueva.second < 4000) TAB_GUIA else 0) }
+    val pedida = EscribirHub.pestanaAlEntrar?.takeIf { it.first == id }?.second
+    var pestana by rememberSaveable(id) { mutableIntStateOf(if (nueva != null && nueva.first == id && System.currentTimeMillis() - nueva.second < 4000) TAB_GUIA else pedida ?: 0) }
+    LaunchedEffect(Unit) { if (pedida != null) EscribirHub.pestanaAlEntrar = null }
     var focoArbol by remember { mutableStateOf<String?>(null) }
     val irArbol = EscribirHub.irArbol
     LaunchedEffect(irArbol) { if (irArbol != null) { focoArbol = irArbol; pestana = TAB_ARBOL; EscribirHub.irArbol = null } }
