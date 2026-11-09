@@ -178,10 +178,16 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
         val lista = Competiciones.lista(u, anteriores)
         ElegirCompeticion(u, lista, competicion, desplegable) { competicion = it }
         BuscarCompeticiones(u, Modifier.padding(top = 6.dp))
-        Campo("Rival", rival, "Contra quién") { rival = it }
+        val conSeleccion = Competiciones.deSelecciones(competicion)
+        val tuEquipo = if (conSeleccion) u.personaje.suSeleccion.ifBlank { "tu selección" } else u.club
+        if (conSeleccion) Tarjeta(Modifier.padding(top = 8.dp), bordeIzq = Acento) {
+            TextoTarjeta("Con la selección${u.personaje.suSeleccion.takeIf { it.isNotBlank() }?.let { " de $it" } ?: ""}, no con ${u.club}: la prensa, la afición y la red serán las de tu país, " +
+                "y en tu club lo seguirán desde lejos. No cobras la prima por gol de tu club." + (if (u.personaje.suSeleccion.isBlank()) " (Pon tu nacionalidad o tu selección en el perfil.)" else ""), color = Charcoal)
+        }
+        Campo("Rival", rival, if (conSeleccion) "Qué selección" else "Contra quién") { rival = it }
         MagChoice(listOf("En casa", "Fuera"), if (local) 0 else 1, "Dónde") { local = it == 0 }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Campo("Goles de ${u.club}", gf, "0", Modifier.weight(1f), teclado = KeyboardType.Number) { gf = it.filter { c -> c.isDigit() }.take(2) }
+            Campo("Goles de $tuEquipo", gf, "0", Modifier.weight(1f), teclado = KeyboardType.Number) { gf = it.filter { c -> c.isDigit() }.take(2) }
             Campo("Del rival", gc, "0", Modifier.weight(1f), teclado = KeyboardType.Number) { gc = it.filter { c -> c.isDigit() }.take(2) }
         }
         if (u.modo == Rol.JUGADOR) {

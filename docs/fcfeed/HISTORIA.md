@@ -5,6 +5,21 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.8.1
+
+- **Con la selección, no con el club.** Si en el partido pones una competición de selecciones («Selección», «Mundial 2026», «Eurocopa»,
+  «Copa América», «Nations League», «Liga de Naciones», las eliminatorias, «Amistoso internacional», los Juegos, los Sub-21…), FcFeed
+  sabe que es con tu selección: el aviso sale al meter el partido, el marcador dice «España 2-1 Alemania», Claude lo cuenta con la
+  prensa y la afición del país (y tu club, de lejos), no cobras la prima por gol de tu club y la fama del partido pesa algo más. El
+  nombre del torneo se guarda tal cual (ya no se convertiría en «Selección») (`Competiciones.deSelecciones`, `Narrador.partido`).
+- **Tu selección y tu físico.** Al crear la carrera (y en Editar perfil): la selección si no es la de tu nacionalidad, altura, peso, pie
+  bueno y cómo eres por fuera. Salen en tu ficha y Claude los tiene siempre (la prensa rosa, los anuncios, «el zurdo de 1,85»). La
+  nacionalidad ya se pedía; ahora también se puede cambiar en el perfil.
+- **Ofertas con las cifras bien.** En el hecho histórico, Claude recibía los sueldos de una leyenda y la app los recortaba al nivel con el
+  que te quedabas: el texto decía 150.000 € a la semana y la casilla, 80 mil. Ahora Claude recibe los rangos de cada nivel posible y,
+  además, si una cifra se recorta, el texto se cuadra con ella (también en las ofertas que ya tenías). Y fuera el «(marca inventada)»
+  del nombre: dentro de la historia todo es real.
+
 ## 0.8.0
 
 - **Hecho histórico.** El botón + abre ahora dos cosas: «Meter el partido» y «Hecho histórico», para algo fuera de lo normal que lo cambia

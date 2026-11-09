@@ -48,6 +48,8 @@ abstract class CapturasHechoBase {
                             1 -> PantHecho(Carreras.de(u0.id)!!, {}, {}, texto0 = cuenta)
                             2 -> PantHecho(Carreras.de(u0.id)!!, {}, {}, texto0 = cuenta, entendido0 = ent)
                             3 -> PantCarrera(u0.id, {}, {}, {}, inicial = 1)
+                            5 -> PantNueva({}, {})
+                            6 -> PantPartido(u0.id, {}, {}, comoInicial = 0)
                             4 -> PaginaRevista { Carreras.entradasDe(u0.id).first { it.tipo == TipoEntrada.HISTORICO }.let { EdicionEspecial(Carreras.de(u0.id)!!, it, abierta0 = true, {}, {}) } }
                         }
                     }
@@ -60,6 +62,11 @@ abstract class CapturasHechoBase {
         Motor.hecho(u0.id, cuenta, ent, Ruido.MUNDO)
         cual = 3; foto("h4-inicio-edicion-especial")
         cual = 4; foto("h5-edicion-abierta")
+        cual = 5; foto("s1-nueva-carrera")
+        Carreras.guarda(Carreras.de(u0.id)!!.let { it.copy(personaje = it.personaje.copy(nacionalidad = "España", altura = 184, peso = 77, pie = "Zurdo")) })
+        Motor.partido(u0.id, Partido("2026/27", "Mundial 2026", "Alemania", true, 2, 1, 90, 1, 0, 8.4, fecha = "2026-07-04"))
+        cual = 6; foto("s2-partido-seleccion")
+        cual = 3; foto("s3-inicio-tras-mundial")
         ClaveApi.fija = null; Gasto.mesFijo = null
     }
 }

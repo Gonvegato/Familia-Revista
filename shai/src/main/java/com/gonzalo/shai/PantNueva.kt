@@ -28,6 +28,11 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
     var posicion by rememberSaveable { mutableStateOf("") }
     var dorsal by rememberSaveable { mutableStateOf("") }
     var nacimiento by rememberSaveable { mutableStateOf("") }
+    var seleccion by rememberSaveable { mutableStateOf("") }
+    var altura by rememberSaveable { mutableStateOf("") }
+    var peso by rememberSaveable { mutableStateOf("") }
+    var pie by rememberSaveable { mutableStateOf("") }
+    var aspecto by rememberSaveable { mutableStateOf("") }
     var club by rememberSaveable { mutableStateOf("") }
     var liga by rememberSaveable { mutableStateOf("") }
     var temporada by rememberSaveable { mutableStateOf("2026/27") }
@@ -83,6 +88,20 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
             Campo("Posición", posicion, "DC, MCO, LD…", Modifier.weight(2f)) { posicion = it }
             Campo("Dorsal", dorsal, "9", Modifier.weight(1f), teclado = KeyboardType.Number) { dorsal = it.filter { c -> c.isDigit() }.take(2) }
         }
+        Campo("Selección (si no es la de tu nacionalidad)", seleccion, "La de ${nacionalidad.trim().ifBlank { "tu país" }}") { seleccion = it.take(40) }
+        Text("Cuando metas un partido de selecciones (el Mundial, la Eurocopa, la Nations League, «Selección»…), FcFeed sabe que es con ella y no con tu club.",
+            color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
+        BloqueEditor("Tu físico")
+        if (modo == Rol.JUGADOR) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Campo("Altura (cm)", altura, "183", Modifier.weight(1f), teclado = KeyboardType.Number) { altura = it.filter { c -> c.isDigit() }.take(3) }
+                Campo("Peso (kg)", peso, "76", Modifier.weight(1f), teclado = KeyboardType.Number) { peso = it.filter { c -> c.isDigit() }.take(3) }
+            }
+            MagChoice(listOf("Diestro", "Zurdo", "Ambidiestro"), listOf("Diestro", "Zurdo", "Ambidiestro").indexOf(pie), "Pie bueno") { pie = listOf("Diestro", "Zurdo", "Ambidiestro")[it] }
+        }
+        Campo("Cómo es por fuera (opcional)", aspecto, "Moreno, barba corta, tatuajes en el brazo, complexión fuerte…", lineas = 3) { aspecto = it.take(300) }
+        Text("La prensa rosa, la red y los anuncios lo usan; los atributos del juego (ritmo, físico…) van en tu carta, más abajo.",
+            color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
         BloqueEditor("Dónde")
         Campo("Club", club, "El de tu partida") { club = it }
         Campo("Liga", liga, "LaLiga, Premier League…") { liga = it }
@@ -145,7 +164,9 @@ fun PantNueva(alVolver: () -> Unit, alCreada: (String) -> Unit) {
             val pj = Personaje(nombre.trim(), apodo.trim(), edad.toIntOrNull() ?: 18, nacionalidad.trim(), if (modo == Rol.JUGADOR) posicion.trim() else "",
                 if (modo == Rol.JUGADOR) dorsal.toIntOrNull() ?: 0 else 0, media.toIntOrNull() ?: 0,
                 cifras.mapValues { it.value.toIntOrNull() ?: 0 }.filterValues { it > 0 }, rasgos.trim(),
-                media.toIntOrNull()?.takeIf { it > 0 }?.let { listOf(0 to it) } ?: emptyList(), Fechas.lee(nacimiento)?.let { Fechas.iso(it) } ?: "")
+                media.toIntOrNull()?.takeIf { it > 0 }?.let { listOf(0 to it) } ?: emptyList(), Fechas.lee(nacimiento)?.let { Fechas.iso(it) } ?: "",
+                if (modo == Rol.JUGADOR) altura.toIntOrNull()?.takeIf { it in 120..230 } ?: 0 else 0, if (modo == Rol.JUGADOR) peso.toIntOrNull()?.takeIf { it in 35..160 } ?: 0 else 0,
+                if (modo == Rol.JUGADOR) pie else "", aspecto.trim(), seleccion.trim().takeIf { !Vida.mismo(it, nacionalidad) }.orEmpty())
             val c = Contratos.primero(nivel, club.trim(), temporada.trim(), modo)
             val u = Universo(Universo.nuevoId(), modo, pj, club.trim(), liga.trim(), temporada.trim(), c.sueldo, c.hasta, numero(dinero),
                 fuera = Fuera.INICIAL + mapOf(Fuera.FAMA to nivel.fama, Fuera.AFICION to nivel.aficion, Fuera.CARISMA to nivel.carisma),

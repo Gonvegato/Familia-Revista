@@ -20,7 +20,7 @@ object Competiciones {
     const val OTRA = "Otra"
 
     /** Qué tipo de competición es un nombre (para emparejar variantes). */
-    enum class Familia { AMISTOSO, SELECCION, MUNDIAL_CLUBES, CONFERENCE, EUROPA, CHAMPIONS, SUPERCOPA, COPA, LIGA }
+    enum class Familia { AMISTOSO, SELECCION, TORNEO_SELECCIONES, MUNDIAL_CLUBES, CONFERENCE, EUROPA, CHAMPIONS, SUPERCOPA, COPA, LIGA }
 
     /** «LaLiga EA Sports» → «laliga ea sports»; sin tildes, sin signos. */
     fun norm(s: String): String = Normalizer.normalize(s.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
@@ -35,9 +35,11 @@ object Competiciones {
         val n = norm(s)
         if (n.isBlank()) return null
         return when {
+            hay(n, "amistoso internacional", "amistoso con la seleccion", "international friendly") -> Familia.TORNEO_SELECCIONES
             hay(n, "amistos", "pretemporada", "friendly", "friendlies", "trofeo", "gira de") -> Familia.AMISTOSO
             n in setOf("seleccion", "seleccion nacional", "internacional", "partido internacional", "con la seleccion", "selecciones") || n.startsWith("seleccion ") -> Familia.SELECCION
             hay(n, "mundial de clubes", "club world cup", "intercontinental") -> Familia.MUNDIAL_CLUBES
+            torneoDeSelecciones(n) -> Familia.TORNEO_SELECCIONES
             hay(n, "conference", "uecl") -> Familia.CONFERENCE
             hay(n, "europa league", "liga europa", "uel", "uefa europa", "copa de la uefa", "copa uefa") -> Familia.EUROPA
             hay(n, "champions", "liga de campeones", "ucl", "copa de europa") -> Familia.CHAMPIONS
@@ -48,6 +50,17 @@ object Competiciones {
             else -> null
         }
     }
+
+    /** Los torneos de selecciones (el Mundial, la Eurocopa, la Copa América, la Nations League, las eliminatorias, los Juegos…), ya normalizado. */
+    private fun torneoDeSelecciones(n: String): Boolean =
+        hay(n, "mundial", "copa del mundo", "world cup", "eurocopa", "copa america", "nations league", "liga de naciones", "copa africa",
+            "copa de africa", "africa cup", "afcon", "asian cup", "copa asiatica", "copa de asia", "gold cup", "copa oro", "juegos olimpicos", "olimpiadas", "olympic", "finalissima",
+            "copa confederaciones", "confederations", "sub 21", "sub 20", "sub 19", "sub 17", "u21", "u20", "u19", "u17") ||
+            Regex("""\b(uefa )?euro( (19|20)?\d{2})?$|\beuro ?(19|20)?\d{2}\b""").containsMatchIn(n) ||
+            (Regex("clasif|eliminator|qualif").containsMatchIn(n) && Regex("mundial|world|euro|america|africa|asia|selecci").containsMatchIn(n))
+
+    /** ¿Es de la selección (no de su club)? «Selección», «Mundial 2026», «Eurocopa», «Nations League», «Amistoso internacional»… */
+    fun deSelecciones(s: String): Boolean = familia(s).let { it == Familia.SELECCION || it == Familia.TORNEO_SELECCIONES }
 
     /** Una competición «bonita» a partir de lo que escribió él («liga» → «Liga»). */
     fun bonita(s: String): String = s.trim().replace(Regex("\\s+"), " ").replaceFirstChar { it.uppercase() }

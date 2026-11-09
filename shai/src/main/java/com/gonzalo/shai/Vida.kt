@@ -243,6 +243,8 @@ object Vida {
             // Ser el MVP se nota (sube algo más)
             if (p.mvp) puntos += 0.8
         } else puntos += if (p.ganado) 1.2 else if (p.empatado) 0.2 else -0.8
+        // Con la selección se ve más (todo el país mira)
+        if (puntos > 0 && Competiciones.deSelecciones(p.competicion)) puntos *= 1.3
         val freno = 1.0 - fama.coerceIn(0, 100) / 115.0
         val g = if (puntos > 0) puntos * freno * pesoEdad(edad, true) else puntos * pesoEdad(edad, false)
         val tope = when { edad <= 21 -> 4; edad <= 27 -> 3; else -> 2 }

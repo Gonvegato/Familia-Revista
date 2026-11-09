@@ -23,7 +23,7 @@ Reglas que no se rompen nunca:
 1. El campo es del jugador. Los resultados, los minutos, los goles, las asistencias, las notas, la media y las cifras del juego son los que él te da: no los cambies ni inventes otros. No inventes lesiones, suplencias, sanciones, alineaciones, resultados, minutos de los goles, cómo fueron las jugadas ni nada que pase dentro del campo o que él tenga que hacer en el juego. Puedes comentar, opinar y exagerar lo que te da, no añadir hechos del campo.
 2. Personas reales (futbolistas, entrenadores, periodistas, famosos): solo de pasada y en público, en tono neutro o amable (un saludo, un comentario de un partido, una foto en un evento). Nunca les pongas romances, sexo, escándalos, delitos, insultos, problemas de salud ni frases polémicas. Todo lo íntimo, lo escandaloso y lo de pareja es SIEMPRE con personajes inventados.
 3. El protagonista es un mujeriego (a no ser que sus rasgos digan otra cosa): ligues, rumores, fotos con chicas, invitaciones, celos y exparejas, siempre con mujeres inventadas y mayores de edad, a nivel de prensa rosa y de cotilleo. Nada de contenido sexual explícito: se insinúa, no se describe.
-4. Clubes y competiciones: los reales se pueden nombrar (son el juego), sin inventarles escándalos institucionales graves. Medios de comunicación, programas, marcas, empresas, discotecas, restaurantes e influencers: inventados (con nombres creíbles), nunca reales.
+4. Clubes y competiciones: los reales se pueden nombrar (son el juego), sin inventarles escándalos institucionales graves. Medios de comunicación, programas, marcas, empresas, discotecas, restaurantes e influencers: inventados (con nombres creíbles), nunca reales. Dentro de la historia todo es real: nunca escribas «(inventada)», «(ficticio)» ni nada que avise de que algo es inventado.
 5. El dinero en euros, con cifras creíbles para su nivel y su club. Las ofertas son propuestas que él decide en la app (si acepta, lo hará en el juego): de clubes reales que encajen con su nivel de AHORA y su momento, o de marcas inventadas.
 6. Su trayectoria (lo que él cuenta de su pasado, también premios y títulos reales que diga haber ganado) es su historia: respétala y úsala. Los premios que des tú al cerrar una temporada son siempre de medios inventados.
 7. Su edad y cómo se le ve marcan el tono: a un chaval de 18 que rinde por encima de lo esperado se le trata como un terremoto (nuevo fenómeno, comparaciones, presión); a uno de 29 con un buen tramo, como una buena racha de alguien cuyo nivel ya se conoce; con la edad alta, los malos tramos se leen como declive. El alcance va con su nivel de AHORA: los seguidores, los «me gusta», cuánto se habla de él y qué medios le cubren (un canterano, la prensa local y cuatro cuentas de la grada; una estrella, medio mundo). Las cifras de interacción, creíbles para sus seguidores.
@@ -49,6 +49,10 @@ Reglas que no se rompen nunca:
             (if (u.modo == Rol.JUGADOR && pj.posicion.isNotBlank()) ", ${pj.posicion}" else "") + (if (pj.dorsal > 0) ", dorsal ${pj.dorsal}" else "") +
             (if (pj.media > 0) ", media ${pj.media} en el juego" else ""))
         if (pj.rasgos.isNotBlank()) appendLine("- Cómo es: ${pj.rasgos}")
+        if (pj.fisico.isNotBlank() || pj.aspecto.isNotBlank()) appendLine("- Físico: " + listOf(pj.fisico, pj.aspecto).filter { it.isNotBlank() }.joinToString(". "))
+        if (pj.suSeleccion.isNotBlank()) appendLine("- Su selección: ${pj.suSeleccion}" + (if (pj.seleccion.isNotBlank() && !Vida.mismo(pj.seleccion, pj.nacionalidad)) " (juega con ella aunque es ${pj.nacionalidad})" else "") +
+            (partidos.filter { Competiciones.deSelecciones(it.competicion) }.takeIf { it.isNotEmpty() }?.let { l -> ". Con ella lleva ${l.size} partido${if (l.size > 1) "s" else ""}" +
+                (if (u.modo == Rol.JUGADOR) ", ${l.sumOf { it.goles }} goles" else "") } ?: ". Aún no ha jugado con ella en FcFeed"))
         Fechas.lee(pj.nacimiento)?.let { nac -> partidos.lastOrNull()?.let { Fechas.lee(it.fecha) }?.let { f ->
             val (a, d) = Fechas.edad(nac, f); appendLine("- Edad exacta el día del último partido (${Fechas.texto(f)}): ${Fechas.textoEdad(a, d)}") } }
         if (u.trayectoria.isNotBlank()) appendLine("- Su trayectoria (lo que él cuenta de su pasado; respétalo): ${u.trayectoria}")
@@ -114,12 +118,26 @@ Reglas que no se rompen nunca:
         }
     }.trim()
 
+    /**
+     * El partido para Claude. Si es con la selección (una competición de selecciones: «Selección», «Mundial 2026», «Eurocopa», «Nations
+     * League»…), que se sepa que no es con su club y se cuente en consecuencia.
+     */
+    fun partido(u: Universo, p: Partido): String {
+        val base = p.resumen(u.modo)
+        if (!Competiciones.deSelecciones(p.competicion)) return base
+        val sel = u.personaje.suSeleccion.ifBlank { null }
+        val quien = if (u.modo == Rol.MISTER) "la dirige como seleccionador" else "juega con ella"
+        return base + "\n" + """
+OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: ""} ($quien), NO CON SU CLUB (${u.club}). «${p.competicion}» es de selecciones: el rival es otra selección, la prensa que manda es la nacional (y la internacional si es un torneo grande), la afición es la de su país y el vestuario es el de la selección. Sus compañeros y el ${if (u.modo == Rol.MISTER) "presidente de la federación" else "seleccionador"}, si son personas reales, solo de pasada y sin frases polémicas (o sin nombre). En su club (${u.club}) lo siguen desde lejos: orgullo, miedo al cansancio o a una lesión, lo que dirá su entrenador. No mezcles este resultado con la liga ni con su club: no suma para ${u.club}.
+""".trim()
+    }
+
     /** Con cuántas decisiones abiertas ya no se le ponen más. */
     const val MAX_ABIERTAS = 2
 
     /** Una línea de algo que ya pasó. */
     fun resumen(e: Entrada, modo: Rol): String = when {
-        e.partido != null -> "Partido: " + e.partido.resumen(modo) + (e.prensa?.let { " · Portada: «${it.titular}»" } ?: "") + decisionResumen(e.decision)
+        e.partido != null -> "Partido" + (if (Competiciones.deSelecciones(e.partido.competicion)) " CON LA SELECCIÓN (no con su club)" else "") + ": " + e.partido.resumen(modo) + (e.prensa?.let { " · Portada: «${it.titular}»" } ?: "") + decisionResumen(e.decision)
         else -> listOf(e.titulo, e.texto.take(240)).filter { it.isNotBlank() }.joinToString(": ") + decisionResumen(e.decision) +
             e.ofertas.filter { it.estado != Oferta.ABIERTA }.joinToString("") { " · Oferta de ${it.de}: ${it.estado}" }
     }
@@ -208,7 +226,7 @@ UNA DECISIÓN (si hay = true): «titulo» corto; «contexto» de 4 a 7 frases qu
 $ctx
 
 ACABA DE JUGAR ESTE PARTIDO:
-${p.resumen(u.modo)}
+${partido(u, p)}
 
 Escribe lo que pasa en la red justo después de este partido, que se note su repercusión según su nivel y lo que ha pasado antes.
 ${comoRed(u, "De 10 a 14")}
@@ -220,11 +238,11 @@ GENTE NUEVA: con su nivel de ahora (${u.nivelActual.nombre.lowercase()}) entra g
     /** Tras un partido: la portada con su noticia, las ofertas (si tocan), una decisión (si toca), lo que no contestó y lo que cambia (Sonnet). */
     fun prensa(u: Universo, p: Partido, ctx: String, sinContestar: List<Entrada> = emptyList()) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto(buildString {
         appendLine(ctx); appendLine()
-        appendLine("ACABA DE JUGAR ESTE PARTIDO:"); appendLine(p.resumen(u.modo)); appendLine()
+        appendLine("ACABA DE JUGAR ESTE PARTIDO:"); appendLine(partido(u, p)); appendLine()
         appendLine("""
 Escribe:
 - La portada del día después en un diario deportivo inventado que le cubra según su nivel (local o nacional; internacional si es una estrella): cabecera, titular, entradilla (1-2 frases) y la noticia entera en «articulo» (3 párrafos separados por una línea en blanco, unas 220-300 palabras: qué hizo con las cifras que te ha dado, qué significa para él y su club, qué se dice en la grada y en el vestuario, y algo de fuera del campo). Y 2 o 3 «secundarios» (titular y entradilla de 1-2 frases), alguno de fuera del campo.
-- Ofertas: solo si encajan de verdad con su nivel de ahora, su rendimiento y su momento (lo normal es ninguna; como mucho una o dos). Salario en euros a la semana, prima en euros de una vez, años de contrato; en «texto», por qué le quieren y qué le ofrecen de verdad (minutos, proyecto, escaparate). ${Rangos.texto(u.nivelActual)}
+- Ofertas: solo si encajan de verdad con su nivel de ahora, su rendimiento y su momento (lo normal es ninguna; como mucho una o dos). Salario en euros a la semana, prima en euros de una vez, años de contrato; en «texto», por qué le quieren y qué le ofrecen de verdad (minutos, proyecto, escaparate), con las mismas cifras que pones en sus campos. ${Rangos.texto(u.nivelActual)}
 - $COMO_DECISION Que salga de este partido o de lo que ya viene pasando (unas declaraciones, una fiesta para celebrarlo, un rifirrafe en redes, un mensaje que contestar...).
 - Efectos de este partido en lo de fuera del campo (fama, afición, disciplina, carisma: pequeños, de -5 a +5) y en su gente (por su nombre exacto). Dinero: 0 salvo que haya un motivo (una prima por objetivos, una multa del club por algo de fuera del campo).
 - Gente nueva solo si aparece alguien que vaya a importar (inventado).
@@ -336,7 +354,7 @@ Es una EDICIÓN ESPECIAL: lo más gordo que le ha pasado hasta ahora. Escribe:
 - ${comoRed(u, "De 16 a 22")} OJO: sus seguidores y sus «me gusta» de ahora son de ANTES de esto: con este ruido los posts gordos se disparan (varias veces lo normal, y más cuanto más lejos llega el ruido), y la tendencia lleva muchos posts. Que se note la locura: gente que no le conocía, cuentas de otros países si el ruido llega, memes, la afición de su club, la de su selección, escépticos.
 - $COMO_MENSAJES De 3 a 5 conversaciones: su familia, su representante, sus amigos de siempre (un grupo), alguna chica o alguna ex que reaparece, alguien que de repente se acuerda de él.
 - $COMO_DECISION Una que salga de esto (la presión, una entrevista, un patrocinio, un mensaje que contestar), salvo que ya tenga ${MAX_ABIERTAS} o más pendientes.
-- «ofertas»: de 0 a 3 que salgan de esto (marcas que le quieren ya, algún club que pregunta), con lo que pediría con su nivel de después. ${Rangos.texto(ruido.tope)}
+- «ofertas»: de 0 a 3 que salgan de esto (marcas que le quieren ya, algún club que pregunta), con lo que pediría con el nivel que pongas en «nivel_tras» (y el texto, con esas mismas cifras). Por nivel:\n${Nivel.entries.filter { it.ordinal >= u.nivelActual.ordinal && it.ordinal <= (if (ruido.sinTope) ruido.tope else u.nivelActual).ordinal }.joinToString("\n") { "  · " + Rangos.texto(it) }}
 - «nivel_tras»: el nivel en el que le deja esto (${Nivel.entries.joinToString(", ") { it.name }}), nunca por debajo del de ahora y ${if (ruido.sinTope) "como mucho ${ruido.tope.name}" else "el de ahora (con este ruido no cambia)"}.
 - Efectos en lo de fuera del campo: afición, disciplina y carisma (de -10 a +10) y su gente (por su nombre exacto, de -15 a +15); «fama»: 0 (la pone la app con el nivel). Dinero: 0 salvo un motivo claro.
 - «gente_nueva»: de 0 a 2 personas INVENTADAS que aparecen por esto (un representante de los grandes, una influencer, un periodista que le persigue…), con nombre y apellido, su rol y una nota corta; y en «mensajes», por cada una, una conversación nueva (su nombre como chat, «id» vacío) en la que se presenta.

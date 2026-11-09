@@ -155,6 +155,10 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit, alChat: (String) -> Unit = {})
                 FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Dato(edadExacta(u))
                     if (pj.nacionalidad.isNotBlank()) Dato(pj.nacionalidad)
+                    if (pj.seleccion.isNotBlank() && !Vida.mismo(pj.seleccion, pj.nacionalidad)) Dato("Juega con ${pj.seleccion}")
+                    if (pj.altura in 120..230) Dato("${pj.altura / 100},${"%02d".format(pj.altura % 100)} m")
+                    if (pj.peso in 35..160) Dato("${pj.peso} kg")
+                    if (pj.pie.isNotBlank()) Dato(pj.pie)
                     if (u.modo == Rol.JUGADOR && pj.posicion.isNotBlank()) Dato(pj.posicion)
                     if (pj.dorsal > 0) Dato("#${pj.dorsal}")
                     if (u.modo == Rol.MISTER) Dato("Míster")
@@ -430,6 +434,12 @@ private fun EditarCarta(u: Universo, alAcabar: () -> Unit) {
     var trayectoria by remember { mutableStateOf(u.trayectoria) }
     var edad by remember { mutableStateOf("${pj.edad}") }
     var nacimiento by remember { mutableStateOf(Fechas.lee(pj.nacimiento)?.let { Fechas.texto(it) } ?: "") }
+    var nacionalidad by remember { mutableStateOf(pj.nacionalidad) }
+    var seleccion by remember { mutableStateOf(pj.seleccion) }
+    var altura by remember { mutableStateOf(if (pj.altura > 0) "${pj.altura}" else "") }
+    var peso by remember { mutableStateOf(if (pj.peso > 0) "${pj.peso}" else "") }
+    var pie by remember { mutableStateOf(pj.pie) }
+    var aspecto by remember { mutableStateOf(pj.aspecto) }
     if (u.modo == Rol.JUGADOR) Campo("Media", media, "—", teclado = KeyboardType.Number) { media = it.filter { c -> c.isDigit() }.take(2) }
     (if (u.modo == Rol.MISTER) Cifras.MISTER else Cifras.JUGADOR).chunked(3).forEach { fila ->
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -440,6 +450,16 @@ private fun EditarCarta(u: Universo, alAcabar: () -> Unit) {
     Campo("Edad", edad, "18", teclado = KeyboardType.Number) { edad = it.filter { c -> c.isDigit() }.take(2) }
     Campo("Fecha de nacimiento en FC", nacimiento, "dd/mm/aaaa (opcional)") { nacimiento = it.take(20) }
     if (nacimiento.isNotBlank() && Fechas.lee(nacimiento) == null) Nota("No entiendo esa fecha: ponla como 12/08/2008.", color = Acento)
+    Campo("Nacionalidad", nacionalidad, "España") { nacionalidad = it.take(40) }
+    Campo("Selección (si no es la de tu nacionalidad)", seleccion, "La de ${nacionalidad.trim().ifBlank { "tu país" }}") { seleccion = it.take(40) }
+    if (u.modo == Rol.JUGADOR) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Campo("Altura (cm)", altura, "183", Modifier.weight(1f), teclado = KeyboardType.Number) { altura = it.filter { c -> c.isDigit() }.take(3) }
+            Campo("Peso (kg)", peso, "76", Modifier.weight(1f), teclado = KeyboardType.Number) { peso = it.filter { c -> c.isDigit() }.take(3) }
+        }
+        MagChoice(listOf("Diestro", "Zurdo", "Ambidiestro"), listOf("Diestro", "Zurdo", "Ambidiestro").indexOf(pie), "Pie bueno") { pie = listOf("Diestro", "Zurdo", "Ambidiestro")[it] }
+    }
+    Campo("Cómo es por fuera", aspecto, "Moreno, barba corta, tatuajes…", lineas = 3) { aspecto = it.take(300) }
     Campo("Su forma de ser", rasgos, "", lineas = 3) { rasgos = it }
     Campo("Quién es (su historia, su palmarés)", trayectoria, "23 años, Balón de Oro, canterano que debuta…", lineas = 4) { trayectoria = it }
     Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -447,6 +467,8 @@ private fun EditarCarta(u: Universo, alAcabar: () -> Unit) {
             val m = media.toIntOrNull() ?: 0
             val nuevo = pj.copy(media = m, atributos = cifras.mapValues { it.value.toIntOrNull() ?: 0 }.filterValues { it > 0 }, rasgos = rasgos.trim(), edad = edad.toIntOrNull() ?: pj.edad,
                 nacimiento = Fechas.lee(nacimiento)?.let { Fechas.iso(it) } ?: if (nacimiento.isBlank()) "" else pj.nacimiento,
+                nacionalidad = nacionalidad.trim(), seleccion = seleccion.trim().takeIf { !Vida.mismo(it, nacionalidad) }.orEmpty(),
+                altura = altura.toIntOrNull()?.takeIf { it in 120..230 } ?: 0, peso = peso.toIntOrNull()?.takeIf { it in 35..160 } ?: 0, pie = pie, aspecto = aspecto.trim(),
                 historial = if (m > 0 && m != pj.media) (pj.historial + (u.paso to m)).takeLast(60) else pj.historial)
             Carreras.guarda((Carreras.de(u.id) ?: u).copy(personaje = nuevo, trayectoria = trayectoria.trim())); alAcabar()
         }

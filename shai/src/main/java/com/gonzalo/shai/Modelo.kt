@@ -72,22 +72,43 @@ object Rangos {
     class Rango(val sueldo: LongRange, val primaMax: Long, val patroSemana: Long, val patroPrima: Long, val quien: String)
     fun de(n: Nivel): Rango = when (n) {
         Nivel.CANTERANO -> Rango(1_500L..12_000L, 60_000, 2_000, 20_000,
-            "cesiones a clubes de Segunda o a filiales, renovaciones modestas con su club y patrocinios de comercios y marcas locales (inventadas)")
+            "cesiones a clubes de Segunda o a filiales, renovaciones modestas con su club y patrocinios de comercios y marcas locales")
         Nivel.PROMESA -> Rango(8_000L..40_000L, 400_000, 8_000, 150_000,
-            "clubes medianos de su liga o de Segunda que le den minutos, renovaciones con mejora y marcas nacionales pequeñas (inventadas)")
+            "clubes medianos de su liga o de Segunda que le den minutos, renovaciones con mejora y marcas nacionales pequeñas")
         Nivel.TITULAR -> Rango(25_000L..110_000L, 2_000_000, 25_000, 600_000,
-            "clubes de la parte alta de su liga o medianos de otras grandes ligas, renovaciones buenas y marcas nacionales (inventadas)")
+            "clubes de la parte alta de su liga o medianos de otras grandes ligas, renovaciones buenas y marcas nacionales")
         Nivel.ESTRELLA -> Rango(90_000L..350_000L, 10_000_000, 80_000, 3_000_000,
-            "los grandes de Europa, renovaciones de estrella y marcas grandes internacionales (inventadas)")
+            "los grandes de Europa, renovaciones de estrella y marcas grandes internacionales")
         Nivel.LEYENDA -> Rango(250_000L..900_000L, 30_000_000, 200_000, 10_000_000,
-            "los más grandes del mundo y contratos históricos, y las marcas más grandes del planeta (inventadas)")
+            "los más grandes del mundo y contratos históricos, y las marcas más grandes del planeta")
     }
     fun texto(n: Nivel): String { val r = de(n)
         return "OFERTAS PARA SU NIVEL (${n.nombre.lowercase()}): ${r.quien}. Sueldo entre ${Formato.euros(r.sueldo.first)} y ${Formato.euros(r.sueldo.last)} a la semana; prima de hasta ${Formato.euros(r.primaMax)}; un patrocinio, hasta ${Formato.euros(r.patroSemana)} a la semana y ${Formato.euros(r.patroPrima)} de una vez." }
-    /** Lo que se sale del rango de su nivel, a su sitio. */
+    /** Lo que se sale del rango de su nivel, a su sitio (y el texto, con las cifras de verdad). */
     fun recorta(o: Oferta, n: Nivel): Oferta { val r = de(n)
-        return if (o.tipo == "patrocinio") o.copy(salario = o.salario.coerceIn(0, r.patroSemana), prima = o.prima.coerceIn(0, r.patroPrima))
-        else o.copy(salario = if (o.salario <= 0) 0 else o.salario.coerceIn(r.sueldo.first, r.sueldo.last), prima = o.prima.coerceIn(0, r.primaMax))
+        val x = if (o.tipo == "patrocinio") o.copy(salario = o.salario.coerceIn(0, r.patroSemana), prima = o.prima.coerceIn(0, r.patroPrima))
+            else o.copy(salario = if (o.salario <= 0) 0 else o.salario.coerceIn(r.sueldo.first, r.sueldo.last), prima = o.prima.coerceIn(0, r.primaMax))
+        return x.copy(de = limpiaNombre(x.de), texto = cuadraTexto(x.texto, x.salario, x.prima))
+    }
+
+    /** «Nova Sport (marca inventada)» → «Nova Sport»: dentro de la historia todo es real. */
+    fun limpiaNombre(t: String): String = t.replace(Regex("""\s*\((?:[^()]*\s)?inventad[oa]s?\)""", RegexOption.IGNORE_CASE), "").trim()
+
+    private val CIFRA = Regex("""(\d{1,3}(?:[.\u00A0 ]\d{3})+|\d+)(?:,(\d+))?\s*(millones|millón|mil|M)?(\s*(?:€|euros))?""")
+    /**
+     * Que las cifras del texto sean las de la oferta (si se recortaron al nivel, el texto aún decía las de antes): la que va con «a la
+     * semana» es el sueldo; la que va con «de prima», «por firmar» o «de una vez», la prima.
+     */
+    fun cuadraTexto(t: String, semana: Long, prima: Long): String {
+        if (t.isBlank()) return t
+        return CIFRA.replace(t) { m ->
+            val despues = t.substring(m.range.last + 1).take(40).lowercase()
+            val antes = t.substring(0, m.range.first).takeLast(30).lowercase()
+            val vaSemana = Regex("""^\s*(?:de euros\s*)?(?:a la semana|por semana|semanales|a la semana de más)""").containsMatchIn(despues) || antes.endsWith("semanales de ")
+            val vaPrima = Regex("""^\s*(?:de euros\s*)?(?:de prima|por firmar|por la firma|de una vez|de golpe|de entrada)""").containsMatchIn(despues) || Regex("""prima de\s*$""").containsMatchIn(antes)
+            val nuevo = when { vaSemana && semana > 0 -> semana; vaPrima && prima > 0 -> prima; else -> return@replace m.value }
+            Formato.cifra(nuevo) + m.groupValues[4].trim().let { if (it.isBlank()) "" else " $it" }
+        }
     }
 }
 
@@ -140,18 +161,31 @@ data class Personaje(
     val historial: List<Pair<Int, Int>> = emptyList(),
     /** Su fecha de nacimiento en el juego (ISO, opcional): con ella y las fechas de los partidos, la edad exacta para los récords. */
     val nacimiento: String = "",
+    /** Lo físico (opcional): altura en cm, peso en kg, su pie bueno («Diestro», «Zurdo», «Ambidiestro») y cómo es (pelo, tatuajes, complexión…). */
+    val altura: Int = 0,
+    val peso: Int = 0,
+    val pie: String = "",
+    val aspecto: String = "",
+    /** La selección con la que juega, si no es la de su nacionalidad (vacío: la de [nacionalidad]). */
+    val seleccion: String = "",
 ) {
     val nombreCorto: String get() = apodo.ifBlank { nombre }
+    /** La selección con la que juega: la que puso o, si no, la de su nacionalidad. */
+    val suSeleccion: String get() = seleccion.ifBlank { nacionalidad }
+    /** «1,85 m · 78 kg · zurdo», o vacío. */
+    val fisico: String get() = listOfNotNull(altura.takeIf { it in 120..230 }?.let { "${it / 100},${"%02d".format(it % 100)} m" }, peso.takeIf { it in 35..160 }?.let { "$it kg" },
+        pie.ifBlank { null }?.lowercase()).joinToString(" · ")
     fun aMapa(): Map<String, Any?> = mapOf(
         "n" to nombre, "ap" to apodo, "ed" to edad.toLong(), "na" to nacionalidad, "po" to posicion, "do" to dorsal.toLong(), "me" to media.toLong(),
         "at" to atributos.mapValues { it.value.toLong() }, "ra" to rasgos, "hi" to historial.map { listOf(it.first.toLong(), it.second.toLong()) }, "nc" to nacimiento,
+        "al" to altura.toLong(), "pe" to peso.toLong(), "pi" to pie, "as" to aspecto, "se" to seleccion,
     )
     companion object {
         fun de(m: Map<String, Any?>) = Personaje(
             m["n"].comoTexto(), m["ap"].comoTexto(), m["ed"].comoLong().toInt(), m["na"].comoTexto(), m["po"].comoTexto(), m["do"].comoLong().toInt(),
             m["me"].comoLong().toInt(), m["at"].comoMapa().mapValues { it.value.comoLong().toInt() }, m["ra"].comoTexto(),
             m["hi"].comoLista().mapNotNull { x -> x.comoLista().takeIf { it.size == 2 }?.let { it[0].comoLong().toInt() to it[1].comoLong().toInt() } },
-            m["nc"].comoTexto(),
+            m["nc"].comoTexto(), m["al"].comoLong().toInt(), m["pe"].comoLong().toInt(), m["pi"].comoTexto(), m["as"].comoTexto(), m["se"].comoTexto(),
         )
     }
 }

@@ -99,7 +99,9 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
     private fun datos(t: String): Datos {
         val nombre = Regex("""- (?:Jugador|Entrenador): ([^(,\n]+)""").find(t)?.groupValues?.get(1)?.trim().orEmpty().ifBlank { "el chaval" }
         val apodo = Regex("""- (?:Jugador|Entrenador): [^\n]*?\(«([^»]+)»\)""").find(t)?.groupValues?.get(1).orEmpty()
-        val club = Regex("""- Club: ([^(,\n]+)""").find(t)?.groupValues?.get(1)?.trim().orEmpty().ifBlank { "su club" }
+        // (con la selección, «su club» es su selección)
+        val seleccion = Regex("""CON LA SELECCIÓN DE ([^(\n]+?) \(""").find(t)?.groupValues?.get(1)?.lowercase()?.split(' ')?.joinToString(" ") { w -> w.replaceFirstChar { it.uppercase() } }
+        val club = seleccion ?: Regex("""- Club: ([^(,\n]+)""").find(t)?.groupValues?.get(1)?.trim().orEmpty().ifBlank { "su club" }
         val partido = t.substringAfter("ACABA DE JUGAR ESTE PARTIDO:", "").substringBefore("\n\n")
         val rival = Regex("""(?:En casa contra|En el campo del) ([^(\n]+?) \(""").find(partido)?.groupValues?.get(1)?.trim().orEmpty()
         val comp = Regex("""(?:En casa contra|En el campo del) [^(\n]+? \(([^,)]+)""").find(partido)?.groupValues?.get(1)?.trim().orEmpty()

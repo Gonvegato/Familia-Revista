@@ -152,7 +152,10 @@ fun textoEfectos(e: Efectos): String = buildList {
 fun sinEuro(t: String) = t.removeSuffix("€").trim()
 
 /** El partido en una línea («Real Betis 3-1 Sevilla FC»). */
-fun marcador(u: Universo, p: Partido) = if (p.local) "${u.club} ${p.golesFavor}-${p.golesContra} ${p.rival}" else "${p.rival} ${p.golesContra}-${p.golesFavor} ${u.club}"
+fun marcador(u: Universo, p: Partido): String {
+    val suyo = if (Competiciones.deSelecciones(p.competicion)) u.personaje.suSeleccion.ifBlank { "Su selección" } else u.club
+    return if (p.local) "$suyo ${p.golesFavor}-${p.golesContra} ${p.rival}" else "${p.rival} ${p.golesContra}-${p.golesFavor} $suyo"
+}
 
 // ---------------------------------------------------------------- Inicio
 
@@ -667,13 +670,14 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
         Spacer(Modifier.height(8.dp))
         Tarjeta(bordeIzq = Acento) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Avatar(o.de, 46.dp); Spacer(Modifier.width(12.dp))
+                Avatar(Rangos.limpiaNombre(o.de), 46.dp); Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Sello(Oferta.TIPOS[o.tipo] ?: o.tipo)
-                    Text(o.de, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp, modifier = Modifier.padding(top = 4.dp))
+                    Text(Rangos.limpiaNombre(o.de), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp, modifier = Modifier.padding(top = 4.dp))
                 }
             }
-            if (o.texto.isNotBlank()) TextoTarjeta(o.texto, Modifier.padding(top = 8.dp), color = Charcoal)
+            // (las de antes de la 0.8.1 podían decir en el texto otras cifras que las de la oferta: se cuadran al enseñarlas)
+            if (o.texto.isNotBlank()) TextoTarjeta(Rangos.cuadraTexto(o.texto, o.salario, o.prima), Modifier.padding(top = 8.dp), color = Charcoal)
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (o.salario > 0) DatoOferta(sinEuro(Formato.eurosCorto(o.salario)), if (o.tipo == "patrocinio") "€ a la semana, de más" else "€ a la semana", Modifier.weight(1f).fillMaxHeight())
@@ -703,9 +707,9 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
     if (viejas.isNotEmpty()) { Spacer(Modifier.height(18.dp)); Rotulo("Ya respondidas", color = Muted) }
     viejas.forEach { (_, o) ->
         Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Avatar(o.de, 34.dp); Spacer(Modifier.width(10.dp))
+            Avatar(Rangos.limpiaNombre(o.de), 34.dp); Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text(o.de, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
+                Text(Rangos.limpiaNombre(o.de), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
                 Text(listOfNotNull(Oferta.TIPOS[o.tipo] ?: o.tipo, o.salario.takeIf { it > 0 }?.let { "${Formato.eurosCorto(it)}/semana" }).joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)
             }
             Sello(if (o.estado == Oferta.ACEPTADA) "Aceptada" else "Rechazada", if (o.estado == Oferta.ACEPTADA) Acento else Muted)
