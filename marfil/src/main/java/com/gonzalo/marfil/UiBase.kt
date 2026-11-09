@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 /** Texto con la letra de títulos. */
 @Composable
 fun Titulo(t: String, tam: Int = 28, modifier: Modifier = Modifier, color: Color = Charcoal, lineas: Int = 2) =
-    Text(t, modifier, color = color, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = tam.sp, lineHeight = (tam * 1.1f).sp, maxLines = lineas, overflow = TextOverflow.Ellipsis)
+    Text(t, modifier, color = color, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = (tam * 0.9f).sp, lineHeight = (tam * 1.0f).sp, maxLines = lineas, overflow = TextOverflow.Ellipsis)
 
 @Composable
 fun Etiqueta(t: String, modifier: Modifier = Modifier, color: Color = Muted) =
@@ -44,11 +44,11 @@ fun Cuerpo(t: String, modifier: Modifier = Modifier, color: Color = Muted, tam: 
 @Composable
 fun BotonAcento(texto: String, icono: ImageVector? = null, modifier: Modifier = Modifier, alto: Dp = 52.dp, alHacer: () -> Unit) {
     Row(
-        modifier.heightIn(min = alto).clip(pildora()).background(Acento).clickable(onClick = alHacer).padding(horizontal = 22.dp, vertical = 14.dp),
+        modifier.heightIn(min = alto).background(Acento).clickable(onClick = alHacer).padding(horizontal = 22.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
         if (icono != null) { Icon(icono, null, tint = SobreAcento, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)) }
-        Text(texto.uppercase(), color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.5.sp, maxLines = 1)
+        Text(texto.uppercase(), color = SobreAcento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, letterSpacing = 1.sp, maxLines = 1)
     }
 }
 
@@ -60,13 +60,16 @@ fun BotonAcento(texto: String, icono: ImageVector? = null, modifier: Modifier = 
 fun AccionGrande(icono: ImageVector?, texto: String, modifier: Modifier = Modifier, acento: Boolean = true, enabled: Boolean = true, alHacer: () -> Unit) {
     val fondo = if (acento) Acento else Charcoal
     val letra = if (acento) SobreAcento else Paper
+    // Dirección C: rectángulo de ancho completo, el texto a la izquierda y la flecha a la derecha
     Row(
-        modifier.heightIn(min = 52.dp).clip(pildora()).background(if (enabled) fondo else fondo.copy(alpha = 0.35f)).clickable(enabled = enabled, onClick = alHacer)
-            .padding(horizontal = 22.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
+        modifier.heightIn(min = 54.dp).background(if (enabled) fondo else fondo.copy(alpha = 0.35f)).clickable(enabled = enabled, onClick = alHacer)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        if (icono != null) { Icon(icono, null, tint = letra, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)) }
-        Text(texto.uppercase(), color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.5.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        if (icono != null) { Icon(icono, null, tint = letra, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(10.dp)) }
+        // (con la letra grande, en dos líneas antes que cortado)
+        Text(texto.uppercase(), color = letra, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = 1.sp, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(end = 8.dp))
+        Text("→", color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 18.sp)
     }
 }
 
@@ -75,11 +78,11 @@ fun AccionGrande(icono: ImageVector?, texto: String, modifier: Modifier = Modifi
 fun BotonSuave(texto: String, icono: ImageVector? = null, modifier: Modifier = Modifier, peligro: Boolean = false, alHacer: () -> Unit) {
     val col = if (peligro) Acento else Charcoal
     Row(
-        modifier.heightIn(min = 44.dp).clip(pildora()).border(1.5.dp, col, pildora()).clickable(onClick = alHacer).padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier.heightIn(min = 44.dp).border(2.dp, col).clickable(onClick = alHacer).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
         if (icono != null) { Icon(icono, null, tint = col, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)) }
-        Text(texto.uppercase(), color = col, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.2.sp, maxLines = 1)
+        Text(texto.uppercase(), color = col, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
     }
 }
 
@@ -105,10 +108,9 @@ fun Chip(texto: String, activo: Boolean, modifier: Modifier = Modifier, cuenta: 
 fun Panel(modifier: Modifier = Modifier, alHacer: (() -> Unit)? = null, contenido: @Composable ColumnScope.() -> Unit) {
     val f = Skin.forma
     if (f.esq == Esq.Recta && f.borde.value == 0f) {
-        val tinta = Charcoal
+        // Dirección C: una caja recta con borde de 2 px
         Column(
-            modifier.fillMaxWidth().let { if (alHacer != null) it.clickable(onClick = alHacer) else it }
-                .drawBehind { drawRect(tinta, topLeft = Offset(0f, 0f), size = Size(size.width, 2.dp.toPx())) }.padding(top = 14.dp, bottom = 10.dp),
+            modifier.fillMaxWidth().border(2.dp, Charcoal).let { if (alHacer != null) it.clickable(onClick = alHacer) else it }.padding(16.dp),
             content = contenido
         )
         return
@@ -129,7 +131,7 @@ fun Fila(titulo: String, descripcion: String? = null, modifier: Modifier = Modif
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp)
+            Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp)
             if (descripcion != null) Cuerpo(descripcion, tam = 12)
         }
         if (final != null) { Spacer(Modifier.width(12.dp)); final() }

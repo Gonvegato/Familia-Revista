@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.15.1"
+const val VERSION = "0.16.0"
 
 /** «Ajustes» en pestañas, como Atrio: Apariencia · Lectura · Cuenta (Atrio y libros en la nube) · Avanzado (actualizaciones y copias). */
 @OptIn(ExperimentalLayoutApi::class)
@@ -53,12 +53,14 @@ fun PantEstilo(alVolver: () -> Unit) {
         if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Seshat" }
     }
     var pestana by rememberSaveable { mutableIntStateOf(0) }
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 20.dp)) {
-        RevistaTopBar(alVolver, "Seshat")
-        Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
-        FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-        Filete(3.dp)
+    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+        // Dirección C: la cabecera en un bloque de tinta con «AJUSTES.» en grotesca y las pestañas en bloques
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+            EnlaceRevista("← Seshat", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
+            NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp))
+        }
         PestanasRevista(listOf("Apariencia", "Lectura", "Cuenta", "Avanzado"), pestana) { pestana = it }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(14.dp))
 
         when (pestana) {
@@ -104,11 +106,12 @@ fun PantEstilo(alVolver: () -> Unit) {
         }
 
         Spacer(Modifier.height(26.dp))
-        Filete(3.dp)
+        Filete(2.dp)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Seshat $VERSION")
         Text("Seshat es hermana de Jonsu, Bastet y Thot. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
+        }
     }
 }
 

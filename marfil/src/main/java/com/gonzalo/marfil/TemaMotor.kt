@@ -368,3 +368,9 @@ fun MarfilTheme(content: @Composable () -> Unit) {
         }
     }
 }
+
+// ───── dirección C (editorial moderna) ─────
+/** La letra de la dirección C: Bricolage Grotesque (grotesca), para la cabecera, los titulares y las cifras grandes. La serif queda para citas. */
+val Grotesca: FontFamily get() = VitrinaDisplay
+/** El segundo color de los bloques de cifras de la dirección C (el azul de las maquetas). */
+val Bloque2: Color get() = Color(0xFF1F3A5F)

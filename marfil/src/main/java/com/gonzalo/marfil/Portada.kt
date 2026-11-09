@@ -23,7 +23,7 @@ import java.io.File
 
 /** Los colores de tela de los libros sin portada: uno por título, siempre el mismo. */
 private val TELAS = listOf(0xFF7A2E2E, 0xFF2F4A6B, 0xFF35523F, 0xFF5B3F6B, 0xFF8A5A2B, 0xFF3F5E63, 0xFF6B6B3A, 0xFF4A4A52).map { Color(it) }
-private val PAPEL_CLARO = Color(0xFFF3EDE0)
+internal val PAPEL_CLARO = Color(0xFFF3EDE0)
 
 fun telaDe(titulo: String): Color = TELAS[(norm(titulo).hashCode() and 0x7fffffff) % TELAS.size]
 
@@ -68,4 +68,4 @@ fun PortadaLibro(l: Libro, modifier: Modifier = Modifier, radio: Int = 5, conTit
     }
 }
 
-private fun lerpColor(a: Color, b: Color, t: Float) = Color(a.red + (b.red - a.red) * t, a.green + (b.green - a.green) * t, a.blue + (b.blue - a.blue) * t, 1f)
+internal fun lerpColor(a: Color, b: Color, t: Float) = Color(a.red + (b.red - a.red) * t, a.green + (b.green - a.green) * t, a.blue + (b.blue - a.blue) * t, 1f)

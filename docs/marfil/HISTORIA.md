@@ -79,6 +79,28 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.16.0 — dirección C («editorial moderna»), la prueba de la familia
+
+La primera app de la familia con la estética nueva elegida en las maquetas (`docs/familia/maquetas-revista/`). Solo cambia cómo se ve; la
+lógica es la misma.
+
+- **Cabecera en bloque de tinta** con la fila pequeña (Buscar · + Añadir · fecha · ⚙) y «SESHAT.» en grotesca enorme (Bricolage Grotesque,
+  la letra que ya venía con la app) con el punto del acento. Igual en las secciones («LEÍDOS.») y en Ajustes («AJUSTES.»). Al bajar, se
+  pliega en una barra de tinta con «SESHAT.».
+- **Pestañas en bloques**: la elegida, rellena del acento; los filtros (orden de un estante), bloques con borde de 2 px.
+- **Portada**: la portada del libro, el porcentaje gigante en grotesca, «% · 200/540 PÁGS», el título y el botón negro recto de ancho
+  completo «SEGUIR LEYENDO →»; la rejilla dura de cifras (hoy · reto · días seguidos, en acento, papel y azul); las barras planas de la
+  semana con hoy en el acento; «En la mesilla» y «En la estantería» como listas numeradas (01, 02…) con filetes de 2 px.
+- **Secciones**: rejilla de cifras (libros · horas · páginas) y listas numeradas.
+- **Ficha**: cabecera del color de la tapa con el título en grotesca en mayúsculas y la portada; el estante en bloques (el elegido, de
+  tinta); rejilla de tres cifras; el botón ancho del acento con la flecha.
+- **Botones** rectos (sin píldoras), **paneles** con borde de 2 px, **titulares** en grotesca; la serif queda para citas y líneas en cursiva.
+- **Widgets**: titulares en grotesca, sin el reborde fino, botones rectos, portadas sin esquinas, barra de progreso más gruesa; «SESHAT.»
+  con el punto del acento, y «SESHAT en papel» como bloque de tinta. Previsualizaciones del selector regeneradas con los colores de Seshat.
+- **Icono nuevo**: la «S.» en grotesca enorme sobre #F8F0D4 con el punto #C68B00 y, abajo, la franja del acento con «LIBROS»
+  (adaptable y monocromo; lo genera `herramientas/familia-c/icono-c.py`, listo para las demás apps).
+- Los colores siguen saliendo del tema (Apariencia / «A tu manera»); el azul de los bloques de cifras (#1F3A5F) es el único color fijo.
+
 ## 0.14.2 — lo que eliges, en todos tus dispositivos
 
 - **El orden de cada estante, «tener aquí los libros de tu kDrive», la web de imágenes y «Actualizar sola» ya están en tu cuenta**, no

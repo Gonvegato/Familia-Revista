@@ -79,3 +79,33 @@ fun BarrasLectura(libros: List<Libro>) {
         }
     }
 }
+
+/** Lo de la lectura para la portada de la dirección C: lo leído hoy, la racha, la semana (día → minutos) y tu objetivo diario. */
+class DatosLectura(val hoyMin: Long, val racha: Int, val semana: List<Pair<LocalDate, Long>>, val meta: Int)
+
+fun datosLectura(ctx: android.content.Context, libros: List<Libro>): DatosLectura {
+    val dias = diasLeidos(ctx, libros)
+    val hoy = LocalDate.now()
+    return DatosLectura((dias[hoy.toString()] ?: 0L) / 60_000L, rachaDeLectura(dias), (6 downTo 0).map { hoy.minusDays(it.toLong()) }.map { d -> d to (dias[d.toString()] ?: 0L) / 60_000L },
+        Ajustes.metaLectura(ctx))
+}
+
+/** La semana en barras planas de la dirección C: cada día, lo que leíste; hoy, en el acento. */
+@Composable
+fun BarrasSemanaC(d: DatosLectura, modifier: Modifier = Modifier) {
+    val hoy = LocalDate.now()
+    val tope = maxOf(d.semana.maxOf { it.second }, d.meta.toLong(), 1L).toFloat()
+    Column(modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().height(58.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
+            d.semana.forEach { (dia, m) ->
+                Box(Modifier.weight(1f).height(if (m >= 1) maxOf(4f, 58f * m / tope).dp else 3.dp).background(if (dia == hoy) Acento else Charcoal))
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            d.semana.forEach { (dia, _) ->
+                Text(dia.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale("es", "ES")).uppercase(), fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black,
+                    color = if (dia == hoy) Acento else Muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}

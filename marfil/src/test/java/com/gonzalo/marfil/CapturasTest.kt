@@ -91,11 +91,33 @@ class CapturasTest {
     private fun montar(oscuro: Boolean) {
         coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
         Modo.eleccion = if (oscuro) 2 else 1
+        coloresSeshat(oscuro)
         rule.setContent { PorticoLike { MarfilApp() } }
     }
 
     @androidx.compose.runtime.Composable
     private fun PorticoLike(c: @androidx.compose.runtime.Composable () -> Unit) = MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { c() } }
+
+    /** Los colores de Seshat («A tu manera»: fondo #F8F0D4, texto #050404, acento #C68B00); de noche, solo el acento sobre la paleta oscura. */
+    private fun coloresSeshat(oscuro: Boolean) {
+        Skin.origenAtrio = false
+        Skin.fondoPropio = if (oscuro) 0L else 0xFFF8F0D4
+        Skin.tintaPropia = if (oscuro) 0L else 0xFF050404
+        Skin.acentoPropio = 0xFFC68B00
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun letraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false); foto("c1_portada_letra_grande")
+        rule.onNodeWithText("LEÍDOS").performClick(); rule.waitForIdle(); foto("c2_leidos_letra_grande")
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun fichaLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("c3_ficha_letra_grande")
+    }
 
     @Test fun portada() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")

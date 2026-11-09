@@ -48,7 +48,7 @@ fun SeccionApariencia() {
         if (i > 0) Filete(1.dp, Line)
         val on = Modo.eleccion == modo
         Row(Modifier.fillMaxWidth().clickable { if (!on) { Modo.eleccion = modo; Skin.fondoId = ""; propio(); guarda() } }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(nombre, fontFamily = Display, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = 24.sp, color = if (on) Charcoal else Muted, modifier = Modifier.weight(1f))
+            Text(nombre.uppercase(), fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = if (on) Charcoal else Muted, modifier = Modifier.weight(1f))
             if (on) Text("✓", color = Acento, fontWeight = FontWeight.Black, fontSize = 20.sp)
         }
     }

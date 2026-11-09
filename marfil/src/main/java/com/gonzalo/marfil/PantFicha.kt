@@ -45,7 +45,7 @@ import java.util.Date
 private fun DosCasillas(izq: @Composable ColumnScope.() -> Unit, der: @Composable ColumnScope.() -> Unit) {
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         Column(Modifier.weight(1f).padding(top = 16.dp, bottom = 18.dp, end = 14.dp), content = izq)
-        Box(Modifier.fillMaxHeight().width(1.5.dp).background(Charcoal))
+        Box(Modifier.fillMaxHeight().width(2.dp).background(Charcoal))
         Column(Modifier.weight(1f).padding(top = 16.dp, bottom = 18.dp, start = 16.dp), content = der)
     }
 }
@@ -54,7 +54,7 @@ private fun DosCasillas(izq: @Composable ColumnScope.() -> Unit, der: @Composabl
 @Composable
 private fun CabezaCasilla(texto: String, accion: Pair<String, () -> Unit>? = null) {
     Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(texto.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, modifier = Modifier.weight(1f))
+        Text(texto.uppercase(), color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.4.sp, modifier = Modifier.weight(1f))
         accion?.let { (t, f) -> Text(t.uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, modifier = Modifier.clickable(onClick = f).padding(start = 8.dp, top = 2.dp, bottom = 2.dp)) }
     }
 }
@@ -126,57 +126,71 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
     val miSaga = Sagas.de(l.clave)
     val frac = l.fraccion
 
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = 20.dp)) {
-        // Arriba, como en Atrio: Portada · Editar · Borrar
-        RevistaTopBar(alCerrar, "Volver") {
-            // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
-            if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", acento = true) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
-            else {
-                EnlaceRevista("Portada") { portada = true }
-                EnlaceRevista("Editar") { renombrar = true }
-                EnlaceRevista("Borrar") { quitar = true }
-            }
-        }
-        Filete(3.dp)
-        // El estante, como las pestañas de estado de Atrio, pegado a la barra de arriba (un escrito no tiene estante)
-        if (!l.esEscrito) {
-            FiltrosRevista(Estado.entries.map { it.nombre }, l.estado.ordinal, Modifier.padding(top = 4.dp)) { i -> Biblioteca.poner(l.copy(estado = Estado.entries[i])) }
-            Filete(1.dp)
-        }
-        Spacer(Modifier.height(14.dp))
-        RevistaHeadline(l.titulo, listOfNotNull(l.formato.uppercase().ifBlank { null }, l.autor.ifBlank { null }).joinToString(" · "))
-        if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 6.dp))
-        Spacer(Modifier.height(14.dp))
-
-        // La portada y por dónde vas (con las páginas, al lado del porcentaje)
-        Row(Modifier.fillMaxWidth().height(220.dp)) {
-            PortadaLibro(l, Modifier.width(150.dp).height(220.dp).clickable { portada = true })
-            Column(Modifier.weight(1f).padding(start = 18.dp).fillMaxHeight(), verticalArrangement = Arrangement.Bottom) {
-                // Terminado: lo pone en grande, en el acento, en vez del porcentaje (y las páginas debajo, que al lado no caben)
-                if (l.estado == Estado.LEIDO) {
-                    Paginas.texto(l).takeIf { it.isNotBlank() }?.let { Text(it, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 0.6.sp, maxLines = 1) }
-                    Text("Terminado", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 34.sp, lineHeight = 36.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(bottom = 6.dp))
-                } else Row(verticalAlignment = Alignment.Bottom) {
-                    Text("${(frac * 100).toInt().coerceIn(0, 100)}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 62.sp)
-                    Text(" %", color = Muted, fontFamily = Body, fontSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
+    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+        // ---- Dirección C: la cabecera, del color de la portada, con el título en grotesca y la portada a la derecha
+        // El color de la cabecera: el de la portada (su media, si es una imagen) o el de su tela
+        val tela = remember(l.portada, l.titulo) { colorDePortada(l.portada) ?: telaDe(l.titulo) }
+        Box(Modifier.fillMaxWidth().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(lerpColor(tela, androidx.compose.ui.graphics.Color.White, 0.12f), lerpColor(tela, androidx.compose.ui.graphics.Color.Black, 0.38f))))) {
+            Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 20.dp)) {
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    EnlaceRevista("← Volver", color = PAPEL_CLARO) { alCerrar() }
                     Spacer(Modifier.weight(1f))
-                    Paginas.texto(l).takeIf { it.isNotBlank() }?.let { Text(it, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 14.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(bottom = 12.dp)) }
+                    // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
+                    if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", color = PAPEL_CLARO) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
+                    else Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        EnlaceRevista("Portada", color = PAPEL_CLARO) { portada = true }
+                        EnlaceRevista("Editar", color = PAPEL_CLARO) { renombrar = true }
+                        EnlaceRevista("Borrar", color = PAPEL_CLARO) { quitar = true }
+                    }
                 }
-                Barra(if (l.estado == Estado.LEIDO) 1f else l.fraccion)
-                if (frac <= 0.001f && l.estado == Estado.PENDIENTE) Text("sin empezar", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
-                st.optString("label").takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, maxLines = 2, modifier = Modifier.padding(top = 8.dp)) }
+                Spacer(Modifier.height(18.dp))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                    Column(Modifier.weight(1f).padding(end = 14.dp)) {
+                        val ante = listOfNotNull(l.autor.ifBlank { null }, l.formato.uppercase().ifBlank { null }).joinToString(" · ")
+                        if (ante.isNotBlank()) Text(ante.uppercase(), color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 2)
+                        FitTitle(l.titulo.uppercase(), 40.sp, 38.sp, color = PAPEL_CLARO, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-1).sp, maxLines = 5, minSize = 18f, modifier = Modifier.padding(top = 6.dp))
+                    }
+                    PortadaLibro(l, Modifier.width(112.dp).height(168.dp).clickable { portada = true }, radio = 0)
+                }
             }
         }
+        // ---- El estante, en bloques (el elegido, de tinta)
+        if (!l.esEscrito) {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                Estado.entries.forEachIndexed { i, e ->
+                    val on = e == l.estado
+                    Box(Modifier.weight(1f).fillMaxHeight().background(if (on) Charcoal else Paper).clickable { Biblioteca.poner(l.copy(estado = e)) }.padding(vertical = 12.dp, horizontal = 2.dp), contentAlignment = Alignment.Center) {
+                        // (si no cabe, la letra se encoge: nada de «ABANDONAD»)
+                        FitTitle(e.nombre.uppercase(), 11.sp, 13.sp, color = if (on) Paper else Charcoal, family = Body, fontWeight = FontWeight.Black, letterSpacing = 0.4.sp, maxLines = 1, unaLinea = true, minSize = 6f,
+                            align = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
+            }
+            Filete(2.dp)
+        }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(16.dp))
+        // ---- La rejilla de tres cifras: cómo vas, el tiempo y las páginas (o las veces que lo has leído)
+        val pct = (frac * 100).toInt().coerceIn(0, 100)
+        RejillaCifras(listOf(
+            if (l.estado == Estado.LEIDO) BloqueCifra("LEÍDO", if (l.terminado > 0) fecha(l.terminado) else "terminado", Acento, SobreAcento)
+            else BloqueCifra("$pct%", Paginas.texto(l).ifBlank { if (frac <= 0.001f) "sin empezar" else "leído" }, Acento, SobreAcento),
+            BloqueCifra(if (l.msLeidos >= 60_000) tiempoDe(l.msLeidos).uppercase().replace(" ", "") else "—", "leído en total", Paper, Charcoal),
+            if (l.terminados.size > 1) BloqueCifra("${l.terminados.size}ª", "vez", Bloque2, androidx.compose.ui.graphics.Color.White)
+            else BloqueCifra(if (l.paginas > 0) "${l.paginas}" else "—", "páginas", Bloque2, androidx.compose.ui.graphics.Color.White, alHacer = { renombrar = true }),
+        ))
+        if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
+        st.optString("label").takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp)) }
+        Spacer(Modifier.height(14.dp))
 
         // Las acciones: la saga y el favorito (un escrito de Cobalto no va en sagas ni es favorito)
         if (!l.esEscrito) {
-            Filete(1.dp)
+            Filete(2.dp)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
                 EnlaceRevista(if (miSaga != null) "Saga: ${miSaga.nombre} →" else "Saga →", acento = miSaga != null) { saga = true }
                 EnlaceRevista(if (l.favorito) "★ Favorito" else "☆ Favorito", acento = l.favorito) { Biblioteca.poner(l.copy(favorito = !l.favorito)) }
             }
-            Filete(1.dp)
+            Filete(2.dp)
         }
         Spacer(Modifier.height(4.dp))
         Filete(2.dp)
@@ -235,13 +249,13 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         DosCasillas(
             izq = {
                 CabezaCasilla("Tiempo")
-                FitTitle(if (l.msLeidos >= 60_000) tiempoDe(l.msLeidos) else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1)
+                FitTitle(if (l.msLeidos >= 60_000) tiempoDe(l.msLeidos) else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
                 Text("LEÍDO EN TOTAL", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Text("Última vez: ${haceCuando(l.ultima)}", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
             },
             der = {
                 CabezaCasilla("Páginas", "Editar" to { renombrar = true })
-                FitTitle(if (l.paginas > 0) "${l.paginas}" else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1)
+                FitTitle(if (l.paginas > 0) "${l.paginas}" else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
                 Text("EN TOTAL", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Text(when (l.paginasOrigen) { "manual" -> "las que has puesto tú"; "atrio" -> "las de Atrio"; "pdf" -> "las del PDF"; "openlibrary" -> "las de su edición (Open Library)"; "estimado" -> "calculadas por el texto"; else -> "sin dato: ponlas en Editar" },
                     color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
@@ -259,7 +273,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
                 CabezaCasilla("En Jonsu")
                 if (nota != null) {
                     Row(verticalAlignment = Alignment.Bottom) {
-                        FitTitle("${nota!!.general}", 48.sp, 50.sp, unaLinea = true, maxLines = 1)
+                        FitTitle("${nota!!.general}", 48.sp, 50.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
                         Text(" /100", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp))
                     }
                     if (nota!!.resena.isNotBlank()) Text(nota!!.resena, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
@@ -294,6 +308,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
             if (l.anadido > 0) MagFact("Añadido", fecha(l.anadido))
         }
         Spacer(Modifier.height(30.dp))
+        }
     }
 
     if (portada) SelectorPortada(l) { portada = false }
@@ -338,3 +353,13 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         dismissButton = { TextButton({ quitar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
     )
 }
+
+
+/** El color medio de la imagen de una portada (para la cabecera de la ficha), o null si no hay imagen o no se puede leer. */
+fun colorDePortada(ruta: String): androidx.compose.ui.graphics.Color? = runCatching {
+    val f = File(ruta).takeIf { ruta.isNotBlank() && it.exists() } ?: return null
+    val o = android.graphics.BitmapFactory.Options().apply { inSampleSize = 16 }
+    val b = android.graphics.BitmapFactory.decodeFile(f.path, o) ?: return null
+    val p = android.graphics.Bitmap.createScaledBitmap(b, 1, 1, true).getPixel(0, 0)
+    androidx.compose.ui.graphics.Color(p)
+}.getOrNull()

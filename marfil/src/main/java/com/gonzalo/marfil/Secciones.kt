@@ -10,6 +10,7 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Text
@@ -66,12 +67,14 @@ fun metaLibro(l: Libro, conEstado: Boolean = false): String = listOf(
  * llevas empezado). [numero]: el que tiene dentro de su saga.
  */
 @Composable
-fun FilaLibro(l: Libro, alAbrir: (Libro) -> Unit, modifier: Modifier = Modifier, portada: Dp = 54.dp, numero: Int = 0, conEstado: Boolean = false, sangria: Dp = 0.dp, extra: String = "") {
+fun FilaLibro(l: Libro, alAbrir: (Libro) -> Unit, modifier: Modifier = Modifier, portada: Dp = 54.dp, numero: Int = 0, conEstado: Boolean = false, sangria: Dp = 0.dp, extra: String = "", orden: Int = 0) {
     Row(modifier.fillMaxWidth().clickable { alAbrir(l) }.padding(start = sangria, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (numero > 0) Text("$numero", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, modifier = Modifier.width(26.dp))
-        PortadaLibro(l, Modifier.width(portada).aspectRatio(0.68f), radio = 4, conTitulo = false)
+        // Dirección C: lista numerada (01, 02…) en el acento, en grotesca
+        if (orden > 0) Text("%02d".format(orden), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(46.dp))
+        if (numero > 0) Text("$numero", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, modifier = Modifier.width(26.dp))
+        PortadaLibro(l, Modifier.width(portada).aspectRatio(0.68f), radio = 0, conTitulo = false)
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text(l.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = if (portada >= 54.dp) 20.sp else 18.sp, lineHeight = if (portada >= 54.dp) 22.sp else 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(l.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = if (portada >= 54.dp) 18.sp else 17.sp, lineHeight = if (portada >= 54.dp) 21.sp else 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val meta = listOf(metaLibro(l, conEstado), extra).filter { it.isNotBlank() }.joinToString(" · ")
             if (meta.isNotBlank()) Text(meta.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2, lineHeight = 15.sp, modifier = Modifier.padding(top = 3.dp))
         }
@@ -88,7 +91,7 @@ fun AbanicoSaga(libros: List<Libro>, modifier: Modifier = Modifier) {
     Box(modifier.width(38.dp + 14.dp * (v.size - 1).coerceAtLeast(0)).height(56.dp)) {
         v.asReversed().forEachIndexed { i, l ->
             val k = v.size - 1 - i
-            PortadaLibro(l, Modifier.padding(start = 14.dp * k).width(38.dp).height(56.dp), radio = 3, conTitulo = false)
+            PortadaLibro(l, Modifier.padding(start = 14.dp * k).width(38.dp).height(56.dp), radio = 0, conTitulo = false)
         }
     }
 }
@@ -111,7 +114,7 @@ fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAb
         Row(Modifier.fillMaxWidth().clickable(onClick = alAlternar).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             AbanicoSaga(f.miembros)
             Column(Modifier.weight(1f).padding(start = 16.dp, end = 8.dp)) {
-                Text(f.saga.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 22.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(f.saga.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(("Saga · " + resumenSaga(todos)).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 2, modifier = Modifier.padding(top = 2.dp))
             }
             Text(if (abierta) "−" else "+", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 22.sp)
@@ -126,7 +129,7 @@ fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAb
             }
         }
     }
-    Filete(1.dp, Line)
+    Filete(2.dp)
 }
 
 /** Las filas (libros sueltos y sagas) de una lista de libros, con las sagas que estén abiertas. */
@@ -135,9 +138,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.filas(
     libros: List<Libro>, abiertas: Set<String>, alternar: (String) -> Unit, alAbrir: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit, conEstado: Boolean = false
 ) {
     val filas = Sagas.agrupar(libros)
-    items(filas, key = { when (it) { is FilaLista.Suelto -> "l:" + it.libro.id; is FilaLista.DeSaga -> "s:" + it.saga.id } }) { f ->
+    itemsIndexed(filas, key = { _, it -> when (it) { is FilaLista.Suelto -> "l:" + it.libro.id; is FilaLista.DeSaga -> "s:" + it.saga.id } }) { i, f ->
         when (f) {
-            is FilaLista.Suelto -> { FilaLibro(f.libro, alAbrir, conEstado = conEstado, extra = f.saga?.let { "Saga ${it.nombre} · ${f.numero}" }.orEmpty()); Filete(1.dp, Line) }
+            is FilaLista.Suelto -> { FilaLibro(f.libro, alAbrir, conEstado = conEstado, extra = f.saga?.let { "Saga ${it.nombre} · ${f.numero}" }.orEmpty(), orden = i + 1); Filete(2.dp) }
             is FilaLista.DeSaga -> FilaSaga(f, f.saga.id in abiertas, { alternar(f.saga.id) }, alAbrirSaga, alAbrir)
         }
     }
@@ -160,14 +163,19 @@ private fun PaginaEstante(estado: Estado, todos: List<Libro>, alAbrir: (Libro) -
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Column {
-                Antetitulo("Sección · ${libros.size} ${if (libros.size == 1) "libro" else "libros"}", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
-                FitTitle(if (estado == Estado.LEYENDO) "Leyendo" else estado.nombre + "s", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-                Filete(1.dp, Line)
+                // Dirección C: tres bloques de cifras (cuántos, horas, páginas)
+                val horas = libros.sumOf { it.msLeidos } / 3_600_000L
+                val paginas = libros.sumOf { it.paginas.coerceAtLeast(0) }
+                RejillaCifras(listOf(
+                    BloqueCifra("${libros.size}", if (libros.size == 1) "libro" else "libros", Acento, SobreAcento),
+                    BloqueCifra("${horas}H", "leídas", Paper, Charcoal),
+                    BloqueCifra(if (paginas >= 10_000) "%.1fK".format(paginas / 1000.0) else "$paginas", "páginas", Bloque2, Color.White),
+                ), Modifier.padding(top = 14.dp))
                 // Cómo se ordena este estante (se recuerda)
                 // («Terminado» solo en Leídos)
                 val ordenes = OrdenLibros.entries.filter { it != OrdenLibros.TERMINADO || estado == Estado.LEIDO }
-                FiltrosRevista(ordenes.map { it.nombre }, ordenes.indexOf(orden).coerceAtLeast(0), Modifier.padding(top = 4.dp)) { i -> orden = ordenes[i]; OrdenGuardado.pon(ctx, estado, orden) }
-                Filete(1.dp, Line)
+                FiltrosRevista(ordenes.map { it.nombre }, ordenes.indexOf(orden).coerceAtLeast(0), Modifier.padding(top = 6.dp)) { i -> orden = ordenes[i]; OrdenGuardado.pon(ctx, estado, orden) }
+                Filete(2.dp)
             }
         }
         if (libros.isEmpty()) item {
@@ -190,9 +198,8 @@ private fun PaginaAutores(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirS
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Column {
-                Antetitulo("Sección · ${autores.size} ${if (autores.size == 1) "autor" else "autores"}", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
-                FitTitle("Autores", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-                Filete(1.dp, Line)
+                Antetitulo("${autores.size} ${if (autores.size == 1) "autor" else "autores"}", Modifier.padding(top = 14.dp, bottom = 8.dp), color = Acento, conCuadro = false)
+                Filete(2.dp)
             }
         }
         if (autores.isEmpty()) item { Text("Aún no hay autores: los libros sin autor no salen aquí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 30.dp)) }
@@ -200,7 +207,7 @@ private fun PaginaAutores(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirS
             item(key = "a:$k") {
                 val abierto = k in abiertos
                 Row(Modifier.fillMaxWidth().clickable { abiertos = if (abierto) abiertos - k else abiertos + k }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, modifier = Modifier.weight(1f))
+                    Text(nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, modifier = Modifier.weight(1f))
                     Text("${ls.size} ${if (ls.size == 1) "libro" else "libros"}".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Text(if (abierto) "  −" else "  +", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 20.sp)
                 }
@@ -232,9 +239,8 @@ private fun PaginaSagas(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSag
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Column {
-                Antetitulo("Sección · ${sagas.size} ${if (sagas.size == 1) "saga" else "sagas"}", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
-                FitTitle("Sagas", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-                Filete(1.dp, Line)
+                Antetitulo("${sagas.size} ${if (sagas.size == 1) "saga" else "sagas"}", Modifier.padding(top = 14.dp, bottom = 8.dp), color = Acento, conCuadro = false)
+                Filete(2.dp)
                 EnlaceRevista("+ Nueva saga", Modifier.padding(vertical = 4.dp), acento = true) { nueva = "" }
                 Filete(1.dp, Line)
             }
@@ -262,9 +268,9 @@ private fun Resultados(busca: String, todos: List<Libro>, alAbrir: (Libro) -> Un
             .sortedWith(compareByDescending<Libro> { it.ultima }.thenByDescending { it.anadido })
     }
     LazyColumn(Modifier.fillMaxSize()) {
-        item { Antetitulo("Resultados · ${l.size}", Modifier.padding(top = 14.dp, bottom = 6.dp), color = Acento, conCuadro = false); Filete(1.dp, Line) }
+        item { Antetitulo("Resultados · ${l.size}", Modifier.padding(top = 14.dp, bottom = 6.dp), color = Acento, conCuadro = false); Filete(2.dp) }
         if (l.isEmpty()) item { Text("Nada con «$busca».", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 24.dp)) }
-        items(l, key = { it.id }) { x -> FilaLibro(x, alAbrir, conEstado = true); Filete(1.dp, Line) }
+        itemsIndexed(l, key = { _, it -> it.id }) { i, x -> FilaLibro(x, alAbrir, conEstado = true, orden = i + 1); Filete(2.dp) }
     }
 }
 
@@ -282,14 +288,21 @@ fun PantSecciones(inicial: Destino, alVolver: () -> Unit, alAbrir: (Libro) -> Un
     var busca by rememberSaveable { mutableStateOf("") }
     val todos = Biblioteca.propios()
     val cuentas = listOf(Estado.LEYENDO, Estado.PENDIENTE, Estado.LEIDO, Estado.ABANDONADO).map { e -> todos.count { it.estado == e } } + todos.filter { it.autor.isNotBlank() }.map { norm(it.autor) }.distinct().size + Sagas.lista.size
-    Column(Modifier.fillMaxSize().background(Paper).navigationBarsPadding().padding(horizontal = 28.dp)) {
-        RevistaTopBar(alVolver, "Seshat") {
-            EnlaceRevista("Buscar", acento = buscando) { buscando = !buscando; if (!buscando) busca = "" }
-            EnlaceRevista("+ Añadir", acento = true) { alAnadir() }
+    val nombres = listOf("Leyendo", "Pendientes", "Leídos", "Abandonados", "Autores", "Sagas")
+    Column(Modifier.fillMaxSize().background(Paper).navigationBarsPadding()) {
+        // Dirección C: la cabecera en un bloque de tinta, con el nombre de la sección en grotesca enorme («LEÍDOS.»)
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                EnlaceRevista("← Seshat", color = Paper.copy(alpha = 0.75f)) { alVolver() }
+                Spacer(Modifier.weight(1f))
+                EnlaceRevista("Buscar", color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) { buscando = !buscando; if (!buscando) busca = "" }
+                EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = Acento) { alAnadir() }
+            }
+            NombreConPunto(if (busca.isNotBlank()) "Buscar" else nombres[pager.currentPage], 52.sp, Paper, Modifier.padding(top = 2.dp))
         }
-        Filete(3.dp)
+        PestanasPaginas(nombres, pager.currentPage, cuentas) { i -> ambito.launch { pager.animateScrollToPage(i) } }
+        Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         if (buscando) CampoRevista("Buscar", busca, "título, autor o saga") { busca = it }
-        PestanasPaginas(listOf("Leyendo", "Pendientes", "Leídos", "Abandonados", "Autores", "Sagas"), pager.currentPage, cuentas) { i -> ambito.launch { pager.animateScrollToPage(i) } }
         if (busca.isNotBlank()) Resultados(busca, todos, alAbrir)
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
         else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { paginas[it].name }) { i ->
@@ -301,6 +314,7 @@ fun PantSecciones(inicial: Destino, alVolver: () -> Unit, alAbrir: (Libro) -> Un
                 Destino.Sagas -> PaginaSagas(todos, alAbrir, alAbrirSaga)
                 else -> PaginaAutores(todos, alAbrir, alAbrirSaga)
             }
+        }
         }
     }
 }
@@ -324,17 +338,18 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int>,
                 val f = 28.dp.toPx()
                 if (scroll.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
                 if (scroll.value < scroll.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-            }.horizontalScroll(scroll), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.Bottom) {
+            }.horizontalScroll(scroll), verticalAlignment = Alignment.Bottom) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
                 Row(Modifier.onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).let { kotlin.math.round(it).toInt() } to c.size.width }.clickable { onSel(i) }
-                    .drawBehind { if (on) drawRect(Acento, topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - 3.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 3.dp.toPx())) }
-                    .padding(top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-                    Text(n.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1)
-                    Text(" ${cuentas.getOrElse(i) { 0 }}", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1)
+                    .background(if (on) Acento else Color.Transparent)
+                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.Bottom) {
+                    // Dirección C: la elegida, en un bloque del acento
+                    Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
+                    Text(" ${cuentas.getOrElse(i) { 0 }}", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1)
                 }
             }
         }
-        Filete(1.dp, Line)
+        Filete(2.dp)
     }
 }
