@@ -268,6 +268,29 @@ class CapturasTest {
         montar(false); foto("1d_portada_sin_leyendo")
     }
 
+    /** La portada con un día de la semana tocado (sale encima lo que leíste ese día): normal, noche y letra grande. */
+    private fun portadaDiaTocado(nombre: String, oscuro: Boolean) {
+        siembra(); montar(oscuro)
+        rule.onNodeWithContentDescription("viernes", substring = true, ignoreCase = true).let { runCatching { it.performScrollTo() }; it.performClick() }
+        rule.waitForIdle()
+        rule.onNodeWithText("Esta semana").performScrollTo(); rule.waitForIdle()
+        foto(nombre)
+    }
+    /** Con pocos libros, «También lees» y «Pendientes» lado a lado (uno a medias más y un pendiente). */
+    @Test fun portadaPocos() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra()
+        Biblioteca.libros.removeAll { it.id in setOf("4", "7", "8", "9", "11") }
+        montar(false)
+        rule.onNodeWithText("Tu 2", substring = true).performScrollTo(); rule.waitForIdle(); foto("1k_portada_pocos")
+    }
+
+    @Test fun portadaSemana() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); portadaDiaTocado("1j_portada_semana", false) }
+    @Test fun portadaSemanaNoche() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); portadaDiaTocado("1j_portada_semana_oscuro", true) }
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun portadaSemanaLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); portadaDiaTocado("c8_portada_semana_letra_grande", false)
+    }
+
     @Test fun portadaOscuro() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra(); montar(true); foto("2_portada_oscuro")

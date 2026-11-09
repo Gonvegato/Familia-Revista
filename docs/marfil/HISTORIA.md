@@ -79,6 +79,21 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.20.1 — el reto y la semana en la portada, y el icono centrado
+
+- **Debajo de «Seguir leyendo»**, el reto del año: «Reto 2026 · 13 / 30», su barra y cómo vas («VAS 2 POR DETRÁS · TE QUEDAN 17 EN
+  52 DÍAS», «VAS AL DÍA», «¡RETO CUMPLIDO!»). Lo que toca a estas alturas es el reto repartido por igual entre los días del año (con hoy,
+  hacia abajo). Sin reto, «Ponerte un reto →» (lleva a Ajustes); con reto, tocarlo lleva a Leídos.
+- **«Esta semana»**, con el total y lo de hoy («4 H 01 · HOY 52′»): siete barras grandes que se tocan; la tocada se marca en el acento y
+  encima sale lo que leíste ese día («V · 1 h 10», «S · nada»). De serie, marcada hoy si has leído. Debajo, los días seguidos.
+  La etiqueta se pega a su lado en los extremos (no se sale) y deja sitio de sobra con la letra grande.
+- **«También lees» y «Pendientes» lado a lado** cuando entre los dos hay tres portadas o menos (tan grandes como quepan, hasta
+  120 dp); con más, cada uno en su fila como antes. «Tu año» queda con el mosaico (el reto ya va arriba). Fuera la línea pequeña de
+  hoy/racha del final.
+- **Icono**: la «S.» (letra y punto como conjunto) centrada con la tinta real de la fuente: en horizontal en el centro y en vertical en el
+  hueco entre la zona segura y la franja «LIBROS» (en el monocromo, en el centro de la zona segura). Lámina de comprobación en
+  `docs/marfil/iconos/comprobacion-icono.png` (círculo, squircle, redondeado, monocromo y tamaños pequeños).
+
 ## 0.20.0 — encuadrar la portada y el fondo, paspartú y velo
 
 - **Encuadrar**, como en Bastet: la imagen se guarda entera y tú eliges qué parte se ve. En «Imágenes», en cada pestaña, «Encuadrar» abre

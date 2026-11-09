@@ -38,12 +38,13 @@ import java.util.Locale
  *  - El cartel: lo que lees ahora (el último que has abierto), a lo grande sobre su color, con su avance; debajo, «SEGUIR LEYENDO →».
  *  - «También lees · N →»: los demás que tienes a medias, en portadas grandes que se deslizan.
  *  - «Pendientes · N →»: lo que toca, en portadas medianas (de cada saga, el siguiente que te queda).
- *  - «Tu año · X de Y →»: el reto con su barra y el mosaico de lo leído este año.
- *  - Debajo, en pequeño: hoy, la racha y la semana.
+ *  - Debajo del botón: el reto del año (cómo vas) y la semana en barras que se tocan (lo leído cada día).
+ *  - Con pocos libros, «También lees» y «Pendientes» lado a lado.
+ *  - «Tu año · N leídos →»: el mosaico de lo leído este año.
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun PaginaPortada(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -> Unit, alIr: (Destino) -> Unit) {
+fun PaginaPortada(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: () -> Unit, alIr: (Destino) -> Unit, alAjustes: () -> Unit = {}) {
     val libros = Biblioteca.propios()
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val leyendo = libros.filter { it.estado == Estado.LEYENDO }.sortedWith(compareByDescending<Libro> { it.ultima }.thenByDescending { it.anadido })
@@ -76,61 +77,62 @@ fun PaginaPortada(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAnadir: (
             } else CartelVacio(alAnadir)
         }
 
-        // ---- También lees: los demás que tienes a medias, en portadas grandes con su avance
+        // ---- El reto del año y la semana, justo debajo del botón
+        if (libros.isNotEmpty()) {
+            BloqueReto(metaAnual, terminadosAno, ano, alIr = { alIr(Destino.Leidos) }, alPoner = alAjustes)
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 22.dp), verticalAlignment = Alignment.Bottom) {
+                Text("Esta semana", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, maxLines = 1, modifier = Modifier.weight(1f))
+                Text("${minutosCorto(lectura.semana.sumOf { it.second })} · HOY ${minutosCorto(lectura.hoyMin)}", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
+            }
+            SemanaTocable(lectura, Modifier.padding(horizontal = 20.dp))
+            if (lectura.racha > 0) Text("${lectura.racha} ${if (lectura.racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS"} LEYENDO", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black,
+                fontSize = 10.5.sp, letterSpacing = 1.sp, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp))
+        }
+
         val otros = leyendo.drop(1)
-        if (otros.isNotEmpty()) {
-            TituloEstante("También lees", "${otros.size} →") { alIr(Destino.Leyendo) }
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                otros.forEach { l ->
-                    Column(Modifier.width(120.dp).clickable { alAbrir(l) }) {
-                        PortadaLibro(l, Modifier.width(120.dp).height(180.dp), radio = 0)
-                        Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
-                        Text("${(l.fraccion * 100).toInt().coerceIn(0, 100)} %", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+        // Con pocos libros (tres portadas entre los dos estantes, como mucho), «También lees» y «Pendientes» van lado a lado, con las
+        // portadas tan grandes como quepan; si no, cada uno en su fila
+        val juntos = libros.isNotEmpty() && otros.isNotEmpty() && pendientes.isNotEmpty() && otros.size + pendientes.size <= 3
+        if (juntos) {
+            BoxWithConstraints(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 24.dp)) {
+                val n = otros.size + pendientes.size
+                val ancho = ((maxWidth.value - 18f - 10f * (n - 2)) / n).coerceIn(72f, 120f).toInt()
+                Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                    Column {
+                        EncabezadoCorto("También lees", "${otros.size} →") { alIr(Destino.Leyendo) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { otros.forEach { l -> TapaConAvance(l, ancho, alAbrir) } }
                     }
+                    Column {
+                        EncabezadoCorto("Pendientes", "$nPendientes →") { alIr(Destino.Pendientes) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { pendientes.forEach { (l, saga) -> TapaPendiente(l, saga, ancho, alAbrir) } }
+                    }
+                }
+            }
+        } else {
+            // ---- También lees: los demás que tienes a medias, en portadas grandes con su avance
+            if (otros.isNotEmpty()) {
+                TituloEstante("También lees", "${otros.size} →") { alIr(Destino.Leyendo) }
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    otros.forEach { l -> TapaConAvance(l, 120, alAbrir) }
+                }
+            }
+
+            // ---- Pendientes: portadas medianas, en tu orden
+            if (libros.isNotEmpty()) {
+                TituloEstante("Pendientes", if (nPendientes == 0) null else "$nPendientes →") { alIr(Destino.Pendientes) }
+                if (pendientes.isEmpty()) VacioEstante("No tienes nada pendiente. Lo que añadas sin empezar saldrá aquí.") { BotonC("Añadir un libro", Modifier.padding(top = 8.dp), onClick = alAnadir) }
+                else Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    pendientes.forEach { (l, saga) -> TapaPendiente(l, saga, 104, alAbrir) }
                 }
             }
         }
 
-        // ---- Pendientes: portadas medianas, en tu orden
+        // ---- Tu año: el mosaico de lo leído (el reto, con su barra, ya va arriba)
         if (libros.isNotEmpty()) {
-            TituloEstante("Pendientes", if (nPendientes == 0) null else "$nPendientes →") { alIr(Destino.Pendientes) }
-            if (pendientes.isEmpty()) VacioEstante("No tienes nada pendiente. Lo que añadas sin empezar saldrá aquí.") { BotonC("Añadir un libro", Modifier.padding(top = 8.dp), onClick = alAnadir) }
-            else Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                pendientes.forEach { (l, saga) ->
-                    Column(Modifier.width(104.dp).clickable { alAbrir(l) }) {
-                        PortadaLibro(l, Modifier.width(104.dp).height(156.dp), radio = 0)
-                        if (saga != null) Text("+${saga.miembros.size - 1} DE LA SAGA", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.4.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
-                    }
-                }
-            }
-        }
-
-        // ---- Tu año: el reto y el mosaico de lo leído
-        if (libros.isNotEmpty()) {
-            val titulo = if (metaAnual > 0) "Tu $ano · $terminadosAno de $metaAnual" else "Tu $ano · $terminadosAno ${if (terminadosAno == 1) "leído" else "leídos"}"
-            TituloEstante(titulo, "Leídos →") { alIr(Destino.Leidos) }
+            TituloEstante("Tu $ano · $terminadosAno ${if (terminadosAno == 1) "leído" else "leídos"}", "Leídos →") { alIr(Destino.Leidos) }
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-                if (metaAnual > 0) Box(Modifier.padding(top = 2.dp, bottom = 10.dp).fillMaxWidth().height(8.dp).background(Line)) {
-                    Box(Modifier.fillMaxWidth((terminadosAno.toFloat() / metaAnual).coerceIn(0f, 1f)).fillMaxHeight().background(Acento))
-                }
                 if (leidosAno.isEmpty()) Text("Aún no has terminado ninguno este año. Cuando acabes uno, su portada saldrá aquí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
                 else MosaicoLeidos(leidosAno, alAbrir) { alIr(Destino.Leidos) }
-            }
-        }
-
-        // ---- En pequeño: hoy, la racha y la semana
-        if (libros.isNotEmpty()) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)) {
-                Spacer(Modifier.height(22.dp))
-                Filete(2.dp)
-                Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("HOY ", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp)
-                    Text(if (lectura.hoyMin >= 60) "${lectura.hoyMin / 60} h ${lectura.hoyMin % 60} min" else "${lectura.hoyMin} min", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
-                    Spacer(Modifier.weight(1f))
-                    Text("${lectura.racha} ", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
-                    Text(if (lectura.racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp)
-                }
-                if (lectura.semana.any { it.second >= 1 }) BarrasSemanaC(lectura)
             }
         }
 
@@ -238,5 +240,58 @@ private fun CartelVacio(alAnadir: () -> Unit) {
         Text("Nada, de momento.", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, modifier = Modifier.padding(top = 4.dp))
         Text("Empieza uno de tus pendientes o añade un libro, y su portada saldrá aquí en grande.", color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
         BotonC("Añadir un libro", fondo = Acento, letra = sobreAcento(), onClick = alAnadir)
+    }
+}
+
+/** El reto del año: «Reto 2026 · 13 / 30», su barra y cómo vas. Sin reto, una invitación a ponértelo (en Ajustes). */
+@Composable
+private fun BloqueReto(meta: Int, hechos: Int, ano: Int, alIr: () -> Unit, alPoner: () -> Unit) {
+    Column(Modifier.fillMaxWidth().clickable(onClick = if (meta > 0) alIr else alPoner).padding(start = 20.dp, end = 20.dp, top = 20.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+            Text("Reto $ano", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, maxLines = 1, modifier = Modifier.weight(1f))
+            if (meta > 0) {
+                Text("$hechos", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                Text(" / $meta", color = Muted, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, modifier = Modifier.padding(bottom = 2.dp))
+            }
+        }
+        if (meta > 0) {
+            Box(Modifier.padding(top = 8.dp).fillMaxWidth().height(9.dp).background(Line)) {
+                Box(Modifier.fillMaxWidth((hechos.toFloat() / meta).coerceIn(0f, 1f)).fillMaxHeight().background(Acento))
+            }
+            Text(ritmoReto(meta, hechos).texto(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, letterSpacing = 1.sp, lineHeight = 14.sp,
+                modifier = Modifier.padding(top = 6.dp))
+        } else {
+            Text("$hechos ${if (hechos == 1) "terminado" else "terminados"} este año. Ponte un reto y verás cómo vas.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic,
+                fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
+            Text("PONERTE UN RETO →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 6.dp))
+        }
+    }
+}
+
+/** El título pequeño de un estante cuando van dos lado a lado. */
+@Composable
+private fun EncabezadoCorto(titulo: String, enlace: String, alIr: () -> Unit) {
+    Row(Modifier.clickable(onClick = alIr).padding(bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
+        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, maxLines = 1)
+        Text("  $enlace", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
+    }
+}
+
+/** Una tapa de «También lees», con su barra y su porcentaje. */
+@Composable
+private fun TapaConAvance(l: Libro, ancho: Int, alAbrir: (Libro) -> Unit) {
+    Column(Modifier.width(ancho.dp).clickable { alAbrir(l) }) {
+        PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp), radio = 0)
+        Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+        Text("${(l.fraccion * 100).toInt().coerceIn(0, 100)} %", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+    }
+}
+
+/** Una tapa de «Pendientes» (de una saga, cuántos más quedan). */
+@Composable
+private fun TapaPendiente(l: Libro, saga: FilaLista.DeSaga?, ancho: Int, alAbrir: (Libro) -> Unit) {
+    Column(Modifier.width(ancho.dp).clickable { alAbrir(l) }) {
+        PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp), radio = 0)
+        if (saga != null) Text("+${saga.miembros.size - 1} DE LA SAGA", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.4.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
     }
 }

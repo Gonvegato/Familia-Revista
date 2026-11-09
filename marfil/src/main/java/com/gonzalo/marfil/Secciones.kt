@@ -405,7 +405,7 @@ fun PantPrincipal(
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
         else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }) { i ->
             when (PAGINAS[i]) {
-                Destino.Portada -> PaginaPortada(alAbrir = alAbrir, alLeer = alLeer, alAnadir = alAnadir, alIr = { d -> ambito.launch { pager.animateScrollToPage(PAGINAS.indexOf(d).coerceAtLeast(0)) } })
+                Destino.Portada -> PaginaPortada(alAbrir = alAbrir, alLeer = alLeer, alAnadir = alAnadir, alIr = { d -> ambito.launch { pager.animateScrollToPage(PAGINAS.indexOf(d).coerceAtLeast(0)) } }, alAjustes = alAjustes)
                 Destino.Escritos -> PantEscritos(alVolver = {}, alLeer = alLeer, abrir = escritoPedido, alAbierto = alEscritoAbierto, enPagina = true)
                 else -> Box(Modifier.fillMaxSize().padding(horizontal = 20.dp).navigationBarsPadding()) {
                     when (PAGINAS[i]) {

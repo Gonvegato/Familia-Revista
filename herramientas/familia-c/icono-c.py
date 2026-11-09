@@ -33,15 +33,23 @@ def capas(app):
         T = (255, 255, 255, 255) if mono else rgb(tinta) + (255,)
         A = (255, 255, 255, 255) if mono else rgb(acento) + (255,)
         letra = app[0].upper()
-        f = grotesca(int(S * 0.44))
-        bx0, by0, bx1, by1 = d.textbbox((0, 0), letra, font=f)
-        pw = d.textlength(".", font=f)
-        total = (bx1 - bx0) + pw * 0.9
-        x = (S - total) / 2 - bx0
-        cap_top = S * 0.215                    # dentro de la zona segura (66 dp de 108)
-        y = cap_top - by0
-        d.text((x, y), letra, font=f, fill=T)
-        d.text((x + (bx1 - bx0) + bx0 - pw * 0.05, y), ".", font=f, fill=A)
+        # La «S.» (letra + punto) como un conjunto, centrado con la tinta real de las glifas (no la caja de la línea):
+        #  - en horizontal, en el centro del icono (la zona segura del adaptable es un círculo de 66 dp centrado);
+        #  - en vertical, en el hueco que queda entre la parte de arriba de la zona segura y la franja (en el monocromo, que no
+        #    tiene franja, en el centro de la zona segura).
+        f = grotesca(int(S * 0.40))
+        lx0, ly0, lx1, ly1 = f.getbbox(letra, anchor="ls")     # tinta de la letra, desde la línea base
+        px0, py0, px1, py1 = f.getbbox(".", anchor="ls")       # tinta del punto
+        hueco = S * 0.018
+        ancho = (lx1 - lx0) + hueco + (px1 - px0)
+        alto = max(ly1, py1) - min(ly0, py0)
+        seguro_arriba = S * (54 - 33) / 108                     # el borde de arriba de la zona segura
+        abajo = S * (54 + 33) / 108 if mono else S * BANDA
+        x0 = (S - ancho) / 2                                    # donde empieza la tinta de la letra
+        top = seguro_arriba + ((abajo - seguro_arriba) - alto) / 2
+        base = top - min(ly0, py0)                              # la línea base
+        d.text((x0 - lx0, base), letra, font=f, fill=T, anchor="ls")
+        d.text((x0 + (lx1 - lx0) + hueco - px0, base), ".", font=f, fill=A, anchor="ls")
         if not mono:
             # Lo que hace la app, en la franja (centrado en la parte visible de la franja)
             fl = grotesca(int(S * 0.085))
