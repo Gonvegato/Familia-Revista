@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -99,6 +100,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
     var quitarArchivo by remember { mutableStateOf(false) }
     var renombrar by remember { mutableStateOf(false) }
     var portada by remember { mutableStateOf(false) }
+    var imagenesFondo by remember { mutableStateOf(false) }
     var saga by remember { mutableStateOf(false) }
     var menuArchivo by remember { mutableStateOf(false) }
     var trabajando by remember { mutableStateOf<String?>(null) }
@@ -147,12 +149,15 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
         // ---- «Doble página»: la tapa ampliada como foto de apertura, a todo el ancho y recortada, sobre su color medio
         val tela = remember(l.portada, l.titulo) { colorDePortada(l.portada) ?: telaDe(l.titulo) }
+        val conFondo = l.fondo.isNotBlank()
         Box(Modifier.fillMaxWidth().height(300.dp).clipToBounds()
             .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(lerpColor(tela, androidx.compose.ui.graphics.Color.White, 0.12f), lerpColor(tela, androidx.compose.ui.graphics.Color.Black, 0.55f))))) {
             // (más ancha que la pantalla y recortada: la tapa como foto de apertura)
-            BoxWithConstraints(Modifier.fillMaxSize()) {
+            // Con fondo elegido: el fondo es la foto de apertura (y la portada asoma abajo a la derecha, más abajo)
+            if (conFondo) ImagenRecortada(l.fondo, Modifier.fillMaxSize().clickable(enabled = !l.esEscrito) { imagenesFondo = true; portada = true }, "Fondo de ${l.titulo}")
+            else BoxWithConstraints(Modifier.fillMaxSize()) {
                 val w = maxWidth + 24.dp
-                PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f).clickable(enabled = !l.esEscrito) { portada = true }, radio = 0, conAutor = false)
+                PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f).clickable(enabled = !l.esEscrito) { imagenesFondo = false; portada = true }, radio = 0, conAutor = false)
             }
             // Un velo arriba para que se lean «Volver» y las acciones sobre cualquier tapa
             Box(Modifier.fillMaxWidth().height(110.dp).background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f), androidx.compose.ui.graphics.Color.Transparent))))
@@ -162,7 +167,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
                 // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
                 if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", color = PAPEL_CLARO) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
                 else Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    EnlaceRevista("Portada", color = PAPEL_CLARO) { portada = true }
+                    EnlaceRevista("Imágenes", color = PAPEL_CLARO) { imagenesFondo = false; portada = true }
                     EnlaceRevista("Editar", color = PAPEL_CLARO) { renombrar = true }
                     EnlaceRevista("Borrar", color = PAPEL_CLARO) { quitar = true }
                 }
@@ -171,13 +176,25 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         // La etiqueta del estado, en el acento, pisando el borde de la foto
         val pct = (frac * 100).toInt().coerceIn(0, 100)
         val etiqueta = when (l.estado) { Estado.LEYENDO, Estado.ABANDONADO -> "${l.estado.nombre.uppercase()} · $pct %"; else -> l.estado.nombre.uppercase() }
-        Box(Modifier.padding(start = 20.dp).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
-            Text(etiqueta, color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
+        // Con fondo, la portada (120×180) asoma abajo a la derecha pisando el borde de la foto; el título se aparta para no chocar con ella
+        Box(Modifier.fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth()) {
+                Box(Modifier.padding(start = 20.dp).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
+                    Text(etiqueta, color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
+                }
+                Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = if (conFondo) 156.dp else 20.dp)) {
+                    FitTitle(l.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
+                    val de = listOfNotNull(l.autor.ifBlank { null }?.let { "de $it" }, miSaga?.let { "${it.nombre}, ${it.claves.indexOf(l.clave) + 1}" }).joinToString(" · ")
+                    if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
+                }
+            }
+            // (en una caja de 116 dp que la deja salir 64 dp por arriba: así no estira el hueco hasta el botón)
+            if (conFondo) Box(Modifier.align(Alignment.TopEnd).padding(end = 20.dp).width(120.dp).height(116.dp)) {
+                PortadaLibro(l, Modifier.align(Alignment.BottomCenter).wrapContentHeight(Alignment.Bottom, unbounded = true).requiredHeight(180.dp).fillMaxWidth().shadow(14.dp)
+                    .clickable(enabled = !l.esEscrito) { imagenesFondo = false; portada = true }, radio = 0, conAutor = false)
+            }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            FitTitle(l.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
-            val de = listOfNotNull(l.autor.ifBlank { null }?.let { "de $it" }, miSaga?.let { "${it.nombre}, ${it.claves.indexOf(l.clave) + 1}" }).joinToString(" · ")
-            if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
             Spacer(Modifier.height(16.dp))
             // La acción principal, ancha y negra; a su lado, lo del archivo
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -326,7 +343,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         }
     }
 
-    if (portada) SelectorPortada(l) { portada = false }
+    if (portada) SelectorImagenes(l, fondo = imagenesFondo) { portada = false }
 
     if (saga) DialogoSagaDeLibro(l) { saga = false }
 

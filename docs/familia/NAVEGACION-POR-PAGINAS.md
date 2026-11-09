@@ -65,3 +65,11 @@ Test de referencia: `marfil/src/test/.../SeccionesTest.kt` (`portadaYSeccionesSo
 - **Ficha «doble página»**: la imagen ampliada como foto de apertura a todo el ancho (~300 dp, recortada), con las acciones encima sobre un velo;
   una etiqueta en el acento pisando el borde con el estado; el título enorme; la línea en cursiva; el botón negro ancho de la acción principal;
   y las secciones numeradas en el acento (01 Tu …, 02 La saga, …) con todo lo que la ficha ya tenía.
+
+## Portada + fondo elegibles (Seshat 0.19.0; aplicar igual en las demás)
+
+- Cada cosa (libro, juego, serie, obra…) tiene **portada** (2:3) y **fondo** (a lo ancho), las dos elegibles en una hoja «IMÁGENES.» con
+  pestañas LA PORTADA / EL FONDO: buscar en internet, de tu móvil, quitar (y propuestas cuando la fuente las dé; el fondo puede «usar la portada»).
+- El fondo va a la cuenta como la portada (hash en `fondo`, origen en `fu`; quitado = `"-"`), y se lee el `az.hero` de Jonsu si no hay.
+- Con fondo: el cartel de la portada lleva el fondo detrás y la portada encima a la izquierda; la cabecera de la ficha lleva el fondo de
+  apertura y la portada asomando abajo a la derecha (en una caja que no estira el hueco). Sin fondo, la portada sobre su color, como antes.

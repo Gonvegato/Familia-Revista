@@ -209,7 +209,12 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
     val acentoClaro = lerpColor(Acento, Color.White, 0.35f)
     // (la portada acaba justo donde empieza el texto: lo que lleve pintado abajo —título, autor— no se pisa con el del cartel)
     Box(Modifier.fillMaxWidth().height(470.dp).background(Brush.verticalGradient(listOf(claro, oscuro))).clickable { alAbrir(l) }) {
-        PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 16.dp).shadow(22.dp).width(220.dp).height(330.dp), radio = 0, conAutor = false)
+        if (l.fondo.isNotBlank()) {
+            // Con fondo elegido: el fondo ocupa el cartel (recortado) y la portada va encima, grande, arriba a la izquierda
+            ImagenRecortada(l.fondo, Modifier.fillMaxSize())
+            Box(Modifier.fillMaxWidth().height(120.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Transparent))))
+            PortadaLibro(l, Modifier.align(Alignment.TopStart).padding(start = 20.dp, top = 20.dp).shadow(22.dp).width(150.dp).height(225.dp), radio = 0, conAutor = false)
+        } else PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 16.dp).shadow(22.dp).width(220.dp).height(330.dp), radio = 0, conAutor = false)
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(170.dp).background(Brush.verticalGradient(0f to Color.Transparent, 0.25f to Color(0xCC050404), 1f to Color(0xF2050404))))
         Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
             Text("AHORA LEES · ${porcentaje(l.fraccion)}", color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp, maxLines = 1)

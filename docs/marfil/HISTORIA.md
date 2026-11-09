@@ -79,6 +79,19 @@ Necesita JDK 17+ y el SDK de Android (`local.properties` con `sdk.dir`). Al saca
 
 ## Versiones
 
+## 0.19.0 — portada y fondo elegibles, como en Jonsu
+
+- **Fondo por libro**: una imagen a lo ancho, además de la portada. Se guarda como la portada: en la cuenta, por su hash (`fondo`) y de dónde
+  salió (`fu`); baja sola a tus otros dispositivos. Quitarlo deja `fondo = "-"` (en la cuenta un campo vacío no existe). Si un libro nunca ha
+  tenido fondo en Seshat y en Jonsu le pusiste uno de internet (`az.hero`), se usa ese. En la copia de seguridad, `fondo` y `fu`; las copias
+  viejas siguen valiendo.
+- **IMÁGENES.** (Ficha → «Imágenes», o tocando la tapa o el fondo de arriba): pestañas LA PORTADA / EL FONDO, lo que hay ahora, «Buscar en
+  internet» (la misma búsqueda de imágenes; para el fondo, con «fondo» detrás), «De tu móvil», «Quitar»; en la portada, «La del libro» y las
+  propuestas de iTunes y Open Library; en el fondo, «Usar la portada». Sustituye a la hoja «Portada».
+- **Cartel «Ahora lees»** con fondo: el fondo ocupa el cartel y la portada (150×225) va encima, arriba a la izquierda. Sin fondo, como antes.
+- **Ficha** con fondo: el fondo es la foto de apertura y la portada (120×180) asoma abajo a la derecha pisando el borde; el título se aparta.
+  Sin fondo, como antes.
+
 ## 0.18.0 — la portada «cartel», listas con portadas grandes y la ficha a doble página
 
 Gonzalo: «se le da muy poca importancia a la portada del libro que te estás leyendo… quiero que las portadas en todas las partes de la app

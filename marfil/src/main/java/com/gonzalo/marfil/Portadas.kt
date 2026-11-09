@@ -105,11 +105,48 @@ object Portadas {
         return Biblioteca.por(l.id) ?: l.copy(portada = "", portadaUrl = "")
     }
 
+    /**
+     * Un fondo listo para la cuenta: a lo ancho, como mucho 1600×1000 (unos 150–300 KB en JPEG); se recorta al enseñarlo, no aquí, para
+     * que se pueda ver entero en otros sitios. null si no es una imagen.
+     */
+    fun reducirFondo(bytes: ByteArray): ByteArray? {
+        if (!esImagen(bytes)) return null
+        val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
+        if (o.outWidth <= 0 || o.outHeight <= 0) return null
+        var s = 1; while (o.outWidth / (s * 2) >= 1600 || o.outHeight / (s * 2) >= 1000) s *= 2
+        val b0 = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = s }) ?: return null
+        val k = minOf(1f, 1600f / b0.width, 1000f / b0.height)
+        val b = if (k < 1f) Bitmap.createScaledBitmap(b0, (b0.width * k).toInt().coerceAtLeast(1), (b0.height * k).toInt().coerceAtLeast(1), true) else b0
+        return java.io.ByteArrayOutputStream().use { out -> b.compress(Bitmap.CompressFormat.JPEG, 84, out); out.toByteArray() }
+    }
+
+    /** Pone una imagen como fondo de un libro (en la cuenta, como la portada: sale igual en tus otros dispositivos). null si la imagen no vale. */
+    fun ponerFondo(ctx: Context, l: Libro, bytes: ByteArray, url: String = ""): Libro? {
+        val r = reducirFondo(bytes) ?: return null
+        val hash = com.gonzalo.familia.LaFamilia.familia.imagenes.guarda(r, "image/jpeg")
+        Biblioteca.ponerFondo(l.id, hash, url)
+        return Biblioteca.por(l.id) ?: l.copy(fondo = Biblioteca.archivoPortada(ctx, hash), fondoUrl = url)
+    }
+
+    /** Usa la portada como fondo (la misma imagen, que se recorta a lo ancho). */
+    fun portadaComoFondo(ctx: Context, l: Libro): Libro? {
+        val f = File(l.portada).takeIf { l.portada.isNotBlank() && it.isFile } ?: return null
+        return ponerFondo(ctx, l, f.readBytes(), l.portadaUrl)
+    }
+
+    /** Quita el fondo: la cabecera vuelve al color de la portada (también en tus otros dispositivos). */
+    fun quitarFondo(ctx: Context, l: Libro): Libro {
+        Biblioteca.ponerFondo(l.id, "", "")
+        return Biblioteca.por(l.id) ?: l.copy(fondo = "", fondoUrl = "")
+    }
+
     private val bajando = java.util.concurrent.atomic.AtomicBoolean(false)
 
     /** Las portadas de la cuenta que aún no están en este móvil se bajan (en segundo plano) y el libro las enseña en cuanto llegan. */
     fun bajarQueFalten(ctx: Context) {
-        val faltan = Biblioteca.propios().filter { it.portada.isBlank() }.mapNotNull { l -> Biblioteca.hashPortada(l.id).takeIf { it.isNotBlank() } }
+        val faltan = Biblioteca.propios().filter { it.portada.isBlank() }.mapNotNull { l -> Biblioteca.hashPortada(l.id).takeIf { it.isNotBlank() } } +
+            Biblioteca.propios().filter { !File(it.fondo).isFile }.mapNotNull { l -> Biblioteca.hashFondo(l.id).takeIf { it.isNotBlank() } }
         if (faltan.isEmpty() || !bajando.compareAndSet(false, true)) return
         val app = ctx.applicationContext
         kotlin.concurrent.thread(name = "marfil-portadas") {

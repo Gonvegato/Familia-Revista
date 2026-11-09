@@ -53,6 +53,63 @@ class CapturasTest {
         return f.absolutePath
     }
 
+    /** Un fondo de prueba a lo ancho: un atardecer con montañas (para el cartel y la cabecera de la ficha con fondo). */
+    private fun fondo(nombre: String, cielo: Int, abajo: Int): String {
+        val f = File(ctx.cacheDir, "f_${nombre.hashCode()}.png")
+        val w = 1200f; val h = 500f
+        val bmp = Bitmap.createBitmap(w.toInt(), h.toInt(), Bitmap.Config.ARGB_8888)
+        Canvas(bmp).apply {
+            drawRect(0f, 0f, w, h, Paint().apply { shader = LinearGradient(0f, 0f, 0f, h, cielo, abajo, Shader.TileMode.CLAMP) })
+            drawCircle(w * 0.68f, h * 0.38f, 70f, Paint().apply { color = 0xFFF2C46B.toInt(); isAntiAlias = true })
+            val p = android.graphics.Path().apply { moveTo(0f, h * 0.72f); lineTo(w * 0.12f, h * 0.5f); lineTo(w * 0.25f, h * 0.66f); lineTo(w * 0.4f, h * 0.42f); lineTo(w * 0.55f, h * 0.62f)
+                lineTo(w * 0.72f, h * 0.45f); lineTo(w * 0.88f, h * 0.6f); lineTo(w, h * 0.5f); lineTo(w, h); lineTo(0f, h); close() }
+            drawPath(p, Paint().apply { color = 0xFF14070A.toInt(); isAntiAlias = true })
+        }
+        f.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        return f.absolutePath
+    }
+
+    /** Lo de [siembra] y, además, fondo elegido para «El nombre de la rosa» (el que se lee ahora) y para Dune. */
+    private fun siembraConFondo() {
+        siembra()
+        val i1 = Biblioteca.libros.indexOfFirst { it.id == "1" }; val i2 = Biblioteca.libros.indexOfFirst { it.id == "2" }
+        Biblioteca.libros[i1] = Biblioteca.libros[i1].copy(fondo = fondo("rosa", 0xFFE0703A.toInt(), 0xFF2A0A0E.toInt()))
+        Biblioteca.libros[i2] = Biblioteca.libros[i2].copy(fondo = fondo("dune", 0xFFF0B060.toInt(), 0xFF5A2A0A.toInt()))
+    }
+
+    @Test fun conFondo() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); montar(false); foto("1e_portada_con_fondo")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4h_ficha_con_fondo")
+    }
+
+    @Test fun conFondoNoche() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); montar(true); foto("1f_portada_con_fondo_oscuro")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4i_ficha_con_fondo_oscuro")
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun conFondoLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); montar(false); foto("c6_portada_con_fondo_letra_grande")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("c7_ficha_con_fondo_letra_grande")
+    }
+
+    @Test fun imagenes() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); Skin.cargar(ctx); coloresSeshat(false)
+        val c = listOf("Dune" to 0xFFD9A53A.toInt(), "Dune 2" to 0xFF8C5A22.toInt(), "Arena" to 0xFFB0702A.toInt(), "Otra" to 0xFF35523F.toInt())
+            .mapIndexed { i, (n, col) -> portada(n, col, col and 0x7f7f7f).let { Candidata(it, it, if (i % 2 == 0) "iTunes" else "Open Library", "Dune · Frank Herbert") } }
+        coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
+        val fondo = androidx.compose.runtime.mutableStateOf(true)
+        rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { androidx.compose.runtime.key(fondo.value) { ContenidoImagenes("2", fondo.value, {}, hallados = c) } } } }
+        foto("7b_imagenes_fondo")
+        fondo.value = false; rule.waitForIdle(); foto("7c_imagenes_portada")
+    }
+
     private fun siembra() {
         Skin.cargar(ctx); Biblioteca.cargada = true; Biblioteca.libros.clear(); Biblioteca.borrados.clear(); Sagas.cargar(ctx); Sagas.lista.clear(); Sagas.borradas.clear()
         val ahora = System.currentTimeMillis(); val dia = 86_400_000L

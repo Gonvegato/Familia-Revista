@@ -29,6 +29,12 @@ data class Libro(
     val portada: String = "",
     /** De dónde salió la portada si fue de internet (Open Library, iTunes…): viaja con la cuenta, para que Azabache enseñe la misma. */
     val portadaUrl: String = "",
+    /**
+     * El fondo: una imagen a lo ancho para el cartel de la portada y la cabecera de la ficha (archivo de la app, o una dirección de internet
+     * mientras no ha bajado); "" = sin fondo (se usa el color de la portada). En la cuenta, como la portada: `fondo` (hash) y `fu` (de dónde salió).
+     */
+    val fondo: String = "",
+    val fondoUrl: String = "",
     /** Dirección del archivo en este dispositivo ("" = aún no está aquí). */
     val uri: String = "",
     /** Nombre del archivo (con su extensión). */
@@ -155,9 +161,10 @@ object Biblioteca {
     fun deNodo(n: com.gonzalo.familia.nucleo.Nodo): Libro {
         val c = appCtx
         val hash = n.texto("portada")
+        val (fondo, fondoUrl) = fondoDe(c, n)
         return Libro(
             id = n.ref, titulo = n.texto("t"), autor = n.texto("a"), clave = n.texto("clave").ifBlank { claveDe(n.texto("t"), n.texto("a")) },
-            portada = c?.let { archivoPortada(it, hash) }.orEmpty(), portadaUrl = n.texto("pu"), uri = uris[n.ref].orEmpty(), archivo = n.texto("archivo"),
+            portada = c?.let { archivoPortada(it, hash) }.orEmpty(), portadaUrl = n.texto("pu"), fondo = fondo, fondoUrl = fondoUrl, uri = uris[n.ref].orEmpty(), archivo = n.texto("archivo"),
             favorito = n.si("fav"), estado = estadoDeCuenta(n.texto("estado")), anadido = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("an")), ultima = com.gonzalo.familia.nucleo.Fechas.ms(n.entero("ul")),
             fraccion = n.decimal("fr").toFloat().coerceIn(0f, 1f), fraccionFijada = n.entero("ff"), mod = n.m.values.maxOrNull() ?: 0L,
             paginas = n.entero("pg").toInt(), paginasOrigen = n.texto("po"), terminados = terminadosDe(n),
@@ -178,6 +185,28 @@ object Biblioteca {
     private const val FECHA_MINIMA = 946_684_800_000L   // 2000-01-01: lo de antes es una hora de mentira (o ninguna)
 
     private fun Any?.comoLongSeguro(): Long = (this as? Number)?.toLong() ?: this?.toString()?.toDoubleOrNull()?.toLong() ?: 0L
+
+    /**
+     * El fondo de un libro: la imagen de la cuenta (`fondo`, por su hash) si ya está en el móvil; si aún no ha bajado, la dirección de la que
+     * salió (`fu`). Si el libro nunca ha tenido fondo puesto aquí (no hay campo `fondo`), el que le pusieras en Jonsu (`az.hero`, si es de internet).
+     */
+    fun fondoDe(c: Context?, n: com.gonzalo.familia.nucleo.Nodo): Pair<String, String> {
+        val fu = n.texto("fu")
+        if (n["fondo"] != null) {
+            val h = n.texto("fondo")
+            if (h.isBlank() || h == SIN_FONDO) return "" to ""
+            val f = c?.let { archivoPortada(it, h) }.orEmpty()
+            return f.ifBlank { fu.takeIf { it.startsWith("http") }.orEmpty() } to fu
+        }
+        val hero = n.texto("az").takeIf { it.startsWith("{") }?.let { runCatching { JSONObject(it).optString("hero") }.getOrNull() }.orEmpty()
+        return if (hero.startsWith("http")) hero to hero else "" to ""
+    }
+
+    /** El hash del fondo de un libro en la cuenta ("" si no tiene). */
+    fun hashFondo(id: String): String = col?.nodo(id)?.texto("fondo").orEmpty().takeIf { it != SIN_FONDO }.orEmpty()
+
+    /** «Sin fondo, a propósito» (en la cuenta un campo vacío no existe, y entonces volvería el de Jonsu). */
+    const val SIN_FONDO = "-"
 
     /** El hash de la portada de un libro en la cuenta ("" si no tiene). */
     fun hashPortada(id: String): String = col?.nodo(id)?.texto("portada").orEmpty()
@@ -239,6 +268,8 @@ object Biblioteca {
         val cambios = campos(l).toMutableMap()
         // La portada se pone con [Portadas] (es una imagen de la cuenta); aquí solo se quita si se ha quitado
         if (l.portada.isBlank() && previo != null && previo.portada.isNotBlank()) cambios["portada"] = ""
+        // El fondo, igual: se pone con [Portadas.ponerFondo]; aquí solo se quita si se ha quitado
+        if (l.fondo.isBlank() && previo != null && previo.fondo.isNotBlank()) { cambios["fondo"] = SIN_FONDO; cambios["fu"] = "" }
         if (cc.nodo(id)?.borrado == true) cambios["b"] = 0L
         cc.cambia(id, cambios)
         refresca()
@@ -253,6 +284,13 @@ object Biblioteca {
     fun ponerPortada(id: String, hash: String, url: String) {
         col?.cambia(id, mapOf("portada" to hash, "pu" to url))
         if (congelada || col == null) { val i = libros.indexOfFirst { it.id == id }; val c = appCtx; if (i >= 0 && c != null) libros[i] = libros[i].copy(portada = archivoPortada(c, hash), portadaUrl = url) }
+        refresca()
+    }
+
+    /** El fondo de un libro (el hash de una imagen ya guardada en la cuenta; "" = sin fondo) y de dónde salió. */
+    fun ponerFondo(id: String, hash: String, url: String) {
+        col?.cambia(id, mapOf("fondo" to hash.ifBlank { SIN_FONDO }, "fu" to url))
+        if (congelada || col == null) { val i = libros.indexOfFirst { it.id == id }; val c = appCtx; if (i >= 0 && c != null) libros[i] = libros[i].copy(fondo = archivoPortada(c, hash), fondoUrl = url) }
         refresca()
     }
 
@@ -297,7 +335,7 @@ object Biblioteca {
     fun guardar() { refresca() }
 
     fun aJson(l: Libro) = JSONObject().apply {
-        put("id", l.id); put("clave", l.clave); put("titulo", l.titulo); put("autor", l.autor); put("portada", l.portada); put("pu", l.portadaUrl); put("uri", l.uri); put("archivo", l.archivo)
+        put("id", l.id); put("clave", l.clave); put("titulo", l.titulo); put("autor", l.autor); put("portada", l.portada); put("pu", l.portadaUrl); put("fondo", l.fondo); put("fu", l.fondoUrl); put("uri", l.uri); put("archivo", l.archivo)
         put("favorito", l.favorito); put("estado", l.estado.name); put("anadido", l.anadido); put("ultima", l.ultima); put("fraccion", l.fraccion.toDouble()); put("ff", l.fraccionFijada)
         put("mod", l.mod); put("msp", l.msPropios); put("pg", l.paginas); put("po", l.paginasOrigen)
         put("tm", JSONArray().also { a -> l.terminados.forEach { a.put(it) } })
@@ -306,6 +344,7 @@ object Biblioteca {
 
     fun aLibro(o: JSONObject) = Libro(
         id = o.optString("id").ifBlank { nuevoId() }, titulo = o.optString("titulo"), autor = o.optString("autor"), clave = o.optString("clave").ifBlank { claveDe(o.optString("titulo"), o.optString("autor")) }, portada = o.optString("portada"), portadaUrl = o.optString("pu"),
+        fondo = o.optString("fondo"), fondoUrl = o.optString("fu"),
         uri = o.optString("uri"), archivo = o.optString("archivo"), favorito = o.optBoolean("favorito"),
         estado = Estado.entries.firstOrNull { it.name == o.optString("estado") } ?: Estado.PENDIENTE,
         anadido = o.optLong("anadido"), ultima = o.optLong("ultima"), fraccion = o.optDouble("fraccion", 0.0).toFloat(), fraccionFijada = o.optLong("ff"), mod = o.optLong("mod"),
