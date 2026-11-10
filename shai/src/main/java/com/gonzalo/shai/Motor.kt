@@ -42,6 +42,8 @@ object Motor {
     @Volatile var reloj: () -> Long = { System.currentTimeMillis() }
     /** Cuánto tarda en salir el segundo evento de entre partidos tras el primero. */
     @Volatile var separacion: Long = 6 * 3600_000L
+    /** Al crear una carrera, pedir los candidatos a agente (las capturas de antes lo apagan). */
+    @Volatile var pideAgentes: Boolean = true
     /** Cada cuántas jornadas se rehace lo que FcFeed recuerda. */
     const val CADA_MEMORIA = 3
 
@@ -83,15 +85,65 @@ object Motor {
             try {
                 val r = Narrador.leeInicio(pide(Narrador.inicio(u)))
                 // (sin repetir a nadie, ni una segunda madre, padre o representante si ya los pusiste tú)
-                u = Carreras.guarda(u.copy(entorno = u.entorno + r.gente.filter { g -> u.entorno.none { Vida.mismo(it.nombre, g.nombre) } &&
+                // (sin representante: a su agente lo elige él entre tres; salvo que lo pusieras tú)
+                val gente = if (pideAgentes) r.gente.filter { Gente.rolUnico(it.rol) != "representante" && !it.rol.contains("agente", true) } else r.gente
+                u = Carreras.guarda(u.copy(entorno = u.entorno + gente.filter { g -> u.entorno.none { Vida.mismo(it.nombre, g.nombre) } &&
                     (Gente.rolUnico(g.rol) == null || u.entorno.none { Gente.rolUnico(it.rol) == Gente.rolUnico(g.rol) }) }))
                 Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.INICIO, reloj(), u.paso, r.titulo, r.texto, posts = r.posts, dms = r.dms, prensa = r.prensa,
                     tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts))
                 null
             } catch (e: Exception) { mensaje(e) }
         }
-        return u to fallo
+        // Antes de empezar, a elegir agente (tres candidatos; si no llegan, se piden desde Inicio o Perfil)
+        if (fallo == null && pideAgentes) runCatching { candidatos(u.id) }
+        return (Carreras.de(u.id) ?: u) to fallo
     }
+
+    // ---------------------------------------------------------------- su agente
+
+    /** Pide los tres candidatos a agente (al empezar o para cambiar). Devuelve por qué no se pudo, si no se pudo. */
+    fun candidatos(universo: String): String? = en(universo) {
+        val u = Carreras.de(universo) ?: return@en "Esta carrera ya no está."
+        try {
+            val l = Narrador.leeCandidatos(pide(Narrador.candidatos(u, contexto(u))), u)
+            if (l.size < 2) return@en "No han llegado los candidatos: prueba otra vez."
+            Carreras.guarda((Carreras.de(universo) ?: u).copy(candidatos = l)); null
+        } catch (x: Exception) { mensaje(x) }
+    }
+
+    /** Sin cambiar de agente (se descartan los candidatos). */
+    fun descartaCandidatos(universo: String) { Carreras.de(universo)?.let { Carreras.guarda(it.copy(candidatos = emptyList())) } }
+
+    /**
+     * Elige al candidato [i]: pasa a ser su agente (en su gente, con su comisión, que desde ya se descuenta de lo que cobra y firma); el de
+     * antes deja de serlo (y sigue en su vida o se va, según se lo tome). Claude cuenta cómo se lo toma cada uno (si falla, va sin eso).
+     */
+    fun eligeAgente(universo: String, i: Int): String? = synchronized(cerrojo) { en(universo) {
+        var u = Carreras.de(universo) ?: return@en "Esta carrera ya no está."
+        val c = u.candidatos.getOrNull(i) ?: return@en null
+        val otros = u.candidatos.filterIndexed { j, _ -> j != i }
+        val anterior = u.suAgente ?: u.entorno.firstOrNull { Gente.rolUnico(it.rol) == "representante" && it.id != c.persona && !Vida.mismo(it.nombre, c.nombre) }
+        val nota = "${c.rasgos.joinToString(", ")}. Su idea: ${c.vision} Lo bueno: ${c.bueno} Lo malo: ${c.malo}"
+        val ya = u.entorno.firstOrNull { it.id == c.persona || Vida.mismo(it.nombre, c.nombre) }
+        val persona = ya?.copy(rol = "Representante · ${c.relacion}", nota = nota, afinidad = maxOf(ya.afinidad, 60))
+            ?: Persona(Universo.nuevoId("p"), c.nombre, "Representante · ${c.relacion}", 65, nota, desde = maxOf(1, u.paso))
+        var lo: Narrador.LoDelAgente? = null
+        val fallo = try { lo = Narrador.leeAgente(pide(Narrador.agenteElegido(u, contexto(u), c, otros, anterior))); null } catch (x: Exception) { mensaje(x) }
+        var entorno = u.entorno.filter { it.id != persona.id } + persona
+        var ex = u.exEntorno
+        if (anterior != null) {
+            val viejo = anterior.copy(rol = "Exrepresentante", afinidad = (anterior.afinidad - 15).coerceAtLeast(0))
+            entorno = entorno.map { if (it.id == anterior.id) viejo else it }
+            if (lo?.anteriorSeQueda != true) { entorno = entorno.filter { it.id != anterior.id }; ex = ex + viejo.copy(salio = u.paso, porque = "Dejó de ser tu agente: elegiste a ${c.nombre}") }
+        }
+        u = u.copy(entorno = entorno, exEntorno = ex, agente = persona.id, comision = c.comision, candidatos = emptyList())
+        lo?.let { u = Vida.aplica(u, it.efectos.copy(fuera = emptyMap(), dinero = 0)) }
+        u = Carreras.guarda(u)
+        Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.AGENTE, reloj(), u.paso, lo?.titulo?.ifBlank { null } ?: "${c.nombre}, tu agente",
+            lo?.texto?.ifBlank { null } ?: "Has elegido a ${c.nombre} (${c.relacion}) para llevar tu carrera. Se queda el ${c.comision} % de lo que firmes y cobres.",
+            dms = lo?.dms?.let { Gente.sinExpulsados(u, it) }.orEmpty(), efectos = lo?.let { Vida.recorta(u, it.efectos.copy(fuera = emptyMap(), dinero = 0)) } ?: Efectos()))
+        fallo
+    } }
 
     // ---------------------------------------------------------------- tras un partido
 

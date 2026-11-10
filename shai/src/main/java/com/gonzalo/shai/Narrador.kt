@@ -80,6 +80,8 @@ Reglas que no se rompen nunca:
                 (if (p.alias.isNotEmpty()) " (también le llaman: ${p.alias.joinToString(", ")})" else "") + (if (p.actitud.isNotBlank()) ". Ahora: ${p.actitud}" else "") +
                 (if (Gente.nueva(u, p)) ". NUEVO en su vida" else "")) }
         }
+        u.suAgente?.let { a -> appendLine("- SU AGENTE es ${a.nombre} (lo eligió él; se queda el ${u.comision} % de lo que firma y cobra): ${a.nota}. Las ofertas, los contratos y los patrocinios le llegan por él (según sus contactos), y opina en sus decisiones según su forma de ser.") }
+            ?: if (u.agente.isBlank() && u.paso > 0) appendLine("- No tiene agente elegido en FcFeed.") else Unit
         if (u.exEntorno.isNotEmpty()) appendLine("- YA NO ESTÁN EN SU VIDA (les dio puerta; no le escriben): " + u.exEntorno.joinToString("; ") { "${it.nombre} (${it.rol}, desde la jornada ${it.salio}" + (if (it.porque.isNotBlank()) ": «${it.porque.take(120)}»" else "") + ")" })
         if (partidos.isNotEmpty()) {
             val deTemp = partidos.filter { it.temporada == u.temporada }.ifEmpty { partidos }
@@ -331,7 +333,7 @@ Efectos: aquí sí pueden ser más grandes (de -10 a +10 en fama, afición, disc
     fun inicio(u: Universo) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""
 ${contexto(u, emptyList(), emptyList())}
 
-EMPIEZA SU CARRERA EN FCFEED. Crea su entorno: de 5 a 7 personas inventadas que vayan a dar juego (familia, representante, un amigo de siempre, un compañero del vestuario, alguna ex o alguna chica, un periodista que le sigue), cada una con su rol, una afinidad inicial (0-100) y una nota corta de cómo es; que encaje con su trayectoria y su nivel. Y su presentación: un título y un texto de 3-5 frases, una portada (cabecera inventada, titular, entradilla, la noticia en «articulo» de 2-3 párrafos y 2 secundarios), la red (${comoRed(u, "de 5 a 8")}) y 1 o 2 conversaciones de bienvenida ($COMO_MENSAJES).
+EMPIEZA SU CARRERA EN FCFEED. Crea su entorno: de 5 a 7 personas inventadas que vayan a dar juego (familia, un amigo de siempre, un compañero del vestuario, alguna ex o alguna chica, un periodista que le sigue), cada una con su rol, una afinidad inicial (0-100) y una nota corta de cómo es; que encaje con su trayectoria y su nivel. SIN representante ni agente: a su agente lo elige él (aparte). Y su presentación: un título y un texto de 3-5 frases, una portada (cabecera inventada, titular, entradilla, la noticia en «articulo» de 2-3 párrafos y 2 secundarios), la red (${comoRed(u, "de 5 a 8")}) y 1 o 2 conversaciones de bienvenida ($COMO_MENSAJES).
 """.trim())), maxTokens = 6000, esquema = ESQUEMA_INICIO)
 
     /** Un fichaje o un contrato que ha aceptado: lo que dice la red (Haiku). */
@@ -403,6 +405,45 @@ Es una EDICIÓN ESPECIAL: lo más gordo que le ha pasado hasta ahora. Escribe:
             decision(r["decision"].comoMapa()), ofertas(r["ofertas"], null), Nivel.de(r["nivel_tras"].comoTexto()), efectos(r["efectos"].comoMapa()),
             r["gente_nueva"].comoLista().map { it.comoMapa() }.map { Persona("", it["nombre"].comoTexto().trim(), it["rol"].comoTexto(), 50, it["nota"].comoTexto()) }.filter { it.nombre.isNotBlank() }.take(2))
     }
+
+    // ---------------------------------------------------------------- su agente
+
+    val ESQUEMA_CANDIDATOS = obj("candidatos" to lista(obj("nombre" to TEXTO, "relacion" to TEXTO, "rasgos" to lista(TEXTO), "vision" to TEXTO, "bueno" to TEXTO,
+        "malo" to TEXTO, "comision" to ENTERO, "ya_es" to TEXTO)))
+    val ESQUEMA_AGENTE = obj("titulo" to TEXTO, "texto" to TEXTO, "mensajes" to lista(DM), "efectos" to EFECTOS, "anterior_se_queda" to SINO)
+
+    /** Los tres candidatos a agente (Sonnet): al empezar la carrera o al querer cambiar de agente. */
+    fun candidatos(u: Universo, ctx: String) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""
+$ctx
+
+${u.suAgente?.let { "QUIERE CAMBIAR DE AGENTE: ahora le lleva ${it.nombre}, que NO puede ser ninguno de los tres." } ?: "ELIGE AGENTE ANTES DE EMPEZAR."} Propón TRES candidatos a llevar su carrera, MUY distintos entre sí en todo (relación con él, personalidad, ambición, contactos, forma de trabajar): por ejemplo, alguien cercano (de su familia o un amigo; si encaja alguien de «Su gente», puede ser esa persona: pon su nombre EXACTO en «ya_es»), un profesional de una agencia (inventada) y un tercero distinto de los dos. Que encajen con su nivel de ahora (a un canterano no le quiere la agencia más grande del mundo) y con lo que ha pasado. Personas y agencias INVENTADAS, nunca agentes reales. Para cada uno:
+- «nombre» y apellido; «relacion»: qué es de él y desde cuándo (como mucho 60 caracteres: «Tu tío · te lleva desde los 12 años»).
+- «rasgos»: 3 rasgos de personalidad de una o dos palabras.
+- «vision»: lo que quiere hacer con su carrera, dicho por él en una frase entre comillas « » (como mucho 130 caracteres).
+- «bueno» y «malo»: una frase cada uno (lo que gana y lo que arriesga con él).
+- «comision»: el % que se queda de lo que firme y cobre (realista: de 3 a 12; los de agencias grandes, más).
+- «ya_es»: el nombre exacto si es alguien de «Su gente»; si no, vacío.
+""".trim())), maxTokens = 2500, esquema = ESQUEMA_CANDIDATOS)
+
+    fun leeCandidatos(r: Map<String, Any?>, u: Universo): List<Candidato> = r["candidatos"].comoLista().map { it.comoMapa() }.map { m ->
+        val ya = m["ya_es"].comoTexto().trim()
+        Candidato(m["nombre"].comoTexto().trim(), m["relacion"].comoTexto().trim().take(80), m["rasgos"].comoLista().map { it.comoTexto().trim() }.filter { it.isNotBlank() }.take(3),
+            m["vision"].comoTexto().trim(), m["bueno"].comoTexto().trim(), m["malo"].comoTexto().trim(), m["comision"].comoLong().toInt().coerceIn(1, 15),
+            u.entorno.firstOrNull { ya.isNotBlank() && Vida.mismo(it.nombre, ya) }?.id.orEmpty())
+    }.filter { it.nombre.isNotBlank() && u.suAgente?.let { a -> !Vida.mismo(a.nombre, it.nombre) } != false }.take(3)
+
+    /** Ha elegido agente: cómo se lo toman el elegido, los otros dos y (si cambia) el de antes (Sonnet). */
+    fun agenteElegido(u: Universo, ctx: String, elegido: Candidato, otros: List<Candidato>, anterior: Persona?) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""
+$ctx
+
+HA ELEGIDO AGENTE: ${elegido.nombre} (${elegido.relacion}; ${elegido.rasgos.joinToString(", ")}; ${elegido.vision}).
+LOS QUE NO HA ELEGIDO: ${otros.joinToString(" | ") { "${it.nombre} (${it.relacion} — ${it.rasgos.joinToString(", ")})" }}.
+${anterior?.let { "SU AGENTE DE ANTES, al que deja: ${it.nombre} (${it.rol}, afinidad ${it.afinidad})." } ?: ""}
+Cuenta cómo se lo toma cada uno: «titulo» corto y «texto» de 3 a 5 frases. ${COMO_MENSAJES} De 2 a 4 conversaciones: el elegido le escribe (su primer plan, a su manera) y los que no elegiste reaccionan según su forma de ser y su relación con él (el familiar dolido o comprensivo, el profesional frío, el amigo que se pica…)${anterior?.let { ", y ${it.nombre} también" } ?: ""}. En «efectos.relaciones», los cambios de afinidad con los de «Su gente» que se lo toman bien o mal (por su nombre exacto). ${if (anterior != null) "«anterior_se_queda»: true si ${anterior.nombre} sigue en su vida (es familia o amigo y lo encaja), false si se va." else "«anterior_se_queda»: false."}
+""".trim())), maxTokens = 3500, esquema = ESQUEMA_AGENTE)
+
+    class LoDelAgente(val titulo: String, val texto: String, val dms: List<Dm>, val efectos: Efectos, val anteriorSeQueda: Boolean)
+    fun leeAgente(r: Map<String, Any?>) = LoDelAgente(r["titulo"].comoTexto().trim(), r["texto"].comoTexto().trim(), dms(r["mensajes"]), efectos(r["efectos"].comoMapa()), r["anterior_se_queda"].comoBool())
 
     /** El cierre de la temporada: balance, premios inventados, vacaciones y mercado de verano (Sonnet). */
     fun temporada(u: Universo, ctx: String, cifras: Linea, partidos: List<Partido>) = Peticion(Claude.SONNET, sistema(), listOf(Peticion.texto("""

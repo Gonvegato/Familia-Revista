@@ -110,7 +110,10 @@ object Contratos {
     }
 
     /** Lo que se cobra en una jornada: el sueldo del contrato, los patrocinios y, si marcó, la prima por gol. */
-    fun cobra(u: Universo, p: Partido?): Long = (u.contrato?.sueldo ?: 0) + u.patrocinio + (if (p != null && !Competiciones.deSelecciones(p.competicion)) (u.contrato?.porGol ?: 0) * p.goles else 0)
+    fun cobra(u: Universo, p: Partido?): Long = sinComision(u, (u.contrato?.sueldo ?: 0) + u.patrocinio + (if (p != null && !Competiciones.deSelecciones(p.competicion)) (u.contrato?.porGol ?: 0) * p.goles else 0))
+
+    /** Lo que le llega después de que su agente se quede su parte ([Universo.comision]). */
+    fun sinComision(u: Universo, bruto: Long): Long = if (u.comision <= 0 || u.suAgente == null) bruto else bruto - bruto * u.comision / 100
 
     private fun redondea(x: Double): Long = when {
         x >= 100_000 -> Math.round(x / 5_000) * 5_000

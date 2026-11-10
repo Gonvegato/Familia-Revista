@@ -288,8 +288,8 @@ object Vida {
     /** Aceptar una oferta: cambia el club (o el contrato) y lo que cobras; las otras ofertas de club de esa misma vez se caen. */
     fun acepta(u: Universo, o: Oferta): Universo {
         val c = Contratos.deOferta(u, o)
-        return if (c != null) u.copy(club = c.club, contrato = c, salario = c.sueldo + u.patrocinio, dinero = u.dinero + o.prima, contratoHasta = c.hasta,
+        return if (c != null) u.copy(club = c.club, contrato = c, salario = c.sueldo + u.patrocinio, dinero = u.dinero + Contratos.sinComision(u, o.prima), contratoHasta = c.hasta,
             renovacionPaso = if (o.tipo == "renovacion") u.paso else u.renovacionPaso)
-        else u.copy(dinero = u.dinero + o.prima, patrocinio = u.patrocinio + o.salario, salario = (u.contrato?.sueldo ?: 0) + u.patrocinio + o.salario)
+        else u.copy(dinero = u.dinero + Contratos.sinComision(u, o.prima), patrocinio = u.patrocinio + o.salario, salario = (u.contrato?.sueldo ?: 0) + u.patrocinio + o.salario)
     }
 }

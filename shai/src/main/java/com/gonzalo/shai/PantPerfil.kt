@@ -191,6 +191,7 @@ fun TabPerfil(u: Universo, alBorrada: () -> Unit, alChat: (String) -> Unit = {})
     }
     Spacer(Modifier.height(10.dp))
     BotonRedondo("Editar perfil y carta", Modifier.fillMaxWidth(), lleno = false) { editando = true }
+    BotonAgente(u, Modifier.padding(top = 8.dp))
 
     // La carta de FC
     Seccion(if (u.modo == Rol.MISTER) "Tus cifras" else "Tu carta de FC", if (u.modo == Rol.JUGADOR && pj.historial.size > 1) "media: " + pj.historial.takeLast(5).joinToString(" → ") { "${it.second}" } else null)

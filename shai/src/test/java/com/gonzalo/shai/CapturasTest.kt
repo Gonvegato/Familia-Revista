@@ -41,6 +41,7 @@ abstract class CapturasBase {
         // Con las plantillas del modo prueba (lo más parecido a lo que escribe Claude), sin el aviso del modo prueba
         Motor.claude = Claude({ ClaveApi.lee() }, TransporteDePrueba(kotlin.random.Random(11)))
         Motor.separacion = 0
+        Motor.pideAgentes = false
         val (u0, _) = Motor.crea(Ejemplo.universo().copy(trayectoria = "Canterano del Betis desde los nueve años; debutó el año pasado en Copa. Su abuelo jugó en el filial.",
             nivel = Nivel.PROMESA.name, fuera = Fuera.INICIAL + (Fuera.FAMA to 24)))
         listOf(Ejemplo.partido(2, 2, "Athletic Club"), Ejemplo.partido(1, 2, "Valencia CF"), Ejemplo.partido(3, 1, "Sevilla FC")).forEach { p ->
@@ -179,7 +180,7 @@ abstract class CapturasBase {
         cual = 13; foto("53-prueba-mensajes")
         cual = 40; foto("54-prueba-ajustes-ia")
         Prueba.vacia(); Prueba.pon(ctx, false); Motor.separacion = 6 * 3600_000L
-        ClaveApi.fija = null; Gasto.mesFijo = null
+        ClaveApi.fija = null; Gasto.mesFijo = null; Motor.pideAgentes = true
     }
 }
 

@@ -102,6 +102,8 @@ fun PantCarrera(id: String, alVolver: () -> Unit, alPartido: () -> Unit, alAjust
             puerta0 = chatPuerta, borrador0 = chatBorrador)
         return
     }
+    // Los candidatos a agente esperan: primero, elegir
+    if (u.candidatos.isNotEmpty()) { PantAgentes(u) { }; return }
     if (hecho) {
         BackHandler { hecho = false }
         PantHecho(u, alVolver = { hecho = false }, alHecho = { hecho = false; pestana = 1 })
@@ -207,6 +209,8 @@ private fun TabInicio(u: Universo, entradas: List<Entrada>, convs: List<Conversa
             Text("Ponerla en Ajustes → IA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.padding(top = 8.dp))
         }
     }
+    // Sin agente al empezar (si no llegaron los candidatos): a elegirlo
+    if (u.agente.isBlank() && u.paso == 0 && u.entorno.none { Gente.rolUnico(it.rol) == "representante" }) { Spacer(Modifier.height(10.dp)); BotonAgente(u) }
     // Un hecho histórico de esta jornada: su edición especial, arriba del todo
     val especial = entradas.firstOrNull { it.tipo == TipoEntrada.HISTORICO && it.hecho != null && it.paso == u.paso }
     if (especial != null) { Spacer(Modifier.height(12.dp)); EdicionEspecial(u, especial, alRed = { alPestana(0) }, alMensajes = { alPestana(3) }) }

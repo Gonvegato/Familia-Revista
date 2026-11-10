@@ -5,6 +5,17 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.10.0
+
+- **Eliges a tu agente.** Al crear la carrera, antes de entrar, Sonnet propone tres candidatos muy distintos (alguien cercano, un
+  profesional de una agencia, otro distinto), cada uno con su relación contigo, su personalidad, su visión de tu carrera, lo bueno, lo malo y
+  su comisión. El que eliges entra en tu gente como tu representante; los otros reaccionan (Sonnet cuenta cómo se lo toma cada uno, con sus
+  mensajes) (`PantAgentes`, `Motor.candidatos`, `Motor.eligeAgente`). El principio ya no se inventa un representante.
+- **La comisión es de verdad:** se descuenta de tu sueldo, tus patrocinios, las primas por gol y las primas de firma (`Contratos.sinComision`).
+- **Cambiar de agente** desde Perfil («Cambiar de agente»): tres candidatos nuevos (ninguno el de ahora) o «Seguir con…». El de antes pasa a
+  «Exrepresentante» y sigue en tu vida o se va, según se lo tome. En las carreras de antes, el representante que tenías sigue hasta que cambies.
+- Claude sabe quién es tu agente, su comisión y cómo es: las ofertas te llegan por él y opina según su forma de ser.
+
 ## 0.9.1
 
 - **El videojuego no existe dentro de la historia.** Claude recibía tu media tal cual («media 78 en el juego», «Su media en el juego es

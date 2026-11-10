@@ -44,6 +44,7 @@ abstract class CapturasHechoBase {
                 Surface(Modifier.fillMaxSize(), color = Paper) {
                     key(cual) {
                         when (cual) {
+                            8 -> PantCarrera(u0.id, {}, {}, {}, inicial = 1)
                             0 -> Box(Modifier.fillMaxSize()) { PantCarrera(u0.id, {}, {}, {}, inicial = 1); MenuMas({}, {}, {}) }
                             1 -> PantHecho(Carreras.de(u0.id)!!, {}, {}, texto0 = cuenta)
                             2 -> PantHecho(Carreras.de(u0.id)!!, {}, {}, texto0 = cuenta, entendido0 = ent)
@@ -57,6 +58,9 @@ abstract class CapturasHechoBase {
                 }
             }
         }
+        cual = 8; foto("a1-elige-agente")
+        Motor.eligeAgente(u0.id, 1)
+        cual = 3; foto("a2-inicio-agente")
         cual = 0; foto("h1-menu-mas")
         cual = 1; foto("h2-hecho-escribir")
         cual = 2; foto("h3-hecho-entendido")

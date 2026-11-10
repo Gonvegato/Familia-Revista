@@ -392,6 +392,8 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         val sistema = c["system"].comoLista().joinToString("\n") { it.comoMapa()["text"].comoTexto() }
         val r: Any = when {
             sistema.startsWith("Compruebas en la web") -> mapOf("hay_precedentes" to false, "texto" to "Modo prueba: no se ha buscado nada en la web; con tu clave, aquí sale si ha pasado antes de verdad.", "dudas" to "")
+            "candidatos" in props && props.size == 1 -> candidatosPrueba(d, texto)
+            "anterior_se_queda" in props -> agentePrueba(d, texto)
             "entendido" in props -> entender(texto)
             "nivel_tras" in props -> edicion(u, d, texto)
             "respuesta" in props && "actitud" in props -> charla(u, d, texto)
@@ -418,6 +420,35 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         return Json.escribe(mapOf("id" to "msg_prueba", "type" to "message", "role" to "assistant", "model" to c["model"].comoTexto(),
             "content" to listOf(mapOf("type" to "text", "text" to limpio)), "stop_reason" to "end_turn",
             "usage" to mapOf("input_tokens" to 0, "output_tokens" to 0, "cache_creation_input_tokens" to 0, "cache_read_input_tokens" to 0)))
+    }
+
+    // ---------------------------------------------------------------- su agente
+
+    private fun candidatosPrueba(d: Datos, texto: String): Map<String, Any?> {
+        val ahora = Regex("""ahora le lleva ([^,]+?), que NO""").find(texto)?.groupValues?.get(1)?.trim()
+        val todos = listOf(
+            mapOf("nombre" to "Manolo Vela", "relacion" to "Tu tío · te lleva desde los 12 años", "rasgos" to listOf("Leal", "Prudente", "De la vieja escuela"),
+                "vision" to "«Primero minutos y cabeza. El dinero ya vendrá. No te vendo al primero que llame.»", "bueno" to "Siempre de tu lado; tu familia confía en él.",
+                "malo" to "Pocos contactos fuera de España; las marcas grandes no le cogen el teléfono.", "comision" to 3, "ya_es" to ""),
+            mapOf("nombre" to "Irene Saldaña", "relacion" to "Agencia Prime Sports · la conociste hace un mes", "rasgos" to listOf("Ambiciosa", "Fría", "Muy conectada"),
+                "vision" to "«En dos años te quiero en la Premier. Cada verano, una puerta más grande.»", "bueno" to "Contactos en los grandes de Europa y en las marcas.",
+                "malo" to "Le importan los números; si dejas de rendir, eres uno más de su lista.", "comision" to 10, "ya_es" to ""),
+            mapOf("nombre" to "Dani Rufo", "relacion" to "Tu amigo del barrio · empieza en esto", "rasgos" to listOf("Fiestero", "Mediático", "Impulsivo"),
+                "vision" to "«Tú eres una marca. Redes, anuncios, que se hable de ti cada semana.»", "bueno" to "Te entiende y te hace famoso fuera del campo.",
+                "malo" to "Novato: te puede meter en líos y en malos contratos.", "comision" to 5, "ya_es" to ""),
+            mapOf("nombre" to "Ramón Iturbe", "relacion" to "Exjugador · agente de veteranos", "rasgos" to listOf("Sereno", "Exigente", "Discreto"),
+                "vision" to "«Una carrera larga vale más que un verano loco.»", "bueno" to "Sabe lo que es un vestuario y cuida tu cuerpo.", "malo" to "Odia los focos: poca prensa, pocos anuncios.", "comision" to 6, "ya_es" to ""))
+        return mapOf("candidatos" to todos.filter { it["nombre"] != ahora }.take(3))
+    }
+
+    private fun agentePrueba(d: Datos, texto: String): Map<String, Any?> {
+        val elegido = Regex("""HA ELEGIDO AGENTE: ([^(]+?) \(""").find(texto)?.groupValues?.get(1)?.trim() ?: "tu agente"
+        val otros = Regex("""LOS QUE NO HA ELEGIDO: (.+)""").find(texto)?.groupValues?.get(1).orEmpty().split(" | ").map { it.substringBefore(" (").trim() }.filter { it.isNotBlank() }
+        val ms = mutableListOf(mapOf("chat" to elegido, "de" to elegido, "id" to "", "texto" to "Trato hecho. Mañana te mando el plan: nada de entrevistas hasta que hablemos."),
+            mapOf("chat" to elegido, "de" to elegido, "id" to "", "texto" to "Y una cosa: a partir de hoy, el teléfono lo cojo yo."))
+        otros.firstOrNull()?.let { o -> ms += mapOf("chat" to o, "de" to o, "id" to "", "texto" to "Tú sabrás, chaval. Si un día me necesitas, ya sabes dónde estoy.") }
+        return mapOf("titulo" to "$elegido, tu agente", "texto" to rellena("Has elegido a $elegido para llevar la carrera de {A}. ${otros.joinToString(" y ")} se han enterado esa misma tarde, y no todos lo han encajado igual. Modo prueba: con tu clave, lo escribe Sonnet.", d),
+            "mensajes" to ms, "efectos" to efectos(NADA, d), "anterior_se_queda" to true)
     }
 
     // ---------------------------------------------------------------- los hechos históricos

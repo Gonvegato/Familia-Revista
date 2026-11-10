@@ -208,7 +208,8 @@ class ShaiTest {
         Motor.reloj = { ahora }
         val (u0, f0) = Motor.crea(Ejemplo.universo())
         assertNull(f0)
-        assertEquals(listOf("Loli Cortés", "Toni Vidal", "Vera Salinas"), Carreras.de(u0.id)!!.entorno.map { it.nombre })
+        // (sin el representante que propone el principio: a su agente lo elige él entre tres)
+        assertEquals(listOf("Loli Cortés", "Vera Salinas"), Carreras.de(u0.id)!!.entorno.map { it.nombre })
         assertEquals(TipoEntrada.INICIO, Carreras.entradasDe(u0.id).single().tipo)
 
         // Un partido: la red (Haiku), la prensa (Sonnet) y, por lotes, los dos eventos
@@ -220,7 +221,7 @@ class ShaiTest {
         assertEquals(1, u.paso); assertEquals(250_000 + 18_000L, u.dinero)
         // (a los 19 años el partido da +4 de fama y la prensa pide +4, pero el tope de la jornada es 7: 20 + 7)
         assertEquals(27, u.valorFuera(Fuera.FAMA))
-        assertEquals(listOf("claude-sonnet-5-5", "claude-haiku-5-5", "claude-sonnet-5-5"), api.mensajes().map { it.cuerpo["model"] })
+        assertEquals(listOf("claude-sonnet-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-sonnet-5-5"), api.mensajes().map { it.cuerpo["model"] })  // el principio, los candidatos a agente, la red y la prensa
         val lote = api.llamadas.single { it.url.endsWith("/batches") }
         assertEquals(listOf("${u.id}_1_1", "${u.id}_1_2"), lote.cuerpo["requests"].comoLista().map { it.comoMapa()["custom_id"] })
         assertEquals(1, u.lotes.size)

@@ -190,6 +190,17 @@ data class Personaje(
     }
 }
 
+/** Un candidato a agente: quién es, qué relación tiene con él, cómo es, qué ve en su carrera, lo bueno, lo malo y su comisión (%). */
+data class Candidato(val nombre: String, val relacion: String, val rasgos: List<String>, val vision: String, val bueno: String, val malo: String, val comision: Int,
+                     /** Si ya es alguien de su vida (su tío, su amigo): su id en [Universo.entorno]. */
+                     val persona: String = "") {
+    fun aMapa(): Map<String, Any?> = mapOf("n" to nombre, "r" to relacion, "ra" to rasgos, "v" to vision, "b" to bueno, "m" to malo, "c" to comision.toLong(), "p" to persona)
+    companion object {
+        fun de(m: Map<String, Any?>) = Candidato(m["n"].comoTexto(), m["r"].comoTexto(), m["ra"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["v"].comoTexto(),
+            m["b"].comoTexto(), m["m"].comoTexto(), m["c"].comoLong().toInt().coerceIn(0, 20), m["p"].comoTexto())
+    }
+}
+
 /** Algo tuyo: una casa, un coche, un negocio. [valor] cambia con el tiempo; [renta] es lo que deja (o cuesta, si es negativa) cada jornada. */
 data class Bien(val id: String, val tipo: String, val nombre: String, val compra: Long, val valor: Long, val renta: Long, val desde: Int) {
     fun aMapa(): Map<String, Any?> = mapOf("id" to id, "t" to tipo, "n" to nombre, "c" to compra, "v" to valor, "r" to renta, "d" to desde.toLong())
@@ -272,7 +283,14 @@ data class Universo(
     val compsPreguntadas: List<String> = emptyList(),
     /** El nivel (ordinal de [Nivel]) con el que entró la última gente nueva: al subir de nivel, entra gente nueva ([Gente]). -1: aún no. */
     val nivelGente: Int = -1,
+    /** Su agente (el id de su persona en [entorno]) y lo que se queda de lo que firma y cobra (%). Vacío: aún no ha elegido ([Agentes]). */
+    val agente: String = "",
+    val comision: Int = 0,
+    /** Los tres candidatos a agente que esperan a que elija (al empezar la carrera o al querer cambiar). */
+    val candidatos: List<Candidato> = emptyList(),
 ) {
+    /** Su agente, si lo hay. */
+    val suAgente: Persona? get() = entorno.firstOrNull { it.id == agente }
     /** El club de ahora está identificado y confirmado. */
     val clubIdentificado: Boolean get() = clubInfo?.let { it.confirmado && it.es(club) } == true
     /** Hay una identificación del club de ahora esperando a que digas «Sí, es este». */
@@ -296,7 +314,7 @@ data class Universo(
         "fh" to famaHist.map { listOf(it.first.toLong(), it.second.toLong()) }, "ct" to (contrato?.aMapa() ?: emptyMap<String, Any?>()), "pt" to patrocinio,
         "rp" to renovacionPaso.toLong(), "ht" to hitos.map { it.aMapa() }, "rs" to recordsSuyos.map { it.aMapa() }, "rv" to rivales.map { it.aMapa() },
         "ic" to (clubInfo?.aMapa() ?: emptyMap<String, Any?>()), "ex" to exEntorno.map { it.aMapa() }, "cps" to comps, "cpd" to compsDe, "cpa" to compAlias,
-        "cpq" to compsPreguntadas, "nvg" to nivelGente.toLong(),
+        "cpq" to compsPreguntadas, "nvg" to nivelGente.toLong(), "ag" to agente, "com" to comision.toLong(), "cand" to candidatos.map { it.aMapa() },
     )
     fun aJson(): String = Json.escribe(aMapa())
 
@@ -325,6 +343,7 @@ data class Universo(
                 m["cps"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["cpd"].comoTexto(),
                 m["cpa"].comoMapa().mapValues { it.value.comoTexto() }.filterValues { it.isNotBlank() }, m["cpq"].comoLista().map { it.comoTexto() },
                 if (m.containsKey("nvg")) m["nvg"].comoLong().toInt() else -1,
+                m["ag"].comoTexto(), m["com"].comoLong().toInt(), m["cand"].comoLista().map { Candidato.de(it.comoMapa()) }.filter { it.nombre.isNotBlank() },
             )
             // (las carreras de antes de los contratos: su sueldo y su «3 años» pasan a ser su contrato)
             return if (!m.containsKey("ct") && u.contrato == null) u.copy(contrato = Contratos.migra(u)) else u
@@ -519,7 +538,7 @@ data class Efectos(val dinero: Long = 0, val fuera: Map<String, Int> = emptyMap(
 enum class TipoEntrada(val nombre: String) {
     PARTIDO("Partido"), EVENTO("Mientras tanto"), RESPUESTA("Lo que pasó después"), OFICIAL("Oficial"), INICIO("El principio"),
     TEMPORADA("Fin de temporada"), SINCONTESTAR("No contestaste"), HITO("Hito"), RECORD("Récord histórico"), RIVAL("Rivalidad"),
-    CHARLA("Charla"), PUERTA("Fuera de tu vida"), GENTE("Gente nueva"), HISTORICO("Hecho histórico"), PUJA("Puja"),
+    CHARLA("Charla"), PUERTA("Fuera de tu vida"), GENTE("Gente nueva"), HISTORICO("Hecho histórico"), PUJA("Puja"), AGENTE("Tu agente"),
 }
 
 /**
