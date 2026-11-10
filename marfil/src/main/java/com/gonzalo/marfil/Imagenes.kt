@@ -99,11 +99,11 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, h
         }
         PestanasRevista(listOf("La portada", "El fondo"), if (esFondo) 1 else 0) { esFondo = it == 1 }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            Text("Ahora", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+            Text("AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (esFondo) {
                 Box(Modifier.fillMaxWidth().aspectRatio(3f).clipToBounds().background(lerpColor(telaDe(l.titulo), androidx.compose.ui.graphics.Color.Black, 0.4f)).clickable { galeria.launch("image/*") }, contentAlignment = Alignment.Center) {
                     if (l.fondo.isNotBlank()) ImagenEncuadrada(l.fondo, l.encFondo, Modifier.fillMaxSize(), "Fondo de ${l.titulo}")
-                    else Text("Sin fondo", color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Body, fontSize = 16.sp)
+                    else Text("Sin fondo", color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
                 }
             } else {
                 PortadaLibro(l, Modifier.width(150.dp).height(225.dp).clickable { galeria.launch("image/*") }, radio = 0)
@@ -120,23 +120,23 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, h
                 }
                 if (if (esFondo) l.fondo.isNotBlank() else l.portada.isNotBlank()) BotonMarco("Quitar") { if (esFondo) Portadas.quitarFondo(ctx, l) else Portadas.quitar(ctx, l) }
             }
-            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
+            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
             if (esFondo) {
                 Text("Se recorta a lo ancho: con «Encuadrar» eliges qué parte se ve. Sin fondo, se usa el color de la portada como ahora. Sale en «Ahora lees» de la portada y arriba en la ficha.",
                     color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 14.dp, bottom = 24.dp))
             } else {
-                Text("Propuestas", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
+                Text("PROPUESTAS", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
                 val lista = resultados
                 when {
-                    buscando && lista == null -> Text("Buscando portadas…", color = Muted, fontFamily = Body, fontSize = 16.sp)
-                    lista.isNullOrEmpty() -> Text("No he encontrado portadas de «$consulta». Prueba a buscar en internet.", color = Muted, fontFamily = Body, fontSize = 16.sp)
+                    buscando && lista == null -> Text("Buscando portadas…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                    lista.isNullOrEmpty() -> Text("No he encontrado portadas de «$consulta». Prueba a buscar en internet.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
                     else -> lista.chunked(3).forEach { fila ->
                         Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             fila.forEach { c ->
                                 Column(Modifier.weight(1f).clickable(enabled = !guardando) { guardando = true; ambito.launch { guardar(withContext(Dispatchers.IO) { Portadas.descargar(c.grande) }, c.grande) } }) {
                                     Box(Modifier.fillMaxWidth().aspectRatio(2f / 3f).background(Sand)) { AsyncImage(c.miniatura, c.titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
-                                    Text(c.fuente, color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
-                                    Text(c.titulo, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(c.fuente.uppercase(), color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, modifier = Modifier.padding(top = 4.dp))
+                                    Text(c.titulo, color = Muted, fontFamily = Body, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                 }
                             }
                             repeat(3 - fila.size) { Spacer(Modifier.weight(1f)) }
@@ -152,7 +152,7 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, h
 /** Un botón recto con marco de 2 px (los de la dirección C que no son la acción principal). */
 @Composable
 fun BotonMarco(texto: String, onClick: () -> Unit) {
-    Text(texto, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1,
+    Text(texto.uppercase(), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.8.sp, maxLines = 1,
         modifier = Modifier.border(2.dp, Charcoal).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 9.dp))
 }
 

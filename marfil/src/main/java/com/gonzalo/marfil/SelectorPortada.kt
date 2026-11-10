@@ -72,7 +72,7 @@ fun ContenidoSelectorPortada(l: Libro, alCerrar: () -> Unit, hallados: List<Cand
 
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 20.dp)) {
         RevistaTopBar(alCerrar, "Cerrar")
-        Filete(1.dp, Line)
+        Filete(3.dp)
         Antetitulo("Portada", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle(l.titulo, 34.sp, 36.sp, letterSpacing = (-1).sp, maxLines = 2, modifier = Modifier.padding(top = 2.dp, bottom = 6.dp))
         Filete(1.dp)
@@ -95,9 +95,9 @@ fun ContenidoSelectorPortada(l: Libro, alCerrar: () -> Unit, hallados: List<Cand
         Spacer(Modifier.height(10.dp))
         val lista = resultados
         when {
-            guardando -> Text("Guardando la portada…", color = Muted, fontFamily = Body, fontSize = 17.sp)
-            buscando && lista == null -> Text("Buscando portadas…", color = Muted, fontFamily = Body, fontSize = 17.sp)
-            lista != null && lista.isEmpty() -> Text("Nada todavía. Cambia lo que buscas.", color = Muted, fontFamily = Body, fontSize = 17.sp)
+            guardando -> Text("Guardando la portada…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
+            buscando && lista == null -> Text("Buscando portadas…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
+            lista != null && lista.isEmpty() -> Text("Nada todavía. Cambia lo que buscas.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
             lista != null -> LazyVerticalGrid(GridCells.Fixed(3), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
                 items(lista, key = { it.grande }) { c ->
                     Column(Modifier.clickable(enabled = !guardando) {
@@ -107,8 +107,8 @@ fun ContenidoSelectorPortada(l: Libro, alCerrar: () -> Unit, hallados: List<Cand
                         Box(Modifier.fillMaxWidth().aspectRatio(0.68f).background(Sand)) {
                             AsyncImage(c.miniatura, c.titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                         }
-                        Text(c.fuente, color = Acento, fontFamily = Body, fontSize = 8.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
-                        Text(c.titulo, color = Muted, fontFamily = Display, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(c.fuente.uppercase(), color = Acento, fontFamily = Body, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, modifier = Modifier.padding(top = 4.dp))
+                        Text(c.titulo, color = Muted, fontFamily = Display, fontSize = 11.sp, lineHeight = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }

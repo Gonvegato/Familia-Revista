@@ -1,9 +1,5 @@
 package com.gonzalo.marfil
 
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,36 +31,192 @@ import kotlinx.coroutines.withContext
 
 @Composable
 private fun Seccion(titulo: String) {
-    Spacer(Modifier.height(18.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
     Antetitulo(titulo, Modifier.padding(bottom = 4.dp))
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun SeccionApariencia() {
     val ctx = LocalContext.current
     fun guarda() = Skin.guardar(ctx)
-    // Dirección D: una sola cara. Se elige el claro u oscuro, el tamaño del texto y el color de acento.
-    MagChoice(listOf("Como el móvil", "Claro", "Oscuro"), Modo.eleccion.coerceIn(0, 2), "Tema") { i -> Modo.eleccion = i; guarda() }
+    // Elegir algo aquí manda sobre «seguir los colores de Atrio»
+    fun propio() { Skin.origenAtrio = false; Skin.invertido = false }
 
-    Seccion("Tamaño del texto")
-    val escalas = listOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    MagChoice(escalas.map { it.second }, escalas.indexOfFirst { it.first == Skin.escala }.coerceAtLeast(1)) { i -> Skin.escala = escalas[i].first; guarda() }
+    // ---- Tema
+    Antetitulo("Tema", Modifier.padding(bottom = 4.dp))
+    listOf(1 to "Claro", 2 to "Oscuro", 0 to "Como el móvil").forEachIndexed { i, (modo, nombre) ->
+        if (i > 0) Filete(1.dp, Line)
+        val on = Modo.eleccion == modo
+        Row(Modifier.fillMaxWidth().clickable { if (!on) { Modo.eleccion = modo; Skin.fondoId = ""; propio(); guarda() } }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(nombre.uppercase(), fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = if (on) Charcoal else Muted, modifier = Modifier.weight(1f))
+            if (on) Text("✓", color = Acento, fontWeight = FontWeight.Black, fontSize = 20.sp)
+        }
+    }
 
-    Seccion("Color de acento")
-    Text("El color de los botones, los enlaces y las barras de avance. El primero es el de Seshat.", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
+    // ---- Fondo
+    Seccion("Fondo")
+    Text("Colores hondos y sobrios para toda la app, en lugar de papel claro u oscuro. «Papel» vuelve al tema de arriba.", color = Muted, fontFamily = Body, fontSize = 13.sp)
     Spacer(Modifier.height(12.dp))
-    val noche = Skin.tones.darkBg
-    val deCasa = Color((if (noche) Skin.palette.dark else Skin.palette.light).general or 0xFF000000)
-    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        (listOf<Accent?>(null) + ACCENT_COLORS.filter { it.id != "tinta" }).forEach { a ->
-            val on = Skin.acentoPropio == 0L && Skin.accentId == (a?.id ?: "paleta")
-            val c = if (a == null) deCasa else Color((if (noche) a.dark else a.light) or 0xFF000000)
-            Box(Modifier.size(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c).then(if (on) Modifier.border(3.dp, Charcoal, androidx.compose.foundation.shape.CircleShape) else Modifier)
-                .clickable { Skin.accentId = a?.id ?: "paleta"; Skin.acentoPropio = 0L; guarda() }.semantics { contentDescription = a?.name ?: "El de Seshat" }, contentAlignment = Alignment.Center) {
-                if (on) Text("✓", color = if (c.luminance2() > 0.5f) Color(0xFF14151A) else Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+    listOf<Fondo?>(null).plus(FONDOS).chunked(4).forEach { fila ->
+        Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            fila.forEach { f ->
+                val on = Skin.fondoId == (f?.id ?: "")
+                Column(Modifier.weight(1f).clickable { if (!on) { Skin.fondoId = f?.id ?: ""; Skin.fondoPropio = 0L; propio(); guarda() } }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    val papel = f?.tones?.cPaper ?: Color(if (Modo.eleccion == 1) 0xFFF3EEE4 else 0xFF141210)
+                    Box(Modifier.fillMaxWidth().aspectRatio(1f).background(papel).border(if (on) 3.dp else 1.dp, if (on) Acento else Line), contentAlignment = Alignment.Center) {
+                        Text("Aa", color = f?.tones?.cInk ?: Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                        if (on) Text("✓", color = f?.tones?.cInk ?: Charcoal, fontWeight = FontWeight.Black, fontSize = 13.sp, modifier = Modifier.align(Alignment.TopEnd).padding(6.dp))
+                    }
+                    Text((f?.name ?: "Papel").uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, lineHeight = 12.sp,
+                        textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp), maxLines = 2)
+                }
+            }
+            repeat(4 - fila.size) { Spacer(Modifier.weight(1f)) }
+        }
+    }
+
+    // ---- Tamaño del texto
+    Seccion("Tamaño del texto")
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Bottom) {
+        listOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande").forEach { (pct, nombre) ->
+            val on = Skin.escala == pct
+            Column(Modifier.weight(1f).clickable { if (!on) { Skin.escala = pct; guarda() } }.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Aa", fontFamily = Display, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = (22f * pct / 100f / (Skin.escala / 100f)).sp, color = if (on) Charcoal else Muted)
+                Text(nombre.uppercase(), color = if (on) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
             }
         }
     }
-    SelectorColor("Otro color", Skin.acentoPropio, Acento, { Skin.acentoPropio = it }, { guarda() })
+
+    // ---- Acento
+    Seccion("Acento")
+    Text("El color de los antetítulos, las cifras, los enlaces y los botones.", color = Muted, fontFamily = Body, fontSize = 13.sp)
+    Spacer(Modifier.height(12.dp))
+    ACCENT_COLORS.chunked(4).forEach { fila ->
+        Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            fila.forEach { a ->
+                val on = Skin.accentId == a.id || (a.id == "rojo" && Skin.accentId == "paleta")
+                val c = Color((if (Skin.tones.darkBg) a.dark else a.light) or 0xFF000000)
+                Column(Modifier.weight(1f).clickable { if (!on) { Skin.accentId = a.id; Skin.acentoPropio = 0L; propio(); guarda() } }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.fillMaxWidth().aspectRatio(1f).background(c).then(if (on) Modifier.border(3.dp, Charcoal) else Modifier), contentAlignment = Alignment.Center) {
+                        if (on) Text("✓", color = if (a.id == "tinta") Paper else Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
+                    }
+                    Text(a.name.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 6.dp), maxLines = 1)
+                }
+            }
+            repeat(4 - fila.size) { Spacer(Modifier.weight(1f)) }
+        }
+    }
+
+    // ---- A tu manera
+    Seccion("A tu manera")
+    Text("El color que quieras para el fondo, el texto y el acento, y la letra de los títulos y del texto. Mandan sobre lo de arriba; «Quitar» vuelve a ello.", color = Muted, fontFamily = Body, fontSize = 13.sp)
+    SelectorColor("Fondo", Skin.fondoPropio, Paper, { Skin.fondoPropio = it }, { guarda() })
+    Filete(1.dp, Line)
+    SelectorColor("Texto", Skin.tintaPropia, Charcoal, { Skin.tintaPropia = it }, { guarda() })
+    Filete(1.dp, Line)
+    SelectorColor("Acento", Skin.acentoPropio, Acento, { Skin.acentoPropio = it }, { guarda() })
+    Filete(1.dp, Line)
+    val letras = remember { (DISPLAY_FONTS + BODY_FONTS).map { it.name }.distinct() }
+    SelectorLetra("Letra de los títulos", Skin.display.takeIf { it != "Atrio" }.orEmpty(), letras) { Skin.display = it.ifBlank { "Atrio" }; guarda() }
+    Filete(1.dp, Line)
+    SelectorLetra("Letra del texto", Skin.body.takeIf { it != "Atrio" }.orEmpty(), remember { (BODY_FONTS + DISPLAY_FONTS).map { it.name }.distinct() }) { Skin.body = it.ifBlank { "Atrio" }; guarda() }
+
+    // ---- Colores de Atrio (en directo)
+    Seccion("Colores de Jonsu, en directo")
+    Text("Usa los colores que tienes ahora en Jonsu en este móvil (los que cambies allí cambian aquí), con la opción de ponerlos del revés.", color = Muted, fontFamily = Body, fontSize = 13.sp)
+    Etiqueta("Seguir a Jonsu", Modifier.padding(top = 10.dp))
+    MagChoice(listOf("No", "Sí"), if (Skin.origenAtrio) 1 else 0) { i -> Skin.origenAtrio = i == 1; if (i == 1) Skin.fondoId = ""; guarda() }
+    if (Skin.origenAtrio) {
+        Etiqueta("Invertir", Modifier.padding(top = 6.dp))
+        MagChoice(listOf("No", "Sí"), if (Skin.invertido) 1 else 0) { i -> Skin.invertido = i == 1; guarda() }
+        LaunchedEffect(Unit) { kotlin.concurrent.thread { TemaAtrio.refrescar(ctx.applicationContext) } }
+        Text(
+            if (TemaAtrio.aviso.isNotBlank()) TemaAtrio.aviso + (if (TemaAtrio.tonos != null) " Se usan los últimos colores que se leyeron." else " Mientras tanto, los de Seshat.")
+            else "Seshat lee los colores que tienes ahora en Jonsu" + (if (Skin.invertido) " y los pone del revés: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene." else "."),
+            color = if (TemaAtrio.aviso.isNotBlank()) Acento else Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+
+    // ---- Copiar de Azabache (lo guardado en tu cuenta)
+    Seccion("Copiar de Jonsu")
+    SeccionCopiar()
+}
+
+/** Lee de tu cuenta lo que Atrio tiene (tema, fondo, acento, colores, letras, tamaño) y copia lo que marques. */
+@Composable
+private fun SeccionCopiar() {
+    val ctx = LocalContext.current
+    val ambito = rememberCoroutineScope()
+    var leyendo by remember { mutableStateOf(false) }
+    var aviso by remember { mutableStateOf<String?>(null) }
+    var ajustes by remember { mutableStateOf<CopiaAtrio.Ajustes?>(null) }
+    var marcadas by remember { mutableStateOf(setOf<String>()) }
+    Text("Jonsu sube su apariencia a tu cuenta. Aquí la lees y copias solo lo que quieras (no se cambia nada en Jonsu).", color = Muted, fontFamily = Body, fontSize = 13.sp)
+    if (!Cuenta.vinculada) {
+        Text("Primero vincula tu cuenta de Atrio (en «Cuenta de Atrio», más abajo).", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
+        return
+    }
+    MagLink(if (leyendo) "Leyendo…" else "Leer lo que tiene mi Jonsu", accent = true) {
+        if (!leyendo) {
+            leyendo = true; aviso = null
+            ambito.launch {
+                try {
+                    val r = withContext(Dispatchers.IO) { CopiaAtrio.leer() }
+                    ajustes = r
+                    marcadas = r?.let { CopiaAtrio.filas(it).map { f -> f.id }.toSet() } ?: emptySet()
+                    if (r == null) aviso = "Jonsu todavía no ha subido su apariencia a tu cuenta (ábrelo y espera a que sincronice)."
+                } catch (e: Exception) { aviso = (e.message ?: "No se pudo leer") }
+                leyendo = false
+            }
+        }
+    }
+    ajustes?.let { a ->
+        CopiaAtrio.filas(a).forEach { f ->
+            Row(Modifier.fillMaxWidth().clickable { marcadas = if (f.id in marcadas) marcadas - f.id else marcadas + f.id }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(22.dp).border(1.5.dp, Charcoal), contentAlignment = Alignment.Center) { if (f.id in marcadas) Text("✓", color = Acento, fontWeight = FontWeight.Black, fontSize = 16.sp) }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(f.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp)
+                    Text(f.valor.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                }
+            }
+            Filete(1.dp, Line)
+        }
+        MagLink("Copiar lo marcado", "Se aplica a Seshat ahora", accent = true) {
+            if (marcadas.isNotEmpty()) { CopiaAtrio.aplicar(ctx, a, marcadas); aviso = "Copiado a Seshat." }
+        }
+    }
+    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+}
+
+/** Una letra elegida a mano: su nombre escrito en ella; al tocarla, la lista de letras (cada una en sí misma). */
+@Composable
+fun SelectorLetra(nombre: String, valor: String, opciones: List<String>, onCambia: (String) -> Unit) {
+    var abierto by remember { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth().clickable { abierto = true }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Aa", fontFamily = valor.takeIf { it.isNotBlank() }?.let { Skin.family(it) } ?: Display, fontSize = 28.sp, color = Charcoal, modifier = Modifier.width(50.dp))
+        Column(Modifier.weight(1f)) {
+            Text(nombre, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
+            Text(valor.ifEmpty { "La de Seshat" }, color = Muted, fontFamily = Body, fontSize = 12.sp)
+        }
+        if (valor.isNotEmpty()) EnlaceRevista("Quitar", Modifier.padding(end = 12.dp)) { onCambia("") }
+        Text("▾", color = Muted, fontSize = 16.sp)
+    }
+    if (abierto) AlertDialog(
+        onDismissRequest = { abierto = false }, containerColor = Paper, shape = esquina(4.dp),
+        title = { Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = {
+            LazyColumn(Modifier.heightIn(max = 460.dp)) {
+                item {
+                    Text("La de Seshat", fontSize = 18.sp, color = if (valor.isEmpty()) Acento else Charcoal, modifier = Modifier.fillMaxWidth().clickable { onCambia(""); abierto = false }.padding(vertical = 10.dp))
+                }
+                items(opciones) { o ->
+                    // (cada letra se baja de Google Fonts la primera vez: hasta entonces sale con la del sistema)
+                    Text(o, fontFamily = Skin.family(o), fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = if (o == valor) Acento else Charcoal,
+                        modifier = Modifier.fillMaxWidth().clickable { onCambia(o); abierto = false }.padding(vertical = 10.dp))
+                }
+            }
+        },
+        confirmButton = { TextButton({ abierto = false }) { Text("CERRAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+    )
 }

@@ -1,6 +1,5 @@
 package com.gonzalo.marfil
 
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -55,12 +54,12 @@ fun PantEstilo(alVolver: () -> Unit) {
     }
     var pestana by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
-        // Dirección D: volver y «Ajustes.» sobre el fondo, y las pestañas en píldoras
-        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 8.dp, end = 20.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            com.gonzalo.mesa.IconoM(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, "Volver") { alVolver() }
-            com.gonzalo.mesa.CabeceraM("Ajustes", Modifier.padding(start = 4.dp))
+        // Dirección C: la cabecera en un bloque de tinta con «AJUSTES.» en grotesca y las pestañas en bloques
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+            EnlaceRevista("← Seshat", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
+            NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp))
         }
-        PestanasRevista(listOf("Apariencia", "Lectura", "Cuenta", "Avanzado"), pestana, Modifier.padding(start = 20.dp, top = 10.dp)) { pestana = it }
+        PestanasRevista(listOf("Apariencia", "Lectura", "Cuenta", "Avanzado"), pestana) { pestana = it }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(14.dp))
 
@@ -78,7 +77,7 @@ fun PantEstilo(alVolver: () -> Unit) {
                 MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Libros al año") { i -> reto = retos[i]; Ajustes.ponMetaAnual(ctx, reto) }
                 Text("Tu reto del año sale en la portada y en el widget de la semana. Los dos objetivos viajan con tu cuenta a tus otros Seshat y a Jonsu, que los enseña tal cual.", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
                 Spacer(Modifier.height(14.dp))
-                Filete(1.dp, Line)
+                Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Lector", Modifier.padding(bottom = 4.dp))
                 Text("La letra, el fondo y el paso de página se cambian desde el propio lector (toca el centro de la página y pulsa «Letra»). Lo que elijas vale para todos los libros.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 6.dp))
@@ -87,7 +86,7 @@ fun PantEstilo(alVolver: () -> Unit) {
                 Antetitulo("Cuenta de Atrio", Modifier.padding(bottom = 4.dp))
                 SeccionCuenta()
                 Spacer(Modifier.height(14.dp))
-                Filete(1.dp, Line)
+                Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Libros", Modifier.padding(bottom = 4.dp))
                 SeccionLibros()
@@ -96,21 +95,21 @@ fun PantEstilo(alVolver: () -> Unit) {
                 Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
                 SeccionActualizaciones()
                 Spacer(Modifier.height(14.dp))
-                Filete(1.dp, Line)
+                Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Copias", Modifier.padding(bottom = 4.dp))
                 MagLink("Guardar copia de la biblioteca", "Un archivo con tus libros y estantes (no incluye los archivos de los libros)") { exportar.launch("marfil-biblioteca.json") }
                 Filete(1.dp, Line)
                 MagLink("Importar copia", "Suma los libros de una copia a los que ya tienes") { importar.launch(arrayOf("application/json", "*/*")) }
-                mensaje?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+                mensaje?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
             }
         }
 
         Spacer(Modifier.height(26.dp))
-        Filete(1.dp, Line)
+        Filete(2.dp)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Seshat $VERSION")
-        Text("Seshat es hermana de Jonsu, Bastet y Thot. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+        Text("Seshat es hermana de Jonsu, Bastet y Thot. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
         }
     }
@@ -122,15 +121,15 @@ fun PantEstilo(alVolver: () -> Unit) {
 fun CampoRevista(etiqueta: String, valor: String, pista: String, secreto: Boolean = false, alCambiar: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
-            Text(etiqueta, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
+            Text(etiqueta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
             Box(Modifier.weight(1f)) {
-                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Body, fontSize = 18.sp)
+                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
                 BasicTextField(valor, alCambiar, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp),
                     cursorBrush = SolidColor(Acento), visualTransformation = if (secreto) PasswordVisualTransformation() else VisualTransformation.None,
                     keyboardOptions = KeyboardOptions(keyboardType = if (secreto) KeyboardType.Password else KeyboardType.Text, autoCorrect = false), modifier = Modifier.fillMaxWidth())
             }
         }
-        Filete(1.dp, Line)
+        Filete(2.dp)
     }
 }
 
@@ -160,7 +159,7 @@ private fun SeccionCuenta() {
         }
     } else {
         Etiqueta("Vinculada a", Modifier.padding(top = 8.dp))
-        Text(Cuenta.usuario, color = Charcoal, fontFamily = Body, fontSize = 22.sp)
+        Text(Cuenta.usuario, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
         val cuando = SincroP.ultima.takeIf { it > 0 }?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it)) }
         Text(listOf(SincroP.estado.ifBlank { "Sin sincronizar todavía" }, cuando?.let { "última vez $it" }).filterNotNull().joinToString(" · "),
             color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
@@ -171,7 +170,7 @@ private fun SeccionCuenta() {
         Filete(1.dp, Line)
         MagLink("Salir de la cuenta", "Tus libros se quedan aquí; dejan de sincronizarse") { SincroP.parar(); Cuenta.salir() }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 
@@ -234,7 +233,7 @@ private fun SeccionActualizaciones() {
         Filete(1.dp, Line)
         Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** Si hay una versión nueva ya bajada que Android no deja instalar en silencio, se pregunta (o se lleva al ajuste de «instalar apps»). */
@@ -245,14 +244,14 @@ fun AvisoActualizacion() {
     var luego by remember(n.nombre) { mutableStateOf(false) }
     if (luego) return
     AlertDialog(
-        onDismissRequest = { luego = true }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-        title = { Text("Seshat tiene una versión nueva", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
+        title = { Text("Seshat tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
         text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Seshat instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
-        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
-        dismissButton = { TextButton({ luego = true }) { Text("Luego", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
+        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
+        dismissButton = { TextButton({ luego = true }) { Text("LUEGO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
     )
 }
 
@@ -297,13 +296,13 @@ fun SeccionLibros() {
             estado = n.fold({ if (it == 0) "Todos tus libros ya están en tu kDrive." else "Subidos $it libros." }, { it.message ?: "No he podido subirlos." })
         }
     }
-    if (estado.isNotBlank()) Text(estado, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
+    if (estado.isNotBlank()) Text(estado, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
     hallados?.let { h ->
         val l = h.candidatos
         val n = { e: Estado -> l.count { it.libro.estado == e } }
         AlertDialog(
             onDismissRequest = { hallados = null },
-            title = { Text("${l.size} libros en Atrio", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
+            title = { Text("${l.size} libros en Atrio", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     "${n(Estado.LEIDO)} leídos, ${n(Estado.LEYENDO)} leyendo, ${n(Estado.PENDIENTE)} pendientes, ${n(Estado.ABANDONADO)} abandonados. ${l.count { it.nube != null }} tienen su archivo en tu kDrive." +

@@ -17,7 +17,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -70,6 +69,103 @@ class CapturasTest {
         return f.absolutePath
     }
 
+    /** Lo de [siembra] y, además, fondo elegido para «El nombre de la rosa» (el que se lee ahora) y para Dune. */
+    private fun siembraConFondo() {
+        siembra()
+        val i1 = Biblioteca.libros.indexOfFirst { it.id == "1" }; val i2 = Biblioteca.libros.indexOfFirst { it.id == "2" }
+        Biblioteca.libros[i1] = Biblioteca.libros[i1].copy(fondo = fondo("rosa", 0xFFE0703A.toInt(), 0xFF2A0A0E.toInt()))
+        Biblioteca.libros[i2] = Biblioteca.libros[i2].copy(fondo = fondo("dune", 0xFFF0B060.toInt(), 0xFF5A2A0A.toInt()))
+    }
+
+    @Test fun conFondo() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); montar(false); foto("1e_portada_con_fondo")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4h_ficha_con_fondo")
+    }
+
+    @Test fun conFondoNoche() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); montar(true); foto("1f_portada_con_fondo_oscuro")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4i_ficha_con_fondo_oscuro")
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun conFondoLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); montar(false); foto("c6_portada_con_fondo_letra_grande")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("c7_ficha_con_fondo_letra_grande")
+    }
+
+    /** Encuadrar (0.20.0): el editor de la portada y del fondo, y el cartel y la ficha con el fondo acercado al sol y la portada encuadrada. */
+    private fun siembraEncuadrada() {
+        siembraConFondo()
+        val i1 = Biblioteca.libros.indexOfFirst { it.id == "1" }; val i2 = Biblioteca.libros.indexOfFirst { it.id == "2" }
+        Biblioteca.libros[i1] = Biblioteca.libros[i1].copy(encFondo = Encuadre(1.6f, 0.68f, 0.45f), encPortada = Encuadre(1.8f, 0.3f, 0.8f))
+        Biblioteca.libros[i2] = Biblioteca.libros[i2].copy(encFondo = Encuadre(1.4f, 0.7f, 0.4f), encPortada = Encuadre(1.6f, 0.35f, 0.75f))
+    }
+
+    private fun editores(sufijo: String) {
+        siembraEncuadrada(); Skin.cargar(ctx); coloresSeshat(false)
+        coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
+        val dune = Biblioteca.por("2")!!
+        val fondo = androidx.compose.runtime.mutableStateOf(false)
+        rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { androidx.compose.runtime.key(fondo.value) {
+            if (fondo.value) ContenidoEncuadre(dune.fondo, dune.encFondo, true, {}, {}) else ContenidoEncuadre(dune.portada, dune.encPortada, false, {}, {})
+        } } } }
+        foto("7d_encuadre_portada$sufijo")
+        fondo.value = true; rule.waitForIdle(); foto("7e_encuadre_fondo$sufijo")
+    }
+
+    @Test fun encuadre() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        editores("")
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun encuadreLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        editores("_letra_grande")
+    }
+
+    @Test fun conFondoEncuadrado() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraEncuadrada(); montar(false); foto("1g_portada_encuadrada")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4j_ficha_encuadrada")
+    }
+
+    /** Paspartú (0.20.0): crema con la portada oscura, en la tinta con una portada casi blanca; y el velo arriba de la ficha. */
+    private fun paspartu(sufijo: String, oscuro: Boolean) {
+        siembraConFondo()
+        val blanca = portada("", 0xFFF8F6F0.toInt(), 0xFFEDE9E0.toInt())
+        val i2 = Biblioteca.libros.indexOfFirst { it.id == "2" }
+        Biblioteca.libros[i2] = Biblioteca.libros[i2].copy(portada = blanca)
+        montar(oscuro); foto("1h_portada_paspartu$sufijo")
+        val i1 = Biblioteca.libros.indexOfFirst { it.id == "1" }
+        Biblioteca.libros[i1] = Biblioteca.libros[i1].copy(portada = blanca); rule.waitForIdle(); foto("1i_portada_paspartu_blanca$sufijo")
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4k_ficha_paspartu_blanca$sufijo")
+    }
+
+    @Test fun paspartu() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); paspartu("", false) }
+    @Test fun paspartuNoche() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); paspartu("_oscuro", true) }
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun paspartuLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); paspartu("_letra_grande", false)
+    }
+
+    @Test fun imagenes() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembraConFondo(); Skin.cargar(ctx); coloresSeshat(false)
+        val c = listOf("Dune" to 0xFFD9A53A.toInt(), "Dune 2" to 0xFF8C5A22.toInt(), "Arena" to 0xFFB0702A.toInt(), "Otra" to 0xFF35523F.toInt())
+            .mapIndexed { i, (n, col) -> portada(n, col, col and 0x7f7f7f).let { Candidata(it, it, if (i % 2 == 0) "iTunes" else "Open Library", "Dune · Frank Herbert") } }
+        coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
+        val fondo = androidx.compose.runtime.mutableStateOf(true)
+        rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { androidx.compose.runtime.key(fondo.value) { ContenidoImagenes("2", fondo.value, {}, hallados = c) } } } }
+        foto("7b_imagenes_fondo")
+        fondo.value = false; rule.waitForIdle(); foto("7c_imagenes_portada")
+    }
+
     private fun siembra() {
         Skin.cargar(ctx); Biblioteca.cargada = true; Biblioteca.libros.clear(); Biblioteca.borrados.clear(); Sagas.cargar(ctx); Sagas.lista.clear(); Sagas.borradas.clear()
         val ahora = System.currentTimeMillis(); val dia = 86_400_000L
@@ -103,13 +199,6 @@ class CapturasTest {
         EstadoLectura.ponerSinAvisar(ctx, "1", org.json.JSONObject().put("stats", org.json.JSONObject().put("days", dias)))
     }
 
-    private fun siembraConFondo() {
-        siembra()
-        val i1 = Biblioteca.libros.indexOfFirst { it.id == "1" }; val i2 = Biblioteca.libros.indexOfFirst { it.id == "2" }
-        Biblioteca.libros[i1] = Biblioteca.libros[i1].copy(fondo = fondo("rosa", 0xFFE0703A.toInt(), 0xFF2A0A0E.toInt()))
-        Biblioteca.libros[i2] = Biblioteca.libros[i2].copy(fondo = fondo("dune", 0xFFF0B060.toInt(), 0xFF5A2A0A.toInt()))
-    }
-
     private fun foto(nombre: String) {
         rule.waitForIdle(); Thread.sleep(500); rule.waitForIdle()
         com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/$nombre.png")
@@ -118,36 +207,222 @@ class CapturasTest {
     private fun montar(oscuro: Boolean) {
         coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
         Modo.eleccion = if (oscuro) 2 else 1
-        rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { MarfilApp() } } }
+        coloresSeshat(oscuro)
+        rule.setContent { PorticoLike { MarfilApp() } }
     }
 
-    private fun graba() = org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
-    private fun pestana(nombre: String) { rule.onNodeWithContentDescription(nombre).performClick(); rule.waitForIdle() }
+    @androidx.compose.runtime.Composable
+    private fun PorticoLike(c: @androidx.compose.runtime.Composable () -> Unit) = MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { c() } }
 
-    /** Las pantallas de la dirección D, de un tirón: Hoy, Biblioteca (y un par de filtros), la ficha, Tú y los ajustes. */
-    private fun recorrido(suf: String, oscuro: Boolean, conFondo: Boolean = false) {
-        if (conFondo) siembraConFondo() else siembra()
-        montar(oscuro); foto("d1_hoy$suf")
-        pestana("Biblioteca"); foto("d2_biblioteca$suf")
-        rule.onNodeWithText("Pendientes").performClick(); foto("d2b_pendientes$suf")
-        rule.onNodeWithText("Sagas").performClick(); foto("d2c_sagas$suf")
-        rule.onNodeWithText("Leyendo").performClick(); rule.waitForIdle()
-        rule.onAllNodesWithContentDescription("Dune", substring = true)[0].performClick(); foto("d3_ficha$suf")
-        rule.onNodeWithContentDescription("Volver").performClick(); rule.waitForIdle()
-        pestana("Tú"); foto("d4_tu$suf")
-        rule.onNodeWithContentDescription("Ajustes").performClick(); foto("d5_ajustes$suf")
+    /** Los colores de Seshat («A tu manera»: fondo #F8F0D4, texto #050404, acento #C68B00); de noche, solo el acento sobre la paleta oscura. */
+    private fun coloresSeshat(oscuro: Boolean) {
+        Skin.origenAtrio = false
+        Skin.fondoPropio = if (oscuro) 0L else 0xFFF8F0D4
+        Skin.tintaPropia = if (oscuro) 0L else 0xFF050404
+        Skin.acentoPropio = 0xFFC68B00
     }
 
-    @Test fun claro() { graba(); recorrido("", false) }
-    @Test fun noche() { graba(); recorrido("_noche", true) }
-    @Test fun conFondo() { graba(); recorrido("_fondo", false, conFondo = true) }
-    @Test @Config(sdk = [34], qualifiers = "w360dp-h740dp-xhdpi", fontScale = 1.3f) fun letraGrande() { graba(); recorrido("_letra_grande", false) }
-    @Test @Config(sdk = [34], qualifiers = "w360dp-h740dp-xhdpi", fontScale = 1.3f) fun letraGrandeConFondo() { graba(); recorrido("_letra_grande_fondo", true, conFondo = true) }
-    @Test @Config(sdk = [34], qualifiers = "w1280dp-h800dp-land-mdpi") fun tabletApaisada() { graba(); siembra(); montar(false); foto("d6_tablet_hoy"); pestana("Biblioteca"); foto("d6b_tablet_biblioteca") }
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun letraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false); foto("c1_portada_letra_grande")
+        rule.onNodeWithText("LEÍDOS").performClick(); rule.waitForIdle(); foto("c2_leidos_letra_grande")
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun fichaLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("c3_ficha_letra_grande")
+    }
+
+    @Test fun portada() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false); foto("1_portada")
+    }
+
+    /** La cabecera a mitad de plegarse (el nombre encoge y se desvanece; nunca se corta) y la portada entera, abajo del todo. */
+    @Test fun portadaPlegando() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onRoot().performTouchInput { swipeUp(startY = centerY, endY = centerY - 110f, durationMillis = 900) }
+        foto("1b_portada_plegando")
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        foto("1c_portada_abajo")
+    }
+
+    /** El plegado por pasos (≈25 %, 50 %, 75 % y 100 %): en cada paso la banda negra mide lo que el nombre, nunca un hueco vacío. */
+    @Test fun portadaPlegadoPorPasos() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); siembra(); montar(false); pasos("1p") }
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun portadaPlegadoPorPasosLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); siembra(); montar(false); pasos("c9")
+    }
+    private fun pasos(prefijo: String) {
+        // (el primer gesto se come el umbral de arrastre; los siguientes mueven ~60 px cada uno, una cuarta parte del nombre)
+        listOf(25, 50, 75, 100).forEachIndexed { i, pct ->
+            val d = if (i == 0) 85f else if (pct == 100) 400f else 62f
+            rule.onRoot().performTouchInput { swipeUp(startY = centerY, endY = centerY - d, durationMillis = 900) }
+            foto("${prefijo}_plegado_$pct")
+        }
+    }
+
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun portadaPlegandoLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onRoot().performTouchInput { swipeUp(startY = centerY, endY = centerY - 110f, durationMillis = 900) }
+        foto("c4_portada_plegando_letra_grande")
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        rule.onRoot().performTouchInput { swipeUp(startY = bottom - 40f, endY = top + 40f, durationMillis = 900) }
+        foto("c5_portada_abajo_letra_grande")
+    }
+
+    @Test fun portadaSinNadaALaMitad() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra()
+        for (i in Biblioteca.libros.indices) Biblioteca.libros[i].let { if (it.estado == Estado.LEYENDO) Biblioteca.libros[i] = it.copy(estado = Estado.PENDIENTE, fraccion = 0f) }
+        montar(false); foto("1d_portada_sin_leyendo")
+    }
+
+    /** La portada con un día de la semana tocado (sale encima lo que leíste ese día): normal, noche y letra grande. */
+    private fun portadaDiaTocado(nombre: String, oscuro: Boolean) {
+        siembra(); montar(oscuro)
+        rule.onNodeWithContentDescription("viernes", substring = true, ignoreCase = true).let { runCatching { it.performScrollTo() }; it.performClick() }
+        rule.waitForIdle()
+        rule.onNodeWithText("Esta semana").performScrollTo(); rule.waitForIdle()
+        foto(nombre)
+    }
+    /** Con pocos libros, «También lees» y «Pendientes» lado a lado (uno a medias más y un pendiente). */
+    @Test fun portadaPocos() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra()
+        Biblioteca.libros.removeAll { it.id in setOf("4", "7", "8", "9", "11") }
+        montar(false)
+        rule.onNodeWithText("Tu 2", substring = true).performScrollTo(); rule.waitForIdle(); foto("1k_portada_pocos")
+    }
+
+    @Test fun portadaSemana() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); portadaDiaTocado("1j_portada_semana", false) }
+    @Test fun portadaSemanaNoche() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); portadaDiaTocado("1j_portada_semana_oscuro", true) }
+    @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun portadaSemanaLetraGrande() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); portadaDiaTocado("c8_portada_semana_letra_grande", false)
+    }
+
+    @Test fun portadaOscuro() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(true); foto("2_portada_oscuro")
+    }
+
+    @Test fun seccionesYSagas() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithText("LEYENDO").performClick(); foto("3_lista")
+        rule.onAllNodesWithText("PENDIENTES")[0].performClick(); rule.waitForIdle(); foto("3b_pendientes")
+        rule.onNodeWithText("Crónicas de Dune", useUnmergedTree = true).performClick(); foto("3c_saga_abierta")
+        rule.onNodeWithText("VER LA SAGA →", useUnmergedTree = true).performClick(); foto("3d_pagina_saga")
+    }
+
+    @Test fun otrasSecciones() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithText("LEÍDOS").performClick(); rule.waitForIdle(); foto("3e_leidos")
+        rule.onAllNodesWithText("ABANDONADOS")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("3f_abandonados")
+        rule.onAllNodesWithText("AUTORES")[0].performScrollTo().performClick(); rule.waitForIdle()
+        rule.onNodeWithText("Frank Herbert", useUnmergedTree = true).performClick(); foto("3g_autores")
+        rule.onAllNodesWithText("SAGAS")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("3h_sagas")
+        rule.onAllNodesWithText("Crónicas de Dune", useUnmergedTree = true).onLast().performClick(); rule.waitForIdle(); foto("3i_sagas_abierta")
+    }
 
     @Test fun vacia() {
-        graba()
-        Skin.cargar(ctx); Biblioteca.cargada = true; Biblioteca.libros.clear(); Sagas.lista.clear()
-        montar(false); foto("d7_hoy_vacia"); pestana("Biblioteca"); foto("d7b_biblioteca_vacia")
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        Skin.cargar(ctx); Biblioteca.cargada = true; Biblioteca.libros.clear(); montar(false); foto("5_portada_vacia")
+    }
+
+    @Test fun fichaCompleta() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        // (en Leyendo solo está «Dune»: sale como libro suelto, con su saga al lado)
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4_ficha")
+        rule.onNodeWithText("Añadido", useUnmergedTree = true).performScrollTo(); foto("4b_ficha_abajo")
+    }
+
+    /** La ficha de un pendiente (la de una portada generada, recortada) y la de Dune de noche. */
+    @Test fun fichaPendienteYNoche() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onAllNodesWithText("PENDIENTES")[0].performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("La sombra del viento", useUnmergedTree = true)[0].performClick(); foto("4f_ficha_pendiente")
+    }
+
+    @Test fun fichaOscuro() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(true)
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4g_ficha_oscuro")
+    }
+
+    @Test fun fichaSinArchivoNiPortada() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        Biblioteca.libros[5] = Biblioteca.libros[5].copy(uri = "")
+        rule.onNodeWithText("PENDIENTES").performClick(); rule.waitForIdle()
+        rule.onAllNodesWithText("Los pilares de la Tierra", useUnmergedTree = true)[0].performClick(); foto("4c_ficha_sin_archivo")
+    }
+
+    @Test fun tapas() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        Skin.cargar(ctx)
+        rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) {
+            androidx.compose.foundation.layout.Column(Modifier.padding(20.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)) {
+                androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)) {
+                    listOf("Los pilares de la Tierra" to "Ken Follett", "La sombra del viento" to "Carlos Ruiz Zafón", "Cien años de soledad" to "Gabriel García Márquez").forEach { (t, a) ->
+                        PortadaLibro(Libro("x", t, a), Modifier.width(104.dp).aspectRatio(0.68f))
+                    }
+                }
+                androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)) {
+                    listOf("Dune", "1984", "Ulises", "Fahrenheit 451", "Don Quijote de la Mancha", "El Principito").forEach { t -> PortadaLibro(Libro("x", t), Modifier.width(50.dp).aspectRatio(0.68f)) }
+                }
+                PortadaLibro(Libro("x", "El nombre de la rosa", "Umberto Eco"), Modifier.width(210.dp).aspectRatio(0.68f))
+            }
+        } } }
+        foto("6_tapas")
+    }
+
+    @Test fun selectorDePortada() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); Skin.cargar(ctx)
+        val c = listOf("Rosa" to 0xFF8C2A22.toInt(), "Dune" to 0xFFD9A53A.toInt(), "Cien" to 0xFF2F5D8A.toInt(), "F451" to 0xFFE0603A.toInt(), "Otra" to 0xFF35523F.toInt(), "Mas" to 0xFF5B3F6B.toInt())
+            .mapIndexed { i, (n, col) -> portada(n, col, col and 0x7f7f7f).let { Candidata(it, it, if (i % 2 == 0) "iTunes" else "Open Library", "El nombre de la rosa · Umberto Eco") } }
+        coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(Dispatchers.Unconfined).allowHardware(false).build())
+        rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { ContenidoSelectorPortada(Biblioteca.libros.first(), {}, hallados = c) } } }
+        foto("7_selector_portada")
+    }
+
+    @Test fun ajustes() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithContentDescription("Ajustes").performClick(); rule.waitForIdle(); foto("8_ajustes")
+        rule.onNodeWithText("LECTURA").performClick(); rule.waitForIdle(); foto("8b_ajustes_lectura")
+        rule.onNodeWithText("CUENTA").performClick(); rule.waitForIdle()
+        rule.onNodeWithText("Tener todos mis libros aquí", useUnmergedTree = true).performScrollTo(); foto("8c_ajustes_cuenta")
+        rule.onNodeWithText("AVANZADO").performClick(); rule.waitForIdle(); foto("8d_ajustes_avanzado")
+    }
+
+    @Test fun escritos() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra()
+        val lectura = org.json.JSONObject().put("novela", org.json.JSONObject()
+            .put("c1", org.json.JSONObject().put("t", "La casa del acantilado").put("a", "Gonzalo").put("c", "El regreso").put("n", 1).put("pa", "Primera parte").put("p", 2140).put("x", "Era de noche.").put("u", System.currentTimeMillis() - 86_400_000L))
+            .put("c2", org.json.JSONObject().put("t", "La casa del acantilado").put("a", "Gonzalo").put("c", "La marea").put("n", 2).put("pa", "").put("p", 1870).put("x", "Subía *despacio*.").put("u", System.currentTimeMillis() - 3_600_000L)))
+            .put("relatos", org.json.JSONObject().put("c1", org.json.JSONObject().put("t", "Relatos de invierno").put("a", "Gonzalo").put("c", "Nieve").put("n", 1).put("pa", "").put("p", 950).put("x", "Nevaba.").put("u", System.currentTimeMillis() - 20 * 86_400_000L)))
+        ctx.getSharedPreferences("marfil_escritos", Context.MODE_PRIVATE).edit().putString("lectura", lectura.toString()).putLong("ultima", System.currentTimeMillis() - 600_000L).commit()
+        montar(false)
+        rule.onNodeWithText("ESCRITOS").performScrollTo().performClick(); rule.waitForIdle(); foto("9_escritos")
+    }
+
+    @Test fun fichaDeUnLeido() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithText("LEÍDOS").performClick(); rule.waitForIdle()
+        rule.onAllNodesWithText("Fahrenheit 451", useUnmergedTree = true)[0].performClick(); foto("4d_ficha_leido")
+        rule.onNodeWithText("Añadido", useUnmergedTree = true).performScrollTo(); foto("4e_ficha_leido_abajo")
     }
 }

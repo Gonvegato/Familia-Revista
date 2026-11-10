@@ -55,12 +55,12 @@ fun PortadaLibro(l: Libro, modifier: Modifier = Modifier, radio: Int = 5, conTit
                 val chica = ancho < 110.dp
                 Column(Modifier.fillMaxSize().padding(horizontal = ancho * (if (chica) 0.12f else 0.15f), vertical = ancho * 0.16f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        Text(l.titulo, color = PAPEL_CLARO, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = sp(if (chica) 0.14f else 0.115f), lineHeight = sp(if (chica) 0.165f else 0.135f),
+                        Text(l.titulo, color = PAPEL_CLARO, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = sp(if (chica) 0.14f else 0.115f), lineHeight = sp(if (chica) 0.165f else 0.135f),
                             textAlign = TextAlign.Center, maxLines = 5, overflow = TextOverflow.Ellipsis)
                     }
                     if (l.autor.isNotBlank() && conAutor && !chica) {
                         Box(Modifier.padding(vertical = ancho * 0.03f).width(ancho * 0.12f).height(1.dp).background(PAPEL_CLARO.copy(alpha = 0.55f)))
-                        Text(l.autor, color = PAPEL_CLARO.copy(alpha = 0.78f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = sp(0.052f), letterSpacing = sp(0.006f),
+                        Text(l.autor.uppercase(), color = PAPEL_CLARO.copy(alpha = 0.78f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = sp(0.052f), letterSpacing = sp(0.006f),
                             textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
