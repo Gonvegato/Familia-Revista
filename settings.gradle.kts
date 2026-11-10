@@ -15,6 +15,8 @@ include(":nucleo")
 include(":iptv")
 if (!soloEscritorio) {
     include(":familia")
+    // La cara común (dirección D): la barra de abajo, Hoy, la estantería y la ficha
+    include(":mesa")
     include(":hiedra", ":marfil", ":cobalto", ":azabache", ":mostaza", ":cobre")
     // Ptah, la de los widgets (solo Android: no tiene versión de escritorio)
     include(":ptah")

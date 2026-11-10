@@ -234,13 +234,13 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
             }
         } else {
             RevistaTopBar(alVolver, "Seshat") { EnlaceRevista(if (mirando) "Mirando…" else "Actualizar", acento = !mirando) { actualizar() } }
-            Filete(3.dp)
+            Filete(1.dp, Line)
             Antetitulo("Sección · ${obras.size} ${if (obras.size == 1) "obra" else "obras"}", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
             NombreConPunto("Escritos", 52.sp, Charcoal, Modifier.padding(top = 2.dp))
         }
-        Text("Lo que escribes en Thot, aquí, con el lector: cada obra con los capítulos que has dado por terminados.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
-        if (mensaje.isNotBlank()) Text(mensaje, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(bottom = 8.dp))
-        Filete(2.dp)
+        Text("Lo que escribes en Thot, aquí, con el lector: cada obra con los capítulos que has dado por terminados.", color = Muted, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
+        if (mensaje.isNotBlank()) Text(mensaje, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(bottom = 8.dp))
+        Filete(1.dp, Line)
         if (obras.isEmpty()) Text(
             when { !Cuenta.vinculada -> "Vincula tu cuenta de Atrio (Ajustes) para ver tus obras de Thot."; Escritos.ultimaVez(ctx) == 0L -> "Todavía no se ha leído tu cuenta."; else -> "Thot aún no ha publicado ningún capítulo terminado. Se publican al marcarlos como terminados allí." },
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(vertical = 14.dp)
@@ -252,11 +252,11 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
             val porDonde = remember(libro?.id, libro?.ultima) { libro?.let { EstadoLectura.estado(ctx, it.id).optString("label").trim() }.orEmpty() }
             Row(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
             // Dirección C: lista numerada en el acento
-            Text("%02d".format(i + 1), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(46.dp))
+            Text("%02d".format(i + 1), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(46.dp))
             Column(Modifier.weight(1f)) {
-                if (nuevos > 0) Text(if (nuevos == 1) "1 CAPÍTULO NUEVO" else "$nuevos CAPÍTULOS NUEVOS", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(bottom = 4.dp))
-                Text(o.titulo, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, lineHeight = 26.sp, color = Charcoal)
-                Text(listOfNotNull(o.autor.ifBlank { null }, "${o.capitulos.size} ${if (o.capitulos.size == 1) "capítulo terminado" else "capítulos terminados"}", "${Formato.cifra(o.palabras)} palabras").joinToString(" · ").uppercase(),
+                if (nuevos > 0) Text(if (nuevos == 1) "1 CAPÍTULO NUEVO" else "$nuevos CAPÍTULOS NUEVOS", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(bottom = 4.dp))
+                Text(o.titulo, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 26.sp, color = Charcoal)
+                Text(listOfNotNull(o.autor.ifBlank { null }, "${o.capitulos.size} ${if (o.capitulos.size == 1) "capítulo terminado" else "capítulos terminados"}", "${Formato.cifra(o.palabras)} palabras").joinToString(" · "),
                     color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.8.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 4.dp))
                 libro?.takeIf { it.fraccion > 0.005f }?.let { l ->
                     Text(listOfNotNull("vas por el ${(l.fraccion * 100).toInt()} %", porDonde.ifBlank { null }).joinToString(" · "),
@@ -271,7 +271,7 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
                 }
             }
             }
-            Filete(2.dp)
+            Filete(1.dp, Line)
         }
         Spacer(Modifier.height(30.dp))
     }

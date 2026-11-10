@@ -1,0 +1,206 @@
+<title>Maqueta de la familia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: una mesa (lo que tienes a medias) y una estantería (todo lo demás); las seis apps comparten esqueleto y cambian solo de tinta. */
+:root{
+  --bg:#F3F4F1; --surface:#FFFFFF; --ink:#16191C; --mute:#666D73; --line:#DDE0DC; --chip:#E8EAE6;
+  --jonsu:#8F3232; --bastet:#2E6B4E; --seshat:#5A4A8C; --thot:#2A4FA0; --hathor:#9A7400; --nut:#B0532A;
+  --on-acc:#FFFFFF;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111417; --surface:#1B1F23; --ink:#ECEEE9; --mute:#9AA2A8; --line:#2C3238; --chip:#252A2F;
+  --jonsu:#D46A6A; --bastet:#5DB58A; --seshat:#A493E0; --thot:#7FA2F0; --hathor:#E0B63A; --nut:#E58A5C;
+  --on-acc:#111417; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#111417; --surface:#1B1F23; --ink:#ECEEE9; --mute:#9AA2A8; --line:#2C3238; --chip:#252A2F;
+  --jonsu:#D46A6A; --bastet:#5DB58A; --seshat:#A493E0; --thot:#7FA2F0; --hathor:#E0B63A; --nut:#E58A5C;
+  --on-acc:#111417; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,6vw,46px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0;text-wrap:balance}
+p{margin:0;max-width:65ch}
+.lead{color:var(--mute)}
+.stage{--acc:var(--jonsu);display:flex;flex-direction:column;gap:20px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tabs button{font:600 15px var(--body);padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.tabs button:focus-visible,.phone:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.what{color:var(--mute);font-size:15px}
+.phones{display:flex;flex-wrap:wrap;gap:22px;justify-content:center}
+figure{margin:0;display:flex;flex-direction:column;gap:10px;align-items:center}
+figcaption{font-size:13px;color:var(--mute);font-weight:500}
+.phone{width:290px;max-width:100%;height:600px;background:var(--bg);border:1px solid var(--line);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;position:relative;font-size:13px;line-height:1.35}
+.scr{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:18px 16px 0}
+.top{display:flex;justify-content:space-between;align-items:baseline}
+.app{font-family:var(--display);font-weight:700;font-size:20px}
+.app i{font-style:normal;color:var(--acc)}
+.date{color:var(--mute);font-size:12px}
+.lbl{font-size:12px;color:var(--mute);font-weight:600}
+.hero{background:var(--surface);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.hero .row{display:flex;gap:12px;align-items:flex-end}
+.cover{border-radius:6px;display:flex;align-items:flex-end;padding:6px;font:600 10px var(--body);color:#fff;aspect-ratio:2/3;min-width:0;overflow:hidden;line-height:1.15}
+.cover.land{aspect-ratio:16/9}
+.hero .cover{width:74px;flex:none;font-size:11px}
+.hero .cover.land{width:128px}
+.tt{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.1}
+.sub{color:var(--mute);font-size:12px}
+.bar{height:4px;border-radius:2px;background:var(--chip);overflow:hidden}
+.bar b{display:block;height:100%;background:var(--acc)}
+.btn{background:var(--acc);color:var(--on-acc);font-weight:600;font-size:14px;border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between}
+.week{display:flex;gap:6px;align-items:flex-end;height:46px}
+.week span{flex:1;background:var(--chip);border-radius:4px 4px 0 0;min-height:4px}
+.week span.on{background:var(--acc)}
+.days{display:flex;gap:6px;font-size:10px;color:var(--mute);text-align:center}
+.days span{flex:1}
+.rowc{display:flex;gap:8px}
+.rowc .cover{flex:1;aspect-ratio:1/1}
+.search{background:var(--surface);border-radius:14px;padding:10px 12px;color:var(--mute);border:1px solid var(--line)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips span{padding:5px 10px;border-radius:999px;background:var(--chip);font-size:11px;font-weight:600}
+.chips span.on{background:var(--ink);color:var(--bg)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid.land{grid-template-columns:repeat(2,1fr)}
+.wash{margin:-18px -16px 0;padding:22px 16px 16px;background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 30%,var(--bg)),var(--bg));display:flex;flex-direction:column;align-items:center;gap:10px}
+.wash .cover{width:118px}
+.wash .cover.land{width:200px}
+.seg{display:flex;background:var(--chip);border-radius:12px;padding:3px;font-size:11px;font-weight:600;text-align:center}
+.seg span{flex:1;padding:6px 2px;border-radius:9px}
+.seg span.on{background:var(--surface)}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
+.kv span:first-child{color:var(--mute)}
+.nav{display:flex;border-top:1px solid var(--line);background:var(--surface);padding:8px 6px 12px;font-size:10px;font-weight:600;color:var(--mute);text-align:center}
+.nav span{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav .on{color:var(--acc)}
+.nav .plus svg{background:var(--acc);stroke:var(--on-acc);border-radius:50%;padding:5px;width:22px;height:22px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.box{background:var(--surface);border-radius:16px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.box h3{margin:0;font:600 15px var(--body)}
+.box ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.note{font-size:13px;color:var(--mute)}
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <h1>La mesa y la estantería</h1>
+    <p class="lead">Propuesta única para Jonsu, Bastet, Seshat, Thot, Hathor y Nut. Las seis se usan igual y solo cambian de color. Los títulos y las cifras de las pantallas son ejemplos, no tus datos.</p>
+  </header>
+
+  <section class="stage" id="stage">
+    <div class="tabs" id="tabs" role="group" aria-label="Elegir app"></div>
+    <p class="what" id="what"></p>
+    <div class="phones" id="phones"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2>Qué cambia en las seis</h2>
+    <div class="cols">
+      <div class="box"><h3>Cómo te mueves</h3><ul>
+        <li>Barra abajo, al alcance del pulgar: Hoy, Biblioteca, el botón de añadir o buscar, y Tú.</li>
+        <li>Desaparecen las pestañas en mayúsculas de arriba y el deslizar entre páginas.</li>
+        <li>En Nut para la tele, la barra pasa a un lateral que se maneja con el mando.</li>
+      </ul></div>
+      <div class="box"><h3>Hoy (la mesa)</h3><ul>
+        <li>Una sola cosa grande: lo que tienes a medias, con un único botón para seguir.</li>
+        <li>Debajo, tu semana y lo siguiente en la cola.</li>
+        <li>El reto del año y las cifras pasan a Tú.</li>
+      </ul></div>
+      <div class="box"><h3>Biblioteca (la estantería)</h3><ul>
+        <li>Una sola pantalla con todas las portadas.</li>
+        <li>Los estados (a medias, pendientes, terminados, abandonados), las sagas y los sistemas son filtros, no páginas distintas.</li>
+        <li>El buscador siempre arriba.</li>
+      </ul></div>
+      <div class="box"><h3>Aspecto</h3><ul>
+        <li>Texto en minúsculas normales, sin marcos negros ni numeración 01, 02.</li>
+        <li>Fondo neutro; el color lo ponen las portadas y un acento por app.</li>
+        <li>Claro y oscuro, y letra grande sin texto cortado.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2>Qué quitaría y qué añadiría</h2>
+    <div class="cols">
+      <div class="box"><h3>Quitaría</h3><ul>
+        <li>En Apariencia: las paletas, los «estilos» y la elección de letras. Quedan claro/oscuro, el color de acento, la imagen de fondo y el encuadre de portadas.</li>
+        <li>Las páginas sueltas de Autores, Sistemas y Sagas: pasan a ser filtros de la Biblioteca.</li>
+        <li>El código repetido: hoy cada app lleva su copia del tema, la cuenta y el actualizador. Pasa a una pieza común.</li>
+      </ul></div>
+      <div class="box"><h3>Añadiría</h3><ul>
+        <li>Jonsu: una cola «Por valorar» con lo que has terminado en las otras apps y aún no tiene nota.</li>
+        <li>Bastet, Seshat, Hathor: «Lo siguiente», una cola que ordenas tú con lo que quieres empezar después.</li>
+        <li>Thot: el botón de Hoy abre la escena exacta donde lo dejaste.</li>
+        <li>Nut: en Hoy, lo que echan ahora mismo en tus favoritos.</li>
+      </ul></div>
+      <div class="box"><h3>No toco</h3><ul>
+        <li>Tus datos, la cuenta, la sincronización y los paquetes: se instalan encima.</li>
+        <li>El lector, el emulador, los reproductores y el editor por dentro: mismo funcionamiento, botones con el aspecto nuevo.</li>
+        <li>Los widgets siguen, redibujados.</li>
+      </ul></div>
+    </div>
+    <p class="note">Lo de Apariencia es lo único que te quita algo que usas hoy. Si quieres conservar paletas o letras, dímelo y se quedan.</p>
+  </section>
+</div>
+
+<script>
+const IC={hoy:'<svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/></svg>',
+ bib:'<svg viewBox="0 0 24 24"><path d="M5 4v16M10 4v16M15 5l4 15"/></svg>',
+ mas:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+ tu:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></svg>'};
+const G=[['#7a2222','#2a0c0c'],['#1f4f7a','#0b1c2c'],['#a8791a','#3d2a05'],['#3c3f47','#17181c'],['#2f6b4f','#0e2219'],['#6b3f8a','#1e1028'],['#b0532a','#3a1708'],['#44606e','#141d22'],['#8a6a3a','#2a1e0c']];
+const cov=(t,i,land)=>`<div class="cover${land?' land':''}" style="background:linear-gradient(160deg,${G[i%9][0]},${G[i%9][1]})">${t}</div>`;
+const APPS={
+ jonsu:{n:'Jonsu',d:'La revista: lo que juegas, lees, ves y escribes, valorado y contado.',tabs:['Hoy','Diario','Valorar','Tú'],
+  hoyLbl:'Por valorar',t:'Deadlock',s:'Juego · 52 h · terminado ayer',p:100,btn:'Ponerle nota',wk:[2,5,3,0,6,4,1],wkLbl:'Tu semana · 14 h entre todo',
+  next:['Dune','The Bear','Ubik'],nextLbl:'También sin nota',
+  chips:['Todo 214','Juegos 96','Libros 71','Películas 31','Series 16'],items:['Deadlock','Dune','Oppenheimer','Hollow Knight','Ubik','The Bear','Hades','El nombre de la rosa','Juego de tronos'],
+  seg:['Sin nota','Bien','Muy bien','Favorito'],on:2,kv:[['Terminado','8 nov 2026'],['Tiempo','52 h'],['Tu nota','8,5'],['En el diario','3 apuntes']],fbtn:'Escribir un apunte'},
+ bastet:{n:'Bastet',d:'Tus juegos: biblioteca, lanzador y jugador.',tabs:['Hoy','Biblioteca','Añadir','Tú'],
+  hoyLbl:'Jugando',t:'Hollow Knight',s:'PC · 23 h · ayer 1 h 10 min',p:64,btn:'Jugar',wk:[1,3,0,2,5,6,2],wkLbl:'Esta semana · 6 h 40 min',
+  next:['Hades','Celeste','Metroid Fusion'],nextLbl:'Lo siguiente',
+  chips:['Jugando 4','Pendientes 31','Pasados 58','Abandonados 3','GBA','PC'],items:['Hollow Knight','Hades','Deadlock','Celeste','Metroid Fusion','Stardew Valley','Balatro','Golden Sun','Outer Wilds'],
+  seg:['Pendiente','Jugando','Pasado','Abandonado'],on:1,kv:[['Se abre con','PC · Emulador'],['Tiempo','23 h'],['Última vez','ayer'],['Saga','—']],fbtn:'Jugar'},
+ seshat:{n:'Seshat',d:'Tus libros: biblioteca y lector.',tabs:['Hoy','Biblioteca','Añadir','Tú'],
+  hoyLbl:'Leyendo',t:'El nombre de la rosa',s:'Umberto Eco · página 200 de 540',p:37,btn:'Seguir leyendo',wk:[3,2,4,0,1,5,2],wkLbl:'Esta semana · 4 h 01 min',
+  next:['Dune','Ubik','Solaris'],nextLbl:'Lo siguiente',
+  chips:['Leyendo 3','Pendientes 5','Leídos 42','Abandonados 2','Sagas','Escritos'],items:['El nombre de la rosa','Dune','Ubik','Solaris','Rayuela','Fundación','Neuromante','Pedro Páramo','Hyperion'],
+  seg:['Pendiente','Leyendo','Leído','Abandonado'],on:1,kv:[['Te quedan','unas 5 h 20 min'],['Leído','3 h 40 min'],['Subrayados','2'],['Saga','—']],fbtn:'Seguir leyendo'},
+ thot:{n:'Thot',d:'Lo que escribes: obras, manuscrito, fichas y notas.',tabs:['Hoy','Obras','Nueva','Tú'],
+  hoyLbl:'Escribiendo',t:'La casa del agua',s:'Capítulo 7 · escena 2 · 41.200 palabras',p:52,btn:'Seguir escribiendo',wk:[4,6,2,0,3,5,1],wkLbl:'Esta semana · 3.180 palabras · meta 500 al día',
+  next:['Cuentos del norte','Diario de viaje','Guion sin título'],nextLbl:'Otras obras',
+  chips:['Escribiendo 2','En pausa 3','Terminadas 1','Archivo 4'],items:['La casa del agua','Cuentos del norte','Diario de viaje','Guion sin título','Poemas','Ensayo breve'],
+  seg:['Escribiendo','En pausa','Terminada','Archivo'],on:0,kv:[['Palabras','41.200 de 80.000'],['Capítulos','7 de 14'],['Racha','9 días'],['Última vez','hoy']],fbtn:'Abrir el manuscrito'},
+ hathor:{n:'Hathor',d:'Tus películas y series: biblioteca y reproductor.',tabs:['Hoy','Biblioteca','Explorar','Tú'],land:true,
+  hoyLbl:'Viendo',t:'The Bear',s:'T2 · E4 · quedan 18 min',p:44,btn:'Seguir viendo',wk:[2,0,3,1,4,6,5],wkLbl:'Esta semana · 7 h 15 min',
+  next:['Oppenheimer','Juego de tronos','Severance'],nextLbl:'Lo siguiente',
+  chips:['Viendo 5','Pendientes 22','Vistas 140','Próximos estrenos'],items:['The Bear','Oppenheimer','Juego de tronos','Severance','Dune: parte dos','Andor'],
+  seg:['Pendiente','Viendo','Vista','Abandonada'],on:1,kv:[['Vas por','T2 · E4 de 10'],['Próximo episodio','ya disponible'],['Fuente','1080p · castellano'],['Tiempo','11 h']],fbtn:'Seguir viendo'},
+ nut:{n:'Nut',d:'La tele: tus listas, la guía y el videoclub. En móvil, tablet y Android TV.',tabs:['Hoy','Directo','Buscar','Tú'],land:true,
+  hoyLbl:'Ahora en tus favoritos',t:'La 1',s:'Saber y ganar · acaba a las 16:30',p:70,btn:'Ver La 1',wk:[3,4,2,5,1,6,6],wkLbl:'Próximo partido · sábado 21:00',
+  next:['Antena 3','DAZN LaLiga','La 2'],nextLbl:'Otros favoritos, ahora',
+  chips:['Favoritos 12','Guía','Películas','Series','Listas 2'],items:['La 1','Antena 3','DAZN LaLiga','La 2','Telecinco','laSexta'],
+  seg:['Canal','Guía de hoy','Favorito','Ocultar'],on:0,kv:[['Ahora','Saber y ganar'],['Después','16:30 · Cine de barrio'],['Lista','Mi proveedor'],['Calidad','1080p']],fbtn:'Ver ahora'}};
+const nav=(a,on)=>`<div class="nav">${a.tabs.map((t,i)=>`<span class="${i==on?'on':''}${i==2?' plus':''}">${[IC.hoy,IC.bib,IC.mas,IC.tu][i]}${t}</span>`).join('')}</div>`;
+function hoy(a){return `<div class="scr"><div class="top"><div class="app">${a.n}<i>.</i></div><div class="date">martes 10 nov</div></div>
+ <div class="hero"><div class="lbl">${a.hoyLbl}</div><div class="row">${cov(a.t,0,a.land)}<div style="min-width:0"><div class="tt">${a.t}</div><div class="sub">${a.s}</div></div></div>
+ <div class="bar"><b style="width:${a.p}%"></b></div><div class="btn"><span>${a.btn}</span><span>→</span></div></div>
+ <div><div class="lbl" style="margin-bottom:8px">${a.wkLbl}</div><div class="week">${a.wk.map((v,i)=>`<span class="${i==1?'on':''}" style="height:${v*7}px"></span>`).join('')}</div><div class="days">${'LMXJVSD'.split('').map(d=>`<span>${d}</span>`).join('')}</div></div>
+ <div><div class="lbl" style="margin-bottom:8px">${a.nextLbl}</div><div class="rowc">${a.next.map((t,i)=>cov(t,i+1,a.land)).join('')}</div></div></div>${nav(a,0)}`}
+function bib(a){return `<div class="scr"><div class="search">Buscar en ${a.n}</div><div class="chips">${a.chips.map((c,i)=>`<span class="${i==0?'on':''}">${c}</span>`).join('')}</div>
+ <div class="grid${a.land?' land':''}">${a.items.map((t,i)=>cov(t,i,a.land)).join('')}</div></div>${nav(a,1)}`}
+function ficha(a){return `<div class="scr"><div class="wash"><div class="sub" style="align-self:flex-start">← Volver</div>${cov(a.t,0,a.land)}<div class="tt" style="text-align:center">${a.t}</div><div class="sub">${a.s}</div></div>
+ <div class="btn"><span>${a.fbtn}</span><span>→</span></div><div class="seg">${a.seg.map((s,i)=>`<span class="${i==a.on?'on':''}">${s}</span>`).join('')}</div>
+ <div>${a.kv.map(k=>`<div class="kv"><span>${k[0]}</span><span>${k[1]}</span></div>`).join('')}</div></div>`}
+const stage=document.getElementById('stage'),tabs=document.getElementById('tabs');
+function show(k){const a=APPS[k];stage.style.setProperty('--acc',`var(--${k})`);
+ [...tabs.children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k==k));
+ document.getElementById('what').textContent=a.d;
+ document.getElementById('phones').innerHTML=[['Hoy',hoy],[a.tabs[1]=='Diario'?'Biblioteca (desde Valorar)':a.tabs[1],bib],['Ficha',ficha]].map(([c,f])=>`<figure><div class="phone">${f(a)}</div><figcaption>${c}</figcaption></figure>`).join('')}
+Object.keys(APPS).forEach(k=>{const b=document.createElement('button');b.id='tab-'+k;b.dataset.k=k;b.textContent=APPS[k].n;b.onclick=()=>show(k);tabs.appendChild(b)});
+show('seshat');
+</script>

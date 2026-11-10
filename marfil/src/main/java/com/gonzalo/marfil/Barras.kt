@@ -77,7 +77,7 @@ fun BarrasLectura(libros: List<Libro>) {
                             Box(Modifier.fillMaxWidth().height(if (m >= 1) maxOf(3f, 30f * m / tope).dp else 1.dp)
                                 .background(if (m >= 1) (if (meta > 0 && m >= meta) Acento else Charcoal) else Line))
                         }
-                        Text(d.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale("es", "ES")).uppercase(), fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                        Text(d.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale("es", "ES")), fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                             color = if (d == hoy) Acento else Muted, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
@@ -109,7 +109,7 @@ fun BarrasSemanaC(d: DatosLectura, modifier: Modifier = Modifier) {
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             d.semana.forEach { (dia, _) ->
-                Text(dia.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale("es", "ES")).uppercase(), fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black,
+                Text(dia.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale("es", "ES")), fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                     color = if (dia == hoy) Acento else Muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
             }
         }
@@ -124,13 +124,13 @@ class RitmoReto(val hechos: Int, val meta: Int, val diferencia: Int, val quedan:
     val cumplido: Boolean get() = meta in 1..hechos
     /** «VAS 2 POR DETRÁS · TE QUEDAN 17 EN 52 DÍAS», «VAS AL DÍA · …», «¡RETO CUMPLIDO!». */
     fun texto(): String {
-        if (cumplido) return if (hechos > meta) "¡RETO CUMPLIDO! Y ${hechos - meta} DE PROPINA" else "¡RETO CUMPLIDO!"
+        if (cumplido) return if (hechos > meta) "¡Reto cumplido! Y ${hechos - meta} de propina" else "¡Reto cumplido!"
         val vas = when {
-            diferencia > 0 -> "VAS $diferencia POR DELANTE"
-            diferencia < 0 -> "VAS ${-diferencia} POR DETRÁS"
-            else -> "VAS AL DÍA"
+            diferencia > 0 -> "Vas $diferencia por delante"
+            diferencia < 0 -> "Vas ${-diferencia} por detrás"
+            else -> "Vas al día"
         }
-        return "$vas · ${if (quedan == 1) "TE QUEDA 1" else "TE QUEDAN $quedan"} EN $dias ${if (dias == 1) "DÍA" else "DÍAS"}"
+        return "$vas · ${if (quedan == 1) "te queda 1" else "te quedan $quedan"} en $dias ${if (dias == 1) "día" else "días"}"
     }
 }
 
@@ -181,7 +181,7 @@ fun SemanaTocable(d: DatosLectura, modifier: Modifier = Modifier, alto: Int = 74
                     if (sel) {
                         // La etiqueta, encima de la barra (puede salirse de su columna; no se recorta)
                         val arriba = if (m >= 1) maxOf(4f, alto * m / tope) else 3f
-                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, maxLines = 1, softWrap = false,
+                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                             modifier = Modifier.align(when (i) { 0 -> Alignment.BottomStart; d.semana.lastIndex -> Alignment.BottomEnd; else -> Alignment.BottomCenter })
                                 .offset(y = (-(arriba + 6)).dp)
                                 // (en los extremos se pega a su lado, para no salirse de la pantalla)
@@ -189,7 +189,7 @@ fun SemanaTocable(d: DatosLectura, modifier: Modifier = Modifier, alto: Int = 74
                                 .background(Charcoal).padding(horizontal = 7.dp, vertical = 4.dp))
                     }
                 }
-                Text(letra, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (dia == hoy) Acento else Muted,
+                Text(letra, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (dia == hoy) Acento else Muted,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
             }
         }

@@ -47,22 +47,22 @@ fun SeccionNotas(l: Libro, conTitulo: Boolean = true) {
     var todas by remember { mutableStateOf(false) }
     if (conTitulo) Antetitulo("Subrayados y notas", Modifier.padding(top = 18.dp, bottom = 6.dp))
     if (notas.isEmpty()) {
-        Text("Aún no has subrayado nada. En el lector, mantén pulsada una palabra y toca Subrayar o Nota.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp)
+        Text("Aún no has subrayado nada. En el lector, mantén pulsada una palabra y toca Subrayar o Nota.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 20.sp)
         return
     }
     val conNota = notas.count { it.nota.isNotBlank() }
-    Text(listOfNotNull("${notas.size} subrayado${if (notas.size == 1) "" else "s"}", if (conNota > 0) "$conNota con nota" else null).joinToString(" · ").uppercase(),
+    Text(listOfNotNull("${notas.size} subrayado${if (notas.size == 1) "" else "s"}", if (conNota > 0) "$conNota con nota" else null).joinToString(" · "),
         color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     Spacer(Modifier.height(6.dp))
     (if (todas) notas else notas.take(4)).forEachIndexed { i, n ->
         if (i > 0) Filete(1.dp, Line)
         Column(Modifier.fillMaxWidth().clickable { Lector.abrir(ctx, l, goto = n.value) }.padding(vertical = 10.dp)) {
             Text("«${n.texto}»", color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 23.sp, maxLines = if (todas) 12 else 5, overflow = TextOverflow.Ellipsis)
-            if (n.nota.isNotBlank()) Text(n.nota, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 4.dp))
-            Text(listOfNotNull(n.etiqueta.ifBlank { null }, if (n.creada > 0) Formato.fecha(n.creada) else null).joinToString(" · ").uppercase(),
+            if (n.nota.isNotBlank()) Text(n.nota, color = Acento, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 4.dp))
+            Text(listOfNotNull(n.etiqueta.ifBlank { null }, if (n.creada > 0) Formato.fecha(n.creada) else null).joinToString(" · "),
                 color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 4.dp))
         }
     }
-    if (notas.size > 4) Text(if (todas) "VER MENOS" else "VER LOS ${notas.size} →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
+    if (notas.size > 4) Text(if (todas) "Ver menos" else "Ver los ${notas.size} →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
         modifier = Modifier.clickable { todas = !todas }.padding(top = 6.dp, bottom = 4.dp))
 }

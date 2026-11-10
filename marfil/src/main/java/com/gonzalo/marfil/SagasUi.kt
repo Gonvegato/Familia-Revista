@@ -30,7 +30,7 @@ fun siguienteDe(libros: List<Libro>): Libro? = libros.firstOrNull { it.estado ==
 
 @Composable
 private fun BotonTexto(texto: String, acento: Boolean = false, onClick: () -> Unit) =
-    TextButton(onClick) { Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) }
+    TextButton(onClick) { Text(texto, color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) }
 
 /** La página de una saga: sus libros en orden, lo que toca leer ahora y cómo editarla (nombre, orden, libros). */
 @Composable
@@ -50,20 +50,20 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Libro) -> Unit) {
     }
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = 28.dp)) {
         RevistaTopBar(alCerrar, "Volver") { EnlaceRevista(if (editando) "Listo" else "Editar", acento = editando) { editando = !editando } }
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Spacer(Modifier.height(14.dp))
         RevistaHeadline(s.nombre, listOfNotNull("Saga", autoresDe(libros).ifBlank { null }).joinToString(" · "))
-        Text(resumenSaga(libros), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
+        Text(resumenSaga(libros), color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             val leidos = libros.count { it.estado == Estado.LEIDO }
             Column(Modifier.weight(1f)) {
                 FitTitle("$leidos/${libros.size}", 44.sp, 46.sp, unaLinea = true, maxLines = 1)
-                Text("LEÍDOS", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("Leídos", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
             val pags = libros.sumOf { it.paginas }
             if (pags > 0) Column(Modifier.weight(1f)) {
                 FitTitle("$pags", 44.sp, 46.sp, unaLinea = true, maxLines = 1)
-                Text("PÁGINAS EN TOTAL", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("Páginas en total", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -71,14 +71,14 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Libro) -> Unit) {
             Filete(1.dp)
             Row(Modifier.fillMaxWidth().clickable { alAbrir(siguiente) }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(if (siguiente.estado == Estado.LEYENDO) "AHORA" else "TOCA ESTE", color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
+                    Text(if (siguiente.estado == Estado.LEYENDO) "Ahora" else "Toca este", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     Text(siguiente.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 24.sp, maxLines = 2)
                 }
-                Text("ABRIR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp)
+                Text("Abrir →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
             }
         }
-        Filete(2.dp)
-        if (libros.isEmpty()) Text("Esta saga no tiene libros todavía.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(vertical = 16.dp))
+        Filete(1.dp, Line)
+        if (libros.isEmpty()) Text("Esta saga no tiene libros todavía.", color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(vertical = 16.dp))
         libros.forEachIndexed { i, l ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { FilaLibro(l, alAbrir, numero = i + 1, conEstado = true) }
@@ -102,14 +102,14 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Libro) -> Unit) {
     if (anadir) SelectorLibros("Añadir a «${s.nombre}»", Biblioteca.propios().filter { it.clave !in s.claves }, { anadir = false }) { claves -> anadir = false; Sagas.poner(s.copy(claves = s.claves + claves)) }
     if (renombrar) {
         var t by remember { mutableStateOf(s.nombre) }
-        AlertDialog(onDismissRequest = { renombrar = false }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("Nombre de la saga", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        AlertDialog(onDismissRequest = { renombrar = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            title = { Text("Nombre de la saga", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
             text = { CampoRevista("Nombre", t, "nombre") { t = it } },
             confirmButton = { BotonTexto("Guardar", true) { if (t.isNotBlank()) { Sagas.poner(s.copy(nombre = t.trim())); renombrar = false } } },
             dismissButton = { BotonTexto("Cancelar") { renombrar = false } })
     }
-    if (borrar) AlertDialog(onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("¿Borrar «${s.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+    if (borrar) AlertDialog(onDismissRequest = { borrar = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("¿Borrar «${s.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text("Se deshace la saga en todos tus dispositivos. Los ${libros.size} libros siguen en tu biblioteca, cada uno en su estante.", color = Muted, fontFamily = Body) },
         confirmButton = { BotonTexto("Borrar", true) { Sagas.quitar(s.id); borrar = false; alCerrar() } },
         dismissButton = { BotonTexto("Cancelar") { borrar = false } })
@@ -121,8 +121,8 @@ fun DialogoSagaDeLibro(l: Libro, alCerrar: () -> Unit) {
     val actual = Sagas.de(l.clave)
     var nueva by remember { mutableStateOf("") }
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Saga de «${l.titulo}»", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Saga de «${l.titulo}»", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 if (Sagas.lista.isEmpty()) Text("Aún no hay sagas. Escribe un nombre para crear la primera.", color = Muted, fontFamily = Body, fontSize = 13.sp)
@@ -144,8 +144,8 @@ fun DialogoSagaDeLibro(l: Libro, alCerrar: () -> Unit) {
 @Composable
 fun DialogoNuevaSaga(nombre: String, alCambiar: (String) -> Unit, alCerrar: () -> Unit, alCrear: (String) -> Unit) {
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Nueva saga", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Nueva saga", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { CampoRevista("Nombre", nombre, "p. ej. Dune") { alCambiar(it) } },
         confirmButton = { BotonTexto("Crear", true) { if (nombre.isNotBlank()) alCrear(nombre.trim()) } },
         dismissButton = { BotonTexto("Cerrar") { alCerrar() } }
@@ -162,11 +162,11 @@ fun SelectorLibros(titulo: String, candidatos: List<Libro>, alCerrar: () -> Unit
         val lista = candidatos.filter { q.isEmpty() || norm(it.titulo).contains(q) || norm(it.autor).contains(q) }.sortedBy { norm(it.titulo) }
         Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp)) {
             RevistaTopBar(alCerrar, "Cerrar") { EnlaceRevista(if (marcados.isEmpty()) "Elige" else "Añadir ${marcados.size} →", acento = marcados.isNotEmpty()) { if (marcados.isNotEmpty()) alElegir(marcados) } }
-            Filete(3.dp)
-            Text(titulo.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, modifier = Modifier.padding(top = 12.dp))
+            Filete(1.dp, Line)
+            Text(titulo, color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp))
             CampoRevista("Buscar", busca, "título o autor") { busca = it }
             LazyColumn(Modifier.fillMaxSize()) {
-                if (lista.isEmpty()) item { Text("No hay más libros para añadir.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
+                if (lista.isEmpty()) item { Text("No hay más libros para añadir.", color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
                 items(lista, key = { it.id }) { l ->
                     val on = l.clave in marcados
                     Row(Modifier.fillMaxWidth().clickable { marcados = if (on) marcados - l.clave else marcados + l.clave }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -174,7 +174,7 @@ fun SelectorLibros(titulo: String, candidatos: List<Libro>, alCerrar: () -> Unit
                         PortadaLibro(l, Modifier.width(40.dp).aspectRatio(0.68f), radio = 3, conTitulo = false)
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
                             Text(l.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2)
-                            if (l.autor.isNotBlank()) Text(l.autor.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            if (l.autor.isNotBlank()) Text(l.autor, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                     Filete(1.dp, Line)
