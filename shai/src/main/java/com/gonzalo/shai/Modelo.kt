@@ -490,9 +490,11 @@ data class Oferta(val id: String, val de: String, val tipo: String, val salario:
                   /** En una puja ([Pujas]): la oferta que esta mejora (o de la que se retira), y en qué ronda va. */
                   val antes: String = "", val ronda: Int = 0,
                   /** La cláusula de rescisión del contrato que ofrece (traspaso, renovación, banquillo). 0: la pone la app según el nivel. */
-                  val clausula: Long = 0) {
+                  val clausula: Long = 0,
+                  /** La apuesta de un club muy rico que paga muy por encima de lo normal (solo a una superestrella, y una a la vez: [Contratos.apuesta]). */
+                  val apuesta: Boolean = false) {
     fun aMapa(): Map<String, Any?> = mapOf("id" to id, "d" to de, "t" to tipo, "s" to salario, "p" to prima, "a" to anios.toLong(), "x" to texto, "e" to estado, "ng" to negociada,
-        "an" to antes, "ro" to ronda.toLong(), "cu" to clausula)
+        "an" to antes, "ro" to ronda.toLong(), "cu" to clausula, "ap" to apuesta)
     /** Lo que vale entera (para comparar en una puja): lo de todas las semanas de sus años y la prima. */
     val valor: Long get() = salario * 52 * maxOf(1, anios) + prima
     val cambiaDeClub: Boolean get() = tipo == "traspaso" || tipo == "cesion" || tipo == "banquillo"
@@ -503,7 +505,7 @@ data class Oferta(val id: String, val de: String, val tipo: String, val salario:
         /** En una puja: la otra la ha mejorado (sale la nueva) o se ha retirado. */
         const val MEJORADA = "mejorada"; const val RETIRADA = "retirada"
         fun de(m: Map<String, Any?>) = Oferta(m["id"].comoTexto(), m["d"].comoTexto(), m["t"].comoTexto(), m["s"].comoLong(), m["p"].comoLong(), m["a"].comoLong().toInt(), m["x"].comoTexto(), m["e"].comoTexto().ifBlank { ABIERTA }, m["ng"].comoBool(),
-            m["an"].comoTexto(), m["ro"].comoLong().toInt(), m["cu"].comoLong())
+            m["an"].comoTexto(), m["ro"].comoLong().toInt(), m["cu"].comoLong(), m["ap"].comoBool())
     }
 }
 

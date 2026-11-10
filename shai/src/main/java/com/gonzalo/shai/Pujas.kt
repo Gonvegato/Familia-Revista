@@ -31,10 +31,11 @@ object Pujas {
         val ofertas = g.map { it.second }.sortedByDescending { it.valor }
         val lider = ofertas.first()
         val r = Rangos.de(u.nivelActual)
-        val topeSemana = if (lider.tipo == "patrocinio") r.patroSemana else r.sueldo.last
+        // (en un club, lo de su edad; si hay una apuesta, pueden acercarse a ella, pero la apuesta no puja: ya es la excepción)
+        val topeSemana = if (lider.tipo == "patrocinio") r.patroSemana else minOf(r.sueldo.last.let { if (Contratos.apuesta(u) != null) maxOf(it, Contratos.topeNormal(u)) else it }, Contratos.topeNormal(u))
         val topePrima = if (lider.tipo == "patrocinio") r.patroPrima else r.primaMax
         // Se mueve la que va por detrás (la segunda); si ya ha pujado todas sus rondas, nadie
-        val otra = ofertas.drop(1).firstOrNull { it.ronda < MAX_RONDAS } ?: return null
+        val otra = ofertas.drop(1).firstOrNull { it.ronda < MAX_RONDAS && !it.apuesta } ?: return null
         val quien = Rangos.limpiaNombre(otra.de); val delLider = Rangos.limpiaNombre(lider.de)
         val tiro = azar.nextDouble()
         val enElTope = otra.salario >= topeSemana && otra.prima >= topePrima

@@ -197,8 +197,15 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
         " Salario en euros a la semana, prima en euros de una vez, años de contrato y, en traspasos y renovaciones, «clausula»: la cláusula de rescisión del contrato nuevo en euros (como mucho le blindan: al menos ${Formato.eurosCorto(Contratos.clausulaMinima(u))}, 1,5 veces lo que vale; en una renovación, mucho más alta que la de ahora); en «texto», por qué le quieren y qué le ofrecen de verdad (minutos, proyecto, escaparate), con las mismas cifras que pones en sus campos. ${Rangos.texto(Contratos.nivelOfertas(u))}${sueldoDeChaval(u)}"
 
     /** Si es muy joven: su sueldo es de chaval aunque valga una fortuna (lo que se dispara es lo que pagarían por él). */
-    fun sueldoDeChaval(u: Universo): String = Contratos.topeSueldo(u).takeIf { it != Long.MAX_VALUE }?.let { t ->
-        " OJO, ES MUY JOVEN (${u.personaje.edad} años): aunque valga una fortuna, en un club cobraría como mucho ${Formato.euros(t)} a la semana (unos ${Formato.eurosCorto(t * 52)} al año; y una prima de como mucho un año de eso). Lo que se dispara es lo que pagarían por él a su club (el traspaso) y su cláusula: le quieren para montar un proyecto alrededor suyo y blindarle con una cláusula altísima. Que el texto lo refleje." } ?: ""
+    fun sueldoDeChaval(u: Universo): String = laApuesta(u) + (Contratos.topeSueldo(u).takeIf { it != Long.MAX_VALUE }?.let { t ->
+        " OJO, ES MUY JOVEN (${u.personaje.edad} años): aunque valga una fortuna, en un club cobraría como mucho ${Formato.euros(t)} a la semana (unos ${Formato.eurosCorto(t * 52)} al año; y una prima de como mucho un año de eso). Lo que se dispara es lo que pagarían por él a su club (el traspaso) y su cláusula: le quieren para montar un proyecto alrededor suyo y blindarle con una cláusula altísima. Que el texto lo refleje." } ?: "")
+
+    /** Si es una superestrella: como mucho una oferta puede ser la apuesta de un club muy rico (y solo si no hay otra abierta). */
+    private fun laApuesta(u: Universo): String {
+        if (!Contratos.superestrella(u)) return " «apuesta»: false."
+        Contratos.apuesta(u)?.let { a -> return " «apuesta»: false (ya tiene la apuesta de ${Rangos.limpiaNombre(a.de)}: ${Formato.euros(a.salario)} a la semana; los demás pueden acercarse a ella, sin igualarla)." }
+        return " ES UNA SUPERESTRELLA: como mucho UNA de las ofertas puede ser una apuesta («apuesta»: true): un club muy rico que pueda permitírselo (no uno con problemas económicos ni uno que ya tenga a sus estrellas en ese puesto) y que pague muy por encima de lo normal, hasta ${Formato.euros(Contratos.topeApuesta(u))} a la semana, porque cree que va a ser el rey del fútbol; que el texto lo cuente así. Lo normal es que no haya ninguna; nunca más de una. Las demás, «apuesta»: false y dentro de lo normal."
+    }
 
     /** Con cuántas decisiones abiertas ya no se le ponen más. */
     const val MAX_ABIERTAS = 2
@@ -242,7 +249,7 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
         "relaciones" to lista(obj("nombre" to TEXTO, "cambio" to ENTERO)), "rivales" to lista(RIVAL))
     private val DECISION = obj("hay" to SINO, "de" to TEXTO, "titulo" to TEXTO, "contexto" to TEXTO, "en_juego" to TEXTO, "pregunta" to TEXTO, "opciones" to lista(TEXTO))
     private val OFERTA = obj("de" to TEXTO, "tipo" to enumerado("traspaso", "cesion", "renovacion", "patrocinio", "banquillo"),
-        "salario_semanal" to ENTERO, "prima" to ENTERO, "anios" to ENTERO, "clausula" to ENTERO, "texto" to TEXTO)
+        "salario_semanal" to ENTERO, "prima" to ENTERO, "anios" to ENTERO, "clausula" to ENTERO, "apuesta" to SINO, "texto" to TEXTO)
     private val PRENSA = obj("cabecera" to TEXTO, "titular" to TEXTO, "entradilla" to TEXTO, "articulo" to TEXTO,
         "secundarios" to lista(obj("titular" to TEXTO, "entradilla" to TEXTO)))
 
@@ -531,10 +538,17 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
     }
 
     /** Las ofertas, con el sueldo y la prima dentro de lo que pide su nivel de ahora ([Rangos]). */
-    private fun ofertas(l: Any?, n: Nivel?, tope: Long = Long.MAX_VALUE) = l.comoLista().map { it.comoMapa() }.map { m ->
-        Oferta(Universo.nuevoId("o"), m["de"].comoTexto(), m["tipo"].comoTexto().ifBlank { "traspaso" }, m["salario_semanal"].comoLong().coerceAtLeast(0),
-            m["prima"].comoLong().coerceAtLeast(0), m["anios"].comoLong().toInt().coerceIn(0, 10), m["texto"].comoTexto(), clausula = m["clausula"].comoLong().coerceAtLeast(0)).let { if (n != null) Rangos.recorta(it, n, tope) else it }
-    }.filter { it.de.isNotBlank() }.take(3)
+    private fun ofertas(l: Any?, n: Nivel?, tope: Long = Long.MAX_VALUE, u: Universo? = null): List<Oferta> {
+        var hayApuesta = false
+        return l.comoLista().map { it.comoMapa() }.map { m ->
+            // (como mucho una apuesta por respuesta: la primera)
+            val ap = m["apuesta"].comoBool() && !hayApuesta
+            if (ap) hayApuesta = true
+            Oferta(Universo.nuevoId("o"), m["de"].comoTexto(), m["tipo"].comoTexto().ifBlank { "traspaso" }, m["salario_semanal"].comoLong().coerceAtLeast(0),
+                m["prima"].comoLong().coerceAtLeast(0), m["anios"].comoLong().toInt().coerceIn(0, 10), m["texto"].comoTexto(), clausula = m["clausula"].comoLong().coerceAtLeast(0), apuesta = ap)
+                .let { if (u != null) Contratos.recortaPara(u, it) else if (n != null) Rangos.recorta(it.copy(apuesta = false), n, tope) else it }
+        }.filter { it.de.isNotBlank() }.take(3)
+    }
 
     fun decision(m: Map<String, Any?>): Decision? {
         if (!m["hay"].comoBool()) return null
@@ -560,7 +574,7 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
 
     class SinContestar(val n: Int, val consecuencia: String, val efectos: Efectos)
     class LoDePrensa(val prensa: Prensa?, val ofertas: List<Oferta>, val decision: Decision?, val efectos: Efectos, val sinContestar: List<SinContestar> = emptyList())
-    fun leePrensa(r: Map<String, Any?>, n: Nivel? = null, tope: Long = Long.MAX_VALUE) = LoDePrensa(prensaDe(r["prensa"].comoMapa()), ofertas(r["ofertas"], n, tope), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]),
+    fun leePrensa(r: Map<String, Any?>, n: Nivel? = null, tope: Long = Long.MAX_VALUE, u: Universo? = null) = LoDePrensa(prensaDe(r["prensa"].comoMapa()), ofertas(r["ofertas"], n, tope, u), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]),
         r["sin_contestar"].comoLista().map { it.comoMapa() }.map { SinContestar(it["n"].comoLong().toInt(), it["consecuencia"].comoTexto(), efectos(it["efectos"].comoMapa())) }.filter { it.consecuencia.isNotBlank() })
 
     /** Un evento de entre partidos, ya como entrada (sin aplicar: sale a su hora). */
@@ -568,7 +582,7 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
         val (h, n) = tendencia(r["tendencia"].comoMapa())
         return Entrada(
             Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, ahora, u.paso, r["titulo"].comoTexto(), r["texto"].comoTexto(), null, posts(r["posts"]), dms(r["mensajes"]),
-            null, ofertas(r["ofertas"], Contratos.nivelOfertas(u), Contratos.topeSueldo(u)), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]), visibleDesde = visible, aplicada = false,
+            null, ofertas(r["ofertas"], Contratos.nivelOfertas(u), Contratos.topeSueldo(u), u), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]), visibleDesde = visible, aplicada = false,
             tendencia = h, tendenciaPosts = n,
         )
     }
@@ -593,13 +607,13 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
     class LoDeLaTemporada(val titulo: String, val balance: String, val premios: List<Premio>, val prensa: Prensa?, val posts: List<Post>, val dms: List<Dm>,
                           val tendencia: String, val tendenciaPosts: Int, val vacacionesTitulo: String, val vacacionesTexto: String, val vacacionesDecision: Decision?,
                           val ofertas: List<Oferta>, val efectos: Efectos)
-    fun leeTemporada(r: Map<String, Any?>, nivel: Nivel? = null, tope: Long = Long.MAX_VALUE): LoDeLaTemporada {
+    fun leeTemporada(r: Map<String, Any?>, nivel: Nivel? = null, tope: Long = Long.MAX_VALUE, u: Universo? = null): LoDeLaTemporada {
         val (h, n) = tendencia(r["tendencia"].comoMapa())
         val v = r["vacaciones"].comoMapa()
         return LoDeLaTemporada(r["titulo"].comoTexto(), r["balance"].comoTexto().trim(),
             r["premios"].comoLista().map { it.comoMapa() }.map { Premio(it["premio"].comoTexto(), it["medio"].comoTexto(), it["ganado"].comoBool(), it["texto"].comoTexto()) }.filter { it.nombre.isNotBlank() }.take(5),
             prensaDe(r["prensa"].comoMapa()), posts(r["posts"]), dms(r["mensajes"]), h, n, v["titulo"].comoTexto(), v["texto"].comoTexto(), decision(v["decision"].comoMapa()),
-            ofertas(r["ofertas"], nivel, tope), efectos(r["efectos"].comoMapa(), r["gente_nueva"]))
+            ofertas(r["ofertas"], nivel, tope, u), efectos(r["efectos"].comoMapa(), r["gente_nueva"]))
     }
 
     /** Lo leído de la foto, para rellenar la plantilla (que revisas antes de guardar). */

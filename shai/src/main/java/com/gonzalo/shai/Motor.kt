@@ -374,7 +374,7 @@ object Motor {
             try {
                 val u = Carreras.de(e.universo) ?: return@en e to null
                 val caducadas = sinContar(u.id)
-                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u), caducadas)), Contratos.nivelOfertas(u), Contratos.topeSueldo(u))
+                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u), caducadas)), Contratos.nivelOfertas(u), Contratos.topeSueldo(u), u)
                 var nu = Vida.aplica(u, r.efectos)
                 val ef = Vida.recorta(u, r.efectos)
                 // Lo que no contestó: su consecuencia (la que cuenta la prensa, o una corta si no la cuenta) y sus efectos
@@ -600,7 +600,7 @@ object Motor {
         val ps = Carreras.partidos(u.id).map { it.second }.filter { it.temporada == t || t.isBlank() }
         if (ps.isEmpty()) return@en "No hay partidos en esta temporada: mete alguno antes de cerrarla."
         try {
-            val r = Narrador.leeTemporada(pide(Narrador.temporada(u, contexto(u, cuantas = 12), Estadisticas.linea(t, "", ps), ps)), Contratos.nivelOfertas(u), Contratos.topeSueldo(u))
+            val r = Narrador.leeTemporada(pide(Narrador.temporada(u, contexto(u, cuantas = 12), Estadisticas.linea(t, "", ps), ps)), Contratos.nivelOfertas(u), Contratos.topeSueldo(u), u)
             val ef = Vida.recorta(u, r.efectos)
             var nu = Vida.aplica(u, r.efectos)
             val ahora = reloj()

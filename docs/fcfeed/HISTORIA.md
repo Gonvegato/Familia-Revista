@@ -5,6 +5,15 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.15.0
+
+- **La apuesta.** Si eres una superestrella (vales 100 M€ o más, o el triple de lo de tu nivel), UNA oferta puede ser la apuesta de un club
+  muy rico que paga muy por encima de lo normal porque cree que vas a ser el rey del fútbol: hasta el triple de tu tope de sueldo
+  (`Contratos.topeApuesta`). Solo una a la vez (si llega otra, es una oferta normal) y no de clubes que no puedan permitírselo. Sale con el
+  sello «★ Apuesta». Lo normal es que no haya ninguna.
+- **Los demás pueden picarse:** con una apuesta abierta, el resto de ofertas (también en las pujas y al subir tu valor) pueden acercarse a
+  ella hasta el 75 %, sin igualarla (`Contratos.topeNormal`). La apuesta no puja: ya es la excepción.
+
 ## 0.14.0
 
 - **Un fenómeno sin precedentes cobra varios millones (no 38).** El tope de sueldo por edad de la 0.13.1 se quedaba en el de un chaval

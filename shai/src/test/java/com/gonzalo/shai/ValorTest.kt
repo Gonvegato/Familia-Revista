@@ -72,4 +72,24 @@ class ValorTest {
         assertTrue(Contratos.revalora(u, Partido("2026/27", "Amistoso", "Ajax", true, 1, 0, 90, 1, 0, 7.0)) < v * 11 / 10)
         assertTrue(Contratos.revalora(u, Partido("2026/27", "LaLiga EA Sports", "Getafe CF", true, 0, 2, 90, 0, 0, 5.0)) < v)
     }
+
+    @Test fun unaSolaApuestaYSoloParaUnaSuperestrella() {
+        val (u0, _) = Motor.crea(Ejemplo.universo().let { it.copy(personaje = it.personaje.copy(edad = 16)) })
+        var u = Carreras.guarda(Carreras.de(u0.id)!!.let { it.copy(fuera = it.fuera + (Fuera.FAMA to 70), valor = 150_000_000) })
+        assertTrue(Contratos.superestrella(u))
+        val tope = Contratos.topeSueldo(u)
+        // El City se tira a la piscina: 800.000 € a la semana → apuesta, hasta el triple del tope
+        val city = Contratos.recortaPara(u, Oferta("city", "Manchester City", "traspaso", 800_000, 20_000_000, 5, "El City apuesta por ti: 800.000 € a la semana.", apuesta = true))
+        assertTrue(city.texto, city.texto.contains("${Formato.cifra(city.salario)} € a la semana"))
+        assertTrue(city.apuesta); assertEquals(Contratos.topeApuesta(u), city.salario); assertEquals(tope * 3, city.salario)
+        Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, 1, 0, "El City", ofertas = listOf(city)))
+        // Una segunda apuesta no cuela (es una oferta normal); y las normales pueden acercarse a la apuesta, hasta el 75 %
+        val psg = Contratos.recortaPara(u, Oferta("psg", "Paris Saint-Germain", "traspaso", 800_000, 0, 5, "El PSG también.", apuesta = true))
+        assertFalse(psg.apuesta); assertEquals(city.salario * 3 / 4, psg.salario)
+        assertTrue(psg.salario < city.salario)
+        // Sin ser superestrella, ninguna apuesta
+        u = Carreras.guarda(u.copy(valor = 20_000_000))
+        val normal = Contratos.recortaPara(u.copy(id = "otro"), Oferta("x", "Chelsea FC", "traspaso", 800_000, 0, 5, "", apuesta = true))
+        assertFalse(normal.apuesta); assertTrue(normal.salario <= Contratos.topeSueldo(u))
+    }
 }

@@ -178,11 +178,41 @@ object Contratos {
         return redondea(base * (1.0 + minOf(jugados, 60) / 40.0) * fenomeno)
     }
 
-    /** Una oferta de club, en su sitio: el nivel con el que se le hacen ofertas y lo que puede cobrar por su edad. */
-    fun recortaPara(u: Universo, o: Oferta): Oferta = Rangos.recorta(o, nivelOfertas(u), topeSueldo(u)).let { x ->
+    /** Es una superestrella: vale 100 M€ o más, o el triple de lo que vale alguien de su nivel. */
+    fun superestrella(u: Universo): Boolean = u.valor >= 100_000_000 || (u.valor > 0 && u.valor >= valorBase(u) * 3)
+
+    /** La apuesta que tiene abierta (si la hay): la de un club que paga muy por encima de lo normal. */
+    fun apuesta(u: Universo): Oferta? = Carreras.entradasDe(u.id).flatMap { it.ofertas }.firstOrNull { it.apuesta && it.estado == Oferta.ABIERTA }
+
+    /** Lo que puede pagar una apuesta: hasta el triple de su tope de sueldo (y el nivel de una leyenda). */
+    fun topeApuesta(u: Universo): Long = topeSueldo(u).let { if (it == Long.MAX_VALUE) it else it * 3 }
+
+    /**
+     * El tope de una oferta normal: el de su edad y, si hay una apuesta abierta, los demás pueden acercarse a ella (hasta el 75 %) para
+     * no quedarse atrás. Nunca la igualan: la apuesta es la excepción.
+     */
+    fun topeNormal(u: Universo): Long {
+        val t = topeSueldo(u)
+        val a = apuesta(u) ?: return t
+        return if (t == Long.MAX_VALUE) t else maxOf(t, a.salario * 3 / 4)
+    }
+
+    /**
+     * Una oferta de club, en su sitio: el nivel con el que se le hacen ofertas y lo que puede cobrar por su edad. Una apuesta solo vale si
+     * es una superestrella y no tiene otra abierta (si no, es una oferta normal); entonces puede llegar al triple de su tope.
+     */
+    fun recortaPara(u: Universo, o0: Oferta): Oferta {
+        val otra = apuesta(u)
+        val o = if (o0.apuesta && (!superestrella(u) || o0.tipo == "patrocinio" || (otra != null && otra.id != o0.id && otra.id != o0.antes))) o0.copy(apuesta = false) else o0
+        val tope = if (o.apuesta) topeApuesta(u) else topeNormal(u)
+        return Rangos.recorta(o, nivelOfertas(u), tope).let { r ->
+            // (la apuesta, y las que se acercan a ella, pueden pasar del máximo de su nivel: hasta lo que pidan, sin pasar de su tope)
+            if (o.tipo != "patrocinio" && (o.apuesta || otra != null)) maxOf(r.salario, minOf(o.salario, tope)).let { sal -> r.copy(salario = sal, texto = Rangos.cuadraTexto(o.texto, sal, r.prima)) } else r
+        }.let { x ->
         // Un club que le ficha o le renueva le blinda: su cláusula, nunca por debajo de 1,5 veces lo que vale (y como mucho 1.000 M€)
         if (x.tipo == "traspaso" || x.tipo == "renovacion" || x.tipo == "banquillo")
             x.copy(clausula = maxOf(x.clausula, clausulaMinima(u)).coerceAtMost(1_000_000_000L)) else x
+        }
     }
 
     /** La cláusula mínima con la que un club le ficha o le renueva: 1,5 veces lo que vale. */

@@ -689,6 +689,7 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
                     androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Sello(Oferta.TIPOS[o.tipo] ?: o.tipo)
                         if (o.id in enPuja) Sello(if (o.ronda > 0) "En puja · mejorada ${o.ronda}" else "En puja", Dorado)
+                        if (o.apuesta) Sello("★ Apuesta", Coral)
                     }
                     Text(Rangos.limpiaNombre(o.de), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp, modifier = Modifier.padding(top = 4.dp))
                 }
