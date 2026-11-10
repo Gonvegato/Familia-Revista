@@ -73,3 +73,15 @@ class VersionPartidoTest {
         assertFalse(Narrador.partido(u, p.copy(momentos = "")).contains("SU VERSIÓN"))
     }
 }
+
+/** Los compañeros de equipo de verdad que añade él: en su gente, con la relación solo amable o neutra. */
+class CompanerosTest {
+    @Test fun unCompaneroDeVerdadVaMarcadoAlContexto() {
+        val p = Persona("p1", "Pedri", "Compañero en la selección (España)", 60, "Me echa un cable con la presión", real = true)
+        assertEquals(p, Persona.de(p.aMapa()))
+        val u = Gente.anade(Ejemplo.universo(), listOf(p), 1)
+        val ctx = Narrador.contexto(u, emptyList(), emptyList())
+        assertTrue(ctx.contains("Pedri, Compañero en la selección (España)")); assertTrue(ctx.contains("FUTBOLISTA DE VERDAD"))
+        assertTrue(Narrador.REGLAS.contains("compañeros de equipo o de selección de verdad"))
+    }
+}

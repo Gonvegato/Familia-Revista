@@ -173,11 +173,20 @@ object Contratos {
         val edad = u.personaje.edad
         val base = when { edad <= 17 -> 60_000L; edad <= 19 -> 120_000L; edad <= 21 -> 250_000L; else -> return Long.MAX_VALUE }
         val jugados = Carreras.partidos(u.id).count { it.second.minutos > 0 }
-        return redondea(base * (1.0 + minOf(jugados, 60) / 40.0))
+        // Un fenómeno sin precedentes (vale una fortuna) cobra varios millones aunque sea un chaval: hasta el triple, según lo que vale
+        val fenomeno = (valorMercado(u) / 30_000_000.0).coerceIn(1.0, 3.0)
+        return redondea(base * (1.0 + minOf(jugados, 60) / 40.0) * fenomeno)
     }
 
     /** Una oferta de club, en su sitio: el nivel con el que se le hacen ofertas y lo que puede cobrar por su edad. */
-    fun recortaPara(u: Universo, o: Oferta): Oferta = Rangos.recorta(o, nivelOfertas(u), topeSueldo(u))
+    fun recortaPara(u: Universo, o: Oferta): Oferta = Rangos.recorta(o, nivelOfertas(u), topeSueldo(u)).let { x ->
+        // Un club que le ficha o le renueva le blinda: su cláusula, nunca por debajo de 1,5 veces lo que vale (y como mucho 1.000 M€)
+        if (x.tipo == "traspaso" || x.tipo == "renovacion" || x.tipo == "banquillo")
+            x.copy(clausula = maxOf(x.clausula, clausulaMinima(u)).coerceAtMost(1_000_000_000L)) else x
+    }
+
+    /** La cláusula mínima con la que un club le ficha o le renueva: 1,5 veces lo que vale. */
+    fun clausulaMinima(u: Universo): Long = redondeaCl(valorMercado(u) * 3 / 2)
 
     /** El tope de lo que puede valer (por encima del fichaje más caro de la historia, para que haya sitio). */
     const val VALOR_MAX = 350_000_000L

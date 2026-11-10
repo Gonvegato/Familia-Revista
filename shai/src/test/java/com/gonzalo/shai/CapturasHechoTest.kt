@@ -45,6 +45,7 @@ abstract class CapturasHechoBase {
                     key(cual) {
                         when (cual) {
                             8 -> PantCarrera(u0.id, {}, {}, {}, inicial = 1)
+                            11 -> PaginaRevista { AnadirCompanero(Carreras.de(u0.id)!!, abierto0 = true) }
                             0 -> Box(Modifier.fillMaxSize()) { PantCarrera(u0.id, {}, {}, {}, inicial = 1); MenuMas({}, {}, {}) }
                             1 -> PantHecho(Carreras.de(u0.id)!!, {}, {}, texto0 = cuenta)
                             2 -> PantHecho(Carreras.de(u0.id)!!, {}, {}, texto0 = cuenta, entendido0 = ent)
@@ -89,6 +90,7 @@ abstract class CapturasHechoBase {
         cual = 9; foto("v1-partido-version")
         Motor.partido(u0.id, Partido("2026/27", "LaLiga EA Sports", "Getafe CF", false, 0, 1, 90, 0, 0, 5.5, momentos = "Ha sido una mierda, no han sabido jugar al fútbol, solo han hecho faltas"))
         cual = 10; foto("v2-red-version")
+        cual = 11; foto("c1-anadir-companero")
         ClaveApi.fija = null; Gasto.mesFijo = null
     }
 }

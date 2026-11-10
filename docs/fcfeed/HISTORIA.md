@@ -5,6 +5,18 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.14.0
+
+- **Un fenómeno sin precedentes cobra varios millones (no 38).** El tope de sueldo por edad de la 0.13.1 se quedaba en el de un chaval
+  normal (unos 3 M€ al año). Ahora crece con lo que vales, hasta el triple (`Contratos.topeSueldo`): un chaval de 16 que vale 150 M€
+  puede cobrar unos 180.000 € a la semana (~9 M€ al año).
+- **Le blindan:** en un traspaso o una renovación, la cláusula nunca baja de 1,5 veces lo que vale (como mucho 1.000 M€)
+  (`Contratos.clausulaMinima`), y Claude lo sabe: le quieren para montar un proyecto alrededor suyo.
+- **Compañeros de equipo.** En Perfil → Tu gente, «Añadir compañero de equipo»: alguien de tu club o de tu selección con quien empiezas a
+  llevarte bien, de verdad o inventado, y cómo os lleváis. Entra en tu gente (te escribe, sale en la red, puedes hablar con él). Si es un
+  futbolista de verdad, la relación es siempre amable o neutra (vestuario, ánimos, bromas, quedar a cenar): nada de líos, polémicas, salud
+  ni su vida privada (regla 2, con su excepción).
+
 ## 0.13.1
 
 - **Sueldos de chaval.** En la 0.13.0, al dispararse su valor, a un chaval de 16 años le llegaban ofertas de leyenda (38 M€ al año del

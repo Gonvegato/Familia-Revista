@@ -54,8 +54,10 @@ class ValorTest {
         val u = Carreras.de(u0.id)!!
         val o = Carreras.entradasDe(u.id).flatMap { it.ofertas }.first { it.id == "bay" }
         val tope = Contratos.topeSueldo(u)
-        assertTrue("tope $tope", tope in 50_000..100_000)
+        // Un fenómeno sin precedentes: varios millones al año (no 38), con la cláusula por las nubes
+        assertTrue("tope $tope", tope * 52 in 5_000_000L..12_000_000L)
         assertEquals(tope, o.salario); assertTrue(o.prima <= tope * 52)
+        assertTrue("cláusula ${o.clausula}", o.clausula >= 225_000_000)
         assertTrue(o.texto, o.texto.contains("${Formato.cifra(o.salario)} € a la semana"))
         // Pero lo que pagarían por él sigue siendo una fortuna (su valor y su cláusula no se recortan por la edad)
         assertEquals(150_000_000L, Contratos.valorMercado(u))

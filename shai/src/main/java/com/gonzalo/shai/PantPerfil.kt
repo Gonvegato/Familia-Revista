@@ -274,6 +274,8 @@ fun TuGente(u: Universo, alChat: (String) -> Unit = {}) {
         }
     }
 
+    AnadirCompanero(u)
+
     if (u.exEntorno.isNotEmpty()) {
         Seccion("Ya no está en tu vida", "${u.exEntorno.size}")
         Tarjeta {
@@ -293,6 +295,35 @@ fun TuGente(u: Universo, alChat: (String) -> Unit = {}) {
         }
     }
 
+}
+
+/** «Añadir compañero de equipo»: alguien de tu club o de tu selección con quien empiezas a llevarte bien (de verdad o inventado). */
+@Composable
+fun AnadirCompanero(u: Universo, abierto0: Boolean = false) {
+    var abierto by rememberSaveable { mutableStateOf(abierto0) }
+    var nombre by rememberSaveable { mutableStateOf("") }
+    var deSeleccion by rememberSaveable { mutableStateOf(false) }
+    var real by rememberSaveable { mutableStateOf(true) }
+    var como by rememberSaveable { mutableStateOf("") }
+    val sel = u.personaje.suSeleccion.ifBlank { "tu selección" }
+    if (!abierto) { BotonRedondo("Añadir compañero de equipo", Modifier.fillMaxWidth().padding(top = 8.dp), lleno = false) { abierto = true }; return }
+    Tarjeta(Modifier.padding(top = 8.dp)) {
+        TituloTarjeta("Compañero de equipo", tam = 17)
+        TextoTarjeta("Alguien del vestuario con quien empiezas a llevarte bien. Entra en tu gente: te escribirá, saldrá en la red y podrás hablar con él.", Modifier.padding(top = 4.dp))
+        Campo("Nombre", nombre, "Como le conoces") { nombre = it.take(60) }
+        MagChoice(listOf(u.club, "Selección (${sel})"), if (deSeleccion) 1 else 0, "Dónde") { deSeleccion = it == 1 }
+        SiNo("Es un futbolista de verdad", "Entonces la relación es siempre amable o neutra: vestuario, ánimos, bromas, quedar a cenar. Nada de líos, polémicas ni su vida privada.", real) { real = it }
+        Campo("Cómo os lleváis (opcional)", como, "«Nos sentamos juntos en el autobús», «me echa un cable con la presión»…", lineas = 2) { como = it.take(200) }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BotonRedondo("Añadir", Modifier.weight(1f)) {
+                if (nombre.isBlank()) return@BotonRedondo
+                val rol = if (deSeleccion) "Compañero en la selección (${sel})" else "Compañero en el ${u.club}"
+                Carreras.guarda(Gente.anade(Carreras.de(u.id) ?: u, listOf(Persona("", nombre.trim(), rol, 60, como.trim(), real = real)), 1))
+                nombre = ""; como = ""; abierto = false
+            }
+            BotonRedondo("Cancelar", Modifier.weight(1f), lleno = false) { abierto = false }
+        }
+    }
 }
 
 /** La carta de FC: la media grande y los atributos en rejilla (o las cifras del míster). */

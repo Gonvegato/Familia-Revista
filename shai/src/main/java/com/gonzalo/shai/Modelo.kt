@@ -140,15 +140,17 @@ object Alcance {
  */
 data class Persona(val id: String, val nombre: String, val rol: String, val afinidad: Int = 50, val nota: String = "",
                    val alias: List<String> = emptyList(), val noEs: List<String> = emptyList(), val actitud: String = "", val desde: Int = 0,
-                   val salio: Int = 0, val porque: String = "") {
+                   val salio: Int = 0, val porque: String = "",
+                   /** Un futbolista de verdad (un compañero de su club o de su selección que ha añadido él): relación solo amable o neutra. */
+                   val real: Boolean = false) {
     fun aMapa(): Map<String, Any?> = mapOf("id" to id, "n" to nombre, "r" to rol, "a" to afinidad.toLong(), "t" to nota, "al" to alias, "ne" to noEs, "ac" to actitud,
-        "ds" to desde.toLong(), "sa" to salio.toLong(), "pq" to porque)
+        "ds" to desde.toLong(), "sa" to salio.toLong(), "pq" to porque, "re" to real)
     /** El id corto que se le pasa a Claude (para que diga quién escribe sin equivocarse de nombre). */
     val corto: String get() = id.take(6)
     companion object {
         fun de(m: Map<String, Any?>) = Persona(m["id"].comoTexto(), m["n"].comoTexto(), m["r"].comoTexto(), m["a"].comoLong().toInt().coerceIn(0, 100), m["t"].comoTexto(),
             m["al"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["ne"].comoLista().map { it.comoTexto() }.filter { it.isNotBlank() }, m["ac"].comoTexto(),
-            m["ds"].comoLong().toInt(), m["sa"].comoLong().toInt(), m["pq"].comoTexto())
+            m["ds"].comoLong().toInt(), m["sa"].comoLong().toInt(), m["pq"].comoTexto(), m["re"].comoBool())
     }
 }
 
