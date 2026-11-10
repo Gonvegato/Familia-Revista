@@ -5,6 +5,20 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.12.0
+
+- **La fase del partido.** Un desplegable aparte, debajo de la competición, en las que tienen fases: la Champions, la Europa League y la
+  Conference (formato de liga: fase previa, fase liga, play-off, octavos, cuartos, semifinales, final), el Mundial (de 48: grupos,
+  dieciseisavos, octavos, cuartos, semifinales, tercer puesto, final), la Eurocopa y los demás torneos de selecciones, la Nations League,
+  las eliminatorias, el Mundial de Clubes, la Copa y la Supercopa. Se recuerda la del partido anterior si es la misma competición.
+- **Pesa:** la fama del partido se multiplica por la fase (grupos ×1, octavos ×1,25, cuartos ×1,4, semis ×1,6, final ×2, con más tope en
+  las rondas grandes), Claude la recibe («ES UNA FINAL, lo más grande que hay») y los récords de «goleador más joven en una final de Mundial»
+  y «de Champions» (#2 y #17), que ya estaban en la lista, por fin se pueden comprobar.
+- **Las competiciones de selecciones, en la lista:** Copa del Mundo, Eurocopa, Copa América, UEFA Nations League, las clasificaciones y
+  el amistoso internacional, siempre, entre las del club y «Amistoso».
+- Arreglado de paso: al agrupar competiciones, «Copa» ya no se junta con «Copa del Mundo», y cada torneo de selecciones se queda con su
+  nombre («Mundial 2026» no pasa a «Clasificación para el Mundial»).
+
 ## 0.11.0
 
 - **Las cláusulas importan.** Cada oferta de traspaso, renovación o banquillo trae la cláusula de rescisión del contrato nuevo (la propone

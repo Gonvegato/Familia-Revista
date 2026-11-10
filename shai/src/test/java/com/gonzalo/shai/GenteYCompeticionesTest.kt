@@ -39,7 +39,8 @@ class GenteYCompeticionesTest {
     @Test fun elDesplegableTraeLasDelClubAmistosoYSeleccion() {
         val u = Carreras.guarda(Ejemplo.universo().copy(comps = listOf("LaLiga EA Sports", "Copa del Rey"), compsDe = "Real Betis"))
         val l = Competiciones.lista(u)
-        assertEquals(listOf("LaLiga EA Sports", "Copa del Rey", Competiciones.AMISTOSO, Competiciones.SELECCION), l)
+        // (y desde la 0.12.0, las de selecciones entre las del club y «Amistoso»)
+        assertEquals(listOf("LaLiga EA Sports", "Copa del Rey") + Competiciones.DE_SELECCIONES + listOf(Competiciones.AMISTOSO, Competiciones.SELECCION), l)
         // «Otra…»: se añade a la lista (y no se repite)
         assertEquals("Trofeo de la ciudad", Motor.anadeCompeticion(u.id, "trofeo de la ciudad"))
         assertTrue("Trofeo de la ciudad" in Competiciones.lista(Carreras.de(u.id)!!))

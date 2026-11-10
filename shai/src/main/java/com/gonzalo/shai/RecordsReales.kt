@@ -63,7 +63,7 @@ object RecordsReales {
     val TODOS: List<RecordReal> = listOf(
         // 1. Precocidad y juventud
         e(1, "Campeón del Mundo más joven", "Pelé (Brasil) – Suecia 1958", 17, 249, "campeon_joven:mundial"),
-        e(2, "Goleador en final de Mundial más joven", "Pelé (Brasil) – doblete ante Suecia, 1958", 17, 249),
+        e(2, "Goleador en final de Mundial más joven", "Pelé (Brasil) – doblete ante Suecia, 1958", 17, 249, "gol_final_joven:mundial"),
         e(3, "Hat-trick en Mundial más joven", "Pelé (Brasil) – ante Francia (semifinal de 1958)", 17, 244, "hat_joven:mundial"),
         e(4, "Goleador más joven en la Eurocopa", "Lamine Yamal (España) – ante Francia (2024)", 16, 362, "gol_joven:eurocopa"),
         e(5, "Jugador más joven en disputar la Eurocopa", "Lamine Yamal (España) – ante Croacia (2024)", 16, 338, "debut_joven:eurocopa"),
@@ -78,7 +78,7 @@ object RecordsReales {
         e(14, "Goleador más joven de una liga del Top 5", "Lamine Yamal (FC Barcelona) – ante el Granada (2023)", 16, 87, "gol_joven:top5"),
         e(15, "Capitán más joven en la Champions League", "Rúben Neves (FC Porto) – ante el Maccabi Tel Aviv (2015)", 18, 221),
         e(16, "Hat-trick más joven en la Champions League", "Raúl González (Real Madrid) – ante el Ferencváros (1995)", 18, 114, "hat_joven:champions"),
-        e(17, "Goleador más joven en una final de Champions", "Patrick Kluivert (Ajax) – ante el AC Milan (1995)", 18, 327),
+        e(17, "Goleador más joven en una final de Champions", "Patrick Kluivert (Ajax) – ante el AC Milan (1995)", 18, 327, "gol_final_joven:champions"),
         e(18, "Goleador más joven de la Copa América", "Johnnier Montaño (Colombia) – ante Argentina (1999)", 16, 171, "gol_joven:copaamerica"),
         e(19, "Goleador más joven en la Copa Libertadores", "Angelo Gabriel (Santos FC) – ante el Deportivo Lara (2021)", 16, 105, "gol_joven:libertadores"),
         e(20, "Debutante más joven en la Premier League", "Ethan Nwaneri (Arsenal) – ante el Brentford (2022)", 15, 181, "debut_joven:premier"),

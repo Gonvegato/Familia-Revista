@@ -387,8 +387,12 @@ data class Partido(
     val mvp: Boolean = false,
     /** La competición tal cual se metió, si se agrupó en otra de la lista ([Competiciones]). */
     val competicionOriginal: String = "",
+    /** La fase o ronda («Fase de grupos», «Cuartos de final», «Final»…): en las competiciones que las tienen ([Competiciones.fases]). */
+    val fase: String = "",
 ) {
     val resultado: String get() = "$golesFavor-$golesContra"
+    /** Es una final (o la vuelta de una). */
+    val esFinal: Boolean get() = Competiciones.esFinal(fase)
     val ganado: Boolean get() = golesFavor > golesContra
     val empatado: Boolean get() = golesFavor == golesContra
     val letra: String get() = if (ganado) "V" else if (empatado) "E" else "D"
@@ -396,12 +400,12 @@ data class Partido(
     fun aMapa(): Map<String, Any?> = mapOf(
         "te" to temporada, "co" to competicion, "ri" to rival, "lo" to local, "gf" to golesFavor.toLong(), "gc" to golesContra.toLong(), "mi" to minutos.toLong(),
         "go" to goles.toLong(), "as" to asistencias.toLong(), "no" to nota, "gs" to goleadores, "eq" to equipo, "re" to rendimiento, "mo" to momentos,
-        "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo, "fx" to fechaEstimada, "mv" to mvp, "co0" to competicionOriginal,
+        "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo, "fx" to fechaEstimada, "mv" to mvp, "co0" to competicionOriginal, "fa" to fase,
     )
 
     /** Una línea para contárselo a Claude. */
     fun resumen(modo: Rol): String = buildString {
-        append(if (local) "En casa contra $rival" else "En el campo del $rival"); append(" ($competicion"); if (fecha.isNotBlank()) append(", ${Fechas.bonita(fecha)}"); append("): ")
+        append(if (local) "En casa contra $rival" else "En el campo del $rival"); append(" ($competicion"); if (fase.isNotBlank()) append(", $fase"); if (fecha.isNotBlank()) append(", ${Fechas.bonita(fecha)}"); append("): ")
         append(resultado); append(if (ganado) " (victoria)" else if (empatado) " (empate)" else " (derrota)")
         if (modo == Rol.JUGADOR) {
             append(". Jugó $minutos min"); if (goles > 0) append(", $goles gol${if (goles > 1) "es" else ""}"); if (asistencias > 0) append(", $asistencias asistencia${if (asistencias > 1) "s" else ""}")
@@ -421,7 +425,7 @@ data class Partido(
             m["te"].comoTexto(), m["co"].comoTexto(), m["ri"].comoTexto(), m["lo"].comoBool(), m["gf"].comoLong().toInt(), m["gc"].comoLong().toInt(),
             m["mi"].comoLong().toInt(), m["go"].comoLong().toInt(), m["as"].comoLong().toInt(), m["no"].comoDouble(), m["gs"].comoTexto(),
             m["eq"].comoMapa().mapValues { it.value.comoTexto() }, m["re"].comoTexto(), m["mo"].comoTexto(), m["me"].comoLong().toInt(), m["fe"].comoTexto(),
-            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(), m["fx"].comoBool(), m["mv"].comoBool(), m["co0"].comoTexto(),
+            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(), m["fx"].comoBool(), m["mv"].comoBool(), m["co0"].comoTexto(), m["fa"].comoTexto(),
         )
     }
 }

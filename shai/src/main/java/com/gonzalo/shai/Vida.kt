@@ -245,9 +245,11 @@ object Vida {
         } else puntos += if (p.ganado) 1.2 else if (p.empatado) 0.2 else -0.8
         // Con la selección se ve más (todo el país mira)
         if (puntos > 0 && Competiciones.deSelecciones(p.competicion)) puntos *= 1.3
+        // Y la fase: no es lo mismo la fase de grupos que una final
+        if (puntos > 0) puntos *= Competiciones.pesoFase(p.fase)
         val freno = 1.0 - fama.coerceIn(0, 100) / 115.0
         val g = if (puntos > 0) puntos * freno * pesoEdad(edad, true) else puntos * pesoEdad(edad, false)
-        val tope = when { edad <= 21 -> 4; edad <= 27 -> 3; else -> 2 }
+        val tope = when { edad <= 21 -> 4; edad <= 27 -> 3; else -> 2 } + (if (p.esFinal) 2 else if (Competiciones.pesoFase(p.fase) >= 1.4) 1 else 0)
         return Math.round(g).toInt().coerceIn(-3, tope)
     }
 

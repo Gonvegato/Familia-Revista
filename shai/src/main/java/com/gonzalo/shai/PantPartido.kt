@@ -86,6 +86,30 @@ fun ElegirCompeticion(u: Universo, lista: List<String>, valor: String, abierto0:
     }
 }
 
+/** La fase o ronda (un desplegable aparte, solo en las competiciones que las tienen). */
+@Composable
+fun ElegirFase(fases: List<String>, valor: String, alCambiar: (String) -> Unit) {
+    var abierto by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Etiqueta("Fase")
+        Box {
+            Row(Modifier.fillMaxWidth().tocable { abierto = true }.padding(top = 4.dp, bottom = 6.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(valor.ifBlank { "Elige la fase (pesa: no es lo mismo grupos que una final)" }, color = if (valor.isBlank()) Muted else Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic,
+                    fontSize = 18.sp, lineHeight = 22.sp, modifier = Modifier.weight(1f))
+                Icon(Icons.Filled.ArrowDropDown, "Elegir", tint = Muted)
+            }
+            DropdownMenu(abierto, { abierto = false }, containerColor = Crudo) {
+                fases.forEach { f ->
+                    DropdownMenuItem(text = { Text(f, color = Charcoal, fontFamily = Body, fontWeight = if (f == valor) FontWeight.Bold else FontWeight.Normal, fontSize = 16.sp, lineHeight = 21.sp) },
+                        onClick = { alCambiar(f); abierto = false })
+                }
+                DropdownMenuItem(text = { Text("Sin fase", color = Muted, fontFamily = Body, fontSize = 16.sp) }, onClick = { alCambiar(""); abierto = false })
+            }
+        }
+        Filete(1.5.dp)
+    }
+}
+
 /** «Busca las competiciones de tu club»: si aún no están (o son las de tu club de antes). */
 @Composable
 fun BuscarCompeticiones(u: Universo, modifier: Modifier = Modifier) {
@@ -113,6 +137,8 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
     val anteriores = remember(id) { Carreras.partidos(id).map { it.second } }
     var como by rememberSaveable { mutableIntStateOf(comoInicial) }
     var competicion by rememberSaveable { mutableStateOf(anteriores.lastOrNull()?.competicion.orEmpty()) }
+    // (la fase: la del partido anterior si era de la misma competición)
+    var fase by rememberSaveable { mutableStateOf(anteriores.lastOrNull()?.takeIf { it.competicion == competicion }?.fase.orEmpty()) }
     var rival by rememberSaveable { mutableStateOf("") }
     var local by rememberSaveable { mutableStateOf(true) }
     var gf by rememberSaveable { mutableStateOf("") }
@@ -176,7 +202,8 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
 
         BloqueEditor("El resultado")
         val lista = Competiciones.lista(u, anteriores)
-        ElegirCompeticion(u, lista, competicion, desplegable) { competicion = it }
+        ElegirCompeticion(u, lista, competicion, desplegable) { if (it != competicion) fase = ""; competicion = it }
+        Competiciones.fases(competicion)?.let { fs -> ElegirFase(fs, fase) { fase = it } }
         BuscarCompeticiones(u, Modifier.padding(top = 6.dp))
         val conSeleccion = Competiciones.deSelecciones(competicion)
         val tuEquipo = if (conSeleccion) u.personaje.suSeleccion.ifBlank { "tu selección" } else u.club
@@ -240,7 +267,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
                 if (u.modo == Rol.JUGADOR) minutos.toIntOrNull() ?: 0 else 90, goles.toIntOrNull() ?: 0, asist.toIntOrNull() ?: 0, nota(laNota), goleadores.trim(),
                 if (como == 1) equipo else emptyMap(), if (como == 1) rendimiento.trim() else "", momentos.trim(),
                 if (como == 1) media.toIntOrNull() ?: 0 else 0, Fechas.lee(fecha)?.let { Fechas.iso(it) } ?: "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim(),
-                mvp = u.modo == Rol.JUGADOR && mvp)
+                mvp = u.modo == Rol.JUGADOR && mvp, fase = fase.takeIf { Competiciones.fases(competicion)?.contains(it) == true }.orEmpty())
             ocupado = "Escribiendo la prensa…"; aviso = null
             ambito.launch {
                 val r = withContext(Dispatchers.IO) { runCatching { Motor.partido(id, p) } }

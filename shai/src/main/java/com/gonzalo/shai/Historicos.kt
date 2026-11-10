@@ -159,6 +159,7 @@ object Historicos {
     /** Lo que tiene que pasar en un partido para cada familia de edad. */
     private fun cumple(u: Universo, f: String, c: String, p: Partido, i: Int): Boolean = when (f) {
         "gol_joven", "gol_veterano" -> en(p, c) && p.goles > 0
+        "gol_final_joven" -> en(p, c) && p.esFinal && p.goles > 0
         "debut_joven" -> if (c == "pro") i == 0 else en(p, c) && p.minutos > 0
         "asist_joven" -> en(p, c) && p.asistencias > 0
         "hat_joven" -> en(p, c) && p.goles >= 3
@@ -170,6 +171,7 @@ object Historicos {
 
     private fun accion(f: String, c: String, p: Partido): String = when (f) {
         "gol_joven", "gol_veterano" -> "marca en ${nombreComp(c, p)} ante el ${p.rival}"
+        "gol_final_joven" -> "marca en la final de ${nombreComp(c, p)} ante el ${p.rival}"
         "debut_joven" -> if (c == "pro") "debuta como profesional ante el ${p.rival}" else "debuta en ${nombreComp(c, p)} ante el ${p.rival}"
         "asist_joven" -> "da una asistencia en ${nombreComp(c, p)} ante el ${p.rival}"
         "hat_joven" -> "le hace un hat-trick al ${p.rival} en ${nombreComp(c, p)}"

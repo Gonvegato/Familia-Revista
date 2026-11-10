@@ -62,6 +62,49 @@ object Competiciones {
     /** ¿Es de la selección (no de su club)? «Selección», «Mundial 2026», «Eurocopa», «Nations League», «Amistoso internacional»… */
     fun deSelecciones(s: String): Boolean = familia(s).let { it == Familia.SELECCION || it == Familia.TORNEO_SELECCIONES }
 
+    /** Las competiciones de selecciones que salen siempre en la lista (después de las del club). */
+    val DE_SELECCIONES = listOf("Copa del Mundo", "Eurocopa", "Copa América", "UEFA Nations League", "Clasificación para el Mundial", "Clasificación para la Eurocopa", "Amistoso internacional")
+
+    /**
+     * Las fases de una competición (para el desplegable), o null si no tiene (una liga, un amistoso). Las de la Champions, la Europa
+     * League y la Conference, con el formato de liga única (desde 2024/25); las del Mundial, con el de 48 selecciones (desde 2026).
+     */
+    fun fases(comp: String): List<String>? {
+        val n = norm(comp)
+        if (n.isBlank()) return null
+        val f = familia(comp)
+        return when {
+            f == Familia.CHAMPIONS || f == Familia.EUROPA || f == Familia.CONFERENCE ->
+                listOf("Fase previa", "Fase liga", "Play-off de eliminatorias", "Octavos de final", "Cuartos de final", "Semifinales", "Final")
+            f == Familia.MUNDIAL_CLUBES -> listOf("Fase de grupos", "Octavos de final", "Cuartos de final", "Semifinales", "Final")
+            f == Familia.SUPERCOPA -> listOf("Semifinales", "Final")
+            f == Familia.TORNEO_SELECCIONES && Regex("clasif|eliminator|qualif").containsMatchIn(n) -> listOf("Fase de grupos", "Repesca", "Final de la repesca")
+            f == Familia.TORNEO_SELECCIONES && hay(n, "nations league", "liga de naciones") -> listOf("Fase de liga", "Cuartos de final", "Semifinales", "Tercer puesto", "Final")
+            f == Familia.TORNEO_SELECCIONES && hay(n, "amistoso", "friendly") -> null
+            f == Familia.TORNEO_SELECCIONES && hay(n, "mundial", "copa del mundo", "world cup") -> listOf("Fase de grupos", "Dieciseisavos de final", "Octavos de final", "Cuartos de final", "Semifinales", "Tercer puesto", "Final")
+            f == Familia.TORNEO_SELECCIONES -> listOf("Fase de grupos", "Octavos de final", "Cuartos de final", "Semifinales", "Tercer puesto", "Final")
+            f == Familia.SELECCION -> listOf("Fase de grupos", "Dieciseisavos de final", "Octavos de final", "Cuartos de final", "Semifinales", "Tercer puesto", "Final")
+            f == Familia.COPA -> listOf("Primera ronda", "Segunda ronda", "Dieciseisavos de final", "Octavos de final", "Cuartos de final", "Semifinales", "Final")
+            else -> null
+        }
+    }
+
+    fun esFinal(fase: String) = norm(fase).let { it == "final" || it.startsWith("final ") && !it.startsWith("final de la repesca") }
+
+    /** Cuánto pesa la fase (para la fama del partido): la fase de grupos, 1; la final, 2. */
+    fun pesoFase(fase: String): Double {
+        val n = norm(fase)
+        return when {
+            n.isBlank() -> 1.0
+            esFinal(fase) -> 2.0
+            n.startsWith("semifinal") -> 1.6
+            n.startsWith("cuartos") -> 1.4
+            n.startsWith("octavos") || n.startsWith("tercer") -> 1.25
+            n.startsWith("dieciseisavos") || n.startsWith("play off") || n.contains("repesca") -> 1.1
+            else -> 1.0
+        }
+    }
+
     /** Una competición «bonita» a partir de lo que escribió él («liga» → «Liga»). */
     fun bonita(s: String): String = s.trim().replace(Regex("\\s+"), " ").replaceFirstChar { it.uppercase() }
 
@@ -78,7 +121,9 @@ object Competiciones {
         val usadas = partidos.map { it.competicion.trim() }.filter { it.isNotBlank() && it != OTRA }
         val extra = usadas.filter { canonica(it, base, u.compAlias) == null && familia(it) != Familia.AMISTOSO && familia(it) != Familia.SELECCION }
             .groupBy { familia(it)?.name ?: norm(it) }.values.map { g -> g.groupingBy { it }.eachCount().maxByOrNull { it.value }!!.key }
-        return (base + extra).distinctBy { norm(it) } + AMISTOSO + SELECCION
+        // (y las de selecciones, siempre: el Mundial, la Eurocopa, la Nations League…)
+        val sel = DE_SELECCIONES.filter { d -> (base + extra).none { norm(it) == norm(d) } }
+        return (base + extra).distinctBy { norm(it) } + sel + AMISTOSO + SELECCION
     }
 
     /**
@@ -93,6 +138,8 @@ object Competiciones {
         val f = familia(raw)
         if (f == Familia.AMISTOSO) return AMISTOSO
         if (f == Familia.SELECCION) return SELECCION
+        // (cada torneo de selecciones es el suyo: «Mundial 2026» no es «Clasificación para el Mundial»; va con su nombre)
+        if (f == Familia.TORNEO_SELECCIONES) return null
         if (f != null) {
             val mismas = lista.filter { familia(it) == f }
             if (mismas.size == 1) return mismas.first()
@@ -101,7 +148,8 @@ object Competiciones {
                 mismas.maxByOrNull { c -> norm(c).split(' ').count { it in ps } }?.takeIf { c -> norm(c).split(' ').any { it in ps } }?.let { return it }
             }
         }
-        if (n.length >= 4) lista.firstOrNull { val c = norm(it); c.length >= 4 && (c.contains(n) || n.contains(c)) }?.let { return it }
+        // (una que contiene a la otra, pero del mismo tipo: «Copa» no es «Copa del Mundo»)
+        if (n.length >= 4) lista.firstOrNull { val c = norm(it); c.length >= 4 && (c.contains(n) || n.contains(c)) && (f == null || familia(it) == null || familia(it) == f) }?.let { return it }
         return null
     }
 
