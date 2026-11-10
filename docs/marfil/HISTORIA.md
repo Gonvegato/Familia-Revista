@@ -5,6 +5,27 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.22.0 — la mesa y la estantería (dirección D)
+
+Seshat estrena la cara nueva de la familia (`docs/familia/DIRECCION-D.md`); es la app de referencia de las seis.
+
+- **Barra abajo**: Hoy · Biblioteca · Añadir · Tú. Se van las pestañas de arriba y el pasar de página con el dedo. Atrás desde otra
+  pestaña vuelve a Hoy. En tablet apaisada la barra va a la izquierda.
+- **Hoy**: lo que lees ahora, grande, con un solo botón («Seguir leyendo»); tu semana en barras; «También lees» y «Lo siguiente».
+- **Lo siguiente** (nuevo): tu cola. En la ficha de un pendiente, «Poner el siguiente» lo pone el primero (y «Quitar de lo siguiente»
+  lo devuelve a su sitio). Es de cada dispositivo. De cada saga sale solo el que te toca.
+- **Biblioteca**: una sola pantalla con el buscador arriba y los estantes de antes como filtros (Leyendo, Pendientes, Leídos,
+  Abandonados, Sagas, Autores, Escritos). Los libros, en rejilla de portadas con su avance. El orden se despliega en «Orden: …».
+- **Tú**: el reto del año, tus cifras, lo leído este año, Ajustes y la versión.
+- **Ficha**: la portada sobre un lavado de su color, volver y las acciones (imágenes, editar, borrar) en iconos, el estado en cuatro
+  casillas que caben enteras también con la letra grande, y los datos en líneas.
+- **Aspecto**: fondo neutro, tarjetas redondas sin borde, texto en minúsculas normales, acento violeta de tinta (#5A4A8C; de noche
+  #A493E0). Títulos en Bricolage.
+- **Se quita** de Apariencia: las paletas, los estilos, las formas, la letra de títulos y de texto, los fondos de color, el fondo y el
+  texto «a tu manera», seguir los colores de Jonsu en directo y «copiar de Jonsu». Quedan el tema (como el móvil, claro u oscuro), el
+  tamaño del texto y el color de acento (el de Seshat, los de la lista u otro color). La primera vez, el acento vuelve al de Seshat.
+- El lector, los subrayados, la cuenta, kDrive y los widgets funcionan igual. Capturas en `docs/marfil/capturas/d/`.
+
 ## Capturas
 
 Generadas en el ordenador con libros de ejemplo (`CapturasTest`, solo con `-Proborazzi.test.record=true`): [portada](docs/capturas/1_portada.png) ·
