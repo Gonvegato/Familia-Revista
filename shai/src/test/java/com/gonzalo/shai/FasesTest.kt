@@ -61,3 +61,14 @@ class PenaltisTest {
         assertTrue(Narrador.contexto(Ejemplo.universo(), emptyList(), emptyList()).contains("FC Barcelona volvió en 2026 a la regla 1:1"))
     }
 }
+
+/** La apuesta: cualquier grande que pueda permitírselo (también su club), sin favoritos. */
+class ApuestaTextoTest {
+    @Test fun cualquierGrandePuedeApostarTambienSuClub() {
+        val u = Ejemplo.universo().copy(valor = 150_000_000)
+        val t = Narrador.sueldoDeChaval(u)
+        assertTrue(t.contains("también su propio club")); assertTrue(t.contains("no favorezcas a ninguno"))
+        assertFalse(t.contains("estrellas en ese puesto"))
+        assertTrue(Narrador.AL_DIA.contains("puede hacer una apuesta como cualquier otro grande"))
+    }
+}

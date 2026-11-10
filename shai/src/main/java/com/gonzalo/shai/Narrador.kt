@@ -205,14 +205,14 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
     private fun laApuesta(u: Universo): String {
         if (!Contratos.superestrella(u)) return " «apuesta»: false."
         Contratos.apuesta(u)?.let { a -> return " «apuesta»: false (ya tiene la apuesta de ${Rangos.limpiaNombre(a.de)}: ${Formato.euros(a.salario)} a la semana; los demás pueden acercarse a ella, sin igualarla)." }
-        return " ES UNA SUPERESTRELLA: como mucho UNA de las ofertas puede ser una apuesta («apuesta»: true): un club muy rico que pueda permitírselo (no uno con problemas económicos ni uno que ya tenga a sus estrellas en ese puesto) y que pague muy por encima de lo normal, hasta ${Formato.euros(Contratos.topeApuesta(u))} a la semana, porque cree que va a ser el rey del fútbol; que el texto lo cuente así. Lo normal es que no haya ninguna; nunca más de una. Las demás, «apuesta»: false y dentro de lo normal."
+        return " ES UNA SUPERESTRELLA: como mucho UNA de las ofertas puede ser una apuesta («apuesta»: true): cualquier club grande que pueda permitírselo (uno con problemas económicos, no), también su propio club con una renovación para que no se le escape, y TODOS con las mismas probabilidades: no favorezcas a ninguno; que pague muy por encima de lo normal, hasta ${Formato.euros(Contratos.topeApuesta(u))} a la semana, porque cree que va a ser el rey del fútbol; que el texto lo cuente así. Lo normal es que no haya ninguna; nunca más de una. Las demás, «apuesta»: false y dentro de lo normal."
     }
 
     /**
      * Datos de clubes de verdad que la app sabe al día (por si lo que sabe Claude es de antes): no se contradicen. Comprobados en la prensa
      * al escribirlos (noviembre de 2026).
      */
-    const val AL_DIA = "DATOS AL DÍA DE CLUBES DE VERDAD (no los contradigas aunque recuerdes otra cosa): el FC Barcelona volvió en 2026 a la regla 1:1 del control económico de LaLiga (puede gastar en plantilla cada euro que genera): ya NO está en problemas económicos para fichar ni para renovar."
+    const val AL_DIA = "DATOS AL DÍA DE CLUBES DE VERDAD (no los contradigas aunque recuerdes otra cosa): el FC Barcelona volvió en 2026 a la regla 1:1 del control económico de LaLiga (puede gastar en plantilla cada euro que genera): ya NO está en problemas económicos para fichar ni para renovar, y puede hacer una apuesta como cualquier otro grande."
 
     /** Con cuántas decisiones abiertas ya no se le ponen más. */
     const val MAX_ABIERTAS = 2

@@ -5,6 +5,12 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.16.1
+
+- **La apuesta, de cualquier grande:** quitado el «no uno que ya tenga a sus estrellas en ese puesto» (dejaba fuera al Barça). Ahora la
+  puede hacer cualquier club grande que pueda permitírselo, también tu propio club con una renovación, y todos con las mismas
+  probabilidades (Claude no favorece a ninguno). Los que tengan problemas económicos, no; el Barça ya no los tiene.
+
 ## 0.16.0
 
 - **Prórroga y penaltis.** En el partido, «Hubo prórroga» (se marca sola si pones más de 90 minutos; tú la marcas si entraste desde el
