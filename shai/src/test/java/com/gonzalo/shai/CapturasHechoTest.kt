@@ -78,7 +78,8 @@ abstract class CapturasHechoBase {
         val uu = Carreras.de(u0.id)!!
         val ofs = Carreras.guarda(Entrada(Universo.nuevoId("e"), uu.id, TipoEntrada.EVENTO, System.currentTimeMillis(), uu.paso, "Dos marcas te quieren", ofertas = listOf(
             Oferta("pn", "Nova Sport", "patrocinio", 20_000, 500_000, 3, "La marca deportiva Nova Sport quiere hacerte su cara joven con un contrato de imagen de tres años."),
-            Oferta("pa", "Aurum Mobile", "patrocinio", 15_000, 300_000, 2, "La tecnológica Aurum Mobile te propone un patrocinio de dos años para una campaña global."))))
+            Oferta("pa", "Aurum Mobile", "patrocinio", 15_000, 300_000, 2, "La tecnológica Aurum Mobile te propone un patrocinio de dos años para una campaña global."),
+            Rangos.recorta(Oferta("pr", "Real Betis", "renovacion", 60_000, 1_500_000, 5, "El Real Betis quiere blindarte antes de que nadie pague tu cláusula: 60.000 € a la semana y cinco temporadas.", clausula = 120_000_000), Nivel.TITULAR))))
         val ahora = System.currentTimeMillis()
         val pj = (0 until 300).asSequence().mapNotNull { Pujas.calcula(Carreras.de(u0.id)!!, Carreras.entradasDe(u0.id), ahora, ahora, kotlin.random.Random(it)) }
             .first { it.ofertas.first().estado == Oferta.ABIERTA }

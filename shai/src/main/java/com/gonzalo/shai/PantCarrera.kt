@@ -665,6 +665,8 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
             Text(c.club, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 4.dp))
             Text("${Formato.eurosCorto(c.sueldo)} a la semana · hasta ${c.hasta}" + (if (c.clausula > 0) " · cláusula ${Formato.eurosCorto(c.clausula)}" else ""),
                 color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 2.dp))
+            Text("En el mercado te valoran en unos ${Formato.eurosCorto(Contratos.valorMercado(u))}" + if (Contratos.ganga(u)) ": tu cláusula es una ganga y los clubes lo saben." else ".",
+                color = if (Contratos.ganga(u)) Coral else Muted, fontFamily = Body, fontWeight = if (Contratos.ganga(u)) FontWeight.SemiBold else FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
         }
     } ?: Tarjeta(bordeIzq = Acento) { TituloTarjeta("Eres agente libre"); TextoTarjeta("Cualquier club puede ficharte.", Modifier.padding(top = 2.dp)) }
     Nota("La app manda: si aceptas aquí, hazlo también en tu partida de FC.", Modifier.padding(top = 10.dp, bottom = 4.dp))
@@ -697,6 +699,8 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
                 if (o.prima > 0) DatoOferta(sinEuro(Formato.eurosCorto(o.prima)), "€ de prima", Modifier.weight(1f).fillMaxHeight())
                 if (o.anios > 0) DatoOferta("${o.anios}", if (o.anios == 1) "año" else "años", Modifier.weight(1f).fillMaxHeight())
             }
+            if (o.clausula > 0) Text("Cláusula del contrato nuevo: ${Formato.eurosCorto(o.clausula)}" + (u.contrato?.clausula?.takeIf { it > 0 && o.tipo == "renovacion" }?.let { " (ahora: ${Formato.eurosCorto(it)})" } ?: ""),
+                color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))
             if (o.salario > 0 && o.tipo != "patrocinio" && u.salario > 0) {
                 val pct = Math.round((o.salario - u.salario) * 100.0 / u.salario)
                 Text("Ahora cobras ${Formato.eurosCorto(u.salario)}: " + (if (pct >= 0) "+$pct %" else "$pct %"), color = if (pct >= 0) Acento else Coral,

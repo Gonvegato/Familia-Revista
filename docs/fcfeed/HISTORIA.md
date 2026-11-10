@@ -5,6 +5,15 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.11.0
+
+- **Las cláusulas importan.** Cada oferta de traspaso, renovación o banquillo trae la cláusula de rescisión del contrato nuevo (la propone
+  Claude; si no, la de tu nivel) y se ve en la oferta («Cláusula del contrato nuevo: 120 M€ (ahora: 5 M€)»). Al aceptar, esa es tu cláusula.
+- **Lo que vales y la ganga.** La app calcula lo que te valoran en el mercado (tu nivel, tu edad: cuanto más joven, más) y lo enseña en
+  «Tu contrato ahora». Si tu cláusula está por debajo de la mitad, es una GANGA: Claude lo sabe en todo lo que escribe (clubes grandes que
+  la pagarían, la prensa hablando de ello, tu club con miedo), las ofertas tienen que llover (de 2 a 3, traspasos que pagan la cláusula y una
+  renovación para blindarte) y tu club te ofrece renovar con una cláusula mucho más alta (`Contratos.valorMercado`, `Contratos.ganga`).
+
 ## 0.10.1
 
 - **Tu versión del partido, en las tres plantillas.** «Lo que pasó» solo estaba en la completa; ahora es «Tu versión del partido

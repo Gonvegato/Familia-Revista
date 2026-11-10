@@ -53,6 +53,7 @@ object Contratos {
         return (h - a + 1).coerceAtLeast(0)
     }
 
+    fun clausula(n: Nivel, sueldo: Long): Long = clausulaDe(n, sueldo)
     private fun clausulaDe(n: Nivel, sueldo: Long): Long = when (n) {
         Nivel.CANTERANO -> 5_000_000L; Nivel.PROMESA -> 30_000_000L; Nivel.TITULAR -> 80_000_000L; Nivel.ESTRELLA -> 200_000_000L; Nivel.LEYENDA -> 500_000_000L
     }.coerceAtLeast(sueldo * 52 * 4)
@@ -96,17 +97,36 @@ object Contratos {
         val anios = o.anios.coerceIn(1, 8)
         return when (o.tipo) {
             "traspaso", "banquillo" -> Contrato(o.de, o.salario.takeIf { it > 0 } ?: u.contrato?.sueldo ?: u.salario, t, mas(t, anios - 1), prima = o.prima,
-                clausula = clausulaDe(n, o.salario), porGol = if (u.modo == Rol.JUGADOR && n != Nivel.CANTERANO) redondea(o.salario * 0.08) else 0,
+                clausula = o.clausula.takeIf { it > 0 } ?: clausulaDe(n, o.salario), porGol = if (u.modo == Rol.JUGADOR && n != Nivel.CANTERANO) redondea(o.salario * 0.08) else 0,
                 objetivos = objetivosDe(n, u.modo), imagen = imagenDe(n))
             "cesion" -> Contrato(o.de, o.salario.takeIf { it > 0 } ?: u.contrato?.sueldo ?: u.salario, t, t, prima = o.prima, nota = "Cedido por ${u.contrato?.club ?: u.club}",
                 imagen = imagenDe(n))
             "renovacion" -> (u.contrato ?: primero(n, u.club, t, u.modo)).let { c ->
-                c.copy(sueldo = o.salario.takeIf { it > 0 } ?: c.sueldo, desde = t, hasta = mas(t, anios - 1), prima = o.prima, clausula = clausulaDe(n, o.salario),
+                c.copy(sueldo = o.salario.takeIf { it > 0 } ?: c.sueldo, desde = t, hasta = mas(t, anios - 1), prima = o.prima, clausula = o.clausula.takeIf { it > 0 } ?: clausulaDe(n, o.salario),
                     porGol = if (c.porGol > 0 || (u.modo == Rol.JUGADOR && n != Nivel.CANTERANO)) redondea((o.salario.takeIf { it > 0 } ?: c.sueldo) * 0.08) else 0,
                     objetivos = objetivosDe(n, u.modo).ifBlank { c.objetivos }, imagen = imagenDe(n), nota = "")
             }
             else -> null
         }
+    }
+
+    /**
+     * Lo que vale en el mercado ahora (lo que pediría su club por él): lo de su nivel, más si está en racha o acaba de pasar algo gordo,
+     * y más cuanto más joven. Si su cláusula está muy por debajo, es una ganga ([ganga]) y los clubes lo saben.
+     */
+    fun valorMercado(u: Universo): Long {
+        val n = u.nivelActual
+        val base = clausulaDe(n, u.contrato?.sueldo ?: u.salario) / 2
+        val edad = u.personaje.edad
+        val joven = when { edad <= 18 -> 1.5; edad <= 21 -> 1.25; edad <= 27 -> 1.0; edad <= 30 -> 0.7; else -> 0.4 }
+        return redondea(base * joven)
+    }
+
+    /** Su cláusula es una ganga: está por debajo de la mitad de lo que vale (con un mínimo de nivel: un canterano normal no lo es). */
+    fun ganga(u: Universo): Boolean {
+        val c = u.contrato ?: return false
+        if (c.clausula <= 0 || u.nivelActual == Nivel.CANTERANO) return false
+        return c.clausula < valorMercado(u) / 2
     }
 
     /** Lo que se cobra en una jornada: el sueldo del contrato, los patrocinios y, si marcó, la prima por gol. */
@@ -115,6 +135,7 @@ object Contratos {
     /** Lo que le llega después de que su agente se quede su parte ([Universo.comision]). */
     fun sinComision(u: Universo, bruto: Long): Long = if (u.comision <= 0 || u.suAgente == null) bruto else bruto - bruto * u.comision / 100
 
+    private fun redondeaCl(x: Long): Long = if (x >= 10_000_000) Math.round(x / 5_000_000.0) * 5_000_000 else Math.round(x / 500_000.0) * 500_000
     private fun redondea(x: Double): Long = when {
         x >= 100_000 -> Math.round(x / 5_000) * 5_000
         x >= 10_000 -> Math.round(x / 500) * 500
@@ -134,6 +155,7 @@ object Contratos {
             q <= 1 -> "te queda esta temporada de contrato"
             q == 2 && partidosTemporada >= 19 -> "te queda temporada y media de contrato"
             c.sueldo * 13 < Rangos.de(u.nivelActual).sueldo.first * 10 -> "tu nivel ya está muy por encima de lo que cobras"
+            ganga(u) -> "tu cláusula (${Formato.eurosCorto(c.clausula)}) es una ganga para lo que vales ahora y el club quiere blindarte"
             else -> null
         }
     }
@@ -161,7 +183,11 @@ object Contratos {
             mejora < 0 -> "El ${u.club} te ofrece renovar, pero con rebaja: ${Formato.euros(sueldo)} a la semana (${Formato.euros(c.sueldo)} ahora) y $anios temporadas. Dicen que «hay que ajustarse a lo que está dando»."
             else -> "El ${u.club} te ofrece renovar en las mismas condiciones: ${Formato.euros(sueldo)} a la semana y $anios temporadas más."
         }
-        return Rangos.recorta(Oferta(Universo.nuevoId("o"), u.club, "renovacion", sueldo, redondea(sueldo * if (forma > 0) 8.0 else 3.0), anios, texto), n)
+        // La cláusula nueva: la de su nivel (y si la de ahora es una ganga, el club la sube para blindarle)
+        val cl = maxOf(clausulaDe(n, sueldo), if (ganga(u)) valorMercado(u) * 3 / 2 else 0L)
+        return Rangos.recorta(Oferta(Universo.nuevoId("o"), u.club, "renovacion", sueldo, redondea(sueldo * if (forma > 0) 8.0 else 3.0), anios,
+            texto.replace("y una cláusula nueva", "y una cláusula de ${Formato.eurosCorto(redondeaCl(cl))}") + (c.clausula.takeIf { it > 0 }?.let { " Tu cláusula ahora: ${Formato.eurosCorto(it)}." } ?: ""),
+            clausula = redondeaCl(cl)), n)
     }
 
     /**
