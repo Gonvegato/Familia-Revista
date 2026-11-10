@@ -127,7 +127,8 @@ Reglas que no se rompen nunca:
      * League»…), que se sepa que no es con su club y se cuente en consecuencia.
      */
     fun partido(u: Universo, p: Partido): String {
-        val base = p.resumen(u.modo)
+        val base = p.resumen(u.modo) + (if (p.momentos.isBlank()) "" else "\n" +
+            "SU VERSIÓN DEL PARTIDO (lo cuenta él, con sus palabras): «${p.momentos.trim()}». Que se note de verdad: que marque el tono de la prensa, la red y lo que le escribe su gente (quien le da la razón, quien no, la polémica si la hay). Puedes comentarlo y opinar, pero no inventes jugadas, nombres ni cifras que no diga.")
         if (!Competiciones.deSelecciones(p.competicion)) return base
         val sel = u.personaje.suSeleccion.ifBlank { null }
         val quien = if (u.modo == Rol.MISTER) "la dirige como seleccionador" else "juega con ella"

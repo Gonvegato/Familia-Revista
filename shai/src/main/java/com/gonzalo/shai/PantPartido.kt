@@ -215,10 +215,12 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
             }
             BloqueEditor("Lo demás")
             if (u.modo == Rol.JUGADOR) Campo("Más del rendimiento", rendimiento, "Tiros, pases, regates… con tus palabras", lineas = 3) { rendimiento = it }
-            Campo("Lo que pasó", momentos, "El golazo, la remontada, la tangana…", lineas = 3) { momentos = it }
             if (u.modo == Rol.JUGADOR) Campo("Tu media ahora en FC", media, if (u.personaje.media > 0) "${u.personaje.media}" else "Si ha cambiado", teclado = KeyboardType.Number) { media = it.filter { c -> c.isDigit() }.take(2) }
             Campo("Temporada", temporada, "2026/27") { temporada = it }
         }
+        // Tu versión del partido (en las tres plantillas, opcional): la prensa, la red y tu gente la tienen en cuenta
+        Campo("Tu versión del partido (opcional)", momentos, "«Ha sido una mierda, no han sabido jugar al fútbol», «el árbitro nos ha robado», el golazo, la tangana…", lineas = 3) { momentos = it.take(500) }
+        Text("Con tus palabras: la prensa, la red y tu gente lo tendrán en cuenta (sin inventarse jugadas que no digas).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp))
         // La fecha del calendario de FC (en las dos plantillas): con ella y la de nacimiento, la edad exacta para los récords
         val estimada = remember(id) { Motor.fechaEstimada(id) }
         Campo("Fecha del partido en FC", fecha, estimada?.let { "Si no la pones: ${Fechas.texto(it)} (la anterior + 7 días)" } ?: "dd/mm/aaaa, la del calendario del juego") { fecha = it.take(20) }
@@ -236,7 +238,7 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
             }.toMap()
             val p = Partido(temporada.trim().ifBlank { u.temporada }, competicion.trim(), rival.trim(), local, gf.toIntOrNull() ?: 0, gc.toIntOrNull() ?: 0,
                 if (u.modo == Rol.JUGADOR) minutos.toIntOrNull() ?: 0 else 90, goles.toIntOrNull() ?: 0, asist.toIntOrNull() ?: 0, nota(laNota), goleadores.trim(),
-                if (como == 1) equipo else emptyMap(), if (como == 1) rendimiento.trim() else "", if (como == 1) momentos.trim() else "",
+                if (como == 1) equipo else emptyMap(), if (como == 1) rendimiento.trim() else "", momentos.trim(),
                 if (como == 1) media.toIntOrNull() ?: 0 else 0, Fechas.lee(fecha)?.let { Fechas.iso(it) } ?: "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim(),
                 mvp = u.modo == Rol.JUGADOR && mvp)
             ocupado = "Escribiendo la prensa…"; aviso = null

@@ -291,6 +291,11 @@ class TransporteDePrueba(private val azar: kotlin.random.Random = kotlin.random.
         // La cuenta atrás de los récords que tiene a tiro (y los que se le acaban de escapar): la red y su gente
         val (pc, mc) = redCuentaAtras(u, d, texto)
         pc.reversed().forEach { posts.add(minOf(1, posts.size), it) }
+        // Su versión del partido: la red la recoge (y la discute)
+        Regex("""SU VERSIÓN DEL PARTIDO \(lo cuenta él, con sus palabras\): «([^»]+)»""").find(texto)?.groupValues?.get(1)?.let { v ->
+            posts.add(0, post(d, "Grada Joven", "{A} lo ha dicho sin filtro: «${cita(v)}». Y no le falta razón", "aficion", gordo = true, resp = respuestas(u, d, 'X')))
+            posts += post(d, "Analista de sofá", "Que {A} diga «${cita(v)}» en caliente es muy humano. Pero mañana se lo van a recordar", "aficion")
+        }
         return mapOf("tendencia" to tendencia(d, tag), "posts" to posts, "mensajes" to mc + conversaciones(u, d, r, 2 + azar.nextInt(2)))
     }
 

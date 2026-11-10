@@ -52,6 +52,8 @@ abstract class CapturasHechoBase {
                             5 -> PantNueva({}, {})
                             6 -> PantPartido(u0.id, {}, {}, comoInicial = 0)
                             7 -> PantCarrera(u0.id, {}, {}, {}, inicial = 2)
+                            9 -> PantPartido(u0.id, {}, {}, comoInicial = 0)
+                            10 -> PantCarrera(u0.id, {}, {}, {}, inicial = 0)
                             4 -> PaginaRevista { Carreras.entradasDe(u0.id).first { it.tipo == TipoEntrada.HISTORICO }.let { EdicionEspecial(Carreras.de(u0.id)!!, it, abierta0 = true, {}, {}) } }
                         }
                     }
@@ -83,6 +85,9 @@ abstract class CapturasHechoBase {
         Carreras.guarda(pj); Motor.revela(u0.id, forzar = true)
         cual = 7; foto("p1-ofertas-puja")
         cual = 3; foto("p2-inicio-puja")
+        cual = 9; foto("v1-partido-version")
+        Motor.partido(u0.id, Partido("2026/27", "LaLiga EA Sports", "Getafe CF", false, 0, 1, 90, 0, 0, 5.5, momentos = "Ha sido una mierda, no han sabido jugar al fútbol, solo han hecho faltas"))
+        cual = 10; foto("v2-red-version")
         ClaveApi.fija = null; Gasto.mesFijo = null
     }
 }

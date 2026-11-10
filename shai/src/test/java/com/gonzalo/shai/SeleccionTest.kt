@@ -62,3 +62,14 @@ class OfertasTest {
         assertEquals("Real Betis", Rangos.limpiaNombre("Real Betis"))
     }
 }
+
+/** Su versión del partido (opcional, con sus palabras) le llega a Claude bien marcada. */
+class VersionPartidoTest {
+    @Test fun suVersionMarcaElTono() {
+        val u = Ejemplo.universo()
+        val p = Partido("2026/27", "LaLiga EA Sports", "Getafe CF", false, 0, 1, 90, 0, 0, 5.5, momentos = "Ha sido una mierda, no han sabido jugar al fútbol, solo han hecho faltas")
+        val t = Narrador.partido(u, p)
+        assertTrue(t.contains("SU VERSIÓN DEL PARTIDO (lo cuenta él, con sus palabras): «Ha sido una mierda, no han sabido jugar al fútbol, solo han hecho faltas»"))
+        assertFalse(Narrador.partido(u, p.copy(momentos = "")).contains("SU VERSIÓN"))
+    }
+}

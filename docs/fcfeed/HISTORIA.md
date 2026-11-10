@@ -5,6 +5,13 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.10.1
+
+- **Tu versión del partido, en las tres plantillas.** «Lo que pasó» solo estaba en la completa; ahora es «Tu versión del partido
+  (opcional)» en la rápida, la completa y la de la foto: una línea con tus palabras («ha sido una mierda, no han sabido jugar al fútbol»).
+  Claude la recibe bien marcada y tiene que notarse en el tono de la prensa, la red y tu gente (quién te da la razón, la polémica), sin
+  inventarse jugadas, nombres ni cifras que no digas (`Narrador.partido`). En el modo prueba, la red también la recoge.
+
 ## 0.10.0
 
 - **Eliges a tu agente.** Al crear la carrera, antes de entrar, Sonnet propone tres candidatos muy distintos (alguien cercano, un
