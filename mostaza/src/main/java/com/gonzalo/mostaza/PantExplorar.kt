@@ -78,7 +78,7 @@ private fun PantExplorarAddons(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Uni
                 RevistaTopBar(alVolver, "Hathor")
                 Antetitulo("Tus addons", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
                 FitTitle("Explorar", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-                Filete(3.dp)
+                Filete(1.dp, Line)
                 when {
                     addons == null -> Nota("Leyendo tus addons…", Modifier.padding(top = 14.dp))
                     tipos.isEmpty() -> Nota("Ninguno de tus addons tiene catálogos. Cinemeta (el oficial) sí: lo puedes poner en «Addons».", Modifier.padding(top = 14.dp))
@@ -143,17 +143,17 @@ fun PantBuscar(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
         RevistaTopBar(alVolver, "Hathor")
         Antetitulo(if (Tmdb.activo) "Películas y series" else "En tus addons", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Buscar", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.Bottom) {
             Box(Modifier.weight(1f)) {
-                if (q.isEmpty()) Text("Una película o una serie…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp)
+                if (q.isEmpty()) Text("Una película o una serie…", color = Muted, fontFamily = Body, fontSize = 24.sp)
                 BasicTextField(q, { q = it }, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp),
                     cursorBrush = SolidColor(Acento), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), keyboardActions = KeyboardActions(onSearch = { busca() }),
                     modifier = Modifier.fillMaxWidth().focusRequester(foco))
             }
             EnlaceRevista(if (buscando) "Buscando…" else "Buscar", acento = true) { busca() }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
         if (enTu.isNotEmpty()) FilaPosters("En tu biblioteca", enTu.map { it.breve() }, alAbrir, sub = { b -> enTu.firstOrNull { it.idStremio == b.id }?.estado?.nombre.orEmpty() },
             imagen = { b -> enTu.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster })
         deTmdb?.let { l ->

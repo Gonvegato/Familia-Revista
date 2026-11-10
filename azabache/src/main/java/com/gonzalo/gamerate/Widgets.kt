@@ -154,14 +154,9 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
 
     // El papel de la revista: el de la edición elegida (Ediciones.kt)
     val edicion = Ediciones.guardada(ctx)
-    // Con un fondo de color elegido en Apariencia, los widgets lo llevan también (igual de día que de noche)
-    // …y los colores elegidos a mano (Apariencia → A tu manera) por encima de todo
-    private val propios = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).let { p ->
-        Triple(p.getLong("skin_fondo_propio", 0L), p.getLong("skin_tinta_propia", 0L), p.getLong("skin_acento_propio", 0L)).let { t ->
-            // Sin nada elegido en Apariencia: los colores de Jonsu de serie
-            if (Skin.deSerieJonsu(p.getString("skin_fondo", ""), p.getString("skin_accent_id", "edicion"), t.first, t.second, t.third)) Triple(JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) else t } }
-    private val tonos = Skin.conPropios(Widgets.fondo(ctx)?.tones ?: if (noche) edicion.paleta.dark else edicion.paleta.light,
-        propios.first, propios.second, 0L)
+    // Dirección D: la paleta «mesa» en claro u oscuro; el acento, el de Jonsu, uno de la lista u «otro color»
+    private val propios = Triple(0L, 0L, ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).getLong("skin_acento_propio", 0L))
+    private val tonos = if (noche) edicion.paleta.dark else edicion.paleta.light
     val papel = tonos.cPaper.toArgb()
     val crudo = tonos.cCrudo.toArgb()
     val tinta = tonos.cInk.toArgb()
@@ -351,15 +346,10 @@ object Widgets {
 
     /** El acento elegido en Estilo (en oscuro, su versión clara). */
     /** El fondo de color elegido (o null: el papel de la edición). */
-    fun fondo(ctx: Context): Fondo? {
-        val id = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).getString("skin_fondo", "")
-        return FONDOS.firstOrNull { it.id == id }
-    }
+    fun fondo(ctx: Context): Fondo? = null   // (dirección D: sin fondos de color)
 
     fun acento(ctx: Context, noche: Boolean): Int {
         val id = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).getString("skin_accent_id", "edicion")
-        // Con un fondo de color, el acento por defecto (edición o rojo) es el suyo; el que elijas tú manda
-        fondo(ctx)?.takeIf { id == "edicion" || id == "rojo" }?.let { return it.tones.general.toInt() }
         val (l, d) = acentoDe(Ediciones.guardada(ctx), id)
         return (if (noche) d else l).toInt()
     }

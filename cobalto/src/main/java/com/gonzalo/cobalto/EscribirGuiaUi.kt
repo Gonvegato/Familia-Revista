@@ -99,7 +99,7 @@ fun TarjetaGuia(e: Escritos, obra: Doc, ver: Int, hacer: (Int) -> Unit, verGuia:
     Column(Modifier.fillMaxWidth().padding(bottom = 10.dp).clip(shp(16.dp)).background(Crudo).border(1.dp, ColGeneral, shp(16.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("GUÍA · PASO $id DE ${GuiaNovela.PASOS.size}", color = ColGeneral, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
         FitTitle(p.titulo, 22.sp, 25.sp, color = Charcoal, conEdicion = false)
-        Text(p.que, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, color = Muted)
+        Text(p.que, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, color = Muted)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
             BotonEscribir(p.accion) { hacer(id) }
             BotonEscribir("Ver la guía", suave = true) { verGuia() }
@@ -124,7 +124,7 @@ fun GuiaObra(e: Escritos, obra: Doc, ver: Int, hacer: (Int) -> Unit) {
             Column(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("$hechos de ${GuiaNovela.PASOS.size} pasos", color = Muted, fontSize = 13.sp)
                 Bar(hechos.toFloat() / GuiaNovela.PASOS.size, color, height = 4.dp)
-                if (obra.s("idea").isNotBlank()) Text(obra.s("idea"), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 25.sp, color = Charcoal,
+                if (obra.s("idea").isNotBlank()) Text(obra.s("idea"), fontFamily = Body, fontSize = 18.sp, lineHeight = 25.sp, color = Charcoal,
                     modifier = Modifier.padding(top = 4.dp, start = 4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(if (GuiaNovela.activa(obra)) "La guía está activada: el paso que toca sale arriba del manuscrito." else "La guía está desactivada: no sale nada en el manuscrito.", color = Muted, fontSize = 12.sp, modifier = Modifier.weight(1f))
@@ -143,7 +143,7 @@ fun GuiaObra(e: Escritos, obra: Doc, ver: Int, hacer: (Int) -> Unit) {
                     Box(Modifier.size(28.dp).clip(CircleShape).background(if (hecho) Charcoal else Color.Transparent).border(1.5.dp, if (p.id == sig) ColGeneral else if (hecho) Charcoal else Muted, CircleShape), contentAlignment = Alignment.Center) {
                         Text(when (s.estado) { "hecho" -> "✓"; "saltado" -> "–"; "curso" -> "…"; else -> p.id.toString() }, color = if (hecho) Paper else if (p.id == sig) ColGeneral else Muted, fontSize = 12.sp, fontWeight = FontWeight.Black)
                     }
-                    Text(p.titulo, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if (hecho) Muted else Charcoal, modifier = Modifier.weight(1f))
+                    Text(p.titulo, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if (hecho) Muted else Charcoal, modifier = Modifier.weight(1f))
                     Text(when { s.estado == "hecho" -> "HECHO"; s.estado == "saltado" -> "SALTADO"; s.estado == "curso" -> "REPOSO: ${s.dias} ${if (s.dias == 1) "DÍA" else "DÍAS"}"; p.id == sig -> "TOCA AHORA"; else -> "" },
                         color = if (p.id == sig || s.estado == "curso") ColGeneral else Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
                 }

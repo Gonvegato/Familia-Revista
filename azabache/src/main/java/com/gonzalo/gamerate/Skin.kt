@@ -62,6 +62,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Dirección D («la mesa y la estantería»): fondo neutro y un solo acento, el de la app (aquí, el granate de Jonsu)
+    Palette("mesa", "Mesa", "Familia",
+        t(0xF3F4F1, 0xFFFFFF, 0x16191C, 0x8F3232, 0x16191C, 0x666D73, 0x9AA2A8, 0x6E2424, 0xB8861B, 0xE8EAE6, 0xDDE0DC, 0xC4C8C3, 0x666D73),
+        t(0x111417, 0x1B1F23, 0xECEEE9, 0xD46A6A, 0xECEEE9, 0x9AA2A8, 0x666D73, 0xE89A9A, 0xE0B456, 0x252A2F, 0x2C3238, 0x444B52, 0x9AA2A8)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)
@@ -384,12 +388,12 @@ object Skin {
     var motion by mutableStateOf(0)
     /** Color de acento propio (0 = el de la paleta). Solo para la interfaz antigua; en la revista va [accentId]. */
     var accent by mutableStateOf(0L)
-    /** Acento de la revista (uno de [ACCENT_COLORS], o «edicion»: el de la edición). */
+    /** El acento (uno de [ACCENT_COLORS], o «edicion»: el de Jonsu, el granate). */
     var accentId by mutableStateOf("edicion")
     /** Fondo de color elegido (uno de [FONDOS]; "" = papel claro u oscuro, según el tema). */
     var fondoId by mutableStateOf("")
     /** El fondo que se ve ahora: el elegido, salvo en lo de tu pareja (que va con el tema contrario, sin fondo de color). */
-    val fondoActual: Fondo? get() = if (revista && !Mode.partnerShown) FONDOS.firstOrNull { it.id == fondoId } else null
+    val fondoActual: Fondo? get() = null   // (dirección D: ya no hay fondos de color)
     /** Edición de la revista (Ediciones.kt): su papel, sus letras, su cabecera… */
     var edicion by mutableStateOf("atrio")
     /** Colores a mano (Apariencia → A tu manera), 0 = sin elegir: mandan sobre el tema, el fondo y el acento. */
@@ -399,19 +403,13 @@ object Skin {
     /** Letras a mano (de Google Fonts), "" = las de la edición. */
     var letraTitulos by mutableStateOf("")
     var letraTexto by mutableStateOf("")
-    /** ¿El fondo propio es oscuro? (fija el modo, como los fondos de color); null sin fondo propio o en lo de tu pareja. */
-    val fondoPropioOscuro: Boolean? get() = if (!revista || Mode.partnerShown) null else if (fondoPropio != 0L) Color(fondoPropio).luminance() < 0.4f
-        else if (sinElegir) Color(JONSU_FONDO).luminance() < 0.4f else null
-    /** Sin nada elegido en Apariencia (ni fondo de color, ni colores a mano, ni acento): se ven los colores de Jonsu ([JONSU_FONDO]…). */
-    val sinElegir: Boolean get() = deSerieJonsu(fondoId, accentId, fondoPropio, tintaPropia, acentoPropio)
-    /** (también para los widgets y el proveedor de colores, que leen lo guardado) */
-    fun deSerieJonsu(fondoId: String?, accentId: String?, fondo: Long, tinta: Long, acento: Long): Boolean =
-        fondoId.isNullOrEmpty() && (accentId ?: "edicion") == "edicion" && fondo == 0L && tinta == 0L && acento == 0L
+    /** (dirección D: el fondo ya no se elige; el modo lo fija solo el tema claro u oscuro) */
+    val fondoPropioOscuro: Boolean? get() = null
 
     /** Pone el papel de la edición (las letras las da Theme.kt según la edición). */
     fun ponEdicion() {
         palette = Ediciones.actual.paleta; display = "Atrio"; body = "Atrio"
-        form = FORMS.first { it.id == "revista" }; gauge = null; chameleon = false; textScale = 1f
+        form = FORMS.first { it.id == "mesa" }; gauge = null; chameleon = false; textScale = 1f
     }
     /** Tamaño de las portadas en las bibliotecas: 0 normal, 1 grandes, 2 pequeñas. */
     var covers by mutableStateOf(0)
@@ -439,15 +437,13 @@ object Skin {
 
     /** Tonos que se ven ahora (según el modo claro u oscuro). */
     val tones: Tones get() = override ?: propios(conAcento)
+    /** El acento: el de Jonsu (el de la paleta), uno de la lista u «otro color». En lo de tu pareja, siempre el de la paleta. */
     private val conAcento: Tones get() = base.let { b ->
-        // Con un fondo de color, el acento por defecto («edición» o el rojo de siempre) es el suyo; los demás, los tuyos
-        if (revista && fondoActual != null && (accentId == "edicion" || accentId == "rojo")) b
-        else if (revista) ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> b.copy(general = if (Mode.dark) a.dark else a.light) } ?: b
-        else if (accent != 0L) b.copy(general = accent) else b
+        if (Mode.partnerShown) b
+        else if (acentoPropio != 0L) b.copy(general = acentoPropio)
+        else ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> b.copy(general = if (Mode.dark) a.dark else a.light) } ?: b
     }
-    /** Los colores a mano por encima de todo: el fondo (las tarjetas, líneas y grises salen de él y del texto), el texto y el acento. */
-    private fun propios(t: Tones): Tones =
-        if (!revista || Mode.partnerShown) t else if (sinElegir) conPropios(t, JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) else conPropios(t, fondoPropio, tintaPropia, acentoPropio)
+    private fun propios(t: Tones): Tones = t
     /** (también para los widgets, que leen lo guardado) */
     fun conPropios(t: Tones, fondo: Long, tintaP: Long, acentoP: Long): Tones {
         var r = t
@@ -465,7 +461,7 @@ object Skin {
         return r
     }
     /** Tonos de la paleta elegida, sin camaleón. */
-    val base: Tones get() = fondoActual?.tones ?: if (Mode.dark) palette.dark else palette.light
+    val base: Tones get() = if (Mode.dark) palette.dark else palette.light
 
     private val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
@@ -543,6 +539,21 @@ object Skin {
         if (shell == 2) ponEdicion()
         // El tamaño del texto de la app (Apariencia), en tanto por ciento
         if (shell == 2) textScale = p.getInt("skin_escala", 100).coerceIn(80, 140) / 100f
+        // Dirección D: la primera vez, el acento vuelve al de la app (lo demás de antes ya no se elige)
+        if (!p.getBoolean("mesa_v1", false)) { accentId = "edicion"; acentoPropio = 0L; p.edit().putBoolean("mesa_v1", true).putString("skin_accent_id", "edicion").putLong("skin_acento_propio", 0L).apply() }
+        soloMesa(ctx)
+    }
+
+    /**
+     * La dirección D no deja elegir fondos de color, colores a mano para el fondo y el texto, ni letras: una sola cara (la mesa), con el
+     * claro/oscuro, el acento y el tamaño del texto que elijas. Lo que venga de antes (o de un dispositivo sin actualizar) se queda en
+     * eso, también en lo guardado (lo leen los widgets y el proveedor de colores).
+     */
+    private fun soloMesa(ctx: Context) {
+        val habia = fondoId.isNotEmpty() || fondoPropio != 0L || tintaPropia != 0L || letraTitulos.isNotEmpty() || letraTexto.isNotEmpty()
+        fondoId = ""; fondoPropio = 0L; tintaPropia = 0L; letraTitulos = ""; letraTexto = ""; edicion = "atrio"
+        if (habia) prefs(ctx).edit().putString("skin_fondo", "").putLong("skin_fondo_propio", 0L).putLong("skin_tinta_propia", 0L)
+            .putString("skin_letra_titulos", "").putString("skin_letra_texto", "").apply()
     }
 
     /** Tamaños del texto de la app que se pueden elegir (por ciento). */

@@ -112,7 +112,7 @@ fun TopBar(back: String, onBack: () -> Unit, title: String, actions: @Composable
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) { actions() }
                 }
             }
-            Text(back.uppercase(), color = acentoSobreTinta(), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            Text(back, color = acentoSobreTinta(), fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp))
             FitTitle(title.uppercase(), 34.sp, 36.sp, color = Paper, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.3).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, minSize = 18f)
         }
@@ -124,7 +124,7 @@ fun TopBar(back: String, onBack: () -> Unit, title: String, actions: @Composable
 fun BigHeader(title: String, overline: String? = null, modifier: Modifier = Modifier, actions: @Composable RowScope.() -> Unit = {}) {
     Column(modifier.fillMaxWidth().padding(top = 10.dp, bottom = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (overline != null) Text(overline.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
+            if (overline != null) Text(overline, color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             else Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, content = actions)
         }

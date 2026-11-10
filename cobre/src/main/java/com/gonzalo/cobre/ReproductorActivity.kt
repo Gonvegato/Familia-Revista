@@ -656,19 +656,19 @@ fun ControlesReproductor(
     val blanco = Color(0xFFF7F2E8)
     // (tocar la pantalla enseña o esconde los controles; sin «clickable», que se quedaría el foco y el OK del mando ya no abriría los canales)
     Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { alTocar() } }) {
-        if (e.cargando && e.aviso == null) Text("Cargando…", color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 20.sp, modifier = Modifier.align(Alignment.Center))
+        if (e.cargando && e.aviso == null) Text("Cargando…", color = blanco, fontFamily = Body, fontSize = 20.sp, modifier = Modifier.align(Alignment.Center))
         if (e.visibles || e.aviso != null) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xCC000000), Color.Transparent, Color.Transparent, Color(0xDD000000)))))
             Column(Modifier.align(Alignment.TopStart).fillMaxWidth().statusBarsPadding().padding(horizontal = 32.dp, vertical = 18.dp)) {
-                Text("← VOLVER", color = blanco, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp, modifier = Modifier.tocable { alVolver() }.padding(vertical = 8.dp))
+                Text("← VOLVER", color = blanco, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, modifier = Modifier.tocable { alVolver() }.padding(vertical = 8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (e.directo) {
-                        Text("${e.numero}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.padding(end = 14.dp))
+                        Text("${e.numero}", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.padding(end = 14.dp))
                         Logo(e.logo, e.titulo, Modifier.padding(end = 14.dp), 48.dp)
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
+                        Text(e.titulo, color = blanco, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        if (e.subtitulo.isNotBlank()) Text(e.subtitulo, color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
                     }
                 }
             }
@@ -684,14 +684,14 @@ fun ControlesReproductor(
                     val ahora = System.currentTimeMillis()
                     e.ahora?.let { p ->
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text("AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.5.sp, modifier = Modifier.padding(end = 10.dp, bottom = 3.dp))
+                            Text("Ahora", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(end = 10.dp, bottom = 3.dp))
                             Text(p.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                             Text(franja(p), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontSize = 13.sp)
                         }
                         Barra(p.avance(ahora), Modifier.padding(vertical = 6.dp), fondo = blanco.copy(alpha = 0.25f))
                         if (p.descripcion.isNotBlank()) Text(p.descripcion, color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    } ?: Text("Sin guía para este canal", color = blanco.copy(alpha = 0.7f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
-                    e.despues?.let { p -> Text("DESPUÉS · ${hora(p.inicio)} · ${p.titulo}", color = blanco.copy(alpha = 0.75f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp)) }
+                    } ?: Text("Sin guía para este canal", color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 15.sp)
+                    e.despues?.let { p -> Text("DESPUÉS · ${hora(p.inicio)} · ${p.titulo}", color = blanco.copy(alpha = 0.75f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp)) }
                 } else if (e.dur > 0) {
                     Slider(e.pos.toFloat().coerceIn(0f, e.dur.toFloat()), { alIr(it.toLong()) }, valueRange = 0f..e.dur.toFloat(),
                         colors = SliderDefaults.colors(thumbColor = Acento, activeTrackColor = Acento, inactiveTrackColor = blanco.copy(alpha = 0.3f)))
@@ -709,9 +709,9 @@ fun ControlesReproductor(
                 }
             }
         }
-        if (e.tecleado.isNotBlank()) Text(e.tecleado, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 54.sp,
+        if (e.tecleado.isNotBlank()) Text(e.tecleado, color = blanco, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 54.sp,
             modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(28.dp).background(Color(0x99000000)).padding(horizontal = 18.dp, vertical = 4.dp))
-        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, textAlign = TextAlign.Center,
+        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Body, fontSize = 17.sp, textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.Center).offset(y = 64.dp).widthIn(max = 560.dp).padding(horizontal = 24.dp).background(Color(0x99000000)).padding(horizontal = 16.dp, vertical = 8.dp)) }
         e.lista?.let { canales -> ListaRapida(canales, e.enLista, e.guiaDe, alElegirCanal) }
         e.aviso?.let { a ->
@@ -789,4 +789,4 @@ private fun BotonReproductor(icono: androidx.compose.ui.graphics.vector.ImageVec
 
 @Composable
 private fun EnlaceClaro(t: String, color: Color, alHacer: () -> Unit) =
-    Text(t.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.3.sp, maxLines = 1, modifier = Modifier.tocable { alHacer() }.padding(vertical = 10.dp))
+    Text(t, color = color, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1, modifier = Modifier.tocable { alHacer() }.padding(vertical = 10.dp))

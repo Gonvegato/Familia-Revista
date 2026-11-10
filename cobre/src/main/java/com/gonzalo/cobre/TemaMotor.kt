@@ -60,6 +60,8 @@ val FORMAS: List<Forma> = listOf(
     Forma("terminal", Esq.Recta, 0f, 1.dp, true, false, 0f),
     Forma("brutal", Esq.Recta, 0f, 3.dp, true, true, 0f),
     Forma("revista", Esq.Recta, 0f, 0.dp, false, false, 0f),
+    // Dirección D: redonda, sin bordes
+    Forma("mesa", Esq.Redonda, 1f, 0.dp, false, false, 1f),
 )
 
 /** Esquina normal de radio [r] según la forma. */
@@ -117,12 +119,12 @@ object Modo {
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "revista" })
-    var display by mutableStateOf("Atrio")
+    var palette by mutableStateOf(PALETTES.first { it.id == "mesa" })
+    var display by mutableStateOf("Vitrina")
     var body by mutableStateOf("Atrio")
-    var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
+    var forma by mutableStateOf(FORMAS.first { it.id == "mesa" })
     /** Id de [ACCENT_COLORS] o "paleta" (el de la paleta). */
-    var accentId by mutableStateOf("cobre")
+    var accentId by mutableStateOf("paleta")
     /** Tamaño del texto en por ciento. */
     var escala by mutableStateOf(100)
     /** Colores invertidos: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene. */
@@ -234,7 +236,7 @@ object Skin {
         display = p.getString("display", "Atrio") ?: "Atrio"
         body = p.getString("body", "Atrio") ?: "Atrio"
         forma = FORMAS.firstOrNull { it.id == p.getString("forma", "revista") } ?: forma
-        accentId = p.getString("acento", "cobre")?.takeIf { id -> id == "paleta" || ACCENT_COLORS.any { it.id == id } } ?: "cobre"
+        accentId = p.getString("acento", "paleta")?.takeIf { id -> id == "paleta" || ACCENT_COLORS.any { it.id == id } } ?: "paleta"
         escala = p.getInt("escala", 100).coerceIn(80, 140)
         // La primera vez: los colores de Atrio (sin invertir)
         if (!p.getBoolean("atrio_v1", false)) p.edit().putBoolean("atrio_v1", true).putBoolean("invertido", false).putBoolean("origen_atrio", false).apply()
@@ -244,6 +246,18 @@ object Skin {
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
+        // Dirección D: la primera vez, el acento vuelve al de la app (lo demás de antes ya no se elige)
+        if (!p.getBoolean("mesa_v1", false)) { accentId = "paleta"; acentoPropio = 0L; p.edit().putBoolean("mesa_v1", true).putString("acento", "paleta").putLong("acento_propio", 0L).apply() }
+        soloMesa()
+    }
+
+    /**
+     * La dirección D no deja elegir paleta, formas, letras, fondos de color ni los colores de Jonsu: una sola cara (la mesa), con el
+     * claro/oscuro, el acento y el tamaño del texto que elijas. Lo que venga de antes (o de un dispositivo sin actualizar) se queda en eso.
+     */
+    private fun soloMesa() {
+        palette = PALETTES.first { it.id == "mesa" }; forma = FORMAS.first { it.id == "mesa" }
+        display = "Vitrina"; body = "Atrio"; invertido = false; origenAtrio = false; fondoId = ""; fondoPropio = 0L; tintaPropia = 0L
     }
 
     /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros dispositivos gana la más reciente. */
@@ -276,6 +290,7 @@ object Skin {
         fondoId = k.optString("fondoId").takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         fondoPropio = k.optLong("fondoPropio", 0L); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = k.optLong("acentoPropio", 0L)
         ajustesAt = at
+        soloMesa()
         persistir(c)
         return true
     }
@@ -390,7 +405,7 @@ fun CobreTheme(content: @Composable () -> Unit) {
     ) {
         MaterialTheme(colorScheme = appColors(), typography = AppTypography) {
             // El texto sin color propio sale con la tinta del tema (si no, negro: se veía mal sobre un fondo oscuro)
-            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Charcoal, content = content)
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Charcoal) { com.gonzalo.mesa.ConTinta(tintaMesa(), content) }
         }
     }
 }
@@ -400,3 +415,7 @@ fun CobreTheme(content: @Composable () -> Unit) {
 val Grotesca: FontFamily get() = VitrinaDisplay
 /** El segundo color de los bloques de cifras de la dirección C (el azul de las maquetas). */
 val Bloque2: Color get() = Color(0xFF1F3A5F)
+
+// ───── dirección D (la mesa y la estantería) ─────
+/** Los colores y las letras de Nut para lo de [com.gonzalo.mesa]. */
+fun tintaMesa() = com.gonzalo.mesa.Tinta(fondo = Paper, superficie = Crudo, tinta = Charcoal, apagado = Muted, linea = Line, chip = Sand, acento = Acento, sobreAcento = SobreAcento, titulos = Grotesca, texto = Body)

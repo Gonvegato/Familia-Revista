@@ -74,7 +74,7 @@ fun SemanaTocable(d: SemanaCine, modifier: Modifier = Modifier, alto: Int = 74) 
                     if (sel) {
                         // La etiqueta, por encima de todas las barras (puede salirse de su columna; así ninguna barra vecina más alta la tapa)
                         val arriba = alto.toFloat()
-                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, maxLines = 1, softWrap = false,
+                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                             modifier = Modifier.align(when (i) { 0 -> Alignment.BottomStart; d.semana.lastIndex -> Alignment.BottomEnd; else -> Alignment.BottomCenter })
                                 .offset(y = (-(arriba + 6)).dp)
                                 // (en los extremos se pega a su lado, para no salirse de la pantalla)
@@ -82,7 +82,7 @@ fun SemanaTocable(d: SemanaCine, modifier: Modifier = Modifier, alto: Int = 74) 
                                 .background(Charcoal).padding(horizontal = 7.dp, vertical = 4.dp))
                     }
                 }
-                Text(letra, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (dia == hoy) Acento else Muted,
+                Text(letra, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (dia == hoy) Acento else Muted,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
             }
         }

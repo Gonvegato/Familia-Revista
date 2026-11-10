@@ -124,13 +124,13 @@ fun FilaJuego(j: Juego, alAbrir: (Juego) -> Unit, alJugar: ((Juego) -> Unit)? = 
         Box(Modifier.width(portada).height(alto)) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = (portada.value * 0.4f).toInt()) }
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
             val num = when { orden > 0 -> "%02d".format(orden); numero > 0 -> "Nº $numero"; else -> "" }
-            if (num.isNotEmpty()) Text(num, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
-            Text(j.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = if (portada >= 70.dp) 19.sp else 17.sp, lineHeight = if (portada >= 70.dp) 22.sp else 20.sp,
+            if (num.isNotEmpty()) Text(num, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1)
+            Text(j.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = if (portada >= 70.dp) 19.sp else 17.sp, lineHeight = if (portada >= 70.dp) 22.sp else 20.sp,
                 maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = if (num.isEmpty()) 0.dp else 2.dp))
-            Text(plataformaDe(j).uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.9.sp, maxLines = 1,
+            Text(plataformaDe(j), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
             val meta = listOf(if (conEstado) j.estado.nombre.lowercase() else "", if (j.enOtroDispositivo) "en otro dispositivo" else "", extra).filter { it.isNotBlank() }.joinToString(" · ")
-            if (meta.isNotBlank()) Text(meta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2, lineHeight = 14.sp,
+            if (meta.isNotBlank()) Text(meta, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 2, lineHeight = 18.sp,
                 modifier = Modifier.padding(top = 3.dp))
             Spacer(Modifier.weight(1f).heightIn(min = 8.dp))
             PieFila(j, if (alJugar != null && !j.sinLanzador) ({ alJugar(j) }) else null)
@@ -147,8 +147,8 @@ private fun PieFila(j: Juego, alJugar: (() -> Unit)?) {
         Estado.PASADO -> unidos(listOf(if (j.finalizado > 0) "PASADO EL ${fechaJunta(j.finalizado).uppercase()}" else "PASADO", if (j.msJugados >= 60_000) horasCortas(j.msJugados) else null))
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-        Text(izq, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, lineHeight = 15.sp, maxLines = 2, modifier = Modifier.weight(1f))
-        if (alJugar != null) Text(if (j.enPc && !j.abrible) "PC →" else "JUGAR →", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1,
+        Text(izq, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 18.sp, maxLines = 2, modifier = Modifier.weight(1f))
+        if (alJugar != null) Text(if (j.enPc && !j.abrible) "PC →" else "JUGAR →", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1,
             modifier = Modifier.tocable(onClick = alJugar).padding(start = 10.dp, top = 6.dp, bottom = 2.dp))
     }
     if ((j.estado == Estado.JUGANDO || j.estado == Estado.ABANDONADO) && j.avance != null)
@@ -186,10 +186,10 @@ fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAb
         Row(Modifier.fillMaxWidth().tocable(onClick = alAlternar).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             AbanicoSaga(f.miembros)
             Column(Modifier.weight(1f).padding(start = 16.dp, end = 8.dp)) {
-                Text(f.saga.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(("Saga\u00A0· " + resumenSaga(todos)).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 14.sp, maxLines = 3, modifier = Modifier.padding(top = 2.dp))
+                Text(f.saga.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(("Saga\u00A0· " + resumenSaga(todos)), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp, maxLines = 3, modifier = Modifier.padding(top = 2.dp))
             }
-            Text(if (abierta) "−" else "+", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Text(if (abierta) "−" else "+", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 22.sp)
         }
         if (abierta) {
             Column(Modifier.fillMaxWidth().padding(start = 10.dp)) {
@@ -201,7 +201,7 @@ fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAb
             }
         }
     }
-    Filete(2.dp)
+    Filete(1.dp, Line)
 }
 
 /** Las filas (juegos sueltos y sagas) de una lista de juegos, con las sagas que estén abiertas. */
@@ -211,7 +211,7 @@ private fun LazyListScope.filas(
     val filas = Sagas.agrupar(juegos)
     itemsIndexed(filas, key = { _, it -> when (it) { is FilaLista.Suelto -> "j:" + it.juego.id; is FilaLista.DeSaga -> "s:" + it.saga.id } }) { i, f ->
         when (f) {
-            is FilaLista.Suelto -> { FilaJuego(f.juego, alAbrir, alJugar, conEstado = conEstado, extra = f.saga?.let { "Saga ${it.nombre} · ${f.numero}" }.orEmpty(), orden = i + 1); Filete(2.dp) }
+            is FilaLista.Suelto -> { FilaJuego(f.juego, alAbrir, alJugar, conEstado = conEstado, extra = f.saga?.let { "Saga ${it.nombre} · ${f.numero}" }.orEmpty(), orden = i + 1); Filete(1.dp, Line) }
             is FilaLista.DeSaga -> FilaSaga(f, f.saga.id in abiertas, { alternar(f.saga.id) }, alAbrirSaga, alAbrir, alJugar)
         }
     }
@@ -235,8 +235,8 @@ fun MenusPequenos(sel: Menu?, cuentas: Map<Menu, Int>, onSel: (Menu?) -> Unit) {
             val n = cuentas[m] ?: 0
             Row(Modifier.tocable(fuera = 2.dp) { onSel(if (on) null else m) }.background(if (on) Charcoal else Color.Transparent).border(2.dp, Charcoal)
                 .padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(m.nombre.uppercase(), color = if (on) Paper else if (n == 0) Muted else Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                Text(" $n", color = if (on) Paper else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, maxLines = 1)
+                Text(m.nombre, color = if (on) Paper else if (n == 0) Muted else Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(" $n", color = if (on) Paper else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
             }
         }
     }
@@ -276,12 +276,12 @@ private fun PaginaEstante(estado: Estado, todos: List<Juego>, menu: Menu?, alMen
                 if (menu == Menu.EMULACION && sistemas.size > 1) FiltrosRevista(listOf("Todos") + sistemas.map { (Catalogo.sistema(it.key)?.corto ?: it.key) + " " + it.value.size }, sistemas.indexOfFirst { it.key == sistema } + 1) { i ->
                     sistema = if (i == 0) null else sistemas[i - 1].key
                 }
-                Filete(2.dp)
+                Filete(1.dp, Line)
             }
         }
         if (juegos.isEmpty()) item {
             Column(Modifier.fillMaxWidth().padding(top = 30.dp)) {
-                Text(if (todos.isEmpty()) "Todavía no hay nada aquí." else vacioDe(estado, menu), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 24.sp)
+                Text(if (todos.isEmpty()) "Todavía no hay nada aquí." else vacioDe(estado, menu), color = Muted, fontFamily = Body, fontSize = 18.sp, lineHeight = 24.sp)
                 if (todos.isEmpty()) BotonC("Añadir juegos", Modifier.padding(top = 12.dp), onClick = alAnadir)
             }
         }
@@ -304,7 +304,7 @@ private fun PaginaSagas(todos: List<Juego>, alAbrir: (Juego) -> Unit, alJugar: (
                     Antetitulo("Sagas · ${sagas.size}", Modifier.weight(1f), color = Acento, conCuadro = false)
                     EnlaceRevista("+ Nueva saga", acento = true) { nueva = "" }
                 }
-                Filete(2.dp)
+                Filete(1.dp, Line)
             }
         }
         if (filas.isEmpty()) item {
@@ -330,9 +330,9 @@ private fun Resultados(busca: String, todos: List<Juego>, alAbrir: (Juego) -> Un
             .sortedWith(compareByDescending<Juego> { it.ultima }.thenByDescending { it.anadido })
     }
     LazyColumn(Modifier.fillMaxSize()) {
-        item { Antetitulo("Resultados · ${l.size}", Modifier.padding(top = 14.dp, bottom = 6.dp), color = Acento, conCuadro = false); Filete(2.dp) }
-        if (l.isEmpty()) item { Text("Nada con «$busca».", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 24.dp)) }
-        itemsIndexed(l, key = { _, it -> it.id }) { i, x -> FilaJuego(x, alAbrir, alJugar, conEstado = true, orden = i + 1); Filete(2.dp) }
+        item { Antetitulo("Resultados · ${l.size}", Modifier.padding(top = 14.dp, bottom = 6.dp), color = Acento, conCuadro = false); Filete(1.dp, Line) }
+        if (l.isEmpty()) item { Text("Nada con «$busca».", color = Muted, fontFamily = Body, fontSize = 18.sp, modifier = Modifier.padding(top = 24.dp)) }
+        itemsIndexed(l, key = { _, it -> it.id }) { i, x -> FilaJuego(x, alAbrir, alJugar, conEstado = true, orden = i + 1); Filete(1.dp, Line) }
     }
 }
 
@@ -403,7 +403,7 @@ fun PantPrincipal(
                 EnlaceRevista("Buscar", color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) { buscando = !buscando; if (!buscando) busca = "" }
                 EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = acentoSobreTinta()) { alAnadir(null) }
                 Spacer(Modifier.weight(1f))
-                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 4.dp).tocable { alAjustes(0) }.padding(6.dp).size(20.dp))
             }
             // El nombre: su alto se mide una vez y se va quitando según se recoge; encoge con su hueco desde la esquina de arriba a la izquierda
@@ -476,11 +476,11 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>
                     .background(if (on) Acento else Color.Transparent)
                     .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                     // Dirección C: la elegida, en un bloque del acento
-                    Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                    Text(n, color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1) }
                 }
             }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
     }
 }

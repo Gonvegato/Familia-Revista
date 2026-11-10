@@ -113,7 +113,7 @@ fun HojaPagina(p: PaginaEscribir, ancha: Boolean, onCerrar: () -> Unit) {
     ModalBottomSheet(onCerrar, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = Crudo, shape = shp(28.dp)) {
         Column(Modifier.fillMaxWidth().widthIn(max = 720.dp).align(Alignment.CenterHorizontally).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("La página", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Charcoal)
+            Text("La página", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Charcoal)
             // Un párrafo de prueba con todo lo elegido
             val muestra = "—¿Y si no vuelve? —preguntó Elena.\nNadie contestó. La ciudad seguía despertando despacio, como si cada ventana tuviera que decidir por su cuenta si merecía la pena abrirse aquella mañana."
             Column(Modifier.fillMaxWidth().clip(shp(14.dp)).background(Paper).border(1.dp, Line, shp(14.dp)).padding(horizontal = 18.dp, vertical = 14.dp)) {
@@ -135,7 +135,7 @@ fun HojaPagina(p: PaginaEscribir, ancha: Boolean, onCerrar: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EtiquetaEscribir("Tamaño")
                 Spacer(Modifier.weight(1f))
-                Text("${p.tam.toInt()}", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal)
+                Text("${p.tam.toInt()}", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("A", fontFamily = Display, fontSize = 14.sp, color = Muted, modifier = Modifier.press(haptic = false) { p.letraMenos() }.padding(8.dp))
@@ -257,11 +257,11 @@ fun PreviaFicha(e: Escritos, f: Doc?, onLeer: (Doc) -> Unit, onCerrar: (Doc) -> 
             Box(Modifier.fillMaxWidth().height(4.dp).background(color))
             Row(Modifier.fillMaxWidth().padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(singularFicha(x.s("tipo")).uppercase() + if (x.s("alias").isNotBlank()) " · también ${x.s("alias")}" else "", color = color, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(x.s("nombre"), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (x.s("resumen").isNotBlank()) Text(x.s("resumen"), fontFamily = Display, fontStyle = FontStyle.Italic, color = Charcoal, fontSize = 14.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(singularFicha(x.s("tipo")).uppercase() + if (x.s("alias").isNotBlank()) " · también ${x.s("alias")}" else "", color = color, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(x.s("nombre"), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (x.s("resumen").isNotBlank()) Text(x.s("resumen"), fontFamily = Body, color = Charcoal, fontSize = 14.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (datos.isNotEmpty()) Text(datos.joinToString("  ·  ") { (k, v) -> "$k: $v" }, color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (unidas.isNotEmpty()) Text(unidas.joinToString("  ·  ") { (t, n) -> if (t.isBlank()) n else "${t.uppercase()} · $n" }, color = Acento, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (unidas.isNotEmpty()) Text(unidas.joinToString("  ·  ") { (t, n) -> if (t.isBlank()) n else "${t.uppercase()} · $n" }, color = Acento, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("✕", color = Muted, fontSize = 14.sp, modifier = Modifier.press(haptic = false) { onCerrar(x) }.padding(10.dp))
@@ -322,11 +322,11 @@ fun ResultadosObra(e: Escritos, pid: String, consulta: String, rx: Regex, actual
             val c = r.capitulo
             if (c != null && c.id != cap) {
                 cap = c.id
-                Text("CAPÍTULO ${numeroCapitulo(e, c)} · ${c.s("titulo").ifBlank { "Sin título" }}".uppercase(), color = Acento, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp, modifier = Modifier.padding(top = 10.dp))
+                Text("CAPÍTULO ${numeroCapitulo(e, c)} · ${c.s("titulo").ifBlank { "Sin título" }}", color = Acento, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
             }
             Column(Modifier.fillMaxWidth().clip(shp(12.dp)).border(1.dp, if (r.escena.id == actual) Acento else Line, shp(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(r.escena.s("titulo").ifBlank { "Sin título" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Charcoal, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(r.escena.s("titulo").ifBlank { "Sin título" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Charcoal, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(if (r.escena.id == actual) "ESTA · ${r.veces.size}" else "${r.veces.size}", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                 }
                 r.veces.take(4).forEachIndexed { k, v ->

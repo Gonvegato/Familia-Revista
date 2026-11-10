@@ -71,6 +71,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Dirección D («la mesa y la estantería»): fondo neutro y un solo acento, el de la app (aquí, el oro viejo de Hathor)
+    Palette("mesa", "Mesa", "Familia",
+        t(0xF3F4F1, 0xFFFFFF, 0x16191C, 0x9A7400, 0x16191C, 0x666D73, 0x9AA2A8, 0x6E5300, 0xB8861B, 0xE8EAE6, 0xDDE0DC, 0xC4C8C3, 0x666D73),
+        t(0x111417, 0x1B1F23, 0xECEEE9, 0xE0B63A, 0xECEEE9, 0x9AA2A8, 0x666D73, 0xF0D27A, 0xE0B456, 0x252A2F, 0x2C3238, 0x444B52, 0x9AA2A8)),
     // Hathor 0.7.0: «Palomitas», la predeterminada. Papel crema, tinta casi negra y el rojo de la caja de palomitas; de noche, el negro de
     // la pantalla apagada con el mismo rojo (el texto en rojo se aclara o se oscurece solo lo justo para leerse: acentoLegible).
     Palette("palomitas", "Palomitas", "Hathor",

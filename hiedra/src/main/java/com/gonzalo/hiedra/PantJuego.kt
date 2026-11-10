@@ -94,9 +94,9 @@ private fun Aviso(a: JuegoActivity, texto: String, fraccion: Float?, error: Bool
     @Composable
     fun Textos(centrar: Boolean) {
         Column(horizontalAlignment = if (centrar) Alignment.CenterHorizontally else Alignment.Start) {
-            Text(listOfNotNull("BASTET", sistema?.uppercase()).joinToString(" · "), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 2.sp)
-            Text(j?.titulo.orEmpty(), color = Tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 36.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp))
-            Text(texto, color = if (error) Tinta else Gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 12.dp).widthIn(max = 520.dp))
+            Text(listOfNotNull("BASTET", sistema?).joinToString(" · "), color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            Text(j?.titulo.orEmpty(), color = Tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 36.sp, maxLines = 3, modifier = Modifier.padding(top = 6.dp))
+            Text(texto, color = if (error) Tinta else Gris, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 12.dp).widthIn(max = 520.dp))
             if (!error) {
                 val m = Modifier.padding(top = 18.dp).widthIn(max = 320.dp).fillMaxWidth()
                 if (fraccion != null) LinearProgressIndicator(progress = { fraccion.coerceIn(0f, 1f) }, color = Acento, trackColor = Raya, modifier = m)
@@ -154,12 +154,12 @@ private fun Jugando(a: JuegoActivity) {
             }
         }
         a.indicador?.let { t ->
-            Text(t, color = Tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.2.sp,
+            Text(t, color = Tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                 modifier = Modifier.align(Alignment.TopCenter).padding(top = 14.dp).background(Color(0x99000000), RoundedPill).padding(horizontal = 12.dp, vertical = 5.dp))
         }
         a.aviso?.let { t ->
             LaunchedEffect(t) { delay(3_500); if (a.aviso == t) a.aviso = null }
-            Text(t, color = Tinta, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp,
+            Text(t, color = Tinta, fontFamily = Body, fontSize = 15.sp,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = if (tactil) 10.dp else 24.dp).background(Color(0xCC000000), RoundedPill).padding(horizontal = 14.dp, vertical = 7.dp))
         }
         if (a.menu) MenuJuego(a)
@@ -170,7 +170,7 @@ private val RoundedPill = androidx.compose.foundation.shape.RoundedCornerShape(5
 
 @Composable
 private fun Pildora(texto: String, onClick: () -> Unit) {
-    Text(texto, color = Tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp,
+    Text(texto, color = Tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
         modifier = Modifier.background(Color(0x66000000), RoundedPill).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 8.dp))
 }
 
@@ -178,7 +178,7 @@ private fun Pildora(texto: String, onClick: () -> Unit) {
 @Composable
 private fun PildoraAvance(a: JuegoActivity) {
     val on = a.indicador != null
-    Text("▶▶", color = if (on) Carbon else Tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 14.sp,
+    Text("▶▶", color = if (on) Carbon else Tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
         modifier = Modifier.background(if (on) Acento else Color(0x66000000), RoundedPill)
             .pointerInput(Unit) { detectTapGestures(onPress = { a.pulsarAvance(true); tryAwaitRelease(); a.pulsarAvance(false) }) }
             .padding(horizontal = 16.dp, vertical = 7.dp))
@@ -199,10 +199,10 @@ private fun MenuJuego(a: JuegoActivity) {
         @Composable
         fun Cabeza(modifier: Modifier = Modifier) {
             Column(modifier) {
-                Text(if (a.pantallaMenu == "principal") "EN PAUSA" else "← EN PAUSA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 2.sp,
+                Text(if (a.pantallaMenu == "principal") "EN PAUSA" else "← EN PAUSA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                     modifier = Modifier.clickable { if (a.pantallaMenu == "principal") a.cerrarMenu() else a.pantallaMenu = "principal" }.padding(vertical = 4.dp))
-                Text(a.juego?.titulo.orEmpty(), color = Tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = if (ancho) 34.sp else 30.sp, lineHeight = if (ancho) 37.sp else 33.sp, maxLines = 3)
-                Text(listOfNotNull(sistema?.nombre, a.nucleoDef.nombre + if (a.nucleoDef.pruebas) " · en pruebas" else "").joinToString(" · ").uppercase(),
+                Text(a.juego?.titulo.orEmpty(), color = Tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = if (ancho) 34.sp else 30.sp, lineHeight = if (ancho) 37.sp else 33.sp, maxLines = 3)
+                Text(listOfNotNull(sistema?.nombre, a.nucleoDef.nombre + if (a.nucleoDef.pruebas) " · en pruebas" else "").joinToString(" · "),
                     color = Gris, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 6.dp))
             }
         }
@@ -235,7 +235,7 @@ private fun MenuJuego(a: JuegoActivity) {
                 "consola" -> MenuConsola(a)
                 else -> MenuPrincipal(a)
             }
-            a.aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp)) }
+            a.aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp)) }
         }
         if (ancho) {
             // Apaisado y ancho (la tablet, el móvil tumbado): a la izquierda el juego, como una portada; a la derecha, el menú
@@ -266,9 +266,9 @@ private fun Ayuda(modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
         listOf("A" to "elegir", "B" to "volver", "☰" to "seguir jugando").forEach { (b, t) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(b, color = Carbon, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp,
+                Text(b, color = Carbon, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                     modifier = Modifier.background(Tinta, RoundedPill).padding(horizontal = 7.dp, vertical = 2.dp))
-                Text(" $t".uppercase(), color = Gris, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp)
+                Text(" $t", color = Gris, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
         }
     }
@@ -354,14 +354,14 @@ private fun MenuMapeo(a: JuegoActivity) {
     val ctx = LocalContext.current
     val d = a.ultimoMando
     if (d == null) {
-        Text("Pulsa cualquier botón del mando que quieras configurar.", color = Gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 12.dp))
+        Text("Pulsa cualquier botón del mando que quieras configurar.", color = Gris, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(top = 12.dp))
         return
     }
     val sistema = a.juego?.sistema ?: "gba"
     var version by remember { mutableIntStateOf(0) }
     val mapa = remember(d.descriptor, version, a.esperandoMapeo) { AjustesJuego.mapa(ctx, d.descriptor) }
     Text(d.name, color = Tinta, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, modifier = Modifier.padding(top = 10.dp))
-    a.esperandoMapeo?.let { Text("Pulsa en el mando el botón para «${it.nombre}»…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(vertical = 8.dp)) }
+    a.esperandoMapeo?.let { Text("Pulsa en el mando el botón para «${it.nombre}»…", color = Acento, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(vertical = 8.dp)) }
     val dis = Mandos.disposicion(sistema)
     val destinos: List<Mandos.Destino> = Mandos.Boton.entries.filter { it in dis.botones || it.name in setOf("ARRIBA", "ABAJO", "IZQUIERDA", "DERECHA") }.map { Mandos.Destino.Pad(it) } +
         Mandos.Accion.entries.map { Mandos.Destino.Hacer(it) }
@@ -431,7 +431,7 @@ private fun MenuConsola(a: JuegoActivity) {
 
 @Composable
 private fun Etiqueta2(t: String) {
-    Text(t.uppercase(), color = Gris, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+    Text(t, color = Gris, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
 }
 
 /**
@@ -449,7 +449,7 @@ private fun FilaOscura(titulo: String, sub: String?, foco: Boolean = false, acti
         Box(Modifier.width(4.dp * t).height(46.dp).background(Acento))
         Column(Modifier.weight(1f).padding(vertical = 11.dp, horizontal = 4.dp + 8.dp * t)) {
             Text(titulo, color = if (!activa) Gris else if (enfocada) Acento else Tinta, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
-            if (!sub.isNullOrBlank()) Text(sub.uppercase(), color = Gris, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, lineHeight = 14.sp)
+            if (!sub.isNullOrBlank()) Text(sub, color = Gris, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 18.sp)
         }
         if (flecha && activa) Text("›", color = if (enfocada) Acento else Gris, fontFamily = Display, fontSize = 26.sp, modifier = Modifier.padding(end = 10.dp))
     }
@@ -469,7 +469,7 @@ private fun Opciones(opciones: List<String>, sel: Int, foco: Boolean = false, al
             var enfocada by remember { mutableStateOf(false) }
             if (foco && i == sel.coerceAtLeast(0)) LaunchedEffect(Unit) { runCatching { fr.requestFocus() } }
             val on = i == sel
-            Text(o.uppercase(), color = if (on) Carbon else if (enfocada) Acento else Tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp,
+            Text(o, color = if (on) Carbon else if (enfocada) Acento else Tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                 modifier = Modifier.focusRequester(fr).onFocusChanged { enfocada = it.isFocused }.clickable { alElegir(i) }
                     .background(if (on) Acento else Color.Transparent, RoundedPill).border(1.dp, if (enfocada) Acento else Raya, RoundedPill).padding(horizontal = 14.dp, vertical = 8.dp))
         }
@@ -480,6 +480,6 @@ private fun Opciones(opciones: List<String>, sel: Int, foco: Boolean = false, al
 private fun BotonOscuro(t: String, acento: Boolean = false, foco: Boolean = false, onClick: () -> Unit) {
     val fr = remember { FocusRequester() }
     if (foco) LaunchedEffect(Unit) { runCatching { fr.requestFocus() } }
-    Text(t.uppercase(), color = if (acento) Carbon else Tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp,
+    Text(t, color = if (acento) Carbon else Tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp,
         modifier = Modifier.focusRequester(fr).clickable(onClick = onClick).background(if (acento) Acento else Color.Transparent, RoundedPill).border(1.dp, if (acento) Acento else Raya, RoundedPill).padding(horizontal = 18.dp, vertical = 10.dp))
 }

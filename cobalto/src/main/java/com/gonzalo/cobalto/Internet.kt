@@ -343,7 +343,7 @@ fun InternetPicker(consultaInicial: String, alElegir: (ByteArray) -> Unit, alCer
         }
         Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().imePadding().padding(horizontal = 16.dp)) {
             RevistaTopBar(alCerrar, "Cerrar")
-            Filete(2.dp)
+            Filete(1.dp, Line)
             FiltrosRevista(Internet.fuentes.map { it.nombre }, Internet.fuentes.indexOfFirst { it.id == fuente.id }.coerceAtLeast(0), Modifier.padding(top = 2.dp)) { i ->
                 val f = Internet.fuentes[i]; fuente = f; prefs.edit().putString("fuente", f.id).apply(); web?.let { carga(it, Internet.searchUrl(consulta, f)) }; msg = ""
             }
@@ -395,7 +395,7 @@ fun InternetPicker(consultaInicial: String, alElegir: (ByteArray) -> Unit, alCer
                 if (tapada) Box(
                     Modifier.matchParentSize().background(Paper).pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } },
                     contentAlignment = Alignment.Center
-                ) { Text("Buscando en ${fuente.nombre}…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp) }
+                ) { Text("Buscando en ${fuente.nombre}…", color = Muted, fontFamily = Body, fontSize = 18.sp) }
             }
             Column(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(msg.ifBlank { "Toca una imagen para verla grande y pulsa «Usar esta imagen». También vale mantener pulsada una imagen." }, color = if (msg.isBlank()) Muted else Acento, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp)

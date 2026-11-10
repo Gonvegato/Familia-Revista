@@ -86,16 +86,16 @@ fun Mancheta(aqui: Destino, alIr: (Destino) -> Unit) {
     Cabecera(if (bajita) 56.sp else if (ancho >= 700) 112.sp else 84.sp, Modifier.padding(top = if (bajita) 0.dp else 8.dp))
     FileteCabecera(3.dp)
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-        Text("Nº ${hoy.dayOfYear}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 1, softWrap = false)
+        Text("Nº ${hoy.dayOfYear}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
         Spacer(Modifier.weight(1f))
-        Text(Hora.largo(hoy).uppercase(), color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 1, softWrap = false)
+        Text(Hora.largo(hoy), color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
     }
     Filete(1.dp)
     Column(Modifier.fillMaxWidth().padding(top = 18.dp)) {
         Filete(1.dp)
         FlowRow(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             seccionesMenu().forEachIndexed { i, (t, x) ->
-                Text(t.uppercase(), color = if (x == aqui) Acento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
+                Text(t, color = if (x == aqui) Acento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
                     modifier = Modifier.let { if (i == 0) it.focoInicial() else it }.tocable { alIr(x) }.padding(vertical = 9.dp))
             }
         }
@@ -141,7 +141,7 @@ fun FilaDia(p: Partido, mios: Set<String>, rivales: Set<String>, alAbrir: () -> 
     val vivo = p.estado.enDirecto
     Row(Modifier.fillMaxWidth().tocable(onClick = alAbrir).semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.widthIn(min = 60.dp).padding(end = 8.dp)) {
-            Text(Dia.cuando(p), color = if (vivo) Acento else if (p.estado.terminado) Muted else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false)
+            Text(Dia.cuando(p), color = if (vivo) Acento else if (p.estado.terminado) Muted else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false)
             marcaDe(p)?.let { MarcaRival(if (it == "Rival") it else "Tu rival", Modifier.padding(top = 3.dp)) }
         }
         Column(Modifier.weight(1f)) {
@@ -210,14 +210,14 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, enPagina: Boolean
                         val c = x.s.competicion
                         Row(Modifier.weight(1f).let { m2 -> if (c != null) m2.tocable { alFicha(Ficha.DeCompeticion(c.slug)) } else m2 }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                             Antetitulo(x.s.titulo, Modifier.weight(1f, fill = false), color = if (c == null) Acento else Charcoal)
-                            if (c != null) Text(" →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                            if (c != null) Text(" →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                         }
-                        Text("${x.s.partidos.size} " + if (x.plegada) "▸" else "▾", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false,
+                        Text("${x.s.partidos.size} " + if (x.plegada) "▸" else "▾", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                             modifier = Modifier.semantics { contentDescription = if (x.plegada) "Desplegar ${x.s.titulo}" else "Plegar ${x.s.titulo}" }
                                 .tocable { plegadas = if (x.plegada) plegadas - x.s.clave else plegadas + x.s.clave }.padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 2.dp))
                     }
                     is FilaPortada.Uno -> Column {
-                        if (filas.getOrNull(k - 1) is FilaPortada.Titulo) Filete(2.dp)
+                        if (filas.getOrNull(k - 1) is FilaPortada.Titulo) Filete(1.dp, Line)
                         FilaDia(x.p, mios.toSet(), riv) { alFicha(Ficha.DePartido(x.p)) }
                         // (los tuyos, con sus canales a un toque)
                         if (x.tuyo && !x.p.estado.terminado && x.p.estado != Estado.CANCELADO) BotonesCanal(x.p, { alIr(Destino.AjustesFutbol) }, Modifier.padding(start = 68.dp, top = 2.dp, bottom = 10.dp))
@@ -228,8 +228,8 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, enPagina: Boolean
             item {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     PieFuente()
-                    Text("Nut · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.padding(top = 16.dp))
-                    Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 2.dp))
+                    Text("Nut · hecho en casa", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 16.dp))
+                    Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
                     Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
                 }
             }
@@ -278,7 +278,7 @@ fun PantCompeticion(liga: String, alCerrar: () -> Unit, alFicha: (Ficha) -> Unit
             RevistaTopBar(alCerrar, "Volver")
             Antetitulo(if (Competiciones.esDeSelecciones(liga)) "Selecciones" else "Competición", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
             FitTitle(c.nombre, 46.sp, 50.sp, letterSpacing = (-1.2).sp, modifier = Modifier.padding(top = 2.dp))
-            Filete(3.dp)
+            Filete(1.dp, Line)
             PestanasRevista(if (Competiciones.tieneTabla(liga)) listOf("Partidos", "Clasificación", "Goleadores") else listOf("Partidos", "Goleadores"), pestana) { pestana = it }
             Column(Modifier.widthIn(max = 900.dp)) {
                 val tabla = Competiciones.tieneTabla(liga)
@@ -342,7 +342,7 @@ fun PantEquipo(e: Equipo, liga: String, alCerrar: () -> Unit, alFicha: (Ficha) -
                     Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                         EscudoConPaspartu(e, if (esAncha()) 140.dp else 112.dp)
                         Column(Modifier.weight(1f).padding(start = 16.dp)) {
-                            Text((if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(suLiga).nombre).uppercase(), color = blanco, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 2)
+                            Text((if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(suLiga).nombre), color = blanco, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 2)
                             if (puesto != null) EtiquetaBloque("${puesto}º en la tabla", Modifier.padding(top = 8.dp))
                         }
                     }
@@ -390,7 +390,7 @@ fun Plantilla(e: Equipo, liga: String) {
         Antetitulo(t, Modifier.padding(top = 18.dp, bottom = 4.dp)); Filete(1.dp)
         js.forEach { j ->
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(j.dorsal, color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 34.dp))
+                Text(j.dorsal, color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 34.dp))
                 Text(j.nombre, color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             }
             Filete(1.dp, Line)

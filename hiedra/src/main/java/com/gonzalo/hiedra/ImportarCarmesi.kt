@@ -262,15 +262,15 @@ fun SeccionImportarCarmesi() {
                 .onFailure { estado = it.message ?: "No he podido leer tu cuenta." }
         }
     }
-    if (estado.isNotBlank()) Text(estado, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
+    if (estado.isNotBlank()) Text(estado, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
     hallados?.let { h ->
         val l = h.candidatos
         val n = { e: Estado -> l.count { it.juego.estado == e } }
         val yaEstan = l.count { ImportarCarmesi.existente(it) != null }
         val conRom = l.count { it.juego.rom != null }
         AlertDialog(
-            onDismissRequest = { hallados = null }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("${l.size} juegos en Carmesí", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            onDismissRequest = { hallados = null }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            title = { Text("${l.size} juegos en Carmesí", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     "${n(Estado.JUGANDO)} jugando, ${n(Estado.PENDIENTE)} pendientes, ${n(Estado.PASADO)} pasados, ${n(Estado.ABANDONADO)} abandonados" +

@@ -57,6 +57,7 @@ val media3 = "1.9.4"
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
     implementation(project(":familia"))
+    implementation(project(":mesa"))
     // El motor de torrents de la familia (libtorrent4j): ver un torrent mientras se baja
     implementation(project(":torrent"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))

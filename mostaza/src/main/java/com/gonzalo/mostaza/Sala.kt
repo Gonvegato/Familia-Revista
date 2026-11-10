@@ -278,14 +278,14 @@ private fun BarraSala(est: EstadoSala, ctl: ControlSala) {
     LaunchedEffect(Unit) { while (true) { delay(1000L * (60 - (System.currentTimeMillis() / 1000L % 60)).coerceAtLeast(1)); hora = Date() } }
     Column(Modifier.fillMaxWidth().padding(top = MARGEN_V - 20.dp)) {
         Row(Modifier.fillMaxWidth().height(96.dp).padding(horizontal = MARGEN_H).focusGroup(), verticalAlignment = Alignment.CenterVertically) {
-            Text("HATHOR", color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, letterSpacing = 3.sp, maxLines = 1)
+            Text("Hathor", color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 40.sp, maxLines = 1)
             Spacer(Modifier.width(48.dp))
             SeccionSala.entries.forEach { s ->
                 val on = s == est.seccion
                 val ancho by animateFloatAsState(if (on) 1f else 0f, spring(dampingRatio = 0.7f), label = "pestaña")
                 Column(Modifier.padding(horizontal = 6.dp).enfocable("tab:${s.name}", radio = 8.dp, crece = 1.05f) { ctl.seccion(s) }.padding(horizontal = 14.dp, vertical = 8.dp)
                     .width(IntrinsicSize.Max), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(s.nombre.uppercase(), color = if (on) tinta.tinta else tinta.gris, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 19.sp, letterSpacing = 2.4.sp, maxLines = 1)
+                    Text(s.nombre, color = if (on) tinta.tinta else tinta.gris, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 1)
                     Spacer(Modifier.height(8.dp))
                     Box(Modifier.height(4.dp).fillMaxWidth(ancho).background(tinta.acento))
                 }
@@ -294,7 +294,7 @@ private fun BarraSala(est: EstadoSala, ctl: ControlSala) {
             Row(Modifier.enfocable("tab:menu", radio = 8.dp, crece = 1.05f) { ctl.abreMenu() }.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("☰", color = tinta.tinta, fontSize = 24.sp, fontFamily = Body)
                 Spacer(Modifier.width(10.dp))
-                Text("MENÚ", color = tinta.tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 17.sp, letterSpacing = 2.sp)
+                Text("Menú", color = tinta.tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
             }
             Spacer(Modifier.width(30.dp))
             Text(SimpleDateFormat("HH:mm", Locale("es", "ES")).format(hora), color = tinta.tinta, fontFamily = Display, fontSize = 38.sp, fontWeight = FontWeight.SemiBold)
@@ -384,7 +384,7 @@ fun CartaSala(b: MetaBreve, id: String, est: EstadoSala, ctl: ControlSala, sub: 
         Spacer(Modifier.height(22.dp))
         Text(b.nombre, color = if (enfocada) tinta.tinta else tinta.tinta.copy(alpha = 0.86f), fontFamily = Display, fontSize = 19.sp, lineHeight = 22.sp,
             fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Text(sub.uppercase(), color = tinta.gris, fontFamily = Body, fontSize = 12.sp, letterSpacing = 1.3.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(sub, color = tinta.gris, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -442,13 +442,13 @@ private fun Cartel(b: MetaBreve?, modifier: Modifier) {
             if (x == null) return@AnimatedContent
             val t = Biblioteca.por(x.id)
             Column(Modifier.fillMaxWidth(0.62f).padding(bottom = 24.dp)) {
-                Text(listOfNotNull(tipoNombre(x.tipo), x.ano.ifBlank { null }, t?.estado?.nombre?.let { "En $it" }).joinToString("  ·  ").uppercase(),
+                Text(listOfNotNull(tipoNombre(x.tipo), x.ano.ifBlank { null }, t?.estado?.nombre?.let { "En $it" }).joinToString("  ·  "),
                     color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 17.sp, letterSpacing = 3.sp, maxLines = 1)
                 Spacer(Modifier.height(8.dp))
                 FitTitle(x.nombre, 80.sp, 84.sp, color = tinta.tinta, letterSpacing = (-1.5).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, minSize = 40f)
                 Spacer(Modifier.height(8.dp))
                 val linea = listOfNotNull(t?.takeIf { it.estado == Estado.VIENDO }?.let { seguirTexto(it) }?.ifBlank { null }, x.generos.take(3).joinToString(", ").ifBlank { null }, x.nota.ifBlank { null }?.let { "★ $it" })
-                if (linea.isNotEmpty()) Text(linea.joinToString("  ·  "), color = tinta.tinta.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (linea.isNotEmpty()) Text(linea.joinToString("  ·  "), color = tinta.tinta.copy(alpha = 0.8f), fontFamily = Body, fontSize = 24.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (x.descripcion.isNotBlank()) Text(x.descripcion, color = tinta.tinta.copy(alpha = 0.72f), fontFamily = Body, fontSize = 18.sp, lineHeight = 26.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
             }
         }
@@ -474,7 +474,7 @@ private fun PanelConfirmar(c: Confirmacion, ctl: ControlSala) {
     val tinta = LocalTinta.current
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
         Column(Modifier.width(900.dp).clip(formaSala(18.dp)).background(tinta.fondo).padding(56.dp)) {
-            Text(c.titulo, color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp)
+            Text(c.titulo, color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp)
             Spacer(Modifier.height(16.dp))
             Text(c.texto, color = tinta.gris, fontFamily = Body, fontSize = 21.sp, lineHeight = 31.sp)
             Spacer(Modifier.height(36.dp))

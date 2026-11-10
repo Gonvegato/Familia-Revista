@@ -96,16 +96,16 @@ val AtrioBody = FontFamily(
     Font(R.font.body_bold, FontWeight.ExtraBold)
 )
 
-/** Letra de títulos: la de la edición de la revista (Ediciones.kt). */
-val Display: FontFamily get() = if (Skin.revista) (Skin.letraTitulos.takeIf { it.isNotEmpty() }?.let { Skin.family(it) } ?: Ediciones.actual.titulos) else Skin.family(Skin.display) ?: AtrioDisplay
+/** Letra de títulos: Bricolage (dirección D). */
+val Display: FontFamily get() = Ediciones.actual.titulos
 
-/** Letra del texto: la de la edición. */
-val Body: FontFamily get() = if (Skin.revista) (Skin.letraTexto.takeIf { it.isNotEmpty() }?.let { Skin.family(it) } ?: Ediciones.actual.texto) else Skin.family(Skin.body) ?: AtrioBody
+/** Letra del texto: Inter. */
+val Body: FontFamily get() = Ediciones.actual.texto
 
 private val base = Typography()
 
 private fun TextStyle.body() = copy(fontFamily = Body)
-private fun TextStyle.display() = copy(fontFamily = Display, fontWeight = FontWeight.Normal)
+private fun TextStyle.display() = copy(fontFamily = Display, fontWeight = FontWeight.Bold)
 
 val AppTypography: Typography get() = Typography(
     displayLarge = base.displayLarge.display(),
@@ -136,5 +136,17 @@ fun hoursText(minutes: Int): String {
         h > 0 -> "$h h"
         m > 0 -> "$m min"
         else -> "0 h"
+    }
+}
+
+// ───── dirección D (la mesa y la estantería) ─────
+/** Los colores y las letras de Jonsu para lo de [com.gonzalo.mesa]. */
+fun tintaMesa() = com.gonzalo.mesa.Tinta(fondo = Paper, superficie = Crudo, tinta = Charcoal, apagado = Muted, linea = Line, chip = Sand, acento = Acento, sobreAcento = SobreAcento, titulos = Grotesca, texto = Body)
+
+/** El tema de Jonsu: los colores de Material, las letras y la tinta de la mesa. (Lo usan la actividad y las pruebas.) */
+@androidx.compose.runtime.Composable
+fun TemaJonsu(content: @androidx.compose.runtime.Composable () -> Unit) {
+    androidx.compose.material3.MaterialTheme(colorScheme = appColors(), typography = AppTypography) {
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Charcoal) { com.gonzalo.mesa.ConTinta(tintaMesa(), content) }
     }
 }

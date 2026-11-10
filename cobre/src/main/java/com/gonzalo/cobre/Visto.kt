@@ -133,14 +133,14 @@ fun SemanaTocable(d: SemanaVista, modifier: Modifier = Modifier, alto: Int = 74)
                         .background(if (sel) Acento else if (m >= 1) Charcoal else Line)
                         .then(if (sel) Modifier.border(2.dp, Charcoal) else Modifier))
                     if (sel) {
-                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, maxLines = 1, softWrap = false,
+                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                             modifier = Modifier.align(when (i) { 0 -> Alignment.BottomStart; d.semana.lastIndex -> Alignment.BottomEnd; else -> Alignment.BottomCenter })
                                 .offset(y = (-(alto + 6)).dp)
                                 .wrapContentWidth(align = when (i) { 0 -> Alignment.Start; d.semana.lastIndex -> Alignment.End; else -> Alignment.CenterHorizontally }, unbounded = true)
                                 .background(Charcoal).padding(horizontal = 7.dp, vertical = 4.dp))
                     }
                 }
-                Text(letra, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (dia == hoy) Acento else Muted,
+                Text(letra, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (dia == hoy) Acento else Muted,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
             }
         }

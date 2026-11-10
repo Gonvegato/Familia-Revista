@@ -155,13 +155,13 @@ fun PortadaObra(o: Doc, modifier: Modifier = Modifier, conTitulo: Boolean = true
                 val chica = ancho < 110.dp
                 Column(Modifier.fillMaxSize().padding(horizontal = ancho * (if (chica) 0.12f else 0.15f), vertical = ancho * 0.16f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        Text(titulo, color = PAPEL_CLARO, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = sp(if (chica) 0.14f else 0.115f), lineHeight = sp(if (chica) 0.165f else 0.135f),
+                        Text(titulo, color = PAPEL_CLARO, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = sp(if (chica) 0.14f else 0.115f), lineHeight = sp(if (chica) 0.165f else 0.135f),
                             textAlign = TextAlign.Center, maxLines = 5, overflow = TextOverflow.Ellipsis)
                     }
                     val autor = o.s("autor")
                     if (autor.isNotBlank() && conAutor && !chica) {
                         Box(Modifier.padding(vertical = ancho * 0.03f).width(ancho * 0.12f).height(1.dp).background(PAPEL_CLARO.copy(alpha = 0.55f)))
-                        Text(autor.uppercase(), color = PAPEL_CLARO.copy(alpha = 0.78f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = sp(0.052f), letterSpacing = sp(0.006f),
+                        Text(autor, color = PAPEL_CLARO.copy(alpha = 0.78f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = sp(0.052f), letterSpacing = sp(0.006f),
                             textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
@@ -208,7 +208,7 @@ fun luminancia(c: Color): Float = 0.2126f * c.red + 0.7152f * c.green + 0.0722f 
 /** Un botón recto con marco de 2 px (los de la dirección C que no son la acción principal). */
 @Composable
 fun BotonMarco(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Text(texto.uppercase(), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.8.sp, maxLines = 1,
+    Text(texto, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1,
         modifier = modifier.border(2.dp, Charcoal).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 9.dp))
 }
 
@@ -266,11 +266,11 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit) {
         }
         PestanasRevista(listOf("La portada", "El fondo"), if (esFondo) 1 else 0) { esFondo = it == 1 }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            Text("AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+            Text("Ahora", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (esFondo) {
                 Box(Modifier.fillMaxWidth().aspectRatio(3f).clipToBounds().background(lerpColor(telaDe(o), Color.Black, 0.4f)).clickable { galeria.launch("image/*") }, contentAlignment = Alignment.Center) {
                     if (rutaFondo.isNotBlank()) ImagenEncuadrada(rutaFondo, ImagenesObra.encFondo(ctx, o), Modifier.fillMaxSize(), "Fondo de $titulo")
-                    else Text("Sin fondo", color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                    else Text("Sin fondo", color = PAPEL_CLARO.copy(alpha = 0.8f), fontFamily = Body, fontSize = 16.sp)
                 }
             } else {
                 PortadaObra(o, Modifier.width(150.dp).height(225.dp).clickable { galeria.launch("image/*") })
@@ -284,7 +284,7 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit) {
                 }
                 if (if (esFondo) ImagenesObra.hashFondo(o).isNotBlank() else ImagenesObra.hashPortada(o).isNotBlank()) BotonMarco("Quitar") { ImagenesObra.quitar(e, id, esFondo) }
             }
-            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
+            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
             Text(if (esFondo) "Se recorta a lo ancho: con «Encuadrar» eliges qué parte se ve. Sin fondo, se usa el color de la portada. Sale en «Ahora escribes» de la portada y arriba en la ficha."
                 else "Sin portada, la obra lleva una tapa de su color con el título. La imagen va a tu cuenta y sale igual en tus otros dispositivos; el encuadre es de cada uno.",
                 color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 14.dp, bottom = 24.dp))

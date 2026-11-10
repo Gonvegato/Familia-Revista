@@ -59,7 +59,7 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}, pestanaInicial: 
             }
         }
         Spacer(Modifier.height(26.dp))
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Hathor $VERSION")
         Text("Hathor es hermana de Jonsu, Bastet, Seshat y Thot. Habla el protocolo abierto de los addons de Stremio; reproduce con AndroidX Media3 (Apache 2.0). " + Tmdb.AVISO_TMDB,
@@ -74,15 +74,15 @@ fun PantEstilo(alVolver: () -> Unit, alAddons: () -> Unit = {}, pestanaInicial: 
 fun CampoRevista(etiqueta: String, valor: String, pista: String, secreto: Boolean = false, alCambiar: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
-            Text(etiqueta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
+            Text(etiqueta, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
             Box(Modifier.weight(1f)) {
-                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
+                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Body, fontSize = 18.sp)
                 BasicTextField(valor, alCambiar, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp),
                     cursorBrush = SolidColor(Acento), visualTransformation = if (secreto) PasswordVisualTransformation() else VisualTransformation.None,
                     keyboardOptions = KeyboardOptions(keyboardType = if (secreto) KeyboardType.Password else KeyboardType.Uri, autoCorrect = false), modifier = Modifier.fillMaxWidth())
             }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
     }
 }
 
@@ -100,11 +100,11 @@ private fun SeccionReproductor() {
     val tams = listOf(75, 100, 125, 150, 200)
     MagChoice(tams.map { "$it %" }, tams.indexOf(AjustesReproductor.subTam(ctx)).coerceAtLeast(1), "Tamaño") { i -> cambia { AjustesReproductor.ponSubTam(ctx, tams[i]) } }
     Fila("Sobre una banda oscura", "Si no, letra blanca con borde.") { Interruptor(AjustesReproductor.subFondo(ctx)) { x -> cambia { AjustesReproductor.ponSubFondo(ctx, x) } } }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Audio", Modifier.padding(bottom = 4.dp))
     val audios = listOf("spa" to "Español", "eng" to "Inglés", "" to "El original")
     MagChoice(audios.map { it.second }, audios.indexOfFirst { it.first == AjustesReproductor.audio(ctx) }.coerceAtLeast(0), "Si la fuente trae varios") { i -> cambia { AjustesReproductor.ponAudio(ctx, audios[i].first) } }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Mientras ves", Modifier.padding(bottom = 4.dp))
     Fila("El episodio siguiente, solo", "Al terminar uno, el siguiente empieza en 8 segundos (con la fuente de la misma clase).") { Interruptor(AjustesReproductor.siguiente(ctx)) { x -> cambia { AjustesReproductor.ponSiguiente(ctx, x) } } }
     val saltos = listOf(5, 10, 15, 30)
@@ -132,7 +132,7 @@ private fun SeccionFuentes(alAddons: () -> Unit) {
     orden.forEachIndexed { i, id ->
         val on = id in p.idiomas
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (on) "${p.idiomas.indexOf(id) + 1}" else "·", color = if (on) Acento else Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(32.dp))
+            Text(if (on) "${p.idiomas.indexOf(id) + 1}" else "·", color = if (on) Acento else Muted, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(32.dp))
             Text(PrefsElector.nombre(id), color = if (on) Charcoal else Muted, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(1f))
             if (on && p.idiomas.indexOf(id) > 0) EnlaceRevista("↑") { val l = p.idiomas.toMutableList(); val k = l.indexOf(id); l.removeAt(k); l.add(k - 1, id); pon(p.copy(idiomas = l)) }
             Spacer(Modifier.width(10.dp))
@@ -145,7 +145,7 @@ private fun SeccionFuentes(alAddons: () -> Unit) {
     MagChoice(maximas.map { it.second }, maximas.indexOfFirst { it.first == p.maxima }.coerceAtLeast(0), "Calidad máxima") { i -> pon(p.copy(maxima = maximas[i].first)) }
     Fila("Directas antes que torrents", "Las de tu debrid (o un enlace directo) se ponen al momento.") { Interruptor(p.directasPrimero) { pon(p.copy(directasPrimero = it)) } }
     Fila("Ahorrar datos del móvil", "Con datos (no con wifi): como mucho 720p, y lo que menos pese.") { Interruptor(p.ahorroDatos) { pon(p.copy(ahorroDatos = it)) } }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Tu conexión, aquí", Modifier.padding(bottom = 4.dp))
     val red = remember { Conexion.red(ctx) }
     val cap = remember { Conexion.capacidades(ctx) }
@@ -153,7 +153,7 @@ private fun SeccionFuentes(alAddons: () -> Unit) {
     MagFact(if (red.medida) "Medido al ver" else "Lo que estima Android", if (red.kbps > 0) String.format(java.util.Locale("es", "ES"), "%.1f Mbit/s", red.kbps / 1000.0) else "aún no se sabe")
     MagFact("Este dispositivo", listOfNotNull("hasta ${Analisis.etiquetaResolucion(cap.maxima)}", if (cap.hevc) "HEVC" else null, if (cap.av1) "AV1" else null, if (cap.hdr) "HDR" else null, if (cap.dv) "Dolby Vision" else null).joinToString(" · "))
     Text("Lo de la conexión es de este dispositivo (no viaja): se mide al ver, por wifi y por datos aparte, y baja en cuanto algo se corta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Torrents", Modifier.padding(bottom = 4.dp))
     Text(if (Torrents.disponible) "Con el motor de torrents de la familia." else "El motor de torrents no se ha podido poner en marcha en este dispositivo: se ven las fuentes directas o de tu debrid. Lo que elijas aquí viaja con tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     var t by remember { mutableStateOf(AjustesTorrents.ajustes(ctx)) }
@@ -166,7 +166,7 @@ private fun SeccionFuentes(alAddons: () -> Unit) {
     MagChoice(bajadas.map { it.second }, bajadas.indexOfFirst { it.first == t.bajadaKBs }.coerceAtLeast(0), "Bajada") { i -> ponT(t.copy(bajadaKBs = bajadas[i].first)) }
     val caches = listOf(1024 to "1 GB", 4096 to "4 GB", 8192 to "8 GB", 16384 to "16 GB")
     MagChoice(caches.map { it.second }, caches.indexOfFirst { it.first == t.cacheMB }.coerceAtLeast(1), "Lo que puede ocupar aquí (de este dispositivo)") { i -> ponT(t.copy(cacheMB = caches[i].first)) }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp)
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line)
     MagLink("Tus addons", "Instalar, ordenar, configurar o quitar", accent = true) { alAddons() }
 }
 
@@ -197,7 +197,7 @@ private fun SeccionCuenta() {
         }
     } else {
         Etiqueta("Dentro como", Modifier.padding(top = 8.dp))
-        Text(Cuenta.usuario, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+        Text(Cuenta.usuario, color = Charcoal, fontFamily = Body, fontSize = 22.sp)
         val cuando = SincroP.ultima.takeIf { it > 0 }?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it)) }
         Text(listOfNotNull(SincroP.estado.ifBlank { "Sin sincronizar todavía" }, cuando?.let { "última vez $it" }).joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
         Spacer(Modifier.height(6.dp))
@@ -207,8 +207,8 @@ private fun SeccionCuenta() {
         Filete(1.dp, Line)
         MagLink("Salir de la cuenta", "Solo en Hathor y solo en este dispositivo") { Cuenta.salir() }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Las hermanas", Modifier.padding(bottom = 4.dp))
     Text("Jonsu valora lo que ves aquí (la nota y la reseña van en la misma ficha de tu cuenta). Lo que tenía Jonsu de películas y series ya es de Hathor.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     Hermanas.TODAS.forEach { (n, p) -> if (Hermanas.instalada(ctx, p)) MagLink("Abrir $n") { Hermanas.abre(ctx, p) } }
@@ -219,14 +219,14 @@ private fun SeccionAvanzado() {
     val ctx = LocalContext.current
     Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
     SeccionActualizaciones()
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Reto del año", Modifier.padding(bottom = 4.dp))
     var reto by remember { mutableIntStateOf(RetoCine.meta(ctx)) }
     val retos = remember { (listOf(0, 12, 24, 36, 50, 75, 100, 150) + RetoCine.meta(ctx)).distinct().sorted() }
     MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Películas y series terminadas al año") { i -> reto = retos[i]; RetoCine.poner(ctx, reto) }
     Text("Una película vista cuenta 1; una serie, 1 cuando la terminas (todos sus capítulos estrenados vistos). Va con tu cuenta: sale igual en tus otros Hathor.",
         color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("La portada", Modifier.padding(bottom = 4.dp))
     var cuantas by remember { mutableIntStateOf(AjustesPortada.cuantas(ctx)) }
     val ops = listOf(0, 2, 4, 6, 8, 12)
@@ -234,7 +234,7 @@ private fun SeccionAvanzado() {
     Text("Las primeras de tus addons, en su orden.", color = Muted, fontFamily = Body, fontSize = 12.sp)
     // La sala (la cara de la tele) también en una tablet: en una tele sale siempre, así que allí no se ofrece
     if (!Sala.esTele(ctx)) {
-        Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
         Antetitulo("La sala", Modifier.padding(bottom = 4.dp))
         Fila("Modo sala", "Hathor como en la tele: a pantalla completa, con portadas grandes y todo con la cruceta de un mando. Para una tablet con un mando o conectada a la tele. Solo en este dispositivo; se sale desde su menú.") {
             Interruptor(Sala.enTablet) { Sala.ponEnTablet(ctx, it) }
@@ -280,7 +280,7 @@ private fun SeccionActualizaciones() {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** Si hay una versión nueva ya bajada que Android no deja instalar en silencio, se pregunta (o se lleva al ajuste de «instalar apps»). */
@@ -291,13 +291,13 @@ fun AvisoActualizacion() {
     var luego by remember(n.nombre) { mutableStateOf(false) }
     if (luego) return
     AlertDialog(
-        onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Hathor tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { luego = true }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Hathor tiene una versión nueva", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Hathor instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
-        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ luego = true }) { Text("LUEGO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ luego = true }) { Text("Luego", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }

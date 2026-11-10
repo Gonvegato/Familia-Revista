@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 private fun Seccion(titulo: String) {
-    Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(18.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo(titulo, Modifier.padding(bottom = 4.dp))
 }
 
@@ -64,10 +64,10 @@ fun SeccionApariencia() {
                 Column(Modifier.weight(1f).tocable { if (!on) { Skin.fondoId = f?.id ?: ""; Skin.fondoPropio = 0L; propio(); guarda() } }, horizontalAlignment = Alignment.CenterHorizontally) {
                     val papel = f?.tones?.cPaper ?: Color(if (Modo.eleccion == 1) 0xFFF3EEE4 else 0xFF141210)
                     Box(Modifier.fillMaxWidth().aspectRatio(1f).background(papel).border(if (on) 3.dp else 1.dp, if (on) Acento else Line), contentAlignment = Alignment.Center) {
-                        Text("Aa", color = f?.tones?.cInk ?: Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                        Text("Aa", color = f?.tones?.cInk ?: Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                         if (on) Text("✓", color = f?.tones?.cInk ?: Charcoal, fontWeight = FontWeight.Black, fontSize = 13.sp, modifier = Modifier.align(Alignment.TopEnd).padding(6.dp))
                     }
-                    Text((f?.name ?: "Papel").uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, lineHeight = 12.sp,
+                    Text((f?.name ?: "Papel"), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, lineHeight = 18.sp,
                         textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp), maxLines = 2)
                 }
             }
@@ -82,7 +82,7 @@ fun SeccionApariencia() {
             val on = Skin.escala == pct
             Column(Modifier.weight(1f).tocable { if (!on) { Skin.escala = pct; guarda() } }.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Aa", fontFamily = Display, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = (22f * pct / 100f / (Skin.escala / 100f)).sp, color = if (on) Charcoal else Muted)
-                Text(nombre.uppercase(), color = if (on) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+                Text(nombre, color = if (on) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
             }
         }
     }
@@ -100,7 +100,7 @@ fun SeccionApariencia() {
                     Box(Modifier.fillMaxWidth().aspectRatio(1f).background(c).then(if (on) Modifier.border(3.dp, Charcoal) else Modifier), contentAlignment = Alignment.Center) {
                         if (on) Text("✓", color = if (a.id == "tinta") Paper else Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
                     }
-                    Text(a.name.uppercase(), color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 6.dp), maxLines = 1)
+                    Text(a.name, color = if (on) Charcoal else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp), maxLines = 1)
                 }
             }
             repeat(4 - fila.size) { Spacer(Modifier.weight(1f)) }
@@ -153,7 +153,7 @@ private fun SeccionCopiar() {
     var marcadas by remember { mutableStateOf(setOf<String>()) }
     Text("Jonsu sube su apariencia a tu cuenta. Aquí la lees y copias solo lo que quieras (no se cambia nada en Jonsu).", color = Muted, fontFamily = Body, fontSize = 13.sp)
     if (!Cuenta.vinculada) {
-        Text("Primero vincula tu cuenta de Atrio (en «Cuenta de Atrio», más abajo).", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
+        Text("Primero vincula tu cuenta de Atrio (en «Cuenta de Atrio», más abajo).", color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
         return
     }
     MagLink(if (leyendo) "Leyendo…" else "Leer lo que tiene mi Jonsu", accent = true) {
@@ -177,7 +177,7 @@ private fun SeccionCopiar() {
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(f.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp)
-                    Text(f.valor.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(f.valor, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Filete(1.dp, Line)
@@ -186,7 +186,7 @@ private fun SeccionCopiar() {
             if (marcadas.isNotEmpty()) { CopiaAtrio.aplicar(ctx, a, marcadas); aviso = "Copiado a Bastet." }
         }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** Una letra elegida a mano: su nombre escrito en ella; al tocarla, la lista de letras (cada una en sí misma). */
@@ -196,15 +196,15 @@ fun SelectorLetra(nombre: String, valor: String, opciones: List<String>, onCambi
     Row(Modifier.fillMaxWidth().tocable { abierto = true }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("Aa", fontFamily = valor.takeIf { it.isNotBlank() }?.let { Skin.family(it) } ?: Display, fontSize = 28.sp, color = Charcoal, modifier = Modifier.width(50.dp))
         Column(Modifier.weight(1f)) {
-            Text(nombre, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
+            Text(nombre, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
             Text(valor.ifEmpty { "La de Bastet" }, color = Muted, fontFamily = Body, fontSize = 12.sp)
         }
         if (valor.isNotEmpty()) EnlaceRevista("Quitar", Modifier.padding(end = 12.dp)) { onCambia("") }
         Text("▾", color = Muted, fontSize = 16.sp)
     }
     if (abierto) AlertDialog(
-        onDismissRequest = { abierto = false }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { abierto = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text(nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             LazyColumn(Modifier.heightIn(max = 460.dp)) {
                 item {
@@ -217,6 +217,6 @@ fun SelectorLetra(nombre: String, valor: String, opciones: List<String>, onCambi
                 }
             }
         },
-        confirmButton = { TextButton({ abierto = false }) { Text("CERRAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        confirmButton = { TextButton({ abierto = false }) { Text("Cerrar", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }

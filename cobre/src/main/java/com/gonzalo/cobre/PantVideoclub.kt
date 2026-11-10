@@ -162,7 +162,7 @@ fun PantFichaSerie(l: Lista, s: Serie, alCerrar: () -> Unit) {
                 f.episodios[temp].orEmpty().forEach { e ->
                     val p = progresos[e.id]
                     Row(Modifier.fillMaxWidth().tocable { Reproducir.pon(ctx, Encargo.DeEpisodio(l, serie, f, e)) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("${e.numero}", color = if (p?.visto == true) Muted else Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(44.dp))
+                        Text("${e.numero}", color = if (p?.visto == true) Muted else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(44.dp))
                         Column(Modifier.weight(1f)) {
                             Text(tituloEpisodio(e, serie.nombre), color = if (p?.visto == true) Muted else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             val sub = listOfNotNull(e.duracionSeg.takeIf { it > 0 }?.let { duracion((it / 60).toInt()) }, if (p?.visto == true) "visto" else p?.takeIf { it.pos > 0 }?.let { "vas por ${tiempo(it.pos)}" })
@@ -187,7 +187,7 @@ private fun PaginaFicha(alCerrar: () -> Unit, poster: String, fondo: String, ant
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = m)) {
             RevistaTopBar(alCerrar, "Volver")
             RevistaHeadline(titulo, ante)
-            Filete(3.dp)
+            Filete(1.dp, Line)
             Spacer(Modifier.height(16.dp))
             if (esAncha()) Row(Modifier.fillMaxWidth()) {
                 Poster(poster, titulo, Modifier.width(260.dp))

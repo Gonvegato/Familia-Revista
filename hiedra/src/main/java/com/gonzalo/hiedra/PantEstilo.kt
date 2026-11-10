@@ -76,19 +76,19 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}, pestanaInicial
                 MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Juegos terminados al año") { i -> reto = retos[i]; RetoJuegos.poner(ctx, reto) }
                 Text("Cuentan los que pasas a «Pasados» este año. Sale en la portada (cómo vas) y viaja con tu cuenta a tus otros Bastet.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 6.dp))
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Sistemas", Modifier.padding(bottom = 4.dp))
                 MagLink("Sistemas y emuladores", "Las ${Nucleos.principales.size} consolas que juega Bastet, el emulador de cada una, sus BIOS y las carpetas de ROMs", onClick = alSistemas)
                 Spacer(Modifier.height(26.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Portadas", Modifier.padding(bottom = 4.dp))
                 Fila("Portadas automáticas", "Busca la caja de cada ROM en thumbnails.libretro.com (se envía el nombre del archivo). Si lo desactivas no sale nada a internet. Jonsu enseña esa misma caja mientras no pongas otra portada.") {
                     Interruptor(Ajustes.portadasLibretro) { Ajustes.portadasLibretro = it; Ajustes.guardar(ctx) }
                 }
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Tiempo de juego", Modifier.padding(bottom = 4.dp))
                 var uso by remember { mutableStateOf(Uso.permitido(ctx)) }
@@ -100,7 +100,7 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}, pestanaInicial
                 MagLink(if (uso) "Tiempo exacto: activado" else "Tiempo exacto: dar permiso",
                     if (uso) "Bastet mira cuánto estuvo delante el emulador o el juego (permiso «acceso al uso» de Android). Lo demás no se mira. Al dejar de jugar, las horas se apuntan y suben solas, aunque no vuelvas a Bastet." else "Sin él, se cuenta todo el rato desde que abres el juego hasta que vuelves a Bastet (como mucho 12 horas). Con el permiso «acceso al uso» de Android se cuenta solo lo que el emulador o el juego estuvo delante.") { Uso.pedir(ctx) }
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Pantalla de inicio", Modifier.padding(bottom = 4.dp))
                 Fila("Usar Bastet como launcher", if (inicio) "Bastet ya puede elegirse como pantalla de inicio del móvil." else "Permite elegir Bastet como pantalla de inicio (Android te lo pregunta).") {
@@ -111,7 +111,7 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}, pestanaInicial
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Tu PC", Modifier.padding(bottom = 4.dp))
                 var galeria by remember { mutableStateOf(Suite.aGaleria()) }
@@ -127,7 +127,7 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}, pestanaInicial
                 Filete(1.dp, Line)
                 SeccionImportarAtrio()
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Servicios", Modifier.padding(bottom = 4.dp))
                 SeccionServicios()
@@ -136,18 +136,18 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}, pestanaInicial
                 Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
                 SeccionActualizaciones()
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Copias", Modifier.padding(bottom = 4.dp))
                 MagLink("Guardar copia de la biblioteca", "Un archivo con tus juegos y carpetas (no incluye las ROMs)") { exportar.launch("hiedra-biblioteca.json") }
                 Filete(1.dp, Line)
                 MagLink("Importar copia", "Suma los juegos de una copia a los que ya tienes") { importar.launch(arrayOf("application/json", "*/*")) }
-                mensaje?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+                mensaje?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
             }
         }
 
         Spacer(Modifier.height(26.dp))
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Bastet $VERSION")
         Text("Bastet es hermana de Jonsu, Seshat y Thot. Los comandos para abrir emuladores salen de ES-DE Frontend (licencia MIT, © Northwestern Software AB, Leon Styhre y Alec Lofquist). Las portadas, de libretro. El jugador interno usa LibretroDroid y RadialGamePad (GPL-3.0, Filippo Scognamiglio) y los núcleos de libretro (mGBA, Gambatte, FCEUmm, Snes9x, Genesis Plus GX, Beetle, Handy, Stella, ProSystem, FinalBurn Neo, Mupen64Plus-Next, PCSX ReARMed, PPSSPP y melonDS, cada uno con su licencia), que no van dentro de la app: se descargan del buildbot de libretro, como en RetroArch. Las consolas y sus mandos son los de Lemuroid. Por eso Bastet es software libre (GPL-3.0).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
@@ -162,15 +162,15 @@ fun PantEstilo(alVolver: () -> Unit, alSistemas: () -> Unit = {}, pestanaInicial
 fun CampoRevista(etiqueta: String, valor: String, pista: String, secreto: Boolean = false, alCambiar: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
-            Text(etiqueta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
+            Text(etiqueta, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
             Box(Modifier.weight(1f)) {
-                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
+                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Body, fontSize = 18.sp)
                 BasicTextField(valor, alCambiar, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp),
                     cursorBrush = SolidColor(Acento), visualTransformation = if (secreto) PasswordVisualTransformation() else VisualTransformation.None,
                     keyboardOptions = KeyboardOptions(keyboardType = if (secreto) KeyboardType.Password else KeyboardType.Text, autoCorrect = false), modifier = Modifier.fillMaxWidth())
             }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
     }
 }
 
@@ -200,7 +200,7 @@ private fun SeccionCuenta() {
         }
     } else {
         Etiqueta("Vinculada a", Modifier.padding(top = 8.dp))
-        Text(Cuenta.usuario, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+        Text(Cuenta.usuario, color = Charcoal, fontFamily = Body, fontSize = 22.sp)
         val cuando = SincroP.ultima.takeIf { it > 0 }?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it)) }
         Text(listOf(SincroP.estado.ifBlank { "Sin sincronizar todavía" }, cuando?.let { "última vez $it" }).filterNotNull().joinToString(" · "),
             color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
@@ -211,7 +211,7 @@ private fun SeccionCuenta() {
         Filete(1.dp, Line)
         MagLink("Salir de la cuenta", "Tus juegos se quedan aquí; dejan de sincronizarse") { SincroP.parar(); Cuenta.salir() }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 
@@ -296,7 +296,7 @@ private fun SeccionActualizaciones() {
         Filete(1.dp, Line)
         Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** Si hay una versión nueva ya bajada que Android no deja instalar en silencio, se pregunta (o se lleva al ajuste de «instalar apps»). */
@@ -307,13 +307,13 @@ fun AvisoActualizacion() {
     var luego by remember(n.nombre) { mutableStateOf(false) }
     if (luego) return
     AlertDialog(
-        onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Bastet tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { luego = true }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Bastet tiene una versión nueva", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Bastet instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { Lanzar.aviso(ctx, "No se pudo instalar: ${it.message}") }
-        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ luego = true }) { Text("LUEGO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ luego = true }) { Text("Luego", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }

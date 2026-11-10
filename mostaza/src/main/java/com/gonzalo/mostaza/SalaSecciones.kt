@@ -51,10 +51,10 @@ private fun CabeceraSala(ante: String, titulo: String, cuenta: String = "") {
     Column {
         AnteSala(ante, tam = 16.sp, color = tinta.acento)
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(titulo, color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, letterSpacing = (-1).sp, maxLines = 1)
+            Text(titulo, color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 64.sp, maxLines = 1)
             if (cuenta.isNotBlank()) {
                 Spacer(Modifier.width(22.dp))
-                Text(cuenta, color = tinta.gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 26.sp, modifier = Modifier.padding(bottom = 12.dp))
+                Text(cuenta, color = tinta.gris, fontFamily = Body, fontSize = 26.sp, modifier = Modifier.padding(bottom = 12.dp))
             }
         }
     }
@@ -66,7 +66,7 @@ private fun CabeceraSala(ante: String, titulo: String, cuenta: String = "") {
 private fun PastillasSala(etiqueta: String, ops: List<String>, sel: Int, prefijo: String, alElegir: (Int) -> Unit) {
     val tinta = LocalTinta.current
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (etiqueta.isNotBlank()) Text(etiqueta.uppercase(), color = tinta.gris, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 2.sp, modifier = Modifier.width(130.dp))
+        if (etiqueta.isNotBlank()) Text(etiqueta, color = tinta.gris, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.width(130.dp))
         CompositionLocalProvider(LocalBringIntoViewSpec provides remember { TraerAVista(200f) }) {
             LazyRow(Modifier.weight(1f).focusGroup(), contentPadding = PaddingValues(vertical = 10.dp, horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 itemsIndexed(ops) { i, n -> ChipSala(n, "$prefijo:$i", i == sel) { alElegir(i) } }
@@ -322,7 +322,7 @@ fun BuscarSala(est: EstadoSala, ctl: ControlSala) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     Box(Modifier.width(1000.dp).height(92.dp).enfocable("q:campo", radio = 12.dp, crece = 1.02f) { editando = true }.clip(formaSala(12.dp))
                         .background(tinta.tarjeta).padding(horizontal = 28.dp), contentAlignment = Alignment.CenterStart) {
-                        if (q.isEmpty() && !editando) Text("Una película o una serie…", color = tinta.gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 34.sp, maxLines = 1)
+                        if (q.isEmpty() && !editando) Text("Una película o una serie…", color = tinta.gris, fontFamily = Body, fontSize = 34.sp, maxLines = 1)
                         BasicTextField(q, { est.consulta = it.take(80) }, singleLine = true,
                             textStyle = TextStyle(color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp),
                             cursorBrush = SolidColor(tinta.acento), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),

@@ -134,7 +134,7 @@ private fun ResultadoSprint(s: Sprint, e: Escritos, onCerrar: () -> Unit) {
     val antes = remember(s) { SprintEscribir.historial(s.pid).filter { it.desde != s.desde } }
     val record = antes.isNotEmpty() && s.porMinuto > antes.maxOf { it.porMinuto }
     HojaEscribir("Sprint terminado", onCerrar) {
-        Text(cifraE(s.palabras), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 66.sp, color = Charcoal)
+        Text(cifraE(s.palabras), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 66.sp, color = Charcoal)
         Text(if (s.minutos >= 1) "PALABRAS EN ${s.minutos} MIN · ${s.porMinuto} POR MINUTO" else "PALABRAS EN MENOS DE UN MINUTO", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
         if (s.meta > 0) Text(if (s.palabras >= s.meta) "Meta de ${cifraE(s.meta)} conseguida." else "Te quedaste a ${cifraE(s.meta - s.palabras)} de la meta (${cifraE(s.meta)}).", fontFamily = Display, fontSize = 20.sp, color = Charcoal)
         if (record) Text("Es tu mejor ritmo en esta obra.", color = ColGeneral, fontSize = 15.sp, fontWeight = FontWeight.Bold)

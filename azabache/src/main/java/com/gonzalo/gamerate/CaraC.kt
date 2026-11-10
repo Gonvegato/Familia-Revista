@@ -45,10 +45,9 @@ import kotlin.math.roundToInt
  * pestañas en bloque. Aquí solo las piezas; las pantallas las usan.
  */
 
-/** Los colores de Jonsu de serie (los del icono): fondo, texto y acento. Se usan si no has elegido otros en Apariencia. */
-const val JONSU_FONDO = 0xFF1C1F22L
-const val JONSU_TINTA = 0xFFF1EBE0L
+/** El granate de Jonsu (el acento de serie, en claro y en oscuro). */
 const val JONSU_ACENTO = 0xFF8F3232L
+const val JONSU_ACENTO_NOCHE = 0xFFD46A6AL
 
 /** La grotesca de la dirección C: Bricolage Grotesque con el tamaño óptico de titular (48) y el ancho normal. */
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)

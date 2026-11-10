@@ -79,8 +79,8 @@ fun Destacado(b: MetaBreve, alAbrir: (MetaBreve) -> Unit) {
             AsyncImage(b.fondo.ifBlank { b.poster }, b.nombre, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Color.Black.copy(alpha = 0f), 1f to Color.Black.copy(alpha = 0.85f))))
             Column(Modifier.align(Alignment.BottomStart).padding(16.dp)) {
-                Text("DESTACADO · ${tipoNombre(b.tipo).uppercase()}", color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1)
-                Text(b.nombre, color = Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = if (ancha) 40.sp else 28.sp, lineHeight = if (ancha) 42.sp else 30.sp,
+                Text("DESTACADO · ${tipoNombre(b.tipo).uppercase()}", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(b.nombre, color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = if (ancha) 40.sp else 28.sp, lineHeight = if (ancha) 42.sp else 30.sp,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val datos = listOfNotNull(b.ano.ifBlank { null }, b.generos.take(2).joinToString(", ").ifBlank { null }, b.nota.ifBlank { null }?.let { "★ $it" })
                 if (datos.isNotEmpty()) Text(datos.joinToString(" · "), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -101,7 +101,7 @@ fun DondeVer(p: List<Plataforma>) {
             else Text(x.nombre, color = Charcoal, fontFamily = Body, fontSize = 12.sp)
         }
     }
-    Text(p.take(6).joinToString(" · ") { it.nombre } + ". Datos de JustWatch.", color = Muted, fontFamily = Body, fontSize = 11.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 4.dp))
+    Text(p.take(6).joinToString(" · ") { it.nombre } + ". Datos de JustWatch.", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
 }
 
 /** El reparto, con sus fotos. */
@@ -115,8 +115,8 @@ fun RepartoFila(ps: List<Persona>) {
                 Box(Modifier.size(84.dp, 112.dp).clip(esquina(3.dp)).background(Line)) {
                     if (x.foto.isNotBlank()) AsyncImage(x.foto, x.nombre, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 }
-                Text(x.nombre, color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                if (x.papel.isNotBlank()) Text(x.papel, color = Muted, fontFamily = Body, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(x.nombre, color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                if (x.papel.isNotBlank()) Text(x.papel, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -161,7 +161,7 @@ fun PantExplorarTmdb(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
                 RevistaTopBar(alVolver, "Hathor")
                 Antetitulo("El catálogo", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
                 FitTitle("Explorar", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-                Filete(3.dp)
+                Filete(1.dp, Line)
                 PestanasRevista(listOf("Películas", "Series"), if (tv) 1 else 0) { i -> tv = i == 1; genero = 0L }
                 Spacer(Modifier.height(6.dp))
                 Etiqueta("Orden", Modifier.padding(top = 4.dp))
@@ -231,5 +231,5 @@ fun SeccionCatalogo() {
     }
     aviso?.let { Nota(it, Modifier.padding(top = 8.dp)) }
     Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(8.dp))
-    Text(Tmdb.AVISO_TMDB + " Lo de dónde ver cada cosa es de JustWatch.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, lineHeight = 17.sp)
+    Text(Tmdb.AVISO_TMDB + " Lo de dónde ver cada cosa es de JustWatch.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
 }

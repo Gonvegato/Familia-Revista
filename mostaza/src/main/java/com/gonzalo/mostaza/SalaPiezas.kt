@@ -81,7 +81,7 @@ private fun TapaSala(nombre: String) {
     val base = Color.hsv(h.toFloat(), 0.38f, if (tinta.oscura) 0.36f else 0.78f)
     val claro = lerp(base, tinta.tinta, 0.12f)
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(claro, base)))) {
-        Text(nombre.trim().take(1).uppercase(), Modifier.align(Alignment.TopEnd).padding(end = 12.dp, top = 2.dp), color = Color.White.copy(alpha = 0.16f),
+        Text(nombre.trim().take(1), Modifier.align(Alignment.TopEnd).padding(end = 12.dp, top = 2.dp), color = Color.White.copy(alpha = 0.16f),
             fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 120.sp, lineHeight = 120.sp)
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Box(Modifier.width(26.dp).height(3.dp).background(tinta.acento))
@@ -121,7 +121,7 @@ fun AnteSala(texto: String, modifier: Modifier = Modifier, tam: TextUnit = 17.sp
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size((tam.value * 0.72f).dp).background(tinta.acento))
         Spacer(Modifier.width(12.dp))
-        Text(texto.uppercase(), color = color, fontFamily = Body, fontSize = tam, fontWeight = FontWeight.Black, letterSpacing = (tam.value * 0.16f).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(texto, color = color, fontFamily = Body, fontSize = tam, fontWeight = FontWeight.SemiBold, letterSpacing = (tam.value * 0.16f).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -136,7 +136,7 @@ fun BotonSala(texto: String, id: String, modifier: Modifier = Modifier, principa
         .let { if (principal) it else it.border(1.5.dp, tinta.borde.copy(alpha = 0.6f), forma) }.padding(horizontal = 30.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
         if (icono != null) { Text(icono, color = letra, fontSize = 22.sp, fontFamily = Body); Spacer(Modifier.width(12.dp)) }
-        Text(texto.uppercase(), color = letra.copy(alpha = if (activo) 1f else 0.5f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 18.sp, letterSpacing = 2.sp, maxLines = 1, textAlign = TextAlign.Center)
+        Text(texto, color = letra.copy(alpha = if (activo) 1f else 0.5f), fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 1, textAlign = TextAlign.Center)
     }
 }
 
@@ -144,7 +144,7 @@ fun BotonSala(texto: String, id: String, modifier: Modifier = Modifier, principa
 @Composable
 fun ChipSala(texto: String, id: String, on: Boolean, modifier: Modifier = Modifier, alPulsar: () -> Unit) {
     val tinta = LocalTinta.current
-    Text(texto.uppercase(), color = if (on) tinta.sobreAcento else tinta.tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 16.sp, letterSpacing = 1.8.sp, maxLines = 1,
+    Text(texto, color = if (on) tinta.sobreAcento else tinta.tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, maxLines = 1,
         modifier = modifier.enfocable(id, radio = 10.dp, crece = 1.05f, alPulsar = alPulsar).clip(formaSala(10.dp))
             .background(if (on) tinta.acento else tinta.tarjeta.copy(alpha = 0.7f)).padding(horizontal = 22.dp, vertical = 12.dp))
 }
@@ -168,7 +168,7 @@ fun DatoSala(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
 @Composable
 fun NotaSala(t: String, modifier: Modifier = Modifier, tam: TextUnit = 24.sp) {
     val tinta = LocalTinta.current
-    Text(t, color = tinta.gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = tam, lineHeight = (tam.value * 1.35f).sp, modifier = modifier)
+    Text(t, color = tinta.gris, fontFamily = Body, fontSize = tam, lineHeight = (tam.value * 1.35f).sp, modifier = modifier)
 }
 
 /** Una opción de un panel: una línea grande que se enfoca (con la marca a la izquierda si es la elegida). */
@@ -200,9 +200,9 @@ fun Lateral(titulo: String, ante: String, ancho: Dp = 680.dp, alCerrar: () -> Un
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f * (1f - x))).pointerInput(Unit) { detectTapGestures(onTap = { alCerrar() }) }) {
         Column(Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(ancho).graphicsLayer { translationX = x * size.width * 1.05f }.background(tinta.fondo)
             .pointerInput(Unit) { detectTapGestures {} }.padding(start = 56.dp, end = MARGEN_H, top = MARGEN_V + 10.dp, bottom = MARGEN_V)) {
-            Text(ante.uppercase(), color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 16.sp, letterSpacing = 3.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(ante, color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(8.dp))
-            Text(titulo, color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(titulo, color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(18.dp))
             Box(Modifier.fillMaxWidth().height(2.dp).background(tinta.tinta))
             Spacer(Modifier.height(18.dp))
@@ -219,7 +219,7 @@ fun TeclaMando(t: String, tam: Dp = 30.dp) {
     val tinta = LocalTinta.current
     Box(Modifier.heightIn(min = tam).widthIn(min = tam).clip(RoundedCornerShape(tam * 0.5f)).background(tinta.tinta.copy(alpha = 0.9f)).padding(horizontal = (tam.value * 0.32f).dp),
         contentAlignment = Alignment.Center) {
-        Text(t.uppercase(), color = tinta.fondo, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = (tam.value * if (t.length > 3) 0.36f else 0.44f).sp,
+        Text(t, color = tinta.fondo, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = (tam.value * if (t.length > 3) 0.36f else 0.44f).sp,
             letterSpacing = 0.5.sp, maxLines = 1, lineHeight = (tam.value * 0.5f).sp)
     }
 }
@@ -231,6 +231,6 @@ fun PistaSala(tecla: String, texto: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         TeclaMando(tecla)
         Spacer(Modifier.width(10.dp))
-        Text(texto.uppercase(), color = tinta.tinta, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 15.sp, letterSpacing = 1.6.sp, maxLines = 1)
+        Text(texto, color = tinta.tinta, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1)
     }
 }

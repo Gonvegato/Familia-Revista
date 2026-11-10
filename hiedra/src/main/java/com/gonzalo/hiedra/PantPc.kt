@@ -79,7 +79,7 @@ fun PuntoDirecto(size: Int = 8) {
 
 @Composable
 private fun BotonDialogo(texto: String, acento: Boolean = false, onClick: () -> Unit) =
-    TextButton(onClick) { Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) }
+    TextButton(onClick) { Text(texto, color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) }
 
 /** La portada de un juego de la biblioteca del PC (la de Atrio) o, sin ella, la de letra. */
 @Composable
@@ -111,7 +111,7 @@ fun TarjetaPc(alIr: () -> Unit, alAbrir: (Juego) -> Unit, enPortada: Boolean = t
         val conocido = Suite.pcs().maxByOrNull { it.at } ?: return
         Column(Modifier.fillMaxWidth().tocable(onClick = alIr).padding(bottom = if (enPortada) 18.dp else 0.dp)) {
             Antetitulo("Tu PC · ${conocido.name}", color = Muted, conCuadro = false)
-            Text("Desconectado" + if (conocido.at > 0) " · visto ${hace(conocido.at)}" else "", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 2.dp))
+            Text("Desconectado" + if (conocido.at > 0) " · visto ${hace(conocido.at)}" else "", color = Muted, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(top = 2.dp))
             if (!enPortada) Cuerpo("Enciende el PC y abre Atrio con tu cuenta: aparecerá aquí en directo.", tam = 12, modifier = Modifier.padding(top = 4.dp))
             if (enPortada) Filete(1.dp, Line, Modifier.padding(top = 10.dp))
         }
@@ -138,7 +138,7 @@ fun TarjetaPc(alIr: () -> Unit, alAbrir: (Juego) -> Unit, enPortada: Boolean = t
             else PortadaPc(PcGame(g.key, g.name, g.cover, g.sg, false, 0, "", 0), Modifier.width(54.dp).aspectRatio(PROPORCION_PORTADA))
             Column(Modifier.weight(1f).padding(start = 14.dp)) {
                 FitTitle(g.name, 26.sp, 28.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, letterSpacing = (-0.5).sp)
-                Text(("Jugando desde hace " + desdeHace(g.start) + (juego?.takeIf { it.msJugados >= 60_000 }?.let { " · ${tiempoDe(it.msJugados)} en total" } ?: "")).uppercase(),
+                Text(("Jugando desde hace " + desdeHace(g.start) + (juego?.takeIf { it.msJugados >= 60_000 }?.let { " · ${tiempoDe(it.msJugados)} en total" } ?: "")),
                     color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
             }
         }
@@ -211,11 +211,11 @@ fun VisorCaptura(shot: Shot, alCerrar: () -> Unit, alBorrar: () -> Unit) {
         AnimatedVisibility(chrome) {
             Column(Modifier.fillMaxWidth().background(Brush.verticalGradient(0f to Color(0xAA000000), 1f to Color.Transparent)).statusBarsPadding().padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("← VOLVER", color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.tocable(onClick = alCerrar).padding(vertical = 8.dp))
+                    Text("← VOLVER", color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.tocable(onClick = alCerrar).padding(vertical = 8.dp))
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
                         Text(shot.game.ifBlank { "Escritorio" }, color = Color.White, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text("${shot.w}×${shot.h} · ${if (shot.mime == "image/jpeg") "JPG" else "PNG original"} · ${shot.bytes / 1024} KB · ${fechaHora(shot.time)}", color = Color(0xCCFFFFFF), fontFamily = Body, fontSize = 11.sp)
+                        Text("${shot.w}×${shot.h} · ${if (shot.mime == "image/jpeg") "JPG" else "PNG original"} · ${shot.bytes / 1024} KB · ${fechaHora(shot.time)}", color = Color(0xCCFFFFFF), fontFamily = Body, fontSize = 13.sp)
                     }
                 }
             }
@@ -223,14 +223,14 @@ fun VisorCaptura(shot: Shot, alCerrar: () -> Unit, alBorrar: () -> Unit) {
         AnimatedVisibility(chrome, Modifier.align(Alignment.BottomCenter)) {
             Row(Modifier.fillMaxWidth().background(Brush.verticalGradient(0f to Color.Transparent, 1f to Color(0xAA000000))).navigationBarsPadding().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(22.dp)) {
                 listOf("Compartir" to { compartirCaptura(ctx, shot) }, "Abrir" to { abrirCaptura(ctx, shot) }, "Borrar" to { ask = true }).forEach { (t, f) ->
-                    Text(t.uppercase(), color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.tocable(onClick = f).padding(vertical = 8.dp))
+                    Text(t, color = Color.White, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.tocable(onClick = f).padding(vertical = 8.dp))
                 }
             }
         }
     }
     if (ask) AlertDialog(
-        onDismissRequest = { ask = false }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("¿Borrar la captura?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { ask = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("¿Borrar la captura?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text("Se borra de Bastet. Si se guardó en la galería, allí se queda; y en el PC sigue en Imágenes/Atrio.", color = Muted, fontFamily = Body) },
         confirmButton = { BotonDialogo("Borrar", true) { ask = false; alBorrar() } },
         dismissButton = { BotonDialogo("Cancelar") { ask = false } }
@@ -242,11 +242,11 @@ fun VisorCaptura(shot: Shot, alCerrar: () -> Unit, alBorrar: () -> Unit) {
 fun HojaJuegoPc(dev: String, g: PcGame, alCerrar: () -> Unit, alAbrir: (Juego) -> Unit) {
     val enHiedra = Biblioteca.porClave("pc:" + g.key)
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text(g.name, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(listOfNotNull(g.src.ifBlank { null }, if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (g.lastPlayed > 0) "última vez ${hace(g.lastPlayed)}" else null).joinToString(" · ").uppercase(),
+                Text(listOfNotNull(g.src.ifBlank { null }, if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (g.lastPlayed > 0) "última vez ${hace(g.lastPlayed)}" else null).joinToString(" · "),
                     color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Spacer(Modifier.height(12.dp))
                 BotonesJugarPc(g.key) { alCerrar() }
@@ -282,10 +282,10 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
     }
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
         RevistaTopBar(alVolver, "Bastet") {
-            if (pc != null) Row(verticalAlignment = Alignment.CenterVertically) { PuntoDirecto(); Spacer(Modifier.width(6.dp)); Text("CONECTADO", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }
-            else Text(Suite.state.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            if (pc != null) Row(verticalAlignment = Alignment.CenterVertically) { PuntoDirecto(); Spacer(Modifier.width(6.dp)); Text("Conectado", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+            else Text(Suite.state, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle(pc?.name ?: Suite.pcs().firstOrNull()?.name ?: "Tu PC", 44.sp, 48.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         if (Suite.pcs().size > 1) FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -312,7 +312,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                                 items(recientes, key = { it.key }) { g ->
                                     Column(Modifier.width(96.dp).tocable { hoja = dev to g }) {
                                         PortadaPc(g, Modifier.fillMaxWidth().aspectRatio(PROPORCION_PORTADA))
-                                        Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                                        Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
                                     }
                                 }
                             }
@@ -328,18 +328,18 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                         // Los que entraron solos en «Pendiente» (hasta la 0.5.3) y no has tocado: se quitan de una vez
                         val solos = JuegosPc.entraronSolos()
                         if (solos.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("${solos.size} en Pendiente entraron solos y no los has tocado".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f))
+                            Text("${solos.size} en Pendiente entraron solos y no los has tocado", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                             EnlaceRevista("Quitarlos →", acento = true) { limpiar = true }
                         }
-                        if (lib.isEmpty()) Text(if (Suite.libs.isEmpty()) "Abre Atrio en el PC con tu cuenta para ver aquí su biblioteca." else "Nada con ese nombre.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp))
+                        if (lib.isEmpty()) Text(if (Suite.libs.isEmpty()) "Abre Atrio en el PC con tu cuenta para ver aquí su biblioteca." else "Nada con ese nombre.", color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp))
                         LazyVerticalGrid(GridCells.Adaptive(96.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                             items(lib, key = { it.key }) { g ->
                                 val en = Biblioteca.porClave("pc:" + g.key) != null
                                 Column(Modifier.tocable { hoja = dev to g }) {
                                     PortadaPc(g, Modifier.fillMaxWidth().aspectRatio(PROPORCION_PORTADA))
                                     // (todas las casillas miden lo mismo: dos líneas de nombre y dos de horas, quepan o no en una)
-                                    Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                                    Text(listOfNotNull(if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (en) "en Bastet" else null).joinToString(" · ").uppercase(), color = if (en) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, minLines = 2, maxLines = 2)
+                                    Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                                    Text(listOfNotNull(if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (en) "en Bastet" else null).joinToString(" · "), color = if (en) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, minLines = 2, maxLines = 2)
                                 }
                             }
                         }
@@ -347,7 +347,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                 }
                 2 -> Column(Modifier.fillMaxSize()) {
                     Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("${Suite.localShots.size} capturas en este móvil".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f))
+                        Text("${Suite.localShots.size} capturas en este móvil", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         if (pc != null) EnlaceRevista(if (capturando) "Capturando…" else "Capturar →", acento = true) { captura() }
                     }
                     Cuerpo("Llegan a su resolución original (PNG, sin pérdida) y, si lo tienes activado en Ajustes, se guardan en Imágenes/Bastet.", tam = 12)
@@ -357,7 +357,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                             Column(Modifier.tocable { alCaptura(s) }) {
                                 AsyncImage(s.uri, s.game, Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(esquina(6.dp)).background(Sand), contentScale = ContentScale.Crop)
                                 Text(s.game.ifBlank { "Escritorio" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                                Text(fechaHora(s.time).uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                                Text(fechaHora(s.time), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -366,7 +366,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                     if (pc == null) {
                         Text("Ningún PC conectado", color = Charcoal, fontFamily = Display, fontSize = 22.sp)
                         Cuerpo("Abre Atrio en el PC y entra con tu cuenta. En cuanto esté abierto aparecerá aquí el mando.", modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
-                        if (Stream.host() != null) { Filete(2.dp); Spacer(Modifier.height(12.dp)); PanelStreaming() }
+                        if (Stream.host() != null) { Filete(1.dp, Line); Spacer(Modifier.height(12.dp)); PanelStreaming() }
                     } else {
                         Antetitulo("Atrio", Modifier.padding(bottom = 4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -374,21 +374,21 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                             EnlaceRevista(if (capturando) "Capturando…" else "Captura →") { captura() }
                             EnlaceRevista("Rebuscar la biblioteca →") { act("rescan") }
                         }
-                        Spacer(Modifier.height(16.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(16.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
                         PanelStreaming()
-                        Spacer(Modifier.height(16.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(16.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
                         Antetitulo("Energía", Modifier.padding(bottom = 4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                             EnlaceRevista("Suspender →") { confirmar = "suspender" to "¿Suspender ${pc.name}?" }
                             EnlaceRevista("Reiniciar →") { confirmar = "reiniciar" to "¿Reiniciar ${pc.name}?" }
                             EnlaceRevista("Apagar →", acento = true) { confirmar = "apagar" to "¿Apagar ${pc.name}?" }
                         }
-                        Spacer(Modifier.height(16.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(16.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
                         Antetitulo("Mensaje en la pantalla", Modifier.padding(bottom = 4.dp))
                         var msg by remember { mutableStateOf("") }
                         CampoRevista("Mensaje", msg, "sale como aviso en Atrio") { msg = it }
                         EnlaceRevista("Enviar →", acento = true) { if (msg.isNotBlank()) { act("toast", JSONObject().put("text", msg)); msg = "" } }
-                        Spacer(Modifier.height(16.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(16.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
                         Antetitulo("Dispositivos de tu cuenta", Modifier.padding(bottom = 4.dp))
                         Suite.devices.forEach { d ->
                             Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -407,8 +407,8 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
     if (limpiar) {
         val solos = JuegosPc.entraronSolos()
         AlertDialog(
-            onDismissRequest = { limpiar = false }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("¿Quitar ${solos.size} de Bastet?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            onDismissRequest = { limpiar = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            title = { Text("¿Quitar ${solos.size} de Bastet?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
             text = {
                 Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
                     Cuerpo("Son juegos del PC que están en Pendiente tal como entraron: nadie les ha cambiado el estado, el nombre, la portada ni la nota. " +
@@ -424,8 +424,8 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
     }
     confirmar?.let { c ->
         AlertDialog(
-            onDismissRequest = { confirmar = null }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text(c.second, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            onDismissRequest = { confirmar = null }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            title = { Text(c.second, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
             text = { Text(if (pc?.game != null) "Ahora mismo se está jugando a ${pc.game.name}: guarda la partida antes." else "Atrio guarda tus horas antes de hacerlo.", color = Muted, fontFamily = Body) },
             confirmButton = { BotonDialogo(c.first, true) { confirmar = null; act("power", JSONObject().put("action", c.first)) } },
             dismissButton = { BotonDialogo("Cancelar") { confirmar = null } }

@@ -55,7 +55,7 @@ fun FichasObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir) {
         }
         if (fichas.isEmpty()) item("vacio", span = ancho) {
             Column(Modifier.padding(vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("El mundo de tu historia", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
+                Text("El mundo de tu historia", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
                 Text("Personajes, lugares, objetos y reglas del mundo en fichas. Cuando escribas su nombre (o un alias) en una escena, quedará subrayado y lo tendrás en el panel, con sus datos, sin salir del texto.", color = Muted, fontSize = 14.sp, lineHeight = 21.sp)
             }
         }
@@ -66,9 +66,9 @@ fun FichasObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir) {
             Column(Modifier.fillMaxWidth().height(168.dp).background(Crudo).press(haptic = false) { a.ver = f.id }) {
                 Box(Modifier.fillMaxWidth().height(4.dp).background(color))
                 Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text((singularFicha(f.s("tipo"))).uppercase() + (sale[f.id]?.let { " · sale en $it ${if (it == 1) "escena" else "escenas"}" } ?: " · aún no sale").uppercase(), color = color, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(f.s("nombre"), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 23.sp, lineHeight = 26.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), fontFamily = Display, fontStyle = FontStyle.Italic, color = Charcoal, fontSize = 15.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text((singularFicha(f.s("tipo"))).uppercase() + (sale[f.id]?.let { " · sale en $it ${if (it == 1) "escena" else "escenas"}" } ?: " · aún no sale"), color = color, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(f.s("nombre"), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 23.sp, lineHeight = 26.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), fontFamily = Body, color = Charcoal, fontSize = 15.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (datos.isNotEmpty()) Text(datos.joinToString("  ·  ") { (k, v) -> "$k: $v" }, color = Muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
@@ -104,7 +104,7 @@ fun NotasObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir) {
         }
         if (notas.isEmpty()) item("vacio") {
             Column(Modifier.padding(vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("El tablón", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
+                Text("El tablón", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
                 Text("Ideas sueltas, investigación, cosas por arreglar y plantillas (como una ficha de escena) que puedes tener junto al texto mientras escribes.", color = Muted, fontSize = 14.sp, lineHeight = 21.sp)
             }
         }
@@ -118,8 +118,8 @@ fun NotasObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir) {
                             val c = colorEscrito(n.s("color"), ColGeneral)
                             Column(Modifier.fillMaxWidth().clip(shp(14.dp)).background(c.copy(alpha = 0.16f)).border(1.dp, c.copy(alpha = 0.5f), shp(14.dp)).press(haptic = false) { a.ver = n.id }.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 val vinc = n.vin().mapNotNull { e.get(it) }.map { x -> if (x.t == Escritos.T_PARTE) x.s("titulo") else "cap. ${numeroCapitulo(e, x)}" }
-                                Text(singularNota(n.s("tipo")).uppercase() + (if (n.b("fija")) " · FIJADA" else "") + if (vinc.isNotEmpty()) " · " + vinc.joinToString(", ").uppercase() else "", color = Muted, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                                if (n.s("titulo").isNotBlank()) Text(n.s("titulo"), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, color = Charcoal)
+                                Text(singularNota(n.s("tipo")).uppercase() + (if (n.b("fija")) " · FIJADA" else "") + if (vinc.isNotEmpty()) " · " + vinc.joinToString(", ").uppercase() else "", color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                if (n.s("titulo").isNotBlank()) Text(n.s("titulo"), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, color = Charcoal)
                                 if (n.s("texto").isNotBlank()) Text(n.s("texto"), color = Charcoal, fontSize = 13.sp, maxLines = 9, overflow = TextOverflow.Ellipsis, fontStyle = if (n.s("tipo") == "idea") FontStyle.Italic else FontStyle.Normal)
                             }
                         }
@@ -208,8 +208,8 @@ fun CifrasObra(e: Escritos, obra: Doc, ver: Int) {
     }
 }
 
-@Composable private fun Grande(n: String, t: String) = Column { Text(n, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 34.sp, lineHeight = 36.sp, color = Charcoal); Text(t.uppercase(), color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp) }
-@Composable private fun Etiq(t: String) = Text(t.uppercase(), color = Charcoal, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.8.sp)
+@Composable private fun Grande(n: String, t: String) = Column { Text(n, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 34.sp, lineHeight = 36.sp, color = Charcoal); Text(t, color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+@Composable private fun Etiq(t: String) = Text(t, color = Charcoal, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
 
 // ---------------------------------------------------------------- Exportar
 

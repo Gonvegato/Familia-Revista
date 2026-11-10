@@ -87,9 +87,9 @@ suspend fun guardarPortadaBytes(c: Context, id: String, bytes: ByteArray, origin
 @Composable
 private fun SeccionNumerada(n: Int, texto: String, accion: Pair<String, () -> Unit>? = null, arriba: androidx.compose.ui.unit.Dp = 26.dp) {
     Row(Modifier.fillMaxWidth().padding(top = arriba, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, maxLines = 1)
-        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
-        accion?.let { (t, f) -> Text(t.uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1,
+        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, maxLines = 1)
+        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
+        accion?.let { (t, f) -> Text(t, color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
             modifier = Modifier.tocable(onClick = f).padding(start = 8.dp, top = 4.dp, bottom = 4.dp)) }
     }
 }
@@ -181,13 +181,13 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
         Box(Modifier.fillMaxWidth()) {
             Column(Modifier.fillMaxWidth()) {
                 Box(Modifier.padding(start = margen).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
-                    Text(etiquetaEstado(j), color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
+                    Text(etiquetaEstado(j), color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1)
                 }
                 Column(Modifier.fillMaxWidth().padding(start = margen, end = if (conFondo) margen + 136.dp else margen)) {
                     FitTitle(j.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
                     val estudio = datos?.desarrolladores?.firstOrNull()
                     val de = listOfNotNull(estudio?.let { "de $it" }, miSaga?.let { "${it.nombre}, ${it.juegos.indexOf(j.id) + 1}" }, if (estudio == null && miSaga == null) plataformaDe(j) else null).joinToString(" · ")
-                    if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
+                    if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Body, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
                 }
             }
             // (en una caja de 116 dp que la deja salir 64 dp por arriba: así no estira el hueco hasta el botón)
@@ -213,15 +213,15 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                 avance?.let { "${(it * 100).toInt()} % DE LA HISTORIA" },
                 if (avance != null && j.estado == Estado.JUGANDO && avance < 0.98f && min >= 5) "TE QUEDAN ~${tiempoDe((j.durHistoria - min).coerceAtLeast(1) * 60_000L).uppercase()}" else null
             ))
-            Text(linea, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = if (avance != null) 7.dp else 0.dp))
+            Text(linea, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = if (avance != null) 7.dp else 0.dp))
             val deck = unidos(listOf(
                 if (j.estado == Estado.PASADO) (if (j.finalizado > 0) "pasado el " + fechaCorta(j.finalizado) else "pasado") else null,
                 if (j.ultima > 0) "jugado por última vez " + haceCuanto(j.ultima).lowercase() else null,
                 if (j.veces > 0) "${j.veces} ${if (j.veces == 1) "vez" else "veces"}" else null
             ))
-            if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
+            if (deck.isNotBlank()) Text(deck, color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
             val desglose = desgloseHoras(j)
-            if (desglose.isNotBlank()) Text(desglose.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, lineHeight = 14.sp, modifier = Modifier.padding(top = 6.dp))
+            if (desglose.isNotBlank()) Text(desglose, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).border(2.dp, Charcoal)) {
                 Estado.entries.forEach { e ->
@@ -253,7 +253,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                         }
                     }
                 }
-            } else Text("No está en ninguna saga.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+            } else Text("No está en ninguna saga.", color = Muted, fontFamily = Body, fontSize = 15.sp)
 
             // ---- 03 Cómo se abre: cada lanzador (emulador, app, web, PC)
             if (!j.sinLanzador) {
@@ -266,11 +266,11 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                             val aqui = Archivos.tiene(l.clave)
                             Text((Catalogo.sistema(l.sistema)?.nombre ?: l.sistema) + " · " + (e?.etiqueta ?: "sin emulador"), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                             val r = e?.resultado
-                            Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Bastet · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }).uppercase(),
+                            Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Bastet · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }),
                                 color = if (aqui && r is Resultado.Ok) Muted else Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 14.sp)
                         }
                         TipoLanzador.APP -> { Text("App de Android", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp); Text(l.paquete, color = Muted, fontFamily = Body, fontSize = 12.sp) }
-                        TipoLanzador.WEB -> { Text(l.url, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2); Text(("Pantalla: " + listOf("automática", "horizontal", "vertical")[l.orientacion.coerceIn(0, 2)]).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }
+                        TipoLanzador.WEB -> { Text(l.url, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 2); Text(("Pantalla: " + listOf("automática", "horizontal", "vertical")[l.orientacion.coerceIn(0, 2)]), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
                         TipoLanzador.PC -> BotonesJugarPc(l.pcKey)
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -290,20 +290,20 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
             SeccionNumerada(sig(), "Tiempo y duración")
             DosCasillas(
                 izq = {
-                    Text("TIEMPO", color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.4.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    Text("Tiempo", color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
                     FitTitle(if (j.msJugados >= 60_000) tiempoDe(j.msJugados) else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold, color = Acento)
-                    Text("JUGADO EN TOTAL", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    Text("Última vez: ${if (j.ultima > 0) haceCuanto(j.ultima).lowercase() else "todavía no"}", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
+                    Text("Jugado en total", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text("Última vez: ${if (j.ultima > 0) haceCuanto(j.ultima).lowercase() else "todavía no"}", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
                 },
                 der = {
-                    Text("SUELE DURAR", color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.4.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    Text("Suele durar", color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
                     FitTitle(if (j.durHistoria > 0) tiempoDe(j.durHistoria * 60_000L) else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
-                    Text("LA HISTORIA", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text("La historia", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     val mas = listOfNotNull(if (j.durExtras > 0) "con extras ${tiempoDe(j.durExtras * 60_000L)}" else null, if (j.durCompleto > 0) "al completo ${tiempoDe(j.durCompleto * 60_000L)}" else null).joinToString(" · ")
-                    Text(mas.ifBlank { if (!datos?.duracionDe.isNullOrBlank()) "según ${datos!!.duracionDe}" else "sin dato todavía" }, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
+                    Text(mas.ifBlank { if (!datos?.duracionDe.isNullOrBlank()) "según ${datos!!.duracionDe}" else "sin dato todavía" }, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
                 }
             )
-            Filete(2.dp)
+            Filete(1.dp, Line)
 
             // ---- En Jonsu (solo se ve; se valora allí)
             val nota = NotaAzabache.de(notas, j)
@@ -311,7 +311,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
             if (nota == null) {
                 // Una línea: lo que hay y qué hacer
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                    Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Body, fontSize = 16.sp)
                     if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(j.id, 0, "")) }
                 }
             } else {
@@ -319,10 +319,10 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                     FitTitle("${nota.general}", 48.sp, 50.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
                     Text(" /100", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp))
                 }
-                if (nota.resena.isNotBlank()) Text(nota.resena, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 6, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                if (nota.resena.isNotBlank()) Text(nota.resena, color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 6, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
             }
             Spacer(Modifier.height(16.dp))
-            Filete(2.dp)
+            Filete(1.dp, Line)
 
             // ---- Datos: lo de fuera y lo de aquí, en líneas con puntos guía
             SeccionNumerada(sig(), "Datos", "Buscar de nuevo" to { scope.launch { buscandoDatos = true; runCatching { Datos.pedir(ctx, j, forzar = true) }; buscandoDatos = false } })
@@ -351,10 +351,10 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                 datos.nada -> if (Servicios.claves(ctx).rawg.isBlank()) "No está en la tienda de Steam. Con una clave de RAWG (Ajustes → Cuenta → Servicios, o en Atrio) se buscan también los juegos de consola." else "No he encontrado este juego en Steam ni en RAWG. Si su nombre aquí no es el oficial, cámbialo en «Editar» y busca de nuevo."
                 else -> ""
             }
-            if (pie.isNotBlank()) Text(pie, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 6.dp))
+            if (pie.isNotBlank()) Text(pie, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 6.dp))
             if (datos != null && datos.resumen.isNotBlank()) Text(datos.resumen, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 21.sp, maxLines = 8, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
             Spacer(Modifier.height(16.dp))
-            Filete(2.dp)
+            Filete(1.dp, Line)
 
             // ---- En la nube (solo ROMs)
             if (j.rom != null) { SeccionNumerada(sig(), "En la nube"); SeccionNube(j) }
@@ -365,11 +365,11 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
     if (saga) DialogoSagaDeJuego(j) { saga = false }
     if (imagenes) SelectorImagenes(j, fondo = imagenesFondo) { imagenes = false }
     if (borrar) AlertDialog(
-        onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("¿Quitar «${j.titulo}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { borrar = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("¿Quitar «${j.titulo}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text(if (j.rom != null) "Solo se quita de Bastet: el archivo de la ROM no se toca." else "Solo se quita de Bastet.", color = Muted, fontFamily = Body) },
-        confirmButton = { TextButton({ Biblioteca.quitar(j.id); borrar = false; alCerrar() }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ borrar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        confirmButton = { TextButton({ Biblioteca.quitar(j.id); borrar = false; alCerrar() }) { Text("Quitar", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ borrar = false }) { Text("Cancelar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
     if (selector) SelectorEmulador(j.sistema, j) { selector = false }
     if (editarWeb) DialogoWeb(j) { editarWeb = false }
@@ -384,11 +384,11 @@ fun hayEstados(c: Context, j: Juego): Boolean = Estados.huecos.any { Estados.met
 fun DialogoTexto(titulo: String, inicial: String, boton: String, alCerrar: () -> Unit, alAceptar: (String) -> Unit) {
     var t by remember { mutableStateOf(inicial) }
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text(titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Campo(t, "", { t = it }) },
-        confirmButton = { TextButton({ alAceptar(t) }) { Text(boton.uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton(alCerrar) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        confirmButton = { TextButton({ alAceptar(t) }) { Text(boton, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton(alCerrar) { Text("Cancelar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }
 
@@ -397,7 +397,7 @@ fun DialogoTexto(titulo: String, inicial: String, boton: String, alCerrar: () ->
 fun Campo(valor: String, pista: String, alCambiar: (String) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
+            if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Body, fontSize = 18.sp)
             BasicTextField(valor, alCambiar, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontSize = 18.sp), cursorBrush = SolidColor(Acento), modifier = Modifier.fillMaxWidth())
         }
         Filete(1.5.dp)
@@ -420,7 +420,7 @@ fun SelectorEmulador(sistemaId: String, juego: Juego?, alCerrar: () -> Unit) {
                 else if (Nucleos.para(sistemaId) != null) "Bastet juega a esta consola ella misma: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. «Automático» la usa si no tienes otro emulador instalado para ella; si lo tienes, sigue siendo ese hasta que elijas «Bastet» aquí."
                 else "Los que ya tienes instalados salen marcados. «Automático» usa uno propio (sin núcleos que descargar) y, si no hay, RetroArch.", tam = 12, modifier = Modifier.padding(vertical = 8.dp))
             Nucleos.para(sistemaId)?.let { n -> BloqueNucleo(n) }
-            Filete(2.dp)
+            Filete(1.dp, Line)
             fun elegir(l: String) {
                 actual = l
                 if (juego != null) Biblioteca.cambiar(juego.id) { x -> x.copy(lanzadores = x.lanzadores.map { if (it.tipo == TipoLanzador.ROM) it.copy(emulador = l) else it }) }
@@ -448,12 +448,12 @@ private fun Opcion(titulo: String, sub: String, elegida: Boolean, instalado: Boo
     Row(Modifier.fillMaxWidth().tocable(onClick = alElegir).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(titulo, color = if (elegida) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
-            Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(sub, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
-        if (!instalado && paquetePlay != null) Text("INSTALAR\u00A0→", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp,
+        if (!instalado && paquetePlay != null) Text("INSTALAR\u00A0→", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
             modifier = Modifier.tocable { Lanzar.tienda(ctx, paquetePlay) }.padding(10.dp))
         else if (elegida) Text("✓", color = Acento, fontWeight = FontWeight.Black, fontSize = 18.sp)
-        else if (instalado && titulo != "Automático") Text("INSTALADO", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        else if (instalado && titulo != "Automático") Text("Instalado", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
     Filete(1.dp, Line)
 }
@@ -495,15 +495,15 @@ private fun BloqueNucleo(n: Nucleos.Nucleo) {
     }
     Row(Modifier.padding(top = 6.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Antetitulo("Núcleo de Bastet")
-        if (n.pruebas) Text("EN PRUEBAS", color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
+        if (n.pruebas) Text("En pruebas", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(start = 10.dp).border(1.dp, Acento, esquina(2.dp)).padding(horizontal = 5.dp, vertical = 1.dp))
     }
     Text(Nucleos.describir(n, inst), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
-    if (inst != null) Text("VERSIÓN ${inst.version}", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+    if (inst != null) Text("VERSIÓN ${inst.version}", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     if (n.pruebas) Cuerpo("Todavía no se ha podido probar en un móvil de verdad. Si un juego no arranca o va lento, elige aquí otro emulador para este sistema (o para ese juego, en su ficha).", tam = 12, modifier = Modifier.padding(top = 4.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(18.dp), modifier = Modifier.padding(vertical = 6.dp)) {
         when {
-            bajando != null -> Text("BAJANDO · ${((bajando ?: 0f) * 100).toInt()} %", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, modifier = Modifier.padding(vertical = 10.dp))
+            bajando != null -> Text("BAJANDO · ${((bajando ?: 0f) * 100).toInt()} %", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(vertical = 10.dp))
             inst == null -> EnlaceRevista("Descargar ahora →", acento = true) { bajar() }
             else -> {
                 EnlaceRevista(if (confirmar) "Sí, actualizar →" else if (nueva != null && Nucleos.hayNueva(inst, nueva!!)) "Actualizar a la del ${Formato.fecha(nueva!!)}" else "Actualizar", acento = confirmar || (nueva != null && Nucleos.hayNueva(inst, nueva!!))) {
@@ -524,7 +524,7 @@ private fun BloqueNucleo(n: Nucleos.Nucleo) {
     if (confirmar) Cuerpo("Los estados guardados con esta versión pueden dejar de cargar con la nueva (en todos tus móviles, hasta que también la actualicen). La partida del cartucho no se pierde.", tam = 12)
     n.recursos?.let { r ->
         val listos = remember(Nucleos.version) { Nucleos.recursosListos(ctx, n) }
-        Text((if (listos) "Archivos de ${n.nombre}: listos" else "Archivos de ${n.nombre}: se bajan con el núcleo (${Nucleos.megas(r.pesoAprox)})").uppercase(),
+        Text((if (listos) "Archivos de ${n.nombre}: listos" else "Archivos de ${n.nombre}: se bajan con el núcleo (${Nucleos.megas(r.pesoAprox)})"),
             color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
     }
     if (n.bios.isNotEmpty()) {
@@ -534,17 +534,17 @@ private fun BloqueNucleo(n: Nucleos.Nucleo) {
         n.bios.forEach { b ->
             val esta = remember(v, b.ruta) { Nucleos.biosEsta(ctx, b) }
             Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(if (esta) "✓" else if (b.obligatoria) "!" else "·", color = if (esta) Charcoal else if (b.obligatoria) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 14.sp, modifier = Modifier.width(20.dp))
+                Text(if (esta) "✓" else if (b.obligatoria) "!" else "·", color = if (esta) Charcoal else if (b.obligatoria) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.width(20.dp))
                 Column(Modifier.weight(1f)) {
                     Text(b.archivo, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text((b.descripcion + if (esta) "" else if (b.obligatoria) (if (b.grupo != null) " · basta con una" else " · hace falta") else " · opcional").uppercase(),
+                    Text((b.descripcion + if (esta) "" else if (b.obligatoria) (if (b.grupo != null) " · basta con una" else " · hace falta") else " · opcional"),
                         color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                 }
             }
         }
         EnlaceRevista("Añadir BIOS →", acento = Nucleos.faltan(ctx, n).isNotEmpty()) { elegirBios.launch(arrayOf("*/*")) }
     }
-    mensaje?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp) }
+    mensaje?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 14.sp) }
 }
 
 /**
@@ -566,11 +566,11 @@ private fun EstadosDeFicha(j: Juego) {
                 Column(Modifier.width(132.dp)) {
                     Box(Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(esquina(3.dp)).border(1.dp, Line, esquina(3.dp)).background(Sand)) {
                         if (mini != null) androidx.compose.foundation.Image(mini, null, contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.matchParentSize())
-                        if (h == Estados.AUTO) Text("AL SALIR", color = SobreAcento, fontFamily = Body, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp,
+                        if (h == Estados.AUTO) Text("Al salir", color = SobreAcento, fontFamily = Body, fontSize = 8.sp, fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.align(Alignment.TopStart).padding(5.dp).background(Acento, esquina(2.dp)).padding(horizontal = 4.dp, vertical = 1.dp))
                     }
                     Text(if (h == Estados.AUTO) "Automático" else "Hueco $h", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.padding(top = 5.dp))
-                    Text((haceCuanto(m.t) + if (m.dev != Cuenta.dispositivo && m.dn.isNotBlank()) " · ${m.dn}" else "").uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2)
+                    Text((haceCuanto(m.t) + if (m.dev != Cuenta.dispositivo && m.dn.isNotBlank()) " · ${m.dn}" else ""), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 2)
                 }
             }
         }
@@ -584,8 +584,8 @@ fun DialogoHoras(ms: Long, alAceptar: (Long) -> Unit, alCerrar: () -> Unit) {
     var h by remember { mutableStateOf((ms / 3_600_000).toString()) }
     var m by remember { mutableStateOf(((ms / 60_000) % 60).toString()) }
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Horas jugadas", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Horas jugadas", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -595,8 +595,8 @@ fun DialogoHoras(ms: Long, alAceptar: (Long) -> Unit, alCerrar: () -> Unit) {
                 Cuerpo("Bastet suma solo el tiempo que pasas fuera cuando abres un juego (aproximado). Aquí lo corriges.", tam = 12)
             }
         },
-        confirmButton = { TextButton({ alAceptar((h.toLongOrNull() ?: 0L) * 3_600_000L + (m.toLongOrNull() ?: 0L).coerceAtMost(59L) * 60_000L) }) { Text("GUARDAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton(alCerrar) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        confirmButton = { TextButton({ alAceptar((h.toLongOrNull() ?: 0L) * 3_600_000L + (m.toLongOrNull() ?: 0L).coerceAtMost(59L) * 60_000L) }) { Text("Guardar", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton(alCerrar) { Text("Cancelar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }
 
@@ -636,11 +636,11 @@ fun Casilla(titulo: String, accion: Pair<String, () -> Unit>? = null, contenido:
     Column(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 14.dp)) {
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) { Antetitulo(titulo, tam = 12.sp, conCuadro = false) }
-            if (accion != null) Text(accion.first.uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, modifier = Modifier.tocable(onClick = accion.second).padding(4.dp))
+            if (accion != null) Text(accion.first, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.tocable(onClick = accion.second).padding(4.dp))
         }
         contenido()
     }
-    Filete(2.dp)
+    Filete(1.dp, Line)
 }
 
 /** «Editar»: el nombre, la plataforma (en las fichas sin lanzador), corregir las horas y quitar el juego. */
@@ -649,8 +649,8 @@ fun DialogoEditarJuego(j: Juego, alCerrar: () -> Unit, alHoras: () -> Unit, alQu
     var nombre by remember { mutableStateOf(j.titulo) }
     var plataforma by remember { mutableStateOf(j.plataforma) }
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Editar", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Editar", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 CampoRevista("Nombre", nombre, "nombre del juego") { nombre = it }
@@ -661,8 +661,8 @@ fun DialogoEditarJuego(j: Juego, alCerrar: () -> Unit, alHoras: () -> Unit, alQu
                 MagLink("Quitar de Bastet", if (j.rom != null) "La ROM no se toca" else null, onClick = alQuitar)
             }
         },
-        confirmButton = { TextButton({ if (nombre.isNotBlank()) Biblioteca.cambiar(j.id) { it.copy(titulo = nombre.trim(), plataforma = plataforma.trim()) }; alCerrar() }) { Text("GUARDAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton(alCerrar) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        confirmButton = { TextButton({ if (nombre.isNotBlank()) Biblioteca.cambiar(j.id) { it.copy(titulo = nombre.trim(), plataforma = plataforma.trim()) }; alCerrar() }) { Text("Guardar", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton(alCerrar) { Text("Cancelar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }
 
@@ -705,5 +705,5 @@ private fun SeccionNube(j: Juego) {
             }
         }
     }
-    mensaje?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    mensaje?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }

@@ -114,7 +114,7 @@ fun ColoresEscribir(elegido: String, onElige: (String) -> Unit) {
 }
 
 @Composable
-fun EtiquetaEscribir(t: String) = Text(t.uppercase(), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
+fun EtiquetaEscribir(t: String) = Text(t, color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
 
 @Composable
 fun BotonEscribir(texto: String, modifier: Modifier = Modifier, peligro: Boolean = false, suave: Boolean = false, onClick: () -> Unit) {

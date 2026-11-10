@@ -80,8 +80,8 @@ fun ParrafosEscribir(texto: String, tam: Int = 16) {
     texto.split('\n').map { it.trim() }.filter { it.isNotEmpty() }.forEach { l ->
         when {
             l == "***" -> Text("* * *", color = Muted, fontSize = tam.sp, modifier = Modifier.fillMaxWidth().wrapContentWidth())
-            Regex("^#{1,3} ").containsMatchIn(l) -> Text(l.replace(Regex("^#+ "), ""), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (tam + 4).sp, color = Charcoal)
-            l.startsWith("> ") -> Text(conFormato(l.removePrefix("> ")), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = tam.sp, lineHeight = (tam * 1.5).sp, color = Muted, modifier = Modifier.padding(start = 14.dp))
+            Regex("^#{1,3} ").containsMatchIn(l) -> Text(l.replace(Regex("^#+ "), ""), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (tam + 4).sp, color = Charcoal)
+            l.startsWith("> ") -> Text(conFormato(l.removePrefix("> ")), fontFamily = Body, fontSize = tam.sp, lineHeight = (tam * 1.5).sp, color = Muted, modifier = Modifier.padding(start = 14.dp))
             else -> Text(conFormato(l), fontFamily = Display, fontSize = tam.sp, lineHeight = (tam * 1.5).sp, color = Charcoal)
         }
     }
@@ -121,7 +121,7 @@ fun ParrafoCapitular(texto: AnnotatedString, color: Color, tam: Int = 17, lineas
         val corte = if (medida.lineCount <= lineas) resto.length else medida.getLineEnd(lineas - 1, visibleEnd = false)
         Column {
             Row {
-                Text(letra, color = color, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = tamLetra, lineHeight = tamLetra,
+                Text(letra, color = color, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = tamLetra, lineHeight = tamLetra,
                     modifier = Modifier.padding(end = 8.dp).height((alto * lineas).dp).offset(y = (-(tam * 0.18f)).dp))
                 Text(resto.subSequence(0, corte), style = estilo)
             }
@@ -139,10 +139,10 @@ fun TextoLectura(texto: String, color: Color, tam: Int = 17) {
         when {
             i == primero -> ParrafoCapitular(conFormato(l), color, tam)
             l == "***" -> Text("* * *", color = Muted, fontSize = tam.sp, modifier = Modifier.fillMaxWidth().wrapContentWidth().padding(vertical = 4.dp))
-            Regex("^#{1,3} ").containsMatchIn(l) -> Text(l.replace(Regex("^#+ "), ""), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (tam + 5).sp, color = Charcoal, modifier = Modifier.padding(top = 6.dp))
+            Regex("^#{1,3} ").containsMatchIn(l) -> Text(l.replace(Regex("^#+ "), ""), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (tam + 5).sp, color = Charcoal, modifier = Modifier.padding(top = 6.dp))
             l.startsWith("> ") -> Row(Modifier.height(IntrinsicSize.Min)) {
                 Box(Modifier.width(3.dp).fillMaxHeight().background(color.copy(alpha = 0.6f)))
-                Text(conFormato(l.removePrefix("> ")), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = tam.sp, lineHeight = (tam * 1.55f).sp, color = Muted, modifier = Modifier.padding(start = 14.dp))
+                Text(conFormato(l.removePrefix("> ")), fontFamily = Body, fontSize = tam.sp, lineHeight = (tam * 1.55f).sp, color = Muted, modifier = Modifier.padding(start = 14.dp))
             }
             else -> Text(conFormato(l), fontFamily = Display, fontSize = tam.sp, lineHeight = (tam * 1.55f).sp, color = Charcoal)
         }
@@ -178,11 +178,11 @@ fun HojaLectura(
                     Column(Modifier.fillMaxWidth().widthIn(max = 1080.dp).align(Alignment.CenterHorizontally).padding(horizontal = 22.dp).padding(top = 18.dp, bottom = 40.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(10.dp).background(color)); Spacer(Modifier.width(8.dp))
-                            Text(ante.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.8.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(ante, color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
                         FitTitle(titulo.uppercase(), if (ancha) 56.sp else 40.sp, if (ancha) 58.sp else 42.sp, Modifier.padding(top = 6.dp), color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold,
                             letterSpacing = (-0.4).sp, maxLines = 3, overflow = TextOverflow.Ellipsis, minSize = 20f, conEdicion = false)
-                        if (sub.isNotBlank()) Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
+                        if (sub.isNotBlank()) Text(sub, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
                         Filete(3.dp, modifier = Modifier.padding(top = 12.dp, bottom = 18.dp))
                         if (ancha && lateral != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(36.dp)) {
                             Column(Modifier.weight(1.65f), verticalArrangement = Arrangement.spacedBy(14.dp), content = contenido)
@@ -191,7 +191,7 @@ fun HojaLectura(
                             contenido()
                             lateral?.invoke(this)
                         }
-                        Text("Toca lo escrito para editarlo.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp,
+                        Text("Toca lo escrito para editarlo.", color = Muted, fontFamily = Body, fontSize = 13.sp,
                             modifier = Modifier.fillMaxWidth().wrapContentWidth().padding(top = 30.dp))
                     }
                 }
@@ -203,7 +203,7 @@ fun HojaLectura(
 /** La entradilla: la frase de la ficha, grande y en cursiva. */
 @Composable
 private fun Entradilla(t: String, onEditar: () -> Unit) =
-    Text(t, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 23.sp, lineHeight = 31.sp, color = Charcoal, modifier = Modifier.press(haptic = false, onClick = onEditar))
+    Text(t, fontFamily = Body, fontSize = 23.sp, lineHeight = 31.sp, color = Charcoal, modifier = Modifier.press(haptic = false, onClick = onEditar))
 
 /** Un recuadro de la columna de los datos: filete de color arriba, su nombre en versalitas y lo de dentro. */
 @Composable
@@ -211,7 +211,7 @@ private fun Recuadro(titulo: String, color: Color, onClick: (() -> Unit)? = null
     Column(Modifier.fillMaxWidth().background(Crudo).then(if (onClick != null) Modifier.press(haptic = false, onClick = onClick) else Modifier)) {
         Box(Modifier.fillMaxWidth().height(3.dp).background(color))
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(titulo.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp)
+            Text(titulo, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             contenido()
         }
     }
@@ -246,7 +246,7 @@ fun VerFicha(e: Escritos, pid: String, f: Doc, a: AbreEscribir, onCerrar: () -> 
                 datos.forEachIndexed { i, (k, v) ->
                     if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Line))
                     Column {
-                        Text(k.ifBlank { "—" }.uppercase(), color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+                        Text(k.ifBlank { "—" }, color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         Text(v.ifBlank { "—" }, fontFamily = Display, color = Charcoal, fontSize = 17.sp, lineHeight = 22.sp)
                     }
                 }
@@ -258,7 +258,7 @@ fun VerFicha(e: Escritos, pid: String, f: Doc, a: AbreEscribir, onCerrar: () -> 
                     Column {
                         Text((if (flecha && r.s("b") == f.id) "← " else "") + r.s("titulo").ifBlank { "Unión" }.uppercase() + (if (flecha && r.s("a") == f.id) " →" else ""),
                             color = colorEscrito(r.s("color"), Acento), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, modifier = Modifier.press(haptic = false) { a.ver = r.id }.padding(vertical = 2.dp))
-                        Text(otra.s("nombre").ifBlank { "Sin nombre" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Charcoal, modifier = Modifier.press(haptic = false) { a.ver = otra.id })
+                        Text(otra.s("nombre").ifBlank { "Sin nombre" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Charcoal, modifier = Modifier.press(haptic = false) { a.ver = otra.id })
                         if (r.s("texto").isNotBlank()) Text(r.s("texto").lineSequence().first().take(140), color = Muted, fontStyle = FontStyle.Italic, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
@@ -280,7 +280,7 @@ fun VerFicha(e: Escritos, pid: String, f: Doc, a: AbreEscribir, onCerrar: () -> 
         if (f.s("resumen").isNotBlank()) Entradilla(f.s("resumen"), onEditar)
         if (f.s("texto").isNotBlank()) Column(Modifier.press(haptic = false, onClick = onEditar), verticalArrangement = Arrangement.spacedBy(12.dp)) { TextoLectura(f.s("texto"), color) }
         if (f.s("resumen").isBlank() && f.s("texto").isBlank())
-            Text("Aún no has escrito nada de ${f.s("nombre").ifBlank { "esta ficha" }}. Toca aquí para contar quién es, de dónde viene, qué quiere…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 25.sp,
+            Text("Aún no has escrito nada de ${f.s("nombre").ifBlank { "esta ficha" }}. Toca aquí para contar quién es, de dónde viene, qué quiere…", color = Muted, fontFamily = Body, fontSize = 18.sp, lineHeight = 25.sp,
                 modifier = Modifier.press(haptic = false, onClick = onEditar))
     }
 }
@@ -294,7 +294,7 @@ fun VerNota(e: Escritos, n: Doc, onCerrar: () -> Unit, onEditar: () -> Unit) {
     val lateral: (@Composable ColumnScope.() -> Unit)? = if (n.vin().any { e.get(it) != null }) { { VinculadaA(e, n) } } else null
     HojaLectura(color, tipo + (e.get(n.pid)?.s("titulo")?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: ""), n.s("titulo").ifBlank { tipo }, onCerrar, onEditar, sub = sub, lateral = lateral) {
         if (n.s("texto").isNotBlank()) Column(Modifier.press(haptic = false, onClick = onEditar), verticalArrangement = Arrangement.spacedBy(12.dp)) { TextoLectura(n.s("texto"), color) }
-        else Text("Sin texto todavía. Toca aquí para escribirlo.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.press(haptic = false, onClick = onEditar))
+        else Text("Sin texto todavía. Toca aquí para escribirlo.", color = Muted, fontFamily = Body, fontSize = 18.sp, modifier = Modifier.press(haptic = false, onClick = onEditar))
     }
 }
 
@@ -306,14 +306,14 @@ fun VerHito(e: Escritos, x: Doc, onCerrar: () -> Unit, onEditar: () -> Unit, abr
     val lateral: (@Composable ColumnScope.() -> Unit)? = if (s == null) null else { {
         Recuadro("Se cuenta en", color) {
             Row(Modifier.fillMaxWidth().press(haptic = false) { onCerrar(); abrirEscena(s.id) }, verticalAlignment = Alignment.CenterVertically) {
-                Text(s.s("titulo").ifBlank { "la escena" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal, modifier = Modifier.weight(1f))
+                Text(s.s("titulo").ifBlank { "la escena" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal, modifier = Modifier.weight(1f))
                 Text("ESCRIBIR →", color = Acento, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
             }
         }
     } }
     HojaLectura(color, if (r != null) "Rama · ${r.s("titulo")}" else "Línea principal", x.s("titulo").ifBlank { "Suceso" }, onCerrar, onEditar, sub = x.s("cuando"), lateral = lateral) {
         if (x.s("nota").isNotBlank()) Column(Modifier.press(haptic = false, onClick = onEditar), verticalArrangement = Arrangement.spacedBy(12.dp)) { TextoLectura(x.s("nota"), color) }
-        else Text("Sin más detalles. Toca aquí para contar qué pasa.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.press(haptic = false, onClick = onEditar))
+        else Text("Sin más detalles. Toca aquí para contar qué pasa.", color = Muted, fontFamily = Body, fontSize = 18.sp, modifier = Modifier.press(haptic = false, onClick = onEditar))
     }
 }
 
@@ -329,6 +329,6 @@ fun VerRelacion(e: Escritos, r: Doc, a: AbreEscribir, onCerrar: () -> Unit, onEd
             FitTitle(fb.s("nombre").ifBlank { "Sin nombre" }, 24.sp, 27.sp, Modifier.press(haptic = false) { a.ver = fb.id }, color = Charcoal, conEdicion = false)
         }
         if (r.s("texto").isNotBlank()) Column(Modifier.press(haptic = false, onClick = onEditar), verticalArrangement = Arrangement.spacedBy(12.dp)) { TextoLectura(r.s("texto"), color) }
-        else Text("Solo la palabra; no has escrito nada más de esta unión. Toca aquí para contarlo.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.press(haptic = false, onClick = onEditar))
+        else Text("Solo la palabra; no has escrito nada más de esta unión. Toca aquí para contarlo.", color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.press(haptic = false, onClick = onEditar))
     }
 }

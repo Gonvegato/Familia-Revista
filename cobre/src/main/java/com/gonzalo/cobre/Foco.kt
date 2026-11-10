@@ -20,6 +20,8 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -69,4 +71,13 @@ fun Modifier.atrapaFoco(): Modifier = this.focusProperties { exit = { FocusReque
 fun Modifier.tocable(enabled: Boolean = true, role: Role? = null, fuera: Dp = 4.dp, onClick: () -> Unit): Modifier = composed {
     val src = remember { MutableInteractionSource() }
     this.marcoFoco(src, fuera).clickable(interactionSource = src, indication = LocalIndication.current, enabled = enabled, role = role, onClick = onClick)
+}
+
+/**
+ * Como [tocable], para las piezas redondas de la dirección D: recorta con esquinas de [radio] y el marco de foco va por fuera, con la
+ * misma forma (para una píldora, un radio grande).
+ */
+fun Modifier.tocableRedondo(radio: Dp, enabled: Boolean = true, role: Role? = null, onClick: () -> Unit): Modifier = composed {
+    val src = remember { MutableInteractionSource() }
+    this.marcoFoco(src, 3.dp, radio + 3.dp).clip(RoundedCornerShape(radio)).clickable(interactionSource = src, indication = LocalIndication.current, enabled = enabled, role = role, onClick = onClick)
 }

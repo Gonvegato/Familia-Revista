@@ -90,7 +90,7 @@ private fun toast(ctx: Context, m: String) = Toast.makeText(ctx, m, Toast.LENGTH
 
 @Composable
 private fun BotonDialogo(texto: String, acento: Boolean = false, onClick: () -> Unit) =
-    TextButton(onClick) { Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) }
+    TextButton(onClick) { Text(texto, color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) }
 
 /**
  * Las dos maneras de jugar a un juego del PC: abrirlo en el PC o jugarlo en este móvil en streaming (Steam Link). Dos líneas, como el resto de la revista.
@@ -125,12 +125,12 @@ fun BotonesJugarPc(key: String, modifier: Modifier = Modifier, alHacer: (String)
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         val canPc = pc != null && !running
         Column(Modifier.fillMaxWidth().tocable(enabled = canPc && !busyPc) { launch() }) {
-            Text(if (busyPc) "Abriendo…" else if (running) "En marcha" else "Jugar en el PC →", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = if (canPc || running) Charcoal else Muted)
-            Text((pc?.let { if (running) "Ya en ${it.name}" else "En ${it.name}" } ?: "PC apagado").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(if (busyPc) "Abriendo…" else if (running) "En marcha" else "Jugar en el PC →", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = if (canPc || running) Charcoal else Muted)
+            Text((pc?.let { if (running) "Ya en ${it.name}" else "En ${it.name}" } ?: "PC apagado"), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Column(Modifier.fillMaxWidth().tocable(enabled = !busySt) { stream() }) {
-            Text(if (busySt) "Conectando…" else "Streaming →", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Acento)
-            Text((if (running) "Seguir en el móvil, con Steam Link" else "En este móvil, con Steam Link").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(if (busySt) "Conectando…" else "Streaming →", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Acento)
+            Text((if (running) "Seguir en el móvil, con Steam Link" else "En este móvil, con Steam Link"), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
     }
     if (falta) SteamLinkDialog { falta = false }
@@ -142,8 +142,8 @@ fun BotonesJugarPc(key: String, modifier: Modifier = Modifier, alHacer: (String)
 fun SteamLinkDialog(onDismiss: () -> Unit) {
     val ctx = LocalContext.current
     AlertDialog(
-        onDismissRequest = onDismiss, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Falta Steam Link", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = onDismiss, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Falta Steam Link", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text("El streaming va con Steam Link, la app gratuita de Valve (está en Google Play). Instálala, ábrela y elige tu PC: te enseña un PIN que se escribe en Steam del PC. Desde entonces, «Streaming» en cualquier juego.", color = Muted, fontFamily = Body) },
         confirmButton = { BotonDialogo("Instalar Steam Link", true) { onDismiss(); Stream.install(ctx) } },
         dismissButton = { BotonDialogo("Ahora no") { onDismiss() } }
@@ -156,8 +156,8 @@ fun WakeDialog(pcName: String, h: StreamHost, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     var msg by remember { mutableStateOf("") }
     AlertDialog(
-        onDismissRequest = onDismiss, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("¿Encender $pcName?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = onDismiss, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("¿Encender $pcName?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 Text("Por red (Wake-on-LAN): solo con el móvil en la wifi de casa y la opción activada en la BIOS.", color = Muted, fontFamily = Body)
@@ -234,8 +234,8 @@ fun BotonesPc(j: Juego) {
 @Composable
 fun DialogoJugarPc(j: Juego, alCerrar: () -> Unit) {
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text(j.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text(j.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { BotonesJugarPc(j.pcKey) { alCerrar() } },
         confirmButton = {}, dismissButton = { BotonDialogo("Cerrar") { alCerrar() } }
     )

@@ -66,7 +66,7 @@ fun PantAddons(alVolver: () -> Unit, instalar: String? = null, alInstalado: () -
         RevistaTopBar(alVolver, "Hathor")
         Antetitulo("De dónde sale todo", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Addons", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Text("Hathor habla con los addons de Stremio: los catálogos, las fichas, las fuentes y los subtítulos salen de ellos. El de arriba manda en las fichas y sale antes en las fuentes. Tus addons viajan con tu cuenta, pero en su parte secreta (la que solo puedes leer tú: ni siquiera tu pareja), porque sus direcciones pueden llevar la clave de tu debrid.",
             color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 10.dp))
         if (!Cuenta.vinculada) Nota("Sin cuenta todavía: lo que instales se queda en este dispositivo y pasa a tu cuenta al entrar.", Modifier.padding(top = 6.dp))
@@ -75,15 +75,15 @@ fun PantAddons(alVolver: () -> Unit, instalar: String? = null, alInstalado: () -
             val m = manifiestos[a.url]
             Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${i + 1}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, modifier = Modifier.width(38.dp))
+                    Text("${i + 1}", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 28.sp, modifier = Modifier.width(38.dp))
                     Column(Modifier.weight(1f)) {
                         Text(m?.nombre ?: a.nombre.ifBlank { sitioDe(a.url) }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(listOfNotNull(m?.version?.takeIf { it.isNotBlank() }?.let { "v$it" }, m?.tipos?.joinToString(", ") { tiposNombre(it) }?.takeIf { it.isNotBlank() }, m?.recursos?.joinToString(", ") { nombreRecurso(it.nombre) }, if (m == null) "sin respuesta ahora" else null, sitioDe(a.url)).joinToString(" · ").uppercase(),
+                        Text(listOfNotNull(m?.version?.takeIf { it.isNotBlank() }?.let { "v$it" }, m?.tipos?.joinToString(", ") { tiposNombre(it) }?.takeIf { it.isNotBlank() }, m?.recursos?.joinToString(", ") { nombreRecurso(it.nombre) }, if (m == null) "sin respuesta ahora" else null, sitioDe(a.url)).joinToString(" · "),
                             color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2)
                     }
                 }
                 m?.descripcion?.takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 38.dp, top = 2.dp)) }
-                if (m?.p2p == true) Text("Da torrents: ver con ellos comparte con otros lo que bajas.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.padding(start = 38.dp))
+                if (m?.p2p == true) Text("Da torrents: ver con ellos comparte con otros lo que bajas.", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(start = 38.dp))
                 Row(Modifier.padding(start = 38.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (i > 0) EnlaceRevista("↑ Subir") { Addons.mueve(a.url, -1) }
                     if (i < lista.size - 1) EnlaceRevista("↓ Bajar") { Addons.mueve(a.url, 1) }
@@ -100,22 +100,22 @@ fun PantAddons(alVolver: () -> Unit, instalar: String? = null, alInstalado: () -
         MagLink(if (ocupado) "Instalando…" else "Instalar", "Pega la dirección del manifiesto (la de «Install» o «Copy link» en su página)", accent = true) { instala(url) }
         if (lista.none { it.url == Addons.CINEMETA }) { Filete(1.dp, Line); MagLink("Poner Cinemeta", "El oficial de Stremio: catálogos y fichas de películas y series") { instala(Addons.CINEMETA) } }
         if (lista.none { it.url == Addons.OPENSUBTITLES }) { Filete(1.dp, Line); MagLink("Poner OpenSubtitles", "El oficial de Stremio para los subtítulos (no viene puesto)") { instala(Addons.OPENSUBTITLES) } }
-        aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp)) }
+        aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp)) }
         Spacer(Modifier.height(40.dp))
     }
     quitar?.let { a ->
-        AlertDialog(onDismissRequest = { quitar = null }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("¿Quitar ${manifiestos[a.url]?.nombre ?: a.nombre.ifBlank { "este addon" }}?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        AlertDialog(onDismissRequest = { quitar = null }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            title = { Text("¿Quitar ${manifiestos[a.url]?.nombre ?: a.nombre.ifBlank { "este addon" }}?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
             text = { Text("Deja de usarse en todos tus dispositivos. Para volver a ponerlo hará falta su dirección (si la configuraste, con tu clave).", color = Muted, fontFamily = Body) },
-            confirmButton = { TextButton({ Addons.quita(a.url); quitar = null }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black) } },
-            dismissButton = { TextButton({ quitar = null }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black) } })
+            confirmButton = { TextButton({ Addons.quita(a.url); quitar = null }) { Text("Quitar", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+            dismissButton = { TextButton({ quitar = null }) { Text("Cancelar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } })
     }
     pedido?.let { u ->
-        AlertDialog(onDismissRequest = { pedido = null; alInstalado() }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("¿Instalar este addon?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        AlertDialog(onDismissRequest = { pedido = null; alInstalado() }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            title = { Text("¿Instalar este addon?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
             text = { Text("Viene de ${sitioDe(u)}. Se guarda en la parte secreta de tu cuenta.", color = Muted, fontFamily = Body) },
-            confirmButton = { TextButton({ pedido = null; alInstalado(); instala(u) }) { Text("INSTALAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black) } },
-            dismissButton = { TextButton({ pedido = null; alInstalado() }) { Text("NO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black) } })
+            confirmButton = { TextButton({ pedido = null; alInstalado(); instala(u) }) { Text("Instalar", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+            dismissButton = { TextButton({ pedido = null; alInstalado() }) { Text("NO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } })
     }
 }
 

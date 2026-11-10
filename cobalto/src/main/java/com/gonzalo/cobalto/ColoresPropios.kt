@@ -33,7 +33,7 @@ fun SelectorColor(nombre: String, valor: Long, actual: Color, onCambia: (Long) -
         Box(Modifier.size(36.dp).background(actual).border(1.dp, Charcoal))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(nombre, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
+            Text(nombre, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal)
             Text(if (valor == 0L) "Automático" else hexDe(Color(valor)), color = Muted, fontFamily = Body, fontSize = 12.sp)
         }
         if (valor != 0L) EnlaceRevista("Quitar", Modifier.padding(end = 12.dp)) { onCambia(0L); onGuarda(); abierto = false }
@@ -66,7 +66,7 @@ fun SelectorColor(nombre: String, valor: Long, actual: Color, onCambia: (Long) -
 @Composable
 private fun Barra(nombre: String, valor: Float, fondo: Brush, onCambia: (Float) -> Unit, onSuelta: () -> Unit) {
     Column {
-        Text(nombre.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+        Text(nombre, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         Box(contentAlignment = Alignment.Center) {
             Box(Modifier.fillMaxWidth().padding(horizontal = 10.dp).height(12.dp).background(fondo).border(1.dp, Line))
             Slider(valor, onCambia, onValueChangeFinished = onSuelta, modifier = Modifier.fillMaxWidth(),
@@ -109,6 +109,6 @@ fun CampoCodigo(valor: String, alCambiar: (String, Color?) -> Unit) {
             )
         }
         Filete(1.5.dp)
-        Text(if (colorDeCodigo(campo.text) != null) "Aplicado" else "Escribe o pega un código de 3, 6 u 8 cifras", color = Muted, fontFamily = Body, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
+        Text(if (colorDeCodigo(campo.text) != null) "Aplicado" else "Escribe o pega un código de 3, 6 u 8 cifras", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
     }
 }

@@ -39,7 +39,7 @@ fun PantAjustes(alVolver: () -> Unit, alListas: () -> Unit = {}, inicial: Int = 
         RevistaTopBar(alVolver, "Nut")
         Antetitulo("Sección", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Ajustes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-        Filete(3.dp)
+        Filete(1.dp, Line)
         PestanasRevista(listOf("Apariencia", "Fútbol", "Reproductor", "Guía", "Cuenta", "Avanzado"), pestana) { pestana = it }
         Spacer(Modifier.height(14.dp))
         Column(Modifier.widthIn(max = 760.dp)) {
@@ -53,7 +53,7 @@ fun PantAjustes(alVolver: () -> Unit, alListas: () -> Unit = {}, inicial: Int = 
             }
         }
         Spacer(Modifier.height(26.dp))
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Nut $VERSION")
         Text("Nut es hermana de Jonsu, Hathor, Bastet, Seshat y Thot. Es un reproductor: no trae canales ni listas, los pones tú. Reproduce con AndroidX Media3 (Apache 2.0) y, para el sonido que tu aparato no sepa, con FFmpeg (el decodificador de Jellyfin, GPL-3.0).",
@@ -72,13 +72,13 @@ private fun SeccionReproductor() {
     val asp = AjustesReproductor.Aspecto.entries
     MagChoice(asp.map { it.nombre }, asp.indexOf(AjustesReproductor.aspecto(ctx)), "De serie (se cambia también mientras ves)") { i -> cambia { AjustesReproductor.ponAspecto(ctx, asp[i]) } }
     Fila("Ahorrar datos del móvil", "Con datos (o una wifi con límite), la calidad más baja que dé el canal (en los que dan varias).") { Interruptor(AjustesReproductor.ahorro(ctx)) { x -> cambia { AjustesReproductor.ponAhorro(ctx, x) } } }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Audio y subtítulos", Modifier.padding(bottom = 4.dp))
     val audios = listOf("spa" to "Español", "eng" to "Inglés", "" to "El que venga")
     MagChoice(audios.map { it.second }, audios.indexOfFirst { it.first == AjustesReproductor.audio(ctx) }.coerceAtLeast(0), "Audio, si hay varios") { i -> cambia { AjustesReproductor.ponAudio(ctx, audios[i].first) } }
     val subs = listOf("" to "Sin subtítulos", "spa" to "Español", "eng" to "Inglés")
     MagChoice(subs.map { it.second }, subs.indexOfFirst { it.first == AjustesReproductor.subs(ctx) }.coerceAtLeast(0), "Subtítulos") { i -> cambia { AjustesReproductor.ponSubs(ctx, subs[i].first) } }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("En directo", Modifier.padding(bottom = 4.dp))
     Fila("Volver a conectar solo", "Si un canal se corta, se vuelve a conectar (hasta seis veces, cada vez esperando un poco más).") { Interruptor(AjustesReproductor.reconectar(ctx)) { x -> cambia { AjustesReproductor.ponReconectar(ctx, x) } } }
     Fila("Arriba, el canal anterior", "Como en muchas teles. Si no, arriba en el mando es el siguiente.") { Interruptor(AjustesReproductor.invertirCanales(ctx)) { x -> cambia { AjustesReproductor.ponInvertirCanales(ctx, x) } } }
@@ -88,7 +88,7 @@ private fun SeccionReproductor() {
     Fila("Al abrir, el último canal", "Nut se abre con lo último que viste, como una tele.") { Interruptor(AjustesDirecto.alAbrir(ctx)) { x -> cambia { AjustesDirecto.ponAlAbrir(ctx, x) } } }
     val ordenes = AjustesDirecto.Orden.entries
     MagChoice(ordenes.map { it.nombre }, ordenes.indexOf(AjustesDirecto.orden(ctx)), "El orden de los canales") { i -> cambia { AjustesDirecto.ponOrden(ctx, ordenes[i]) } }
-    Spacer(Modifier.height(12.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Películas y series", Modifier.padding(bottom = 4.dp))
     Fila("Pelis y series del proveedor", "Las de tu servidor de Xtream, en el menú, en la portada y en «Buscar». Apagado, Nut es la tele y el fútbol.") {
         Interruptor(AjustesDirecto.videoclub(ctx)) { x -> cambia { AjustesDirecto.ponVideoclub(ctx, x) } }
@@ -146,7 +146,7 @@ private fun SeccionCuenta() {
         }
     } else {
         Etiqueta("Dentro como", Modifier.padding(top = 8.dp))
-        Text(Cuenta.usuario, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+        Text(Cuenta.usuario, color = Charcoal, fontFamily = Body, fontSize = 22.sp)
         val cuando = SincroP.ultima.takeIf { it > 0 }?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it)) }
         Text(listOfNotNull(SincroP.estado.ifBlank { "Sin sincronizar todavía" }, cuando?.let { "última vez $it" }).joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
         Spacer(Modifier.height(6.dp))
@@ -156,8 +156,8 @@ private fun SeccionCuenta() {
         Filete(1.dp, Line)
         MagLink("Salir de la cuenta", "Solo en Nut y solo en este dispositivo") { Cuenta.salir() }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Las hermanas", Modifier.padding(bottom = 4.dp))
     Text("Lo que ves en Nut se queda en Nut (en tu cuenta): las películas y las series de tus listas no pasan a la biblioteca de Hathor.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     Hermanas.TODAS.forEach { (n, p) -> if (Hermanas.instalada(ctx, p)) MagLink("Abrir $n") { Hermanas.abre(ctx, p) } }
@@ -169,7 +169,7 @@ private fun SeccionAvanzado() {
     val ambito = rememberCoroutineScope()
     Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
     SeccionActualizaciones()
-    Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(12.dp))
     Antetitulo("Este dispositivo", Modifier.padding(bottom = 4.dp))
     var aviso by remember { mutableStateOf<String?>(null) }
     val ocupa by produceState(0L, aviso) { value = withContext(Dispatchers.IO) { listOf("cobre_listas", "cobre_futbol").sumOf { d -> java.io.File(ctx.filesDir, d).walkTopDown().filter { it.isFile }.sumOf { it.length() } } } }
@@ -180,7 +180,7 @@ private fun SeccionAvanzado() {
             aviso = "Hecho. Se vuelve a bajar todo al entrar en cada lista."
         }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp) }
 }
 
 /** «Actualizaciones»: Cobre se actualiza sola desde la carpeta «versiones» de tu kDrive, con el token de kDrive de tu cuenta. */
@@ -221,7 +221,7 @@ private fun SeccionActualizaciones() {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** Si hay una versión nueva ya bajada que Android no deja instalar en silencio, se pregunta (o se lleva al ajuste de «instalar apps»). */
@@ -232,13 +232,13 @@ fun AvisoActualizacion() {
     var luego by remember(n.nombre) { mutableStateOf(false) }
     if (luego) return
     AlertDialog(
-        onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Nut tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { luego = true }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Nut tiene una versión nueva", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Nut instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
-        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ luego = true }) { Text("LUEGO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ luego = true }) { Text("Luego", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }

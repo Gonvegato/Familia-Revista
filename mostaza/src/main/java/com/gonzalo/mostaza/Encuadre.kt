@@ -175,7 +175,7 @@ fun ContenidoEncuadre(ruta: String, inicial: Encuadre, fondo: Boolean, alGuardar
             EnlaceRevista("← Cancelar", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alCerrar() }
             NombreConPunto("Encuadrar", 44.sp, Paper, Modifier.padding(top = 2.dp))
         }
-        Text(if (fondo) "EL FONDO · COMO EN «AHORA VES»" else "LA PORTADA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp,
+        Text(if (fondo) "EL FONDO · COMO EN «AHORA VES»" else "LA PORTADA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
             letterSpacing = 1.4.sp, modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 8.dp))
         BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = if (fondo) 0.dp else 20.dp), contentAlignment = Alignment.Center) {
             // La ventana, con la forma en que se verá: la portada a 2:3 (no más alta que media pantalla); el fondo, a todo el ancho y el alto del cartel
@@ -193,7 +193,7 @@ fun ContenidoEncuadre(ruta: String, inicial: Encuadre, fondo: Boolean, alGuardar
             }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            Text("ZOOM", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 14.dp))
+            Text("Zoom", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 14.dp))
             Slider(e.zoom, { e = e.copy(zoom = it) }, valueRange = Encuadre.ZOOM_MIN..Encuadre.ZOOM_MAX, colors = colores)
             Text((if (fondo) "Arrastra para mover y pellizca para acercar. Esto es lo que se ve en «Ahora ves»; arriba en la ficha sale una franja más baja centrada en el mismo punto."
                 else "Arrastra para mover y pellizca para acercar. Queda así en todas partes: la ficha, las listas, la portada y los widgets.") +
@@ -202,7 +202,7 @@ fun ContenidoEncuadre(ruta: String, inicial: Encuadre, fondo: Boolean, alGuardar
             Row(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 BotonMarco("Restablecer") { e = Encuadre() }
                 Spacer(Modifier.weight(1f))
-                Text("LISTO →", color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.sp, maxLines = 1,
+                Text("LISTO →", color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1,
                     modifier = Modifier.background(Acento).tocable { alGuardar(e); alCerrar() }.padding(horizontal = 16.dp, vertical = 11.dp))
             }
         }

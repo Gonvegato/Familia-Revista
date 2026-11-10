@@ -59,7 +59,7 @@ fun BarrasJuego(juegos: List<Juego>) {
                         Box(Modifier.fillMaxWidth(0.62f).height(30.dp), contentAlignment = Alignment.BottomCenter) {
                             Box(Modifier.fillMaxWidth().height(if (m >= 1) maxOf(3f, 30f * m / tope).dp else 1.dp).background(if (m >= 1) Charcoal else Line))
                         }
-                        Text(d.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale("es", "ES")).uppercase(), fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                        Text(d.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale("es", "ES")), fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                             color = if (d == hoy) Acento else Muted, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
@@ -117,7 +117,7 @@ fun SemanaTocable(d: SemanaJuego, modifier: Modifier = Modifier, alto: Int = 74)
                     if (sel) {
                         // La etiqueta, encima de la barra (puede salirse de su columna; no se recorta)
                         val arriba = if (m >= 1) maxOf(4f, alto * m / tope) else 3f
-                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, maxLines = 1, softWrap = false,
+                        Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                             modifier = Modifier.align(when (i) { 0 -> Alignment.BottomStart; d.semana.lastIndex -> Alignment.BottomEnd; else -> Alignment.BottomCenter })
                                 .offset(y = (-(arriba + 6)).dp)
                                 // (en los extremos se pega a su lado, para no salirse de la pantalla)
@@ -125,7 +125,7 @@ fun SemanaTocable(d: SemanaJuego, modifier: Modifier = Modifier, alto: Int = 74)
                                 .background(Charcoal).padding(horizontal = 7.dp, vertical = 4.dp))
                     }
                 }
-                Text(letra, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (dia == hoy) Acento else Muted,
+                Text(letra, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (dia == hoy) Acento else Muted,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
             }
         }

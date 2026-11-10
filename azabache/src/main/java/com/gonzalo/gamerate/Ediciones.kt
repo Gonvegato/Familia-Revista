@@ -108,10 +108,10 @@ data class Edicion(
 // Papel, tarjetas, tinta, el color de la edición, y los criterios (gráficos, historia, música, jugabilidad), dorado,
 // arena, línea, borde y gris. Cada edición tiene su color, sobrio: rojo de imprenta, azul noche, granate, verde inglés,
 // cereza, azul eléctrico, ocre, marrón tabaco, fucsia y el amarillo del marco.
-private val P_ATRIO = PALETTES.first { it.id == "revista" }
+private val P_ATRIO = PALETTES.first { it.id == "mesa" }
 val EDICIONES: List<Edicion> = listOf(
-    Edicion("atrio", "Jonsu", "La de siempre: papel crema, serif cálida y rojo de imprenta", "JONSU", "Jonsu · hecho en casa",
-        P_ATRIO, AtrioDisplay, AtrioBody),
+    Edicion("atrio", "Jonsu", "La mesa y la estantería: fondo neutro, Bricolage y el granate de Jonsu", "Jonsu", "Jonsu · hecho en casa",
+        P_ATRIO, Grotesca, AtrioBody),
 )
 
 object Ediciones {

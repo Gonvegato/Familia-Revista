@@ -55,10 +55,10 @@ fun NotasDeTuPareja(e: Escritos, cid: String, abrirEscena: (String) -> Unit) {
     if (notas.isEmpty()) return
     val nombre = remember { Pareja.nombre(ctx) }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("LO QUE TE ANOTA ${nombre.uppercase()} · ${notas.size}", color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
+        Text("LO QUE TE ANOTA ${nombre.uppercase()} · ${notas.size}", color = ColGeneral, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         notas.forEach { n ->
             Column(Modifier.fillMaxWidth().border(1.dp, Line).press(haptic = false) { if (e.get(n.eid) != null) abrirEscena(n.eid) }.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (n.cita.isNotBlank()) Text("«${n.cita}»", fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (n.cita.isNotBlank()) Text("«${n.cita}»", fontFamily = Body, fontSize = 14.sp, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(n.texto, fontSize = 15.sp, lineHeight = 21.sp, color = Charcoal)
                 Text(e.get(n.eid)?.s("titulo")?.ifBlank { null }?.let { "$it · ${haceE(n.u)}" } ?: haceE(n.u), color = Muted, fontSize = 11.sp)
             }
@@ -77,7 +77,7 @@ fun TeComparte(onAbrir: () -> Unit) {
     if (caps.isEmpty()) return
     val nombre = remember { Pareja.nombre(ctx) }
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp).border(1.5.dp, Charcoal).press { onAbrir() }.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("TE COMPARTE ${nombre.uppercase()}", color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
+        Text("TE COMPARTE ${nombre.uppercase()}", color = ColGeneral, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         FitTitle(pe.obras().joinToString(" · ") { it.s("titulo").ifBlank { "Sin título" } }, 24.sp, 28.sp, color = Charcoal)
         Text("${caps.size} ${if (caps.size == 1) "capítulo" else "capítulos"} para leer y anotar →", color = Muted, fontSize = 13.sp)
     }
@@ -112,7 +112,7 @@ fun LecturaPareja(onBack: () -> Unit) {
                 item("o" + o.id) {
                     Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         FitTitle(o.s("titulo").ifBlank { "Sin título" }, 30.sp, 33.sp, color = Charcoal)
-                        if (o.s("sinopsis").isNotBlank()) Text(o.s("sinopsis"), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, color = Muted)
+                        if (o.s("sinopsis").isNotBlank()) Text(o.s("sinopsis"), fontFamily = Body, fontSize = 15.sp, color = Muted)
                     }
                 }
                 val caps = pe.capitulos(o.id)
@@ -144,7 +144,7 @@ private fun LeerYAnotar(pe: Escritos, c: Doc, notas: List<NotaLectura>, onNotas:
         if (esc.all { it.s("texto").isBlank() }) Text("Todavía no hay nada escrito.", color = Muted, fontSize = 14.sp)
         esc.forEachIndexed { i, s ->
             if (i > 0) Text("* * *", color = Muted, fontSize = 16.sp, modifier = Modifier.fillMaxWidth().wrapContentWidth().padding(vertical = 8.dp))
-            if (s.s("titulo").isNotBlank()) Text(s.s("titulo").uppercase(), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
+            if (s.s("titulo").isNotBlank()) Text(s.s("titulo"), color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             Compartir.parrafos(s.s("texto")).forEachIndexed { p, l ->
                 val aqui = notas.filter { it.eid == s.id && (it.p == p || (it.p < 0 && Compartir.cita(l).startsWith(it.cita.take(40)))) }
                 Column(Modifier.fillMaxWidth().press(haptic = false) { editando = Triple(s, p, null) }) {
@@ -164,7 +164,7 @@ private fun LeerYAnotar(pe: Escritos, c: Doc, notas: List<NotaLectura>, onNotas:
         val parrafo = Compartir.parrafos(s.s("texto")).getOrNull(p).orEmpty()
         var texto by remember(n?.id, s.id, p) { mutableStateOf(n?.texto.orEmpty()) }
         HojaEscribir(if (n == null) "Anotar" else "Tu nota", { editando = null }) {
-            Text("«${Compartir.cita(parrafo)}»", fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, color = Muted)
+            Text("«${Compartir.cita(parrafo)}»", fontFamily = Body, fontSize = 16.sp, color = Muted)
             CampoEscribir(texto, { texto = it }, "Tu nota", lineas = 4)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 BotonEscribir("Guardar") {

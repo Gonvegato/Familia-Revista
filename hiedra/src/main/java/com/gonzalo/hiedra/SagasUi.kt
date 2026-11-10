@@ -31,7 +31,7 @@ fun siguienteDe(juegos: List<Juego>): Juego? = juegos.firstOrNull { it.estado ==
 
 @Composable
 private fun BotonTexto(texto: String, acento: Boolean = false, onClick: () -> Unit) =
-    TextButton(onClick) { Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) }
+    TextButton(onClick) { Text(texto, color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) }
 
 /** La página de una saga: sus juegos en orden, el que toca ahora y cómo editarla (nombre, orden, juegos). */
 @Composable
@@ -51,20 +51,20 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Juego) -> Unit, alJugar
     }
     Column(Modifier.fillMaxSize().atrapaFoco().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
         RevistaTopBar(alCerrar, "Volver") { EnlaceRevista(if (editando) "Listo" else "Editar", acento = editando) { editando = !editando } }
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Spacer(Modifier.height(14.dp))
         RevistaHeadline(s.nombre, listOfNotNull("Saga", origenesDe(juegos).ifBlank { null }).joinToString(" · "))
-        Text(resumenSaga(juegos), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
+        Text(resumenSaga(juegos), color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             val pasados = juegos.count { it.estado == Estado.PASADO }
             Column(Modifier.weight(1f)) {
                 FitTitle("$pasados/${juegos.size}", 44.sp, 46.sp, unaLinea = true, maxLines = 1)
-                Text("PASADOS", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("Pasados", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
             val ms = juegos.sumOf { it.msJugados }
             if (ms >= 60_000) Column(Modifier.weight(1f)) {
                 FitTitle(tiempoDe(ms), 44.sp, 46.sp, unaLinea = true, maxLines = 1)
-                Text("EN TOTAL", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("En total", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -72,15 +72,15 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Juego) -> Unit, alJugar
             Filete(1.dp)
             Row(Modifier.fillMaxWidth().tocable { alAbrir(siguiente) }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(if (siguiente.estado == Estado.JUGANDO) "AHORA" else "TOCA ESTE", color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
+                    Text(if (siguiente.estado == Estado.JUGANDO) "AHORA" else "TOCA ESTE", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     Text(siguiente.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 24.sp, maxLines = 2)
                 }
-                if (!siguiente.sinLanzador) Text("JUGAR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp, modifier = Modifier.tocable { alJugar(siguiente) }.padding(8.dp))
-                else Text("ABRIR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp)
+                if (!siguiente.sinLanzador) Text("JUGAR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, modifier = Modifier.tocable { alJugar(siguiente) }.padding(8.dp))
+                else Text("ABRIR →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
             }
         }
-        Filete(2.dp)
-        if (juegos.isEmpty()) Text("Esta saga no tiene juegos todavía.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(vertical = 16.dp))
+        Filete(1.dp, Line)
+        if (juegos.isEmpty()) Text("Esta saga no tiene juegos todavía.", color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(vertical = 16.dp))
         juegos.forEachIndexed { i, j ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { FilaJuego(j, alAbrir, if (editando) null else alJugar, numero = i + 1, conEstado = true) }
@@ -104,14 +104,14 @@ fun PantSaga(id: String, alCerrar: () -> Unit, alAbrir: (Juego) -> Unit, alJugar
     if (anadir) SelectorJuegos("Añadir a «${s.nombre}»", Biblioteca.juegos.filter { it.id !in s.juegos }, { anadir = false }) { ids -> anadir = false; Sagas.poner(s.copy(juegos = s.juegos + ids)) }
     if (renombrar) {
         var t by remember { mutableStateOf(s.nombre) }
-        AlertDialog(onDismissRequest = { renombrar = false }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("Nombre de la saga", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        AlertDialog(onDismissRequest = { renombrar = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            title = { Text("Nombre de la saga", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
             text = { CampoRevista("Nombre", t, "nombre") { t = it } },
             confirmButton = { BotonTexto("Guardar", true) { if (t.isNotBlank()) { Sagas.poner(s.copy(nombre = t.trim())); renombrar = false } } },
             dismissButton = { BotonTexto("Cancelar") { renombrar = false } })
     }
-    if (borrar) AlertDialog(onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("¿Borrar «${s.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+    if (borrar) AlertDialog(onDismissRequest = { borrar = false }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("¿Borrar «${s.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text("Se deshace la saga en todos tus dispositivos. Los ${juegos.size} juegos siguen en tu biblioteca, cada uno en su sección.", color = Muted, fontFamily = Body) },
         confirmButton = { BotonTexto("Borrar", true) { Sagas.quitar(s.id); borrar = false; alCerrar() } },
         dismissButton = { BotonTexto("Cancelar") { borrar = false } })
@@ -123,8 +123,8 @@ fun DialogoSagaDeJuego(j: Juego, alCerrar: () -> Unit) {
     val actual = Sagas.de(j)
     var nueva by remember { mutableStateOf("") }
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Saga de «${j.titulo}»", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Saga de «${j.titulo}»", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 if (Sagas.lista.isEmpty()) Text("Aún no hay sagas. Escribe un nombre para crear la primera.", color = Muted, fontFamily = Body, fontSize = 13.sp)
@@ -146,8 +146,8 @@ fun DialogoSagaDeJuego(j: Juego, alCerrar: () -> Unit) {
 @Composable
 fun DialogoNuevaSaga(nombre: String, alCambiar: (String) -> Unit, alCerrar: () -> Unit, alCrear: (String) -> Unit) {
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Nueva saga", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Nueva saga", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { CampoRevista("Nombre", nombre, "p. ej. Zelda") { alCambiar(it) } },
         confirmButton = { BotonTexto("Crear", true) { if (nombre.isNotBlank()) alCrear(nombre.trim()) } },
         dismissButton = { BotonTexto("Cerrar") { alCerrar() } }
@@ -164,11 +164,11 @@ fun SelectorJuegos(titulo: String, candidatos: List<Juego>, alCerrar: () -> Unit
         val lista = candidatos.filter { q.isEmpty() || Catalogo.norm(it.titulo).contains(q) || Catalogo.norm(etiquetaDe(it)).contains(q) }.sortedBy { Catalogo.norm(it.titulo) }
         Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp)) {
             RevistaTopBar(alCerrar, "Cerrar") { if (!uno) EnlaceRevista(if (marcados.isEmpty()) "Elige" else "Añadir ${marcados.size} →", acento = marcados.isNotEmpty()) { if (marcados.isNotEmpty()) alElegir(marcados) } }
-            Filete(3.dp)
-            Text(titulo.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, modifier = Modifier.padding(top = 12.dp))
+            Filete(1.dp, Line)
+            Text(titulo, color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp))
             CampoRevista("Buscar", busca, "título o sistema") { busca = it }
             LazyColumn(Modifier.fillMaxSize()) {
-                if (lista.isEmpty()) item { Text("No hay más juegos para elegir.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
+                if (lista.isEmpty()) item { Text("No hay más juegos para elegir.", color = Muted, fontFamily = Body, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
                 items(lista, key = { it.id }) { j ->
                     val on = j.id in marcados
                     Row(Modifier.fillMaxWidth().tocable { if (uno) alElegir(listOf(j.id)) else marcados = if (on) marcados - j.id else marcados + j.id }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -176,7 +176,7 @@ fun SelectorJuegos(titulo: String, candidatos: List<Juego>, alCerrar: () -> Unit
                         Box(Modifier.width(40.dp).aspectRatio(PROPORCION_PORTADA).clip(esquina(3.dp))) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 18) }
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
                             Text(j.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2)
-                            Text(metaJuego(j, conEstado = true).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text(metaJuego(j, conEstado = true), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                     Filete(1.dp, Line)

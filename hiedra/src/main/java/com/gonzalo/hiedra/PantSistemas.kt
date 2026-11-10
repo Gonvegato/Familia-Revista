@@ -87,28 +87,28 @@ fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit, enPagina: Bo
                     RevistaTopBar(alVolver, "Bastet") { EnlaceRevista("+ Carpeta", acento = true, onClick = alAnadirCarpeta) }
                     Antetitulo("Sección · ${Catalogo.sistemas.size} sistemas", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
                     FitTitle("Sistemas", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-                    Filete(3.dp)
+                    Filete(1.dp, Line)
                 }
                 Text("Bastet juega ella misma a ${Nucleos.principales.size} consolas: baja el núcleo la primera vez, guarda donde lo dejas al salir y lo sube a tu nube para seguir en otro móvil. " +
                     "Para el resto, abre los emuladores que ya tienes instalados.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(vertical = 12.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.weight(1f)) { Antetitulo("Se juegan en Bastet") }
-                    Text("${consolas.count { it.bajado }} BAJADAS", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+                    Text("${consolas.count { it.bajado }} BAJADAS", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     consolas.forEach { e -> CasillaConsola(e, anchoCasilla) { abierto = e.id } }
                 }
                 Text("«En pruebas»: núcleos que aún no se han podido probar en un móvil de verdad (3D, discos, arcade). Si tienes otro emulador para ese sistema, «Automático» sigue usándolo; Bastet, cuando la elijas.",
                     color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 12.dp, bottom = 18.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Carpetas de ROMs", Modifier.padding(bottom = 6.dp))
                 if (Biblioteca.carpetas.isEmpty()) Text("Todavía no has añadido ninguna. Añade la carpeta donde guardas tus ROMs y Bastet la recorre.", color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp)
                 else Biblioteca.carpetas.forEach { c ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
-                        Text("QUITAR", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, modifier = Modifier.tocable { Biblioteca.carpetas.remove(c); Biblioteca.guardar() }.padding(8.dp))
+                        Text("Quitar", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.tocable { Biblioteca.carpetas.remove(c); Biblioteca.guardar() }.padding(8.dp))
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -121,9 +121,9 @@ fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit, enPagina: Bo
                         }
                     }
                 }
-                aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp) }
+                aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp) }
                 Spacer(Modifier.height(10.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) { Antetitulo("Todos los sistemas") }
                 CampoBusquedaRevista(busca, "Buscar un sistema") { busca = it }
                 Filete(1.dp, Line)
@@ -132,10 +132,10 @@ fun PantSistemas(alVolver: () -> Unit, alAnadirCarpeta: () -> Unit, enPagina: Bo
         items(lista, key = { it.s.id }) { e ->
             FilaRevista(e.s.nombre, "${if (e.juegos == 0) "sin juegos" else if (e.juegos == 1) "1 juego" else "${e.juegos} juegos"} · ${e.emu}",
                 modifier = Modifier.widthIn(max = 1180.dp),
-                derecha = { Text(if (e.listo) "LISTO" else "FALTA", color = if (e.listo) Charcoal else Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.padding(start = 10.dp)) }) { abierto = e.s.id }
+                derecha = { Text(if (e.listo) "LISTO" else "FALTA", color = if (e.listo) Charcoal else Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 10.dp)) }) { abierto = e.s.id }
         }
         item {
-            if (busca.isBlank()) Text((if (verTodos) "Ver solo los míos" else "Ver los ${Catalogo.sistemas.size} sistemas").uppercase() + " →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.4.sp,
+            if (busca.isBlank()) Text((if (verTodos) "Ver solo los míos" else "Ver los ${Catalogo.sistemas.size} sistemas").uppercase() + " →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp,
                 modifier = Modifier.tocable { verTodos = !verTodos }.padding(vertical = 18.dp))
         }
     }
@@ -157,17 +157,17 @@ private fun CasillaConsola(e: EstadoConsola, ancho: Dp, alAbrir: () -> Unit) {
         Box(Modifier.fillMaxWidth().height(5.dp).background(e.s.color))
         Column(Modifier.padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)) {
             Row(verticalAlignment = Alignment.Top) {
-                Text(e.s.corto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 32.sp, letterSpacing = 0.sp, maxLines = 1, modifier = Modifier.weight(1f))
-                if (e.n.pruebas) Text("PRUEBAS", color = Acento, fontFamily = Body, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp,
+                Text(e.s.corto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp, maxLines = 1, modifier = Modifier.weight(1f))
+                if (e.n.pruebas) Text("Pruebas", color = Acento, fontFamily = Body, fontSize = 8.sp, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 6.dp).border(1.dp, Acento, esquina(2.dp)).padding(horizontal = 4.dp, vertical = 1.dp))
             }
             Text(e.s.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 16.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
-            Text(e.n.nombre.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, modifier = Modifier.padding(top = 6.dp))
+            Text(e.n.nombre, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.padding(top = 6.dp))
             Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (e.bajado && !e.faltaBios) { Box(Modifier.size(6.dp).clip(esquina(3.dp)).background(Color(0xFF3E8E5A))); Spacer(Modifier.width(5.dp)) }
-                Text(estado.uppercase(), color = if (e.faltaBios) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(estado, color = if (e.faltaBios) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if (e.juegos > 0) Text(if (e.juegos == 1) "1 JUEGO" else "${e.juegos} JUEGOS", color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
+            if (e.juegos > 0) Text(if (e.juegos == 1) "1 JUEGO" else "${e.juegos} JUEGOS", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

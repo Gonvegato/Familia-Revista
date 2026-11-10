@@ -62,7 +62,7 @@ fun PantListas(alVolver: () -> Unit) {
                 Panel {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(l.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                            Text(l.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                             Etiqueta(Tele.tipoNombre(l.tipo) + when (l.tipo) {
                                 TipoLista.XTREAM -> " · " + Servidor.normaliza(l.url).substringAfter("://") + " · " + l.usuario.take(2) + "…"
                                 TipoLista.M3U -> " · " + Secretos.tapa(l.url, l.secretos.filter { it != l.url }).substringAfter("://").substringBefore('/') + "/…"
@@ -85,7 +85,7 @@ fun PantListas(alVolver: () -> Unit) {
             }
             quitar?.let { l ->
                 Panel {
-                    Text("¿Quitar «${l.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                    Text("¿Quitar «${l.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                     Cuerpo("Se quita de tu cuenta (en todos tus dispositivos) con lo que se ha bajado aquí. Tus favoritos y lo visto de esa lista se quedan en tu cuenta por si la vuelves a poner.")
                     Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                         EnlaceRevista("Sí, quitarla", Modifier.focoInicial(l.id), acento = true) { Listas.quita(l.id); Tele.olvida(l); quitar = null }
@@ -104,16 +104,16 @@ fun CampoRevista(etiqueta: String, valor: String, pista: String, secreto: Boolea
     var ver by remember { mutableStateOf(false) }
     Column(modifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
-            Text(etiqueta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.width(110.dp).padding(bottom = 3.dp))
+            Text(etiqueta, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(110.dp).padding(bottom = 3.dp))
             Box(Modifier.weight(1f)) {
-                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
+                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Body, fontSize = 18.sp)
                 BasicTextField(valor, alCambiar, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp),
                     cursorBrush = SolidColor(Acento), visualTransformation = if (secreto && !ver) PasswordVisualTransformation() else VisualTransformation.None,
                     keyboardOptions = KeyboardOptions(keyboardType = if (secreto) KeyboardType.Password else teclado, autoCorrect = false), modifier = Modifier.fillMaxWidth())
             }
             if (secreto && valor.isNotEmpty()) EnlaceRevista(if (ver) "Tapar" else "Ver", Modifier.padding(start = 8.dp)) { ver = !ver }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
     }
 }
 
@@ -169,7 +169,7 @@ private fun FormularioLista(inicial: Lista, alAcabar: () -> Unit) {
     CampoRevista("Guía XMLTV", epg, "una dirección .xml o .xml.gz (opcional)", secreto = true) { epg = it }
     CampoRevista("User-Agent", agente, "el que pida tu proveedor (opcional)", teclado = KeyboardType.Text) { agente = it }
     Spacer(Modifier.height(12.dp))
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(bottom = 8.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(bottom = 8.dp)) }
     Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
         BotonAcento(if (ocupado) "Comprobando…" else "Guardar") {
             if (ocupado) return@BotonAcento

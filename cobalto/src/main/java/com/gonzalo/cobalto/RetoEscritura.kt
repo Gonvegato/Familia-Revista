@@ -99,14 +99,14 @@ fun palabrasDia(n: Int): String = when { n <= 0 -> "nada"; n == 1 -> "1 palabra"
 fun BloqueReto(d: DatosEscritura, alPoner: () -> Unit) {
     Column(Modifier.fillMaxWidth().clickable(onClick = alPoner).padding(start = 20.dp, end = 20.dp, top = 20.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Text("Meta del día", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, maxLines = 1, modifier = Modifier.weight(1f))
-            Text(cifraE(d.hoy), color = if (d.cumplida) Acento else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, maxLines = 1)
-            Text(" / ${cifraE(d.meta)}", color = Muted, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
+            Text("Meta del día", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, maxLines = 1, modifier = Modifier.weight(1f))
+            Text(cifraE(d.hoy), color = if (d.cumplida) Acento else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, maxLines = 1)
+            Text(" / ${cifraE(d.meta)}", color = Muted, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
         }
         Box(Modifier.padding(top = 8.dp).fillMaxWidth().height(9.dp).background(Line)) {
             Box(Modifier.fillMaxWidth((d.hoy.toFloat() / d.meta.coerceAtLeast(1)).coerceIn(0f, 1f)).fillMaxHeight().background(Acento))
         }
-        Text("${textoMeta(d)} · ${textoCumplidos(d.cumplidos30)}", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, letterSpacing = 1.sp, lineHeight = 14.sp,
+        Text("${textoMeta(d)} · ${textoCumplidos(d.cumplidos30)}", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp,
             modifier = Modifier.padding(top = 6.dp))
     }
 }
@@ -144,14 +144,14 @@ fun SemanaTocable(d: DatosEscritura, modifier: Modifier = Modifier, alto: Int = 
                             .background(if (sel) Acento else if (n > 0) (if (cumple) Charcoal else Charcoal.copy(alpha = 0.55f)) else Line)
                             .then(if (sel) Modifier.border(2.dp, Charcoal) else Modifier))
                         if (sel) {
-                            Text("$letra · ${palabrasDia(n)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, maxLines = 1, softWrap = false,
+                            Text("$letra · ${palabrasDia(n)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                                 modifier = Modifier.align(when (i) { 0 -> Alignment.BottomStart; d.semana.lastIndex -> Alignment.BottomEnd; else -> Alignment.BottomCenter })
                                     .offset(y = (-(h + 6)).dp)
                                     .wrapContentWidth(align = when (i) { 0 -> Alignment.Start; d.semana.lastIndex -> Alignment.End; else -> Alignment.CenterHorizontally }, unbounded = true)
                                     .background(Charcoal).padding(horizontal = 7.dp, vertical = 4.dp))
                         }
                     }
-                    Text(letra, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, color = if (dia == hoy) Acento else Muted,
+                    Text(letra, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (dia == hoy) Acento else Muted,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
                 }
             }

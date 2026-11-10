@@ -73,8 +73,8 @@ fun DialogoBajarRom(j: Juego, jugar: Boolean, alCerrar: () -> Unit) {
 
     val sistema = Catalogo.sistema(j.sistema)?.corto ?: j.sistema
     AlertDialog(
-        onDismissRequest = { if (bajando == null) alCerrar() }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text(j.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { if (bajando == null) alCerrar() }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text(j.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 val texto = if (!listo) "Esta ROM está en otro de tus móviles. Para bajarla aquí, vincula tu cuenta de Atrio y conecta tu kDrive (Ajustes)." else when (val p = paso) {
@@ -89,7 +89,7 @@ fun DialogoBajarRom(j: Juego, jugar: Boolean, alCerrar: () -> Unit) {
                 if (bajando != null) Box(Modifier.padding(top = 12.dp).fillMaxWidth().height(3.dp).background(Line)) {
                     Box(Modifier.fillMaxWidth(hecho).fillMaxHeight().background(Acento))
                 }
-                if (paso is PasoRom.Lista && carpeta != null) Text("Elegir otra carpeta", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp,
+                if (paso is PasoRom.Lista && carpeta != null) Text("Elegir otra carpeta", color = Muted, fontFamily = Body, fontSize = 14.sp,
                     modifier = Modifier.padding(top = 10.dp).tocable { elegir.launch(null) })
             }
         },
@@ -109,4 +109,4 @@ fun DialogoBajarRom(j: Juego, jugar: Boolean, alCerrar: () -> Unit) {
 
 @Composable
 private fun BotonRom(texto: String, acento: Boolean = false, onClick: () -> Unit) =
-    TextButton(onClick) { Text(texto.uppercase(), color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) }
+    TextButton(onClick) { Text(texto, color = if (acento) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) }

@@ -185,7 +185,7 @@ fun FondoEquipo(e: Equipo?, modifier: Modifier = Modifier) {
 /** Un botón recto con marco de 2 px (los de la dirección C que no son la acción principal). */
 @Composable
 fun BotonMarco(texto: String, modifier: Modifier = Modifier, color: Color = Charcoal, onClick: () -> Unit) {
-    Text(texto.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.8.sp, maxLines = 1,
+    Text(texto, color = color, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1,
         modifier = modifier.border(2.dp, color).tocable(onClick = onClick).padding(horizontal = 12.dp, vertical = 9.dp))
 }
 
@@ -225,15 +225,15 @@ fun ContenidoImagenesEquipo(e: Equipo, alCerrar: () -> Unit, fondoInicial: Boole
         }
         PestanasRevista(listOf("El escudo", "El fondo"), if (esFondo) 1 else 0) { esFondo = it == 1 }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            Text("AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+            Text("Ahora", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (esFondo) {
                 Box(Modifier.fillMaxWidth().aspectRatio(2.2f).tocable { galeria.launch("image/*") }, contentAlignment = Alignment.Center) {
                     FondoEquipo(e, Modifier.matchParentSize())
-                    if (fondo.isBlank()) Text("Sin fondo: el color del club", color = Color.White.copy(alpha = 0.85f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                    if (fondo.isBlank()) Text("Sin fondo: el color del club", color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 16.sp)
                 }
             } else {
                 Box(Modifier.size(150.dp).background(Sand).tocable { galeria.launch("image/*") }, contentAlignment = Alignment.Center) { EscudoConPaspartu(e, 130.dp, sombra = 0.dp) }
-                Text(if (escudo.isNotBlank()) "EL TUYO" else "EL DE ESPN (AUTOMÁTICO)", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
+                Text(if (escudo.isNotBlank()) "EL TUYO" else "EL DE ESPN (AUTOMÁTICO)", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
             }
             FlowRow(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (esFondo && fondo.isNotBlank()) BotonMarco("Encuadrar") { encuadrar = true }
@@ -241,20 +241,20 @@ fun ContenidoImagenesEquipo(e: Equipo, alCerrar: () -> Unit, fondoInicial: Boole
                 if (!esFondo && escudo.isNotBlank()) BotonMarco("El de ESPN") { ImagenesEquipo.quitarEscudo(e.id) }
                 if (esFondo && fondo.isNotBlank()) BotonMarco("Quitar") { ImagenesEquipo.quitarFondo(e.id) }
             }
-            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando el escudo…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
+            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando el escudo…", color = Acento, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
             Text(if (esFondo) "Va detrás del cartel de la portada y arriba en las fichas del equipo y de sus partidos en casa. Se recorta a lo ancho: con «Encuadrar» eliges qué parte se ve (solo en este dispositivo). Sin fondo, el color del club."
                 else "Sale en el cartel, en las fichas y en «Tus equipos», con su paspartú. Va con tu cuenta: igual en tus otros dispositivos. «El de ESPN» vuelve al automático.",
                 color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 14.dp))
-            Text("PROPUESTAS · ESPN", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
-            if (esFondo) Text("ESPN no da fondos de los equipos: elige uno de tu móvil (una foto del estadio, de la afición…).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
+            Text("PROPUESTAS · ESPN", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
+            if (esFondo) Text("ESPN no da fondos de los equipos: elige uno de tu móvil (una foto del estadio, de la afición…).", color = Muted, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp)
             else {
                 val props = listOfNotNull(e.escudo.ifBlank { null }?.let { "El de siempre" to it }, ImagenesEquipo.escudoOscuroEspn(e.escudo)?.let { "Para fondo oscuro" to it })
-                if (props.isEmpty()) Text("ESPN no tiene escudo de este equipo.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                if (props.isEmpty()) Text("ESPN no tiene escudo de este equipo.", color = Muted, fontFamily = Body, fontSize = 16.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     props.forEachIndexed { i, (t, url) ->
                         Column(Modifier.width(120.dp).tocable(enabled = !guardando) { deUrl(url) }) {
                             Box(Modifier.size(120.dp).background(if (i == 0) PASPARTU_CREMA else PASPARTU_OSCURO).padding(16.dp)) { AsyncImage(url, t, Modifier.fillMaxSize(), contentScale = ContentScale.Fit) }
-                            Text(t.uppercase(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, modifier = Modifier.padding(top = 4.dp))
+                            Text(t, color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
                         }
                     }
                 }

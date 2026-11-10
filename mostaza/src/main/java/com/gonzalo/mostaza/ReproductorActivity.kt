@@ -715,13 +715,13 @@ fun ControlesReproductor(
     }
     // (un toque, no un botón: así la cruceta no se para en todo el vídeo, y con los controles escondidos llega al reproductor para saltar)
     Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures(onTap = { alTocar() }) }) {
-        if (e.cargando && e.aviso == null) Text("Cargando…", color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 20.sp * k, modifier = Modifier.align(Alignment.Center))
+        if (e.cargando && e.aviso == null) Text("Cargando…", color = blanco, fontFamily = Body, fontSize = 20.sp * k, modifier = Modifier.align(Alignment.Center))
         if (e.visibles || e.aviso != null) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xCC000000), Color.Transparent, Color.Transparent, Color(0xCC000000)))))
             Column(Modifier.align(Alignment.TopStart).fillMaxWidth().statusBarsPadding().padding(horizontal = mh, vertical = mv)) {
-                Text("← VOLVER", color = blanco, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp * k, letterSpacing = 1.4.sp, modifier = Modifier.tocable { alVolver() }.padding(vertical = 8.dp))
-                Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp * k, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp * k, letterSpacing = 1.sp, maxLines = 1)
+                Text("← VOLVER", color = blanco, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp * k, modifier = Modifier.tocable { alVolver() }.padding(vertical = 8.dp))
+                Text(e.titulo, color = blanco, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp * k, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (e.subtitulo.isNotBlank()) Text(e.subtitulo, color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp * k, maxLines = 1)
                 if (e.fuente.isNotBlank()) Text(e.fuente, color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp * k, maxLines = 1)
             }
             if (botones) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -754,7 +754,7 @@ fun ControlesReproductor(
             }
         }
         // (debajo de «Cargando…», en el centro: arriba tapaba el título)
-        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp * k, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        e.mensaje?.let { m -> Text(m, color = blanco, fontFamily = Body, fontSize = 17.sp * k, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier.align(Alignment.Center).offset(y = 64.dp * k).widthIn(max = 560.dp * k).padding(horizontal = 24.dp).background(Color(0x99000000)).padding(horizontal = 16.dp, vertical = 8.dp)) }
         e.aviso?.let { a ->
             Column(Modifier.align(Alignment.Center).widthIn(max = 520.dp * k).padding(24.dp).background(Paper).padding(22.dp).atrapaFoco()) {
@@ -811,7 +811,7 @@ private fun BotonReproductor(icono: androidx.compose.ui.graphics.vector.ImageVec
 
 @Composable
 private fun EnlaceClaro(t: String, color: Color, k: Float, alHacer: () -> Unit) =
-    Text(t.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp * k, letterSpacing = 1.3.sp, maxLines = 1, modifier = Modifier.tocable { alHacer() }.padding(vertical = 10.dp, horizontal = 4.dp))
+    Text(t, color = color, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp * k, maxLines = 1, modifier = Modifier.tocable { alHacer() }.padding(vertical = 10.dp, horizontal = 4.dp))
 
 /** «1:23:45» o «23:45». */
 fun tiempo(ms: Long): String {

@@ -88,7 +88,7 @@ fun SeccionCopias(e: Escritos, aviso: (String) -> Unit) {
             aviso(if (f != null) "Copia hecha" else "No había nada que copiar"); ver++
         }
     }
-    if (lista.isEmpty()) Text("Aún no hay ninguna.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(vertical = 4.dp))
+    if (lista.isEmpty()) Text("Aún no hay ninguna.", color = Muted, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(vertical = 4.dp))
     lista.take(12).forEach { c ->
         MagLink(fechaCopia(c.hecha), "${c.obras} ${if (c.obras == 1) "obra" else "obras"} · ${cifraE(c.palabras)} palabras · ${maxOf(1L, c.tam / 1024)} KB") { abierta = c }
     }
@@ -111,14 +111,14 @@ private fun HojaCopia(e: Escritos, copias: CopiasEscritos, c: CopiasEscritos.Cop
         val d = docs
         val obras = remember(d) { d?.let { CopiasEscritos.obras(it) }.orEmpty() }
         when {
-            d == null -> Text("Leyendo la copia…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
-            obras.isEmpty() -> Text("Esta copia no tiene obras (o no se puede leer).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+            d == null -> Text("Leyendo la copia…", color = Muted, fontFamily = Body, fontSize = 16.sp)
+            obras.isEmpty() -> Text("Esta copia no tiene obras (o no se puede leer).", color = Muted, fontFamily = Body, fontSize = 16.sp)
         }
         obras.forEach { o ->
             val (palabras, escenas) = remember(d, o.id) { CopiasEscritos.resumen(d!!, o.id) }
             Column(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Box(Modifier.fillMaxWidth().height(1.dp).background(Line))
-                Text(o.s("titulo").ifBlank { "Sin título" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 21.sp, lineHeight = 24.sp, color = Charcoal, modifier = Modifier.padding(top = 8.dp))
+                Text(o.s("titulo").ifBlank { "Sin título" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 21.sp, lineHeight = 24.sp, color = Charcoal, modifier = Modifier.padding(top = 8.dp))
                 Text("${cifraE(palabras)} palabras · $escenas ${if (escenas == 1) "escena" else "escenas"}" + if (o.borrado) " · estaba en la papelera" else "", color = Muted, fontSize = 12.sp)
                 BotonEscribir("Sacar como obra nueva", Modifier.padding(top = 4.dp)) {
                     val n = CopiasEscritos.recupera(e, d!!, o.id)

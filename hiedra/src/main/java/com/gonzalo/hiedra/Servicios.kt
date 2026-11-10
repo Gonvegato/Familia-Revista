@@ -229,7 +229,7 @@ fun DialogoSgdb(j: Juego, alCerrar: () -> Unit, alElegir: (String) -> Unit) {
     Dialog(onDismissRequest = alCerrar, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp)) {
             RevistaTopBar({ if (elegido != null) { elegido = null; portadas = emptyList() } else alCerrar() }, if (elegido != null) "Juegos" else "Cerrar")
-            Filete(3.dp)
+            Filete(1.dp, Line)
             Antetitulo(elegido?.name ?: "SteamGridDB", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
             if (key.isBlank()) {
                 Text("Falta la API key de SteamGridDB.", color = Charcoal, fontFamily = Display, fontSize = 20.sp, modifier = Modifier.padding(top = 10.dp))
@@ -243,12 +243,12 @@ fun DialogoSgdb(j: Juego, alCerrar: () -> Unit, alElegir: (String) -> Unit) {
                 }
             }
             if (ocupado) Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Acento) }
-            if (error.isNotBlank()) Text(error, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
+            if (error.isNotBlank()) Text(error, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
             if (elegido == null) Column(Modifier.verticalScroll(rememberScrollState())) {
                 hits.forEach { h ->
                     Row(Modifier.fillMaxWidth().tocable { elegir(h) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(h.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(1f))
-                        if (h.sub.isNotBlank()) Text(h.sub, color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        if (h.sub.isNotBlank()) Text(h.sub, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                     Filete(1.dp, Line)
                 }
@@ -280,8 +280,8 @@ fun SeccionServicios() {
         "RAWG" to estado(p.rawg, atrio.rawg), "IGDB" to estado(p.igdbId, atrio.igdbId), "kDrive" to (if (KDrive.on(ctx)) "conectado" else "sin conectar (en «Avanzado»)"))
     Cuerpo("SteamGridDB da las portadas; Steam, tus horas; RAWG e IGDB, los datos de cada juego (fecha, estudio, géneros, lo que suele durar). Lo que pongas aquí manda; si lo dejas vacío, se usa lo que tengas en Atrio (viene con tu cuenta).", tam = 12)
     Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp)) { resumen.forEach { (n, v) -> MagFact(n, v) } }
-    if (mirando) Text("Mirando las de Atrio…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp)
-    else if (Cuenta.vinculada && Servicios.ultimaAtrio(ctx) == 0L) Text("Todavía no se han leído las de Atrio: sincroniza (arriba).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp)
+    if (mirando) Text("Mirando las de Atrio…", color = Muted, fontFamily = Body, fontSize = 14.sp)
+    else if (Cuenta.vinculada && Servicios.ultimaAtrio(ctx) == 0L) Text("Todavía no se han leído las de Atrio: sincroniza (arriba).", color = Muted, fontFamily = Body, fontSize = 14.sp)
     CampoRevista("SteamGridDB", p.sgdb, if (atrio.sgdb.isNotBlank()) "la de Atrio" else "API key (steamgriddb.com → Preferencias → API)") { guarda(p.copia(sgdb = it)) }
     CampoRevista("Steam", p.steamKey, if (atrio.steamKey.isNotBlank()) "la de Atrio" else "clave de Steam (steamcommunity.com/dev/apikey)", secreto = true) { guarda(p.copia(steamKey = it)) }
     CampoRevista("Perfil", p.steamUser, if (atrio.steamUser.isNotBlank()) "el de Atrio" else "URL del perfil, nombre o SteamID64") { guarda(p.copia(steamUser = it)) }
@@ -294,7 +294,7 @@ fun SeccionServicios() {
         ocupado = true; msg = "Hablando con Steam…"
         scope.launch { msg = withContext(Dispatchers.IO) { Servicios.traerHorasSteam(ctx) }; ocupado = false }
     }
-    if (msg.isNotBlank()) Text(msg, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
+    if (msg.isNotBlank()) Text(msg, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
 }
 
 /** Una copia con algún campo cambiado (como copy() de un data class, para las claves). */

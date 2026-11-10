@@ -111,10 +111,10 @@ fun FilaTitulo(t: Titulo, alAbrir: (Titulo) -> Unit, alVer: ((Titulo) -> Unit)? 
     Row(modifier.fillMaxWidth().tocable { alAbrir(t) }.testTag("fila-" + t.ref).padding(top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
         Box(Modifier.width(portada).height(alto)) { PortadaTitulo(t, Modifier.matchParentSize()) }
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
-            if (orden > 0) Text("%02d".format(orden), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
-            Text(t.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, lineHeight = 22.sp,
+            if (orden > 0) Text("%02d".format(orden), color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1)
+            Text(t.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 22.sp,
                 maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = if (orden > 0) 2.dp else 0.dp))
-            Text((lineaTipo(t) + if (conEstado) " · " + t.estado.nombre.lowercase() else "").uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+            Text((lineaTipo(t) + if (conEstado) " · " + t.estado.nombre.lowercase() else ""), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                 letterSpacing = 0.9.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
             Spacer(Modifier.weight(1f).heightIn(min = 8.dp))
             PieFila(t, if (alVer != null && (t.estado == Estado.VIENDO || t.estado == Estado.ABANDONADO)) ({ alVer(t) }) else null)
@@ -135,8 +135,8 @@ private fun PieFila(t: Titulo, alVer: (() -> Unit)?) {
         Estado.VISTO -> listOfNotNull(if (t.fin > 0) "TERMINADA EL ${fechaJunta(t.fin).uppercase()}" else "VISTA", if (ms >= 60_000L) horasCortas(ms) else null).joinToString(" · ")
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-        Text(izq, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, lineHeight = 15.sp, maxLines = 2, modifier = Modifier.weight(1f))
-        if (alVer != null) Text("SEGUIR →", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1,
+        Text(izq, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 18.sp, maxLines = 2, modifier = Modifier.weight(1f))
+        if (alVer != null) Text("SEGUIR →", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1,
             modifier = Modifier.tocable(onClick = alVer).padding(start = 10.dp, top = 6.dp, bottom = 2.dp))
     }
     if ((t.estado == Estado.VIENDO || t.estado == Estado.ABANDONADO) && p != null && !p.visto && p.fraccion > 0f)
@@ -152,8 +152,8 @@ fun MenusPequenos(sel: OrdenGuardado.Filtro, cuentas: Map<OrdenGuardado.Filtro, 
             val n = cuentas[m] ?: 0
             Row(Modifier.tocable(fuera = 2.dp) { onSel(if (on) OrdenGuardado.Filtro.TODO else m) }.background(if (on) Charcoal else Color.Transparent).border(2.dp, Charcoal)
                 .padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(m.nombre.uppercase(), color = if (on) Paper else if (n == 0) Muted else Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                Text(" $n", color = if (on) Paper else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, maxLines = 1)
+                Text(m.nombre, color = if (on) Paper else if (n == 0) Muted else Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(" $n", color = if (on) Paper else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
             }
         }
     }
@@ -189,7 +189,7 @@ private fun PaginaEstado(estado: Estado, todos: List<Titulo>, alAbrir: (Titulo) 
                 MenusPequenos(filtro, cuentas) { filtro = it; OrdenGuardado.ponFiltro(ctx, estado, it) }
                 val ordenes = ordenesDe(estado)
                 FiltrosRevista(ordenes.map { nombreOrden(estado, it) }, ordenes.indexOf(orden).coerceAtLeast(0), Modifier.padding(top = 2.dp)) { i -> orden = ordenes[i]; OrdenGuardado.pon(ctx, estado, orden) }
-                Filete(2.dp)
+                Filete(1.dp, Line)
             }
         }
         if (lista.isEmpty()) item {
@@ -199,7 +199,7 @@ private fun PaginaEstado(estado: Estado, todos: List<Titulo>, alAbrir: (Titulo) 
                 if (todos.isEmpty()) BotonC("Explorar", Modifier.padding(top = 12.dp), onClick = alExplorar)
             }
         }
-        itemsIndexed(lista, key = { _, it -> it.ref }) { i, t -> FilaTitulo(t, alAbrir, alVer, orden = i + 1); Filete(2.dp) }
+        itemsIndexed(lista, key = { _, it -> it.ref }) { i, t -> FilaTitulo(t, alAbrir, alVer, orden = i + 1); Filete(1.dp, Line) }
         item { Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) }
     }
 }
@@ -233,14 +233,14 @@ private fun PaginaProximos(alAbrir: (Titulo) -> Unit) {
             Row(Modifier.fillMaxWidth().tocable(enabled = t != null) { t?.let(alAbrir) }.padding(vertical = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
                 Box(Modifier.width(64.dp).height(96.dp)) { if (t != null) PortadaTitulo(t, Modifier.matchParentSize()) else TapaDeTela(x.serie, Modifier.matchParentSize()) }
                 Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                    Text("%02d".format(i + 1), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
-                    Text(x.serie, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, lineHeight = 22.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text(Proximos.episodio(x).uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.9.sp, lineHeight = 15.sp, maxLines = 2,
+                    Text("%02d".format(i + 1), color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1)
+                    Text(x.serie, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 22.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(Proximos.episodio(x), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp, maxLines = 2,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
-                    x.dia?.let { d -> Text(Proximos.cuando(d).uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 6.dp)) }
+                    x.dia?.let { d -> Text(Proximos.cuando(d), color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp)) }
                 }
             }
-            Filete(2.dp)
+            Filete(1.dp, Line)
         }
         item { Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) }
     }
@@ -305,7 +305,7 @@ fun PantPrincipal(pagina: Int, alPagina: (Int) -> Unit, alAbrir: (Titulo) -> Uni
                 EnlaceRevista("Buscar", color = Paper.copy(alpha = 0.75f)) { alIr(Destino.Buscar) }
                 EnlaceRevista("Explorar", Modifier.padding(start = 14.dp), color = acentoSobreTinta()) { alIr(Destino.Explorar) }
                 Spacer(Modifier.weight(1f))
-                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 4.dp).tocable { alIr(Destino.Ajustes) }.padding(6.dp).size(20.dp))
             }
             // El nombre: su alto se mide una vez y se va quitando según se recoge; encoge con su hueco desde la esquina de arriba a la izquierda
@@ -377,12 +377,12 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>
                 Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }.tocable(fuera = 0.dp) { onSel(i) }
                     .background(if (on) AcentoBloque else Color.Transparent)
                     .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(n.uppercase(), color = if (on) SobreBloque else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreBloque else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                    Text(n, color = if (on) SobreBloque else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreBloque else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1) }
                 }
             }
             if (relleno > 0) Spacer(Modifier.width(with(androidx.compose.ui.platform.LocalDensity.current) { relleno.toDp() }))
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
     }
 }

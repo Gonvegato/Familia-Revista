@@ -60,6 +60,8 @@ val FORMAS: List<Forma> = listOf(
     Forma("terminal", Esq.Recta, 0f, 1.dp, true, false, 0f),
     Forma("brutal", Esq.Recta, 0f, 3.dp, true, true, 0f),
     Forma("revista", Esq.Recta, 0f, 0.dp, false, false, 0f),
+    // Dirección D: redonda, sin bordes
+    Forma("mesa", Esq.Redonda, 1f, 0.dp, false, false, 1f),
 )
 
 /** Esquina normal de radio [r] según la forma. */
@@ -117,10 +119,10 @@ object Modo {
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "palomitas" })
-    var display by mutableStateOf("Atrio")
+    var palette by mutableStateOf(PALETTES.first { it.id == "mesa" })
+    var display by mutableStateOf("Vitrina")
     var body by mutableStateOf("Atrio")
-    var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
+    var forma by mutableStateOf(FORMAS.first { it.id == "mesa" })
     /** Id de [ACCENT_COLORS] o "paleta" (el de la paleta). */
     var accentId by mutableStateOf("paleta")
     /** Tamaño del texto en por ciento. */
@@ -247,26 +249,18 @@ object Skin {
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
-        // Hathor 0.7.0, una vez: los colores de antes pasan a Palomitas (y viajan a tus otros dispositivos)
-        if (!p.getBoolean("palomitas_v1", false)) {
-            p.edit().putBoolean("palomitas_v1", true).apply()
-            if (aPalomitas()) { ajustesAt = System.currentTimeMillis(); persistir(c) }
-        }
+        // Dirección D: la primera vez, el acento vuelve al de la app (lo demás de antes ya no se elige)
+        if (!p.getBoolean("mesa_v1", false)) { accentId = "paleta"; acentoPropio = 0L; p.edit().putBoolean("mesa_v1", true).putString("acento", "paleta").putLong("acento_propio", 0L).apply() }
+        soloMesa()
     }
 
     /**
-     * Los colores de antes pasan a «Palomitas»: los de Hathor hasta la 0.6 (fondo marrón #715021, texto blanco y acento rosa #D4C1C0, puestos
-     * en «A tu manera») vuelven a automático, y la paleta que venía puesta (Revista con acento mostaza) pasa a Palomitas. Lo demás elegido a
-     * mano se queda. Devuelve true si ha cambiado algo.
+     * La dirección D no deja elegir paleta, formas, letras, fondos de color ni los colores de Jonsu: una sola cara (la mesa), con el
+     * claro/oscuro, el acento y el tamaño del texto que elijas. Lo que venga de antes (o de un dispositivo sin actualizar) se queda en eso.
      */
-    fun aPalomitas(): Boolean {
-        var cambio = false
-        val viejoFondo = (fondoPropio and 0xFFFFFFL) == 0x715021L && fondoPropio != 0L
-        if (viejoFondo) { fondoPropio = 0L; cambio = true }
-        if (viejoFondo && tintaPropia != 0L && (tintaPropia and 0xFFFFFFL) == 0xFFFFFFL) { tintaPropia = 0L; cambio = true }
-        if (acentoPropio != 0L && (acentoPropio and 0xFFFFFFL) == 0xD4C1C0L) { acentoPropio = 0L; cambio = true }
-        if (palette.id == "revista" && accentId == "mostaza") { palette = PALETTES.first { it.id == "palomitas" }; accentId = "paleta"; cambio = true }
-        return cambio
+    fun soloMesa() {
+        palette = PALETTES.first { it.id == "mesa" }; forma = FORMAS.first { it.id == "mesa" }
+        display = "Vitrina"; body = "Atrio"; invertido = false; origenAtrio = false; fondoId = ""; fondoPropio = 0L; tintaPropia = 0L
     }
 
     /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros Hathor gana la más reciente. */
@@ -298,7 +292,7 @@ object Skin {
         Modo.eleccion = k.optInt("modo", Modo.eleccion).coerceIn(0, 2)
         fondoId = k.optString("fondoId").takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         fondoPropio = k.optLong("fondoPropio", 0L); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = k.optLong("acentoPropio", 0L)
-        aPalomitas()  // (si llega de un Hathor de antes)
+        soloMesa()
         ajustesAt = at
         persistir(c)
         return true
@@ -414,7 +408,7 @@ fun MostazaTheme(content: @Composable () -> Unit) {
     ) {
         MaterialTheme(colorScheme = appColors(), typography = AppTypography) {
             // El texto sin color propio sale con la tinta del tema (si no, negro: se veía mal sobre un fondo oscuro)
-            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Charcoal, content = content)
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Charcoal) { com.gonzalo.mesa.ConTinta(tintaMesa(), content) }
         }
     }
 }
@@ -424,3 +418,7 @@ fun MostazaTheme(content: @Composable () -> Unit) {
 val Grotesca: FontFamily get() = VitrinaDisplay
 /** El segundo color de los bloques de cifras de la dirección C (el azul de las maquetas). */
 val Bloque2: Color get() = Color(0xFF1F3A5F)
+
+// ───── dirección D (la mesa y la estantería) ─────
+/** Los colores y las letras de Hathor para lo de [com.gonzalo.mesa]. */
+fun tintaMesa() = com.gonzalo.mesa.Tinta(fondo = Paper, superficie = Crudo, tinta = Charcoal, apagado = Muted, linea = Line, chip = Sand, acento = Acento, sobreAcento = SobreAcento, titulos = Grotesca, texto = Body)

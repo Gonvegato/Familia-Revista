@@ -52,8 +52,8 @@ fun CuadroEscribir(color: Color, ante: String, titulo: String, texto: String, pi
     Column(Modifier.fillMaxWidth().height(ALTO_CUADRO).clip(shp(14.dp)).background(color.copy(alpha = 0.09f)).border(1.dp, color.copy(alpha = 0.45f), shp(14.dp)).press(haptic = false, onLong = onLong, onClick = onClick)) {
         Box(Modifier.fillMaxWidth().height(6.dp).background(color))
         Column(Modifier.fillMaxWidth().weight(1f).padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(ante.uppercase(), color = anteColor, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(titulo, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 22.sp, color = Charcoal, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(ante, color = anteColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(titulo, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 22.sp, color = Charcoal, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (texto.isNotBlank()) Text(texto, color = Muted, fontSize = 13.sp, lineHeight = 17.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, fontStyle = FontStyle.Italic)
             Spacer(Modifier.weight(1f))
             extra()
@@ -67,7 +67,7 @@ private fun CuadroNuevo(texto: String, onClick: () -> Unit) {
     Column(Modifier.fillMaxWidth().height(ALTO_CUADRO).clip(shp(14.dp)).border(1.dp, Line, shp(14.dp)).press(haptic = false, onClick = onClick).padding(12.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Text("+", fontFamily = Display, fontSize = 34.sp, color = Muted)
-        Text(texto.uppercase(), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
+        Text(texto, color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -114,8 +114,8 @@ private fun LazyGridScope.cabecera(key: String, contenido: @Composable () -> Uni
 @Composable
 private fun Seccion(t: String, accion: String? = null, onAccion: () -> Unit = {}) {
     Row(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(t.uppercase(), color = Charcoal, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.8.sp, modifier = Modifier.weight(1f))
-        if (accion != null) Text(accion.uppercase(), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp, modifier = Modifier.press(haptic = false, onClick = onAccion).padding(8.dp))
+        Text(t, color = Charcoal, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        if (accion != null) Text(accion, color = ColGeneral, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.press(haptic = false, onClick = onAccion).padding(8.dp))
     }
 }
 
@@ -165,7 +165,7 @@ fun ManuscritoObra(e: Escritos, obra: Doc, ver: Int, abrirParte: (String) -> Uni
         cabecera("resumen") { conmuta() }
         if (est.items.isEmpty()) cabecera("vacio") {
             Column(Modifier.padding(vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("El manuscrito", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
+                Text("El manuscrito", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
                 Text("Crea partes (actos, libros…) y capítulos dentro, o capítulos sueltos si no quieres partes. Cada capítulo es un cuadrado: ábrelo para escribir sus escenas, leerlo entero o apuntar notas.", color = Muted, fontSize = 14.sp, lineHeight = 21.sp)
             }
         }
@@ -270,7 +270,7 @@ fun ParteScreen(e: Escritos, aid: String, onBack: () -> Unit, abrirCapitulo: (St
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Parte ${NUMS.getOrNull(numero) ?: "${numero + 1}"} · ${caps.size} ${if (caps.size == 1) "capítulo" else "capítulos"} · ${cifraE(caps.sumOf { e.palabrasCapitulo(it.id) })} palabras", color = Muted, fontSize = 13.sp)
                     Box(Modifier.width(56.dp).height(5.dp).background(colorEscrito(p.s("color"))))
-                    if (p.s("resumen").isNotBlank()) Text(p.s("resumen"), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 23.sp, color = Charcoal)
+                    if (p.s("resumen").isNotBlank()) Text(p.s("resumen"), fontFamily = Body, fontSize = 17.sp, lineHeight = 23.sp, color = Charcoal)
                     MarcasCompartir(e, p)
                 }
             }
@@ -328,7 +328,7 @@ fun CapituloScreen(e: Escritos, cid: String, onBack: () -> Unit, abrir: (String)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Capítulo ${numeroCapitulo(e, c)} · ${esc.size} ${if (esc.size == 1) "escena" else "escenas"} · ${cifraE(e.palabrasCapitulo(cid))} palabras", color = Muted, fontSize = 13.sp)
                     Box(Modifier.width(56.dp).height(5.dp).background(colorEscrito(c.s("color"), Charcoal)))
-                    if (c.s("resumen").isNotBlank()) Text(c.s("resumen"), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 23.sp, color = Charcoal)
+                    if (c.s("resumen").isNotBlank()) Text(c.s("resumen"), fontFamily = Body, fontSize = 17.sp, lineHeight = 23.sp, color = Charcoal)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         BotonEscribir("Escribir") {
                             val s = esc.maxByOrNull { it.u }
@@ -387,7 +387,7 @@ fun LeerCapitulo(e: Escritos, c: Doc, onCerrar: () -> Unit) {
         if (esc.all { it.s("texto").isBlank() }) Text("Todavía no hay nada escrito.", color = Muted, fontSize = 14.sp)
         esc.forEachIndexed { i, s ->
             if (i > 0) Text("* * *", color = Muted, fontSize = 16.sp, modifier = Modifier.fillMaxWidth().wrapContentWidth().padding(vertical = 8.dp))
-            if (s.s("titulo").isNotBlank()) Text(s.s("titulo").uppercase(), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
+            if (s.s("titulo").isNotBlank()) Text(s.s("titulo"), color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             // (el capítulo empieza con letra capitular, como en un libro)
             if (i == 0) TextoLectura(s.s("texto"), colorEscrito(c.s("color"), ColGeneral), tam = 18) else ParrafosEscribir(s.s("texto"), tam = 18)
         }

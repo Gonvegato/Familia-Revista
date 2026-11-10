@@ -121,7 +121,7 @@ class MainActivity : ComponentActivity() {
             val own = when (Mode.themeMode) { 1 -> false; 2 -> true; else -> sys }
             // Lo de tu pareja va con el tema contrario al tuyo.
             // (un fondo de color fija el modo: casi todos son oscuros; en lo de tu pareja no hay fondo de color)
-            val target = Skin.fondoPropioOscuro ?: Skin.fondoActual?.oscuro ?: if (Mode.partnerShown) !own else own
+            val target = if (Mode.partnerShown) !own else own
             remember { Mode.dark = target; true }
             var overlay by remember { mutableStateOf<ImageBitmap?>(null) }
             var center by remember { mutableStateOf(Offset.Zero) }
@@ -189,7 +189,7 @@ class MainActivity : ComponentActivity() {
                 androidx.compose.runtime.CompositionLocalProvider(
                     androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(dens.density, dens.fontScale * Skin.textScale)
                 ) {
-                    MaterialTheme(colorScheme = appColors(), typography = AppTypography) {
+                    TemaJonsu {
                         App(store, openId, openPartner, openGo, shareUrl, shareTitle, { shareUrl = "" }) { openId = 0L; openPartner = false; openGo = "" }
                         // Fondo propio de la forma (líneas de TV, rejilla, grano, trama): no se puede tocar
                         FormOverlay()

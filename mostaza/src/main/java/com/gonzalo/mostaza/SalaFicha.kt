@@ -106,12 +106,12 @@ private fun FichaSalaDe(b: MetaBreve, est: EstadoSala, ctl: ControlSala) {
                 PosterSala(poster, nombre, Modifier.width(340.dp), radio = 14.dp, sombra = 30.dp)
                 Spacer(Modifier.width(64.dp))
                 Column(Modifier.weight(1f)) {
-                    Text((tipoNombre(tipo) + (t?.let { "  ·  En " + it.estado.nombre } ?: "")).uppercase(), color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 18.sp, letterSpacing = 3.sp)
+                    Text((tipoNombre(tipo) + (t?.let { "  ·  En " + it.estado.nombre } ?: "")), color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
                     Spacer(Modifier.height(10.dp))
                     FitTitle(nombre, 88.sp, 92.sp, color = tinta.tinta, letterSpacing = (-2).sp, maxLines = 3, overflow = TextOverflow.Ellipsis, minSize = 44f)
                     val datos = listOfNotNull(m?.ano?.ifBlank { null } ?: b.ano.ifBlank { null }, m?.minutos?.takeIf { it > 0 }?.let { duracion(it) }, m?.nota?.ifBlank { null }?.let { "★ $it" },
                         m?.generos?.take(3)?.joinToString(", ")?.ifBlank { null })
-                    if (datos.isNotEmpty()) Text(datos.joinToString("  ·  "), color = tinta.tinta.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 26.sp, modifier = Modifier.padding(top = 10.dp))
+                    if (datos.isNotEmpty()) Text(datos.joinToString("  ·  "), color = tinta.tinta.copy(alpha = 0.8f), fontFamily = Body, fontSize = 26.sp, modifier = Modifier.padding(top = 10.dp))
                     Spacer(Modifier.height(30.dp))
                     // ---- Reproducir, las fuentes, tu biblioteca
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -128,12 +128,12 @@ private fun FichaSalaDe(b: MetaBreve, est: EstadoSala, ctl: ControlSala) {
                     }
                     if (prog != null && prog.pos > 0 && !prog.visto && prog.dur > 0) {
                         Box(Modifier.padding(top = 18.dp).width(620.dp).height(6.dp).background(tinta.linea)) { Box(Modifier.fillMaxWidth(prog.fraccion).fillMaxHeight().background(tinta.acento)) }
-                        Text("Vas por ${tiempo(prog.pos)} de ${tiempo(prog.dur)}".uppercase(), color = tinta.gris, fontFamily = Body, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp, modifier = Modifier.padding(top = 8.dp))
+                        Text("Vas por ${tiempo(prog.pos)} de ${tiempo(prog.dur)}", color = tinta.gris, fontFamily = Body, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                     }
                     if (t == null) NotaSala(if (Biblioteca.loBorraste(b.id)) "La quitaste de tu biblioteca: no vuelve sola aunque la veas. «Añadir» la recupera, con lo que tenía."
                         else "Si la ves 10 minutos seguidos, entra sola en «Viendo».", Modifier.padding(top = 16.dp), tam = 19.sp)
                     // ---- Lo que dice su ficha
-                    extras?.lema?.takeIf { it.isNotBlank() }?.let { Text("«$it»", color = tinta.tinta, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 26.sp, lineHeight = 34.sp, modifier = Modifier.padding(top = 30.dp)) }
+                    extras?.lema?.takeIf { it.isNotBlank() }?.let { Text("«$it»", color = tinta.tinta, fontFamily = Body, fontSize = 26.sp, lineHeight = 34.sp, modifier = Modifier.padding(top = 30.dp)) }
                     m?.descripcion?.takeIf { it.isNotBlank() }?.let { Text(it, color = tinta.tinta.copy(alpha = 0.86f), fontFamily = Body, fontSize = 21.sp, lineHeight = 31.sp, maxLines = 6, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 18.dp).widthIn(max = 1150.dp)) }
                     if (m == null) NotaSala(if (b.id.startsWith("tt") || t?.imdb?.isNotBlank() == true) "Leyendo la ficha…" else "Ninguno de tus addons tiene la ficha de esto.", Modifier.padding(top = 20.dp))
                     Spacer(Modifier.height(30.dp))
@@ -212,12 +212,12 @@ private fun EpisodioSala(v: Video, t: Titulo?, m: Meta, toca: Boolean, alVer: ()
         Row(Modifier.weight(1f).enfocable(id, radio = 10.dp, crece = 1.015f) { if (estrenado) alVer() }.clip(formaSala(10.dp))
             .background(if (foco.actual == id && foco.visible) tinta.tarjeta else if (toca) tinta.tarjeta.copy(alpha = 0.5f) else Color.Transparent).padding(horizontal = 18.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Text(if (v.episodio > 0) "${v.episodio}" else "·", color = if (p?.visto == true) tinta.gris else tinta.acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 38.sp, modifier = Modifier.width(76.dp))
+            Text(if (v.episodio > 0) "${v.episodio}" else "·", color = if (p?.visto == true) tinta.gris else tinta.acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 38.sp, modifier = Modifier.width(76.dp))
             Column(Modifier.weight(1f)) {
                 Text(v.titulo.ifBlank { "Episodio ${v.episodio}" }, color = if (estrenado) tinta.tinta else tinta.gris, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 25.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 val linea = listOfNotNull(if (toca) "el siguiente" else null, if (v.estreno > 0) Formato.fecha(v.estreno) else null, if (!estrenado) "aún no se ha estrenado" else null,
                     if (p?.visto == true) "visto" else if (p != null && p.pos > 0 && p.dur > 0) "vas por ${tiempo(p.pos)}" else null)
-                if (linea.isNotEmpty()) Text(linea.joinToString(" · ").uppercase(), color = tinta.gris, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+                if (linea.isNotEmpty()) Text(linea.joinToString(" · "), color = tinta.gris, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 if (p != null && !p.visto && p.fraccion > 0f) Box(Modifier.padding(top = 6.dp).fillMaxWidth(0.6f).height(4.dp).background(tinta.linea)) { Box(Modifier.fillMaxWidth(p.fraccion).fillMaxHeight().background(tinta.acento)) }
             }
         }

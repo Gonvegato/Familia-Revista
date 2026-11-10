@@ -163,7 +163,7 @@ private fun BibliotecaEscribir(e: Escritos, ver: Int, onBack: () -> Unit, abrirO
             item("pareja") { TeComparte(abrirPareja) }
             if (activas.isEmpty()) item("vacio") {
                 Column(Modifier.fillMaxWidth().padding(vertical = 30.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Aquí empieza tu novela.", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Charcoal)
+                    Text("Aquí empieza tu novela.", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Charcoal)
                     Text("Crea una obra y escribe por capítulos y escenas, con fichas de personajes y lugares, notas, borradores e historial. Se guarda sola, funciona sin conexión y aparece en todos tus dispositivos con tu cuenta.", color = Muted, fontSize = 15.sp, lineHeight = 22.sp)
                     BotonEscribir("Nueva obra") { nueva = true }
                     BotonEscribir("Importar un texto", suave = true) { importar.launch(arrayOf("text/*", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream")) }
@@ -195,7 +195,7 @@ fun SigueEscribiendo(e: Escritos, s: Doc, abrir: () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp).press(haptic = false, onClick = abrir).clip(shp(16.dp)).background(Crudo).border(1.dp, Line, shp(16.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text("SIGUE ESCRIBIENDO", color = ColGeneral, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
         FitTitle(s.s("titulo").ifBlank { "Sin título" }, 22.sp, 25.sp, color = Charcoal, maxLines = 2, overflow = TextOverflow.Ellipsis, conEdicion = false)
-        if (linea.isNotEmpty()) Text("…" + linea.takeLast(140), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (linea.isNotEmpty()) Text("…" + linea.takeLast(140), fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(listOfNotNull(obra?.s("titulo")?.ifBlank { null }, "${cifraE(s.i("palabras"))} palabras", "editada ${haceE(s.u)}").joinToString(" · ") + "  ·  Abrir →", color = Muted, fontSize = 12.sp)
     }
 }
@@ -221,11 +221,11 @@ private fun ResumenHoy(e: Escritos, hoy: Int, diaria: Int, racha: Int, total: In
     Column(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Bottom) {
             Column {
-                Text(cifraE(hoy), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 46.sp, color = if (diaria > 0 && hoy >= diaria) Color(0xFF5B8C5A) else Charcoal)
+                Text(cifraE(hoy), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 46.sp, color = if (diaria > 0 && hoy >= diaria) Color(0xFF5B8C5A) else Charcoal)
                 Text(if (diaria > 0) "HOY · DE ${cifraE(diaria)}" else "PALABRAS HOY", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
             }
-            Column { Text("$racha", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Charcoal); Text(if (racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp) }
-            Column { Text(cifraE(total), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Charcoal); Text("PALABRAS EN TOTAL", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp) }
+            Column { Text("$racha", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Charcoal); Text(if (racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS", color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+            Column { Text(cifraE(total), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Charcoal); Text("Palabras en total", color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
         }
         if (diaria > 0) Bar((hoy.toFloat() / diaria).coerceIn(0f, 1f), if (hoy >= diaria) Color(0xFF5B8C5A) else ColGeneral, height = 4.dp)
         Barras(dias.map { it.second }, Modifier.fillMaxWidth().height(44.dp))
@@ -355,7 +355,7 @@ fun ManuscritoLista(e: Escritos, obra: Doc, ver: Int, abrir: (String) -> Unit, a
             val esc = e.escenas(c.id).filter { pasa(it) }
             if (etiqueta.isNotEmpty() && esc.isEmpty()) return@forEachIndexed
             val p = c.s("aid").let { e.get(it)?.s("titulo")?.ifBlank { "Sin título" } } ?: c.s("parte")
-            if (p.isNotBlank() && p != parte) { parte = p; item("p$ci${c.id}") { Text(p.uppercase(), color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.padding(top = 22.dp, bottom = 2.dp)) } }
+            if (p.isNotBlank() && p != parte) { parte = p; item("p$ci${c.id}") { Text(p, color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 22.dp, bottom = 2.dp)) } }
             item("c${c.id}") { CabeceraCapitulo(e, c, ci, caps, onAbrir = { abrirCapitulo(c.id) }, onEditar = { capDlg = c }) }
             items(esc, key = { it.id }) { s -> FilaEscena(e, s, caps, esquema, onAbrir = { abrir(s.id) }) }
             if (etiqueta.isEmpty()) item("n${c.id}") { Text("+ ESCENA", color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
@@ -469,7 +469,7 @@ private fun BuscarObraDialogo(e: Escritos, obra: Doc, onCerrar: () -> Unit, abri
                     else -> onCerrar()
                 }
             }.padding(vertical = 6.dp)) {
-                Text(h.donde.uppercase(), color = ColGeneral, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1)
+                Text(h.donde, color = ColGeneral, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Text(resalta(h.extracto), fontFamily = Display, fontSize = 15.sp, color = Charcoal, maxLines = 3)
             }
             Filete(1.dp, Line)

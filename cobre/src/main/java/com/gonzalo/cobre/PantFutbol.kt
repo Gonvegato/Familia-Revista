@@ -97,7 +97,7 @@ fun <T> rememberDato(vararg claves: Any?, leer: (Boolean) -> T?): T? {
 fun Escudo(e: Equipo, tam: Dp, modifier: Modifier = Modifier) {
     Box(modifier.size(tam), contentAlignment = Alignment.Center) {
         @Composable fun Siglas() = Box(Modifier.fillMaxSize().clip(androidx.compose.foundation.shape.CircleShape).background(Sand), contentAlignment = Alignment.Center) {
-            Text(e.siglas.ifBlank { iniciales(e.nombre) }.take(3), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = (tam.value * 0.28f).sp, lineHeight = (tam.value * 0.3f).sp, maxLines = 1, softWrap = false,
+            Text(e.siglas.ifBlank { iniciales(e.nombre) }.take(3), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = (tam.value * 0.28f).sp, lineHeight = (tam.value * 0.3f).sp, maxLines = 1, softWrap = false,
                 style = androidx.compose.ui.text.TextStyle(platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false)))
         }
         if (e.escudo.isBlank()) Siglas()
@@ -112,14 +112,14 @@ private fun LineaPartido(p: Partido, ahora: Long, modifier: Modifier = Modifier)
     val t = listOf(p.competicion.corto, if (vivo) "En directo · " + p.cuando(ahora) else p.cuando(ahora)).joinToString(" · ")
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         if (vivo) { Box(Modifier.size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Acento)); Spacer(Modifier.width(6.dp)) }
-        Text(t.uppercase(), color = if (vivo) Acento else Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.1.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(t, color = if (vivo) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
 /** La marca de lo que es de un rival: «RIVAL» o «CONTRA TU RIVAL», en un recuadro de tinta (sin el acento de lo tuyo). */
 @Composable
 fun MarcaRival(texto: String, modifier: Modifier = Modifier) =
-    Text(texto.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, softWrap = false,
+    Text(texto, color = Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false,
         modifier = modifier.border(1.dp, Charcoal, esquina(2.dp)).padding(horizontal = 5.dp, vertical = 1.dp))
 
 /** Lo que dice un partido de tus rivales: «Contra tu rival» (uno tuyo contra un rival), «Rival» (un rival sin los tuyos) o nada. */
@@ -142,7 +142,7 @@ fun LineaEquipo(e: Equipo, goles: Int?, tam: Dp, letra: Int, ganador: Boolean, m
         Spacer(Modifier.width(10.dp))
         Text(e.nombre, color = if (mio) Charcoal else Charcoal.copy(alpha = 0.88f), fontFamily = Display, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = if (ganador || mio) FontWeight.Bold else FontWeight.SemiBold,
             fontSize = letra.sp, lineHeight = (letra * 1.15f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        if (goles != null) Text("$goles", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = (letra + 8).sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
+        if (goles != null) Text("$goles", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (letra + 8).sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
     }
 }
 
@@ -182,9 +182,9 @@ fun FilaPartido(p: Partido, ahora: Long, mios: Set<String>, rivales: Set<String>
                 p.estado == Estado.POR_JUGAR -> Hora.diaRelativo(p.inicio, ahora) to Hora.reloj(p.inicio)
                 else -> Hora.dia(p.inicio) to p.estado.texto
             }
-            Text(a.uppercase(), color = if (p.estado.enDirecto) Acento else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false)
+            Text(a, color = if (p.estado.enDirecto) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
             Text(b, color = if (p.estado.enDirecto) Acento else Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
-            Text(p.competicion.corto.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false)
+            Text(p.competicion.corto, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
             marcaDe(p)?.let { MarcaRival(if (it == "Rival") it else "Tu rival", Modifier.padding(top = 3.dp)) }
         }
         Column(Modifier.weight(1f)) {
@@ -204,7 +204,7 @@ private fun BotonCanal(texto: String, lleno: Boolean, alHacer: () -> Unit) {
         .semantics { role = Role.Button }.tocable(onClick = alHacer).padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Rounded.PlayArrow, null, tint = col, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
-        Text(texto.uppercase(), color = col, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.2.sp, maxLines = 1, softWrap = false)
+        Text(texto, color = col, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1, softWrap = false)
     }
 }
 
@@ -231,7 +231,7 @@ fun BotonesCanal(p: Partido, alConfigurar: () -> Unit, modifier: Modifier = Modi
             else Row(verticalAlignment = Alignment.CenterVertically) {
                 BotonCanal(g.boton, gi == 0) { pon(g, 0) }
                 (2..minOf(g.canales.size, 4)).forEach { n ->
-                    Text("$n", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false,
+                    Text("$n", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                         modifier = Modifier.semantics { contentDescription = "${g.boton}, canal $n" }.tocable { pon(g, n - 1) }.padding(horizontal = 9.dp, vertical = 10.dp))
                 }
             }
@@ -241,7 +241,7 @@ fun BotonesCanal(p: Partido, alConfigurar: () -> Unit, modifier: Modifier = Modi
 
 /** El pie de lo que sale de la fuente: «Datos: ESPN». */
 @Composable
-fun PieFuente(modifier: Modifier = Modifier) = Text(Futbol.FUENTE, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = modifier.padding(top = 14.dp))
+fun PieFuente(modifier: Modifier = Modifier) = Text(Futbol.FUENTE, color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = modifier.padding(top = 14.dp))
 
 // ---------------------------------------------------------------- «Tus partidos» (portada)
 
@@ -293,7 +293,7 @@ fun PantFutbol(alVolver: () -> Unit, alIr: (Destino) -> Unit, alFicha: (Ficha) -
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).let { if (enPagina) it else it.statusBarsPadding() }.navigationBarsPadding().padding(horizontal = m)) {
         if (!enPagina) CabeceraSeccion("Tus equipos", "Fútbol", alVolver) { EnlaceRevista("Ajustes", acento = true) { alIr(Destino.AjustesFutbol) } }
         else Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("FÚTBOL", color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.weight(1f))
+            Text("Fútbol", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             EnlaceRevista("Elegir equipos →", acento = true) { alIr(Destino.AjustesFutbol) }
         }
         PestanasRevista(listOf("Partidos", "Equipos"), pestana) { pestana = it }
@@ -390,14 +390,14 @@ fun ClasificacionDe(liga: String, resaltar: Set<String> = emptySet()) {
 fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set<String> = emptySet(), resaltar: Set<String> = emptySet()) {
     if (c.tablas.isEmpty()) { Nota("Esta competición aún no tiene clasificación.", Modifier.padding(top = 12.dp)); return }
     @Composable fun Num(t: String, w: Dp, negrita: Boolean = false, color: Color = Charcoal) =
-        Text(t, color = color, fontFamily = Body, fontSize = 14.sp, fontWeight = if (negrita) FontWeight.Black else FontWeight.Medium, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(w))
+        Text(t, color = color, fontFamily = Body, fontSize = 14.sp, fontWeight = if (negrita) FontWeight.SemiBold else FontWeight.Medium, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(w))
     c.tablas.forEach { (nombre, filas) ->
         if (nombre.isNotBlank()) Antetitulo(nombre, Modifier.padding(top = 16.dp))
         Row(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Etiqueta("#", Modifier.width(28.dp)); Etiqueta("Equipo", Modifier.weight(1f))
-            listOf("PJ", "DG", "Pts").forEach { Text(it.uppercase(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(when (it) { "Pts" -> 48.dp; "DG" -> 54.dp; else -> 40.dp })) }
+            listOf("PJ", "DG", "Pts").forEach { Text(it, color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(when (it) { "Pts" -> 48.dp; "DG" -> 54.dp; else -> 40.dp })) }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
         var nota = ""
         filas.forEach { f ->
             val mio = f.equipo.id in mios
@@ -405,7 +405,7 @@ fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set<String>
             if (f.nota != nota && nota.isNotEmpty()) Filete(1.dp, Charcoal)
             nota = f.nota
             Row(Modifier.fillMaxWidth().let { if (f.equipo.id in resaltar) it.background(Sand) else it }.padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("${f.puesto}", color = if (mio) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(28.dp))
+                Text("${f.puesto}", color = if (mio) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(28.dp))
                 EscudoEquipo(f.equipo, 26.dp)
                 Spacer(Modifier.width(8.dp))
                 val rival = f.equipo.id in rivales
@@ -416,12 +416,12 @@ fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set<String>
                 }
                 Num("${f.jugados}", 40.dp)
                 Num(if (f.diferencia > 0) "+${f.diferencia}" else "${f.diferencia}", 54.dp, color = Muted)
-                Text("${f.puntos}", color = if (mio) Acento else Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(48.dp))
+                Text("${f.puntos}", color = if (mio) Acento else Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.width(48.dp))
             }
             Filete(1.dp, Line)
         }
         val notas = filas.map { it.nota }.filter { it.isNotBlank() }.distinct()
-        if (notas.isNotEmpty()) Text(notas.joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 11.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 8.dp))
+        if (notas.isNotEmpty()) Text(notas.joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 8.dp))
     }
 }
 
@@ -438,14 +438,14 @@ fun GoleadoresDe(liga: String) {
         Antetitulo(t, Modifier.padding(top = 18.dp, bottom = 4.dp)); Filete(1.dp)
         lista.take(15).forEachIndexed { k, x ->
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("${k + 1}", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(28.dp))
+                Text("${k + 1}", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(28.dp))
                 Escudo(x.equipo, 22.dp)
                 Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f)) {
                     Text(x.nombre, color = if (x.equipo.id in mios) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text((x.equipo.nombre + if (x.partidos > 0) " · ${x.partidos} partidos" else "").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2)
+                    Text((x.equipo.nombre + if (x.partidos > 0) " · ${x.partidos} partidos" else ""), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 2)
                 }
-                Text("${x.cifra}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
+                Text("${x.cifra}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
             }
             Filete(1.dp, Line)
         }
@@ -515,16 +515,16 @@ fun etiquetaPartido(p: Partido, ahora: Long): String = when {
 @Composable
 fun SeccionNumerada(n: Int, texto: String, arriba: Dp = 26.dp) {
     Row(Modifier.fillMaxWidth().padding(top = arriba, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, maxLines = 1)
-        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
+        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, maxLines = 1)
+        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
     }
-    Filete(2.dp)
+    Filete(1.dp, Line)
 }
 
 /** La etiqueta en un bloque del acento (el estado del partido, «TU PRÓXIMO PARTIDO»…). */
 @Composable
 fun EtiquetaBloque(t: String, modifier: Modifier = Modifier) =
-    Text(t.uppercase(), color = SobreBloque, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, maxLines = 2,
+    Text(t, color = SobreBloque, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 2,
         modifier = modifier.background(AcentoBloque).padding(horizontal = 8.dp, vertical = 5.dp))
 
 /**
@@ -541,13 +541,13 @@ fun Enfrentados(p: Partido, ahora: Long, tamEscudo: Dp, alEquipo: ((Equipo) -> U
             val grande = gl != null && gv != null
             FitTitle(if (grande) "$gl–$gv" else Hora.reloj(p.inicio), if (grande) 64.sp else 44.sp, if (grande) 64.sp else 46.sp, color = blanco, family = Grotesca, fontWeight = FontWeight.ExtraBold,
                 maxLines = 1, unaLinea = true, minSize = 20f, letterSpacing = 0.sp, align = TextAlign.Center)
-            if (p.penaltis.isNotBlank()) Text("Penaltis ${p.penaltis}", color = blanco.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, textAlign = TextAlign.Center)
+            if (p.penaltis.isNotBlank()) Text("Penaltis ${p.penaltis}", color = blanco.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, textAlign = TextAlign.Center)
         }
         EscudoConPaspartu(p.visitante, tamEscudo, Modifier.let { if (alEquipo != null) it.tocable { alEquipo(p.visitante) } else it })
     }
     Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(p.local.nombre, color = blanco, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        Text(p.visitante.nombre, color = blanco, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+        Text(p.local.nombre, color = blanco, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Text(p.visitante.nombre, color = blanco, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
     }
 }
 
@@ -562,11 +562,11 @@ private fun AperturaPartido(p: Partido, ahora: Long, alCerrar: () -> Unit, alEqu
         Box(Modifier.matchParentSize().background(veloArriba()))
         Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = m).padding(bottom = 22.dp)) {
             EnlaceRevista("← Volver", Modifier.padding(top = 6.dp), color = Color.White.copy(alpha = 0.85f)) { alCerrar() }
-            Text(p.competicion.nombre.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
+            Text(p.competicion.nombre, color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
             EtiquetaBloque(etiquetaPartido(p, ahora), Modifier.padding(top = 8.dp, bottom = 18.dp))
             Enfrentados(p, ahora, if (grande) 128.dp else 104.dp, alEquipo)
             val donde = listOfNotNull(if (p.estado != Estado.POR_JUGAR) Hora.diaYHora(p.inicio, ahora) else null, p.estadio.ifBlank { null }).joinToString(" · ")
-            if (donde.isNotBlank()) Text(donde, color = Color.White.copy(alpha = 0.85f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, modifier = Modifier.padding(top = 10.dp))
+            if (donde.isNotBlank()) Text(donde, color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 14.sp, modifier = Modifier.padding(top = 10.dp))
         }
     }
 }
@@ -615,20 +615,20 @@ private fun Marcador(p: Partido, ahora: Long, alEquipo: (Equipo) -> Unit = {}) {
         Column(Modifier.padding(horizontal = 8.dp).widthIn(min = 96.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             val vivo = p.estado.enDirecto
             if (p.golesLocal != null && p.golesVisitante != null)
-                Text("${p.golesLocal}–${p.golesVisitante}", color = if (vivo) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = if (grande) 64.sp else 46.sp, maxLines = 1, softWrap = false)
-            else Text(Hora.reloj(p.inicio), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = if (grande) 48.sp else 34.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 8.dp))
+                Text("${p.golesLocal}–${p.golesVisitante}", color = if (vivo) Acento else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = if (grande) 64.sp else 46.sp, maxLines = 1, softWrap = false)
+            else Text(Hora.reloj(p.inicio), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = if (grande) 48.sp else 34.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 8.dp))
             val estado = when {
                 vivo -> p.cuando(ahora)
                 p.estado == Estado.POR_JUGAR -> Hora.diaRelativo(p.inicio, ahora)
                 else -> p.estado.texto
             }
-            Text(estado.uppercase(), color = if (vivo) Acento else Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, textAlign = TextAlign.Center, maxLines = 2)
+            Text(estado, color = if (vivo) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 2)
             if (p.penaltis.isNotBlank()) Etiqueta("Penaltis ${p.penaltis}", Modifier.padding(top = 2.dp))
         }
         Lado(p.visitante, Modifier.weight(1f))
     }
     val donde = listOfNotNull(if (p.estado != Estado.POR_JUGAR) Hora.diaYHora(p.inicio, ahora) else null, p.estadio.ifBlank { null }).joinToString(" · ")
-    if (donde.isNotBlank()) Text(donde, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp))
+    if (donde.isNotBlank()) Text(donde, color = Muted, fontFamily = Body, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp))
 }
 
 /** El color de lo que pasa: goles en acento, las amarillas y las rojas en su color, lo demás en gris. */
@@ -654,20 +654,20 @@ private fun FilaEvento(e: Evento, p: Partido) {
     if (e.tipo.esHito) {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f).height(1.dp).background(Line))
-            Text(e.frase().uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(horizontal = 10.dp))
+            Text(e.frase(), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false, modifier = Modifier.padding(horizontal = 10.dp))
             Box(Modifier.weight(1f).height(1.dp).background(Line))
         }
         return
     }
     val equipo = if (e.equipo == p.local.id) p.local else if (e.equipo == p.visitante.id) p.visitante else null
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.Top) {
-        Text(e.minuto, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(top = 2.dp, end = 6.dp))
+        Text(e.minuto, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(top = 2.dp, end = 6.dp))
         Box(Modifier.padding(top = 5.dp, end = 10.dp).size(width = if (e.tipo.esTarjeta) 8.dp else 10.dp, height = if (e.tipo.esTarjeta) 12.dp else 10.dp)
             .clip(if (e.tipo.esGol) androidx.compose.foundation.shape.CircleShape else esquina(2.dp)).background(colorEvento(e.tipo)))
         Column(Modifier.weight(1f)) {
             val texto = e.frase().removePrefix("${e.minuto} ")
             Text(texto, color = Charcoal, fontFamily = Display, fontWeight = if (e.tipo.esGol) FontWeight.Bold else FontWeight.Normal, fontSize = 16.sp, lineHeight = 21.sp)
-            if (equipo != null) Text(equipo.nombre.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (equipo != null) Text(equipo.nombre, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
     Filete(1.dp, Line)
@@ -684,10 +684,10 @@ private fun Alineaciones(f: FichaPartido) {
 private fun Alineacion1(a: Alineacion) {
     Row(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Escudo(a.equipo, 26.dp); Spacer(Modifier.width(8.dp))
-        Text(a.equipo.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        if (a.formacion.isNotBlank()) Text(a.formacion, color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
+        Text(a.equipo.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        if (a.formacion.isNotBlank()) Text(a.formacion, color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
     }
-    Filete(2.dp)
+    Filete(1.dp, Line)
     a.titulares.forEach { FilaJugador(it) }
     if (a.suplentes.isNotEmpty()) {
         Etiqueta("Suplentes", Modifier.padding(top = 12.dp, bottom = 2.dp))
@@ -703,12 +703,12 @@ private fun posicion(p: String): String = when (p.substringBefore('-').uppercase
 @Composable
 private fun FilaJugador(j: Jugador) {
     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(j.dorsal, color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = 28.dp).padding(end = 10.dp))
+        Text(j.dorsal, color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = 28.dp).padding(end = 10.dp))
         Text(j.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         val marca = when { j.entra -> "↑ entra"; j.sale -> "↓ sale"; else -> "" }
-        if (marca.isNotBlank()) Text(marca.uppercase(), color = if (j.entra) Acento else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
+        if (marca.isNotBlank()) Text(marca, color = if (j.entra) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
         val pos = posicion(j.posicion)
-        if (pos.isNotBlank()) Text(pos, color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
+        if (pos.isNotBlank()) Text(pos, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
     }
     Filete(1.dp, Line)
 }
@@ -718,18 +718,18 @@ private fun Cifras(f: FichaPartido) {
     if (f.cifras.isEmpty()) { Nota("Las cifras salen cuando empieza el partido.", Modifier.padding(top = 14.dp)); return }
     val p = f.partido
     Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 6.dp)) {
-        Text(p.local.corto.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        Text(p.visitante.corto.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+        Text(p.local.corto, color = Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Text(p.visitante.corto, color = Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
     }
-    Filete(2.dp)
+    Filete(1.dp, Line)
     f.cifras.forEach { c ->
         val a = c.local.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f
         val b = c.visitante.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f
         Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(c.local, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 15.sp, maxLines = 1, softWrap = false)
+                Text(c.local, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, softWrap = false)
                 Text(c.nombre, color = Muted, fontFamily = Body, fontSize = 13.sp, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
-                Text(c.visitante, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 15.sp, maxLines = 1, softWrap = false)
+                Text(c.visitante, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, softWrap = false)
             }
             if (a + b > 0f) Row(Modifier.fillMaxWidth().padding(top = 5.dp).height(4.dp)) {
                 Box(Modifier.weight(maxOf(a, 0.001f)).fillMaxHeight().background(if (a >= b) Acento else Line))
@@ -784,7 +784,7 @@ fun DondeVerlo(p: Partido, conTitulo: Boolean = true) {
     }
     Column(Modifier.fillMaxWidth().padding(top = if (conTitulo) 16.dp else 0.dp)) {
         if (conTitulo) Antetitulo("Dónde verlo")
-        Text(com.gonzalo.iptv.futbol.DondeVer.titulo(p.liga), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+        Text(com.gonzalo.iptv.futbol.DondeVer.titulo(p.liga), color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
         if (p.estado.terminado) { Nota("El partido ya ha terminado."); return@Column }
         ops.forEachIndexed { k, o ->
             val mod = Modifier.fillMaxWidth().padding(top = if (k == 0) 0.dp else 8.dp).let { if (k == 0) it.focoInicial(p.id) else it }
@@ -794,7 +794,7 @@ fun DondeVerlo(p: Partido, conTitulo: Boolean = true) {
                     if (o.grupo.canales.size > 1) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                         Etiqueta("Otros canales de ${o.grupo.boton}:")
                         (2..minOf(o.grupo.canales.size, 5)).forEach { n ->
-                            Text("$n", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false,
+                            Text("$n", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, softWrap = false,
                                 modifier = Modifier.semantics { contentDescription = "${o.grupo.boton}, canal $n" }.tocable { pon(o.grupo, n - 1) }.padding(horizontal = 10.dp, vertical = 10.dp))
                         }
                     }

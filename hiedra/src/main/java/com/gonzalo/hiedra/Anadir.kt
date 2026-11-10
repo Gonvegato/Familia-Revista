@@ -126,7 +126,7 @@ fun HojaAnadir(inicial: TipoLanzador?, vincularA: String? = null, alVincular: (J
             Paso.Menu -> Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
                 Antetitulo(if (paraFicha != null) "Vincular" else "Añadir", Modifier.padding(bottom = 4.dp), color = Acento, conCuadro = false)
                 FitTitle(paraFicha?.titulo ?: "Juegos", 44.sp, 46.sp, letterSpacing = (-1).sp, unaLinea = true)
-                Filete(3.dp)
+                Filete(1.dp, Line)
                 Cuerpo(if (paraFicha != null) "Elige su ROM, su app o su web: el juego se queda con todo (horas, estado, saga) y gana una manera más de abrirse." else "Elige de dónde vienen.", tam = 13, modifier = Modifier.padding(vertical = 8.dp))
                 if (paraFicha == null) Entrada("Carpeta de ROMs", "Bastet busca dentro y reconoce el sistema por la extensión o por el nombre de la carpeta") { carpeta.launch(null) }
                 Entrada(if (paraFicha != null) "Su ROM" else "ROMs sueltas", "Elige uno o varios archivos (.gba, .nds, .sfc…)") { archivos.launch(arrayOf("*/*")) }
@@ -147,7 +147,7 @@ fun HojaAnadir(inicial: TipoLanzador?, vincularA: String? = null, alVincular: (J
                 CircularProgressIndicator(color = Acento); Cuerpo(p.texto)
             }
             is Paso.Resumen -> Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 32.dp)) {
-                Filete(3.dp)
+                Filete(1.dp, Line)
                 FitTitle(p.texto, 30.sp, 34.sp, letterSpacing = (-1).sp, modifier = Modifier.padding(top = 14.dp))
                 MagFooter("Listo", alCerrar)
             }
@@ -164,8 +164,8 @@ fun DialogoFicha(alCerrar: () -> Unit) {
     var plataforma by remember { mutableStateOf("PC") }
     var error by remember { mutableStateOf<String?>(null) }
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Solo la ficha", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Solo la ficha", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Campo(nombre, "Nombre del juego", { nombre = it; error = null })
@@ -262,8 +262,8 @@ fun DialogoWeb(juego: Juego?, alCerrar: () -> Unit) {
     var orient by remember { mutableStateOf(juego?.orientacion ?: 0) }
     var error by remember { mutableStateOf<String?>(null) }
     AlertDialog(
-        onDismissRequest = alCerrar, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text(if (juego == null) "Juego de navegador" else "Editar", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = alCerrar, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text(if (juego == null) "Juego de navegador" else "Editar", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (juego == null) LazyRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) { items(SUGERENCIAS) { (n, u) -> Chip(n, false) { url = u; nombre = n } } }

@@ -17,8 +17,8 @@ android {
         applicationId = "com.gonzalo.cobalto"
         minSdk = 29
         targetSdk = 35
-        versionCode = 29
-        versionName = "0.6.0"
+        versionCode = 30
+        versionName = "0.7.0"
     }
     // Firma fija: cada versión nueva se instala encima de la anterior sin borrar tus obras.
     signingConfigs {
@@ -56,6 +56,7 @@ tasks.register<Copy>("copyRobolectricDeps") { from(robolectricDeps); into(layout
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
     implementation(project(":familia"))
+    implementation(project(":mesa"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")

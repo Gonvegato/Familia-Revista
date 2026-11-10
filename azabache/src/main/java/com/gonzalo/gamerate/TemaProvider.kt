@@ -12,8 +12,8 @@ import androidx.compose.ui.graphics.toArgb
 
 /**
  * Los colores de Atrio, para otras apps tuyas (Pórtico): content://com.gonzalo.gamerate.tema/colores
- * Devuelve una sola fila con los colores que se ven AHORA en Atrio (los de tu paleta, tu fondo de color, tus colores a mano
- * y tu acento, ya mezclados y en claro u oscuro según lo que tengas elegido): solo colores, nada de tus datos.
+ * Devuelve una sola fila con los colores que se ven AHORA en Jonsu (la paleta «mesa» en claro u oscuro y tu acento): solo colores,
+ * nada de tus datos.
  * Se calcula leyendo los ajustes guardados, sin tocar la pantalla ni el estado de la app.
  */
 class TemaProvider : ContentProvider() {
@@ -40,24 +40,15 @@ class TemaProvider : ContentProvider() {
          * MainActivity: un fondo a mano o de color fija el modo; si no, el tema elegido o el del sistema).
          */
         fun calcula(p: android.content.SharedPreferences, themeMode: Int, sistemaOscuro: Boolean): Pair<Tones, Boolean> {
-            val own = when (themeMode) { 1 -> false; 2 -> true; else -> sistemaOscuro }
-            val fondo = FONDOS.firstOrNull { it.id == p.getString("skin_fondo", "") }
-            val fondoPropio = p.getLong("skin_fondo_propio", 0L)
-            val tintaPropia = p.getLong("skin_tinta_propia", 0L)
+            // Dirección D: la paleta «mesa» en claro u oscuro (el tema elegido o el del sistema) y el acento (el de Jonsu, uno de la lista u otro color)
+            val oscuro = when (themeMode) { 1 -> false; 2 -> true; else -> sistemaOscuro }
+            val paleta = PALETTES.first { it.id == "mesa" }
+            val base = if (oscuro) paleta.dark else paleta.light
             val acentoPropio = p.getLong("skin_acento_propio", 0L)
-            val accentId0 = p.getString("skin_accent_id", "edicion") ?: "edicion"
-            // Sin nada elegido: los colores de Jonsu de serie (fondo casi negro, texto crema y el granate)
-            val deSerie = Skin.deSerieJonsu(p.getString("skin_fondo", ""), accentId0, fondoPropio, tintaPropia, acentoPropio)
-            val oscuro = (if (fondoPropio != 0L) Color(fondoPropio).luminance() < 0.4f else if (deSerie) Color(JONSU_FONDO).luminance() < 0.4f else null) ?: fondo?.oscuro ?: own
-            val paleta = PALETTES.first { it.id == "revista" }
-            val base = fondo?.tones ?: if (oscuro) paleta.dark else paleta.light
             val accentId = p.getString("skin_accent_id", "edicion") ?: "edicion"
-            val conAcento = when {
-                fondo != null && (accentId == "edicion" || accentId == "rojo") -> base
-                else -> ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> base.copy(general = if (oscuro) a.dark else a.light) } ?: base
-            }
-            if (deSerie) return Skin.conPropios(conAcento, JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) to oscuro
-            return Skin.conPropios(conAcento, fondoPropio, tintaPropia, acentoPropio) to oscuro
+            val t = if (acentoPropio != 0L) base.copy(general = acentoPropio)
+                else ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> base.copy(general = if (oscuro) a.dark else a.light) } ?: base
+            return t to oscuro
         }
     }
 }

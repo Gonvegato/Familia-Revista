@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.cobre"
         minSdk = 29
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.8.0"
+        versionCode = 11
+        versionName = "0.9.0"
         // Móviles, tabletas y teles: muchas teles y cajas de Android TV (también algunas con Google TV) van con Android de 32 bits, así que
         // además del de 64 va el de 32 (la única biblioteca nativa es la del sonido, FFmpeg, que trae las dos)
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
@@ -57,6 +57,7 @@ val media3 = "1.9.4"
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
     implementation(project(":familia"))
+    implementation(project(":mesa"))
     // Lo que no es pantalla (listas, Xtream, la guía): Kotlin puro, el mismo que usará Cobre del ordenador
     implementation(project(":iptv"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))

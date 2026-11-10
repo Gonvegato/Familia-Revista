@@ -64,7 +64,7 @@ fun PaginaPortada(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit
             Cartel(e, ahora) { alAbrir(ahora.id) }
             BotonC("Seguir escribiendo", fondo = Acento, letra = SobreAcento) { alSeguir(ahora.id, escena?.id) }
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.End) {
-                Text("EMPEZAR UN SPRINT →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, maxLines = 1,
+                Text("EMPEZAR UN SPRINT →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1,
                     modifier = Modifier.clickable { alSprint(ahora.id) }.padding(vertical = 10.dp))
             }
         } else CartelVacio(todas.isNotEmpty(), alNueva) { alIr(Destino.EnPausa) }
@@ -73,11 +73,11 @@ fun PaginaPortada(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit
         if (todas.isNotEmpty()) {
         BloqueReto(datos, alMeta)
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 22.dp), verticalAlignment = Alignment.Bottom) {
-            Text("Esta semana", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, maxLines = 1, modifier = Modifier.weight(1f))
-            Text("${palabrasCorto(datos.semanaTotal)} · HOY ${palabrasCorto(datos.hoy)}", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
+            Text("Esta semana", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, modifier = Modifier.weight(1f))
+            Text("${palabrasCorto(datos.semanaTotal)} · HOY ${palabrasCorto(datos.hoy)}", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1)
         }
         SemanaTocable(datos, Modifier.padding(horizontal = 20.dp))
-        if (datos.racha > 0) Text("${datos.racha} ${if (datos.racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS"} ESCRIBIENDO", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black,
+        if (datos.racha > 0) Text("${datos.racha} ${if (datos.racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS"} ESCRIBIENDO", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold,
             fontSize = 10.5.sp, letterSpacing = 1.sp, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp))
         }
 
@@ -127,8 +127,8 @@ fun PaginaPortada(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit
             }
         }
 
-        Text("Thot · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 22.dp))
-        Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
+        Text("Thot · hecho en casa", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 22.dp))
+        Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
         Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
     }
 }
@@ -137,8 +137,8 @@ fun PaginaPortada(alAbrir: (String) -> Unit, alSeguir: (String, String?) -> Unit
 @Composable
 private fun TituloEstante(titulo: String, enlace: String?, alIr: () -> Unit) {
     Row(Modifier.fillMaxWidth().clickable(enabled = enlace != null, onClick = alIr).padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 21.sp, lineHeight = 24.sp, maxLines = 2, modifier = Modifier.weight(1f))
-        if (enlace != null) Text(enlace.uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp, bottom = 3.dp))
+        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 21.sp, lineHeight = 24.sp, maxLines = 2, modifier = Modifier.weight(1f))
+        if (enlace != null) Text(enlace, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp, bottom = 3.dp))
     }
 }
 
@@ -148,8 +148,8 @@ private fun TituloEstante(titulo: String, enlace: String?, alIr: () -> Unit) {
 private fun EncabezadoCorto(titulo: String, enlace: String, ancho: androidx.compose.ui.unit.Dp, alIr: () -> Unit) {
     // (si «En pausa 1 →» no cabe encima de sus portadas —letra grande—, el enlace baja a la línea de abajo en vez de cortarse)
     FlowRow(Modifier.widthIn(max = ancho).clickable(onClick = alIr).padding(bottom = 8.dp), verticalArrangement = Arrangement.Bottom) {
-        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, maxLines = 1, modifier = Modifier.padding(end = 8.dp))
-        Text(enlace, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.align(Alignment.Bottom).padding(bottom = 2.dp))
+        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1, modifier = Modifier.padding(end = 8.dp))
+        Text(enlace, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, modifier = Modifier.align(Alignment.Bottom).padding(bottom = 2.dp))
     }
 }
 
@@ -162,7 +162,7 @@ private fun TapaConAvance(e: Escritos, o: Doc, ancho: Int, alAbrir: (String) -> 
     Column(Modifier.width(ancho.dp).clickable { alAbrir(o.id) }) {
         PortadaObra(o, Modifier.width(ancho.dp).height((ancho * 1.5f).dp))
         if (meta > 0) Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(e.avance(o)).fillMaxHeight().background(Acento)) }
-        Text(if (meta > 0) "${(palabras * 100L / meta).coerceAtMost(999)} %" else "${palabrasCorto(palabras)} PAL.", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp,
+        Text(if (meta > 0) "${(palabras * 100L / meta).coerceAtMost(999)} %" else "${palabrasCorto(palabras)} PAL.", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp,
             letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
     }
 }
@@ -181,10 +181,10 @@ private fun MosaicoAno(obras: List<Doc>, caps: Map<String, Int>, alAbrir: (Strin
                     Box(Modifier.weight(1f).aspectRatio(0.67f)) {
                         if (o != null) {
                             PortadaObra(o, Modifier.fillMaxSize().clickable { alAbrir(o.id) })
-                            Text("${caps[o.id] ?: 0} CAP.", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, letterSpacing = 0.6.sp, maxLines = 1,
+                            Text("${caps[o.id] ?: 0} CAP.", color = Paper, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1,
                                 modifier = Modifier.align(Alignment.BottomStart).background(Charcoal).padding(horizontal = 5.dp, vertical = 2.dp))
                         } else Box(Modifier.fillMaxSize().background(Charcoal), contentAlignment = Alignment.Center) {
-                            Text("+${sobran + 1}", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, maxLines = 1)
+                            Text("+${sobran + 1}", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1)
                         }
                     }
                 }
@@ -230,15 +230,15 @@ private fun Cartel(e: Escritos, o: Doc, alAbrir: () -> Unit) {
                 PortadaSobreFondo(o, Modifier.heightIn(max = tope).fillMaxHeight().aspectRatio(2f / 3f, matchHeightConstraintsFirst = true), sombra = 22.dp)
             }
             Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
-                Text(listOfNotNull("AHORA ESCRIBES", cap).joinToString(" · "), color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp,
+                Text(listOfNotNull("AHORA ESCRIBES", cap).joinToString(" · "), color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                     lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(o.s("titulo").ifBlank { "Sin título" }.uppercase(), color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 2,
+                Text(o.s("titulo").ifBlank { "Sin título" }, color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 2,
                     overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
                 if (meta > 0) Box(Modifier.padding(top = 10.dp).fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.22f))) {
                     Box(Modifier.fillMaxWidth(e.avance(o)).fillMaxHeight().background(acentoClaro))
                 }
                 Row(Modifier.fillMaxWidth().padding(top = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("HOY ${cifraE(hoy)}", color = if (hoy > 0) acentoClaro else Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp,
+                    Text("HOY ${cifraE(hoy)}", color = if (hoy > 0) acentoClaro else Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                         maxLines = 1, modifier = Modifier.weight(1f))
                     Text((if (meta > 0) "${cifraE(palabras)} DE ${cifraE(meta)} PALABRAS" else "${cifraE(palabras)} PALABRAS"), color = Color.White.copy(alpha = 0.85f), fontFamily = Body,
                         fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.8.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp))
@@ -252,13 +252,13 @@ private fun Cartel(e: Escritos, o: Doc, alAbrir: () -> Unit) {
 @Composable
 private fun CartelVacio(hayObras: Boolean, alNueva: () -> Unit, alPausa: () -> Unit) {
     Column(Modifier.fillMaxWidth().background(Charcoal).padding(horizontal = 20.dp, vertical = 28.dp)) {
-        Text("AHORA ESCRIBES", color = acentoSobreTinta(), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp)
-        Text("Nada, de momento.", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Ahora escribes", color = acentoSobreTinta(), fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+        Text("Nada, de momento.", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 33.sp, modifier = Modifier.padding(top = 4.dp))
         Text(if (hayObras) "Retoma una de las que tienes en pausa o empieza una nueva, y su portada saldrá aquí en grande."
             else "Aquí empieza tu novela. Crea una obra y escribe por capítulos y escenas, con fichas, notas, borradores e historial. Se guarda sola, funciona sin conexión y sale en el PC y en tus otros móviles.",
             color = Paper.copy(alpha = 0.8f), fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
         BotonC("Nueva obra", fondo = Paper, letra = Charcoal, onClick = alNueva)
-        if (hayObras) Text("VER LAS QUE ESTÁN EN PAUSA →", color = acentoSobreTinta(), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp,
+        if (hayObras) Text("VER LAS QUE ESTÁN EN PAUSA →", color = acentoSobreTinta(), fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
             modifier = Modifier.padding(top = 12.dp).clickable(onClick = alPausa).padding(vertical = 6.dp))
     }
 }

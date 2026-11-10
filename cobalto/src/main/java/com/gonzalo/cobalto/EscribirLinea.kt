@@ -81,7 +81,7 @@ fun LineaObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir, abrir: (String)
         }
         if (orden.isEmpty()) item("vacio") {
             Column(Modifier.padding(vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("La línea de tu historia", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
+                Text("La línea de tu historia", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
                 Text("Apunta lo que pasa (aunque no salga en el libro, o salga en otro orden) y saca ramas para las tramas que van a la vez.", color = Muted, fontSize = 14.sp, lineHeight = 21.sp)
             }
         }
@@ -105,8 +105,8 @@ fun LineaObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir, abrir: (String)
                     val esc = e.get(d.s("eid"))
                     Row(Modifier.weight(1f).padding(start = 6.dp, bottom = 12.dp)) {
                         Column(Modifier.weight(1f).press(haptic = false) { a.ver = d.id }.padding(top = 10.dp, end = 4.dp)) {
-                            if (d.s("cuando").isNotBlank()) Text(d.s("cuando").uppercase(), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                            Text(d.s("titulo").ifBlank { "Sin título" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 22.sp, color = Charcoal)
+                            if (d.s("cuando").isNotBlank()) Text(d.s("cuando"), color = ColGeneral, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Text(d.s("titulo").ifBlank { "Sin título" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 22.sp, color = Charcoal)
                             if (d.s("nota").isNotBlank()) Text(d.s("nota").lineSequence().first().take(180), color = Muted, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             if (esc != null) Text("→ " + esc.s("titulo").ifBlank { "escena" }, color = ColGeneral, fontSize = 13.sp)
                         }
@@ -126,7 +126,7 @@ fun LineaObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir, abrir: (String)
                     Column(Modifier.weight(1f).padding(start = 6.dp, top = 4.dp, bottom = 12.dp).clip(shp(12.dp)).background(c.copy(alpha = 0.08f)).border(1.dp, c.copy(alpha = 0.5f), shp(12.dp))
                         .press(haptic = false) { a.editar = d.id }.padding(horizontal = 12.dp, vertical = 8.dp)) {
                         Text(if (f.tipo == "inicio") "NACE LA RAMA" else "VUELVE A LA PRINCIPAL", color = c, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
-                        Text(d.s("titulo").ifBlank { "Rama" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Charcoal)
+                        Text(d.s("titulo").ifBlank { "Rama" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Charcoal)
                         if (f.tipo == "inicio" && d.s("texto").isNotBlank()) Text(d.s("texto").lineSequence().first().take(160), color = Muted, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
@@ -137,7 +137,7 @@ fun LineaObra(e: Escritos, obra: Doc, ver: Int, a: AbreEscribir, abrir: (String)
             items(conFecha.size) { i ->
                 val s = conFecha[i]
                 Column(Modifier.fillMaxWidth().press(haptic = false) { abrir(s.id) }.padding(vertical = 7.dp)) {
-                    Text(s.s("cuando").uppercase(), color = ColGeneral, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+                    Text(s.s("cuando"), color = ColGeneral, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     Text(s.s("titulo").ifBlank { "Sin título" }, fontFamily = Display, fontSize = 18.sp, color = Charcoal)
                 }
             }

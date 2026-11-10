@@ -108,19 +108,19 @@ fun FilaObra(e: Escritos, o: Doc, alAbrir: (String) -> Unit, modifier: Modifier 
     Row(modifier.fillMaxWidth().clickable { alAbrir(o.id) }.padding(top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
         PortadaObra(o, Modifier.width(portada).height(alto))
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
-            if (orden > 0) Text("%02d".format(orden), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
-            Text(o.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, lineHeight = 22.sp,
+            if (orden > 0) Text("%02d".format(orden), color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1)
+            Text(o.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 22.sp,
                 maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = if (orden > 0) 2.dp else 0.dp))
             val genero = o.s("genero")
-            if (genero.isNotBlank()) Text(genero.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.9.sp, maxLines = 1,
+            if (genero.isNotBlank()) Text(genero, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
             val meta2 = listOfNotNull(if (conEstado) estadoDe(o).nombre else null, "editada ${haceE(e.ultimaEdicion(o.id))}").joinToString(" · ")
-            Text(meta2.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2, lineHeight = 14.sp, modifier = Modifier.padding(top = 3.dp))
+            Text(meta2, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 2, lineHeight = 18.sp, modifier = Modifier.padding(top = 3.dp))
             Spacer(Modifier.weight(1f).heightIn(min = 8.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                Text(if (meta > 0) "${(palabras * 100L / meta).coerceAtMost(999)} %" else if (hoy > 0) "${cifraE(hoy)} HOY" else "", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black,
+                Text(if (meta > 0) "${(palabras * 100L / meta).coerceAtMost(999)} %" else if (hoy > 0) "${cifraE(hoy)} HOY" else "", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold,
                     fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.weight(1f))
-                Text("${cifraE(palabras)} PALABRAS", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1)
+                Text("${cifraE(palabras)} PALABRAS", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1)
             }
             if (meta > 0) Box(Modifier.padding(top = 5.dp).fillMaxWidth().height(5.dp).background(Line)) { Box(Modifier.fillMaxWidth(e.avance(o)).fillMaxHeight().background(Acento)) }
         }
@@ -159,18 +159,18 @@ private fun PaginaObras(estado: EstadoObra, e: Escritos, alAbrir: (String) -> Un
                 FiltrosRevista(ordenes.map { it.nombre }, ordenes.indexOf(orden).coerceAtLeast(0), Modifier.padding(top = 6.dp)) { i -> orden = ordenes[i]; OrdenGuardado.pon(ctx, estado, orden) }
                 // Traer un texto (Word, Markdown o texto) como obra nueva: entre las que escribes
                 if (estado == EstadoObra.ESCRIBIENDO) EnlaceRevista("+ Importar un texto (Word, Markdown…)", acento = true, onClick = alImportar)
-                Filete(2.dp)
+                Filete(1.dp, Line)
             }
         }
         if (obras.isEmpty()) item {
             Column(Modifier.fillMaxWidth().padding(top = 30.dp)) {
-                Text(if (todas == 0) "Todavía no hay nada aquí." else vacioDe(estado), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 24.sp)
+                Text(if (todas == 0) "Todavía no hay nada aquí." else vacioDe(estado), color = Muted, fontFamily = Body, fontSize = 18.sp, lineHeight = 24.sp)
                 if (todas == 0 || estado == EstadoObra.ESCRIBIENDO) BotonC("Nueva obra", Modifier.padding(top = 14.dp), fondo = Acento, letra = SobreAcento, onClick = alNueva)
             }
         }
-        itemsIndexed(obras, key = { _, it -> it.id }) { i, o -> FilaObra(e, o, alAbrir, orden = i + 1); Filete(2.dp) }
+        itemsIndexed(obras, key = { _, it -> it.id }) { i, o -> FilaObra(e, o, alAbrir, orden = i + 1); Filete(1.dp, Line) }
         if (estado == EstadoObra.ARCHIVO) item {
-            Text("PAPELERA" + if (enPapelera > 0) " · $enPapelera" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp,
+            Text("Papelera" + if (enPapelera > 0) " · $enPapelera" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 18.dp, bottom = 6.dp).clickable { papelera = true }.padding(vertical = 6.dp))
         }
         item { Spacer(Modifier.height(24.dp)) }
@@ -185,9 +185,9 @@ private fun Resultados(busca: String, e: Escritos, alAbrir: (String) -> Unit) {
     val ver = e.version
     val l = remember(busca, ver) { e.obras().filter { norm(it.s("titulo")).contains(q) || norm(it.s("autor")).contains(q) || norm(it.s("genero")).contains(q) }.sortedByDescending { e.ultimaEdicion(it.id) } }
     LazyColumn(Modifier.fillMaxSize()) {
-        item { Antetitulo("Resultados · ${l.size}", Modifier.padding(top = 14.dp, bottom = 6.dp), color = Acento, conCuadro = false); Filete(2.dp) }
-        if (l.isEmpty()) item { Text("Nada con «$busca».", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 24.dp)) }
-        itemsIndexed(l, key = { _, it -> it.id }) { i, o -> FilaObra(e, o, alAbrir, orden = i + 1, conEstado = true); Filete(2.dp) }
+        item { Antetitulo("Resultados · ${l.size}", Modifier.padding(top = 14.dp, bottom = 6.dp), color = Acento, conCuadro = false); Filete(1.dp, Line) }
+        if (l.isEmpty()) item { Text("Nada con «$busca».", color = Muted, fontFamily = Body, fontSize = 18.sp, modifier = Modifier.padding(top = 24.dp)) }
+        itemsIndexed(l, key = { _, it -> it.id }) { i, o -> FilaObra(e, o, alAbrir, orden = i + 1, conEstado = true); Filete(1.dp, Line) }
     }
 }
 
@@ -283,7 +283,7 @@ fun PantPrincipal(
         }
         PestanasPaginas(NOMBRES_PAGINAS, pager.currentPage, cuentas) { i -> buscando = false; busca = ""; ambito.launch { pager.animateScrollToPage(i) } }
         if (buscando) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) { CampoRevista("Buscar", busca, "título, autor o género") { busca = it } }
-        if (aviso.isNotEmpty()) Text(aviso, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp).clickable { aviso = "" })
+        if (aviso.isNotEmpty()) Text(aviso, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp).clickable { aviso = "" })
         if (busca.isNotBlank()) Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.TopCenter) { Box(Modifier.widthIn(max = 960.dp)) { Resultados(busca, e, alAbrir) } }
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
         else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }) { i ->
@@ -323,11 +323,11 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>
                 Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = c.positionInParent().x.roundToInt() to c.size.width }.clickable { onSel(i) }
                     .background(if (on) Acento else Color.Transparent)
                     .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                    Text(n, color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1) }
                 }
             }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
     }
 }

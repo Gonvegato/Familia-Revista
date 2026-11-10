@@ -81,9 +81,9 @@ fun PantFicha(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve) -> Unit, 
 @Composable
 private fun SeccionNumerada(n: Int, texto: String, accion: Pair<String, () -> Unit>? = null, arriba: androidx.compose.ui.unit.Dp = 26.dp) {
     Row(Modifier.fillMaxWidth().padding(top = arriba, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, maxLines = 1)
-        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
-        accion?.let { (t, f) -> Text(t.uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1,
+        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, maxLines = 1)
+        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
+        accion?.let { (t, f) -> Text(t, color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
             modifier = Modifier.tocable(onClick = f).padding(start = 8.dp, top = 4.dp, bottom = 4.dp)) }
     }
 }
@@ -208,13 +208,13 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
             Box(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth()) {
                     Box(Modifier.padding(start = mg).offset(y = (-16).dp).background(AcentoBloque).padding(horizontal = 10.dp, vertical = 6.dp)) {
-                        Text(etiquetaEstado(t, tipo), color = SobreBloque, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
+                        Text(etiquetaEstado(t, tipo), color = SobreBloque, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1)
                     }
                     Column(Modifier.fillMaxWidth().padding(start = mg, end = if (conFondo) mg + 136.dp else mg)) {
                         FitTitle(nombre.uppercase(), if (ancha) 52.sp else 38.sp, if (ancha) 54.sp else 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
                         val quien = m?.direccion?.take(2)?.joinToString(" y ")?.ifBlank { null }
                         val de = listOfNotNull(quien?.let { "de $it" }, (m?.ano?.ifBlank { null } ?: vista.ano.ifBlank { null }), m?.minutos?.takeIf { it > 0 && !serie }?.let { duracion(it) }).joinToString(" · ")
-                        if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
+                        if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Body, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
                 if (conFondo) Box(Modifier.align(Alignment.TopEnd).padding(end = mg).width(120.dp).height(116.dp)) {
@@ -245,7 +245,7 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                         SeccionNumerada(sig(), "Tu visionado", "Editar" to { editar = true })
                         if (prog != null && prog.pos > 0 && !prog.visto && prog.dur > 0) {
                             Box(Modifier.fillMaxWidth().height(8.dp).background(Line)) { Box(Modifier.fillMaxWidth(prog.fraccion).fillMaxHeight().background(Acento)) }
-                            Text(((if (serie && siguiente != null) "T${siguiente.temporada} · E${siguiente.episodio} · " else "") + "vas por ${tiempo(prog.pos)} de ${tiempo(prog.dur)}").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp,
+                            Text(((if (serie && siguiente != null) "T${siguiente.temporada} · E${siguiente.episodio} · " else "") + "vas por ${tiempo(prog.pos)} de ${tiempo(prog.dur)}"), color = Muted, fontFamily = Body, fontSize = 13.sp,
                                 fontWeight = FontWeight.Black, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
                         }
                         val ms = Biblioteca.msVistos(t.ref)
@@ -281,10 +281,10 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                         if (nota > 0 || resena.isNotBlank() || Hermanas.azabache(ctx)) {
                             SeccionNumerada(sig(), "En Jonsu", if (Hermanas.azabache(ctx)) "Valorar" to { Hermanas.abreEnAzabache(ctx, t.ref) } else null)
                             if (nota > 0) Row(verticalAlignment = Alignment.Bottom) {
-                                Text("$nota", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 48.sp, lineHeight = 48.sp)
+                                Text("$nota", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
                                 Text(" / 100", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
                             } else Nota("Sin valorar todavía.")
-                            if (resena.isNotBlank()) Text("«$resena»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
+                            if (resena.isNotBlank()) Text("«$resena»", color = Charcoal, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
@@ -292,7 +292,7 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                     // ---- La película o la serie: lo que dice TMDB (o su addon)
                     SeccionNumerada(sig(), if (serie) "La serie" else "La película")
                     if (m == null) Nota(if (!hecho) "Leyendo la ficha…" else "Ninguno de tus addons tiene la ficha de esto (¿sin conexión?).", Modifier.padding(vertical = 8.dp))
-                    extras?.lema?.takeIf { it.isNotBlank() }?.let { Text("«$it»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 24.sp, modifier = Modifier.padding(bottom = 8.dp)) }
+                    extras?.lema?.takeIf { it.isNotBlank() }?.let { Text("«$it»", color = Charcoal, fontFamily = Body, fontSize = 18.sp, lineHeight = 24.sp, modifier = Modifier.padding(bottom = 8.dp)) }
                     m?.descripcion?.takeIf { it.isNotBlank() }?.let { Text(it, color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp, modifier = Modifier.padding(bottom = 10.dp)) }
                     m?.trailers?.let { EnlaceTrailer(it) }
                     m?.let { x ->
@@ -320,7 +320,7 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
     if (imagenes && t != null) SelectorImagenes(t) { imagenes = false }
     if (editar && t != null) AlertDialog(
         onDismissRequest = { editar = false }, containerColor = Paper, shape = esquina(0.dp),
-        title = { Text("Editar", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold) },
+        title = { Text("Editar", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 Antetitulo("En tu biblioteca", Modifier.padding(bottom = 2.dp), conCuadro = false)
@@ -334,14 +334,14 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                 MagLink("Quitar de Hathor", "En todos tus dispositivos y en Jonsu") { editar = false; quitar = true }
             }
         },
-        confirmButton = { TextButton({ editar = false }) { Text("LISTO", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
+        confirmButton = { TextButton({ editar = false }) { Text("Listo", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
     )
     if (quitar && t != null) AlertDialog(
         onDismissRequest = { quitar = false }, containerColor = Paper, shape = esquina(0.dp),
-        title = { Text("¿Quitar «${t.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold) },
+        title = { Text("¿Quitar «${t.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text("Se quita de tu biblioteca en todos tus dispositivos y en Jonsu. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).", color = Muted, fontFamily = Body) },
-        confirmButton = { TextButton({ quitar = false; Biblioteca.quita(t.ref) }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ quitar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
+        confirmButton = { TextButton({ quitar = false; Biblioteca.quita(t.ref) }) { Text("Quitar", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ quitar = false }) { Text("Cancelar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
     )
 }
 
@@ -358,11 +358,11 @@ private fun FilaEpisodio(v: Video, t: Titulo?, m: Meta, alVer: () -> Unit, alFue
     val estrenado = v.estrenado()
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().tocable(enabled = estrenado) { alVer() }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (v.episodio > 0) "${v.episodio}" else "·", color = if (p?.visto == true) Muted else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, modifier = Modifier.width(44.dp))
+            Text(if (v.episodio > 0) "${v.episodio}" else "·", color = if (p?.visto == true) Muted else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, modifier = Modifier.width(44.dp))
             Column(Modifier.weight(1f)) {
                 Text(v.titulo.ifBlank { "Episodio ${v.episodio}" }, color = if (estrenado) Charcoal else Muted, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val linea = listOfNotNull(if (v.estreno > 0) Formato.fecha(v.estreno) else null, if (!estrenado) "aún no se ha estrenado" else null, if (p?.visto == true) "visto" else if (p != null && p.pos > 0 && p.dur > 0) "vas por ${tiempo(p.pos)}" else null)
-                if (linea.isNotEmpty()) Text(linea.joinToString(" · ").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
+                if (linea.isNotEmpty()) Text(linea.joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 if (p != null && !p.visto && p.fraccion > 0f) Barra(p.fraccion, Modifier.padding(top = 4.dp))
             }
             if (estrenado) EnlaceRevista("Fuentes", Modifier.padding(start = 8.dp)) { alFuentes() }
@@ -394,7 +394,7 @@ fun PantFuentes(b: MetaBreve, m: Meta?, v: Video?, alCerrar: () -> Unit) {
             RevistaTopBar(alCerrar, "Ficha")
             Antetitulo(b.nombre + (v?.let { if (it.temporada > 0) " · T${it.temporada}·E${it.episodio}" else "" } ?: ""), Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
             FitTitle("Fuentes", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-            Filete(3.dp)
+            Filete(1.dp, Line)
             if (!terminado) Nota("Preguntando a tus addons…", Modifier.padding(top = 10.dp))
             if (terminado && todas.isEmpty()) Nota("Ninguno de tus addons da fuentes para esto. Los addons de fuentes los pones tú en «Addons» (con tu debrid configurado en el suyo).", Modifier.padding(top = 10.dp))
             e.elegida?.let { c ->
@@ -425,10 +425,10 @@ private fun FilaFuente(c: Candidata, elegida: Boolean, alPoner: () -> Unit) {
     }
     Column(Modifier.fillMaxWidth().tocable { alPoner() }.padding(vertical = 12.dp)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(marca.uppercase(), color = if (f.tipo == TipoFuente.DIRECTA) SobreAcento else Paper, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp,
+            Text(marca, color = if (f.tipo == TipoFuente.DIRECTA) SobreAcento else Paper, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.background(if (f.tipo == TipoFuente.DIRECTA) Acento else Charcoal).padding(horizontal = 6.dp, vertical = 2.dp))
-            if (elegida) Text("LA MEJOR PARA TI", color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, modifier = Modifier.border(1.dp, Acento).padding(horizontal = 6.dp, vertical = 2.dp))
-            c.analisis.resumen().takeIf { it.isNotBlank() }?.let { Text(it.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp) }
+            if (elegida) Text("La mejor para ti", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.border(1.dp, Acento).padding(horizontal = 6.dp, vertical = 2.dp))
+            c.analisis.resumen().takeIf { it.isNotBlank() }?.let { Text(it, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
         }
         if (f.nombre.isNotBlank()) Text(f.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
         if (f.descripcion.isNotBlank()) Text(f.descripcion, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)

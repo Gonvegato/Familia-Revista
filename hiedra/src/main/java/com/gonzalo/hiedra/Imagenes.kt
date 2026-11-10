@@ -173,11 +173,11 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, p
         }
         PestanasRevista(listOf("La portada", "El fondo"), if (esFondo) 1 else 0) { esFondo = it == 1 }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            Text("AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+            Text("Ahora", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (esFondo) {
                 Box(Modifier.fillMaxWidth().aspectRatio(3f).clipToBounds().background(lerpColor(telaDe(j.titulo), Color.Black, 0.4f)).tocable { galeria.launch("image/*") }, contentAlignment = Alignment.Center) {
                     if (j.fondo.isNotBlank()) ImagenEncuadrada(j.fondo, j.encFondo, Modifier.fillMaxSize(), "Fondo de ${j.titulo}")
-                    else Text("Sin fondo", color = Color.White.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                    else Text("Sin fondo", color = Color.White.copy(alpha = 0.8f), fontFamily = Body, fontSize = 16.sp)
                 }
             } else {
                 Box(Modifier.width(150.dp).height(225.dp).tocable { galeria.launch("image/*") }) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 64) }
@@ -193,15 +193,15 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, p
                 if (!esFondo && j.portada.isNotBlank()) BotonMarco("La automática") { Biblioteca.cambiar(j.id) { it.copy(portada = "") } }
                 if (esFondo && j.fondo.isNotBlank()) BotonMarco("Quitar") { ImagenesJuego.quitarFondo(j) }
             }
-            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
+            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
             Text(if (esFondo) "Se recorta a lo ancho: con «Encuadrar» eliges qué parte se ve (en este dispositivo). Sin fondo, se usa el color de la portada. Sale en «Ahora juegas» de la portada y arriba en la ficha."
                 else "«La automática» vuelve a la de SteamGridDB, la caja de libretro, el icono de la app o la de la web. Con «Encuadrar» eliges qué parte se ve (en este dispositivo).",
                 color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 14.dp))
-            Text("PROPUESTAS · STEAMGRIDDB", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
+            Text("PROPUESTAS · STEAMGRIDDB", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
             val lista = hallados
             when {
-                key.isBlank() && propuestas == null -> Text("Con tu API key de SteamGridDB (Ajustes → Cuenta → Servicios) salen aquí ${if (esFondo) "los fondos" else "las portadas"} del juego.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
-                buscando && lista == null -> Text("Buscando…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                key.isBlank() && propuestas == null -> Text("Con tu API key de SteamGridDB (Ajustes → Cuenta → Servicios) salen aquí ${if (esFondo) "los fondos" else "las portadas"} del juego.", color = Muted, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp)
+                buscando && lista == null -> Text("Buscando…", color = Muted, fontFamily = Body, fontSize = 16.sp)
                 lista.isNullOrEmpty() -> Text(if (esFondo) "SteamGridDB no tiene fondos de «${j.titulo}». Prueba a buscar en internet." else "SteamGridDB no tiene portadas de «${j.titulo}». Prueba con «SteamGridDB» (otro nombre) o en internet.",
                     color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
                 esFondo -> lista.forEach { (mini, grande) ->
@@ -228,7 +228,7 @@ fun ContenidoImagenes(id: String, fondoInicial: Boolean, alCerrar: () -> Unit, p
 /** Un botón recto con marco de 2 px (los de la dirección C que no son la acción principal). */
 @Composable
 fun BotonMarco(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Text(texto.uppercase(), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.8.sp, maxLines = 1,
+    Text(texto, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1,
         modifier = modifier.border(2.dp, Charcoal).tocable(onClick = onClick).padding(horizontal = 12.dp, vertical = 9.dp))
 }
 

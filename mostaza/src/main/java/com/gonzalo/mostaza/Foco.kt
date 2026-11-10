@@ -21,6 +21,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
 /*
@@ -66,7 +67,8 @@ fun Modifier.sangrado(d: Dp): Modifier = this.layout { m, c ->
 fun Modifier.atrapaFoco(): Modifier = this.focusProperties { exit = { FocusRequester.Cancel } }.focusGroup()
 
 /** Como `clickable`, y con el marco de foco del mando ([marcoFoco]). */
-fun Modifier.tocable(enabled: Boolean = true, role: Role? = null, fuera: Dp = 4.dp, onClick: () -> Unit): Modifier = composed {
+fun Modifier.tocable(enabled: Boolean = true, role: Role? = null, fuera: Dp = 4.dp, forma: androidx.compose.ui.graphics.Shape? = null, onClick: () -> Unit): Modifier = composed {
     val src = remember { MutableInteractionSource() }
-    this.marcoFoco(src, fuera).clickable(interactionSource = src, indication = LocalIndication.current, enabled = enabled, role = role, onClick = onClick)
+    // (dirección D: con [forma], lo pulsable se recorta redondo; el marco de foco va por fuera, sin recortar)
+    this.marcoFoco(src, fuera, if (forma != null) 20.dp else 6.dp).let { if (forma != null) it.clip(forma) else it }.clickable(interactionSource = src, indication = LocalIndication.current, enabled = enabled, role = role, onClick = onClick)
 }

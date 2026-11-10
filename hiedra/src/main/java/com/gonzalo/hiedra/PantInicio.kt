@@ -162,11 +162,11 @@ fun PaginaPortada(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: 
             // ---- El reto del año y la semana, justo debajo del botón
             BloqueReto(meta, pasadosAno.size, ano, alIr = { alIr(Destino.Pasado) }, alPoner = { alAjustes(1) })
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 22.dp), verticalAlignment = Alignment.Bottom) {
-                Text("Esta semana", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, maxLines = 1, modifier = Modifier.weight(1f))
-                Text("${minutosCorto(semana.semana.sumOf { it.second })} · HOY ${minutosCorto(semana.hoyMin)}", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
+                Text("Esta semana", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, modifier = Modifier.weight(1f))
+                Text("${minutosCorto(semana.semana.sumOf { it.second })} · HOY ${minutosCorto(semana.hoyMin)}", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1)
             }
             SemanaTocable(semana, Modifier.padding(horizontal = 20.dp))
-            if (semana.racha > 0) Text("${semana.racha} ${if (semana.racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS"} JUGANDO", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black,
+            if (semana.racha > 0) Text("${semana.racha} ${if (semana.racha == 1) "DÍA SEGUIDO" else "DÍAS SEGUIDOS"} JUGANDO", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold,
                 fontSize = 10.5.sp, letterSpacing = 1.sp, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp))
 
             // ---- También juegas y Pendientes: con pocos (tres portadas entre los dos, como mucho), lado a lado; si no, cada uno en su fila
@@ -245,7 +245,7 @@ fun PaginaPortada(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: 
             // ---- Tu año: el mosaico de lo pasado (el reto, con su barra, ya va arriba)
             TituloEstante("Tu $ano · ${pasadosAno.size} ${if (pasadosAno.size == 1) "pasado" else "pasados"}", "Pasados →") { alIr(Destino.Pasado) }
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-                if (pasadosAno.isEmpty()) Text("Aún no has terminado ninguno este año. Cuando pases uno (márcalo «Pasado» en su ficha), su portada saldrá aquí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
+                if (pasadosAno.isEmpty()) Text("Aún no has terminado ninguno este año. Cuando pases uno (márcalo «Pasado» en su ficha), su portada saldrá aquí.", color = Muted, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp)
                 else MosaicoPasados(pasadosAno, alAbrir) { alIr(Destino.Pasado) }
             }
         }
@@ -253,21 +253,21 @@ fun PaginaPortada(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: 
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp)) {
             if (juegos.isNotEmpty() && !editando) {
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     EnlaceRevista("Editar portada →", acento = true) { editando = true }
                     Spacer(Modifier.weight(1f))
                 }
-                Text("Un toque en una portada juega · mantenla pulsada para ver la ficha · con mando: A juega, X abre la ficha", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 6.dp))
+                Text("Un toque en una portada juega · mantenla pulsada para ver la ficha · con mando: A juega, X abre la ficha", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 6.dp))
             }
             if (atrio != null) {
                 Spacer(Modifier.height(10.dp))
                 Filete(1.dp, Line)
                 MagLink("Abrir Jonsu", "Valora lo que acabas de jugar") { ctx.startActivity(atrio.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
-            Text("Bastet · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
+            Text("Bastet · hecho en casa", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
             // La versión instalada, debajo (para no tener que entrar en Ajustes a mirarla)
-            Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
+            Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
     }
@@ -278,22 +278,22 @@ fun PaginaPortada(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: 
 @Composable
 private fun TituloEstante(titulo: String, enlace: String?, alIr: () -> Unit) {
     Row(Modifier.fillMaxWidth().tocable(enabled = enlace != null, onClick = alIr).padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 6.dp), verticalAlignment = Alignment.Bottom) {
-        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 21.sp, lineHeight = 24.sp, maxLines = 2, modifier = Modifier.weight(1f))
-        if (enlace != null) Text(enlace.uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp, bottom = 3.dp))
+        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 21.sp, lineHeight = 24.sp, maxLines = 2, modifier = Modifier.weight(1f))
+        if (enlace != null) Text(enlace, color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp, bottom = 3.dp))
     }
 }
 
 @Composable
 private fun VacioEstante(texto: String) {
-    Text(texto, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(horizontal = 20.dp))
+    Text(texto, color = Muted, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(horizontal = 20.dp))
 }
 
 /** El título pequeño de un estante cuando van dos lado a lado. */
 @Composable
 private fun EncabezadoCorto(titulo: String, enlace: String, alIr: () -> Unit) {
     Row(Modifier.tocable(onClick = alIr).padding(bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
-        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, maxLines = 1)
-        Text("  $enlace", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
+        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1)
+        Text("  $enlace", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
     }
 }
 
@@ -311,7 +311,7 @@ private fun TapaConHoras(j: Juego, ancho: Int, alJugar: () -> Unit, alAbrir: () 
     Column(Modifier.width(ancho.dp)) {
         Tapa(j, ancho, alJugar, alAbrir)
         j.avance?.let { av -> Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(av.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) } }
-        Text(if (j.estado == Estado.PASADO && j.finalizado > 0) "PASADO" else horasCortas(j.msJugados), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+        Text(if (j.estado == Estado.PASADO && j.finalizado > 0) "PASADO" else horasCortas(j.msJugados), color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
     }
 }
 
@@ -321,7 +321,7 @@ private fun TapaPendiente(j: Juego, saga: FilaLista.DeSaga?, ancho: Int, alJugar
     Column(Modifier.width(ancho.dp)) {
         Tapa(j, ancho, alJugar, alAbrir)
         val pie = when { saga != null && saga.miembros.size > 1 -> "+${saga.miembros.size - 1} DE LA SAGA"; j.durHistoria > 0 -> "~" + tiempoDe(j.durHistoria * 60_000L).uppercase(); else -> "" }
-        if (pie.isNotBlank()) Text(pie, color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.4.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
+        if (pie.isNotBlank()) Text(pie, color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 11.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
     }
 }
 
@@ -330,8 +330,8 @@ private fun TapaPendiente(j: Juego, saga: FilaLista.DeSaga?, ancho: Int, alJugar
 private fun TapaSaga(s: Saga, juegos: List<Juego>, ancho: Int, alAbrir: () -> Unit) {
     Column(Modifier.tocableMando(alAbrir, alAbrir)) {
         AbanicoSaga(juegos, ancho = (ancho * 0.8f).dp)
-        Text(s.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, lineHeight = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.width((ancho * 1.1f).dp).padding(top = 6.dp))
-        Text(resumenSaga(juegos).uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, lineHeight = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.width((ancho * 1.1f).dp))
+        Text(s.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.width((ancho * 1.1f).dp).padding(top = 6.dp))
+        Text(resumenSaga(juegos), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.width((ancho * 1.1f).dp))
     }
 }
 
@@ -350,7 +350,7 @@ private fun MosaicoPasados(juegos: List<Juego>, alAbrir: (Juego) -> Unit, alVerT
                     Box(Modifier.weight(1f).aspectRatio(2f / 3f)) {
                         if (j != null) Box(Modifier.fillMaxSize().tocableMando({ alAbrir(j) }, { alAbrir(j) })) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 28) }
                         else Box(Modifier.fillMaxSize().background(Charcoal).tocable(onClick = alVerTodos), contentAlignment = Alignment.Center) {
-                            Text("+${sobran + 1}", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, maxLines = 1)
+                            Text("+${sobran + 1}", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1)
                         }
                     }
                 }
@@ -392,15 +392,15 @@ private fun Cartel(j: Juego, kicker: String, derecha: String, directo: Boolean, 
             Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (directo) { PuntoDirecto(); Spacer(Modifier.width(8.dp)) }
-                    Text(kicker.uppercase(), color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(kicker, color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                Text(j.titulo.uppercase(), color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                Text(j.titulo, color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 4.dp))
                 j.avance?.let { av -> Box(Modifier.padding(top = 10.dp).fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.22f))) { Box(Modifier.fillMaxWidth(av).fillMaxHeight().background(acentoClaro)) } }
                 Row(Modifier.fillMaxWidth().padding(top = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(plataformaDe(j).uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Text(plataformaDe(j), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     val der = listOfNotNull(j.avance?.let { "${(it * 100).toInt()} % de la historia" }, derecha.ifBlank { null }).joinToString(" · ")
-                    if (der.isNotBlank()) Text(der.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.8.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp))
+                    if (der.isNotBlank()) Text(der, color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, modifier = Modifier.padding(start = 10.dp))
                 }
             }
         }
@@ -412,22 +412,22 @@ private fun Cartel(j: Juego, kicker: String, derecha: String, directo: Boolean, 
 private fun BloqueReto(meta: Int, hechos: Int, ano: Int, alIr: () -> Unit, alPoner: () -> Unit) {
     Column(Modifier.fillMaxWidth().tocable(onClick = if (meta > 0) alIr else alPoner).testTag("reto").padding(start = 20.dp, end = 20.dp, top = 20.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Text("Reto $ano", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, maxLines = 1, modifier = Modifier.weight(1f))
+            Text("Reto $ano", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, maxLines = 1, modifier = Modifier.weight(1f))
             if (meta > 0) {
-                Text("$hechos", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
-                Text(" / $meta", color = Muted, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, modifier = Modifier.padding(bottom = 2.dp))
+                Text("$hechos", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                Text(" / $meta", color = Muted, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 15.sp, modifier = Modifier.padding(bottom = 2.dp))
             }
         }
         if (meta > 0) {
             Box(Modifier.padding(top = 8.dp).fillMaxWidth().height(9.dp).background(Line)) {
                 Box(Modifier.fillMaxWidth((hechos.toFloat() / meta).coerceIn(0f, 1f)).fillMaxHeight().background(Acento))
             }
-            Text(ritmoReto(meta, hechos).texto(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, letterSpacing = 1.sp, lineHeight = 14.sp,
+            Text(ritmoReto(meta, hechos).texto(), color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp,
                 modifier = Modifier.padding(top = 6.dp))
         } else {
-            Text("$hechos ${if (hechos == 1) "juego terminado" else "juegos terminados"} este año. Ponte un reto y verás cómo vas.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic,
+            Text("$hechos ${if (hechos == 1) "juego terminado" else "juegos terminados"} este año. Ponte un reto y verás cómo vas.", color = Muted, fontFamily = Body,
                 fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
-            Text("PONERTE UN RETO →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 6.dp))
+            Text("PONERTE UN RETO →", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
         }
     }
 }
@@ -448,14 +448,14 @@ fun EditorInicio(juegos: List<Juego>, alListo: () -> Unit) {
             EnlaceRevista("Elegir un juego →", acento = true) { elegirDestacado = true }
             if (fijo != null || cfg.destacado.isNotBlank()) EnlaceRevista("Automático →") { Inicio.cambiar { it.copy(destacado = "") } }
         }
-        Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(10.dp))
         Antetitulo("Estantes", Modifier.padding(bottom = 4.dp))
         Cuerpo("Cuáles se ven, en qué orden y con portadas grandes o pequeñas.", tam = 12)
         cfg.filas.forEachIndexed { i, f ->
             Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(f.estante.nombre, color = if (f.activa) Charcoal else Muted, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp)
-                    Text(if (f.grande) "PORTADAS GRANDES" else "PORTADAS PEQUEÑAS", color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp,
+                    Text(if (f.grande) "PORTADAS GRANDES" else "PORTADAS PEQUEÑAS", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.tocable { Inicio.cambiar { c -> c.copy(filas = c.filas.mapIndexed { k, x -> if (k == i) x.copy(grande = !x.grande) else x }) } }.padding(vertical = 2.dp))
                 }
                 Text("▲", color = if (i > 0) Charcoal else Line, fontSize = 16.sp, modifier = Modifier.tocable(enabled = i > 0) { mover(i, -1) }.padding(8.dp))
@@ -464,7 +464,7 @@ fun EditorInicio(juegos: List<Juego>, alListo: () -> Unit) {
             }
             Filete(1.dp, Line)
         }
-        Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(14.dp)); Filete(1.dp, Line); Spacer(Modifier.height(10.dp))
         Antetitulo("Mis elegidos", Modifier.padding(bottom = 4.dp))
         val fijados = cfg.fijados.mapNotNull { k -> juegos.firstOrNull { it.id == k }?.let { k to it } }
         if (fijados.isEmpty()) Cuerpo("Los juegos que quieras tener siempre en la portada, en el orden que quieras.", tam = 12)
@@ -479,7 +479,7 @@ fun EditorInicio(juegos: List<Juego>, alListo: () -> Unit) {
             Filete(1.dp, Line)
         }
         EnlaceRevista("+ Añadir juegos →", acento = true) { elegirFijados = true }
-        Spacer(Modifier.height(14.dp)); Filete(2.dp)
+        Spacer(Modifier.height(14.dp)); Filete(1.dp, Line)
         MagLink("Listo", accent = true, onClick = alListo)
     }
     if (elegirDestacado) SelectorJuegos("Destacado", juegos, { elegirDestacado = false }, uno = true) { k -> elegirDestacado = false; k.firstOrNull()?.let { c -> Inicio.cambiar { it.copy(destacado = c) } } }

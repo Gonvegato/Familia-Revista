@@ -65,14 +65,14 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () 
                 EnlaceRevista("Guía", acento = true) { alIr(Destino.Guia) }
             }
             else Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("TUS CANALES", color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.weight(1f))
+                Text("Tus canales", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 EnlaceRevista("Buscar") { alIr(Destino.Buscar) }
                 EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) }
             }
             Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
                 FlowRow(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                     secciones.forEachIndexed { i, (t, x) ->
-                        Text(t.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
+                        Text(t, color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
                             modifier = Modifier.let { if (i == 0) it.focoInicial() else it }.tocable { alIr(x) }.padding(vertical = 9.dp))
                     }
                 }
@@ -129,8 +129,8 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () 
                     }
                 }
             }
-            Text("Nut · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
-            Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
+            Text("Nut · hecho en casa", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp))
+            Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
         if (!enPagina) BarraPlegada("Tele", plegada) { EnlaceRevista("Buscar") { alIr(Destino.Buscar) }; EnlaceRevista("Guía", Modifier.padding(start = 14.dp), acento = true) { alIr(Destino.Guia) } }
@@ -186,6 +186,6 @@ fun TarjetaCanal(l: Lista, c: Canal, cg: Cargada?, alAbrir: () -> Unit) {
             if (ahora != null) Barra(ahora.avance(System.currentTimeMillis()), Modifier.align(Alignment.BottomStart))
         }
         Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
-        Text((ahora?.titulo ?: l.nombre).uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text((ahora?.titulo ?: l.nombre), color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

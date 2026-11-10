@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.6.0"
+const val VERSION = "0.7.0"
 
 /** «Ajustes»: Apariencia (como la de Atrio), cuenta de Atrio y pareja, actualizaciones, escritura y copias. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -68,7 +68,7 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
                 Text("Una para todas tus obras y la misma en todos tus dispositivos. La portada enseña cómo vas hoy, cuántos de los últimos 30 días la cumpliste y la semana con la meta como raya.",
                     color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 6.dp))
                 Spacer(Modifier.height(10.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Escritura", Modifier.padding(bottom = 4.dp))
                 val enPapelera = remember(e.version) { e.papelera().size }
@@ -79,7 +79,7 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
                 Text("Thot escribe en los mismos documentos que Escribir de Atrio y de Atrio del PC: tus obras salen aquí tal cual, y lo que cambies aquí llega allí.",
                     color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Hermanas", Modifier.padding(bottom = 4.dp))
                 Text(if (Hermanas.hayMarfil(ctx)) "Seshat está en este móvil: los capítulos que das por terminados se leen allí con su lector («Leer en Seshat», en el manuscrito y en Exportar). Jonsu enseña en su Diario las palabras de cada día."
@@ -94,22 +94,22 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
                 Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
                 SeccionActualizaciones()
                 Spacer(Modifier.height(14.dp))
-                Filete(2.dp)
+                Filete(1.dp, Line)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Copias", Modifier.padding(bottom = 4.dp))
                 SeccionCopias(e) { mensaje = it }
                 Spacer(Modifier.height(8.dp))
                 MagLink("Guardar copia de mis obras", "Un archivo con todo lo escrito (obras, capítulos, escenas, fichas, notas…), también la papelera") { exportar.launch("cobalto-obras.json") }
                 Text("Cada obra se puede exportar aparte (texto, Markdown, Word, libro o PDF) desde «Exportar», dentro de la obra.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
-                mensaje?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+                mensaje?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
             }
         }
 
         Spacer(Modifier.height(26.dp))
-        Filete(3.dp)
+        Filete(1.dp, Line)
         Spacer(Modifier.height(10.dp))
         Etiqueta("Thot $VERSION")
-        Text("Thot es hermana de Jonsu, Seshat y Bastet. El tesauro de sinónimos es el de RLA-ES (LGPL 2.1).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
+        Text("Thot es hermana de Jonsu, Seshat y Bastet. El tesauro de sinónimos es el de RLA-ES (LGPL 2.1).", color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
         }
     }
@@ -123,15 +123,15 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
 fun CampoRevista(etiqueta: String, valor: String, pista: String, secreto: Boolean = false, alCambiar: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
-            Text(etiqueta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
+            Text(etiqueta, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(96.dp).padding(bottom = 3.dp))
             Box(Modifier.weight(1f)) {
-                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
+                if (valor.isEmpty()) Text(pista, color = Muted, fontFamily = Body, fontSize = 18.sp)
                 BasicTextField(valor, alCambiar, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp),
                     cursorBrush = SolidColor(Acento), visualTransformation = if (secreto) PasswordVisualTransformation() else VisualTransformation.None,
                     keyboardOptions = KeyboardOptions(keyboardType = if (secreto) KeyboardType.Password else KeyboardType.Text, autoCorrect = false), modifier = Modifier.fillMaxWidth())
             }
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
     }
 }
 
@@ -163,7 +163,7 @@ private fun SeccionCuenta() {
     } else {
         val e = remember { Escritos.get(ctx) }
         Etiqueta("Vinculada a", Modifier.padding(top = 8.dp))
-        Text(Cuenta.usuario, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+        Text(Cuenta.usuario, color = Charcoal, fontFamily = Body, fontSize = 22.sp)
         val cuando = SincroP.ultima.takeIf { it > 0 }?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it)) }
         val pend = remember(e.version) { e.pendientes().size }
         Text(listOfNotNull(
@@ -195,7 +195,7 @@ private fun SeccionCuenta() {
         } else if (Cuenta.parejaSoloAqui) {
             // La de antes de este móvil, y tu cuenta sin pareja: no se pone sola (dejaría a esa persona leer tu cuenta)
             Etiqueta("Tu pareja", Modifier.padding(top = 8.dp))
-            Text(Cuenta.parejaUsuario.ifBlank { "la de este móvil" }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+            Text(Cuenta.parejaUsuario.ifBlank { "la de este móvil" }, color = Charcoal, fontFamily = Body, fontSize = 22.sp)
             Text("Estaba guardada solo en este móvil y tu cuenta no tiene pareja, así que ahora mismo no os compartís nada. Si la pones en tu cuenta, " +
                 "podrá leer tu cuenta (como la pareja de Jonsu) y estará en todos tus dispositivos.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
             MagLink(if (ocupado) "Poniéndola…" else "Ponerla en mi cuenta", "Desde ahora la tendrás en todas tus apps") {
@@ -210,7 +210,7 @@ private fun SeccionCuenta() {
             MagLink("Olvidarla", "Tu cuenta sigue sin pareja") { ambito.launch { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Cuenta.olvidaParejaDeAqui() } } }
         } else {
             Etiqueta("Tu pareja", Modifier.padding(top = 8.dp))
-            Text(Cuenta.parejaUsuario.ifBlank { "Enlazada en tu cuenta" }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
+            Text(Cuenta.parejaUsuario.ifBlank { "Enlazada en tu cuenta" }, color = Charcoal, fontFamily = Body, fontSize = 22.sp)
             Text("Es la de tu cuenta: la misma en todos tus dispositivos y en las demás apps de la familia.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
             MagLink(if (ocupado) "Quitando…" else "Quitar a mi pareja", "Dejas de compartir y de ver lo suyo, en todas tus apps") {
                 if (!ocupado) {
@@ -225,7 +225,7 @@ private fun SeccionCuenta() {
         Filete(1.dp, Line)
         MagLink("Salir de la cuenta", "Tus obras se quedan aquí; dejan de sincronizarse") { SincroP.parar(); Cuenta.salir(); Escritos.get(ctx).olvidaNube(); Publicar.olvidar(ctx) }
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** «Actualizaciones»: Cobalto se actualiza sola desde la carpeta «versiones» de tu kDrive (la de Atrio), con tu token de kDrive. */
@@ -286,7 +286,7 @@ private fun SeccionActualizaciones() {
         Filete(1.dp, Line)
         Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
-    aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
+    aviso?.let { Text(it, color = Acento, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** Si hay una versión nueva ya bajada que Android no deja instalar en silencio, se pregunta (o se lleva al ajuste de «instalar apps»). */
@@ -297,13 +297,13 @@ fun AvisoActualizacion() {
     var luego by remember(n.nombre) { mutableStateOf(false) }
     if (luego) return
     AlertDialog(
-        onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Thot tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        onDismissRequest = { luego = true }, containerColor = Crudo, shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        title = { Text("Thot tiene una versión nueva", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold) },
         text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Thot instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
-        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
-        dismissButton = { TextButton({ luego = true }) { Text("LUEGO", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
+        }) { Text(if (Actualizador.faltaPermiso) "PERMITIR" else "ACTUALIZAR AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton({ luego = true }) { Text("Luego", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.SemiBold) } }
     )
 }

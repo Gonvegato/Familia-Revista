@@ -53,11 +53,11 @@ fun PantBuscar(alVolver: () -> Unit, alFicha: (Ficha) -> Unit) {
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = m)) {
         CabeceraSeccion("Buscar", "En tus listas", alVolver)
         Box(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-            if (q.isEmpty()) Text(if (vc) "Un canal, una película, una serie…" else "Un canal…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp)
+            if (q.isEmpty()) Text(if (vc) "Un canal, una película, una serie…" else "Un canal…", color = Muted, fontFamily = Body, fontSize = 24.sp)
             BasicTextField(q, { q = it }, singleLine = true, textStyle = TextStyle(color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp), cursorBrush = SolidColor(Acento),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), keyboardActions = KeyboardActions(), modifier = Modifier.fillMaxWidth().focoInicial())
         }
-        Filete(2.dp)
+        Filete(1.dp, Line)
         val x = r
         if (x == null) { Nota(if (q.isBlank()) "Escribe al menos dos letras." else "Buscando…", Modifier.padding(top = 14.dp)); return@Column }
         if (x.canales.isEmpty() && x.pelis.isEmpty() && x.series.isEmpty()) { Nota("Nada con «$q».", Modifier.padding(top = 14.dp)); return@Column }

@@ -160,16 +160,16 @@ fun ContenidoImagenes(ref: String, fondoInicial: Boolean, alCerrar: () -> Unit, 
         }
         PestanasRevista(listOf("La portada", "El fondo"), if (esFondo) 1 else 0) { esFondo = it == 1 }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            Text("AHORA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+            Text("Ahora", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (esFondo) {
                 Box(Modifier.fillMaxWidth().aspectRatio(3f).clipToBounds().background(lerpColor(telaDe(t.nombre), Color.Black, 0.4f)).tocable { galeria.launch("image/*") }, contentAlignment = Alignment.Center) {
                     if (t.fondoVer.isNotBlank()) ImagenEncuadrada(t.fondoVer, t.encFondo, Modifier.fillMaxSize(), "Fondo de ${t.nombre}")
-                    else Text("Sin fondo", color = Color.White.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
+                    else Text("Sin fondo", color = Color.White.copy(alpha = 0.8f), fontFamily = Body, fontSize = 16.sp)
                 }
-                if (t.fondoImg.isBlank() && !t.sinFondo && t.fondo.isNotBlank()) Text("EL DE TMDB (AUTOMÁTICO)", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
+                if (t.fondoImg.isBlank() && !t.sinFondo && t.fondo.isNotBlank()) Text("EL DE TMDB (AUTOMÁTICO)", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
             } else {
                 Box(Modifier.width(150.dp).height(225.dp).tocable { galeria.launch("image/*") }) { PortadaTitulo(t, Modifier.matchParentSize()) }
-                Text(if (t.portadaPropia) "LA TUYA" else "LA DE TMDB (AUTOMÁTICA)", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, modifier = Modifier.padding(top = 6.dp))
+                Text(if (t.portadaPropia) "LA TUYA" else "LA DE TMDB (AUTOMÁTICA)", color = Muted, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
             }
             FlowRow(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (sePuedeEncuadrar) BotonMarco("Encuadrar") { encuadrar = true }
@@ -182,16 +182,16 @@ fun ContenidoImagenes(ref: String, fondoInicial: Boolean, alCerrar: () -> Unit, 
                 if (esFondo && (t.fondoImg.isNotBlank() || t.sinFondo) && t.fondo.isNotBlank()) BotonMarco("El de TMDB") { Biblioteca.fondoAutomatico(t.ref) }
                 if (esFondo && t.fondoVer.isNotBlank()) BotonMarco("Quitar") { ImagenesTitulo.quitarFondo(t) }
             }
-            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
+            if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Body, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
             Text(if (esFondo) "Se recorta a lo ancho: con «Encuadrar» eliges qué parte se ve (en este dispositivo). Sin fondo elegido, va el de TMDB; si lo quitas, el color de la portada. Sale en «Ahora ves» de la portada y arriba en la ficha."
                 else "«La automática» vuelve al póster de TMDB (o el de tu addon). Con «Encuadrar» eliges qué parte se ve (en este dispositivo). La portada sale igual en tus otros dispositivos y en Jonsu.",
                 color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 14.dp))
-            Text("PROPUESTAS · TMDB", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
+            Text("PROPUESTAS · TMDB", color = Acento, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
             val lista = hallados
             when {
-                !conTmdb && propuestas == null -> Text("Con tu clave de TMDB (Ajustes → Catálogo) salen aquí ${if (esFondo) "los fondos" else "los pósteres"} de «${t.nombre}».", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
-                buscando && lista == null -> Text("Buscando…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
-                lista.isNullOrEmpty() -> Text("TMDB no tiene ${if (esFondo) "fondos" else "pósteres"} de «${t.nombre}». Prueba a buscar en internet.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
+                !conTmdb && propuestas == null -> Text("Con tu clave de TMDB (Ajustes → Catálogo) salen aquí ${if (esFondo) "los fondos" else "los pósteres"} de «${t.nombre}».", color = Muted, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp)
+                buscando && lista == null -> Text("Buscando…", color = Muted, fontFamily = Body, fontSize = 16.sp)
+                lista.isNullOrEmpty() -> Text("TMDB no tiene ${if (esFondo) "fondos" else "pósteres"} de «${t.nombre}». Prueba a buscar en internet.", color = Muted, fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp)
                 esFondo -> lista.forEach { (mini, grande) ->
                     Box(Modifier.padding(bottom = 10.dp).fillMaxWidth().aspectRatio(16f / 9f).background(Sand).tocable(enabled = !guardando) { elegirUrl(grande) }) {
                         AsyncImage(imagenDe(mini), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -208,7 +208,7 @@ fun ContenidoImagenes(ref: String, fondoInicial: Boolean, alCerrar: () -> Unit, 
                     }
                 }
             }
-            if (conTmdb || propuestas != null) Text(Tmdb.AVISO_TMDB, color = Muted, fontFamily = Body, fontSize = 10.sp, lineHeight = 14.sp, modifier = Modifier.padding(top = 4.dp))
+            if (conTmdb || propuestas != null) Text(Tmdb.AVISO_TMDB, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -220,7 +220,7 @@ private fun imagenDe(ruta: String): Any = if (ruta.startsWith("http")) ruta else
 /** Un botón recto con marco de 2 px (los de la dirección C que no son la acción principal). */
 @Composable
 fun BotonMarco(texto: String, modifier: Modifier = Modifier, color: Color = Charcoal, onClick: () -> Unit) {
-    Text(texto.uppercase(), color = color, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.8.sp, maxLines = 1,
+    Text(texto, color = color, fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1,
         modifier = modifier.border(2.dp, color).tocable(onClick = onClick).padding(horizontal = 12.dp, vertical = 9.dp))
 }
 
@@ -248,7 +248,7 @@ fun TapaDeTela(nombre: String, modifier: Modifier = Modifier, conTexto: Boolean 
     if (!conTexto) { Box(modifier.background(c)); return }
     BoxWithConstraints(modifier.background(c).padding(8.dp), contentAlignment = Alignment.BottomStart) {
         val tam = (maxWidth.value * 0.15f).coerceIn(10f, 26f)
-        Text(nombre.uppercase(), color = sobre(c), fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = tam.sp, lineHeight = (tam * 1.08f).sp,
+        Text(nombre, color = sobre(c), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = tam.sp, lineHeight = (tam * 1.08f).sp,
             maxLines = 4, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Start)
     }
 }

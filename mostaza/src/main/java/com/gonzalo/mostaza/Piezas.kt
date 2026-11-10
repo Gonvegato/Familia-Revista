@@ -69,7 +69,7 @@ fun TarjetaPoster(imagen: String, nombre: String, ancho: Dp = Dp.Unspecified, su
         }
         Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 17.sp, maxLines = 2, minLines = 2,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
-        Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(sub, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -97,7 +97,7 @@ fun FilaPosters(titulo: String, cosas: List<MetaBreve>, alAbrir: (MetaBreve) -> 
 /** Un texto de espera o de aviso, en cursiva (como en la revista). */
 @Composable
 fun Nota(t: String, modifier: Modifier = Modifier, color: Color = Muted) =
-    Text(t, color = color, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, modifier = modifier)
+    Text(t, color = color, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = modifier)
 
 /** «2 h 22 min» o «48 min». */
 fun duracion(min: Int): String = if (min <= 0) "" else if (min >= 60) "${min / 60} h" + (if (min % 60 > 0) " ${min % 60} min" else "") else "$min min"

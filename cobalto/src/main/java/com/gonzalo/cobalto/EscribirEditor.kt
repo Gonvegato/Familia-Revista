@@ -500,7 +500,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
             val palabra = tf.text.substring(r.first, (r.last + 1).coerceAtMost(tf.text.length))
             ModalBottomSheet({ sinonimos = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = Crudo, shape = shp(28.dp)) {
                 Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp).padding(bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Sinónimos de «$palabra»", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
+                    Text("Sinónimos de «$palabra»", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Charcoal)
                     grupos.take(12).forEach { g ->
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             g.forEach { s -> SoftChip(s, false) {
@@ -554,7 +554,7 @@ private fun CabeceraEditor(
     }.background(Charcoal).padding(top = arriba).padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         VolverRevista(onBack, if (numCap > 0) "Cap. $numCap" else "Volver")
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(obra?.s("titulo").orEmpty().uppercase(), color = acentoSobreTinta(), fontSize = 10.sp, lineHeight = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(obra?.s("titulo").orEmpty(), color = acentoSobreTinta(), fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val t = if (tableta) 24.sp else 20.sp
             BasicTextField(
                 titulo, onTitulo, singleLine = true,
@@ -706,7 +706,7 @@ private fun PanelEscena(
     val pid = escena.pid
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("La escena", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal, modifier = Modifier.weight(1f))
+            Text("La escena", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Charcoal, modifier = Modifier.weight(1f))
             EnlaceRevista("Cerrar", Modifier.padding(horizontal = 10.dp), onClick = onCierra)
         }
         FiltrosRevista(listOf("Escena", "Fichas", "Notas", "Borradores", "Historial"), pestana, Modifier.padding(horizontal = 18.dp)) { pestana = it }
@@ -768,13 +768,13 @@ private fun PestanaFichas(e: Escritos, pid: String, texto: String, inserta: (Str
             Column(Modifier.fillMaxWidth().padding(12.dp)) {
                 Row(Modifier.fillMaxWidth().press(haptic = false) { abierta = if (on) null else f.id }, verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(singularFicha(f.s("tipo")).uppercase() + if (f.id in aqui) " · SALE AQUÍ" else "", color = if (f.id in aqui) color else Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                        Text(f.s("nombre"), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal)
+                        Text(singularFicha(f.s("tipo")).uppercase() + if (f.id in aqui) " · SALE AQUÍ" else "", color = if (f.id in aqui) color else Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(f.s("nombre"), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Charcoal)
                     }
                     Text(if (on) "▴" else "▾", color = Muted, fontSize = 14.sp)
                 }
                 if (on) {
-                    if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), fontFamily = Display, fontStyle = FontStyle.Italic, color = Charcoal, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
+                    if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), fontFamily = Body, color = Charcoal, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
                     f.o.optJSONArray("campos")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let { c -> if (c.optString("v").isNotBlank()) Text("${c.optString("k")}: ${c.optString("v")}", color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 3.dp)) } }
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 6.dp)) {
                         EnlaceRevista("Leer la ficha →", acento = true) { leer(f.id) }
@@ -800,8 +800,8 @@ private fun PestanaNotas(e: Escritos, pid: String, inserta: (String) -> Unit, le
         Column(Modifier.fillMaxWidth().animateContentSize().clip(shp(14.dp)).background(color.copy(alpha = 0.10f)).border(1.dp, color.copy(alpha = 0.45f), shp(14.dp)).padding(12.dp)) {
             Row(Modifier.fillMaxWidth().press(haptic = false) { abierta = if (on) null else n.id }, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(singularNota(n.s("tipo")).uppercase() + if (n.b("fija")) " · FIJADA" else "", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                    Text(n.s("titulo").ifBlank { "Sin título" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(singularNota(n.s("tipo")).uppercase() + if (n.b("fija")) " · FIJADA" else "", color = Muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(n.s("titulo").ifBlank { "Sin título" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Text(if (on) "▴" else "▾", color = Muted, fontSize = 14.sp)
             }
@@ -830,7 +830,7 @@ private fun PestanaBorradores(e: Escritos, escena: Doc, actual: String, pon: (St
     }
     bs.forEach { b ->
         Column(Modifier.fillMaxWidth().clip(shp(14.dp)).background(Paper).border(1.dp, if (b.b("conflicto")) ColGeneral else Line, shp(14.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(b.s("nombre").ifBlank { "Borrador" }, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Charcoal)
+            Text(b.s("nombre").ifBlank { "Borrador" }, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Charcoal)
             Text("${cifraE(Escritos.palabras(b.s("texto")))} palabras" + if (b.b("conflicto")) " · se guardó al juntar dos cambios a la vez" else "", color = if (b.b("conflicto")) ColGeneral else Muted, fontSize = 12.sp)
             Text(b.s("texto").take(220).replace('\n', ' ') + if (b.s("texto").length > 220) "…" else "", color = Charcoal, fontFamily = Display, fontSize = 14.sp, lineHeight = 19.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
@@ -856,7 +856,7 @@ private fun PestanaHistorial(e: Escritos, escena: Doc, actual: String, pon: (Str
         val dif = v.palabras - Escritos.palabras(actual)
         Column(Modifier.fillMaxWidth().clip(shp(14.dp)).background(Paper).border(1.dp, Line, shp(14.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(fechaHora(v.u), fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Charcoal, modifier = Modifier.weight(1f))
+                Text(fechaHora(v.u), fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Charcoal, modifier = Modifier.weight(1f))
                 Text("${cifraE(v.palabras)} palabras" + if (dif != 0) " (${if (dif > 0) "+" else ""}${cifraE(dif)})" else "", color = Muted, fontSize = 12.sp)
             }
             Text(v.texto.take(160).replace('\n', ' ') + if (v.texto.length > 160) "…" else "", color = Muted, fontFamily = Display, fontSize = 14.sp, lineHeight = 19.sp)
@@ -902,7 +902,7 @@ fun ComparaDialogo(actual: String, nombre: String, otro: String, onCerrar: () ->
                             @Composable fun Caja(m: Modifier, on: Boolean, titulo: String, texto: AnnotatedString, vacio: Boolean, f: () -> Unit) =
                                 Column(m.clip(shp(10.dp)).background(if (on) ColGeneral.copy(alpha = 0.10f) else Paper).border(if (on) 2.dp else 1.dp, if (on) ColGeneral else Line, shp(10.dp)).press(haptic = false, onClick = f).padding(12.dp)) {
                                     Text(if (on) "✓ $titulo" else titulo, color = if (on) ColGeneral else Muted, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                                    if (vacio) Text("(nada)", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp)
+                                    if (vacio) Text("(nada)", color = Muted, fontFamily = Body, fontSize = 15.sp)
                                     else Text(texto, color = Charcoal, fontFamily = Display, fontSize = 15.sp, lineHeight = 21.sp)
                                 }
                             val a = diferencias(trozos, TrozoDiff.AQUI, tachar = true)

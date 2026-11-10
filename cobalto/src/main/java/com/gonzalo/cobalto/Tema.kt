@@ -71,6 +71,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Dirección D («la mesa y la estantería»): fondo neutro y un solo acento, el de la app (aquí, el azul de tinta de Thot)
+    Palette("mesa", "Mesa", "Familia",
+        t(0xF3F4F1, 0xFFFFFF, 0x16191C, 0x2A4FA0, 0x16191C, 0x666D73, 0x9AA2A8, 0x1D3A7A, 0xB8861B, 0xE8EAE6, 0xDDE0DC, 0xC4C8C3, 0x666D73),
+        t(0x111417, 0x1B1F23, 0xECEEE9, 0x7FA2F0, 0xECEEE9, 0x9AA2A8, 0x666D73, 0xB3C7F7, 0xE0B456, 0x252A2F, 0x2C3238, 0x444B52, 0x9AA2A8)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)

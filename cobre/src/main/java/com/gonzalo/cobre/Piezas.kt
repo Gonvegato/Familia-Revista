@@ -75,7 +75,7 @@ fun Modifier.tocableCon(src: MutableInteractionSource, onClick: () -> Unit): Mod
 fun Logo(url: String, nombre: String, modifier: Modifier = Modifier, tam: Dp = 44.dp) {
     val forma = esquina(4.dp)
     Box(modifier.size(tam).clip(forma).background(Sand), contentAlignment = Alignment.Center) {
-        @Composable fun Iniciales() = Text(iniciales(nombre), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (tam.value * 0.36f).sp, maxLines = 1)
+        @Composable fun Iniciales() = Text(iniciales(nombre), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (tam.value * 0.36f).sp, maxLines = 1)
         if (url.isBlank()) Iniciales()
         else SubcomposeAsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(tam * 0.08f),
             loading = { Iniciales() }, error = { Iniciales() })
@@ -121,14 +121,14 @@ fun TarjetaPoster(imagen: String, nombre: String, ancho: Dp = Dp.Unspecified, su
         }
         Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 17.sp, maxLines = 2, minLines = 2,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
-        Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(sub, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
 /** Un texto de espera o de aviso, en cursiva (como en la revista). */
 @Composable
 fun Nota(t: String, modifier: Modifier = Modifier, color: Color = Muted) =
-    Text(t, color = color, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, modifier = modifier)
+    Text(t, color = color, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = modifier)
 
 /** Una barra fina de lo que va (de un programa o de lo visto). */
 @Composable

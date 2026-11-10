@@ -37,7 +37,7 @@ fun CabeceraSeccion(titulo: String, ante: String, alVolver: () -> Unit, acciones
     RevistaTopBar(alVolver, "Nut", acciones)
     Antetitulo(ante, Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
     FitTitle(titulo, 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
-    Filete(3.dp)
+    Filete(1.dp, Line)
 }
 
 /**
@@ -139,7 +139,7 @@ fun FilaCanal(l: Lista, cg: Cargada, c: Canal, i: Int, ahora: Long, alVer: () ->
                     Barra(ya.avance(ahora), Modifier.padding(top = 4.dp, end = 40.dp).widthIn(max = 360.dp))
                 }
                 if (luego != null) Text("${hora(luego.inicio)} · ${luego.titulo}", color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
-                if (ya == null && luego == null && c.grupo.isNotBlank()) Text(c.grupo.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1)
+                if (ya == null && luego == null && c.grupo.isNotBlank()) Text(c.grupo, color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             }
         }
         Text(if (fav) "★" else "☆", color = if (fav) Acento else Muted, fontSize = 22.sp,

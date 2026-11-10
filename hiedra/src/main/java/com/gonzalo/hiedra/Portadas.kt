@@ -141,7 +141,7 @@ fun PortadaArco(
         }
         if (titulo && !conImagen) {
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000)))).padding(start = 10.dp, end = 10.dp, top = 28.dp, bottom = 8.dp)) {
-                Text(j.titulo, color = Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(j.titulo, color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 // La fila de abajo deja sitio al botón de jugar (que va a su derecha), así el título usa todo el ancho
                 Row(Modifier.fillMaxWidth().heightIn(min = if (alJugar != null) 30.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(etiquetaDe(j), color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp, maxLines = 1, modifier = Modifier.weight(1f).padding(end = if (alJugar != null) 34.dp else 0.dp))

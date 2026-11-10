@@ -74,7 +74,7 @@ fun PantGuia(alVolver: () -> Unit, alIr: (Destino) -> Unit) {
                 BoxWithConstraints(Modifier.weight(1f)) {
                     val w = maxWidth
                     for (k in 0 until horas * 2) {
-                        Text(hora(desde + k * media), color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, modifier = Modifier.offset(x = w * (k.toFloat() / (horas * 2))))
+                        Text(hora(desde + k * media), color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.offset(x = w * (k.toFloat() / (horas * 2))))
                     }
                 }
                 EnlaceRevista("Después →", Modifier.padding(start = 8.dp)) { desde += media }
@@ -89,8 +89,8 @@ fun PantGuia(alVolver: () -> Unit, alIr: (Destino) -> Unit) {
             Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0x99000000)).tocable { info = null }, contentAlignment = Alignment.Center) {
                 Column(Modifier.widthIn(max = 560.dp).padding(24.dp).background(Paper).padding(22.dp).atrapaFoco()) {
                     Antetitulo("${c.nombre} · ${franja(p)}", Modifier.padding(bottom = 6.dp))
-                    Text(p.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 30.sp)
-                    if (p.subtitulo.isNotBlank()) Text(p.subtitulo, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
+                    Text(p.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 30.sp)
+                    if (p.subtitulo.isNotBlank()) Text(p.subtitulo, color = Charcoal, fontFamily = Body, fontSize = 17.sp)
                     if (p.categoria.isNotBlank() || p.episodio.isNotBlank()) Etiqueta(listOf(p.categoria, p.episodio).filter { it.isNotBlank() }.joinToString(" · "), Modifier.padding(top = 6.dp))
                     if (p.descripcion.isNotBlank()) Text(p.descripcion, color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 10.dp))
                     Spacer(Modifier.height(10.dp))
@@ -116,7 +116,7 @@ private fun FilaGuia(l: Lista, cg: Cargada, c: Canal, desde: Long, hasta: Long, 
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(vertical = 5.dp)) {
             val w = maxWidth; val total = (hasta - desde).toFloat()
-            if (progs.isEmpty()) Text("Sin guía", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterStart).padding(start = 6.dp))
+            if (progs.isEmpty()) Text("Sin guía", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterStart).padding(start = 6.dp))
             progs.forEachIndexed { k, p ->
                 val a = ((maxOf(p.inicio, desde) - desde) / total).coerceIn(0f, 1f); val b = ((minOf(p.fin, hasta) - desde) / total).coerceIn(0f, 1f)
                 if (b > a) {
@@ -125,7 +125,7 @@ private fun FilaGuia(l: Lista, cg: Cargada, c: Canal, desde: Long, hasta: Long, 
                         .let { if (primera && k == 0) it.focoInicial(desde) else it }.tocable(fuera = 1.dp) { if (en) alVer() else alInfo(p) }.padding(horizontal = 8.dp, vertical = 4.dp)) {
                         Column {
                             Text(p.titulo, color = if (en) Acento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(franja(p), color = Muted, fontFamily = Body, fontSize = 11.sp, maxLines = 1)
+                            Text(franja(p), color = Muted, fontFamily = Body, fontSize = 13.sp, maxLines = 1)
                         }
                     }
                 }
