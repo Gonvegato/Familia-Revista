@@ -112,8 +112,11 @@ class ContenidoTest {
         val luego = Carreras.de(u.id)!!
         assertTrue("nivel ${luego.nivelActual} con fama ${luego.valorFuera(Fuera.FAMA)}", luego.nivelActual.ordinal >= Nivel.PROMESA.ordinal)
         assertTrue(luego.famaHist.size > 10)
-        // Y nunca más de lo que da el tope en una jornada (el partido y lo demás juntos)
-        luego.famaHist.zipWithNext().forEach { (a, b) -> if (b.first == a.first + 1) assertTrue("${a} → ${b}", b.second - a.second <= Vida.TOPE_FAMA_JORNADA + 3) }
+        // Y nunca más de lo que da el tope en una jornada (el partido y lo demás juntos), salvo cuando la temporada se vuelve una proeza
+        // (dos goles por partido en 25 partidos es de otro planeta: ahí la fama salta, [Proezas])
+        val proezas = Carreras.entradasDe(u.id, todas = true).filter { it.tipo == TipoEntrada.HITO && it.titulo.startsWith("Una temporada") }.map { it.paso }.toSet()
+        assertEquals(2, proezas.size)
+        luego.famaHist.zipWithNext().forEach { (a, b) -> if (b.first == a.first + 1 && b.first !in proezas) assertTrue("${a} → ${b}", b.second - a.second <= Vida.TOPE_FAMA_JORNADA + 3) }
     }
 
     @Test fun aLos18UnBuenTramoEsUnTerremotoYALos29NoTanto() {

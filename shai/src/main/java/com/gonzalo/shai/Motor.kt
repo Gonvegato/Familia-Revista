@@ -171,7 +171,26 @@ object Motor {
         u = Carreras.guarda(Vida.jornada(u, p))
         // Lo que vale, tras este partido (antes de que la prensa escriba: lo sabe)
         val valor0 = Contratos.valorMercado(u)
-        u = Carreras.guarda(u.copy(valorAntes = valor0, valor = Contratos.revalora(u, p)))
+        // Una proeza (siete goles, una temporada de otro planeta) rompe los topes: la fama salta y lo que vale se dispara ([Proezas])
+        val proeza = Proezas.lee(u, p, Carreras.partidos(universo).map { it.second })
+        val pr = proeza.dispara
+        val f0 = u.valorFuera(Fuera.FAMA)
+        if (pr.mayor) Proezas.fama(u, p, pr, f0).takeIf { it > f0 }?.let { f1 ->
+            u = Carreras.guarda(u.copy(fuera = u.fuera + (Fuera.FAMA to f1), famaJornada = maxOf(u.famaJornada, Vida.topeFama(u.personaje.edad)),
+                famaHist = (u.famaHist.filter { it.first != u.paso } + (u.paso to f1)).takeLast(80)))
+        }
+        val valor1 = maxOf(Contratos.revalora(u, p, proeza.partido), Proezas.sueloValor(u, p, pr)).coerceAtMost(Contratos.VALOR_MAX)
+        u = Carreras.guarda(u.copy(valorAntes = valor0, valor = valor1))
+        if (pr.mayor) {
+            val f1 = u.valorFuera(Fuera.FAMA)
+            val deTemp = pr == proeza.temporada && proeza.temporadaNueva && proeza.temporada.ordinal > proeza.partido.ordinal
+            Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.HITO, reloj() - 2, u.paso,
+                if (deTemp) (if (pr == Proeza.SURREAL) "Una temporada de otro planeta" else "Una temporada histórica") else pr.nombre,
+                (if (deTemp) "Con este partido, tu temporada pasa a ser " + (if (pr == Proeza.SURREAL) "de otro planeta: unas cifras que casi nadie ha visto nunca." else "histórica: unas cifras al alcance de muy pocos.") else "Ante ${p.rival}: ${pr.explica}.") +
+                    (if (f1 > f0) " Tu fama salta de golpe de $f0 a $f1." else "") +
+                    " Lo que vales en el mercado pasa de ${Formato.eurosCorto(valor0)} a ${Formato.eurosCorto(valor1)}.",
+                efectos = if (f1 > f0) Efectos(fuera = mapOf(Fuera.FAMA to f1 - f0)) else Efectos()))
+        }
         var e = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PARTIDO, reloj(), u.paso, partido = p, pendiente = "red,prensa"))
         // Los hitos y récords (los de FcFeed, con sus cifras): se apuntan, dan algo de fama y la red y la prensa los cuentan
         val hitos = Hitos.nuevos(u, Carreras.partidos(u.id).map { it.second }, u.paso)

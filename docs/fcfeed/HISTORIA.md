@@ -5,6 +5,23 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.17.0
+
+- **A prueba de actuaciones y temporadas surrealistas** (`Proezas.kt`). Cada partido se mira por lo que es: **enorme** (4 goles, o 5
+  entre goles y asistencias, o un hat-trick en un escenario grande), **histórico** (5 goles, 7 entre goles y asistencias, 4 en un
+  escenario grande o 3 en una final) o **de otro planeta** (6 goles o más, 9 entre goles y asistencias, o 5 en una final). Un escenario
+  grande: de cuartos en adelante, la Champions o un torneo de selecciones. En un amistoso, un escalón menos. De míster, por la goleada.
+  La temporada también: histórica con 50 goles o más de 1,2 por partido (en 12 o más), de otro planeta con 70 o 1,6 por partido (en 15
+  o más); de míster, sin perder en 20 o más.
+- **Lo que rompe:** en uno histórico o de otro planeta, la fama **salta de golpe** sin el tope de la jornada (de otro planeta, al menos
+  hasta estrella) y lo que vales se dispara con un suelo según tu edad y el escenario (de otro planeta: 150 M€; un chaval en un Mundial,
+  unos 300 M€; tope 350 M€). Sale como hito («Partido de otro planeta», «Una temporada histórica»…) con la fama y el valor de antes y
+  de después. Una temporada solo dispara al cruzar el escalón; luego Claude la sigue contando como lo que es.
+- **La reacción:** Claude recibe que «todo el mundo pierda la cabeza» (portadas en varios países, la tendencia mundial, los escépticos,
+  «¿qué cojones acabamos de ver?»), más posts y más conversaciones; de 3 a 4 ofertas nuevas de los más grandes diciendo lo que pagarían
+  (su cláusula o una cifra de récord) y, tras uno de otro planeta, lo normal es que sí llegue la apuesta (de cualquiera, sin favoritos).
+  Sabe que el traspaso más caro de la historia sigue siendo el de Neymar al PSG en 2017 (222 M€; comprobado, noviembre de 2026).
+
 ## 0.16.1
 
 - **La apuesta, de cualquier grande:** quitado el «no uno que ya tenga a sus estrellas en ese puesto» (dejaba fuera al Barça). Ahora la

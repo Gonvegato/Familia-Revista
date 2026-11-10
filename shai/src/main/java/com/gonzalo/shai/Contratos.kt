@@ -122,12 +122,14 @@ object Contratos {
      * Encadenado partido a partido, en un Mundial crece de forma exponencial. Nunca por debajo de un suelo de su nivel ni por encima de
      * [VALOR_MAX].
      */
-    fun revalora(u: Universo, p: Partido): Long {
+    fun revalora(u: Universo, p: Partido, proeza: Proeza = Proeza.NINGUNA): Long {
         val antes = valorMercado(u)
         val impacto = if (u.modo == Rol.MISTER) (if (p.ganado) 0.06 else if (p.empatado) 0.0 else -0.05)
         else {
             if (p.minutos <= 0) return antes
-            0.06 * minOf(p.goles, 5) + 0.035 * minOf(p.asistencias, 5) + (if (p.mvp) 0.05 else 0.0) +
+            // (en una proeza cuentan todos: siete goles no son cinco)
+            val tope = if (proeza.mayor) 12 else 5
+            0.06 * minOf(p.goles, tope) + 0.035 * minOf(p.asistencias, tope) + (if (p.mvp) 0.05 else 0.0) +
                 (when { p.nota >= 8.5 -> 0.06; p.nota >= 7.5 -> 0.03; p.nota in 0.1..5.5 -> -0.05; else -> 0.0 }) + (if (p.ganado) 0.01 else if (!p.empatado) -0.02 else 0.0) +
                 (if (p.huboPenaltis) (if (p.ganaPenaltis) 0.01 else -0.02) + when (p.suPenalti) { 1 -> 0.02; 2 -> -0.04; else -> 0.0 } else 0.0)
         }
@@ -141,7 +143,7 @@ object Contratos {
         }
         val edad = u.personaje.edad
         val joven = when { edad <= 19 -> 1.5; edad <= 23 -> 1.2; edad <= 28 -> 1.0; else -> 0.7 }
-        val factor = (1.0 + impacto * (if (impacto > 0) escenario * joven else 1.0)).coerceIn(0.85, 2.0)
+        val factor = (1.0 + impacto * (if (impacto > 0) escenario * joven else 1.0)).coerceIn(0.85, proeza.factorMax)
         val v = (antes * factor).toLong()
         return (if (v >= 10_000_000) Math.round(v / 100_000.0) * 100_000 else Math.round(v / 10_000.0) * 10_000).coerceIn(valorBase(u) * 2 / 5, VALOR_MAX)
     }

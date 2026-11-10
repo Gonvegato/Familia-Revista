@@ -26,7 +26,7 @@ Reglas que no se rompen nunca:
 4. Clubes y competiciones: los reales se pueden nombrar (son el juego), sin inventarles escándalos institucionales graves. Medios de comunicación, programas, marcas, empresas, discotecas, restaurantes e influencers: inventados (con nombres creíbles), nunca reales. Dentro de la historia todo es real: nunca escribas «(inventada)», «(ficticio)» ni nada que avise de que algo es inventado.
 5. El dinero en euros, con cifras creíbles para su nivel y su club. Las ofertas son propuestas que él decide en la app (si acepta, lo hará en el juego): de clubes reales que encajen con su nivel de AHORA y su momento, o de marcas inventadas.
 6. Su trayectoria (lo que él cuenta de su pasado, también premios y títulos reales que diga haber ganado) es su historia: respétala y úsala. Los premios que des tú al cerrar una temporada son siempre de medios inventados.
-7. Su edad y cómo se le ve marcan el tono: a un chaval de 18 que rinde por encima de lo esperado se le trata como un terremoto (nuevo fenómeno, comparaciones, presión); a uno de 29 con un buen tramo, como una buena racha de alguien cuyo nivel ya se conoce; con la edad alta, los malos tramos se leen como declive. El alcance va con su nivel de AHORA: los seguidores, los «me gusta», cuánto se habla de él y qué medios le cubren (un canterano, la prensa local y cuatro cuentas de la grada; una estrella, medio mundo). Las cifras de interacción, creíbles para sus seguidores.
+7. Su edad y cómo se le ve marcan el tono: a un chaval de 18 que rinde por encima de lo esperado se le trata como un terremoto (nuevo fenómeno, comparaciones, presión); a uno de 29 con un buen tramo, como una buena racha de alguien cuyo nivel ya se conoce; con la edad alta, los malos tramos se leen como declive. El alcance va con su nivel de AHORA (salvo en una proeza: si viene «ESTE PARTIDO ES DE OTRO PLANETA», «HISTÓRICO» o «SU TEMPORADA ES…», la reacción es la de la vida real ante algo así, aunque sea un desconocido): los seguidores, los «me gusta», cuánto se habla de él y qué medios le cubren (un canterano, la prensa local y cuatro cuentas de la grada; una estrella, medio mundo). Las cifras de interacción, creíbles para sus seguidores.
 8. Coherencia: respeta lo que ya ha pasado y lo que FcFeed recuerda (su gente, sus relaciones, lo que eligió, lo que dejó sin contestar). Usa a su gente por su nombre. Si algo viene de una decisión suya, que se note.
 9. Que todo se entienda sin haber leído nada antes: cada cosa que pasa dice quién, dónde (qué medio, qué programa, qué sitio, qué red), qué se dijo (con la cita literal cuando la hay), por qué importa y qué se juega él. Nada de frases sueltas sin contexto.
 10. Récords: los suyos son los de su carrera en FcFeed (con las cifras que él mete). De récords del fútbol de verdad, solo puedes citar los que vienen en «RÉCORDS HISTÓRICOS REALES» de este mensaje (ya los ha comparado la app con su lista de récords), con sus protagonistas y sus cifras exactamente como vienen: nunca otros récords, nunca otras cifras, nunca «segundo más joven» ni comparaciones que no vengan ahí, y sin poner nada polémico ni escandaloso a esos protagonistas reales (solo la marca y, si acaso, un saludo o una felicitación pública neutra). Si no viene ninguno, no hables de récords del mundo real. Batir uno es lo más gordo que le puede pasar: portada con él, repercusión máxima según su edad y su nivel (cuanto más joven, más terremoto), y que la red no hable de otra cosa; rozarlo o igualarlo, también es noticia.
@@ -133,6 +133,7 @@ Reglas que no se rompen nunca:
             (if (p.esFinal) "ES UNA FINAL, lo más grande que hay: que se note en todo (la presión, la repercusión, la celebración o el drama)." else "que se note en la presión, el tono y la repercusión (no es lo mismo una fase de grupos que unos cuartos).")) +
             (if (p.momentos.isBlank()) "" else "\n" +
             "SU VERSIÓN DEL PARTIDO (lo cuenta él, con sus palabras): «${p.momentos.trim()}». Que se note de verdad: que marque el tono de la prensa, la red y lo que le escribe su gente (quien le da la razón, quien no, la polémica si la hay). Puedes comentarlo y opinar, pero no inventes jugadas, nombres ni cifras que no diga.")
+            .let { b -> Proezas.paraClaude(u, Proezas.lee(u, p, Carreras.partidos(u.id).map { it.second }))?.let { "$b\n$it" } ?: b }
         if (!Competiciones.deSelecciones(p.competicion)) return base
         val sel = u.personaje.suSeleccion.ifBlank { null }
         val quien = if (u.modo == Rol.MISTER) "la dirige como seleccionador" else "juega con ella"
@@ -190,7 +191,9 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
     }
 
     /** Lo que se pide de las ofertas (con la cláusula y, si es una ganga, que lluevan). */
-    private fun comoOfertas(u: Universo) = (if (u.valorAntes > 0 && u.valor >= u.valorAntes * 115 / 100)
+    private fun comoOfertas(u: Universo) = (if (proeza(u).mayor)
+        "Ofertas: DESPUÉS DE ESTO, LOS CLUBES MÁS GRANDES DEL MUNDO SE PELEAN POR ÉL (vale ahora unos ${Formato.eurosCorto(Contratos.valorMercado(u))}${if (u.valorAntes > 0 && u.valor > u.valorAntes) ", y antes ${Formato.eurosCorto(u.valorAntes)}" else ""}). Tienen que llegar de 3 a 4 ofertas NUEVAS de los más grandes de España y de fuera (Premier League, Serie A, Bundesliga, Ligue 1…), sin repetir las que ya tiene sobre la mesa: que en el texto digan lo que están dispuestos a pagar a su club por él (su cláusula o una cifra de récord, de acuerdo con lo que vale) y, si su club puede, una renovación para blindarle."
+    else if (u.valorAntes > 0 && u.valor >= u.valorAntes * 115 / 100)
         "Ofertas: SU VALOR SE HA DISPARADO con este partido (de ${Formato.eurosCorto(u.valorAntes)} a ${Formato.eurosCorto(u.valor)}). Tienen que llegar ofertas NUEVAS: de 2 a 3, de clubes grandes que aún no le habían hecho ninguna, de España y DE FUERA (Premier League, Serie A, Bundesliga, Ligue 1…), sin repetir las que ya tiene sobre la mesa; si su cláusula está a tiro, que la paguen (dilo en el texto)."
     else if (Contratos.ganga(u))
         "Ofertas: SU CLÁUSULA ES UNA GANGA (${Formato.eurosCorto(u.contrato!!.clausula)} para alguien que vale unos ${Formato.eurosCorto(Contratos.valorMercado(u))}): tienen que llover. De 2 a 3: traspasos de clubes reales grandes de España y de fuera que pagarían la cláusula (dilo en el texto) y, si no la tiene abierta ya, una renovación de su club para blindarle con una cláusula mucho más alta."
@@ -205,14 +208,17 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
     private fun laApuesta(u: Universo): String {
         if (!Contratos.superestrella(u)) return " «apuesta»: false."
         Contratos.apuesta(u)?.let { a -> return " «apuesta»: false (ya tiene la apuesta de ${Rangos.limpiaNombre(a.de)}: ${Formato.euros(a.salario)} a la semana; los demás pueden acercarse a ella, sin igualarla)." }
-        return " ES UNA SUPERESTRELLA: como mucho UNA de las ofertas puede ser una apuesta («apuesta»: true): cualquier club grande que pueda permitírselo (uno con problemas económicos, no), también su propio club con una renovación para que no se le escape, y TODOS con las mismas probabilidades: no favorezcas a ninguno; que pague muy por encima de lo normal, hasta ${Formato.euros(Contratos.topeApuesta(u))} a la semana, porque cree que va a ser el rey del fútbol; que el texto lo cuente así. Lo normal es que no haya ninguna; nunca más de una. Las demás, «apuesta»: false y dentro de lo normal."
+        return " ES UNA SUPERESTRELLA: como mucho UNA de las ofertas puede ser una apuesta («apuesta»: true): cualquier club grande que pueda permitírselo (uno con problemas económicos, no), también su propio club con una renovación para que no se le escape, y TODOS con las mismas probabilidades: no favorezcas a ninguno; que pague muy por encima de lo normal, hasta ${Formato.euros(Contratos.topeApuesta(u))} a la semana, porque cree que va a ser el rey del fútbol; que el texto lo cuente así. ${if (proeza(u) == Proeza.SURREAL) "Después de algo así, lo normal es que SÍ haya una (de cualquiera de esos clubes, sin favorecer a ninguno)" else "Lo normal es que no haya ninguna"}; nunca más de una. Las demás, «apuesta»: false y dentro de lo normal."
     }
 
     /**
      * Datos de clubes de verdad que la app sabe al día (por si lo que sabe Claude es de antes): no se contradicen. Comprobados en la prensa
      * al escribirlos (noviembre de 2026).
      */
-    const val AL_DIA = "DATOS AL DÍA DE CLUBES DE VERDAD (no los contradigas aunque recuerdes otra cosa): el FC Barcelona volvió en 2026 a la regla 1:1 del control económico de LaLiga (puede gastar en plantilla cada euro que genera): ya NO está en problemas económicos para fichar ni para renovar, y puede hacer una apuesta como cualquier otro grande."
+    const val AL_DIA = "DATOS AL DÍA DE CLUBES DE VERDAD (no los contradigas aunque recuerdes otra cosa): el FC Barcelona volvió en 2026 a la regla 1:1 del control económico de LaLiga (puede gastar en plantilla cada euro que genera): ya NO está en problemas económicos para fichar ni para renovar, y puede hacer una apuesta como cualquier otro grande. El traspaso más caro de la historia sigue siendo el de Neymar del Barça al PSG en 2017 (222 M€)."
+
+    /** Lo que es la última jornada que ha jugado (el partido o su temporada, si acaba de cruzar): para las ofertas y la red. */
+    fun proeza(u: Universo): Proeza = Carreras.partidos(u.id).map { it.second }.let { l -> l.lastOrNull()?.let { Proezas.lee(u, it, l).dispara } } ?: Proeza.NINGUNA
 
     /** Con cuántas decisiones abiertas ya no se le ponen más. */
     const val MAX_ABIERTAS = 2
@@ -311,8 +317,8 @@ ACABA DE JUGAR ESTE PARTIDO:
 ${partido(u, p)}
 
 Escribe lo que pasa en la red justo después de este partido, que se note su repercusión según su nivel y lo que ha pasado antes.
-${comoRed(u, "De 10 a 14")}
-$COMO_MENSAJES Escribe de 2 a 3 conversaciones (su gente, alguna chica inventada, un grupo).
+${comoRed(u, if (proeza(u).mayor) "De 16 a 22" else "De 10 a 14")}
+$COMO_MENSAJES Escribe de ${if (proeza(u).mayor) "3 a 4" else "2 a 3"} conversaciones (su gente, alguna chica inventada, un grupo).
 """.trim() + (if (nuevas > 0) "\n" + """
 GENTE NUEVA: con su nivel de ahora (${u.nivelActual.nombre.lowercase()}) entra gente nueva en su vida. En «gente_nueva», $nuevas persona${if (nuevas > 1) "s" else ""} INVENTADA${if (nuevas > 1) "S" else ""} que encaje${if (nuevas > 1) "n" else ""} con ese nivel (por ejemplo: ${Gente.quienEntra(u.nivelActual)}), con nombre y apellido, su rol y una nota corta de cómo es; y en «mensajes», por cada una, una conversación nueva (su nombre como chat, «id» vacío) en la que le escribe por primera vez y se presenta: quién es, por qué le escribe ahora y qué quiere de él.
 """.trim() else "\n«gente_nueva»: vacío."))), maxTokens = 7000, esquema = ESQUEMA_RED)
