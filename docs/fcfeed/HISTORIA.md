@@ -5,6 +5,18 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.13.0
+
+- **Tu valor, tras cada partido.** Se recalcula con lo que haces (goles, asistencias, nota, MVP), multiplicado por el escenario (la fase:
+  una final pesa el doble; un torneo de selecciones ×1,4, la Champions ×1,3, un amistoso casi nada) y por tu edad (con 19 o menos, ×1,5).
+  Encadenado, en un Mundial sube de forma exponencial (tope: 350 M€). Se ve en «Tu contrato ahora» con lo que ha subido (`Contratos.revalora`).
+- **Las ofertas abiertas suben con él.** Si tu valor sube, los clubes que ya te habían hecho una oferta (traspaso, renovación, cesión) la
+  mejoran solos: sueldo, prima y cláusula. Sale como «Tu precio se dispara: suben las ofertas» y en Ofertas la nueva sustituye a la vieja.
+- **Las ofertas van por lo que vales, no solo por tu fama:** un nivel más por cada vez que tu valor dobla lo de tu nivel (`Contratos.nivelOfertas`).
+- **Llegan ofertas nuevas, también de fuera.** Si tu valor se dispara en un partido (+15 % o más), la prensa tiene que traer de 2 a 3 ofertas
+  nuevas de clubes grandes que aún no te habían hecho ninguna, de España y de fuera (Premier, Serie A, Bundesliga, Ligue 1…). Claude sabe
+  qué ofertas tienes ya sobre la mesa para no repetirlas y para que se piquen entre ellas.
+
 ## 0.12.0
 
 - **La fase del partido.** Un desplegable aparte, debajo de la competición, en las que tienen fases: la Champions, la Europa League y la

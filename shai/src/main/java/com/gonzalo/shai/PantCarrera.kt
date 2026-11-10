@@ -665,7 +665,9 @@ private fun TabOfertas(u: Universo, entradas: List<Entrada>) {
             Text(c.club, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 4.dp))
             Text("${Formato.eurosCorto(c.sueldo)} a la semana · hasta ${c.hasta}" + (if (c.clausula > 0) " · cláusula ${Formato.eurosCorto(c.clausula)}" else ""),
                 color = Muted, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 2.dp))
-            Text("En el mercado te valoran en unos ${Formato.eurosCorto(Contratos.valorMercado(u))}" + if (Contratos.ganga(u)) ": tu cláusula es una ganga y los clubes lo saben." else ".",
+            Text("En el mercado te valoran en unos ${Formato.eurosCorto(Contratos.valorMercado(u))}" +
+                (if (u.valorAntes > 0 && u.valor != u.valorAntes) " (${if (u.valor > u.valorAntes) "+" else ""}${Math.round((u.valor - u.valorAntes) * 100.0 / u.valorAntes)} % tras el último partido)" else "") +
+                if (Contratos.ganga(u)) ": tu cláusula es una ganga y los clubes lo saben." else ".",
                 color = if (Contratos.ganga(u)) Coral else Muted, fontFamily = Body, fontWeight = if (Contratos.ganga(u)) FontWeight.SemiBold else FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
         }
     } ?: Tarjeta(bordeIzq = Acento) { TituloTarjeta("Eres agente libre"); TextoTarjeta("Cualquier club puede ficharte.", Modifier.padding(top = 2.dp)) }

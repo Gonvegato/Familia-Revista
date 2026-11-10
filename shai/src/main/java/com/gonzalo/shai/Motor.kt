@@ -169,6 +169,9 @@ object Motor {
         Fechas.lee(u.personaje.nacimiento)?.let { nac -> Fechas.lee(p.fecha)?.let { f -> Fechas.edad(nac, f).first.takeIf { it in 10..80 && it != u.personaje.edad }?.let { a ->
             u = Carreras.guarda(u.copy(personaje = u.personaje.copy(edad = a))) } } }
         u = Carreras.guarda(Vida.jornada(u, p))
+        // Lo que vale, tras este partido (antes de que la prensa escriba: lo sabe)
+        val valor0 = Contratos.valorMercado(u)
+        u = Carreras.guarda(u.copy(valorAntes = valor0, valor = Contratos.revalora(u, p)))
         var e = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PARTIDO, reloj(), u.paso, partido = p, pendiente = "red,prensa"))
         // Los hitos y récords (los de FcFeed, con sus cifras): se apuntan, dan algo de fama y la red y la prensa los cuentan
         val hitos = Hitos.nuevos(u, Carreras.partidos(u.id).map { it.second }, u.paso)
@@ -186,6 +189,8 @@ object Motor {
         e = r.first
         // El contrato: si toca hablar de renovar, el club (o tu representante) mueve ficha
         runCatching { revisaContrato(universo) }
+        // Lo que ya tenía sobre la mesa sube con su valor
+        runCatching { subenOfertas(universo, valor0) }
         // Las pujas entre las ofertas que compiten (sin IA): salen entre jornadas
         runCatching { puja(universo) }
         if (e.pendiente.isEmpty()) {
@@ -194,6 +199,25 @@ object Motor {
         }
         e to r.second
     } }
+
+    /** Si ha subido lo que vale, las ofertas de clubes que tenía abiertas mejoran (sale como «Puja»: «Tu precio se dispara»). */
+    fun subenOfertas(universo: String, valorAntes: Long): Entrada? {
+        val u = Carreras.de(universo) ?: return null
+        val ents = Carreras.entradasDe(universo, todas = true)
+        val ratio = Contratos.valorMercado(u).toDouble() / maxOf(1L, valorAntes)
+        // (las de esta jornada ya salen con lo que vale ahora)
+        val cambios = Contratos.subenOfertas(u, ents.filter { it.paso < u.paso }, ratio)
+        if (cambios.isEmpty()) return null
+        // Las de antes, superadas (la nueva ocupa su sitio)
+        val viejas = cambios.map { it.first.id }.toSet()
+        ents.filter { e -> e.ofertas.any { it.id in viejas } }.forEach { e -> Carreras.guarda(e.copy(ofertas = e.ofertas.map { if (it.id in viejas) it.copy(estado = Oferta.MEJORADA) else it })) }
+        val pct = Math.round((ratio - 1) * 100)
+        return Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.PUJA, reloj(), u.paso, "Tu precio se dispara: suben las ofertas",
+            "Tras el partido, lo que vales en el mercado ha subido un $pct % (de ${Formato.eurosCorto(valorAntes)} a ${Formato.eurosCorto(Contratos.valorMercado(u))}). " +
+                cambios.joinToString(" ") { (a, b) -> "${Rangos.limpiaNombre(b.de)} mejora la suya: de ${Formato.eurosCorto(a.salario)} a ${Formato.eurosCorto(b.salario)} a la semana" +
+                    (if (b.clausula > a.clausula && b.clausula > 0) ", con una cláusula de ${Formato.eurosCorto(b.clausula)}" else "") + "." },
+            ofertas = cambios.map { it.second }))
+    }
 
     /** La puja de esta jornada entre las ofertas que compiten ([Pujas]), si toca y no hay otra por salir. Sale entre jornadas. */
     fun puja(universo: String): Entrada? {
@@ -340,7 +364,7 @@ object Motor {
             try {
                 val u = Carreras.de(e.universo) ?: return@en e to null
                 val caducadas = sinContar(u.id)
-                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u), caducadas)), u.nivelActual)
+                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u), caducadas)), Contratos.nivelOfertas(u))
                 var nu = Vida.aplica(u, r.efectos)
                 val ef = Vida.recorta(u, r.efectos)
                 // Lo que no contestó: su consecuencia (la que cuenta la prensa, o una corta si no la cuenta) y sus efectos
@@ -521,7 +545,7 @@ object Motor {
                 else -> emptyList()
             }
             nu = Carreras.de(universo) ?: nu
-            val ofertas = r.ofertas.map { Rangos.recorta(it, nu.nivelActual) }
+            val ofertas = r.ofertas.map { Rangos.recorta(it, Contratos.nivelOfertas(nu)) }
             val ent = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.HISTORICO, reloj(), nu.paso,
                 r.titulo.ifBlank { r.prensa?.titular.orEmpty() }.ifBlank { "Hecho histórico" }, r.texto, null, r.posts, Gente.sinExpulsados(nu, r.dms) + extra,
                 r.prensa, ofertas, r.decision?.takeIf { cabeDecision(universo) }, ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts, hecho = h))
@@ -566,7 +590,7 @@ object Motor {
         val ps = Carreras.partidos(u.id).map { it.second }.filter { it.temporada == t || t.isBlank() }
         if (ps.isEmpty()) return@en "No hay partidos en esta temporada: mete alguno antes de cerrarla."
         try {
-            val r = Narrador.leeTemporada(pide(Narrador.temporada(u, contexto(u, cuantas = 12), Estadisticas.linea(t, "", ps), ps)), u.nivelActual)
+            val r = Narrador.leeTemporada(pide(Narrador.temporada(u, contexto(u, cuantas = 12), Estadisticas.linea(t, "", ps), ps)), Contratos.nivelOfertas(u))
             val ef = Vida.recorta(u, r.efectos)
             var nu = Vida.aplica(u, r.efectos)
             val ahora = reloj()

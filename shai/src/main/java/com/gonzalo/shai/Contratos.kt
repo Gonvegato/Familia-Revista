@@ -114,7 +114,74 @@ object Contratos {
      * Lo que vale en el mercado ahora (lo que pediría su club por él): lo de su nivel, más si está en racha o acaba de pasar algo gordo,
      * y más cuanto más joven. Si su cláusula está muy por debajo, es una ganga ([ganga]) y los clubes lo saben.
      */
-    fun valorMercado(u: Universo): Long {
+    fun valorMercado(u: Universo): Long = if (u.valor > 0) u.valor else valorBase(u)
+
+    /**
+     * Lo que vale tras un partido: sube (o baja) con lo que hace (goles, asistencias, nota, MVP), multiplicado por el escenario (la fase:
+     * una final pesa el doble; un torneo de selecciones o la Champions, más) y por su edad (un chaval que rompe un Mundial se dispara).
+     * Encadenado partido a partido, en un Mundial crece de forma exponencial. Nunca por debajo de un suelo de su nivel ni por encima de
+     * [VALOR_MAX].
+     */
+    fun revalora(u: Universo, p: Partido): Long {
+        val antes = valorMercado(u)
+        val impacto = if (u.modo == Rol.MISTER) (if (p.ganado) 0.06 else if (p.empatado) 0.0 else -0.05)
+        else {
+            if (p.minutos <= 0) return antes
+            0.06 * minOf(p.goles, 5) + 0.035 * minOf(p.asistencias, 5) + (if (p.mvp) 0.05 else 0.0) +
+                (when { p.nota >= 8.5 -> 0.06; p.nota >= 7.5 -> 0.03; p.nota in 0.1..5.5 -> -0.05; else -> 0.0 }) + (if (p.ganado) 0.01 else if (!p.empatado) -0.02 else 0.0)
+        }
+        val f = Competiciones.familia(p.competicion)
+        val escenario = Competiciones.pesoFase(p.fase) * when {
+            f == Competiciones.Familia.TORNEO_SELECCIONES && !Competiciones.norm(p.competicion).contains("amistoso") -> 1.4
+            f == Competiciones.Familia.CHAMPIONS -> 1.3
+            f == Competiciones.Familia.SELECCION -> 1.2
+            f == Competiciones.Familia.AMISTOSO -> 0.3
+            else -> 1.0
+        }
+        val edad = u.personaje.edad
+        val joven = when { edad <= 19 -> 1.5; edad <= 23 -> 1.2; edad <= 28 -> 1.0; else -> 0.7 }
+        val factor = (1.0 + impacto * (if (impacto > 0) escenario * joven else 1.0)).coerceIn(0.85, 2.0)
+        val v = (antes * factor).toLong()
+        return (if (v >= 10_000_000) Math.round(v / 100_000.0) * 100_000 else Math.round(v / 10_000.0) * 10_000).coerceIn(valorBase(u) * 2 / 5, VALOR_MAX)
+    }
+
+    /**
+     * Las ofertas de clubes que tiene abiertas, puestas al día con lo que vale ahora (si ha subido): el sueldo sube algo menos que su valor,
+     * la prima y la cláusula lo mismo, sin pasar de lo que pide el nivel de lo que vale. Devuelve las que cambian (oferta de antes → nueva).
+     */
+    fun subenOfertas(u: Universo, entradas: List<Entrada>, ratio: Double): List<Pair<Oferta, Oferta>> {
+        if (ratio < 1.05) return emptyList()
+        val n = nivelOfertas(u)
+        val ocultas = entradas.flatMap { it.ofertas }.mapNotNull { it.antes.ifBlank { null } }.toSet()
+        return entradas.flatMap { it.ofertas }.filter { it.estado == Oferta.ABIERTA && it.tipo in setOf("traspaso", "renovacion", "cesion", "banquillo") && it.id !in ocultas }
+            .mapNotNull { o ->
+                val sube = 1.0 + (ratio - 1.0) * 0.6
+                val nueva = Rangos.recorta(o.copy(id = Universo.nuevoId("o"), salario = redondea(o.salario * sube), prima = redondea(o.prima * ratio),
+                    clausula = if (o.clausula > 0) redondeaCl((o.clausula * ratio).toLong()) else 0, antes = o.id, negociada = false,
+                    texto = "Mejoran su oferta tras tu último partido: ahora ${Formato.euros(redondea(o.salario * sube))} a la semana. " + o.texto.substringAfter("Mejoran su oferta tras tu último partido: ").substringAfter(". ", o.texto)), n)
+                if (nueva.salario > o.salario || nueva.prima > o.prima || nueva.clausula > o.clausula) o to nueva else null
+            }
+    }
+
+    /** El tope de lo que puede valer (por encima del fichaje más caro de la historia, para que haya sitio). */
+    const val VALOR_MAX = 350_000_000L
+
+    /** El nivel que pide el mercado por lo que vale (si vale más de lo que dice su fama, las ofertas van por lo que vale). */
+    fun nivelPorValor(valor: Long): Nivel = when {
+        valor >= 150_000_000 -> Nivel.LEYENDA; valor >= 60_000_000 -> Nivel.ESTRELLA; valor >= 20_000_000 -> Nivel.TITULAR; valor >= 5_000_000 -> Nivel.PROMESA; else -> Nivel.CANTERANO
+    }
+    /**
+     * El nivel con el que se le hacen las ofertas: el de su fama, y uno más por cada vez que lo que vale dobla lo de su nivel (un chaval
+     * que vale cuatro veces lo de un titular recibe ofertas de estrella).
+     */
+    fun nivelOfertas(u: Universo): Nivel {
+        if (u.valor <= 0) return u.nivelActual
+        val veces = u.valor.toDouble() / maxOf(1L, valorBase(u))
+        val pasos = if (veces < 2) 0 else (Math.log(veces) / Math.log(2.0)).toInt().coerceIn(0, 4)
+        return Nivel.entries[(u.nivelActual.ordinal + pasos).coerceAtMost(Nivel.entries.size - 1)]
+    }
+
+    private fun valorBase(u: Universo): Long {
         val n = u.nivelActual
         val base = clausulaDe(n, u.contrato?.sueldo ?: u.salario) / 2
         val edad = u.personaje.edad
@@ -166,7 +233,7 @@ object Contratos {
      */
     fun propuesta(u: Universo, ps: List<Partido>): Oferta {
         val c = u.contrato ?: primero(u.nivelActual, u.club, u.temporada, u.modo)
-        val n = u.nivelActual
+        val n = nivelOfertas(u)
         val r = Rangos.de(n).sueldo
         val l = Estadisticas.linea(u.temporada, "", ps)
         val forma = when {

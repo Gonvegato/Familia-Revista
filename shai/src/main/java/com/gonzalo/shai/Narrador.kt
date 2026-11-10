@@ -176,7 +176,12 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
     fun mercado(u: Universo): String {
         val v = Contratos.valorMercado(u)
         val c = u.contrato
-        return "En el mercado: los clubes le valoran en unos ${Formato.eurosCorto(v)}" + when {
+        val antes = u.valorAntes
+        val sube = if (antes > 0 && v != antes) " (tras su último partido, de ${Formato.eurosCorto(antes)}: ${if (v > antes) "+" else ""}${Math.round((v - antes) * 100.0 / antes)} %)" else ""
+        val abiertas = Carreras.entradasDe(u.id).flatMap { it.ofertas }.filter { it.estado == Oferta.ABIERTA && it.tipo != "patrocinio" }
+        val sobreLaMesa = if (abiertas.isEmpty()) "" else " Ofertas que ya tiene sobre la mesa (no las repitas; pueden subir, igualarse o picarse entre ellas): " +
+            abiertas.take(6).joinToString("; ") { "${Rangos.limpiaNombre(it.de)} (${Oferta.TIPOS[it.tipo]?.lowercase() ?: it.tipo}, ${Formato.eurosCorto(it.salario)} a la semana)" } + "."
+        return "En el mercado: los clubes le valoran en unos ${Formato.eurosCorto(v)}$sube" + sobreLaMesa + when {
             c == null -> "; es agente libre: cualquiera puede ficharle sin pagar nada."
             Contratos.ganga(u) -> ". SU CLÁUSULA (${Formato.eurosCorto(c.clausula)}) ES UNA GANGA para lo que vale ahora: cualquier club puede pagarla y llevárselo sin negociar. Eso tiene que notarse: clubes grandes que preguntan o que la pagan, la prensa hablando de ello, su club con miedo y queriendo renovarle con una cláusula mucho más alta, su agente frotándose las manos."
             else -> "; su cláusula es de ${Formato.eurosCorto(c.clausula)}."
@@ -184,10 +189,12 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
     }
 
     /** Lo que se pide de las ofertas (con la cláusula y, si es una ganga, que lluevan). */
-    private fun comoOfertas(u: Universo) = (if (Contratos.ganga(u))
-        "Ofertas: SU CLÁUSULA ES UNA GANGA (${Formato.eurosCorto(u.contrato!!.clausula)} para alguien que vale unos ${Formato.eurosCorto(Contratos.valorMercado(u))}): tienen que llover. De 2 a 3: traspasos de clubes reales grandes que pagarían la cláusula (dilo en el texto) y, si no la tiene abierta ya, una renovación de su club para blindarle con una cláusula mucho más alta."
+    private fun comoOfertas(u: Universo) = (if (u.valorAntes > 0 && u.valor >= u.valorAntes * 115 / 100)
+        "Ofertas: SU VALOR SE HA DISPARADO con este partido (de ${Formato.eurosCorto(u.valorAntes)} a ${Formato.eurosCorto(u.valor)}). Tienen que llegar ofertas NUEVAS: de 2 a 3, de clubes grandes que aún no le habían hecho ninguna, de España y DE FUERA (Premier League, Serie A, Bundesliga, Ligue 1…), sin repetir las que ya tiene sobre la mesa; si su cláusula está a tiro, que la paguen (dilo en el texto)."
+    else if (Contratos.ganga(u))
+        "Ofertas: SU CLÁUSULA ES UNA GANGA (${Formato.eurosCorto(u.contrato!!.clausula)} para alguien que vale unos ${Formato.eurosCorto(Contratos.valorMercado(u))}): tienen que llover. De 2 a 3: traspasos de clubes reales grandes de España y de fuera que pagarían la cláusula (dilo en el texto) y, si no la tiene abierta ya, una renovación de su club para blindarle con una cláusula mucho más alta."
     else "Ofertas: solo si encajan de verdad con su nivel de ahora, su rendimiento y su momento (lo normal es ninguna; como mucho una o dos).") +
-        " Salario en euros a la semana, prima en euros de una vez, años de contrato y, en traspasos y renovaciones, «clausula»: la cláusula de rescisión del contrato nuevo en euros (realista para su nivel y su edad; en una renovación para blindarle, mucho más alta que la de ahora); en «texto», por qué le quieren y qué le ofrecen de verdad (minutos, proyecto, escaparate), con las mismas cifras que pones en sus campos. ${Rangos.texto(u.nivelActual)}"
+        " Salario en euros a la semana, prima en euros de una vez, años de contrato y, en traspasos y renovaciones, «clausula»: la cláusula de rescisión del contrato nuevo en euros (realista para su nivel y su edad; en una renovación para blindarle, mucho más alta que la de ahora); en «texto», por qué le quieren y qué le ofrecen de verdad (minutos, proyecto, escaparate), con las mismas cifras que pones en sus campos. ${Rangos.texto(Contratos.nivelOfertas(u))}"
 
     /** Con cuántas decisiones abiertas ya no se le ponen más. */
     const val MAX_ABIERTAS = 2
@@ -329,7 +336,7 @@ ENTRE PARTIDOS (mientras tanto): cuenta UNA cosa que le pasa estos días, fuera 
 - ${comoRed(u, "De 3 a 6")}
 - $COMO_MENSAJES Una o dos conversaciones que vayan con ello.
 - $COMO_DECISION Casi siempre una (salvo que ya tenga ${MAX_ABIERTAS} o más pendientes).
-- Ofertas solo si el evento es una oferta (como mucho una). ${Rangos.texto(u.nivelActual)}
+- Ofertas solo si el evento es una oferta (como mucho una). ${Rangos.texto(Contratos.nivelOfertas(u))}
 - Efectos inmediatos (pequeños; lo gordo vendrá con lo que elija). Dinero en euros (positivo o negativo) solo si este hecho lo mueve ya.
 - Gente nueva solo si aparece alguien que vaya a importar (inventado).
 """.trim())), maxTokens = 5000, esquema = ESQUEMA_EVENTO, cacheHora = enLote)
@@ -480,7 +487,7 @@ Escribe:
 - $COMO_MENSAJES De 1 a 3 conversaciones (las vacaciones, el balance, el verano).
 - «vacaciones»: lo que pasa en sus vacaciones (dónde, con quién, qué sale en la prensa rosa o en la red; 4-6 frases) y una decisión ($COMO_DECISION).
 - ${u.contrato?.let { c -> if (Contratos.quedan(c, u.temporada) <= 1) "SU CONTRATO CON ${c.club.uppercase()} ACABA CON ESTA TEMPORADA y no ha renovado: queda libre; que el verano y las ofertas lo reflejen." else "Su contrato sigue: le quedan ${Contratos.quedan(c, u.temporada) - 1} temporadas más." } ?: "Es agente libre: necesita club."}
-- «ofertas»: el mercado de verano: de 1 a 3 ofertas que encajen con su nivel de ahora y su temporada (clubes reales de su nivel o marcas inventadas). ${Rangos.texto(u.nivelActual)}
+- «ofertas»: el mercado de verano: de 1 a 3 ofertas que encajen con su nivel de ahora y su temporada (clubes reales de su nivel o marcas inventadas). ${Rangos.texto(Contratos.nivelOfertas(u))}
 - Efectos y gente nueva, como siempre.
 """.trim())), maxTokens = 7000, esquema = ESQUEMA_TEMPORADA)
 
@@ -557,7 +564,7 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
         val (h, n) = tendencia(r["tendencia"].comoMapa())
         return Entrada(
             Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, ahora, u.paso, r["titulo"].comoTexto(), r["texto"].comoTexto(), null, posts(r["posts"]), dms(r["mensajes"]),
-            null, ofertas(r["ofertas"], u.nivelActual), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]), visibleDesde = visible, aplicada = false,
+            null, ofertas(r["ofertas"], Contratos.nivelOfertas(u)), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]), visibleDesde = visible, aplicada = false,
             tendencia = h, tendenciaPosts = n,
         )
     }
