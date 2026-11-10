@@ -219,6 +219,16 @@ object Motor {
             ofertas = cambios.map { it.second }))
     }
 
+    /** Las ofertas abiertas que se pasan de lo que puede cobrar por su edad (las de antes de la 0.13.1), a su sitio (al abrir la app). */
+    fun reajustaOfertas(): Int {
+        var n = 0
+        for (u in Carreras.todas()) Carreras.entradasDe(u.id, todas = true).forEach { e ->
+            val nuevas = e.ofertas.map { o -> if (o.estado == Oferta.ABIERTA && o.tipo != "patrocinio") Contratos.recortaPara(u, o) else o }
+            if (nuevas != e.ofertas) { Carreras.guarda(e.copy(ofertas = nuevas)); n++ }
+        }
+        return n
+    }
+
     /** La puja de esta jornada entre las ofertas que compiten ([Pujas]), si toca y no hay otra por salir. Sale entre jornadas. */
     fun puja(universo: String): Entrada? {
         val u = Carreras.de(universo) ?: return null
@@ -364,7 +374,7 @@ object Motor {
             try {
                 val u = Carreras.de(e.universo) ?: return@en e to null
                 val caducadas = sinContar(u.id)
-                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u), caducadas)), Contratos.nivelOfertas(u))
+                val r = Narrador.leePrensa(pide(Narrador.prensa(u, p, contexto(u), caducadas)), Contratos.nivelOfertas(u), Contratos.topeSueldo(u))
                 var nu = Vida.aplica(u, r.efectos)
                 val ef = Vida.recorta(u, r.efectos)
                 // Lo que no contestó: su consecuencia (la que cuenta la prensa, o una corta si no la cuenta) y sus efectos
@@ -545,7 +555,7 @@ object Motor {
                 else -> emptyList()
             }
             nu = Carreras.de(universo) ?: nu
-            val ofertas = r.ofertas.map { Rangos.recorta(it, Contratos.nivelOfertas(nu)) }
+            val ofertas = r.ofertas.map { Contratos.recortaPara(nu, it) }
             val ent = Carreras.guarda(Entrada(Universo.nuevoId("e"), u.id, TipoEntrada.HISTORICO, reloj(), nu.paso,
                 r.titulo.ifBlank { r.prensa?.titular.orEmpty() }.ifBlank { "Hecho histórico" }, r.texto, null, r.posts, Gente.sinExpulsados(nu, r.dms) + extra,
                 r.prensa, ofertas, r.decision?.takeIf { cabeDecision(universo) }, ef, tendencia = r.tendencia, tendenciaPosts = r.tendenciaPosts, hecho = h))
@@ -590,7 +600,7 @@ object Motor {
         val ps = Carreras.partidos(u.id).map { it.second }.filter { it.temporada == t || t.isBlank() }
         if (ps.isEmpty()) return@en "No hay partidos en esta temporada: mete alguno antes de cerrarla."
         try {
-            val r = Narrador.leeTemporada(pide(Narrador.temporada(u, contexto(u, cuantas = 12), Estadisticas.linea(t, "", ps), ps)), Contratos.nivelOfertas(u))
+            val r = Narrador.leeTemporada(pide(Narrador.temporada(u, contexto(u, cuantas = 12), Estadisticas.linea(t, "", ps), ps)), Contratos.nivelOfertas(u), Contratos.topeSueldo(u))
             val ef = Vida.recorta(u, r.efectos)
             var nu = Vida.aplica(u, r.efectos)
             val ahora = reloj()

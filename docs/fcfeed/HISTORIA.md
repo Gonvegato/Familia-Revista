@@ -5,6 +5,19 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.13.1
+
+- **Sueldos de chaval.** En la 0.13.0, al dispararse su valor, a un chaval de 16 años le llegaban ofertas de leyenda (38 M€ al año del
+  Bayern tras un hat-trick). En el fútbol de verdad lo que se dispara es lo que pagarían por él, no su sueldo (referencias de prensa: Endrick
+  llegó al Madrid con 18 años, tras costar 60-70 M€, cobrando unos 4 M€ al año; Lamine Yamal cobraba unos 1,7 M€ antes de renovar y solo
+  tras una temporada de estrella y la Eurocopa pasó a unos 15 M€ netos). Ahora:
+  - Tope de sueldo por edad y lo jugado (`Contratos.topeSueldo`): con 17 o menos, 60.000 € a la semana; 18-19, 120.000; 20-21, 250.000; y
+    hasta ×2,5 según los partidos jugados. Con 22 o más, sin tope (manda su nivel). La prima de un club, como mucho un año de ese sueldo.
+  - Lo que vale solo sube las ofertas un nivel como mucho (antes, uno por cada vez que doblaba), y el sueldo de las ofertas abiertas sube
+    la mitad que antes con su valor; la prima y la cláusula, lo mismo.
+  - Claude lo sabe: «ES MUY JOVEN: sueldos de chaval, cifras de traspaso grandes».
+  - Las ofertas que ya tenías se ajustan al abrir la app (con el texto cuadrado).
+
 ## 0.13.0
 
 - **Tu valor, tras cada partido.** Se recalcula con lo que haces (goles, asistencias, nota, MVP), multiplicado por el escenario (la fase:

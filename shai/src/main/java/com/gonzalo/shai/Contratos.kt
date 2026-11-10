@@ -155,13 +155,29 @@ object Contratos {
         val ocultas = entradas.flatMap { it.ofertas }.mapNotNull { it.antes.ifBlank { null } }.toSet()
         return entradas.flatMap { it.ofertas }.filter { it.estado == Oferta.ABIERTA && it.tipo in setOf("traspaso", "renovacion", "cesion", "banquillo") && it.id !in ocultas }
             .mapNotNull { o ->
-                val sube = 1.0 + (ratio - 1.0) * 0.6
-                val nueva = Rangos.recorta(o.copy(id = Universo.nuevoId("o"), salario = redondea(o.salario * sube), prima = redondea(o.prima * ratio),
+                // (el sueldo sube bastante menos que su valor; la prima y la cláusula, lo mismo)
+                val sube = 1.0 + (ratio - 1.0) * 0.3
+                val nueva = recortaPara(u, o.copy(id = Universo.nuevoId("o"), salario = redondea(o.salario * sube), prima = redondea(o.prima * ratio),
                     clausula = if (o.clausula > 0) redondeaCl((o.clausula * ratio).toLong()) else 0, antes = o.id, negociada = false,
-                    texto = "Mejoran su oferta tras tu último partido: ahora ${Formato.euros(redondea(o.salario * sube))} a la semana. " + o.texto.substringAfter("Mejoran su oferta tras tu último partido: ").substringAfter(". ", o.texto)), n)
+                    texto = "Mejoran su oferta tras tu último partido: ahora ${Formato.euros(redondea(o.salario * sube))} a la semana. " + o.texto.substringAfter("Mejoran su oferta tras tu último partido: ").substringAfter(". ", o.texto)))
                 if (nueva.salario > o.salario || nueva.prima > o.prima || nueva.clausula > o.clausula) o to nueva else null
             }
     }
+
+    /**
+     * Lo que puede cobrar a la semana un chaval, por su edad y lo que lleva jugado (por encima de 21 años, sin tope: manda su nivel).
+     * Referencia de la realidad: un chaval de 18 que costó 60-70 M€ llegó cobrando unos 80.000 € a la semana; con 16-17 años, aunque valga
+     * una fortuna, cobra mucho menos. Lo que se dispara es lo que pagarían por él (su valor, su cláusula), no su sueldo.
+     */
+    fun topeSueldo(u: Universo): Long {
+        val edad = u.personaje.edad
+        val base = when { edad <= 17 -> 60_000L; edad <= 19 -> 120_000L; edad <= 21 -> 250_000L; else -> return Long.MAX_VALUE }
+        val jugados = Carreras.partidos(u.id).count { it.second.minutos > 0 }
+        return redondea(base * (1.0 + minOf(jugados, 60) / 40.0))
+    }
+
+    /** Una oferta de club, en su sitio: el nivel con el que se le hacen ofertas y lo que puede cobrar por su edad. */
+    fun recortaPara(u: Universo, o: Oferta): Oferta = Rangos.recorta(o, nivelOfertas(u), topeSueldo(u))
 
     /** El tope de lo que puede valer (por encima del fichaje más caro de la historia, para que haya sitio). */
     const val VALOR_MAX = 350_000_000L
@@ -177,7 +193,8 @@ object Contratos {
     fun nivelOfertas(u: Universo): Nivel {
         if (u.valor <= 0) return u.nivelActual
         val veces = u.valor.toDouble() / maxOf(1L, valorBase(u))
-        val pasos = if (veces < 2) 0 else (Math.log(veces) / Math.log(2.0)).toInt().coerceIn(0, 4)
+        // (como mucho uno: lo que vale dispara lo que pagarían por él, no su categoría de golpe)
+        val pasos = if (veces < 2) 0 else 1
         return Nivel.entries[(u.nivelActual.ordinal + pasos).coerceAtMost(Nivel.entries.size - 1)]
     }
 
@@ -252,9 +269,9 @@ object Contratos {
         }
         // La cláusula nueva: la de su nivel (y si la de ahora es una ganga, el club la sube para blindarle)
         val cl = maxOf(clausulaDe(n, sueldo), if (ganga(u)) valorMercado(u) * 3 / 2 else 0L)
-        return Rangos.recorta(Oferta(Universo.nuevoId("o"), u.club, "renovacion", sueldo, redondea(sueldo * if (forma > 0) 8.0 else 3.0), anios,
+        return recortaPara(u, Oferta(Universo.nuevoId("o"), u.club, "renovacion", sueldo, redondea(sueldo * if (forma > 0) 8.0 else 3.0), anios,
             texto.replace("y una cláusula nueva", "y una cláusula de ${Formato.eurosCorto(redondeaCl(cl))}") + (c.clausula.takeIf { it > 0 }?.let { " Tu cláusula ahora: ${Formato.eurosCorto(it)}." } ?: ""),
-            clausula = redondeaCl(cl)), n)
+            clausula = redondeaCl(cl)))
     }
 
     /**
@@ -267,7 +284,7 @@ object Contratos {
         val sube = ganas > 0.55
         return if (sube) {
             val f = 1.10 + rnd.nextDouble() * 0.10
-            Rangos.recorta(o.copy(id = Universo.nuevoId("o"), salario = redondea(o.salario * f), texto = "Contraoferta aceptada: el ${o.de} sube a ${Formato.euros(redondea(o.salario * f))} a la semana. «Es nuestra última palabra», dicen."), u.nivelActual) to true
+            recortaPara(u, o.copy(id = Universo.nuevoId("o"), salario = redondea(o.salario * f), texto = "Contraoferta aceptada: el ${o.de} sube a ${Formato.euros(redondea(o.salario * f))} a la semana. «Es nuestra última palabra», dicen.")) to true
         } else o.copy(id = Universo.nuevoId("o"), texto = "El ${o.de} no se mueve: «Esto es lo que hay». O lo tomas o lo dejas.") to false
     }
 }

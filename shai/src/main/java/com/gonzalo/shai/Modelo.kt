@@ -85,9 +85,11 @@ object Rangos {
     fun texto(n: Nivel): String { val r = de(n)
         return "OFERTAS PARA SU NIVEL (${n.nombre.lowercase()}): ${r.quien}. Sueldo entre ${Formato.euros(r.sueldo.first)} y ${Formato.euros(r.sueldo.last)} a la semana; prima de hasta ${Formato.euros(r.primaMax)}; un patrocinio, hasta ${Formato.euros(r.patroSemana)} a la semana y ${Formato.euros(r.patroPrima)} de una vez." }
     /** Lo que se sale del rango de su nivel, a su sitio (y el texto, con las cifras de verdad). */
-    fun recorta(o: Oferta, n: Nivel): Oferta { val r = de(n)
+    fun recorta(o: Oferta, n: Nivel, tope: Long = Long.MAX_VALUE): Oferta { val r = de(n)
+        // [tope]: lo que puede cobrar por su edad y lo que ha jugado ([Contratos.topeSueldo]); en un club, nunca por encima (la prima, como mucho un año de eso)
         val x = if (o.tipo == "patrocinio") o.copy(salario = o.salario.coerceIn(0, r.patroSemana), prima = o.prima.coerceIn(0, r.patroPrima))
-            else o.copy(salario = if (o.salario <= 0) 0 else o.salario.coerceIn(r.sueldo.first, r.sueldo.last), prima = o.prima.coerceIn(0, r.primaMax))
+        else o.copy(salario = if (o.salario <= 0) 0 else o.salario.coerceIn(r.sueldo.first, r.sueldo.last).coerceAtMost(tope),
+            prima = o.prima.coerceIn(0, r.primaMax).coerceAtMost(if (tope == Long.MAX_VALUE) Long.MAX_VALUE else tope * 52))
         // La cláusula del contrato que ofrece: la que diga (con un suelo) o, si no dice, la que toca a su nivel
         val cl = if (x.tipo == "traspaso" || x.tipo == "renovacion" || x.tipo == "banquillo")
             (if (x.clausula > 0) x.clausula else Contratos.clausula(n, x.salario)).coerceAtLeast(x.salario * 52 * 2) else 0

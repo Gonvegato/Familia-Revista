@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.shai"
         minSdk = 29
         targetSdk = 35
-        versionCode = 19
-        versionName = "0.13.0"
+        versionCode = 20
+        versionName = "0.13.1"
     }
     buildTypes {
         getByName("release") {

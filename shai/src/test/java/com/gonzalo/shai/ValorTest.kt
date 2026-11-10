@@ -37,9 +37,31 @@ class ValorTest {
         assertTrue("v1 $v1 → v2 ${u.valor}", u.valor > v1 * 3 / 2)
         val barca2 = Carreras.entradasDe(u0.id).flatMap { it.ofertas }.first { it.de == "FC Barcelona" && it.estado == Oferta.ABIERTA }
         assertTrue(barca2.salario > barca1.salario)
+        // Y ninguna oferta de club pasa de lo que puede cobrar un chaval de su edad
+        assertTrue(Carreras.entradasDe(u0.id).flatMap { it.ofertas }.filter { it.estado == Oferta.ABIERTA && it.tipo != "patrocinio" }.all { it.salario <= Contratos.topeSueldo(u) })
         // Las ofertas ya van por lo que vale, no por su fama
         assertTrue(Contratos.nivelOfertas(u).ordinal >= Nivel.ESTRELLA.ordinal)
         assertTrue(Narrador.contexto(u, Carreras.entradasDe(u.id), Carreras.partidos(u.id).map { it.second }).contains("Ofertas que ya tiene sobre la mesa"))
+    }
+
+    @Test fun unChavalDe16NoCobra38MillonesAunqueValgaUnaFortuna() {
+        val (u0, _) = Motor.crea(Ejemplo.universo().let { it.copy(personaje = it.personaje.copy(edad = 16)) })
+        Carreras.guarda(Carreras.de(u0.id)!!.let { it.copy(fuera = it.fuera + (Fuera.FAMA to 70), valor = 150_000_000) })
+        // La del Bayern de antes de la 0.13.1: 730.000 € a la semana (38 M€ al año)
+        Carreras.guarda(Entrada(Universo.nuevoId("e"), u0.id, TipoEntrada.EVENTO, 1, 0, "El Bayern", ofertas = listOf(
+            Oferta("bay", "FC Bayern München", "traspaso", 730_000, 20_000_000, 5, "El Bayern te ofrece 730.000 € a la semana."))))
+        Motor.reajustaOfertas()
+        val u = Carreras.de(u0.id)!!
+        val o = Carreras.entradasDe(u.id).flatMap { it.ofertas }.first { it.id == "bay" }
+        val tope = Contratos.topeSueldo(u)
+        assertTrue("tope $tope", tope in 50_000..100_000)
+        assertEquals(tope, o.salario); assertTrue(o.prima <= tope * 52)
+        assertTrue(o.texto, o.texto.contains("${Formato.cifra(o.salario)} € a la semana"))
+        // Pero lo que pagarían por él sigue siendo una fortuna (su valor y su cláusula no se recortan por la edad)
+        assertEquals(150_000_000L, Contratos.valorMercado(u))
+        assertTrue(Narrador.sueldoDeChaval(u).contains("ES MUY JOVEN (16 años)"))
+        // Con 25 años, sin tope de edad
+        assertEquals(Long.MAX_VALUE, Contratos.topeSueldo(u.copy(personaje = u.personaje.copy(edad = 25))))
     }
 
     @Test fun unAmistosoYUnMalPartidoNoLoDisparan() {

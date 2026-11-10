@@ -194,7 +194,11 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
     else if (Contratos.ganga(u))
         "Ofertas: SU CLÁUSULA ES UNA GANGA (${Formato.eurosCorto(u.contrato!!.clausula)} para alguien que vale unos ${Formato.eurosCorto(Contratos.valorMercado(u))}): tienen que llover. De 2 a 3: traspasos de clubes reales grandes de España y de fuera que pagarían la cláusula (dilo en el texto) y, si no la tiene abierta ya, una renovación de su club para blindarle con una cláusula mucho más alta."
     else "Ofertas: solo si encajan de verdad con su nivel de ahora, su rendimiento y su momento (lo normal es ninguna; como mucho una o dos).") +
-        " Salario en euros a la semana, prima en euros de una vez, años de contrato y, en traspasos y renovaciones, «clausula»: la cláusula de rescisión del contrato nuevo en euros (realista para su nivel y su edad; en una renovación para blindarle, mucho más alta que la de ahora); en «texto», por qué le quieren y qué le ofrecen de verdad (minutos, proyecto, escaparate), con las mismas cifras que pones en sus campos. ${Rangos.texto(Contratos.nivelOfertas(u))}"
+        " Salario en euros a la semana, prima en euros de una vez, años de contrato y, en traspasos y renovaciones, «clausula»: la cláusula de rescisión del contrato nuevo en euros (realista para su nivel y su edad; en una renovación para blindarle, mucho más alta que la de ahora); en «texto», por qué le quieren y qué le ofrecen de verdad (minutos, proyecto, escaparate), con las mismas cifras que pones en sus campos. ${Rangos.texto(Contratos.nivelOfertas(u))}${sueldoDeChaval(u)}"
+
+    /** Si es muy joven: su sueldo es de chaval aunque valga una fortuna (lo que se dispara es lo que pagarían por él). */
+    fun sueldoDeChaval(u: Universo): String = Contratos.topeSueldo(u).takeIf { it != Long.MAX_VALUE }?.let { t ->
+        " OJO, ES MUY JOVEN (${u.personaje.edad} años): aunque valga mucho, en un club cobraría como mucho ${Formato.euros(t)} a la semana (y una prima de como mucho un año de eso); lo que se dispara es lo que pagarían por él a su club (el traspaso) y su cláusula, no su sueldo. Que el texto lo refleje (sueldos de chaval, cifras de traspaso grandes)." } ?: ""
 
     /** Con cuántas decisiones abiertas ya no se le ponen más. */
     const val MAX_ABIERTAS = 2
@@ -418,7 +422,7 @@ Es una EDICIÓN ESPECIAL: lo más gordo que le ha pasado hasta ahora. Escribe:
 - ${comoRed(u, "De 16 a 22")} OJO: sus seguidores y sus «me gusta» de ahora son de ANTES de esto: con este ruido los posts gordos se disparan (varias veces lo normal, y más cuanto más lejos llega el ruido), y la tendencia lleva muchos posts. Que se note la locura: gente que no le conocía, cuentas de otros países si el ruido llega, memes, la afición de su club, la de su selección, escépticos.
 - $COMO_MENSAJES De 3 a 5 conversaciones: su familia, su representante, sus amigos de siempre (un grupo), alguna chica o alguna ex que reaparece, alguien que de repente se acuerda de él.
 - $COMO_DECISION Una que salga de esto (la presión, una entrevista, un patrocinio, un mensaje que contestar), salvo que ya tenga ${MAX_ABIERTAS} o más pendientes.
-- «ofertas»: de 0 a 3 que salgan de esto (marcas que le quieren ya, algún club que pregunta; si su cláusula es una ganga para lo que vale tras esto, de 2 a 3 y alguna de un club grande que la pagaría), con lo que pediría con el nivel que pongas en «nivel_tras» (y el texto, con esas mismas cifras); en traspasos y renovaciones, «clausula» del contrato nuevo. Por nivel:\n${Nivel.entries.filter { it.ordinal >= u.nivelActual.ordinal && it.ordinal <= (if (ruido.sinTope) ruido.tope else u.nivelActual).ordinal }.joinToString("\n") { "  · " + Rangos.texto(it) }}
+- «ofertas»: de 0 a 3 que salgan de esto (marcas que le quieren ya, algún club que pregunta; si su cláusula es una ganga para lo que vale tras esto, de 2 a 3 y alguna de un club grande que la pagaría), con lo que pediría con el nivel que pongas en «nivel_tras» (y el texto, con esas mismas cifras); en traspasos y renovaciones, «clausula» del contrato nuevo.${sueldoDeChaval(u)} Por nivel:\n${Nivel.entries.filter { it.ordinal >= u.nivelActual.ordinal && it.ordinal <= (if (ruido.sinTope) ruido.tope else u.nivelActual).ordinal }.joinToString("\n") { "  · " + Rangos.texto(it) }}
 - «nivel_tras»: el nivel en el que le deja esto (${Nivel.entries.joinToString(", ") { it.name }}), nunca por debajo del de ahora y ${if (ruido.sinTope) "como mucho ${ruido.tope.name}" else "el de ahora (con este ruido no cambia)"}.
 - Efectos en lo de fuera del campo: afición, disciplina y carisma (de -10 a +10) y su gente (por su nombre exacto, de -15 a +15); «fama»: 0 (la pone la app con el nivel). Dinero: 0 salvo un motivo claro.
 - «gente_nueva»: de 0 a 2 personas INVENTADAS que aparecen por esto (un representante de los grandes, una influencer, un periodista que le persigue…), con nombre y apellido, su rol y una nota corta; y en «mensajes», por cada una, una conversación nueva (su nombre como chat, «id» vacío) en la que se presenta.
@@ -527,9 +531,9 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
     }
 
     /** Las ofertas, con el sueldo y la prima dentro de lo que pide su nivel de ahora ([Rangos]). */
-    private fun ofertas(l: Any?, n: Nivel?) = l.comoLista().map { it.comoMapa() }.map { m ->
+    private fun ofertas(l: Any?, n: Nivel?, tope: Long = Long.MAX_VALUE) = l.comoLista().map { it.comoMapa() }.map { m ->
         Oferta(Universo.nuevoId("o"), m["de"].comoTexto(), m["tipo"].comoTexto().ifBlank { "traspaso" }, m["salario_semanal"].comoLong().coerceAtLeast(0),
-            m["prima"].comoLong().coerceAtLeast(0), m["anios"].comoLong().toInt().coerceIn(0, 10), m["texto"].comoTexto(), clausula = m["clausula"].comoLong().coerceAtLeast(0)).let { if (n != null) Rangos.recorta(it, n) else it }
+            m["prima"].comoLong().coerceAtLeast(0), m["anios"].comoLong().toInt().coerceIn(0, 10), m["texto"].comoTexto(), clausula = m["clausula"].comoLong().coerceAtLeast(0)).let { if (n != null) Rangos.recorta(it, n, tope) else it }
     }.filter { it.de.isNotBlank() }.take(3)
 
     fun decision(m: Map<String, Any?>): Decision? {
@@ -556,7 +560,7 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
 
     class SinContestar(val n: Int, val consecuencia: String, val efectos: Efectos)
     class LoDePrensa(val prensa: Prensa?, val ofertas: List<Oferta>, val decision: Decision?, val efectos: Efectos, val sinContestar: List<SinContestar> = emptyList())
-    fun leePrensa(r: Map<String, Any?>, n: Nivel? = null) = LoDePrensa(prensaDe(r["prensa"].comoMapa()), ofertas(r["ofertas"], n), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]),
+    fun leePrensa(r: Map<String, Any?>, n: Nivel? = null, tope: Long = Long.MAX_VALUE) = LoDePrensa(prensaDe(r["prensa"].comoMapa()), ofertas(r["ofertas"], n, tope), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]),
         r["sin_contestar"].comoLista().map { it.comoMapa() }.map { SinContestar(it["n"].comoLong().toInt(), it["consecuencia"].comoTexto(), efectos(it["efectos"].comoMapa())) }.filter { it.consecuencia.isNotBlank() })
 
     /** Un evento de entre partidos, ya como entrada (sin aplicar: sale a su hora). */
@@ -564,7 +568,7 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
         val (h, n) = tendencia(r["tendencia"].comoMapa())
         return Entrada(
             Universo.nuevoId("e"), u.id, TipoEntrada.EVENTO, ahora, u.paso, r["titulo"].comoTexto(), r["texto"].comoTexto(), null, posts(r["posts"]), dms(r["mensajes"]),
-            null, ofertas(r["ofertas"], Contratos.nivelOfertas(u)), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]), visibleDesde = visible, aplicada = false,
+            null, ofertas(r["ofertas"], Contratos.nivelOfertas(u), Contratos.topeSueldo(u)), decision(r["decision"].comoMapa()), efectos(r["efectos"].comoMapa(), r["gente_nueva"]), visibleDesde = visible, aplicada = false,
             tendencia = h, tendenciaPosts = n,
         )
     }
@@ -589,13 +593,13 @@ El equipo del jugador es ${u.club}${if (u.modo == Rol.JUGADOR) " y su jugador es
     class LoDeLaTemporada(val titulo: String, val balance: String, val premios: List<Premio>, val prensa: Prensa?, val posts: List<Post>, val dms: List<Dm>,
                           val tendencia: String, val tendenciaPosts: Int, val vacacionesTitulo: String, val vacacionesTexto: String, val vacacionesDecision: Decision?,
                           val ofertas: List<Oferta>, val efectos: Efectos)
-    fun leeTemporada(r: Map<String, Any?>, nivel: Nivel? = null): LoDeLaTemporada {
+    fun leeTemporada(r: Map<String, Any?>, nivel: Nivel? = null, tope: Long = Long.MAX_VALUE): LoDeLaTemporada {
         val (h, n) = tendencia(r["tendencia"].comoMapa())
         val v = r["vacaciones"].comoMapa()
         return LoDeLaTemporada(r["titulo"].comoTexto(), r["balance"].comoTexto().trim(),
             r["premios"].comoLista().map { it.comoMapa() }.map { Premio(it["premio"].comoTexto(), it["medio"].comoTexto(), it["ganado"].comoBool(), it["texto"].comoTexto()) }.filter { it.nombre.isNotBlank() }.take(5),
             prensaDe(r["prensa"].comoMapa()), posts(r["posts"]), dms(r["mensajes"]), h, n, v["titulo"].comoTexto(), v["texto"].comoTexto(), decision(v["decision"].comoMapa()),
-            ofertas(r["ofertas"], nivel), efectos(r["efectos"].comoMapa(), r["gente_nueva"]))
+            ofertas(r["ofertas"], nivel, tope), efectos(r["efectos"].comoMapa(), r["gente_nueva"]))
     }
 
     /** Lo leído de la foto, para rellenar la plantilla (que revisas antes de guardar). */
