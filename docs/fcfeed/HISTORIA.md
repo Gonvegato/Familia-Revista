@@ -5,6 +5,18 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.9.1
+
+- **El videojuego no existe dentro de la historia.** Claude recibía tu media tal cual («media 78 en el juego», «Su media en el juego es
+  ahora 80») y la prensa y la red la repetían. Ahora:
+  - Claude ya no ve números del juego: recibe tu nivel en palabras («de los buenos de su liga», «va claramente a más», «destaca por la
+    velocidad y el regate; flojea en la defensa») (`Narrador.enElCampo`).
+  - Regla nueva (17): nadie habla de la media, la valoración, atributos con número, cartas, puntos de habilidad, potencial, el modo carrera
+    ni el videojuego; el nivel se cuenta como en el fútbol de verdad. Las notas de los partidos sí existen (las de los periódicos).
+  - Por si aun así se le escapa, un filtro quita esas frases (y los posts enteros que la nombran) de todo lo que escribe, también de lo que
+    llega por lotes (`SinJuego`). Sin tocar «LaLiga EA Sports», «la FIFA» del Mundial ni «la media de goles».
+  - Lo que ya tenías guardado se limpia al abrir la app (posts, mensajes, portadas, ofertas, decisiones y lo que FcFeed recuerda).
+
 ## 0.9.0
 
 - **Pujas entre empresas (solas, sin botón).** Si tienes abiertas dos o más ofertas del mismo tipo (dos marcas que te quieren de imagen,

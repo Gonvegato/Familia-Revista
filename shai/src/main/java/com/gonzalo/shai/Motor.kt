@@ -56,7 +56,8 @@ object Motor {
         val r = try { claude.mensaje(p) } catch (e: Claude.Rechazo) { Gasto.apunta(e.modelo.ifBlank { p.modelo }, Precios.coste(e.modelo.ifBlank { p.modelo }, e.uso)); throw e }
         Gasto.apunta(r.modelo.ifBlank { p.modelo }, Precios.coste(r.modelo.ifBlank { p.modelo }, r.uso))
         // (el JSON va pedido en el mensaje, no forzado: si no se pudo leer, una vez más; si se cortó, con más sitio)
-        return try { r.json() } catch (e: Claude.Fallo) {
+        // (lo que escribe el narrador, sin el videojuego: ni la media ni nada que lo nombre)
+        return try { r.json().let { j -> if (p.sistema.firstOrNull()?.texto == Narrador.REGLAS) SinJuego.limpia(j) as Map<String, Any?> else j } } catch (e: Claude.Fallo) {
             if (intento > 0) throw e
             pide(if (r.parada == "max_tokens") p.copy(maxTokens = (p.maxTokens * 3 / 2).coerceAtMost(16_000)) else p, intento + 1)
         }
@@ -374,7 +375,7 @@ object Motor {
             res.sortedBy { it.id }.forEachIndexed { i, r ->
                 val resp = r.respuesta ?: return@forEachIndexed
                 Gasto.apunta(resp.modelo.ifBlank { Claude.SONNET }, Precios.coste(resp.modelo.ifBlank { Claude.SONNET }, resp.uso, lote = true, cacheHora = true))
-                val m = runCatching { resp.json() }.getOrNull() ?: return@forEachIndexed
+                @Suppress("UNCHECKED_CAST") val m = runCatching { SinJuego.limpia(resp.json()) as Map<String, Any?> }.getOrNull() ?: return@forEachIndexed
                 // Si ya metiste otro partido, salen ya: se quedaron atrás (en modo prueba, los dos salen ya: no hay que esperar horas para ver cómo va)
                 val visible = if (u.paso > l.paso || Prueba.activo) ahora else ahora + i * separacion
                 var ev = Narrador.leeEvento(m, u, ahora, visible).let { it.copy(paso = l.paso, dms = Gente.sinExpulsados(u, it.dms)) }

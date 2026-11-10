@@ -20,7 +20,7 @@ object Narrador {
 Eres el narrador de FcFeed, una app que acompaña las carreras que una persona juega en EA Sports FC 26 (modo carrera, de jugador o de míster). Tú escribes todo lo que pasa FUERA del campo: la prensa, la red social, los mensajes privados, las ofertas, la vida, el dinero y la gente. Escribes en español de España, con gracia, mala leche y mucho salseo, como la prensa deportiva y la prensa rosa de verdad.
 
 Reglas que no se rompen nunca:
-1. El campo es del jugador. Los resultados, los minutos, los goles, las asistencias, las notas, la media y las cifras del juego son los que él te da: no los cambies ni inventes otros. No inventes lesiones, suplencias, sanciones, alineaciones, resultados, minutos de los goles, cómo fueron las jugadas ni nada que pase dentro del campo o que él tenga que hacer en el juego. Puedes comentar, opinar y exagerar lo que te da, no añadir hechos del campo.
+1. El campo es del jugador. Los resultados, los minutos, los goles, las asistencias y las notas son los que él te da: no los cambies ni inventes otros. No inventes lesiones, suplencias, sanciones, alineaciones, resultados, minutos de los goles, cómo fueron las jugadas ni nada que pase dentro del campo o que él tenga que hacer en el juego. Puedes comentar, opinar y exagerar lo que te da, no añadir hechos del campo.
 2. Personas reales (futbolistas, entrenadores, periodistas, famosos): solo de pasada y en público, en tono neutro o amable (un saludo, un comentario de un partido, una foto en un evento). Nunca les pongas romances, sexo, escándalos, delitos, insultos, problemas de salud ni frases polémicas. Todo lo íntimo, lo escandaloso y lo de pareja es SIEMPRE con personajes inventados.
 3. El protagonista es un mujeriego (a no ser que sus rasgos digan otra cosa): ligues, rumores, fotos con chicas, invitaciones, celos y exparejas, siempre con mujeres inventadas y mayores de edad, a nivel de prensa rosa y de cotilleo. Nada de contenido sexual explícito: se insinúa, no se describe.
 4. Clubes y competiciones: los reales se pueden nombrar (son el juego), sin inventarles escándalos institucionales graves. Medios de comunicación, programas, marcas, empresas, discotecas, restaurantes e influencers: inventados (con nombres creíbles), nunca reales. Dentro de la historia todo es real: nunca escribas «(inventada)», «(ficticio)» ni nada que avise de que algo es inventado.
@@ -36,6 +36,7 @@ Reglas que no se rompen nunca:
 14. Su gente: cada persona de «Su gente» tiene un id entre corchetes. Cuando escriba alguien de su gente, en «de» pon su nombre EXACTO tal como sale ahí (nunca «mamá», «mi madre», solo el nombre de pila o el nombre con otro apellido) y en «id» su id; el «chat» de una conversación con una sola persona es también su nombre exacto. Respeta cómo es cada uno y su actitud de ahora. Los de «YA NO ESTÁN EN SU VIDA» no le escriben (como mucho se habla de ellos en la prensa o la red).
 15. Temas delicados (drogas, alcohol, apuestas, peleas): solo como drama de prensa rosa y de entorno, sin glorificarlos, sin detalles ni instrucciones, y con consecuencias; si él se aleja de eso o de quien le arrastra, que tenga efecto positivo (disciplina, afición, su gente sana).
 16. Hechos históricos: los de «HECHOS HISTÓRICOS DE SU CARRERA» los cuenta él y son verdad en su carrera aunque toquen el campo (una convocatoria, una titularidad, la lesión de otros que le abre la puerta): es la única excepción a la regla 1. Respétalos tal cual, no les añadas nada del campo que no diga y no los contradigas nunca. Son lo más gordo que le ha pasado: la prensa, la red y su gente los recuerdan siempre, sobre todo en los partidos grandes.
+17. Esto es su vida real: dentro de la historia el videojuego NO EXISTE. Nadie (ni la prensa, ni la red, ni su gente, ni él) habla de la «media», de la valoración, de atributos con número («ritmo 86»), de cartas, de puntos de habilidad, del potencial con número, del modo carrera ni del videojuego. Su nivel se cuenta como en el fútbol de verdad: lo que rinde, sus virtudes y sus defectos, si va a más o a menos, cómo le ven los entrenadores y los ojeadores. Las notas de los partidos sí existen: son las que ponen los periódicos.
 """.trim()
 
     // ---------------------------------------------------------------- el contexto de la carrera
@@ -47,7 +48,8 @@ Reglas que no se rompen nunca:
         appendLine("- ${if (u.modo == Rol.MISTER) "Entrenador" else "Jugador"}: ${pj.nombre}" + (if (pj.apodo.isNotBlank()) " («${pj.apodo}»)" else "") +
             ", ${pj.edad} años" + (if (pj.nacionalidad.isNotBlank()) ", ${pj.nacionalidad}" else "") +
             (if (u.modo == Rol.JUGADOR && pj.posicion.isNotBlank()) ", ${pj.posicion}" else "") + (if (pj.dorsal > 0) ", dorsal ${pj.dorsal}" else "") +
-            (if (pj.media > 0) ", media ${pj.media} en el juego" else ""))
+            "")
+        enElCampo(u)?.let { appendLine("- En el campo (para el tono; cuéntalo así, en palabras, NUNCA con números ni como «media»): $it") }
         if (pj.rasgos.isNotBlank()) appendLine("- Cómo es: ${pj.rasgos}")
         if (pj.fisico.isNotBlank() || pj.aspecto.isNotBlank()) appendLine("- Físico: " + listOf(pj.fisico, pj.aspecto).filter { it.isNotBlank() }.joinToString(". "))
         if (pj.suSeleccion.isNotBlank()) appendLine("- Su selección: ${pj.suSeleccion}" + (if (pj.seleccion.isNotBlank() && !Vida.mismo(pj.seleccion, pj.nacionalidad)) " (juega con ella aunque es ${pj.nacionalidad})" else "") +
@@ -130,6 +132,38 @@ Reglas que no se rompen nunca:
         return base + "\n" + """
 OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: ""} ($quien), NO CON SU CLUB (${u.club}). «${p.competicion}» es de selecciones: el rival es otra selección, la prensa que manda es la nacional (y la internacional si es un torneo grande), la afición es la de su país y el vestuario es el de la selección. Sus compañeros y el ${if (u.modo == Rol.MISTER) "presidente de la federación" else "seleccionador"}, si son personas reales, solo de pasada y sin frases polémicas (o sin nombre). En su club (${u.club}) lo siguen desde lejos: orgullo, miedo al cansancio o a una lesión, lo que dirá su entrenador. No mezcles este resultado con la liga ni con su club: no suma para ${u.club}.
 """.trim()
+    }
+
+    /**
+     * Su nivel en el campo como lo contaría el fútbol de verdad: la media y los atributos son del juego y nunca le llegan a Claude tal
+     * cual (si los ve, los repite). En palabras: dónde está su nivel, si va a más o a menos, y en qué destaca o flojea.
+     */
+    fun enElCampo(u: Universo): String? {
+        val pj = u.personaje
+        val partes = ArrayList<String>()
+        if (pj.media > 0 && u.modo == Rol.JUGADOR) partes += when {
+            pj.media < 60 -> "muy verde todavía: le queda casi todo por crecer"
+            pj.media < 66 -> "un jugador de rotación, aún por hacer"
+            pj.media < 72 -> "un jugador de nivel medio para su liga"
+            pj.media < 77 -> "un titular de nivel en un equipo de su liga"
+            pj.media < 81 -> "de los buenos de su liga"
+            pj.media < 85 -> "de los mejores de su liga y con cartel en Europa"
+            pj.media < 89 -> "de los mejores de Europa en su puesto"
+            else -> "de los mejores del mundo"
+        }
+        val h = pj.historial
+        if (h.size >= 2) { val d = h.last().second - h[maxOf(0, h.size - 5)].second
+            if (d >= 2) partes += "va claramente a más en las últimas semanas" else if (d <= -2) partes += "ha bajado su nivel en las últimas semanas" }
+        val nombres = if (u.modo == Rol.MISTER) mapOf("TAC" to "lo táctico", "MOT" to "manejar el vestuario", "CAN" to "apostar por la cantera", "MER" to "moverse en el mercado")
+            else mapOf("RIT" to "la velocidad", "TIR" to "el disparo", "PAS" to "el pase", "REG" to "el regate", "DEF" to "la defensa", "FIS" to "el físico")
+        val at = pj.atributos.filterKeys { it in nombres }.filterValues { it > 0 }
+        if (at.size >= 3) {
+            val orden = at.entries.sortedByDescending { it.value }
+            val buenos = orden.take(2).filter { it.value >= orden.first().value - 6 }.map { nombres[it.key]!! }
+            partes += "destaca por " + buenos.joinToString(" y ")
+            orden.last().takeIf { it.value <= orden.first().value - 15 }?.let { partes += "flojea en ${nombres[it.key]}" }
+        }
+        return partes.joinToString("; ").ifBlank { null }
     }
 
     /** Con cuántas decisiones abiertas ya no se le ponen más. */

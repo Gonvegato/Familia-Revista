@@ -389,7 +389,6 @@ data class Partido(
         if (equipo.isNotEmpty()) append(". Datos: " + equipo.entries.joinToString(", ") { "${it.key} ${it.value}" })
         if (rendimiento.isNotBlank()) append(". Rendimiento: $rendimiento")
         if (momentos.isNotBlank()) append(". Lo que pasó: $momentos")
-        if (media > 0) append(". Su media en el juego es ahora $media")
         if (titulo.isNotBlank()) append(". CON ESTE PARTIDO GANA UN TÍTULO: $titulo")
     }
 

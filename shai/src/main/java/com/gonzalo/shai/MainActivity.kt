@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         val c = applicationContext
         // Lo de entre partidos que haya llegado o le toque salir
-        kotlin.concurrent.thread { Eventos.vuelta(c); Eventos.programa(c); runCatching { Motor.normalizaTodas(conIa = ClaveApi.hayDeVerdad && !Prueba.activo) } }
+        kotlin.concurrent.thread { Eventos.vuelta(c); Eventos.programa(c); runCatching { SinJuego.limpiaTodo() }; runCatching { Motor.normalizaTodas(conIa = ClaveApi.hayDeVerdad && !Prueba.activo) } }
     }
 }
 
