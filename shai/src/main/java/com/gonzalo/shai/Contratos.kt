@@ -128,7 +128,8 @@ object Contratos {
         else {
             if (p.minutos <= 0) return antes
             0.06 * minOf(p.goles, 5) + 0.035 * minOf(p.asistencias, 5) + (if (p.mvp) 0.05 else 0.0) +
-                (when { p.nota >= 8.5 -> 0.06; p.nota >= 7.5 -> 0.03; p.nota in 0.1..5.5 -> -0.05; else -> 0.0 }) + (if (p.ganado) 0.01 else if (!p.empatado) -0.02 else 0.0)
+                (when { p.nota >= 8.5 -> 0.06; p.nota >= 7.5 -> 0.03; p.nota in 0.1..5.5 -> -0.05; else -> 0.0 }) + (if (p.ganado) 0.01 else if (!p.empatado) -0.02 else 0.0) +
+                (if (p.huboPenaltis) (if (p.ganaPenaltis) 0.01 else -0.02) + when (p.suPenalti) { 1 -> 0.02; 2 -> -0.04; else -> 0.0 } else 0.0)
         }
         val f = Competiciones.familia(p.competicion)
         val escenario = Competiciones.pesoFase(p.fase) * when {

@@ -65,6 +65,7 @@ Reglas que no se rompen nunca:
         appendLine("- Club: ${u.club}" + (if (u.liga.isNotBlank()) " (${u.liga})" else "") + (if (u.temporada.isNotBlank()) ", temporada ${u.temporada}" else "") +
             ", jornada ${u.paso} de su carrera en FcFeed")
         Clubes.contexto(u)?.let { appendLine(it) }
+        appendLine(AL_DIA)
         val c = u.contrato
         appendLine(if (c == null) "- SIN CONTRATO: es agente libre (le llegan ofertas; no cobra sueldo de ningún club)" + (if (u.patrocinio > 0) ", cobra ${Formato.euros(u.patrocinio)} a la semana de patrocinios" else "") + "."
             else "- Su contrato (el de FcFeed, no el del juego): con ${c.club}${if (c.nota.isNotBlank()) " (${c.nota.lowercase()})" else ""}, ${Formato.euros(c.sueldo)} a la semana hasta la temporada ${c.hasta} " +
@@ -206,6 +207,12 @@ OJO: ESTE PARTIDO ES CON LA SELECCIÓN${sel?.let { " DE ${it.uppercase()}" } ?: 
         Contratos.apuesta(u)?.let { a -> return " «apuesta»: false (ya tiene la apuesta de ${Rangos.limpiaNombre(a.de)}: ${Formato.euros(a.salario)} a la semana; los demás pueden acercarse a ella, sin igualarla)." }
         return " ES UNA SUPERESTRELLA: como mucho UNA de las ofertas puede ser una apuesta («apuesta»: true): un club muy rico que pueda permitírselo (no uno con problemas económicos ni uno que ya tenga a sus estrellas en ese puesto) y que pague muy por encima de lo normal, hasta ${Formato.euros(Contratos.topeApuesta(u))} a la semana, porque cree que va a ser el rey del fútbol; que el texto lo cuente así. Lo normal es que no haya ninguna; nunca más de una. Las demás, «apuesta»: false y dentro de lo normal."
     }
+
+    /**
+     * Datos de clubes de verdad que la app sabe al día (por si lo que sabe Claude es de antes): no se contradicen. Comprobados en la prensa
+     * al escribirlos (noviembre de 2026).
+     */
+    const val AL_DIA = "DATOS AL DÍA DE CLUBES DE VERDAD (no los contradigas aunque recuerdes otra cosa): el FC Barcelona volvió en 2026 a la regla 1:1 del control económico de LaLiga (puede gastar en plantilla cada euro que genera): ya NO está en problemas económicos para fichar ni para renovar."
 
     /** Con cuántas decisiones abiertas ya no se le ponen más. */
     const val MAX_ABIERTAS = 2

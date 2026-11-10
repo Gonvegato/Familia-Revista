@@ -398,8 +398,19 @@ data class Partido(
     val competicionOriginal: String = "",
     /** La fase o ronda («Fase de grupos», «Cuartos de final», «Final»…): en las competiciones que las tienen ([Competiciones.fases]). */
     val fase: String = "",
+    /** Hubo prórroga. */
+    val prorroga: Boolean = false,
+    /** La tanda de penaltis (si un empate se decidió así): los de su equipo y los del rival; -1 si no hubo. */
+    val penaltisFavor: Int = -1,
+    val penaltisContra: Int = -1,
+    /** Su penalti en la tanda: 0 no tiró, 1 lo marcó, 2 lo falló. */
+    val suPenalti: Int = 0,
 ) {
     val resultado: String get() = "$golesFavor-$golesContra"
+    /** Se decidió en los penaltis. */
+    val huboPenaltis: Boolean get() = empatado && penaltisFavor >= 0 && penaltisContra >= 0 && penaltisFavor != penaltisContra
+    /** Pasa la eliminatoria (o gana el título) en los penaltis. */
+    val ganaPenaltis: Boolean get() = huboPenaltis && penaltisFavor > penaltisContra
     /** Es una final (o la vuelta de una). */
     val esFinal: Boolean get() = Competiciones.esFinal(fase)
     val ganado: Boolean get() = golesFavor > golesContra
@@ -410,12 +421,16 @@ data class Partido(
         "te" to temporada, "co" to competicion, "ri" to rival, "lo" to local, "gf" to golesFavor.toLong(), "gc" to golesContra.toLong(), "mi" to minutos.toLong(),
         "go" to goles.toLong(), "as" to asistencias.toLong(), "no" to nota, "gs" to goleadores, "eq" to equipo, "re" to rendimiento, "mo" to momentos,
         "me" to media.toLong(), "fe" to fecha, "cm" to como, "ti" to titulo, "fx" to fechaEstimada, "mv" to mvp, "co0" to competicionOriginal, "fa" to fase,
+        "pro" to prorroga, "pnf" to penaltisFavor.toLong(), "pnc" to penaltisContra.toLong(), "spn" to suPenalti.toLong(),
     )
 
     /** Una línea para contárselo a Claude. */
     fun resumen(modo: Rol): String = buildString {
         append(if (local) "En casa contra $rival" else "En el campo del $rival"); append(" ($competicion"); if (fase.isNotBlank()) append(", $fase"); if (fecha.isNotBlank()) append(", ${Fechas.bonita(fecha)}"); append("): ")
-        append(resultado); append(if (ganado) " (victoria)" else if (empatado) " (empate)" else " (derrota)")
+        append(resultado); if (prorroga) append(" tras la prórroga")
+        if (huboPenaltis) append(" (empate) y se decidió en los PENALTIS: ${penaltisFavor}-${penaltisContra} en la tanda (" + (if (ganaPenaltis) "su equipo gana la tanda y pasa" else "su equipo pierde la tanda y queda eliminado") + ")" +
+            (when (suPenalti) { 1 -> "; él tiró y MARCÓ su penalti"; 2 -> "; él tiró y FALLÓ su penalti"; else -> "" }))
+        else append(if (ganado) " (victoria)" else if (empatado) " (empate)" else " (derrota)")
         if (modo == Rol.JUGADOR) {
             append(". Jugó $minutos min"); if (goles > 0) append(", $goles gol${if (goles > 1) "es" else ""}"); if (asistencias > 0) append(", $asistencias asistencia${if (asistencias > 1) "s" else ""}")
             if (nota > 0) append(", nota ${Formato.decimal(nota)}")
@@ -434,7 +449,7 @@ data class Partido(
             m["te"].comoTexto(), m["co"].comoTexto(), m["ri"].comoTexto(), m["lo"].comoBool(), m["gf"].comoLong().toInt(), m["gc"].comoLong().toInt(),
             m["mi"].comoLong().toInt(), m["go"].comoLong().toInt(), m["as"].comoLong().toInt(), m["no"].comoDouble(), m["gs"].comoTexto(),
             m["eq"].comoMapa().mapValues { it.value.comoTexto() }, m["re"].comoTexto(), m["mo"].comoTexto(), m["me"].comoLong().toInt(), m["fe"].comoTexto(),
-            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(), m["fx"].comoBool(), m["mv"].comoBool(), m["co0"].comoTexto(), m["fa"].comoTexto(),
+            m["cm"].comoTexto().ifBlank { "rapida" }, m["ti"].comoTexto(), m["fx"].comoBool(), m["mv"].comoBool(), m["co0"].comoTexto(), m["fa"].comoTexto(), m["pro"].comoBool(), if (m.containsKey("pnf")) m["pnf"].comoLong().toInt() else -1, if (m.containsKey("pnc")) m["pnc"].comoLong().toInt() else -1, m["spn"].comoLong().toInt(),
         )
     }
 }

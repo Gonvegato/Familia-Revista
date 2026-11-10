@@ -242,6 +242,8 @@ object Vida {
             if (p.ganado) puntos += 0.4 else if (!p.empatado) puntos -= 0.3
             // Ser el MVP se nota (sube algo más)
             if (p.mvp) puntos += 0.8
+            // Los penaltis: pasar en la tanda y, sobre todo, marcar o fallar el suyo
+            if (p.huboPenaltis) puntos += (if (p.ganaPenaltis) 0.4 else -0.2) + when (p.suPenalti) { 1 -> 0.3; 2 -> -0.6; else -> 0.0 }
         } else puntos += if (p.ganado) 1.2 else if (p.empatado) 0.2 else -0.8
         // Con la selección se ve más (todo el país mira)
         if (puntos > 0 && Competiciones.deSelecciones(p.competicion)) puntos *= 1.3

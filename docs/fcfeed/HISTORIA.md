@@ -5,6 +5,16 @@ los mensajes, la prensa, las ofertas, la vida, el dinero), con Claude y tu clave
 siempre: se instala encima). Icono: un bocadillo blanco con un balón, sobre negro (`herramientas/apartes/iconos.py`).
 **No es de la familia** desde la 0.6.0 (antes se llamaba Shai): sin cuenta, sin revista; todo se guarda en el móvil.
 
+## 0.16.0
+
+- **Prórroga y penaltis.** En el partido, «Hubo prórroga» (se marca sola si pones más de 90 minutos; tú la marcas si entraste desde el
+  banquillo). Si el resultado es empate en una eliminatoria (una ronda que no es de grupos ni de liga, o una copa), «Se decidió en los
+  penaltis»: la tanda (los de tu equipo y los del rival) y tu penalti (no tiré / lo marqué / lo fallé). Claude lo recibe («2-2 tras la
+  prórroga y se decidió en los PENALTIS: 5-4… él tiró y MARCÓ su penalti»), y pesa en la fama y en lo que vales (marcarlo y pasar suma;
+  fallarlo y caer resta). Los partidos de antes se leen sin penaltis (`Partido.huboPenaltis`, `Competiciones.eliminatoria`).
+- **Datos al día de clubes de verdad:** Claude sabe que el FC Barcelona volvió en 2026 a la regla 1:1 de LaLiga y ya no está en problemas
+  económicos para fichar ni renovar (`Narrador.AL_DIA`; según la prensa, confirmado por el club, noviembre de 2026).
+
 ## 0.15.0
 
 - **La apuesta.** Si eres una superestrella (vales 100 M€ o más, o el triple de lo de tu nivel), UNA oferta puede ser la apuesta de un club

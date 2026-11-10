@@ -38,3 +38,26 @@ class FasesTest {
         assertEquals("Copa", Competiciones.sinPreguntar("Copa", l, emptyMap()))
     }
 }
+
+/** La prórroga y los penaltis: se guardan, Claude los recibe y pesan; y el Barça, al día. */
+class PenaltisTest {
+    @Test fun unaTandaDePenaltisEnCuartos() {
+        val p = Partido("2026/27", "Copa del Mundo", "Rumanía", true, 2, 2, 120, 2, 1, 8.8, fase = "Cuartos de final", prorroga = true, penaltisFavor = 5, penaltisContra = 4, suPenalti = 1)
+        assertTrue(p.huboPenaltis); assertTrue(p.ganaPenaltis)
+        assertEquals(p, Partido.de(p.aMapa()))
+        val t = p.resumen(Rol.JUGADOR)
+        assertTrue(t, t.contains("2-2 tras la prórroga (empate) y se decidió en los PENALTIS: 5-4 en la tanda (su equipo gana la tanda y pasa); él tiró y MARCÓ su penalti"))
+        // (un partido discreto, para que no llegue al tope de la jornada: marcar el penalti y pasar suma; fallarlo y caer resta)
+        val discreto = p.copy(goles = 0, asistencias = 0, nota = 6.8)
+        assertTrue(Vida.famaDelPartido(Rol.JUGADOR, discreto, 40, 25) > Vida.famaDelPartido(Rol.JUGADOR, discreto.copy(suPenalti = 2, penaltisFavor = 3), 40, 25))
+        assertTrue(Competiciones.eliminatoria("Copa del Mundo", "Cuartos de final"))
+        assertFalse(Competiciones.eliminatoria("Copa del Mundo", "Fase de grupos")); assertFalse(Competiciones.eliminatoria("LaLiga EA Sports", ""))
+        assertTrue(Competiciones.eliminatoria("Copa del Rey", ""))
+        // (un partido de antes, sin los campos nuevos, se lee sin penaltis)
+        assertFalse(Partido.de(p.aMapa() - "pnf" - "pnc").huboPenaltis)
+    }
+
+    @Test fun elBarcaYaNoEstaEnProblemasEconomicos() {
+        assertTrue(Narrador.contexto(Ejemplo.universo(), emptyList(), emptyList()).contains("FC Barcelona volvió en 2026 a la regla 1:1"))
+    }
+}

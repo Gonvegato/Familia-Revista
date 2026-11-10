@@ -138,6 +138,11 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
     var como by rememberSaveable { mutableIntStateOf(comoInicial) }
     var competicion by rememberSaveable { mutableStateOf(anteriores.lastOrNull()?.competicion.orEmpty()) }
     // (la fase: la del partido anterior si era de la misma competición)
+    var prorroga by rememberSaveable { mutableStateOf(false) }
+    var penaltis by rememberSaveable { mutableStateOf(false) }
+    var pf by rememberSaveable { mutableStateOf("") }
+    var pc by rememberSaveable { mutableStateOf("") }
+    var suPenalti by rememberSaveable { mutableStateOf(0) }
     var fase by rememberSaveable { mutableStateOf(anteriores.lastOrNull()?.takeIf { it.competicion == competicion }?.fase.orEmpty()) }
     var rival by rememberSaveable { mutableStateOf("") }
     var local by rememberSaveable { mutableStateOf(true) }
@@ -217,10 +222,23 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
             Campo("Goles de $tuEquipo", gf, "0", Modifier.weight(1f), teclado = KeyboardType.Number) { gf = it.filter { c -> c.isDigit() }.take(2) }
             Campo("Del rival", gc, "0", Modifier.weight(1f), teclado = KeyboardType.Number) { gc = it.filter { c -> c.isDigit() }.take(2) }
         }
+        // La prórroga (se marca sola con más de 90 minutos) y, si es un empate en una eliminatoria, los penaltis
+        SiNo("Hubo prórroga", "Se marca sola si pones más de 90 minutos; márcala tú si entraste desde el banquillo.", prorroga) { prorroga = it }
+        val eliminatoria = Competiciones.eliminatoria(competicion, fase)
+        if (gf.isNotBlank() && gf == gc && eliminatoria) {
+            SiNo("Se decidió en los penaltis", "Quién pasa de ronda (o gana el título) en la tanda.", penaltis) { penaltis = it }
+            if (penaltis) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Campo("Penaltis de $tuEquipo", pf, "4", Modifier.weight(1f), teclado = KeyboardType.Number) { pf = it.filter { c -> c.isDigit() }.take(2) }
+                    Campo("Del rival", pc, "3", Modifier.weight(1f), teclado = KeyboardType.Number) { pc = it.filter { c -> c.isDigit() }.take(2) }
+                }
+                if (u.modo == Rol.JUGADOR) MagChoice(listOf("No tiré", "Lo marqué", "Lo fallé"), suPenalti, "Tu penalti") { suPenalti = it }
+            }
+        }
         if (u.modo == Rol.JUGADOR) {
             BloqueEditor("Tu partido")
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Campo("Minutos", minutos, "90", Modifier.weight(1f), teclado = KeyboardType.Number) { minutos = it.filter { c -> c.isDigit() }.take(3) }
+                Campo("Minutos", minutos, "90", Modifier.weight(1f), teclado = KeyboardType.Number) { minutos = it.filter { c -> c.isDigit() }.take(3); if ((minutos.toIntOrNull() ?: 0) > 90) prorroga = true }
                 Campo("Nota", laNota, "7,5", Modifier.weight(1f), teclado = KeyboardType.Decimal) { laNota = it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(4) }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -267,7 +285,11 @@ fun PantPartido(id: String, alVolver: () -> Unit, alGuardado: () -> Unit, comoIn
                 if (u.modo == Rol.JUGADOR) minutos.toIntOrNull() ?: 0 else 90, goles.toIntOrNull() ?: 0, asist.toIntOrNull() ?: 0, nota(laNota), goleadores.trim(),
                 if (como == 1) equipo else emptyMap(), if (como == 1) rendimiento.trim() else "", momentos.trim(),
                 if (como == 1) media.toIntOrNull() ?: 0 else 0, Fechas.lee(fecha)?.let { Fechas.iso(it) } ?: "", if (deFoto) "foto" else if (como == 1) "completa" else "rapida", titulo.trim(),
-                mvp = u.modo == Rol.JUGADOR && mvp, fase = fase.takeIf { Competiciones.fases(competicion)?.contains(it) == true }.orEmpty())
+                mvp = u.modo == Rol.JUGADOR && mvp, fase = fase.takeIf { Competiciones.fases(competicion)?.contains(it) == true }.orEmpty(),
+                prorroga = prorroga || (minutos.toIntOrNull() ?: 0) > 90,
+                penaltisFavor = if (penaltis && gf == gc && Competiciones.eliminatoria(competicion, fase)) pf.toIntOrNull() ?: -1 else -1,
+                penaltisContra = if (penaltis && gf == gc && Competiciones.eliminatoria(competicion, fase)) pc.toIntOrNull() ?: -1 else -1,
+                suPenalti = if (penaltis && u.modo == Rol.JUGADOR) suPenalti else 0)
             ocupado = "Escribiendo la prensa…"; aviso = null
             ambito.launch {
                 val r = withContext(Dispatchers.IO) { runCatching { Motor.partido(id, p) } }

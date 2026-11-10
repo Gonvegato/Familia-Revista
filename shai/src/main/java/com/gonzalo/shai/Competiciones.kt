@@ -89,6 +89,14 @@ object Competiciones {
         }
     }
 
+    /** Es un partido de eliminatoria (puede haber prórroga y penaltis): una ronda que no es de grupos ni de liga, o una copa sin fase. */
+    fun eliminatoria(comp: String, fase: String): Boolean {
+        val fs = fases(comp) ?: return false
+        val n = norm(fase)
+        if (n.isBlank()) return familia(comp) == Familia.COPA || familia(comp) == Familia.SUPERCOPA
+        return fase in fs && !(n.startsWith("fase de grupos") || n.startsWith("fase liga") || n.startsWith("fase de liga") || n.startsWith("fase previa"))
+    }
+
     fun esFinal(fase: String) = norm(fase).let { it == "final" || it.startsWith("final ") && !it.startsWith("final de la repesca") }
 
     /** Cuánto pesa la fase (para la fama del partido): la fase de grupos, 1; la final, 2. */
