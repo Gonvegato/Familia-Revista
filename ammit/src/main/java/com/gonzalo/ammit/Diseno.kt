@@ -118,3 +118,27 @@ fun CadenasGrandes(t: Float, entrando: Boolean, color: Color = Diseno.PAPEL) {
         }
     }
 }
+
+/**
+ * Una cadena recta que cruza la pantalla por (x0, y0) con el ángulo [ang], dibujada hasta [p] (0..1: de nada a entera, entrando desde
+ * fuera a lo largo de su línea). [esc]: el tamaño de los eslabones.
+ */
+fun androidx.compose.ui.graphics.drawscope.DrawScope.cadenaQueEntra(x0: Float, y0: Float, ang: Float, p: Float, color: Color, esc: Float) {
+    if (p <= 0f) return
+    val paso = 30f * esc * density / 2.6f
+    val rx = 18f * esc * density / 2.6f
+    val grosor = Stroke(6f * esc * density / 2.6f)
+    val largo = size.width + size.height
+    val n = (largo * 1.4f / paso).toInt()
+    // Desde fuera de la pantalla, por detrás de (x0, y0), hasta cruzarla entera
+    val ix = x0 - cos(ang) * largo * 0.7f; val iy = y0 - sin(ang) * largo * 0.7f
+    val r = 1f - (1f - p) * (1f - p) * (1f - p)
+    val atras = (1f - r) * largo
+    for (i in 0 until n) {
+        val d = i * paso - atras
+        if (d < 0f) continue
+        val x = ix + cos(ang) * d; val y = iy + sin(ang) * d
+        val ry = if (i % 2 == 1) rx / 3f else rx * 0.55f
+        rotate(Math.toDegrees(ang.toDouble()).toFloat(), Offset(x, y)) { drawOval(color, Offset(x - rx, y - ry), Size(rx * 2, ry * 2), style = grosor) }
+    }
+}

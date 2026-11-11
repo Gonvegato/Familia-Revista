@@ -135,6 +135,7 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
             Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Ammit → activar. Solo mira qué app se abre, nunca lo que hay dentro.", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
             if (Build.VERSION.SDK_INT >= 33) Paso(4, "El botón en la barra de arriba", "Lo pone con un toque; también se puede poner a mano desde el lápiz de la barra.", null, t, "PONER") { a.anadirBoton() }
 
+            TuCuenta(a, t)
             ActualizarseSola(a, t)
 
             Titulo("Tu pantalla de inicio de siempre", t)
@@ -204,7 +205,7 @@ private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
     var ocupado by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     Titulo("Actualizarse sola", t)
     if (!hay) {
-        BasicText("Ammit busca sus versiones nuevas en «versiones» de tu kDrive. Pega aquí tu token de kDrive y el número de tu kDrive (el mismo que en las hermanas; se guarda cifrado en esta tablet).",
+        BasicText("Ammit busca sus versiones nuevas en «versiones» de tu kDrive. Con la cuenta, usa el token que pusiste en Jonsu (Ajustes → Cuenta → Tu nube); si aún no lo has puesto, puedes pegarlo aquí (pasa a la cuenta y lo tienen todas).",
             style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
         Campo("TOKEN", token, "token de API de kDrive", t, secreto = true) { token = it }
         Campo("KDRIVE", drive, "número o dirección", t) { drive = it }
@@ -265,4 +266,48 @@ private fun Campo(etiqueta: String, valor: String, pista: String, t: Tonos, secr
         }
     }
     Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(2.dp).background(t.tinta))
+}
+
+/**
+ * Tu cuenta de la familia (la misma que Jonsu, Bastet, Seshat, Thot, Hathor y Nut). Entra sola si alguna hermana instalada la tiene;
+ * si no, aquí con tu usuario y tu contraseña de Atrio. De ella saca el token de tu kDrive para actualizarse sola.
+ */
+@Composable
+private fun TuCuenta(a: AjustesActivity, t: Tonos) {
+    val alcance = androidx.compose.runtime.rememberCoroutineScope()
+    val fam = runCatching { com.gonzalo.familia.LaFamilia.familia }.getOrNull()
+    var dentro by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(fam?.sesion?.dentro == true) }
+    var usuario by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var clave by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var aviso by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    var ocupado by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        // Si una hermana tiene la cuenta, se entra solo (se mira un momento después de abrir)
+        repeat(6) { if (!dentro) { kotlinx.coroutines.delay(1_000); dentro = fam?.sesion?.dentro == true } }
+    }
+    Titulo("Tu cuenta", t)
+    if (fam == null) { BasicText("La cuenta no está disponible en este dispositivo.", style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto)); return }
+    if (dentro) {
+        BasicText("Dentro, como ${fam.sesion.usuario}", style = TextStyle(t.tinta, 20.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
+        BasicText("La misma cuenta que las hermanas. De ella salen el token de tu kDrive (para actualizarse sola) y lo que pongas en Jonsu.",
+            style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
+        BasicText("Salir de la cuenta en Ammit", style = TextStyle(t.gris, 13.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
+            modifier = Modifier.padding(top = 8.dp).clickable { runCatching { com.gonzalo.familia.LaFamilia.salir() }; dentro = false })
+    } else {
+        BasicText("Entra sola si tienes Jonsu u otra hermana con la cuenta (actualizadas). Si no, con tu usuario y tu contraseña de Atrio:",
+            style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
+        Campo("USUARIO", usuario, "tu usuario de Atrio", t) { usuario = it }
+        Campo("CONTRASEÑA", clave, "••••••", t, secreto = true) { clave = it }
+        BasicText(if (ocupado) "ENTRANDO…" else "ENTRAR  →", style = TextStyle(t.fondo, 12.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp),
+            modifier = Modifier.padding(top = 10.dp).background(t.acento).clickable(enabled = !ocupado) {
+                if (usuario.isBlank() || clave.isBlank()) { aviso = "Falta el usuario o la contraseña."; return@clickable }
+                ocupado = true; aviso = null
+                alcance.launch {
+                    val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { com.gonzalo.familia.LaFamilia.entrar(usuario.trim(), clave) } }
+                    if (r.isSuccess) { dentro = true; clave = "" } else aviso = r.exceptionOrNull()?.message ?: "No se pudo entrar."
+                    ocupado = false
+                }
+            }.padding(horizontal = 14.dp, vertical = 9.dp))
+        aviso?.let { BasicText(it, style = TextStyle(t.acento, 14.sp, fontFamily = Diseno.Cursiva), modifier = Modifier.padding(top = 8.dp)) }
+    }
 }

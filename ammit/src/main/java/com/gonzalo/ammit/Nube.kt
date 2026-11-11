@@ -28,8 +28,12 @@ object KDrive {
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("nube", Context.MODE_PRIVATE)
     /** Lo que acabas de pegar, mientras se comprueba: hasta que [confirma] no pasa a ser el bueno (un token malo nunca pisa el bueno). */
     private fun probando(ctx: Context) = prefs(ctx).getBoolean("probando", false)
-    fun token(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("token", "").orEmpty() else Secretos.lee("kdrive_token")
-    fun drive(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("drive", "").orEmpty() else prefs(ctx).getString("drive_ok", "").orEmpty()
+    /** El token y el número de tu kDrive: los de la cuenta (`/claves`, los que pusiste una vez en Jonsu y usan todas las apps); si no, los puestos aquí. */
+    private fun clave(n: String) = runCatching { com.gonzalo.familia.LaFamilia.familia.clave(n) }.getOrDefault("")
+    fun token(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("token", "").orEmpty() else clave("kdrive_token").ifBlank { Secretos.lee("kdrive_token") }
+    fun drive(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("drive", "").orEmpty() else clave("kdrive_id").ifBlank { prefs(ctx).getString("drive_ok", "").orEmpty() }
+    /** ¿Vienen de la cuenta? */
+    fun deLaCuenta(): Boolean = clave("kdrive_token").isNotBlank() && clave("kdrive_id").isNotBlank()
     fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
 
     fun save(ctx: Context, token: String, drive: String) {
@@ -43,7 +47,11 @@ object KDrive {
     fun confirma(ctx: Context) {
         val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
         prefs(ctx).edit().remove("probando").remove("token").remove("drive").apply()
-        if (t.isNotBlank() && d.isNotBlank()) ponLocal(ctx, t, d)
+        if (t.isNotBlank() && d.isNotBlank()) {
+            ponLocal(ctx, t, d)
+            // Con la cuenta, también a la cuenta: lo tienen todas las apps
+            runCatching { val f = com.gonzalo.familia.LaFamilia.familia; if (f.sesion.dentro) { f.ponClave("kdrive_token", t); f.ponClave("kdrive_id", d) } }
+        }
     }
 
     /** Guarda el token (cifrado) y el número del kDrive. */

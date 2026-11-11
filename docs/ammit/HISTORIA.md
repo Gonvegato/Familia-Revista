@@ -4,6 +4,15 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.4.0 — el juicio animado, y con cuenta
+
+- **La pantalla del juicio, en tres tiempos**: entran cuatro cadenas, una tras otra (1, 2, 3, 4), cada una con su golpe; luego aparece
+  «AMMIT.» con «Su corazón pesa más que la pluma. Ammit se lo come.»; y al final cae un montón de cadenas que tapan la pantalla. Dura algo
+  más de tres segundos y vuelve al inicio.
+- **Con la cuenta de la familia**, como las hermanas: entra sola si una hermana la tiene (cuando las hermanas se actualicen para
+  reconocer a Ammit) o, en sus ajustes, con tu usuario y tu contraseña de Atrio. El token de tu kDrive para actualizarse sola sale de
+  la cuenta (el que pusiste en Jonsu): ya no hace falta pegarlo.
+
 ## 0.3.0 — se actualiza sola
 
 - **Actualizarse sola desde tu kDrive**, como las hermanas: busca «Ammit-<versión>.apk» en «Mi carpeta/versiones» y se instala cuando no

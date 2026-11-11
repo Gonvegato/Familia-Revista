@@ -131,6 +131,14 @@ class AmmitTest {
             }
     }
 
+    /** Fotogramas del juicio animado: las cuatro cadenas, Ammit y el montón. */
+    @Test @Config(qualifiers = "w1280dp-h800dp-land-night-xhdpi") fun fotogramasDelJuicio() {
+        org.junit.Assume.assumeTrue(grabar)
+        listOf(0.05f, 0.14f, 0.23f, 0.33f, 0.45f, 0.62f, 0.78f, 0.95f).forEach { t ->
+            com.github.takahirom.roborazzi.captureRoboImage("build/outputs/roborazzi/juicio_${(t * 100).toInt()}.png") { PantJuicio("Instagram", t) }
+        }
+    }
+
     @Test @Config(qualifiers = "w1280dp-h800dp-land-night-xhdpi") fun capturasDeNoche() {
         org.junit.Assume.assumeTrue(grabar)
         val juicio = Robolectric.buildActivity(JuicioActivity::class.java, Intent(ctx, JuicioActivity::class.java).putExtra(JuicioActivity.EXTRA_APP, "Instagram")).setup().get()
