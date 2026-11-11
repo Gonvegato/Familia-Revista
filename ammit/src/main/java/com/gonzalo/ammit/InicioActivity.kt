@@ -41,6 +41,8 @@ class InicioActivity : ComponentActivity() {
      * solo salen las apps) o «salir» (las apps se van, antes de pasar a [SalidaActivity]); null, ninguna.
      */
     var animacion by mutableStateOf<String?>(null)
+    /** Al apagar (sin cortina): ya se han ido las apps; hasta irse, solo el campo de cadenas (nada de destellos). */
+    var tapada by mutableStateOf(false)
 
     /** El widget a medio poner (esperando el permiso para ponerlo o su configuración). */
     private var pendiente = -1
@@ -70,12 +72,15 @@ class InicioActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Ammit.cargar(this)
+        tapada = false
+        // Cuando se quite la cortina de cadenas de encima, salen las apps
+        Cortina.alQuitar = { runOnUiThread { if (animacion == "cortina") animacion = "aparecer" } }
         val anim = Ammit.tomaAnimacion(this)
         if (!Ammit.encendida) {
             // Al apagar: las apps se van, las cadenas dan un tirón y se pasa a tu inicio de siempre con las cadenas yéndose encima
             if (anim == "salir") { animacion = "salir"; return }
             if (pasarAlInicioNormal()) return
-        } else if (anim == "entrar" || anim == "aparecer") animacion = anim
+        } else if (anim == "entrar" || anim == "aparecer" || anim == "cortina") animacion = anim
         recargar()
     }
 
@@ -84,6 +89,7 @@ class InicioActivity : ComponentActivity() {
         val era = animacion
         animacion = null
         if (era == "salir" && !Ammit.encendida) {
+            tapada = true
             val cn = Ammit.inicioNormal(this)
             if (cn == null || !SalidaActivity.abrir(this, cn)) pasarAlInicioNormal()
         }

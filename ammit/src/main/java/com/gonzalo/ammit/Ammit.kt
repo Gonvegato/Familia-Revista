@@ -62,11 +62,11 @@ object Ammit {
 
     fun cargar(c: Context) { encendida = prefs(c).getBoolean("on", false) }
 
-    fun encender(c: Context, on: Boolean) {
+    fun encender(c: Context, on: Boolean, animar: Boolean = true) {
         val antes = prefs(c).getBoolean("on", false)
         encendida = on
         // La próxima vez que se vea la pantalla de inicio, la animación de las cadenas: cerrándose al encender, cayéndose al apagar
-        prefs(c).edit().putBoolean("on", on).apply { if (antes != on) putString("animar", if (on) "entrar" else "salir") }.apply()
+        prefs(c).edit().putBoolean("on", on).apply { if (antes != on && animar) putString("animar", if (on) "entrar" else "salir") else if (!animar) remove("animar") }.apply()
     }
 
     /** Deja pendiente una animación para la próxima vez que se vea la pantalla de inicio (p. ej. «aparecer», al acabar el juicio). */

@@ -57,7 +57,7 @@ private class VistaSalida(c: Context, val alAcabar: () -> Unit) : View(c) {
 
     override fun onDraw(cv: Canvas) {
         if (width == 0 || height == 0) return
-        val campo = Campo.de(width, height)
+        val campo = Campo.dePantalla(context)
         if (t0 < 0) t0 = SystemClock.uptimeMillis()
         val ms = (SystemClock.uptimeMillis() - t0).toFloat()
         val n = campo.n

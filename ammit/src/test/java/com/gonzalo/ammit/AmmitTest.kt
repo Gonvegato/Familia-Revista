@@ -104,7 +104,7 @@ class AmmitTest {
     @Test fun capturas() {
         org.junit.Assume.assumeTrue(grabar)
         sembrarApps()
-        Ammit.encender(ctx, true)
+        Ammit.encender(ctx, true, animar = false)
         val inicio = Robolectric.buildActivity(InicioActivity::class.java).setup().get()
         inicio.apps = Apps.todas(inicio)
         shadowOf(android.os.Looper.getMainLooper()).idle()
@@ -165,7 +165,7 @@ class AmmitTest {
 
     @Test @Config(qualifiers = "w800dp-h1280dp-port-xhdpi") fun capturaEnVertical() {
         org.junit.Assume.assumeTrue(grabar)
-        sembrarApps(); Ammit.encender(ctx, true)
+        sembrarApps(); Ammit.encender(ctx, true, animar = false)
         val inicio = Robolectric.buildActivity(InicioActivity::class.java).setup().get()
         inicio.apps = Apps.todas(inicio)
         shadowOf(android.os.Looper.getMainLooper()).idle()

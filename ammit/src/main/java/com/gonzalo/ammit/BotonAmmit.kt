@@ -21,6 +21,8 @@ class BotonAmmit : TileService() {
             abrir(Intent(this, AjustesActivity::class.java).putExtra(AjustesActivity.EXTRA_FALTA, true))
             return
         }
+        // Con el vigilante, la cortina de cadenas por encima de todo (sin parpadeos); si no, a la antigua
+        if (Cortina.cambiar(this, encender) { abrir(it) }) { pinta(); return }
         Ammit.encender(this, encender)
         pinta()
         // A la pantalla de inicio: encendida, la de Ammit; apagada, Ammit pasa sola a la de siempre

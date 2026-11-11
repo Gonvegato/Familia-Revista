@@ -90,6 +90,7 @@ class Aparicion(val anim: String, val reloj: Animatable<Float, AnimationVector1D
         "entrar" -> Tiempos.clamp((ms - Tiempos.ENTRAR_APPS) / 300)
         "aparecer" -> Tiempos.clamp(ms / 300)
         "salir" -> 1 - Tiempos.clamp(ms / 250)
+        "cortina" -> 0f
         else -> 1f
     }
     /** La app número [i]: salen una tras otra. */
@@ -99,6 +100,7 @@ class Aparicion(val anim: String, val reloj: Animatable<Float, AnimationVector1D
             "entrar" -> Tiempos.clamp((ms - Tiempos.ENTRAR_APPS - 50 - i * paso) / 260)
             "aparecer" -> Tiempos.clamp((ms - 50 - i * paso) / 260)
             "salir" -> 1 - Tiempos.clamp(ms / 250)
+            "cortina" -> 0f
             else -> 1f
         }
     }
@@ -125,23 +127,33 @@ private fun androidx.compose.ui.graphics.GraphicsLayerScope.sale(q: Float) {
 fun PantInicio(a: InicioActivity) {
     val horizontal = LocalConfiguration.current.let { it.screenWidthDp > it.screenHeightDp }
     val anim = a.animacion
-    val reloj = remember { Animatable(0f) }
+    // (un reloj nuevo para cada animación: con el de la anterior, el primer fotograma salía con su final y daba un destello)
+    val reloj = remember(anim) { Animatable(0f) }
     LaunchedEffect(anim) {
         if (anim == null) return@LaunchedEffect
+        if (anim == "cortina") {
+            // Debajo de la cortina de cadenas: en cuanto esto está pintado, la cortina se puede quitar (y entonces salen las apps)
+            androidx.compose.runtime.withFrameNanos { }; androidx.compose.runtime.withFrameNanos { }; androidx.compose.runtime.withFrameNanos { }
+            Cortina.inicioListo = true
+            delay(5000)
+            if (a.animacion == "cortina") a.animacion = "aparecer"
+            return@LaunchedEffect
+        }
         val d = Aparicion.dura(anim, a.apps.size)
         reloj.snapTo(0f)
         reloj.animateTo(d.toFloat(), androidx.compose.animation.core.tween(d, easing = androidx.compose.animation.core.LinearEasing))
         a.alAcabarAnimacion()
     }
-    val ap = anim?.let { Aparicion(it, reloj, a.apps.size) }
+    val ap = (if (a.tapada) "cortina" else anim)?.let { Aparicion(it, reloj, a.apps.size) }
     // Las apps de fuera, encadenadas (también mientras se van, al apagar)
-    val cadena = if (Ammit.encendida || anim == "salir") 1f else 0f
+    val cadena = if (Ammit.encendida || anim == "salir" || a.tapada) 1f else 0f
     // El fondo de cadenas ya pintado (se hace aparte la primera vez; mientras, se dibuja al vuelo)
     var tam by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     var fondo by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    val ctx = LocalContext.current
     LaunchedEffect(tam) {
         if (tam.width > 0 && tam.height > 0) fondo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            Campo.de(tam.width, tam.height).fondo.asImageBitmap()
+            Campo.paraTapar(ctx, tam.width.toFloat(), tam.height.toFloat()).fondo.asImageBitmap()
         }
     }
     androidx.compose.runtime.CompositionLocalProvider(LocalCadena provides cadena, LocalAparicion provides ap) {
@@ -149,7 +161,7 @@ fun PantInicio(a: InicioActivity) {
     Box(Modifier.fillMaxSize().then(if (anim != "entrar" && anim != "salir") Modifier else Modifier.graphicsLayer {
         // El temblor: los golpes de las cadenas al llegar; al apagar, un tirón
         val ms = reloj.value
-        val c = Campo.de(size.width.toInt(), size.height.toInt())
+        val c = Campo.paraTapar(ctx, size.width, size.height)
         val (dx, dy) = when (anim) {
             "entrar" -> Tiempos.temblor(ms, Tiempos.golpesEntrar(c.n))
             "salir" -> if (ms in 50f..250f) { val f = 14f * kotlin.math.sin((ms - 50) / 200 * Math.PI.toFloat()); f * 0.5f * kotlin.math.sin(ms * 0.9f) to f * 0.5f * kotlin.math.sin(ms * 1.13f) } else 0f to 0f
@@ -159,13 +171,14 @@ fun PantInicio(a: InicioActivity) {
     }).pointerInput(Unit) { detectTapGestures(onLongPress = { a.colocando = true }) }) {
         // El fondo: el sinfín de cadenas (al encender, llegando una tras otra sobre tu fondo de pantalla)
         Canvas(Modifier.fillMaxSize().onSizeChanged { tam = it }) {
-            val c = Campo.de(size.width.toInt(), size.height.toInt())
+            // (el campo, del tamaño de la pantalla entera y desde la esquina: igual al píxel que el de la cortina y el del juicio)
+            val c = Campo.paraTapar(ctx, size.width, size.height)
             if (anim == "entrar") {
                 val ms = reloj.value
                 drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) } }
             } else if (cadena > 0f) {
                 val f = fondo
-                if (f != null && f.width == size.width.toInt() && f.height == size.height.toInt()) drawImage(f)
+                if (f != null && f.width == c.ancho && f.height == c.alto) drawImage(f)
                 else drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }
             }
         }

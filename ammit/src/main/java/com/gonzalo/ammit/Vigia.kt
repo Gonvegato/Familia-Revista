@@ -17,7 +17,17 @@ class Vigia : AccessibilityService() {
     private var ultimo = ""
     private var cuando = 0L
 
-    override fun onServiceConnected() { Ammit.cargar(this) }
+    companion object {
+        /** El vigilante, si está activado (para poner la cortina de cadenas por encima de todo). */
+        @Volatile var vivo: Vigia? = null
+    }
+
+    override fun onServiceConnected() { Ammit.cargar(this); vivo = this }
+    override fun onUnbind(intent: Intent?): Boolean { vivo = null; return super.onUnbind(intent) }
+    override fun onDestroy() { vivo = null; super.onDestroy() }
+
+    /** Pone la cortina de cadenas ([Cortina]): «entrar» o «salir». */
+    fun cortina(modo: String): Boolean = Cortina.poner(this, modo)
 
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         if (e == null || e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return

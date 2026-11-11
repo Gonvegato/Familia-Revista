@@ -85,6 +85,7 @@ private val CUATRO = listOf(floatArrayOf(0f, 0.18f, 1f, 0.62f), floatArrayOf(1f,
 @Composable
 fun PantJuicio(app: String, tFijo: Float? = null, alAcabar: () -> Unit = {}) {
     val ancho = LocalConfiguration.current.screenWidthDp
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val reloj = remember { Animatable(tFijo ?: 0f) }
     LaunchedEffect(tFijo) {
         if (tFijo != null) { reloj.snapTo(tFijo); return@LaunchedEffect }
@@ -94,14 +95,14 @@ fun PantJuicio(app: String, tFijo: Float? = null, alAcabar: () -> Unit = {}) {
     val papel = Diseno.PAPEL; val acento = Diseno.ACENTO_NOCHE
     Box(Modifier.fillMaxSize().background(Color.Black).graphicsLayer {
         val ms = reloj.value
-        val c = Campo.de(size.width.toInt(), size.height.toInt())
+        val c = Campo.paraTapar(ctx, size.width, size.height)
         val (dx, dy) = Tiempos.temblor(ms, Tiempos.golpesJuicio(c.n))
         translationX = dx * c.u; translationY = dy * c.u
     }) {
         // 1) las cuatro: lo único que queda por debajo del rótulo
         Canvas(Modifier.fillMaxSize()) {
             val ms = reloj.value
-            val c = Campo.de(size.width.toInt(), size.height.toInt())
+            val c = Campo.paraTapar(ctx, size.width, size.height)
             drawIntoCanvas { cv ->
                 CUATRO.forEachIndexed { k, l ->
                     c.cadena(cv.nativeCanvas, l[0] * size.width, l[1] * size.height, l[2] * size.width, l[3] * size.height, Tiempos.juicioCuatro(ms, k), 3.25f)
@@ -130,7 +131,7 @@ fun PantJuicio(app: String, tFijo: Float? = null, alAcabar: () -> Unit = {}) {
         Canvas(Modifier.fillMaxSize()) {
             val ms = reloj.value
             if (ms < Tiempos.JUICIO_RAFAGA) return@Canvas
-            val c = Campo.de(size.width.toInt(), size.height.toInt())
+            val c = Campo.paraTapar(ctx, size.width, size.height)
             drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Tiempos.juicioOscuro(ms), Tiempos.juicioBase(ms)) { k -> Tiempos.juicio(ms, k) } }
         }
     }

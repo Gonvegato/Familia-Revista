@@ -4,6 +4,16 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.5.1 — sin destellos ni parpadeos
+
+- **Al encender ya no destella**: el primer fotograma salía con el final de la animación anterior (todo tapado) y luego saltaba al
+  principio, y eso se veía como un fogonazo. Ahora cada animación empieza de cero.
+- **Encender y apagar van en una cortina por encima de todo** (una capa del vigilante, el servicio de accesibilidad): mientras Android
+  cambia de una pantalla de inicio a otra por debajo, lo que se ve son solo las cadenas. Al encender, tapan lo que tengas delante y,
+  tapado, debajo se abre Ammit (con el mismo fondo) y salen las apps; al apagar, aparece el campo de cadenas, debajo se abre tu inicio de
+  siempre, dan un tirón y se van.
+- Si el vigilante no estuviera activado, se hace como antes, pero sin dejar ver la pantalla sin cadenas entre medias.
+
 ## 0.5.0 — el sinfín de cadenas
 
 - **El fondo de Ammit es un sinfín de cadenas**: 82 cadenas gruesas de metal, unas encima de otras (las de abajo, más oscuras), siempre

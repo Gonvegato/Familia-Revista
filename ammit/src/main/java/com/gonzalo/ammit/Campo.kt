@@ -1,5 +1,6 @@
 package com.gonzalo.ammit
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LightingColorFilter
@@ -178,9 +179,10 @@ class Campo private constructor(val ancho: Int, val alto: Int) {
     }
 
     /** El fondo de Ammit ya hecho (todas las cadenas, apagadas para leer encima): se pinta una vez y se guarda. */
-    val fondo: Bitmap by lazy {
-        Bitmap.createBitmap(ancho, alto, Bitmap.Config.ARGB_8888).also { b -> pinta(Canvas(b), OSCURO, 1f) { 1f } }
-    }
+    private val fondoPerezoso = lazy { Bitmap.createBitmap(ancho, alto, Bitmap.Config.ARGB_8888).also { b -> pinta(Canvas(b), OSCURO, 1f) { 1f } } }
+    val fondo: Bitmap by fondoPerezoso
+    /** El fondo, si ya está hecho (para no hacerlo a medio fotograma). */
+    fun fondoSiHay(): Bitmap? = if (fondoPerezoso.isInitialized()) fondo else null
 
     companion object {
         /** Cuánto se apagan las cadenas del fondo para que se lean las apps encima. */
@@ -193,6 +195,25 @@ class Campo private constructor(val ancho: Int, val alto: Int) {
         fun azar(n: Int): Double { val x = sin(n * 9301.0 + 49297) * 233280; return x - floor(x) }
 
         @Volatile private var ultimo: Campo? = null
+
+        /**
+         * El tamaño de la pantalla entera (barras incluidas). Todas las pantallas de Ammit pintan el campo con este tamaño desde la
+         * esquina de arriba, así que el de la cortina, el del juicio y el del fondo coinciden al píxel.
+         */
+        fun pantalla(c: Context): Pair<Int, Int> {
+            val wm = c.getSystemService(android.view.WindowManager::class.java)
+            val r = runCatching {
+                if (android.os.Build.VERSION.SDK_INT >= 30 && wm != null) wm.maximumWindowMetrics.bounds.let { it.width() to it.height() }
+                else android.util.DisplayMetrics().also { @Suppress("DEPRECATION") wm?.defaultDisplay?.getRealMetrics(it) }.let { it.widthPixels to it.heightPixels }
+            }.getOrNull()
+            if (r != null && r.first > 0 && r.second > 0) return r
+            return c.resources.displayMetrics.let { it.widthPixels to it.heightPixels }
+        }
+
+        fun dePantalla(c: Context): Campo = pantalla(c).let { (w, h) -> de(w, h) }
+
+        /** El de la pantalla entera; si lo que hay que tapar es más grande (no debería), el de ese tamaño. */
+        fun paraTapar(c: Context, w: Float, h: Float): Campo = dePantalla(c).let { if (it.ancho + 1 < w || it.alto + 1 < h) de(w.toInt(), h.toInt()) else it }
 
         /** El campo para una pantalla de ese tamaño (se guarda el último: el de la tablet). */
         fun de(ancho: Int, alto: Int): Campo {

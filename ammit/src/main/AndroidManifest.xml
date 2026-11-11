@@ -51,6 +51,10 @@
             android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.salida"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
 
+        <!-- Pliega la barra de arriba al encender (y se va sin enseñar nada): las cadenas de la cortina tapan lo de debajo -->
+        <activity android:name=".PlegarActivity" android:exported="false" android:theme="@style/Ammit.Salida"
+            android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.plegar" />
+
         <!-- El botón de la barra de arriba -->
         <service android:name=".BotonAmmit" android:exported="true" android:label="Ammit" android:icon="@drawable/ic_balanza"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
