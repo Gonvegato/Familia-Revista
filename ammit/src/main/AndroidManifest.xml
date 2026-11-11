@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Ver todas las apps que tienes (para pintarlas en la pantalla de inicio) y las pantallas de inicio que hay (para pasar a la de siempre) -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- Ofrecer el botón de la barra de arriba con un toque (Android 13+) no pide permiso; poner los widgets de la familia sí lo pide al ponerlos -->
+    <application
+        android:label="Ammit"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/Ammit"
+        android:allowBackup="false">
+
+        <!-- La pantalla de inicio: con Ammit encendido, tu fondo, tus apps (la familia en color, las demás encadenadas) y los widgets de
+             la familia; apagado, pasa sin más a tu pantalla de inicio de siempre -->
+        <activity android:name=".InicioActivity" android:exported="true" android:launchMode="singleTask"
+            android:theme="@style/Ammit.Inicio" android:excludeFromRecents="true" android:stateNotNeeded="true"
+            android:resumeWhilePausing="true" android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Lo que se ve en el cajón de apps: los pasos para dejarlo listo y el interruptor -->
+        <activity android:name=".AjustesActivity" android:exported="true" android:taskAffinity="com.gonzalo.ammit.ajustes"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Mantener pulsado el botón de la barra de arriba abre esto -->
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" /></intent-filter>
+        </activity>
+
+        <!-- «X no pasa el juicio»: las cadenas, un momento, y a la pantalla de inicio -->
+        <activity android:name=".JuicioActivity" android:exported="false" android:theme="@style/Ammit.Juicio"
+            android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.juicio" android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
+
+        <!-- El botón de la barra de arriba -->
+        <service android:name=".BotonAmmit" android:exported="true" android:label="Ammit" android:icon="@drawable/ic_balanza"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+            <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true" />
+            <meta-data android:name="android.service.quicksettings.ACTIVE_TILE" android:value="true" />
+        </service>
+
+        <!-- El que vigila qué app se abre (servicio de accesibilidad): si no es de la familia, el juicio -->
+        <service android:name=".Vigia" android:exported="true" android:label="Ammit"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/vigia" />
+        </service>
+    </application>
+</manifest>

@@ -1,0 +1,166 @@
+package com.gonzalo.ammit
+
+import android.app.Activity
+import android.appwidget.AppWidgetHost
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
+import android.content.Intent
+import android.graphics.Color as AColor
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/**
+ * La pantalla de inicio. Con Ammit encendida: tu fondo de pantalla, la hora, los widgets de la familia que pongas y tus apps donde las
+ * coloques (la familia en color; el resto, en gris y encadenadas: tocarlas es el juicio). Apagada: pasa sin más a tu pantalla de inicio
+ * de siempre ([Ammit.inicioNormal]).
+ */
+class InicioActivity : ComponentActivity() {
+    companion object { const val HOST_ID = 7_001; private const val PIDE_CONFIGURAR = 71 }
+
+    lateinit var host: AppWidgetHost
+    private val mgr by lazy { AppWidgetManager.getInstance(this) }
+
+    var apps by mutableStateOf<List<AppDeInicio>>(emptyList())
+    var widgets by mutableStateOf<List<Ammit.Widget>>(emptyList())
+    var colocando by mutableStateOf(false)
+    var eligiendoWidget by mutableStateOf(false)
+
+    /** El widget a medio poner (esperando el permiso para ponerlo o su configuración). */
+    private var pendiente = -1
+
+    private val pedirPermiso = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val id = pendiente
+        if (id < 0) return@registerForActivityResult
+        if (r.resultCode == Activity.RESULT_OK) mgr.getAppWidgetInfo(id)?.let { configurar(id, it) } ?: cancelar(id) else cancelar(id)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        // Barras transparentes con iconos claros: encima de tu fondo de pantalla
+        enableEdgeToEdge(SystemBarStyle.dark(AColor.TRANSPARENT), SystemBarStyle.dark(AColor.TRANSPARENT))
+        super.onCreate(savedInstanceState)
+        Ammit.cargar(this)
+        host = AppWidgetHost(applicationContext, HOST_ID)
+        widgets = Ammit.widgets(this)
+        setContent {
+            BackHandler { if (eligiendoWidget) eligiendoWidget = false else if (colocando) colocando = false }
+            PantInicio(this)
+        }
+    }
+
+    override fun onStart() { super.onStart(); runCatching { host.startListening() } }
+    override fun onStop() { super.onStop(); runCatching { host.stopListening() } }
+
+    override fun onResume() {
+        super.onResume()
+        Ammit.cargar(this)
+        if (!Ammit.encendida && pasarAlInicioNormal()) return
+        recargar()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // El botón de casa estando ya aquí: se deja de colocar
+        colocando = false; eligiendoWidget = false
+    }
+
+    /** Ammit apagada: a la pantalla de inicio de siempre. Devuelve false si no hay otra (entonces se queda Ammit). */
+    private fun pasarAlInicioNormal(): Boolean {
+        val cn = Ammit.inicioNormal(this) ?: return false
+        return runCatching {
+            startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setComponent(cn)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION))
+            @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+            true
+        }.getOrDefault(false)
+    }
+
+    fun recargar() {
+        lifecycleScope.launch {
+            val l = withContext(Dispatchers.Default) { Apps.todas(this@InicioActivity) }
+            apps = l
+        }
+    }
+
+    fun mover(desde: String, hacia: String) {
+        val l = apps.toMutableList()
+        val i = l.indexOfFirst { it.clave == desde }; val j = l.indexOfFirst { it.clave == hacia }
+        if (i < 0 || j < 0 || i == j) return
+        val a = l.removeAt(i); l.add(j, a)
+        apps = l
+    }
+
+    fun guardarOrden() = Ammit.ponOrden(this, apps.map { it.clave })
+
+    // ------------------------------------------------------------------ widgets de la familia
+
+    /** Los widgets que se pueden poner: los de las seis apps de la familia. */
+    fun widgetsDisponibles(): List<AppWidgetProviderInfo> =
+        mgr.installedProviders.filter { Ammit.pasa(it.provider.packageName) && it.provider.packageName != Ammit.PROPIO }
+            .sortedWith(compareBy({ Ammit.FAMILIA.indexOfFirst { f -> f.paquete == it.provider.packageName } }, { it.loadLabel(packageManager) }))
+
+    fun ponerWidget(info: AppWidgetProviderInfo) {
+        eligiendoWidget = false
+        val id = host.allocateAppWidgetId()
+        pendiente = id
+        if (mgr.bindAppWidgetIdIfAllowed(id, info.provider)) configurar(id, info)
+        else pedirPermiso.launch(Intent(AppWidgetManager.ACTION_APPWIDGET_BIND)
+            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id).putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, info.provider))
+    }
+
+    private fun configurar(id: Int, info: AppWidgetProviderInfo) {
+        if (info.configure != null) {
+            pendiente = id
+            runCatching { host.startAppWidgetConfigureActivityForResult(this, id, 0, PIDE_CONFIGURAR, null) }.onFailure { anadir(id, info) }
+        } else anadir(id, info)
+    }
+
+    @Deprecated("Lo pide startAppWidgetConfigureActivityForResult")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION") super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != PIDE_CONFIGURAR) return
+        val id = pendiente
+        if (id < 0) return
+        val info = mgr.getAppWidgetInfo(id)
+        if (resultCode == Activity.RESULT_OK && info != null) anadir(id, info) else cancelar(id)
+    }
+
+    private fun anadir(id: Int, info: AppWidgetProviderInfo) {
+        pendiente = -1
+        val dp = resources.displayMetrics.density
+        val alto = (info.minHeight / dp).toInt().coerceIn(90, 340).let { if (it < 120) it + 30 else it }
+        widgets = widgets + Ammit.Widget(id, alto)
+        Ammit.ponWidgets(this, widgets)
+    }
+
+    private fun cancelar(id: Int) { pendiente = -1; runCatching { host.deleteAppWidgetId(id) } }
+
+    fun quitarWidget(id: Int) {
+        widgets = widgets.filterNot { it.id == id }
+        Ammit.ponWidgets(this, widgets)
+        runCatching { host.deleteAppWidgetId(id) }
+    }
+
+    fun cambiarAlto(id: Int, mas: Int) {
+        widgets = widgets.map { if (it.id == id) it.copy(alto = (it.alto + mas).coerceIn(80, 460)) else it }
+        Ammit.ponWidgets(this, widgets)
+    }
+
+    fun subirWidget(id: Int) {
+        val l = widgets.toMutableList(); val i = l.indexOfFirst { it.id == id }
+        if (i > 0) { val w = l.removeAt(i); l.add(i - 1, w); widgets = l; Ammit.ponWidgets(this, l) }
+    }
+
+    fun infoDe(id: Int): AppWidgetProviderInfo? = mgr.getAppWidgetInfo(id)
+}

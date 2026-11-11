@@ -20,6 +20,8 @@ if (!soloEscritorio) {
     include(":ptah")
     // Shai, la de tu carrera de EA Sports FC (solo Android; de la familia, pero sin nada en Jonsu)
     include(":shai")
+    // Ammit, la pantalla de inicio que encendida solo deja pasar a la familia (solo Android)
+    include(":ammit")
     // El motor de torrents de Mostaza (libtorrent4j): ver un torrent mientras se baja
     include(":torrent")
 }
