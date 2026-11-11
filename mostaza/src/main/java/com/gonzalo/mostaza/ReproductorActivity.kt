@@ -1,5 +1,6 @@
 package com.gonzalo.mostaza
 
+import android.content.Context
 import android.annotation.SuppressLint
 import android.graphics.Color as AColor
 import android.net.Uri
@@ -91,6 +92,31 @@ class EstadoReproductor {
     /** Para elegir audio o subtítulos: (título, opciones (texto, elegida), al elegir). */
     var eleccion by mutableStateOf<Triple<String, List<Pair<String, Boolean>>, (Int) -> Unit>?>(null)
     var fuente by mutableStateOf("")
+    /** Qué es el vídeo y quién lo decodifica («H.264 · 720×404 · decodificador del aparato»). */
+    var video by mutableStateOf("")
+}
+
+/**
+ * Qué decodificador de vídeo usar, por formato, en ESTE dispositivo (no viaja con la cuenta: depende del aparato). Por defecto, el del
+ * aparato (el de su chip, rápido); algunos se equivocan con ciertos archivos (sale la imagen rota en bloques grises): para esos formatos se
+ * puede pasar al de Android, por programa (más lento, pero lee bien casi todo lo que no es 4K).
+ */
+object Decodificadores {
+    private fun p(c: Context) = c.getSharedPreferences("mostaza_decodificadores", Context.MODE_PRIVATE)
+    /** Los formatos (tipo MIME) para los que se usa el decodificador de Android en este dispositivo. */
+    fun deAndroid(c: Context): Set<String> = p(c).getStringSet("android", emptySet()).orEmpty()
+    fun cambia(c: Context, mime: String): Boolean {
+        val ahora = deAndroid(c).toMutableSet()
+        val usar = mime !in ahora
+        if (usar) ahora += mime else ahora -= mime
+        p(c).edit().putStringSet("android", ahora).apply()
+        return usar
+    }
+    fun nombre(mime: String?): String = when (mime) {
+        "video/avc" -> "H.264"; "video/hevc" -> "HEVC (H.265)"; "video/mp4v-es" -> "MPEG-4 (XviD/DivX)"; "video/x-vnd.on2.vp9" -> "VP9"
+        "video/av01" -> "AV1"; "video/mpeg2" -> "MPEG-2"; "video/3gpp" -> "H.263"; "video/dolby-vision" -> "Dolby Vision"
+        else -> mime?.substringAfter('/')?.uppercase().orEmpty()
+    }
 }
 
 /**
@@ -109,6 +135,10 @@ class ReproductorActivity : ComponentActivity() {
     private val ambito = MainScope()
     private val principal = Handler(Looper.getMainLooper())
     private var url = ""
+    /** Lo último que se empezó (para volver a abrirlo en el mismo punto con otro decodificador). */
+    private var ultimoEmpiece: Pair<String, List<Subtitulo>>? = null
+    /** El formato del vídeo de ahora (tipo MIME). */
+    private var mimeVideo: String? = null
     private var cabeceras: Map<String, String> = emptyMap()
     private var torrentAbierto = ""
     private var listo = false
@@ -198,7 +228,7 @@ class ReproductorActivity : ComponentActivity() {
             // Atrás (el del mando a distancia también): primero cierra lo que esté abierto encima (audio, subtítulos, fuente); si no, sale
             androidx.activity.compose.BackHandler(enabled = estado.eleccion != null) { estado.eleccion = null }
             ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { s -> salta(s) }, alIr = { p -> player?.seekTo(p); visionado?.sesion?.salto() },
-                alVolver = { finish() }, alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alFuente = { eligeFuente() }, alOtro = { conOtro() },
+                alVolver = { finish() }, alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alFuente = { eligeFuente() }, alOtro = { conOtro() }, alDecodificador = { otroDecodificador() },
                 alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() }, alNoCambiar = { seguirConEsta() },
                 tele = tele, salto = AjustesReproductor.salto(this@ReproductorActivity))
         }
@@ -280,11 +310,20 @@ class ReproductorActivity : ComponentActivity() {
         player?.let { viejo -> viejo.removeListener(oyente); viejo.release() }
         principal.removeCallbacks(pulso)
         // (con FFmpeg detrás de los decodificadores del aparato: el AC3 o el DTS que este no sepa, lo decodifica la app)
+        ultimoEmpiece = u to subs
+        // El decodificador de vídeo: el del aparato; para los formatos que hayas pasado al de Android ([Decodificadores]), primero ese
+        val deAndroid = Decodificadores.deAndroid(this)
+        val selector = androidx.media3.exoplayer.mediacodec.MediaCodecSelector { mime, seguro, tunel ->
+            val l = androidx.media3.exoplayer.mediacodec.MediaCodecUtil.getDecoderInfos(mime, seguro, tunel)
+            if (mime in deAndroid) l.sortedBy { if (it.softwareOnly) 0 else 1 } else l
+        }
         val renderers = androidx.media3.exoplayer.DefaultRenderersFactory(this).setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+            .setMediaCodecSelector(selector).setEnableDecoderFallback(true)
         val p = ExoPlayer.Builder(this, renderers).setMediaSourceFactory(DefaultMediaSourceFactory(datos))
             .setBandwidthMeter(DefaultBandwidthMeter.getSingletonInstance(this)).build().also { nuevo ->
                 player = nuevo; vista?.player = nuevo
                 nuevo.addListener(oyente)
+                nuevo.addAnalyticsListener(analitica)
                 principal.post(pulso)
             }
         val audio = AjustesReproductor.audio(this); val texto = AjustesReproductor.subs(this)
@@ -301,6 +340,37 @@ class ReproductorActivity : ComponentActivity() {
         // (probando fuentes: no empieza hasta ver sus pistas, para no ver un trozo en otro idioma)
         p.prepare(); p.playWhenReady = !tanteando
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    /** Qué vídeo es y qué decodificador lo lee (se enseña arriba, con la fuente). */
+    private var formatoVideo = ""
+    private var decodificador = ""
+    private val analitica = object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+        override fun onVideoInputFormatChanged(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, f: androidx.media3.common.Format,
+            r: androidx.media3.exoplayer.DecoderReuseEvaluation?) {
+            mimeVideo = f.sampleMimeType
+            formatoVideo = listOfNotNull(Decodificadores.nombre(f.sampleMimeType).ifBlank { null }, if (f.width > 0) "${f.width}×${f.height}" else null).joinToString(" · ")
+            pintaVideo()
+        }
+        override fun onVideoDecoderInitialized(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, nombre: String, ini: Long, dur: Long) {
+            val deAndroid = nombre.startsWith("c2.android.") || nombre.startsWith("OMX.google.")
+            decodificador = if (deAndroid) "decodificador de Android" else "decodificador del aparato"
+            pintaVideo()
+        }
+    }
+    private fun pintaVideo() { estado.video = listOf(formatoVideo, decodificador).filter { it.isNotBlank() }.joinToString(" · ") }
+
+    /** «¿Se ve mal?»: el mismo vídeo, en el mismo punto, con el otro decodificador (y se recuerda para este formato en este dispositivo). */
+    private fun otroDecodificador() {
+        val mime = mimeVideo ?: run { estado.mensaje = "Aún no se sabe qué vídeo es: espera a que empiece."; return }
+        val (u, subs) = ultimoEmpiece ?: return
+        val pos = player?.currentPosition ?: 0L
+        val deAndroid = Decodificadores.cambia(this, mime)
+        estado.mensaje = if (deAndroid) "Con el decodificador de Android para ${Decodificadores.nombre(mime)} en este dispositivo (si sigue mal, «Abrir con otro reproductor»)."
+            else "De vuelta al decodificador del aparato para ${Decodificadores.nombre(mime)}."
+        principal.postDelayed({ if (estado.mensaje?.startsWith("Con el decodificador") == true || estado.mensaje?.startsWith("De vuelta") == true) estado.mensaje = null }, 6_000)
+        decodificador = ""
+        empieza(u, subs, pos)
     }
 
     private val oyente = object : Player.Listener {
@@ -685,7 +755,7 @@ class ReproductorActivity : ComponentActivity() {
 fun ControlesReproductor(
     e: EstadoReproductor, alTocar: () -> Unit, alPlay: () -> Unit, alSaltar: (Int) -> Unit, alIr: (Long) -> Unit, alVolver: () -> Unit,
     alAudio: () -> Unit, alSubs: () -> Unit, alFuente: () -> Unit, alOtro: () -> Unit, alSiguiente: () -> Unit, alCancelarSiguiente: () -> Unit, alCorte: () -> Unit, alNoCambiar: () -> Unit = {},
-    tele: Boolean = false, salto: Int = 10,
+    tele: Boolean = false, salto: Int = 10, alDecodificador: () -> Unit = {},
 ) {
     val blanco = Color(0xFFF7F2E8)
     val k = if (tele) 1.35f else 1f
@@ -723,6 +793,7 @@ fun ControlesReproductor(
                 Text(e.titulo, color = blanco, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp * k, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (e.subtitulo.isNotBlank()) Text(e.subtitulo.uppercase(), color = blanco.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp * k, letterSpacing = 1.sp, maxLines = 1)
                 if (e.fuente.isNotBlank()) Text(e.fuente, color = blanco.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp * k, maxLines = 1)
+                if (e.video.isNotBlank()) Text(e.video, color = blanco.copy(alpha = 0.6f), fontFamily = Body, fontSize = 11.sp * k, maxLines = 1)
             }
             if (botones) Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.CenterVertically) {
                 BotonReproductor(Icons.Rounded.Replay10, "Atrás", blanco, 52.dp * k) { alSaltar(-salto) }
@@ -749,6 +820,7 @@ fun ControlesReproductor(
                 Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp * k), verticalAlignment = Alignment.CenterVertically) {
                     EnlaceClaro("Audio", blanco, k, alAudio); EnlaceClaro("Subtítulos", blanco, k, alSubs); EnlaceClaro("Fuente", blanco, k, alFuente)
                     Spacer(Modifier.weight(1f))
+                    EnlaceClaro("¿Se ve mal?", blanco, k, alDecodificador)
                     EnlaceClaro("Abrir con otro reproductor", blanco, k, alOtro)
                 }
             }

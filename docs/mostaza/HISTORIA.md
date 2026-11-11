@@ -11,6 +11,15 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.10 — «¿Se ve mal?»: otro decodificador
+
+- **Si la imagen sale rota (bloques grises, trozos de otros fotogramas)** con un vídeo que en otro aparato se ve bien, es el decodificador de
+  vídeo de ese aparato, que se equivoca con ese archivo. Abajo en el reproductor, **«¿Se ve mal?»** lo vuelve a abrir en el mismo punto con
+  el decodificador de Android (por programa: más lento, pero lee bien casi todo lo que no es 4K), y se recuerda para ese formato en ese
+  dispositivo. Otra vez «¿Se ve mal?», y vuelve al del aparato.
+- Arriba, bajo la fuente, qué es el vídeo y quién lo lee («H.264 · 720×404 · decodificador del aparato»).
+- Si un decodificador no arranca, prueba solo con el siguiente.
+
 ## 0.7.9 — sin la raya bajo la cabecera de color
 
 - En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja
