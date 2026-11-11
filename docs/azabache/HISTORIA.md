@@ -9,6 +9,12 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.7 — sin la raya bajo la cabecera de color
+
+- En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja
+  ya separa la cabecera.
+- Reconoce a Ammit como de la familia (le puede pasar la sesión de la cuenta).
+
 ## 1.8.6 — los ajustes, como los de las hermanas
 
 - **La cabecera de Bastet, Seshat y Thot**: el bloque negro con «← JONSU» y «AJUSTES.», y las pestañas en bloques (la elegida, en

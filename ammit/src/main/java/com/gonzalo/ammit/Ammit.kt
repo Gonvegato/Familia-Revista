@@ -67,6 +67,8 @@ object Ammit {
         encendida = on
         // El candado: al encender se apunta cómo estaba todo (para saber luego si has escrito o leído); al apagar se olvida
         if (on && !antes) Candado.marcar(c) else if (!on) Candado.olvidar(c)
+        // El widget, al día
+        WidgetAmmit.repintarLuego(c)
         // La próxima vez que se vea la pantalla de inicio, la animación de las cadenas: cerrándose al encender, cayéndose al apagar
         prefs(c).edit().putBoolean("on", on).apply { if (antes != on && animar) putString("animar", if (on) "entrar" else "salir") else if (!animar) remove("animar") }.apply()
     }

@@ -12,6 +12,8 @@ class AmmitApp : Application() {
         Ammit.cargar(this)
         // El candado mira las palabras de Thot y lo leído en Seshat: sus colecciones, abiertas (y al entrar en la cuenta)
         runCatching { Candado.abrir(); com.gonzalo.familia.LaFamilia.alEntrar { Candado.abrir() } }
+        // El widget: cuánto falta para soltarla, al día cuando cambia algo de la cuenta (como mucho cada 20 s)
+        runCatching { com.gonzalo.familia.LaFamilia.alCambiar { if (Ammit.encendida) WidgetAmmit.repintarLuego(this, 20_000) } }
         runCatching { Actualizador.init(this) }
     }
 }

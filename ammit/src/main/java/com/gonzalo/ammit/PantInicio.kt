@@ -141,6 +141,15 @@ fun PantInicio(a: InicioActivity) {
     LaunchedEffect(Unit) {
         androidx.compose.runtime.snapshotFlow { a.animacion }.collectLatest { anim ->
             if (anim == null) return@collectLatest
+            if (anim == "casa") {
+                // Debajo de la cortina, al volver al inicio: con las apps cargadas y esto pintado, la cortina se funde (todo ya a la vista)
+                val hasta = android.os.SystemClock.uptimeMillis() + 1500
+                while (!a.cargadas && android.os.SystemClock.uptimeMillis() < hasta) delay(16)
+                repeat(3) { androidx.compose.runtime.withFrameNanos { } }
+                Cortina.inicioListo = true
+                a.animacion = null
+                return@collectLatest
+            }
             if (anim == "cortina") {
                 // Debajo de la cortina de cadenas: con las apps cargadas y esto pintado, la cortina se puede quitar (y entonces salen)
                 val hasta = android.os.SystemClock.uptimeMillis() + 1500
@@ -227,7 +236,6 @@ private fun Reloj() {
         BasicText(ahora.format(DateTimeFormatter.ofPattern("HH:mm")), style = TextStyle(Color.White, 78.sp, FontWeight.SemiBold, fontFamily = Diseno.Grotesca, shadow = SOMBRA, letterSpacing = (-2).sp))
         BasicText("${ahora.dayOfWeek.getDisplayName(FormatoFecha.FULL, ES)} ${ahora.dayOfMonth} de ${ahora.month.getDisplayName(FormatoFecha.FULL, ES)}",
             style = TextStyle(Color.White, 17.sp, FontWeight.Medium, fontFamily = Diseno.Texto, shadow = SOMBRA))
-        BasicText("AMMIT · SOLO LA FAMILIA", style = TextStyle(Color(Ammit.ACENTO_NOCHE), 11.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 2.sp, shadow = SOMBRA), modifier = Modifier.padding(top = 6.dp))
         // Cuánto falta para poder soltarla (se recalcula cuando cambia algo en la cuenta)
         val ctx = LocalContext.current
         val cambios = runCatching { com.gonzalo.familia.LaFamilia.cambios }.getOrDefault(0)

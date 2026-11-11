@@ -60,6 +60,14 @@
         <activity android:name=".PlegarActivity" android:exported="false" android:theme="@style/Ammit.Salida"
             android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.plegar" />
 
+        <!-- El widget de Ammit y lo que hace su toque (encender, o soltarla si ya se puede) -->
+        <receiver android:name=".WidgetAmmit" android:exported="true" android:label="Ammit">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_ammit" />
+        </receiver>
+        <activity android:name=".InterruptorActivity" android:exported="false" android:theme="@style/Ammit.Salida"
+            android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.interruptor" />
+
         <!-- El botón de la barra de arriba -->
         <service android:name=".BotonAmmit" android:exported="true" android:label="Ammit" android:icon="@drawable/ic_balanza"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">

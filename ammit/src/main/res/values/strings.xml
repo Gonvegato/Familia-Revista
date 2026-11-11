@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="vigia_descripcion">Con Ammit encendido, mira qué app se abre y, si no es de la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut), la cierra con la pantalla del juicio y te lleva al inicio. No lee lo que hay en las pantallas.</string>
+    <string name="widget_descripcion">Ammit: un toque la enciende; encendida, cuánto falta para soltarla.</string>
 </resources>

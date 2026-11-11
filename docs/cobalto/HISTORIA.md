@@ -10,6 +10,12 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.6.6 — sin la raya bajo la cabecera de color
+
+- En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja
+  ya separa la cabecera.
+- Reconoce a Ammit como de la familia (le puede pasar la sesión de la cuenta).
+
 ## 0.6.5 — la cabecera de color, de lado a lado
 
 - En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su

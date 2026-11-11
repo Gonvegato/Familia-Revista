@@ -4,6 +4,18 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.8.0 — el widget de Ammit
+
+- **Un widget para tu pantalla de inicio de siempre**: «AMMIT.» con cadenas. Apagada, un toque la enciende (con su animación de cadenas).
+  Encendida, enseña el sinfín de cadenas y cuánto falta para soltarla («120/300 palabras o un capítulo», «Ya puedes soltarla»), y un toque
+  la suelta si ya se puede (si no, «Ammit no te suelta»), igual que el botón de la barra de arriba. Si falta prepararla, abre sus pasos.
+- **Ammit ya no tiene que ser tu pantalla de inicio** (y mejor que no lo sea): en móviles como los Oppo (ColorOS), con una pantalla de inicio
+  que no es la de fábrica, los gestos y el cambio entre apps van peor siempre, también con Ammit apagada. Ahora, encendida, al ir a tu
+  inicio de siempre el vigilante lo tapa con la cortina de cadenas y te lleva al de Ammit (sin que se vea el tuyo); apagada, no hace nada y
+  todo va como sin Ammit. En sus ajustes, el primer paso es volver a tu pantalla de inicio si elegiste Ammit.
+- Apagada, el vigilante no hace nada más que mirar que está apagada.
+- Fuera «solo la familia» de la pantalla de inicio, el widget, el botón de la barra y los ajustes.
+
 ## 0.7.1 — soltarla tras leer, con su animación
 
 - Al darle al botón después de haber escrito o leído, Ammit mira primero lo último de la cuenta (mientras estás en Seshat o en Thot no la

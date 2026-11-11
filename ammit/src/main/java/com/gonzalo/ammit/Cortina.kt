@@ -194,6 +194,17 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
                 if (ms >= 1480) abrirInicioDebajo()
                 if (irse(ms, 1950f)) return false
             }
+            "casa" -> {
+                // Encendida, ibas a tu inicio de siempre: el campo entero (aparece en un instante), debajo se abre el de Ammit con sus
+                // apps ya puestas y la cortina se funde
+                val a = Tiempos.clamp(ms / 120)
+                if (a < 1f) { capa.alpha = (255 * a).toInt(); cv.saveLayer(null, capa) } else cv.save()
+                campo.pinta(cv, Campo.OSCURO, 1f) { 1f }
+                cv.restore()
+                if (!pedido) { pedido = true; Ammit.ponAnimacion(c, "casa")
+                    runCatching { c.startActivity(Intent(c, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) } }
+                if (irse(ms, 120f)) return false
+            }
             "tapar" -> {
                 campo.pinta(cv, Campo.OSCURO, 1f) { 1f }
                 Cortina.tapado = true

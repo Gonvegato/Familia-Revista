@@ -181,6 +181,37 @@ class AmmitTest {
         assertFalse(Ammit.encendida)
     }
 
+    /** El widget, apagada y encendida (y la vista previa para la lista de widgets). */
+    @Test fun elWidget() {
+        Ammit.encender(ctx, false, animar = false)
+        val apagada = WidgetAmmit.dibujo(ctx, 300, 130)
+        Ammit.encender(ctx, true, animar = false)
+        val encendida = WidgetAmmit.dibujo(ctx, 300, 130)
+        assertTrue(apagada.width > 0 && encendida.width > 0)
+        if (grabar) {
+            java.io.File("build/outputs/roborazzi").mkdirs()
+            for ((n, b) in listOf("ammit_widget_apagada" to apagada, "ammit_widget_encendida" to encendida))
+                java.io.FileOutputStream("build/outputs/roborazzi/$n.png").use { b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+    }
+
+    /** Encendida y sin ser la pantalla de inicio: al ir a tu inicio de siempre, el vigilante pone la cortina y te lleva al de Ammit. Apagada, nada. */
+    @Test fun alIrATuInicioTeLlevaAlDeAmmit() {
+        val pm = shadowOf(ctx.packageManager)
+        val casa = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        pm.addResolveInfoForIntent(casa, resolve("com.oppo.launcher", "com.oppo.launcher.Launcher", "Inicio"))
+        val v = Robolectric.setupService(Vigia::class.java)
+        v.javaClass.getDeclaredMethod("onServiceConnected").apply { isAccessible = true }.invoke(v)
+        fun evento() = android.view.accessibility.AccessibilityEvent.obtain(android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).apply {
+            packageName = "com.oppo.launcher"; className = "com.oppo.launcher.Launcher" }
+        Ammit.encender(ctx, false, animar = false)
+        v.onAccessibilityEvent(evento())
+        assertFalse("apagada no hace nada", Cortina.ocupada)
+        Ammit.encender(ctx, true, animar = false)
+        v.onAccessibilityEvent(evento())
+        assertTrue("encendida, la cortina tapa tu inicio", Cortina.ocupada)
+    }
+
     /** La pantalla de «Ammit no te suelta», con progreso a medias. */
     @Test fun capturaDelCandado() {
         org.junit.Assume.assumeTrue(grabar)

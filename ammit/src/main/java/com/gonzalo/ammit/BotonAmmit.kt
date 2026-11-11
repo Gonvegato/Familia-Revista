@@ -17,7 +17,7 @@ class BotonAmmit : TileService() {
     override fun onClick() {
         Ammit.cargar(this)
         val encender = !Ammit.encendida
-        if (encender && !(Ammit.esInicio(this) && Ammit.vigiaActivo(this))) {
+        if (encender && !Ammit.vigiaActivo(this)) {
             abrir(Intent(this, AjustesActivity::class.java).putExtra(AjustesActivity.EXTRA_FALTA, true))
             return
         }
@@ -71,8 +71,8 @@ class BotonAmmit : TileService() {
         val t = qsTile ?: return
         t.state = if (Ammit.encendida) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         t.label = "Ammit"
-        if (Build.VERSION.SDK_INT >= 29) t.subtitle = if (Ammit.encendida) "Solo la familia" else "Apagado"
-        t.contentDescription = if (Ammit.encendida) "Ammit: solo la familia" else "Ammit: apagado"
+        if (Build.VERSION.SDK_INT >= 29) t.subtitle = if (Ammit.encendida) "Encendida" else "Apagada"
+        t.contentDescription = if (Ammit.encendida) "Ammit: encendida" else "Ammit: apagada"
         t.updateTile()
     }
 

@@ -303,6 +303,13 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     /** La etiqueta de acento sobre una foto (con letra blanca): con «todo acento», el acento de la app (el claro de ese estilo no se leería). */
     val chapa: Int get() = if (est == EstiloWidget.ACENTO) papel else acento
 
+    /** La raya fina bajo la cabecera de un widget: con la franja de color (estilo «cabecera») no se pinta, la franja ya separa. */
+    fun reglaCabecera(x1: Float, y1: Float, x2: Float, y2: Float) {
+        val b = banda
+        if (b != null && y1 < b.bottom + 2f) return
+        c.drawRect(x1, y1, x2, y2, lleno(linea))
+    }
+
     private fun pintaBanda() {
         val b = banda ?: return
         if (bandaPuesta) return
@@ -829,7 +836,7 @@ object Widgets {
             fondo()
             seccion(titulo, pad, pad, w - 2 * pad, tinta, acento)
             pon(capa("Seshat", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
-            c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
+            reglaCabecera(pad, pad + 14.5f, w - pad, pad + 15.2f)
             items.forEachIndexed { k, e ->
                 val gap = 5f
                 val x = pad + slot * k + gap
@@ -955,7 +962,7 @@ object Widgets {
             val pad = if (h < 90f) 12f else 16f
             seccion("Lectura", pad, pad, w - 2 * pad, tinta, acento)
             pon(capa("Seshat", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
-            c.drawRect(pad, pad + 14.5f, w - pad, pad + 15.2f, lleno(linea))
+            reglaCabecera(pad, pad + 14.5f, w - pad, pad + 15.2f)
             val top = pad + 26f
             val ancho = w - 2 * pad
             val izqW = if (w >= 230f) ancho * 0.38f else 0f

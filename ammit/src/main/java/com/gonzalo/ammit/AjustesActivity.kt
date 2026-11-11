@@ -106,7 +106,8 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
     @Suppress("UNUSED_VARIABLE") val v = vuelta   // (leerlo hace que se repinte al volver)
     val esInicio = Ammit.esInicio(a)
     val vigia = Ammit.vigiaActivo(a)
-    val listo = esInicio && vigia
+    // (Ammit ya no necesita ser la pantalla de inicio: encendida, el vigilante te lleva a la suya)
+    val listo = vigia
     val otros = Ammit.otrosInicios(a)
     val normal = Ammit.inicioNormal(a)
     Column(Modifier.fillMaxSize().background(t.fondo).verticalScroll(rememberScrollState())) {
@@ -117,14 +118,14 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
                 style = TextStyle(t.fondo, 58.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca, letterSpacing = (-1.5).sp))
         }
         Column(Modifier.widthIn(max = 720.dp).padding(horizontal = 24.dp, vertical = 18.dp).navigationBarsPadding()) {
-            BasicText("Encendida, en la tablet solo pasan Jonsu, Bastet, Seshat, Thot, Hathor y Nut: el resto de apps salen encadenadas en la pantalla de inicio y, si se abren por otro lado, Ammit se las come. Se enciende y se apaga con su botón de la barra de arriba.",
+            BasicText("Encendida, en la tablet solo pasan Jonsu, Bastet, Seshat, Thot, Hathor y Nut: el resto de apps salen encadenadas en su pantalla de inicio y, si se abren por otro lado, Ammit se las come. Se enciende y se apaga con su botón de la barra de arriba.",
                 style = TextStyle(t.gris, 15.sp, fontFamily = Diseno.Texto, lineHeight = 22.sp))
             if (falta && !listo) BasicText("Para encenderla falta algún paso de abajo.", style = TextStyle(t.acento, 15.sp, FontWeight.Bold, fontFamily = Diseno.Texto), modifier = Modifier.padding(top = 10.dp))
 
             Titulo("Encendida", t)
             Row(Modifier.fillMaxWidth().clickable(enabled = listo || Ammit.encendida) { a.encender(!Ammit.encendida) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    BasicText(if (Ammit.encendida) "Solo la familia" else "Apagada", style = TextStyle(t.tinta, 24.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
+                    BasicText(if (Ammit.encendida) "Encendida" else "Apagada", style = TextStyle(t.tinta, 24.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
                     BasicText(if (listo) "Toca para ${if (Ammit.encendida) "apagarla" else "encenderla"} (o usa el botón de la barra de arriba)" else "Primero, los pasos de abajo",
                         style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto))
                 }
@@ -132,7 +133,7 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
             }
 
             Titulo("Para dejarla lista", t)
-            Paso(1, "Ammit, tu pantalla de inicio", "Con Ammit apagada, el botón de casa te lleva a la tuya de siempre: no cambia nada.", esInicio, t, "ELEGIR") { a.ponerDeInicio() }
+            Paso(1, "Tu pantalla de inicio, la de siempre", "Ammit no tiene que ser tu pantalla de inicio: encendida, al ir al inicio te lleva a la suya. Y mejor que no lo sea: en móviles como los Oppo, con otra pantalla de inicio los gestos y el cambio entre apps van peor aunque Ammit esté apagada. Si la elegiste, vuelve aquí a la tuya.", !esInicio, t, "ELEGIR") { a.abrirAjustesInicio() }
             Paso(2, "Permitir los ajustes restringidos", "Android no deja activar el vigilante de una app que no viene de la Play Store hasta que lo permites: en la pantalla que se abre, menú ⋮ (arriba a la derecha) → «Permitir ajustes restringidos». Si no sale el menú, haz antes el paso 3 una vez: Android lo enseña después de avisarte.", vigia, t, "ABRIR") { a.abrirInfoApp() }
             Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Ammit → activar. Solo mira qué app se abre, nunca lo que hay dentro.", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
             if (Build.VERSION.SDK_INT >= 33) Paso(4, "El botón en la barra de arriba", "Lo pone con un toque; también se puede poner a mano desde el lápiz de la barra.", null, t, "PONER") { a.anadirBoton() }

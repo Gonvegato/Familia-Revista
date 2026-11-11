@@ -7,6 +7,12 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.8.8 — sin la raya bajo la cabecera de color
+
+- En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja
+  ya separa la cabecera.
+- Reconoce a Ammit como de la familia (le puede pasar la sesión de la cuenta).
+
 ## 0.8.7 — la cabecera de color, de lado a lado
 
 - En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su

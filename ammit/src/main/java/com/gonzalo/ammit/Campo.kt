@@ -28,12 +28,12 @@ import kotlin.math.sin
  * Para que vaya fluido, cada tipo de eslabón (de frente, de canto, y sus sombras, en seis tamaños) se pinta una sola vez en una imagen
  * ([atlas]); luego cada cadena es copiar esa imagen a lo largo de su línea. Lo más hondo se oscurece con un filtro de color, sin repintar.
  */
-class Campo private constructor(val ancho: Int, val alto: Int) {
+class Campo private constructor(val ancho: Int, val alto: Int, unidad: Float? = null) {
     /** Una cadena: de (x1, y1) a (x2, y2), con eslabones de tamaño [esc]. */
     class Cadena(val x1: Float, val y1: Float, val x2: Float, val y2: Float, val esc: Float)
 
     /** La unidad: la pantalla mide 1000 de alto (o de ancho, si es más estrecha). Así se ve igual en cualquier tamaño. */
-    val u = min(ancho, alto) / 1000f
+    val u = unidad ?: (min(ancho, alto) / 1000f)
     val cadenas: List<Cadena>
 
     init {
@@ -249,6 +249,9 @@ class Campo private constructor(val ancho: Int, val alto: Int) {
             if (r != null && r.first > 0 && r.second > 0) return r
             return c.resources.displayMetrics.let { it.widthPixels to it.heightPixels }
         }
+
+        /** Uno aparte (sin guardar), p. ej. para el widget: así no se pierde el de la pantalla. */
+        fun suelto(ancho: Int, alto: Int, unidad: Float? = null): Campo = Campo(max(1, ancho), max(1, alto), unidad)
 
         fun dePantalla(c: Context): Campo = pantalla(c).let { (w, h) -> de(w, h) }
 

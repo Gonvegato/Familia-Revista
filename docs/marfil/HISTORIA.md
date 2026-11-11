@@ -5,6 +5,12 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.21.5 — sin la raya bajo la cabecera de color
+
+- En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja
+  ya separa la cabecera.
+- Reconoce a Ammit como de la familia (le puede pasar la sesión de la cuenta).
+
 ## 0.21.4 — la cabecera de color, de lado a lado
 
 - En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su

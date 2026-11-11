@@ -103,7 +103,7 @@ class InicioActivity : ComponentActivity() {
             // Al apagar: las apps se van, las cadenas dan un tirón y se pasa a tu inicio de siempre con las cadenas yéndose encima
             if (anim == "salir") { animacion = "salir"; return }
             if (pasarAlInicioNormal()) return
-        } else if (anim == "entrar" || anim == "aparecer" || anim == "cortina") animacion = anim
+        } else if (anim == "entrar" || anim == "aparecer" || anim == "cortina" || anim == "casa") animacion = anim
         recargar()
     }
 
