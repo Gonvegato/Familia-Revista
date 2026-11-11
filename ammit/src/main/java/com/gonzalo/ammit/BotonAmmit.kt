@@ -21,6 +21,8 @@ class BotonAmmit : TileService() {
             abrir(Intent(this, AjustesActivity::class.java).putExtra(AjustesActivity.EXTRA_FALTA, true))
             return
         }
+        // Apagar: solo si desde que la encendiste has escrito 300 palabras o leído un capítulo; si no, «Ammit no te suelta»
+        if (!encender && !Candado.puede(this)) { abrir(Intent(this, CandadoActivity::class.java)); return }
         // Con el vigilante, la cortina de cadenas por encima de todo (sin parpadeos); si no, a la antigua
         if (Cortina.cambiar(this, encender) { abrir(it) }) { pinta(); return }
         Ammit.encender(this, encender)

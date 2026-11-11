@@ -139,6 +139,43 @@ class AmmitTest {
         assertEquals(0f, Tiempos.salir(Tiempos.salidaFin(a.n).toFloat(), 0, a.n))
     }
 
+    /** El candado: 300 palabras desde que la encendiste (sumando dispositivos y días) o un capítulo leído de verdad. */
+    @Test fun elCandadoCuentaPalabrasYCapitulos() {
+        fun n(ref: String, vararg c: Pair<String, Any?>) = com.gonzalo.familia.nucleo.Nodo(ref, mapOf(*c))
+        val dia = "2026-11-11"
+        // Al encender: la tablet llevaba 500 palabras hoy; el móvil, 40. Un libro por el capítulo 3 con 20 min leídos hoy, y 2 h de un juego
+        val palabras0 = listOf(n("tablet", "d2026-11-10" to 900, "d$dia" to 500), n("movil", "d$dia" to 40))
+        val lectura0 = listOf(n("kid1", "bestLabel" to "Capítulo 3", "bestFrac" to 0.30))
+        val tiempo0 = listOf(n("kid1~tablet", "ref" to "kid1", "d$dia" to 20 * 60_000), n("zelda~tablet", "ref" to "zelda", "d$dia" to 7_200_000))
+        val base = Candado.base(dia, palabras0, tiempo0, lectura0)
+        val desde = 1_000L
+        // Nada hecho: 0 palabras, sin capítulo
+        Candado.calcula(base, dia, desde, palabras0, tiempo0, lectura0, emptyList()).let { assertEquals(0, it.palabras); assertFalse(it.capitulo); assertFalse(it.puede) }
+        // 150 en la tablet y 160 mañana en el móvil = 310: se suelta
+        val palabras1 = listOf(n("tablet", "d2026-11-10" to 900, "d$dia" to 650), n("movil", "d$dia" to 40, "d2026-11-12" to 160))
+        Candado.calcula(base, dia, desde, palabras1, tiempo0, lectura0, emptyList()).let { assertEquals(310, it.palabras); assertTrue(it.puede) }
+        // Horas de juego no cuentan como lectura; saltar de capítulo sin leer, tampoco
+        val tiempoJuego = listOf(n("kid1~tablet", "ref" to "kid1", "d$dia" to 21 * 60_000), n("zelda~tablet", "ref" to "zelda", "d$dia" to 9_000_000))
+        val salto = listOf(n("kid1", "bestLabel" to "Capítulo 4", "bestFrac" to 0.36))
+        Candado.calcula(base, dia, desde, palabras0, tiempoJuego, salto, emptyList()).let { assertFalse(it.capitulo); assertEquals(1, it.minutos) }
+        // Pasar al capítulo 4 habiendo leído 6 min más: capítulo leído (también en otro dispositivo)
+        val tiempoLeido = tiempo0 + n("kid1~movil", "ref" to "kid1", "d$dia" to 6 * 60_000)
+        Candado.calcula(base, dia, desde, palabras0, tiempoLeido, salto, emptyList()).let { assertTrue(it.capitulo); assertTrue(it.puede) }
+        // Leer mucho sin cambiar de capítulo no basta
+        Candado.calcula(base, dia, desde, palabras0, tiempoLeido, lectura0, emptyList()).let { assertFalse(it.capitulo) }
+        // Terminar un libro después de encenderla, sí; uno terminado antes, no
+        Candado.calcula(base, dia, desde, palabras0, tiempo0, lectura0, listOf(n("kid9", "fin" to listOf(500L)))).let { assertFalse(it.capitulo) }
+        Candado.calcula(base, dia, desde, palabras0, tiempo0, lectura0, listOf(n("kid9", "fin" to listOf(500L, 2_000L)))).let { assertTrue(it.capitulo) }
+    }
+
+    /** La pantalla de «Ammit no te suelta», con progreso a medias. */
+    @Test fun capturaDelCandado() {
+        org.junit.Assume.assumeTrue(grabar)
+        captureRoboImage("build/outputs/roborazzi/ammit_candado.png") {
+            PantCandado(null, Candado.Progreso(conCuenta = true, listo = true, palabras = 120, capitulo = false, libro = "El nombre del viento", minutos = 3))
+        }
+    }
+
     /** La cortina: cada modo, en varios momentos, pinta sin fallar (y con nombres de app larguísimos). Con grabar, deja las imágenes. */
     @Test fun laCortinaPintaSinFallar() {
         val (w, h) = Campo.pantalla(ctx)

@@ -228,6 +228,14 @@ private fun Reloj() {
         BasicText("${ahora.dayOfWeek.getDisplayName(FormatoFecha.FULL, ES)} ${ahora.dayOfMonth} de ${ahora.month.getDisplayName(FormatoFecha.FULL, ES)}",
             style = TextStyle(Color.White, 17.sp, FontWeight.Medium, fontFamily = Diseno.Texto, shadow = SOMBRA))
         BasicText("AMMIT · SOLO LA FAMILIA", style = TextStyle(Color(Ammit.ACENTO_NOCHE), 11.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 2.sp, shadow = SOMBRA), modifier = Modifier.padding(top = 6.dp))
+        // Cuánto falta para poder soltarla (se recalcula cuando cambia algo en la cuenta)
+        val ctx = LocalContext.current
+        val cambios = runCatching { com.gonzalo.familia.LaFamilia.cambios }.getOrDefault(0)
+        val p = remember(cambios, ahora) { runCatching { Candado.progreso(ctx) }.getOrNull() }
+        if (p != null && p.conCuenta && p.listo) BasicText(
+            if (p.puede) "YA PUEDES SOLTARLA" else "SE SUELTA CON ${Candado.PALABRAS} PALABRAS (LLEVAS ${p.palabras}) O UN CAPÍTULO",
+            style = TextStyle(Color.White.copy(alpha = 0.75f), 11.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.6.sp, shadow = SOMBRA),
+            modifier = Modifier.padding(top = 4.dp))
     }
 }
 

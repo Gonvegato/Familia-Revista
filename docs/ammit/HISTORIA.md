@@ -4,6 +4,18 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.7.0 — el candado: no se suelta sin escribir o leer
+
+- **Encendida, Ammit solo se apaga cuando, desde que la encendiste, has escrito 300 palabras en Thot o leído un capítulo en Seshat**, en
+  cualquier dispositivo (se mira en la cuenta de la familia). Si intentas apagarla antes (con el botón de la barra o en sus ajustes), sale
+  «Ammit no te suelta. Todavía no.» con lo que llevas y botones para ir a Thot o a Seshat. En cuanto lo cumples, se apaga sola.
+- **Palabras**: lo que Thot sube por día y dispositivo, desde el día en que la encendiste, menos lo que ya había ese día al encenderla.
+- **Capítulo**: en algún libro, lo más lejos que has llegado de verdad (Seshat no lo mueve si saltas con la barra) pasa a otro capítulo más
+  adelante, habiendo leído en ese libro al menos 5 minutos desde que la encendiste. Terminar un libro también vale. Las horas de juego y lo
+  visto en Hathor no cuentan.
+- En la pantalla de inicio, bajo la hora: cuánto falta (o «Ya puedes soltarla»).
+- Sin la cuenta de la familia no se puede comprobar, así que no se suelta.
+
 ## 0.6.0 — fluida y sin un parpadeo
 
 - **El juicio, entero en la cortina por encima de todo**: en cuanto se abre una app que no pasa, la pantalla se funde a negro, por debajo

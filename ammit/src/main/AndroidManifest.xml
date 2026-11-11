@@ -46,6 +46,11 @@
             android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.juicio" android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
 
+        <!-- «Ammit no te suelta»: al intentar apagarla sin haber escrito 300 palabras ni leído un capítulo -->
+        <activity android:name=".CandadoActivity" android:exported="false" android:theme="@style/Ammit.Juicio"
+            android:excludeFromRecents="true" android:taskAffinity="com.gonzalo.ammit.candado" android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
+
         <!-- Al apagar: una capa transparente encima de tu inicio de siempre, con las cadenas yéndose -->
         <activity android:name=".SalidaActivity" android:exported="false" android:theme="@style/Ammit.Salida"
             android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.salida"

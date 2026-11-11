@@ -93,6 +93,7 @@ class AjustesActivity : ComponentActivity() {
     }
 
     fun encender(on: Boolean) {
+        if (!on && Ammit.encendida && !Candado.puede(this)) { CandadoActivity.abrir(this); return }
         if (Cortina.cambiar(this, on) { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }) { vuelta++; return }
         Ammit.encender(this, on); BotonAmmit.avisar(this); vuelta++
         if (on) startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
