@@ -68,7 +68,8 @@ class WidgetsTest {
         siembra()
         Skin.origenAtrio = false; Skin.invertido = false
         // (las vistas previas, con los colores de Thot: fondo azul noche, letra crema y acento cobre, como en «A tu manera»)
-        Skin.fondoPropio = 0xFF171E2B; Skin.tintaPropia = 0xFFF1EBE0; Skin.acentoPropio = 0xFFC8703F
+        // (con los colores de serie: «Noche», sin nada a mano)
+        Skin.origenAtrio = false; Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.accentId = "paleta"; Skin.palette = PALETTES.first { it.id == "noche" }
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase().replace("_", "")}", t, s.first, s.second, false)
         Skin.fondoPropio = 0L; Skin.tintaPropia = 0L
         for ((t, s) in tamanos) foto("noche_${t.name.lowercase()}", t, s.first, s.second, true)

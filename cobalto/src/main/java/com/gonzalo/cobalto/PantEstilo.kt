@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.6.1"
+const val VERSION = "0.6.2"
 
 /** «Ajustes»: Apariencia (como la de Atrio), cuenta de Atrio y pareja, actualizaciones, escritura y copias. */
 @OptIn(ExperimentalLayoutApi::class)

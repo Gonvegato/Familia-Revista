@@ -7,6 +7,11 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.8.4 — los widgets, también con los colores nuevos
+
+- Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:
+  rehechas con los nuevos. Los widgets ya puestos se pintaban con los colores nuevos desde la versión anterior (los leen del tema).
+
 ## 0.8.3 — colores nuevos, apagados
 
 - **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Arena»: arena clara (#E7E1D3), tinta parda (#2A2824) y oliva apagado (#6E7458); de noche, tierra oscura (#22211D) con la arena de texto y el oliva aclarado (#8E9474). Elegidos entre tres propuestas sin colores brillantes.

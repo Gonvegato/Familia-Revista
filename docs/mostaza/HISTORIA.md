@@ -11,6 +11,11 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.5 — los widgets, también con los colores nuevos
+
+- Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:
+  rehechas con los nuevos. Los widgets ya puestos se pintaban con los colores nuevos desde la versión anterior (los leen del tema).
+
 ## 0.7.4 — colores nuevos, apagados
 
 - **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Celuloide»: gris cálido (#E9E5DE), casi negro (#1F1E1C) y sepia (#8C6F4E); de noche, casi negro (#1C1B19) con el gris de texto y el sepia aclarado (#A88B66). Elegidos entre tres propuestas sin colores brillantes.

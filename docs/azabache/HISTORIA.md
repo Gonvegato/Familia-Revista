@@ -9,6 +9,11 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.2 — los widgets, también con los colores nuevos
+
+- Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:
+  rehechas con los nuevos. Los widgets ya puestos se pintaban con los colores nuevos desde la versión anterior (los leen del tema).
+
 ## 1.8.1 — colores nuevos, apagados
 
 - **Colores de serie nuevos** («Ciruela»): gris ciruela (#2B2529), crema (#EAE2DD) y malva gris (#9C7B86), en lugar del negro, el crema

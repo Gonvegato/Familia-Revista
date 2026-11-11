@@ -9,6 +9,11 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.8.2 — los widgets, también con los colores nuevos
+
+- Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:
+  rehechas con los nuevos. Los widgets ya puestos se pintaban con los colores nuevos desde la versión anterior (los leen del tema).
+
 ## 0.8.1 — colores nuevos, apagados
 
 - **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Vino viejo»: vino muy oscuro (#2C1C1F), crema (#EADFD2) y caramelo apagado (#A9876A), igual de día y de noche. Elegidos entre tres propuestas sin colores brillantes.

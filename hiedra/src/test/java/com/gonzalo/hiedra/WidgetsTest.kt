@@ -98,6 +98,8 @@ class WidgetsTest {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra()
         Skin.origenAtrio = false; Skin.invertido = false
+        // (con los colores de serie: «Arena», sin nada a mano)
+        Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.accentId = "paleta"; Skin.palette = PALETTES.first { it.id == "arena" }
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase()}", t, s.first, s.second, false)
         Skin.invertido = true
         for ((t, s) in tamanos) foto("inv_${t.name.lowercase()}", t, s.first, s.second, false)

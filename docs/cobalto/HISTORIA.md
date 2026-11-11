@@ -10,6 +10,11 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.6.2 — los widgets, también con los colores nuevos
+
+- Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:
+  rehechas con los nuevos. Los widgets ya puestos se pintaban con los colores nuevos desde la versión anterior (los leen del tema).
+
 ## 0.6.1 — colores nuevos, apagados
 
 - **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Noche»: azul noche apagado (#1C2129), gris claro (#E4E6E9) y azul niebla (#8696AE), igual de día y de noche. Elegidos entre tres propuestas sin colores brillantes.

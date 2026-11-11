@@ -97,8 +97,8 @@ class WidgetsTest {
     @Test fun dibujaLasVistasPrevias() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra()
-        // (las vistas previas, con los colores de Nut: fondo granate, letra crema y acento dorado, como en «A tu manera»)
-        Skin.fondoPropio = 0xFF3D0E19; Skin.tintaPropia = 0xFFF1DCB5; Skin.acentoPropio = 0xFFD4A06A
+        // (las vistas previas, con los colores de serie de Nut: «Vino viejo», sin nada a mano)
+        Skin.origenAtrio = false; Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.accentId = "paleta"; Skin.palette = PALETTES.first { it.id == "vino" }
         Futbol.fijo = FutbolDeMentira.datos(ctx, vivo = false)
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase()}", t, s.first, s.second, false)
         Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L

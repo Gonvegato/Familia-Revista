@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.mostaza"
         minSdk = 29
         targetSdk = 35
-        versionCode = 20
-        versionName = "0.7.4"
+        versionCode = 21
+        versionName = "0.7.5"
         // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura
         ndk { abiFilters += "arm64-v8a" }
     }
