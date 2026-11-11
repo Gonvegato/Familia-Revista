@@ -124,6 +124,9 @@ class WidgetsTest {
             val p = Widgets.componer(ctx, t, 1, w, h)
             assertTrue("$t sin zonas", p.zonas.isNotEmpty())
             for (noche in listOf(false, true)) guardar("${t.name.lowercase()}_${w.toInt()}x${h.toInt()}_${if (noche) "oscuro" else "claro"}", p.bitmap(ctx, w, h, noche, 3f))
+            // Cada widget con cada estilo (familia/EstiloWidget.kt), de día y de noche: build/outputs/estilos/
+            if ((w to h) == ls.first { it.first < 400f }) for (e in com.gonzalo.familia.EstiloWidget.entries) for (n in listOf(false, true))
+                File(File("build/outputs/estilos").apply { mkdirs() }, "${t.name.lowercase()}_${e.ordinal}${e.name.lowercase()}_${if (n) "n" else "d"}.png").outputStream().use { p.bitmap(ctx, w, h, n, 1.5f, estilo = e).compress(Bitmap.CompressFormat.PNG, 100, it) }
             if (prev != null && (w to h) == ls.first { it.first < 400f }) File(prev, "w_prev_${t.name.lowercase().replace("ano", "ano")}.png").outputStream().use {
                 p.bitmap(ctx, w, h, false, 1.6f).compress(Bitmap.CompressFormat.PNG, 100, it)
             }

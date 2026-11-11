@@ -233,6 +233,10 @@
         <receiver android:name=".ActualizadorReabrir" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
+        <!-- Al poner un widget (o al cambiarlo): elegir su estilo -->
+        <activity android:name=".ConfigWidgetActivity" android:exported="true" android:theme="@style/Ronron">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
         <receiver android:name=".WLeyendo" android:label="@string/w_leyendo" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_leyendo" />

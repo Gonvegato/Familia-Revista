@@ -7,6 +7,18 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.8.6 — los widgets, con el estilo que elijas
+
+- **Al poner cualquier widget de Bastet** (también la cabecera con el nombre) se abre una pantalla para
+  elegir cómo lleva el acento: **como ahora**, **cabecera de color** (una franja del acento arriba), **papel teñido** (todo el fondo con un
+  poco del acento), **marco de color** (un borde grueso del acento) o **todo acento** (el fondo es el acento y el texto va en papel o negro,
+  el que se lea mejor). Cada opción se ve con el widget de verdad, de día y de noche.
+- La cabecera sin papel (solo el nombre sobre el fondo de pantalla) tiene dos: como ahora o **el nombre en el color del acento**. Si un
+  estilo no cambia nada en un widget (sobre una foto a sangre la franja y el papel teñido no se ven), no se ofrece.
+- **Para cambiarlo después**: mantener pulsado el widget → ajustes o «configurar» del widget (el nombre depende del lanzador; en algunos
+  lanzadores no existe y hay que quitar el widget y volver a ponerlo). Los widgets que ya tenías puestos siguen como estaban.
+- El granate oscuro de Nut se aclara un poco en la franja y el marco de noche, para que se vea sobre el negro.
+
 ## 0.8.5 — los colores de la familia, de día y de noche
 
 - **Las seis apps comparten colores**: de día, papel #F8F0D4 con texto negro; de noche, al revés (negro con texto #F8F0D4), siguiendo el

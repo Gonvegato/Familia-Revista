@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.gonzalo.familia.EstiloWidgetActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,18 +23,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Al poner un widget «Sigue leyendo» o «En portada» en el escritorio: ¿qué libro abre? El que toque (lo que estés leyendo, pasando de uno a
+ * Al poner cualquier widget: primero su estilo (familia/EstiloWidgetActivity); luego, en un widget «Sigue leyendo» o «En portada» en el escritorio: ¿qué libro abre? El que toque (lo que estés leyendo, pasando de uno a
  * otro) o uno fijo que eliges aquí.
  */
-class ConfigWidgetActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
-        val id = intent?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        setResult(Activity.RESULT_CANCELED)
-        if (id == AppWidgetManager.INVALID_APPWIDGET_ID) { finish(); return }
-        iniciar(this)
-        setContent { MarfilTheme { ElegirLibroWidget { libroId -> Widgets.ponFijo(this, id, libroId); Widgets.pedir(this); setResult(Activity.RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)); finish() } } }
+class ConfigWidgetActivity : EstiloWidgetActivity() {
+    override val nombreApp = "Seshat"
+    override val papelApp = 0xFFF8F0D4.toInt()
+    override val tintaApp = 0xFF000000.toInt()
+    override val acentoApp = 0xFFB0791E.toInt()
+    override fun preparar() = iniciar(this)
+    override suspend fun previas(id: Int) = Widgets.previas(this, id)
+    override fun repintar(id: Int) = Widgets.repintar(this, id)
+
+    /** Después del estilo, los widgets de una ficha preguntan cuál abre. */
+    override fun despues(id: Int): Boolean {
+        if (Widgets.tipoDe(this, id) !in setOf(WTipo.LEYENDO, WTipo.PORTADA)) return false
+        setContent { MarfilTheme { ElegirLibroWidget { libroId -> Widgets.ponFijo(this, id, libroId); listo() } } }
+        return true
     }
 }
 

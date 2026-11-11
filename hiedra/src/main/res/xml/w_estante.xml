@@ -8,4 +8,6 @@
     android:initialLayout="@layout/w_marco"
     android:previewImage="@drawable/w_prev_estante"
     android:description="@string/w_estante_d"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable"
+    android:configure="com.gonzalo.hiedra.ConfigWidgetActivity" />

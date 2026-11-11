@@ -11,6 +11,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
+import kotlinx.coroutines.runBlocking
 
 /** Los widgets, dibujados en el ordenador con obras de ejemplo (build/outputs/widgets/). Sin -Proborazzi.test.record solo se comprueba que se dibujan. */
 @RunWith(RobolectricTestRunner::class)
@@ -63,6 +64,13 @@ class WidgetsTest {
         Widgets.ponFijo(ctx, 7, null); assertNull(Widgets.fijoDe(ctx, 7))
     }
 
+    // Cada widget con cada estilo (familia/EstiloWidget.kt), de día y de noche: build/outputs/estilos/
+    private fun estilo(t: WTipo, w: Float, h: Float, e: com.gonzalo.familia.EstiloWidget, n: Boolean) {
+        val pag = runBlocking { Widgets.componer(ctx, t, 1, w, h) }
+        File("build/outputs/estilos").mkdirs()
+        File("build/outputs/estilos/${t.name.lowercase()}_${e.ordinal}${e.name.lowercase()}_${if (n) "n" else "d"}.png").outputStream().use { pag.bitmap(ctx, w, h, n, 1.5f, estilo = e).compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
     @Test fun dibujaLasVistasPrevias() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra()
@@ -73,6 +81,7 @@ class WidgetsTest {
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase().replace("_", "")}", t, s.first, s.second, false)
         // (y de noche: van a drawable-night-nodpi, para el selector con el modo oscuro)
         for ((t, s) in tamanos) foto("noche_w_prev_${t.name.lowercase().replace("_", "")}", t, s.first, s.second, true)
+        for ((t, s) in tamanos) for (e in com.gonzalo.familia.EstiloWidget.entries) for (n in listOf(false, true)) estilo(t, s.first, s.second, e, n)
         Skin.fondoPropio = 0L; Skin.tintaPropia = 0L
         for ((t, s) in tamanos) foto("noche_${t.name.lowercase()}", t, s.first, s.second, true)
         Skin.invertido = true

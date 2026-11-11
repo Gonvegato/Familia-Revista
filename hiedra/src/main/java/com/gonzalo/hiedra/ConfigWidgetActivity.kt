@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.gonzalo.familia.EstiloWidgetActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,18 +24,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Al poner un widget «Sigue jugando» o «En portada» en el escritorio: ¿qué juego abre? El que toque (lo último que hayas jugado, pasando de uno
+ * Al poner cualquier widget: primero su estilo (familia/EstiloWidgetActivity); luego, en un widget «Sigue jugando» o «En portada» en el escritorio: ¿qué juego abre? El que toque (lo último que hayas jugado, pasando de uno
  * a otro) o uno fijo que eliges aquí. Es lo que antes hacían los accesos directos, pero con el dibujo de la revista.
  */
-class ConfigWidgetActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
-        val id = intent?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        setResult(Activity.RESULT_CANCELED)
-        if (id == AppWidgetManager.INVALID_APPWIDGET_ID) { finish(); return }
-        iniciar(this)
-        setContent { HiedraTheme { ElegirJuegoWidget { juegoId -> Widgets.ponFijo(this, id, juegoId); Widgets.pedir(this); setResult(Activity.RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)); finish() } } }
+class ConfigWidgetActivity : EstiloWidgetActivity() {
+    override val nombreApp = "Bastet"
+    override val papelApp = 0xFFF8F0D4.toInt()
+    override val tintaApp = 0xFF000000.toInt()
+    override val acentoApp = 0xFF7A8A3A.toInt()
+    override fun preparar() = iniciar(this)
+    override suspend fun previas(id: Int) = Widgets.previas(this, id)
+    override fun repintar(id: Int) = Widgets.repintar(this, id)
+
+    /** Después del estilo, los widgets de una ficha preguntan cuál abre. */
+    override fun despues(id: Int): Boolean {
+        if (Widgets.tipoDe(this, id) !in setOf(WTipo.JUGANDO, WTipo.PORTADA)) return false
+        setContent { HiedraTheme { ElegirJuegoWidget { juegoId -> Widgets.ponFijo(this, id, juegoId); listo() } } }
+        return true
     }
 }
 

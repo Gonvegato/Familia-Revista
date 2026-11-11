@@ -8,4 +8,6 @@
     android:initialLayout="@layout/w_marco"
     android:previewImage="@drawable/w_prev_portada"
     android:description="@string/w_portada_d"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable"
+    android:configure="com.gonzalo.mostaza.ConfigWidgetActivity" />

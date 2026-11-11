@@ -110,6 +110,9 @@ class WidgetsTest {
             val pag = runBlocking { Widgets.componer(ctx, tipo, 1, tam.first, tam.second) }
             File(dir, "w_prev_$nombre.png").outputStream().use { pag.bitmap(ctx, tam.first, tam.second, false, 2f).compress(Bitmap.CompressFormat.PNG, 100, it) }
             File(dirNoche, "w_prev_$nombre.png").outputStream().use { pag.bitmap(ctx, tam.first, tam.second, true, 2f).compress(Bitmap.CompressFormat.PNG, 100, it) }
+            File("build/outputs/estilos").mkdirs()
+            for (e in com.gonzalo.familia.EstiloWidget.entries) for (n in listOf(false, true))
+                File("build/outputs/estilos/${nombre}_${e.ordinal}${e.name.lowercase()}_${if (n) "n" else "d"}.png").outputStream().use { pag.bitmap(ctx, tam.first, tam.second, n, 1.5f, estilo = e).compress(Bitmap.CompressFormat.PNG, 100, it) }
         }
     }
 

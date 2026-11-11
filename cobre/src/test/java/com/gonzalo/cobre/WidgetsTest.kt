@@ -94,6 +94,13 @@ class WidgetsTest {
         File("$dir/$nombre.png").outputStream().use { bm.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
+    // Cada widget con cada estilo (familia/EstiloWidget.kt), de día y de noche: build/outputs/estilos/
+    private fun estilo(t: WTipo, w: Float, h: Float, e: com.gonzalo.familia.EstiloWidget, n: Boolean) {
+        val pag = runBlocking { Widgets.componer(ctx, t, 1, w, h) }
+        File("build/outputs/estilos").mkdirs()
+        File("build/outputs/estilos/${t.name.lowercase()}_${e.ordinal}${e.name.lowercase()}_${if (n) "n" else "d"}.png").outputStream().use { pag.bitmap(ctx, w, h, n, 1.5f, estilo = e).compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
     @Test fun dibujaLasVistasPrevias() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra()
@@ -103,6 +110,7 @@ class WidgetsTest {
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase()}", t, s.first, s.second, false)
         // (y de noche: van a drawable-night-nodpi, para el selector con el modo oscuro)
         for ((t, s) in tamanos) foto("noche_w_prev_${t.name.lowercase()}", t, s.first, s.second, true)
+        for ((t, s) in tamanos) for (e in com.gonzalo.familia.EstiloWidget.entries) for (n in listOf(false, true)) estilo(t, s.first, s.second, e, n)
         Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
         foto("ancho_proximo", WTipo.PROXIMO, 330f, 170f, false)
         foto("bajo_proximo", WTipo.PROXIMO, 300f, 100f, false)

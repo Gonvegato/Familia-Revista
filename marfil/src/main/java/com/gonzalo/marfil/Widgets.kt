@@ -37,6 +37,10 @@ import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.TextUtils
 import android.widget.RemoteViews
+import com.gonzalo.familia.EstiloWidget
+import com.gonzalo.familia.EstilosWidget
+import com.gonzalo.familia.PreviasWidget
+import com.gonzalo.familia.TonosWidget
 import androidx.compose.ui.graphics.toArgb
 import coil.imageLoader
 import coil.request.ImageRequest
@@ -128,7 +132,13 @@ class Pagina(val zonas: List<Zona>, val dibujo: Hoja.() -> Unit) {
     /** Sin papel ni esquinas: solo lo dibujado, sobre el fondo de pantalla. */
     var sinFondo = false
     fun transparente() = apply { sinFondo = true }
-    fun bitmap(ctx: Context, w: Float, h: Float, noche: Boolean, s: Float, propio: Int? = null, dentro: Boolean = false, acentoPropio: Int? = null): Bitmap = Hoja(ctx, w, h, noche, s, propio, dentro, acentoPropio).apply { dibujo(); if (!sinFondo) terminar() }.bm
+    fun bitmap(ctx: Context, w: Float, h: Float, noche: Boolean, s: Float, propio: Int? = null, dentro: Boolean = false, acentoPropio: Int? = null, estilo: EstiloWidget = EstiloWidget.COMO_AHORA): Bitmap {
+        // Sin papel (la cabecera sobre el fondo de pantalla) el estilo solo cambia el color del nombre
+        val e = if (sinFondo) EstiloWidget.COMO_AHORA else estilo
+        // Cabecera de color: primero se mide dónde caen las etiquetas de arriba (sin pintar de verdad) y luego se pinta la franja debajo
+        val banda = if (e == EstiloWidget.CABECERA) Hoja(ctx, w, h, noche, 0.05f, propio, dentro, acentoPropio, e, midiendo = true).apply { dibujo() }.bandaMedida() else null
+        return Hoja(ctx, w, h, noche, s, propio, dentro, acentoPropio, e, banda = banda, nombreEnColor = sinFondo && estilo == EstiloWidget.ACENTO).apply { dibujo(); if (!sinFondo) terminar() }.bm
+    }
 }
 
 private val ES = Locale("es", "ES")
@@ -137,7 +147,7 @@ private val ES = Locale("es", "ES")
 fun padDe(h: Float) = if (h < 90f) 17f else 20f
 
 /** El lienzo de un widget: se dibuja en dp, con los colores del tema y las letras de la revista. */
-class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: Float, val propio: Int? = null, val dentro: Boolean = false, val acentoPropio: Int? = null) {
+class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: Float, val propio: Int? = null, val dentro: Boolean = false, val acentoPropio: Int? = null, val estilo: EstiloWidget = EstiloWidget.COMO_AHORA, val midiendo: Boolean = false, val banda: RectF? = null, val nombreEnColor: Boolean = false) {
     val bm: Bitmap = Bitmap.createBitmap(max(1, (w * s).roundToInt()), max(1, (h * s).roundToInt()), Bitmap.Config.ARGB_8888)
     val c = Canvas(bm).apply { scale(bm.width / w, bm.height / h) }
 
@@ -150,13 +160,24 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     }
     private fun lum(c: Int) = (0.299f * android.graphics.Color.red(c) + 0.587f * android.graphics.Color.green(c) + 0.114f * android.graphics.Color.blue(c)) / 255f
     private val base: Int? = propio?.let { 0xFF000000.toInt() or it }
-    val papel = base ?: tonos.cPaper.toArgb()
-    val tinta = base?.let { if (lum(it) > 0.5f) 0xFF15120F.toInt() else 0xFFF6F1E7.toInt() } ?: tonos.cInk.toArgb()
-    val crudo = base?.let { mezcla(it, tinta, 0.08f) } ?: tonos.cCrudo.toArgb()
-    val gris = base?.let { mezcla(tinta, it, 0.4f) } ?: tonos.cMuted.toArgb()
-    val linea = base?.let { mezcla(tinta, it, 0.78f) } ?: tonos.cLine.toArgb()
-    val arena = base?.let { mezcla(it, tinta, 0.1f) } ?: tonos.cSand.toArgb()
-    val acento = acentoPropio?.let { 0xFF000000.toInt() or it } ?: tonos.cGeneral().toArgb().let { a -> if (base != null && kotlin.math.abs(lum(a) - lum(base)) < 0.22f) tinta else a }
+    private val papel0 = base ?: tonos.cPaper.toArgb()
+    private val tinta0 = base?.let { if (lum(it) > 0.5f) 0xFF15120F.toInt() else 0xFFF6F1E7.toInt() } ?: tonos.cInk.toArgb()
+    private val crudo0 = base?.let { mezcla(it, tinta0, 0.08f) } ?: tonos.cCrudo.toArgb()
+    private val gris0 = base?.let { mezcla(tinta0, it, 0.4f) } ?: tonos.cMuted.toArgb()
+    private val linea0 = base?.let { mezcla(tinta0, it, 0.78f) } ?: tonos.cLine.toArgb()
+    private val arena0 = base?.let { mezcla(it, tinta0, 0.1f) } ?: tonos.cSand.toArgb()
+    private val acento0 = acentoPropio?.let { 0xFF000000.toInt() or it } ?: tonos.cGeneral().toArgb().let { a -> if (base != null && kotlin.math.abs(lum(a) - lum(base)) < 0.22f) tinta0 else a }
+    // El estilo elegido al poner el widget (familia/EstiloWidget.kt): «papel teñido» y «todo acento» cambian los colores; la cabecera y el marco se pintan aparte
+    val est: EstiloWidget = if (propio != null || dentro) EstiloWidget.COMO_AHORA else estilo
+    private val tonosEstilo = EstilosWidget.aplicar(est, noche, TonosWidget(papel0, tinta0, gris0, linea0, arena0, crudo0, acento0))
+    val papel = tonosEstilo.papel
+    val tinta = tonosEstilo.tinta
+    val gris = tonosEstilo.gris
+    val linea = tonosEstilo.linea
+    val arena = tonosEstilo.arena
+    val acentoBloque = tonosEstilo.bloque
+    val crudo = tonosEstilo.crudo
+    val acento = tonosEstilo.bloque
     /** El acento sobre una foto oscura. */
     val acentoFoto = Skin.tonosPara(true).cGeneral().toArgb()
     val radio = 22f
@@ -178,11 +199,12 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
             val m = if (dentro) 9f else 6f
             c.drawRoundRect(RectF(m, m, w - m, h - m), radio - m, radio - m, Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.1f; color = col })
         }
+        pintaMarco()
         val p = Path().apply { addRoundRect(RectF(0f, 0f, w, h), radio, radio, Path.Direction.CW); fillType = Path.FillType.INVERSE_WINDING }
         c.drawPath(p, Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR) })
     }
 
-    fun fondo(color: Int = papel) = c.drawColor(color)
+    fun fondo(color: Int = papel) { c.drawColor(color); pintaBanda() }
     /** Un lavado suave del acento elegido desde la esquina de arriba a la derecha: menos papel vacío. */
     fun lavado(@Suppress("UNUSED_PARAMETER") color: Int = 0) {
         // Solo con un acento que hayas elegido tú: nunca un color inventado por juego
@@ -237,8 +259,63 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     }
 
     /** Antetítulo: mayúsculas pequeñas, negras y espaciadas. Devuelve el alto. */
-    fun ante(t: String, x: Float, y: Float, ancho: Float, color: Int = tinta, size: Float = 9f, al: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL): Float =
-        pon(capa(t.uppercase(ES), tp(fNegrita, size, color, 0.16f), ancho, 1, 1f, al), x, y)
+    fun ante(t: String, x: Float, y: Float, ancho: Float, color: Int = tinta, size: Float = 9f, al: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL): Float {
+        val l = capa(t.uppercase(ES), tp(fNegrita, size, enBanda(x, y, color), 0.16f), ancho, 1, 1f, al)
+        if (midiendo) apunta(l, x, y)
+        return pon(l, x, y)
+    }
+
+    // ------------------------------------------------------------------ cabecera de color y marco (estilos del widget)
+
+    private val etiquetas = ArrayList<RectF>()
+    /** El color de la franja y del marco: el acento, visible sobre el papel (el granate de Nut, aclarado de noche). */
+    val colorBanda: Int by lazy { EstilosWidget.colorBorde(TonosWidget(papel, tinta, gris, linea, arena, arena, acentoBloque)) }
+    /** El texto sobre la franja: papel o negro, el que mejor se lea. */
+    val textoBanda: Int by lazy { EstilosWidget.sobre(colorBanda, papel, tinta) }
+    /** El nombre de la app en el color del acento (la cabecera sin papel, con «nombre en color»): legible sobre un fondo de pantalla claro u oscuro. */
+    val acentoNombre: Int by lazy { EstilosWidget.bloqueVisible(acentoBloque, if (noche) 0xFF000000.toInt() else 0xFFFFFFFF.toInt(), if (noche) 0xFFFFFFFF.toInt() else 0xFF000000.toInt(), 2.4) }
+    private var bandaPuesta = false
+
+    /** Lo que se escribe sobre la franja va en su color de texto. */
+    fun enBanda(x: Float, y: Float, color: Int): Int = banda?.let { if (y < it.bottom && x + 1f >= it.left) textoBanda else color } ?: color
+
+    /** Al medir: dónde cae cada etiqueta de arriba del todo. */
+    private fun apunta(l: Layout, x: Float, y: Float) {
+        if (y > 30f || l.lineCount == 0) return
+        etiquetas += RectF(x + l.getLineLeft(0), y, x + l.getLineRight(0), y + l.height)
+    }
+
+    /** La franja: hasta debajo de las etiquetas de arriba (si no hay, una tira fina); si empiezan más adentro (junto a una portada), desde ahí. */
+    fun bandaMedida(): RectF {
+        if (etiquetas.isEmpty()) return RectF(0f, 0f, w, 7f)
+        val izq = etiquetas.minOf { it.left }
+        val abajo = etiquetas.maxOf { it.bottom }
+        return RectF(if (izq <= 28f) 0f else izq - 10f, 0f, w, abajo + 7f)
+    }
+
+    /** El bloque de tinta de la cabecera con papel (fondo, letra): teñido de acento, o el acento con la letra que mejor se lea. */
+    fun bloqueMarca(): Pair<Int, Int> = when (est) {
+        EstiloWidget.ACENTO -> papel to tinta
+        EstiloWidget.TENIDO -> EstilosWidget.mezcla(tinta, acentoBloque, if (noche) 0.30f else 0.35f) to papel
+        else -> tinta to papel
+    }
+
+    /** La etiqueta de acento sobre una foto (con letra blanca): con «todo acento», el acento de la app (el claro de ese estilo no se leería). */
+    val chapa: Int get() = if (est == EstiloWidget.ACENTO) papel else acento
+
+    private fun pintaBanda() {
+        val b = banda ?: return
+        if (bandaPuesta) return
+        bandaPuesta = true
+        c.drawRect(b, lleno(colorBanda))
+    }
+
+    /** El marco de color (encima de todo, antes de recortar las esquinas). */
+    private fun pintaMarco() {
+        if (est != EstiloWidget.MARCO) return
+        val m = 3f
+        c.drawRoundRect(RectF(m, m, w - m, h - m), radio - m, radio - m, Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 6f; color = colorBanda })
+    }
 
     fun anchoAnte(t: String, size: Float = 9f) = tp(fNegrita, size, tinta, 0.16f).measureText(t.uppercase(ES))
 
@@ -433,6 +510,7 @@ object Widgets {
     }
 
     fun olvidar(ctx: Context, ids: IntArray) {
+        EstilosWidget.olvidar(ctx, ids)
         val ed = prefs(ctx).edit()
         ids.forEach { id -> ed.remove("${id}_i"); ed.remove("${id}_fijo") }
         ed.apply()
@@ -483,6 +561,29 @@ object Widgets {
         }
     }
 
+    // ------------------------------------------------------------------ estilo (se elige al poner el widget: ConfigWidgetActivity)
+
+    /** Qué widget es ese id (por su receiver). */
+    fun tipoDe(ctx: Context, id: Int): WTipo? {
+        val n = runCatching { AppWidgetManager.getInstance(ctx).getAppWidgetInfo(id)?.provider?.className }.getOrNull() ?: return null
+        return WTipo.entries.firstOrNull { clase(it).name == n }
+    }
+
+    /** Para la pantalla de elegir el estilo: ese widget, dibujado con cada uno. */
+    suspend fun previas(ctx: Context, id: Int): PreviasWidget? {
+        val app = ctx.applicationContext
+        val t = tipoDe(app, id) ?: return null
+        preparar(app)
+        cargarLetras(app)
+        val (w, h) = tamano(app, AppWidgetManager.getInstance(app).getAppWidgetOptions(id), t)
+        val pag = componer(app, t, id, w, h)
+        val s = escala(app, w, h, 1)
+        return PreviasWidget(w, h, pag.sinFondo) { e, n -> pag.bitmap(app, w, h, n, s, estilo = e) }
+    }
+
+    /** Repinta ese widget (al elegir su estilo). */
+    fun repintar(ctx: Context, id: Int) { val t = tipoDe(ctx, id) ?: return; pintar(ctx, t, intArrayOf(id), null) }
+
     suspend fun pintarUno(ctx: Context, tipo: WTipo, id: Int) {
         val mgr = AppWidgetManager.getInstance(ctx)
         val (w, h) = tamano(ctx, mgr.getAppWidgetOptions(id), tipo)
@@ -520,13 +621,14 @@ object Widgets {
         cargarLetras(ctx)
         val pag = componer(ctx, tipo, id, w, h)
         val rv = RemoteViews(ctx.packageName, R.layout.w_marco)
+        val e = EstilosWidget.de(ctx, id)
         when (val n = noche()) {
             null -> {
                 val s = escala(ctx, w, h, 2)
-                rv.setImageViewBitmap(R.id.w_dia, pag.bitmap(ctx, w, h, false, s))
-                rv.setImageViewBitmap(R.id.w_noche, pag.bitmap(ctx, w, h, true, s))
+                rv.setImageViewBitmap(R.id.w_dia, pag.bitmap(ctx, w, h, false, s, estilo = e))
+                rv.setImageViewBitmap(R.id.w_noche, pag.bitmap(ctx, w, h, true, s, estilo = e))
             }
-            else -> rv.setImageViewBitmap(R.id.w_img, pag.bitmap(ctx, w, h, n, escala(ctx, w, h, 1)))
+            else -> rv.setImageViewBitmap(R.id.w_img, pag.bitmap(ctx, w, h, n, escala(ctx, w, h, 1), estilo = e))
         }
         val d = ctx.resources.displayMetrics.density
         pag.zonas.forEach { rv.addView(R.id.w_zonas, it.vista(ctx, w, h, d)) }
@@ -786,7 +888,7 @@ object Widgets {
             pon(l, pad, y)
             val est = d.estado(e)
             val ew = min(w - 2 * pad, anchoAnte(est, 8.5f) + 12f)
-            c.drawRoundRect(pad, y - 19f, pad + ew, y - 4f, 4f, 4f, lleno(acento))
+            c.drawRoundRect(pad, y - 19f, pad + ew, y - 4f, 4f, 4f, lleno(chapa))
             ante(est, pad + 6f, y - 16.5f, ew - 10f, 0xFFFFFFFF.toInt(), 8.5f)
             ante(if (e.enOtroDispositivo) "Abrir  →" else "Leer  →", w - pad - 90f, h - pad - 10f, 90f, acentoFoto, 9f, Layout.Alignment.ALIGN_OPPOSITE)
         }
@@ -921,7 +1023,7 @@ object Widgets {
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
         return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
-            val color = if (noche) 0xFFF6F1E7.toInt() else tinta
+            val color = if (nombreEnColor) acentoNombre else if (noche) 0xFFF6F1E7.toInt() else tinta
             val sombra = if (noche) 0x99000000.toInt() else 0x55FFFFFF
             val pie = if (h >= 84f) 16f else 0f
             val p = tp(fTitular, 10f, color, -0.04f)
@@ -953,6 +1055,8 @@ object Widgets {
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
         return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
             // Dirección C: la cabecera de la portada, en un bloque de tinta con el nombre del color del papel
+            // Con «papel teñido» o «todo acento», el bloque de tinta también lo lleva
+            val (tinta, papel) = bloqueMarca()
             fondo(tinta)
             val pad = if (h < 90f) 12f else 16f
             val conLinea = h >= 70f

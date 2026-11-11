@@ -76,6 +76,10 @@
             <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
         </receiver>
         <!-- Los widgets de la pantalla de inicio (Widgets.kt): «Seguir viendo», «Pendientes», «En portada», «Próximos capítulos», «Tu semana» y la cabecera -->
+        <!-- Al poner un widget (o al cambiarlo): elegir su estilo -->
+        <activity android:name=".ConfigWidgetActivity" android:exported="true" android:theme="@style/Mostaza">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
         <receiver android:name=".WSeguir" android:label="@string/w_seguir" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/w_seguir" />

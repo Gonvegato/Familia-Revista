@@ -10,6 +10,18 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.6.4 — los widgets, con el estilo que elijas
+
+- **Al poner cualquier widget de Thot** (también la cabecera con el nombre) se abre una pantalla para
+  elegir cómo lleva el acento: **como ahora**, **cabecera de color** (una franja del acento arriba), **papel teñido** (todo el fondo con un
+  poco del acento), **marco de color** (un borde grueso del acento) o **todo acento** (el fondo es el acento y el texto va en papel o negro,
+  el que se lea mejor). Cada opción se ve con el widget de verdad, de día y de noche.
+- La cabecera sin papel (solo el nombre sobre el fondo de pantalla) tiene dos: como ahora o **el nombre en el color del acento**. Si un
+  estilo no cambia nada en un widget (sobre una foto a sangre la franja y el papel teñido no se ven), no se ofrece.
+- **Para cambiarlo después**: mantener pulsado el widget → ajustes o «configurar» del widget (el nombre depende del lanzador; en algunos
+  lanzadores no existe y hay que quitar el widget y volver a ponerlo). Los widgets que ya tenías puestos siguen como estaban.
+- El granate oscuro de Nut se aclara un poco en la franja y el marco de noche, para que se vea sobre el negro.
+
 ## 0.6.3 — los colores de la familia, de día y de noche
 
 - **Las seis apps comparten colores**: de día, papel #F8F0D4 con texto negro; de noche, al revés (negro con texto #F8F0D4), siguiendo el

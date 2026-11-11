@@ -8,4 +8,6 @@
     android:initialLayout="@layout/w_marco"
     android:previewImage="@drawable/w_prev_efemeride"
     android:description="@string/w_efemeride_d"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable"
+    android:configure="com.gonzalo.gamerate.ConfigWidgetActivity" />
