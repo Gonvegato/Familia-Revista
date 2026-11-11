@@ -11,6 +11,15 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.13 — los vídeos H.264 de 10 bits
+
+- Lo de la imagen rota en la tablet era el decodificador: el vídeo es H.264 de 10 bits («Hi10P»), que casi ningún decodificador de Android
+  lee (el de la tablet lo intenta y lo rompe; el de algunos móviles, como el Oppo, sí lo lee). VLC sin aceleración por hardware sí puede.
+- Si un vídeo es H.264 de 10 bits y ningún decodificador del dispositivo dice leerlo, Hathor se para antes de enseñarlo roto y avisa:
+  otra fuente, o VLC con la aceleración por hardware desactivada. Esa fuente ya no se elige sola en ese dispositivo.
+- Las fuentes cuyo nombre dice «10bit» o «Hi10» en H.264 no se eligen solas en los dispositivos que no lo leen.
+- «¿Se ve mal?» vuelve a ser solo cambiar de decodificador (también con torrents: lo de bajarlo de nuevo de la 0.7.12 no era el problema).
+
 ## 0.7.12 — un torrent que se ve roto, desde cero
 
 - Si un torrent se ve roto (bloques grises) en cualquier reproductor, también en VLC, lo que está mal es lo bajado en ese dispositivo

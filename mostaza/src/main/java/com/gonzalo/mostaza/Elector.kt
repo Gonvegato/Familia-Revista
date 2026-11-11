@@ -61,6 +61,8 @@ data class Analisis(
     val confianza: Confianza = Confianza.FUERTE,
     /** Reescalada (por IA o no): no es la calidad que dice. */
     val reescalada: Boolean = false,
+    /** De 10 bits («10bit», «Hi10P»). En H.264 casi ningún decodificador de Android lo lee. */
+    val diezBits: Boolean = false,
 ) {
     val tieneEspanol: Boolean get() = Idioma.CASTELLANO in idiomas || Idioma.LATINO in idiomas || Idioma.ESPANOL in idiomas
     /** «MULTI» o «DUAL» sin decir cuáles: puede tener español (o no). */
@@ -199,7 +201,7 @@ data class Analisis(
                 else -> null
             }
             return Analisis(if (mala && res == 0) 360 else res, hdr, dv, codec, idiomas, subs, tam, sem, cache, mala, r("${B}(3d|sbs|half[ -]?sbs)$E").containsMatchIn(t),
-                confianza, reescalada)
+                confianza, reescalada, r("${B}(10 ?bits?|hi10p?)$E").containsMatchIn(t))
         }
 
         /** «2.1 GB», «1,5 GB», «700 MB», «4.37 GiB». 0 si no lo dice. */
@@ -236,11 +238,14 @@ data class PrefsElector(
 data class Red(val kbps: Long = 0L, val movil: Boolean = false, val medida: Boolean = false)
 
 /** Lo que sabe reproducir este dispositivo (de `MediaCodecList`). */
-data class Capacidades(val hevc: Boolean = true, val av1: Boolean = false, val vp9: Boolean = true, val hdr: Boolean = false, val dv: Boolean = false, val maxima: Int = 2160) {
+data class Capacidades(val hevc: Boolean = true, val av1: Boolean = false, val vp9: Boolean = true, val hdr: Boolean = false, val dv: Boolean = false, val maxima: Int = 2160,
+    /** Algún decodificador lee H.264 de 10 bits («Hi10P»; casi ninguno de Android). */
+    val avc10: Boolean = true) {
     fun reproduce(a: Analisis): Boolean = when {
         a.codec == "hevc" && !hevc -> false
         a.codec == "av1" && !av1 -> false
         a.codec == "vp9" && !vp9 -> false
+        a.diezBits && a.codec == "avc" && !avc10 -> false   // H.264 de 10 bits: casi ningún decodificador de Android lo lee (sale roto)
         a.dv && !dv && !a.hdr && !hdr -> false     // Dolby Vision sin capa HDR10 en un dispositivo que no lo entiende: colores verdes y morados
         a.resolucion > maxima -> false
         else -> true

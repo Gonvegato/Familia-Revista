@@ -38,7 +38,7 @@ object Busqueda {
     suspend fun fuentes(tipo: String, videoId: String, alLlegar: (List<Candidata>) -> Unit = {}): List<Candidata> = fijas ?: Addons.fuentes(tipo, videoId, alLlegar)
 
     fun elige(c: Context, cs: List<Candidata>, m: Meta?, grupo: String = ""): Eleccion =
-        Conexion.red(c).let { red -> Elector.elige(cs, AjustesElector.prefs(c), red, Conexion.capacidades(c), m?.minutos ?: 0, Torrents.usables(c, red), grupo, MemoriaPistas.busca(c), FuentesRotas.busca(c)) }
+        Conexion.red(c).let { red -> Elector.elige(cs, AjustesElector.prefs(c), red, Conexion.capacidades(c), m?.minutos ?: 0, Torrents.usables(c, red), grupo, MemoriaPistas.busca(c), Decodificadores.yRotas(c)) }
 
     /**
      * «Reproducir» (en la ficha del móvil y en la de la sala): pregunta a tus addons por las fuentes de [v] (o de la película) y elige la

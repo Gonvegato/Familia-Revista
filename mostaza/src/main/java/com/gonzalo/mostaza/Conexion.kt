@@ -82,6 +82,10 @@ object Conexion {
         val hdr = runCatching { pantalla?.hdrCapabilities?.supportedHdrTypes?.isNotEmpty() == true }.getOrDefault(false)
         val maxAvc = alto("video/avc"); val maxHevc = alto("video/hevc")
         val maxima = maxOf(maxAvc, maxHevc, 1080).let { if (it >= 2160) 2160 else if (it >= 1440) 1440 else 1080 }
-        return Capacidades(hevc = tiene("video/hevc") || codecs.isEmpty(), av1 = tiene("video/av01"), vp9 = tiene("video/x-vnd.on2.vp9") || codecs.isEmpty(), hdr = hdr, dv = dv, maxima = maxima)
+        // H.264 de 10 bits: solo si algún decodificador dice el perfil High 10 (casi ninguno de Android)
+        val avc10 = codecs.isEmpty() || codecs.filter { ci -> ci.supportedTypes.any { it.equals("video/avc", true) } }.any { ci ->
+            runCatching { ci.getCapabilitiesForType("video/avc").profileLevels.any { it.profile == android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileHigh10 } }.getOrDefault(false)
+        }
+        return Capacidades(hevc = tiene("video/hevc") || codecs.isEmpty(), av1 = tiene("video/av01"), vp9 = tiene("video/x-vnd.on2.vp9") || codecs.isEmpty(), hdr = hdr, dv = dv, maxima = maxima, avc10 = avc10)
     }
 }

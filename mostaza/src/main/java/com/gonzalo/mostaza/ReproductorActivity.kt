@@ -125,6 +125,15 @@ object Decodificadores {
         }
     }
 
+    /** Las fuentes que este dispositivo no sabe decodificar (H.264 de 10 bits sin decodificador que lo lea): no se eligen solas. */
+    fun noSabe(c: Context): (String) -> Boolean { val s = p(c).getStringSet("nosabe", emptySet()).orEmpty(); return { it in s } }
+    fun apuntaNoSabe(c: Context, clave: String) {
+        val s = p(c).getStringSet("nosabe", emptySet()).orEmpty().toMutableSet()
+        if (s.add(clave)) p(c).edit().putStringSet("nosabe", s.toList().takeLast(300).toSet()).apply()
+    }
+    /** Lo de antes junto con las fuentes rotas de tu cuenta. */
+    fun yRotas(c: Context): (String) -> Boolean { val r = FuentesRotas.busca(c); val n = noSabe(c); return { r(it) || n(it) } }
+
     fun nombre(mime: String?): String = when (mime) {
         "video/avc" -> "H.264"; "video/hevc" -> "HEVC (H.265)"; "video/mp4v-es" -> "MPEG-4 (XviD/DivX)"; "video/x-vnd.on2.vp9" -> "VP9"
         "video/av01" -> "AV1"; "video/mpeg2" -> "MPEG-2"; "video/3gpp" -> "H.263"; "video/dolby-vision" -> "Dolby Vision"
@@ -365,6 +374,14 @@ class ReproductorActivity : ComponentActivity() {
             r: androidx.media3.exoplayer.DecoderReuseEvaluation?) {
             mimeVideo = f.sampleMimeType
             diezBits = Decodificadores.diezBits(f)
+            // H.264 de 10 bits y ningún decodificador de este dispositivo dice leerlo: saldría roto (bloques grises). Se para, se avisa y
+            // esta fuente no se vuelve a elegir sola en este dispositivo.
+            if (diezBits && f.sampleMimeType == "video/avc" && !Conexion.capacidades(applicationContext).avc10) {
+                Decodificadores.apuntaNoSabe(applicationContext, Elector.clave(encargo.elegida.fuente))
+                player?.playWhenReady = false
+                estado.cargando = false
+                estado.aviso = "Este vídeo es H.264 de 10 bits y este dispositivo no sabe decodificarlo (se vería roto, en bloques). Prueba otra fuente, o ábrelo con VLC con la aceleración por hardware desactivada (en VLC: Ajustes → Vídeo → Aceleración por hardware)."
+            }
             formatoVideo = listOfNotNull(Decodificadores.nombre(f.sampleMimeType).ifBlank { null }, if (diezBits) "10 bits" else null,
                 if (f.width > 0) "${f.width}×${f.height}" else null).joinToString(" · ")
             pintaVideo()
@@ -379,8 +396,6 @@ class ReproductorActivity : ComponentActivity() {
 
     /** «¿Se ve mal?»: el mismo vídeo, en el mismo punto, con el otro decodificador (y se recuerda para este formato en este dispositivo). */
     private fun otroDecodificador() {
-        // Con un torrent: lo que se ve roto en cualquier reproductor es lo guardado en este dispositivo; se borra y se baja de nuevo
-        if (torrentAbierto.isNotBlank()) { bajarDeNuevo(); return }
         val mime = mimeVideo ?: run { estado.mensaje = "Aún no se sabe qué vídeo es: espera a que empiece."; return }
         val (u, subs) = ultimoEmpiece ?: return
         val pos = player?.currentPosition ?: 0L
@@ -455,7 +470,7 @@ class ReproductorActivity : ComponentActivity() {
     }
 
     private fun nuevoTanteo(e: Encargo): Tanteo {
-        val rotas = FuentesRotas.busca(applicationContext)
+        val rotas = Decodificadores.yRotas(applicationContext)
         return Tanteo(AjustesElector.prefs(applicationContext), e.candidatas.filter { Reproducir.accion(it.fuente) is Accion.Reproductor && (it === e.elegida || !rotas(Elector.clave(it.fuente))) },
             SystemClock.elapsedRealtime())
     }
@@ -534,19 +549,6 @@ class ReproductorActivity : ComponentActivity() {
         if (d is Decision.Nada) { estado.mensaje = null; return false }
         principal.post { haz(d) }
         return true
-    }
-
-    /** El torrent de ahora, desde cero: se borra lo bajado aquí (estaba mal guardado) y se vuelve a abrir en el mismo punto. */
-    private fun bajarDeNuevo() {
-        val hash = torrentAbierto
-        player?.let { p -> visionado?.guarda(p.currentPosition, p.duration.coerceAtLeast(0L)) }
-        estado.mensaje = "Lo bajado de este torrent en este dispositivo estaba mal: se borra y se vuelve a bajar desde cero…"
-        principal.postDelayed({ if (estado.mensaje?.startsWith("Lo bajado de este torrent") == true) estado.mensaje = null }, 9_000)
-        torrentAbierto = ""
-        runCatching { Torrents.fuente.olvida(hash) }
-        val v = visionado
-        visionado = null
-        abre(Encargo(encargo.breve, encargo.meta, encargo.video, encargo.elegida, encargo.candidatas, v?.sesion?.vistoMs ?: 0L, v?.takeIf { !it.enCuenta }?.pendiente().orEmpty(), encargo.automatica))
     }
 
     /** Otra fuente mientras se prueba: sin apuntar nada de esta (no se ha visto) y desde el mismo sitio. */
@@ -713,7 +715,7 @@ class ReproductorActivity : ComponentActivity() {
             val m = encargo.meta
             val red = Conexion.red(applicationContext)
             val e = Elector.elige(cs, AjustesElector.prefs(applicationContext), red, Conexion.capacidades(applicationContext), m?.minutos ?: 0, Torrents.usables(applicationContext, red), grupo,
-                MemoriaPistas.busca(applicationContext), FuentesRotas.busca(applicationContext))
+                MemoriaPistas.busca(applicationContext), Decodificadores.yRotas(applicationContext))
             val c = e.elegida ?: run { estado.cargando = false; estado.aviso = "No hay fuentes para el episodio siguiente."; return@launch }
             visionado?.termina(estado.dur, estado.dur)
             cierraTorrent()
