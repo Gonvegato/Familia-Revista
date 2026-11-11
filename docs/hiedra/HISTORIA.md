@@ -7,6 +7,14 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.8.3 — colores nuevos, apagados
+
+- **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Arena»: arena clara (#E7E1D3), tinta parda (#2A2824) y oliva apagado (#6E7458); de noche, tierra oscura (#22211D) con la arena de texto y el oliva aclarado (#8E9474). Elegidos entre tres propuestas sin colores brillantes.
+- **Una vez, sola**: quien tenía los de serie de antes (fondo verde oscuro #1C241B, texto #F1E1C3 y acento #6A6D2C) pasa a los nuevos, y viaja a tus otros dispositivos. Lo que
+  hubieras elegido tú a mano (otros colores, otro acento, un fondo de color, otra paleta) se queda como está. Si los ves iguales que antes,
+  es que tenías algo elegido a mano: en Ajustes → Apariencia, quita «A tu manera» y elige la paleta «Arena».
+- **Icono** con los colores nuevos (`herramientas/familia-c/icono-c.py`).
+
 ## La idea
 
 En Carmesí un juego **era** su lanzador (su ROM, su app, su web, su clave del PC), y por eso hacían falta fichas sin lanzador, alias, gemelas y

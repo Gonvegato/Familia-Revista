@@ -11,6 +11,14 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.4 — colores nuevos, apagados
+
+- **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Celuloide»: gris cálido (#E9E5DE), casi negro (#1F1E1C) y sepia (#8C6F4E); de noche, casi negro (#1C1B19) con el gris de texto y el sepia aclarado (#A88B66). Elegidos entre tres propuestas sin colores brillantes.
+- **Una vez, sola**: quien tenía los de serie de antes (la paleta «Palomitas» sin nada elegido encima) pasa a los nuevos, y viaja a tus otros dispositivos. Lo que
+  hubieras elegido tú a mano (otros colores, otro acento, un fondo de color, otra paleta) se queda como está. Si los ves iguales que antes,
+  es que tenías algo elegido a mano: en Ajustes → Apariencia, quita «A tu manera» y elige la paleta «Celuloide».
+- **Icono** con los colores nuevos (`herramientas/familia-c/icono-c.py`) y **cartel de la tele** igual que el icono.
+
 ## 0.7.3
 
 Al cambiar una imagen (portada o fondo), la lista de títulos salía duplicada: cada título aparecía dos veces (en Bastet se veía en «También juegas»). La causa:

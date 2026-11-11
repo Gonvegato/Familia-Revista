@@ -117,7 +117,7 @@ object Modo {
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "revista" })
+    var palette by mutableStateOf(PALETTES.first { it.id == "vino" })
     var display by mutableStateOf("Atrio")
     var body by mutableStateOf("Atrio")
     var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
@@ -230,7 +230,7 @@ object Skin {
     fun cargar(c: Context) {
         val p = p(c)
         if (!p.getBoolean("revista_v1", false)) { p.edit().clear().putBoolean("revista_v1", true).apply() }
-        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "revista") } ?: palette
+        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "vino") } ?: palette
         display = p.getString("display", "Atrio") ?: "Atrio"
         body = p.getString("body", "Atrio") ?: "Atrio"
         forma = FORMAS.firstOrNull { it.id == p.getString("forma", "revista") } ?: forma
@@ -244,6 +244,11 @@ object Skin {
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
+        // Nut, una vez (noviembre de 2026): los colores de serie de antes pasan a «Vino viejo» (y viajan a tus otros dispositivos)
+        if (!p.getBoolean("vino_v1", false)) {
+            p.edit().putBoolean("vino_v1", true).apply()
+            if (aColoresNuevos()) { ajustesAt = System.currentTimeMillis(); persistir(c) }
+        }
     }
 
     /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros dispositivos gana la más reciente. */
@@ -275,6 +280,7 @@ object Skin {
         Modo.eleccion = k.optInt("modo", Modo.eleccion).coerceIn(0, 2)
         fondoId = k.optString("fondoId").takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         fondoPropio = k.optLong("fondoPropio", 0L); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = k.optLong("acentoPropio", 0L)
+        aColoresNuevos()  // (si llega de un dispositivo sin actualizar)
         ajustesAt = at
         persistir(c)
         return true
@@ -287,6 +293,25 @@ object Skin {
             .putString("acento", accentId).putBoolean("invertido", invertido).putBoolean("origen_atrio", origenAtrio).putInt("escala", escala).putInt("modo", Modo.eleccion)
             .putString("fondo_id", fondoId).putLong("fondo_propio", fondoPropio).putLong("tinta_propia", tintaPropia).putLong("acento_propio", acentoPropio).apply()
     }
+}
+
+/**
+ * Los colores de serie de Nut desde noviembre de 2026 («Vino viejo»). Quien tenía los de serie de antes pasa a ellos; lo que
+ * hubieras elegido tú (otros colores a mano, un fondo de color, otra paleta) se queda. Devuelve true si ha cambiado algo.
+ */
+fun Skin.aColoresNuevos(): Boolean {
+    var nuevo = false
+        // Los de antes, puestos en «A tu manera» (#3D0E19, #F1DCB5 y #D4A06A): vuelven a automático
+        if (fondoPropio != 0L && (fondoPropio and 0xFFFFFFL) == 0x3D0E19L && (tintaPropia == 0L || (tintaPropia and 0xFFFFFFL) == 0xF1DCB5L) &&
+            (acentoPropio == 0L || (acentoPropio and 0xFFFFFFL) == 0xD4A06AL || (acentoPropio and 0xFFFFFFL) == 0xA79530L)) {
+            fondoPropio = 0L; tintaPropia = 0L; acentoPropio = 0L; nuevo = true
+        }
+    // La paleta de serie de antes, sin nada elegido encima: pasa a la nueva (y deja de seguir los colores de Jonsu, que no eran los suyos)
+    if (fondoPropio == 0L && tintaPropia == 0L && acentoPropio == 0L && accentId == "paleta" && fondoId.isEmpty() && palette.id in listOf("revista")) {
+        palette = PALETTES.first { it.id == "vino" }; origenAtrio = false; nuevo = true
+    }
+    if (nuevo && palette.id != "vino" && fondoPropio == 0L) { palette = PALETTES.first { it.id == "vino" }; accentId = "paleta"; origenAtrio = false }
+    return nuevo
 }
 
 // ───── colores (los mismos nombres que en Atrio) ─────

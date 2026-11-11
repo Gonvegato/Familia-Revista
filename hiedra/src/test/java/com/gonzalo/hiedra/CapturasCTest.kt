@@ -86,9 +86,9 @@ class CapturasCTest {
     /** Los colores de Bastet («A tu manera»); de noche, la paleta oscura con el acento de Bastet. */
     private fun coloresBastet(oscuro: Boolean) {
         Skin.origenAtrio = false; Skin.invertido = false; Skin.fondoId = ""
-        Skin.fondoPropio = if (oscuro) 0L else 0xFF1C241B
-        Skin.tintaPropia = if (oscuro) 0L else 0xFFF1E1C3
-        Skin.acentoPropio = 0xFF6A6D2C
+        // Los de serie desde noviembre de 2026 (paleta «arena»), sin nada a mano
+        Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
+        Skin.palette = PALETTES.first { it.id == "arena" }; Skin.accentId = "paleta"
     }
 
     private fun foto(nombre: String) {

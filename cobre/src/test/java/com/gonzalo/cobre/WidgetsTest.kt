@@ -74,6 +74,8 @@ class WidgetsTest {
 
     @Test fun losWidgetsUsanLosColoresDeApariencia() {
         siembra()
+        // («Vino viejo», la de serie, es igual de día y de noche: se prueba con una paleta que cambia)
+        Skin.palette = PALETTES.first { it.id == "revista" }
         val h = Hoja(ctx, 10f, 10f, false, 1f)
         assertNotEquals("claro y oscuro tienen papeles distintos", h.papel, Hoja(ctx, 10f, 10f, true, 1f).papel)
         Skin.invertido = true
@@ -81,6 +83,7 @@ class WidgetsTest {
         Skin.invertido = false
         Skin.fondoId = FONDOS.first().id
         assertEquals("con un fondo, un solo dibujo", false, Widgets.noche())
+        Skin.fondoId = ""; Skin.palette = PALETTES.first { it.id == "vino" }
     }
 
     private fun foto(nombre: String, tipo: WTipo, w: Float, h: Float, noche: Boolean, dir: String = "build/outputs/widgets") {

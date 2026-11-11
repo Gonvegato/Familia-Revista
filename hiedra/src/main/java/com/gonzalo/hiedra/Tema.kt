@@ -71,6 +71,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Bastet, colores de serie desde noviembre de 2026: «Arena», arena clara, tinta parda y oliva apagado; de noche, tierra oscura con la arena de texto.
+    Palette("arena", "Arena", "Bastet",
+        t(0xE7E1D3, 0xF2EEE7, 0x2A2824, 0x6E7458, 0x2A2824, 0x6C6961, 0x928E84, 0x5A5D48, 0x6E7458),
+        t(0x22211D, 0x2C2B26, 0xE7E1D3, 0x8E9474, 0xE7E1D3, 0xA29E93, 0x7B776F, 0xA9AB90, 0x8E9474)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)

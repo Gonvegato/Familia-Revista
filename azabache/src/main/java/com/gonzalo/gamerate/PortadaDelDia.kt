@@ -32,10 +32,10 @@ private val ES = Locale("es", "ES")
 
 /** Las hermanas que cuentan algo cada día: su nombre, qué haces en ella, su paquete y su color (el de su icono). */
 enum class Hermana(val nombre: String, val verbo: String, val paquete: String, val color: Long) {
-    BASTET("Bastet", "jugando", Hermanas.PAQ_HIEDRA, 0xFF6A6D2C),
+    BASTET("Bastet", "jugando", Hermanas.PAQ_HIEDRA, 0xFF6E7458),
     SESHAT("Seshat", "leyendo", Hermanas.PAQ_MARFIL, 0xFFC68B00),
-    HATHOR("Hathor", "viendo", Hermanas.PAQ_MOSTAZA, 0xFFD7263D),
-    THOT("Thot", "escribiendo", Hermanas.PAQ_COBALTO, 0xFFC8703F),
+    HATHOR("Hathor", "viendo", Hermanas.PAQ_MOSTAZA, 0xFF8C6F4E),
+    THOT("Thot", "escribiendo", Hermanas.PAQ_COBALTO, 0xFF8696AE),
 }
 
 /** Un rato de un día en una hermana: qué (su ficha aquí, [id], o su ref allí, [ref]), cuánto tiempo y, en Thot, cuántas palabras. */

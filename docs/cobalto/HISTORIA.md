@@ -10,6 +10,14 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.6.1 — colores nuevos, apagados
+
+- **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Noche»: azul noche apagado (#1C2129), gris claro (#E4E6E9) y azul niebla (#8696AE), igual de día y de noche. Elegidos entre tres propuestas sin colores brillantes.
+- **Una vez, sola**: quien tenía los de serie de antes (fondo #171E2B, texto #F1EBE0 y acento cobre #C8703F (o el dorado #A79530 de antes)) pasa a los nuevos, y viaja a tus otros dispositivos. Lo que
+  hubieras elegido tú a mano (otros colores, otro acento, un fondo de color, otra paleta) se queda como está. Si los ves iguales que antes,
+  es que tenías algo elegido a mano: en Ajustes → Apariencia, quita «A tu manera» y elige la paleta «Noche».
+- **Icono** con los colores nuevos (`herramientas/familia-c/icono-c.py`).
+
 ## 0.6.0 — la cara de Seshat (dirección C)
 
 - **Colores**: el acento de Thot pasa a **cobre #C8703F** (fondo #171E2B y texto #F1EBE0, igual). Quien tenga puesto el dorado de antes

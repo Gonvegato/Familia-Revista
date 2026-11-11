@@ -6,11 +6,11 @@ from PIL import Image, ImageDraw, ImageFont
 F = "/home/user/familia-revista/marfil/src/main/res/font"
 APPS = {  # nombre: (fondo, texto, acento, lo que hace)
     "seshat": ("#F8F0D4", "#050404", "#C68B00", "LIBROS"),
-    "bastet": ("#1C241B", "#F1E1C3", "#6A6D2C", "JUEGOS"),
-    "thot":   ("#171E2B", "#F1EBE0", "#C8703F", "ESCRITOS"),
-    "jonsu":  ("#1C1F22", "#F1EBE0", "#8F3232", "DIARIO"),
-    "hathor": ("#F4ECDD", "#1B1A1F", "#D7263D", "CINE"),
-    "nut":    ("#3D0E19", "#F1DCB5", "#D4A06A", "FÚTBOL"),
+    "bastet": ("#E7E1D3", "#2A2824", "#6E7458", "JUEGOS"),
+    "thot":   ("#1C2129", "#E4E6E9", "#8696AE", "ESCRITOS"),
+    "jonsu":  ("#2B2529", "#EAE2DD", "#9C7B86", "DIARIO"),
+    "hathor": ("#E9E5DE", "#1F1E1C", "#8C6F4E", "CINE"),
+    "nut":    ("#2C1C1F", "#EADFD2", "#A9876A", "FÚTBOL"),
 }
 def rgb(h): return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
 def sobre(h):
@@ -61,6 +61,28 @@ def capas(app):
                 d.text((xx, yc - (ty0 + ty1) / 2), ch, font=fl, fill=sobre(acento) + (255,)); xx += d.textlength(ch, font=fl) + 0.08 * S * 0.085
         return im
     return bg, delante(), delante(True)
+
+NOMBRES = {"seshat": "SESHAT", "bastet": "BASTET", "thot": "THOT", "jonsu": "JONSU", "hathor": "HATHOR", "nut": "NUT"}
+def banner(app, w=640, h=360):
+    """El cartel de la tele (Android TV): el nombre con su punto sobre el fondo y la franja del acento con lo que hace, como el icono."""
+    fondo, tinta, acento, que = APPS[app]
+    im = Image.new("RGB", (w, h), rgb(fondo)); d = ImageDraw.Draw(im)
+    d.rectangle((0, h * 0.70, w, h), fill=rgb(acento))
+    nombre = NOMBRES[app]
+    f = grotesca(int(h * 0.36))
+    nb = f.getbbox(nombre, anchor="ls"); pb = f.getbbox(".", anchor="ls")
+    ancho = (nb[2] - nb[0]) + (pb[2] - pb[0]) + h * 0.01
+    x0 = (w - ancho) / 2; base = h * 0.70 / 2 + (nb[3] - nb[1]) / 2
+    d.text((x0 - nb[0], base), nombre, font=f, fill=rgb(tinta), anchor="ls")
+    d.text((x0 + (nb[2] - nb[0]) + h * 0.01 - pb[0], base), ".", font=f, fill=rgb(acento), anchor="ls")
+    fl = grotesca(int(h * 0.10))
+    tw = d.textlength(que, font=fl)
+    d.text(((w - tw) / 2, h * 0.85), que, font=fl, fill=sobre(acento), anchor="lm")
+    return im
+
+if __name__ == "__main__" and sys.argv[1] == "banner":
+    # python3 icono-c.py banner <app> <archivo.png>
+    banner(sys.argv[2], 320, 180).save(sys.argv[3]); print("ok"); sys.exit()
 
 if __name__ == "__main__":
     app, carpeta, prefijo = sys.argv[1:4]

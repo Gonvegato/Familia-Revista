@@ -9,6 +9,13 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.1 — colores nuevos, apagados
+
+- **Colores de serie nuevos** («Ciruela»): gris ciruela (#2B2529), crema (#EAE2DD) y malva gris (#9C7B86), en lugar del negro, el crema
+  y el granate. Salen si no has elegido otros en Apariencia; si tienes algo elegido, se queda. Nada más cambia de la dirección C.
+- **Icono** con los colores nuevos, y en la portada del día, el color de cada hermana es el de su icono nuevo (Bastet oliva apagado,
+  Hathor sepia, Thot azul niebla; Seshat, el mostaza de siempre).
+
 ## 1.8.0 — la cara de sus hermanas (dirección C) y la portada del día
 
 - **Colores de Jonsu**: fondo casi negro #1C1F22, texto crema #F1EBE0 y el granate #8F3232, los del icono. Salen si no has elegido otros en

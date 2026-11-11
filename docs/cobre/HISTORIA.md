@@ -9,6 +9,14 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.8.1 — colores nuevos, apagados
+
+- **Colores de serie nuevos**, sin tocar nada más de la dirección C: «Vino viejo»: vino muy oscuro (#2C1C1F), crema (#EADFD2) y caramelo apagado (#A9876A), igual de día y de noche. Elegidos entre tres propuestas sin colores brillantes.
+- **Una vez, sola**: quien tenía los de serie de antes (fondo granate #3D0E19, texto #F1DCB5 y acento #D4A06A) pasa a los nuevos, y viaja a tus otros dispositivos. Lo que
+  hubieras elegido tú a mano (otros colores, otro acento, un fondo de color, otra paleta) se queda como está. Si los ves iguales que antes,
+  es que tenías algo elegido a mano: en Ajustes → Apariencia, quita «A tu manera» y elige la paleta «Vino viejo».
+- **Icono** con los colores nuevos (`herramientas/familia-c/icono-c.py`) y **cartel de la tele** igual que el icono.
+
 ## 0.8.0 · La cara de Seshat, Bastet y Hathor (dirección C)
 
 Nut pasa a la misma altura que Seshat, Bastet y Hathor: toda la app en una pantalla, el cartel de tu próximo partido, la racha de tus

@@ -26,12 +26,12 @@ class DireccionCTest {
 
     // ---------------------------------------------------------------- los colores
 
-    @Test fun palomitasEsLaDeSerie() {
-        val p = PALETTES.first { it.id == "palomitas" }
-        assertEquals(0xFFF4ECDDL, p.light.paper); assertEquals(0xFF1B1A1FL, p.light.ink); assertEquals(0xFFD7263DL, p.light.general)
+    @Test fun celuloideEsLaDeSerie() {
+        val p = PALETTES.first { it.id == "celuloide" }
+        assertEquals(0xFFE9E5DEL, p.light.paper); assertEquals(0xFF1F1E1CL, p.light.ink); assertEquals(0xFF8C6F4EL, p.light.general)
         ctx.getSharedPreferences("mostaza_tema", Context.MODE_PRIVATE).edit().clear().commit()
         Skin.cargar(ctx)
-        assertEquals("palomitas", Skin.palette.id); assertEquals("paleta", Skin.accentId)
+        assertEquals("celuloide", Skin.palette.id); assertEquals("paleta", Skin.accentId)
         assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.acentoPropio)
     }
 
@@ -39,9 +39,20 @@ class DireccionCTest {
         Skin.palette = PALETTES.first { it.id == "revista" }; Skin.accentId = "mostaza"
         Skin.fondoPropio = 0xFF715021; Skin.tintaPropia = 0xFFFFFFFF; Skin.acentoPropio = 0xFFD4C1C0
         assertTrue(Skin.aPalomitas())
-        assertEquals("palomitas", Skin.palette.id); assertEquals("paleta", Skin.accentId)
+        assertEquals("celuloide", Skin.palette.id); assertEquals("paleta", Skin.accentId)
         assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.tintaPropia); assertEquals(0L, Skin.acentoPropio)
         assertFalse("la segunda vez no cambia nada", Skin.aPalomitas())
+    }
+
+    /** Noviembre de 2026: quien tenía «Palomitas» sin nada encima pasa a «Celuloide»; con otro acento elegido, se queda. */
+    @Test fun palomitasPasaACeluloide() {
+        Skin.palette = PALETTES.first { it.id == "palomitas" }; Skin.accentId = "paleta"; Skin.fondoId = ""
+        Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
+        assertTrue(Skin.aColoresNuevos()); assertEquals("celuloide", Skin.palette.id)
+        assertFalse("la segunda vez no cambia nada", Skin.aColoresNuevos())
+        Skin.palette = PALETTES.first { it.id == "palomitas" }; Skin.accentId = "azul"
+        assertFalse(Skin.aColoresNuevos()); assertEquals("palomitas", Skin.palette.id)
+        Skin.accentId = "paleta"
     }
 
     @Test fun loElegidoAManoSeQueda() {

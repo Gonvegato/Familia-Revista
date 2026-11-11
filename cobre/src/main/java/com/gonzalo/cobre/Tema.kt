@@ -71,6 +71,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Nut, colores de serie desde noviembre de 2026: «Vino viejo», vino muy oscuro, crema y caramelo apagado (igual de día y de noche).
+    Palette("vino", "Vino viejo", "Nut",
+        t(0x2C1C1F, 0x362628, 0xEADFD2, 0xA9876A, 0xEADFD2, 0xA89B93, 0x827470, 0xBCA189, 0xA9876A),
+        t(0x2C1C1F, 0x362628, 0xEADFD2, 0xA9876A, 0xEADFD2, 0xA89B93, 0x827470, 0xBCA189, 0xA9876A)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)

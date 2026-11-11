@@ -71,6 +71,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Hathor, colores de serie desde noviembre de 2026: «Celuloide», gris cálido, casi negro y sepia; de noche, casi negro con el mismo gris de texto.
+    Palette("celuloide", "Celuloide", "Hathor",
+        t(0xE9E5DE, 0xF3F1ED, 0x1F1E1C, 0x8C6F4E, 0x1F1E1C, 0x666460, 0x8E8B87, 0x6B573F, 0x8C6F4E),
+        t(0x1C1B19, 0x262523, 0xE9E5DE, 0xA88B66, 0xE9E5DE, 0xA19E99, 0x787672, 0xBCA68A, 0xA88B66)),
     // Hathor 0.7.0: «Palomitas», la predeterminada. Papel crema, tinta casi negra y el rojo de la caja de palomitas; de noche, el negro de
     // la pantalla apagada con el mismo rojo (el texto en rojo se aclara o se oscurece solo lo justo para leerse: acentoLegible).
     Palette("palomitas", "Palomitas", "Hathor",

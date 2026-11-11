@@ -94,9 +94,9 @@ class CapturasCTest {
     /** Los colores de Thot («A tu manera»); de noche, la paleta oscura con el cobre. */
     private fun coloresThot(oscuro: Boolean) {
         Skin.origenAtrio = false; Skin.invertido = false; Skin.fondoId = ""
-        Skin.fondoPropio = if (oscuro) 0L else 0xFF171E2B
-        Skin.tintaPropia = if (oscuro) 0L else 0xFFF1EBE0
-        Skin.acentoPropio = 0xFFC8703F
+        // Los de serie desde noviembre de 2026 (paleta «noche»), sin nada a mano
+        Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
+        Skin.palette = PALETTES.first { it.id == "noche" }; Skin.accentId = "paleta"
     }
 
     private fun foto(nombre: String) {

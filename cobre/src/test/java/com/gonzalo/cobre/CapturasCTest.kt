@@ -82,9 +82,9 @@ class CapturasCTest {
     /** Los colores de Nut («A tu manera»); de noche, la paleta oscura con el acento de Nut. */
     private fun coloresNut(oscuro: Boolean) {
         Skin.origenAtrio = false; Skin.invertido = false; Skin.fondoId = ""
-        Skin.fondoPropio = if (oscuro) 0L else 0xFF3D0E19
-        Skin.tintaPropia = if (oscuro) 0L else 0xFFF1DCB5
-        Skin.acentoPropio = 0xFFD4A06A
+        // Los de serie desde noviembre de 2026 (paleta «vino»), sin nada a mano
+        Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
+        Skin.palette = PALETTES.first { it.id == "vino" }; Skin.accentId = "paleta"
     }
 
     private fun foto(nombre: String) {

@@ -71,6 +71,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Thot, colores de serie desde noviembre de 2026: «Noche», azul noche apagado, gris claro y azul niebla (igual de día y de noche).
+    Palette("noche", "Noche", "Thot",
+        t(0x1C2129, 0x262B33, 0xE4E6E9, 0x8696AE, 0xE4E6E9, 0x9EA1A6, 0x767A7F, 0xA2AEC0, 0x8696AE),
+        t(0x1C2129, 0x262B33, 0xE4E6E9, 0x8696AE, 0xE4E6E9, 0x9EA1A6, 0x767A7F, 0xA2AEC0, 0x8696AE)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)

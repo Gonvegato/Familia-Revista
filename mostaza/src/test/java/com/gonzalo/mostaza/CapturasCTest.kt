@@ -100,7 +100,7 @@ class CapturasCTest {
     private fun palomitas() {
         Skin.origenAtrio = false; Skin.invertido = false; Skin.fondoId = ""
         Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
-        Skin.palette = PALETTES.first { it.id == "palomitas" }; Skin.accentId = "paleta"
+        Skin.palette = PALETTES.first { it.id == "celuloide" }; Skin.accentId = "paleta"
         Skin.display = "Atrio"; Skin.body = "Atrio"
     }
 
