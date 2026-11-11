@@ -101,6 +101,9 @@ object Cortina {
         }.getOrDefault(false)
     }
 
+    /** Solo para las pruebas: sin cortina ni nada pendiente. */
+    internal fun reiniciar() { activa?.let { runCatching { it.quitar() } }; activa = null; inicioListo = false; tapado = false; alQuitar = null }
+
     /** Quita la cortina que haya, ya (si el vigilante se apaga). */
     fun quitarYa() { principal.post { activa?.quitar?.invoke() } }
 }

@@ -4,6 +4,13 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.7.1 — soltarla tras leer, con su animación
+
+- Al darle al botón después de haber escrito o leído, Ammit mira primero lo último de la cuenta (mientras estás en Seshat o en Thot no la
+  escucha, así que lo que sabía era viejo) y, si ya se puede, se apaga ahí mismo con la animación de las cadenas. Antes abría «Ammit no te
+  suelta», se daba cuenta allí y se apagaba cerrando esa pantalla de golpe, sin que se viera la animación.
+- Si se apaga desde «Ammit no te suelta», esa pantalla se queda debajo hasta que las cadenas la tapan.
+
 ## 0.7.0 — el candado: no se suelta sin escribir o leer
 
 - **Encendida, Ammit solo se apaga cuando, desde que la encendiste, has escrito 300 palabras en Thot o leído un capítulo en Seshat**, en

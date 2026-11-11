@@ -31,7 +31,7 @@ class AmmitTest {
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
     private val grabar = System.getProperty("roborazzi.test.record") == "true"
 
-    @Before fun limpia() { Diseno.sinCapas = true; limpia0() }
+    @Before fun limpia() { Diseno.sinCapas = true; Vigia.vivo = null; Cortina.reiniciar(); limpia0() }
     private fun limpia0() { ctx.getSharedPreferences("ammit", Context.MODE_PRIVATE).edit().clear().commit(); Ammit.cargar(ctx) }
 
     @Test fun pasanLaFamiliaYLoImprescindible() {
@@ -166,6 +166,19 @@ class AmmitTest {
         // Terminar un libro después de encenderla, sí; uno terminado antes, no
         Candado.calcula(base, dia, desde, palabras0, tiempo0, lectura0, listOf(n("kid9", "fin" to listOf(500L)))).let { assertFalse(it.capitulo) }
         Candado.calcula(base, dia, desde, palabras0, tiempo0, lectura0, listOf(n("kid9", "fin" to listOf(500L, 2_000L)))).let { assertTrue(it.capitulo) }
+    }
+
+    /** Desde «Ammit no te suelta», cuando ya se puede: se apaga CON la cortina de cadenas (la animación de apagar). */
+    @Test fun alSoltarDesdeElCandadoHayAnimacion() {
+        sembrarApps(); Ammit.encender(ctx, true, animar = false)
+        val v = Robolectric.setupService(Vigia::class.java)
+        v.javaClass.getDeclaredMethod("onServiceConnected").apply { isAccessible = true }.invoke(v)
+        assertTrue(Vigia.vivo != null)
+        val a = Robolectric.buildActivity(CandadoActivity::class.java).setup().get()
+        a.apagar()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        assertTrue("la cortina de salir tiene que estar puesta", Cortina.ocupada)
+        assertFalse(Ammit.encendida)
     }
 
     /** La pantalla de «Ammit no te suelta», con progreso a medias. */

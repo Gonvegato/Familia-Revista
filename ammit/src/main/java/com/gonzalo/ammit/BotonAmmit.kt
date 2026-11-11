@@ -21,13 +21,39 @@ class BotonAmmit : TileService() {
             abrir(Intent(this, AjustesActivity::class.java).putExtra(AjustesActivity.EXTRA_FALTA, true))
             return
         }
-        // Apagar: solo si desde que la encendiste has escrito 300 palabras o leído un capítulo; si no, «Ammit no te suelta»
-        if (!encender && !Candado.puede(this)) { abrir(Intent(this, CandadoActivity::class.java)); return }
+        // Apagar: solo si desde que la encendiste has escrito 300 palabras o leído un capítulo. Lo de la cuenta puede estar viejo (mientras
+        // lees en Seshat, Ammit no la escucha): antes de decir que no, se mira lo último (como mucho 2,5 s) y, si ya se puede, se apaga
+        // aquí mismo, con su animación; si no, «Ammit no te suelta»
+        if (!encender && !Candado.puede(this)) {
+            if (mirando) return
+            mirando = true
+            val principal = android.os.Handler(mainLooper)
+            var hecho = false
+            fun decide() {
+                if (hecho) return
+                hecho = true; mirando = false
+                if (Candado.puede(this)) apagarYa() else abrir(Intent(this, CandadoActivity::class.java))
+            }
+            Thread { runCatching { Candado.sincronizar() }; principal.post { decide() } }.start()
+            principal.postDelayed({ decide() }, 2_500)
+            return
+        }
+        if (!encender) { apagarYa(); return }
         // Con el vigilante, la cortina de cadenas por encima de todo (sin parpadeos); si no, a la antigua
         if (Cortina.cambiar(this, encender) { abrir(it) }) { pinta(); return }
         Ammit.encender(this, encender)
         pinta()
         // A la pantalla de inicio: encendida, la de Ammit; apagada, Ammit pasa sola a la de siempre
+        abrir(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
+    }
+
+    @Volatile private var mirando = false
+
+    /** Apaga Ammit: con la cortina de cadenas si está el vigilante; si no, a la antigua. */
+    private fun apagarYa() {
+        if (Cortina.cambiar(this, false) { abrir(it) }) { pinta(); return }
+        Ammit.encender(this, false)
+        pinta()
         abrir(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
     }
 

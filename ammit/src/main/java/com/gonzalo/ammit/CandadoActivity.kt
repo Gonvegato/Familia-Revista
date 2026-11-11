@@ -57,12 +57,13 @@ class CandadoActivity : ComponentActivity() {
     fun apagar() {
         if (apagada) return
         apagada = true
-        if (!Cortina.cambiar(this, false) { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }) {
+        val conCortina = Cortina.cambiar(this, false) { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        if (!conCortina) {
             Ammit.encender(this, false); BotonAmmit.avisar(this)
             runCatching { startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         }
-        finish()
-        @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+        // (con la cortina, esta pantalla se queda debajo hasta que las cadenas la tapan; luego se va sin animación propia)
+        window.decorView.postDelayed({ finish(); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }, if (conCortina) 400 else 0)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
