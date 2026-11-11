@@ -83,7 +83,7 @@ class WidgetsTest {
         Skin.invertido = false
         Skin.fondoId = FONDOS.first().id
         assertEquals("con un fondo, un solo dibujo", false, Widgets.noche())
-        Skin.fondoId = ""; Skin.palette = PALETTES.first { it.id == "vino" }
+        Skin.fondoId = ""; Skin.palette = PALETTES.first { it.id == "familia" }
     }
 
     private fun foto(nombre: String, tipo: WTipo, w: Float, h: Float, noche: Boolean, dir: String = "build/outputs/widgets") {
@@ -98,9 +98,11 @@ class WidgetsTest {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
         siembra()
         // (las vistas previas, con los colores de serie de Nut: «Vino viejo», sin nada a mano)
-        Skin.origenAtrio = false; Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.accentId = "paleta"; Skin.palette = PALETTES.first { it.id == "vino" }
+        Skin.origenAtrio = false; Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.accentId = "paleta"; Skin.palette = PALETTES.first { it.id == "familia" }
         Futbol.fijo = FutbolDeMentira.datos(ctx, vivo = false)
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase()}", t, s.first, s.second, false)
+        // (y de noche: van a drawable-night-nodpi, para el selector con el modo oscuro)
+        for ((t, s) in tamanos) foto("noche_w_prev_${t.name.lowercase()}", t, s.first, s.second, true)
         Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
         foto("ancho_proximo", WTipo.PROXIMO, 330f, 170f, false)
         foto("bajo_proximo", WTipo.PROXIMO, 300f, 100f, false)

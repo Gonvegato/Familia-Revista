@@ -216,10 +216,8 @@ class CapturasTest {
 
     /** Los colores de Seshat («A tu manera»: fondo #F8F0D4, texto #050404, acento #C68B00); de noche, solo el acento sobre la paleta oscura. */
     private fun coloresSeshat(oscuro: Boolean) {
-        Skin.origenAtrio = false
-        Skin.fondoPropio = if (oscuro) 0L else 0xFFF8F0D4
-        Skin.tintaPropia = if (oscuro) 0L else 0xFF050404
-        Skin.acentoPropio = 0xFFC68B00
+        // Los de la familia con el ocre de Seshat (sin nada a mano)
+        Skin.aColoresDeSerie()
     }
 
     @Test @Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel7, fontScale = 1.3f) fun letraGrande() {

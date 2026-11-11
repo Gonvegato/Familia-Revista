@@ -215,8 +215,10 @@ class WidgetsTest {
         siembra()
         coil.Coil.setImageLoader(coil.ImageLoader.Builder(ctx).dispatcher(kotlinx.coroutines.Dispatchers.Unconfined).allowHardware(false).build())
         // (con los colores de serie: «Celuloide», sin nada a mano)
-        Skin.origenAtrio = false; Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.accentId = "paleta"; Skin.palette = PALETTES.first { it.id == "celuloide" }
+        Skin.origenAtrio = false; Skin.fondoId = ""; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.accentId = "paleta"; Skin.palette = PALETTES.first { it.id == "familia" }
         for ((t, s) in tamanos) foto("w_prev_${t.name.lowercase()}", t, s.first, s.second, false)
+        // (y de noche: van a drawable-night-nodpi, para el selector con el modo oscuro)
+        for ((t, s) in tamanos) foto("noche_w_prev_${t.name.lowercase()}", t, s.first, s.second, true)
         for ((t, s) in tamanos) foto("oscuro_${t.name.lowercase()}", t, s.first, s.second, true)
         foto("alto_seguir", WTipo.SEGUIR, 150f, 260f, false)
         foto("compacto_seguir", WTipo.SEGUIR, 160f, 160f, false)

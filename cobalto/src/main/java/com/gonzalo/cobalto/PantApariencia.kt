@@ -44,7 +44,7 @@ fun SeccionApariencia() {
 
     // ---- Los colores de Thot, de un toque
     Antetitulo("Colores de Thot", Modifier.padding(bottom = 4.dp))
-    Text("Pone los últimos colores diseñados para Thot («Noche»: la paleta de serie, con su versión de noche) y quita lo que hayas elegido a mano aquí abajo. El tema y el tamaño del texto se quedan. Llega también a tus otros dispositivos.",
+    Text("Pone los colores de la familia (papel #F8F0D4 y negro; de noche, al revés) con el acento de Thot, pizarra azul, y quita lo que hayas elegido a mano aquí abajo. El tema y el tamaño del texto se quedan. Llega también a tus otros dispositivos.",
         color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
     var puestos by remember { mutableStateOf(false) }
     BotonC(if (puestos) "Puestos" else "Poner los colores de Thot", Modifier.padding(top = 10.dp, bottom = 18.dp), fondo = Acento, letra = SobreAcento) { Skin.aColoresDeSerie(); guarda(); puestos = true }

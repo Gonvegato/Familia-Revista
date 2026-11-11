@@ -7,12 +7,19 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
-## 0.8.5 — «Colores de Bastet», de un toque
+## 0.8.5 — los colores de la familia, de día y de noche
 
-- **Ajustes → Apariencia → «Poner los colores de Bastet»**, arriba del todo: pone los últimos colores diseñados para Bastet («Arena») y
-  quita lo elegido a mano (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema y el tamaño del texto se quedan. Llega a tus
-  otros dispositivos.
-- **El fondo que pones aquí sale en Jonsu.** Jonsu enseñaba el fondo que guardaba para sí, no el tuyo: ahora usa el de la cuenta (y si lo cambias en Jonsu, cambia aquí).
+- **Las seis apps comparten colores**: de día, papel #F8F0D4 con texto negro; de noche, al revés (negro con texto #F8F0D4), siguiendo el
+  modo del móvil o el que elijas en Apariencia. A cada app la distingue su acento: el de Bastet, **oliva (#7A8A3A)**. Seshat ocre, Jonsu
+  ciruela, Bastet oliva, Thot pizarra azul, Hathor rosa viejo y Nut granate oscuro.
+- **Una vez, sola**: lo que tuvieras elegido a mano en Apariencia (fondo de color, acento, «A tu manera») se quita para que todo quede así;
+  viaja a tus otros dispositivos. Se puede volver a elegir lo que quieras.
+- **«Poner los colores de Bastet»**, arriba del todo en Ajustes → Apariencia: vuelve a estos colores de un toque (el tema y el tamaño del
+  texto se quedan).
+- **Icono y widgets, de día y de noche**: el icono tiene versión clara y oscura (`drawable-night`); cuál se ve depende del lanzador (muchos
+  no cambian el icono con el modo oscuro: Android no tiene una forma oficial de hacerlo). Los widgets cambian solos con el modo, y sus
+  vistas previas del selector también tienen las dos versiones.
+- **El fondo que pones aquí sale en Jonsu** (y si lo cambias en Jonsu, cambia aquí).
 
 ## 0.8.4 — los widgets, también con los colores nuevos
 

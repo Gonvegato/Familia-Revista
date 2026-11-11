@@ -71,6 +71,11 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // La familia (noviembre de 2026): las seis apps comparten papel #F8F0D4 y texto negro (de noche, al revés); a cada una la distingue
+    // su acento. El de Nut: granate oscuro (#5D1414).
+    Palette("familia", "Familia", "Nut",
+        t(0xF8F0D4, 0xFBF6E5, 0x000000, 0x5D1414, 0x000000, 0x57544A, 0x888475, 0x410E0E, 0x5D1414),
+        t(0x000000, 0x0F0E0D, 0xF8F0D4, 0x5D1414, 0xF8F0D4, 0xA19C8A, 0x706C5F, 0x8C564E, 0x5D1414)),
     // Nut, colores de serie desde noviembre de 2026: «Vino viejo», vino muy oscuro, crema y caramelo apagado (igual de día y de noche).
     Palette("vino", "Vino viejo", "Nut",
         t(0x2C1C1F, 0x362628, 0xEADFD2, 0xA9876A, 0xEADFD2, 0xA89B93, 0x827470, 0xBCA189, 0xA9876A),

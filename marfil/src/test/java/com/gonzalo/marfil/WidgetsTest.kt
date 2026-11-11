@@ -101,13 +101,15 @@ class WidgetsTest {
     @Test fun lasPreviasDelSelector() {
         org.junit.Assume.assumeTrue(grabar)
         siembra()
-        // Con los colores de Seshat (los de «A tu manera»): así salen en el selector del lanzador
-        Skin.origenAtrio = false; Skin.fondoPropio = 0xFFF8F0D4; Skin.tintaPropia = 0xFF050404; Skin.acentoPropio = 0xFFC68B00
+                // Con los colores de la familia y el ocre de Seshat; de día y de noche (drawable-night-nodpi)
+        Skin.aColoresDeSerie()
         val dir = File("src/main/res/drawable-nodpi").apply { mkdirs() }
+        val dirNoche = File("src/main/res/drawable-night-nodpi").apply { mkdirs() }
         for ((nombre, tipo, tam) in PEDIDOS) {
             if (nombre !in setOf("leyendo", "estante", "portada", "siguiente", "semana", "cita", "marca", "marcapapel")) continue
             val pag = runBlocking { Widgets.componer(ctx, tipo, 1, tam.first, tam.second) }
             File(dir, "w_prev_$nombre.png").outputStream().use { pag.bitmap(ctx, tam.first, tam.second, false, 2f).compress(Bitmap.CompressFormat.PNG, 100, it) }
+            File(dirNoche, "w_prev_$nombre.png").outputStream().use { pag.bitmap(ctx, tam.first, tam.second, true, 2f).compress(Bitmap.CompressFormat.PNG, 100, it) }
         }
     }
 

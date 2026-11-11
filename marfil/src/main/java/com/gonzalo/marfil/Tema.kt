@@ -71,6 +71,11 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // La familia (noviembre de 2026): las seis apps comparten papel #F8F0D4 y texto negro (de noche, al revés); a cada una la distingue
+    // su acento. El de Seshat: ocre (#B0791E).
+    Palette("familia", "Familia", "Seshat",
+        t(0xF8F0D4, 0xFBF6E5, 0x000000, 0xB0791E, 0x000000, 0x57544A, 0x888475, 0x7B5515, 0xB0791E),
+        t(0x000000, 0x0F0E0D, 0xF8F0D4, 0xB0791E, 0xF8F0D4, 0xA19C8A, 0x706C5F, 0xC69D55, 0xB0791E)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)

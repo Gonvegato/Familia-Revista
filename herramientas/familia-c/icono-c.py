@@ -4,14 +4,13 @@ Uso: python3 icono-c.py <app> <carpeta drawable-nodpi> <prefijo>   (p. ej. sesha
 import sys
 from PIL import Image, ImageDraw, ImageFont
 F = "/home/user/familia-revista/marfil/src/main/res/font"
-APPS = {  # nombre: (fondo, texto, acento, lo que hace)
-    "seshat": ("#F8F0D4", "#050404", "#C68B00", "LIBROS"),
-    "bastet": ("#E7E1D3", "#2A2824", "#6E7458", "JUEGOS"),
-    "thot":   ("#1C2129", "#E4E6E9", "#8696AE", "ESCRITOS"),
-    "jonsu":  ("#2B2529", "#EAE2DD", "#9C7B86", "DIARIO"),
-    "hathor": ("#E9E5DE", "#1F1E1C", "#8C6F4E", "CINE"),
-    "nut":    ("#2C1C1F", "#EADFD2", "#A9876A", "FÚTBOL"),
-}
+PAPEL, NEGRO = "#F8F0D4", "#000000"
+# La familia (noviembre de 2026): papel y negro para todas; a cada una la distingue su acento. De noche, papel y negro al revés.
+ACENTOS = {"seshat": ("#B0791E", "LIBROS"), "bastet": ("#7A8A3A", "JUEGOS"), "thot": ("#5A7896", "ESCRITOS"),
+           "jonsu": ("#8E5A78", "DIARIO"), "hathor": ("#B56576", "CINE"), "nut": ("#5D1414", "FÚTBOL")}
+NOCHE = "--noche" in sys.argv
+if NOCHE: sys.argv.remove("--noche")
+APPS = {a: ((NEGRO, PAPEL) if NOCHE else (PAPEL, NEGRO)) + (ac, que) for a, (ac, que) in ACENTOS.items()}  # nombre: (fondo, texto, acento, lo que hace)
 def rgb(h): return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
 def sobre(h):
     r, g, b = rgb(h); return (26, 20, 16) if 0.299 * r + 0.587 * g + 0.114 * b > 150 else (255, 255, 255)

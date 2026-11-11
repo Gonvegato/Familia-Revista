@@ -71,6 +71,11 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // La familia (noviembre de 2026): las seis apps comparten papel #F8F0D4 y texto negro (de noche, al revés); a cada una la distingue
+    // su acento. El de Bastet: oliva (#7A8A3A).
+    Palette("familia", "Familia", "Bastet",
+        t(0xF8F0D4, 0xFBF6E5, 0x000000, 0x7A8A3A, 0x000000, 0x57544A, 0x888475, 0x556129, 0x7A8A3A),
+        t(0x000000, 0x0F0E0D, 0xF8F0D4, 0x7A8A3A, 0xF8F0D4, 0xA19C8A, 0x706C5F, 0xA0A968, 0x7A8A3A)),
     // Bastet, colores de serie desde noviembre de 2026: «Arena», arena clara, tinta parda y oliva apagado; de noche, tierra oscura con la arena de texto.
     Palette("arena", "Arena", "Bastet",
         t(0xE7E1D3, 0xF2EEE7, 0x2A2824, 0x6E7458, 0x2A2824, 0x6C6961, 0x928E84, 0x5A5D48, 0x6E7458),

@@ -5,12 +5,19 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
-## 0.21.2 — «Colores de Seshat», de un toque
+## 0.21.2 — los colores de la familia, de día y de noche
 
-- **Ajustes → Apariencia → «Poner los colores de Seshat»**, arriba del todo: pone los últimos colores diseñados para Seshat (papel amarillo, tinta casi negra y mostaza) y
-  quita lo elegido a mano (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema y el tamaño del texto se quedan. Llega a tus
-  otros dispositivos.
-- **El fondo que pones aquí sale en Jonsu.** Jonsu enseñaba el fondo que guardaba para sí, no el tuyo: ahora usa el de la cuenta (y si lo cambias en Jonsu, cambia aquí).
+- **Las seis apps comparten colores**: de día, papel #F8F0D4 con texto negro; de noche, al revés (negro con texto #F8F0D4), siguiendo el
+  modo del móvil o el que elijas en Apariencia. A cada app la distingue su acento: el de Seshat, **ocre (#B0791E)**. Seshat ocre, Jonsu
+  ciruela, Bastet oliva, Thot pizarra azul, Hathor rosa viejo y Nut granate oscuro.
+- **Una vez, sola**: lo que tuvieras elegido a mano en Apariencia (fondo de color, acento, «A tu manera») se quita para que todo quede así;
+  viaja a tus otros dispositivos. Se puede volver a elegir lo que quieras.
+- **«Poner los colores de Seshat»**, arriba del todo en Ajustes → Apariencia: vuelve a estos colores de un toque (el tema y el tamaño del
+  texto se quedan).
+- **Icono y widgets, de día y de noche**: el icono tiene versión clara y oscura (`drawable-night`); cuál se ve depende del lanzador (muchos
+  no cambian el icono con el modo oscuro: Android no tiene una forma oficial de hacerlo). Los widgets cambian solos con el modo, y sus
+  vistas previas del selector también tienen las dos versiones.
+- **El fondo que pones aquí sale en Jonsu** (y si lo cambias en Jonsu, cambia aquí).
 
 ## Capturas
 

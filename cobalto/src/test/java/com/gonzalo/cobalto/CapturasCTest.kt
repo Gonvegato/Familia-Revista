@@ -96,7 +96,7 @@ class CapturasCTest {
         Skin.origenAtrio = false; Skin.invertido = false; Skin.fondoId = ""
         // Los de serie desde noviembre de 2026 (paleta «noche»), sin nada a mano
         Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
-        Skin.palette = PALETTES.first { it.id == "noche" }; Skin.accentId = "paleta"
+        Skin.palette = PALETTES.first { it.id == "familia" }; Skin.accentId = "paleta"
     }
 
     private fun foto(nombre: String) {

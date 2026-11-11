@@ -148,19 +148,19 @@ class PortadaDelDiaTest {
     }
 
     @Test fun coloresDeJonsuYAcentoLegible() {
-        // El granate sobre el casi negro no se lee; el legible sí, y se queda en la familia del granate (más rojo que verde)
-        assertTrue(contrasteWcag(Color(JONSU_ACENTO), Color(JONSU_FONDO)) < 4.5f)
-        val l = acentoLegible(Color(JONSU_ACENTO), Color(JONSU_FONDO), Color(JONSU_TINTA))
-        assertTrue(contrasteWcag(l, Color(JONSU_FONDO)) >= 4.5f)
-        assertTrue(l.red > l.green)
-        // Sobre la cabecera crema, el acento oscurecido también se lee
-        assertTrue(contrasteWcag(acentoLegible(Color(JONSU_ACENTO), Color(JONSU_TINTA), Color(JONSU_FONDO)), Color(JONSU_TINTA)) >= 4.5f)
-        // Sin nada elegido, los colores de Jonsu; con algo elegido, lo tuyo
+        // Los de la familia: de día papel y negro, de noche al revés; el ciruela, legible sobre los dos (aclarado de noche, oscurecido de día)
+        for (noche in listOf(false, true)) {
+            val f = Color(jonsuFondo(noche)); val t = Color(jonsuTinta(noche))
+            val l = acentoLegible(Color(JONSU_ACENTO), f, t)
+            assertTrue(contrasteWcag(l, f) >= 4.5f)
+        }
+        assertEquals(0xFFF8F0D4L, jonsuFondo(false)); assertEquals(0xFF000000L, jonsuFondo(true))
+        // Sin nada elegido, los colores de la familia; con algo elegido, lo tuyo
         assertTrue(Skin.deSerieJonsu("", "edicion", 0L, 0L, 0L))
         assertTrue(!Skin.deSerieJonsu("", "azul", 0L, 0L, 0L))
         assertTrue(!Skin.deSerieJonsu("arena", "edicion", 0L, 0L, 0L))
         assertTrue(!Skin.deSerieJonsu("", "edicion", 0xFF101010L, 0L, 0L))
-        val t = Skin.conPropios(PALETTES.first { it.id == "revista" }.light, JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO)
-        assertEquals(Color(JONSU_FONDO), t.cPaper); assertEquals(Color(JONSU_TINTA), t.cInk); assertEquals(Color(JONSU_ACENTO), t.cGeneral())
+        val t = Skin.conPropios(PALETTES.first { it.id == "revista" }.light, jonsuFondo(false), jonsuTinta(false), JONSU_ACENTO)
+        assertEquals(Color(jonsuFondo(false)), t.cPaper); assertEquals(Color(jonsuTinta(false)), t.cInk); assertEquals(Color(JONSU_ACENTO), t.cGeneral())
     }
 }

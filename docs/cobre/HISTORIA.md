@@ -9,11 +9,18 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
-## 0.8.3 — «Colores de Nut», de un toque
+## 0.8.3 — los colores de la familia, de día y de noche
 
-- **Ajustes → Apariencia → «Poner los colores de Nut»**, arriba del todo: pone los últimos colores diseñados para Nut («Vino viejo») y
-  quita lo elegido a mano (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema y el tamaño del texto se quedan. Llega a tus
-  otros dispositivos.
+- **Las seis apps comparten colores**: de día, papel #F8F0D4 con texto negro; de noche, al revés (negro con texto #F8F0D4), siguiendo el
+  modo del móvil o el que elijas en Apariencia. A cada app la distingue su acento: el de Nut, **granate oscuro (#5D1414)**. Seshat ocre, Jonsu
+  ciruela, Bastet oliva, Thot pizarra azul, Hathor rosa viejo y Nut granate oscuro.
+- **Una vez, sola**: lo que tuvieras elegido a mano en Apariencia (fondo de color, acento, «A tu manera») se quita para que todo quede así;
+  viaja a tus otros dispositivos. Se puede volver a elegir lo que quieras.
+- **«Poner los colores de Nut»**, arriba del todo en Ajustes → Apariencia: vuelve a estos colores de un toque (el tema y el tamaño del
+  texto se quedan).
+- **Icono y widgets, de día y de noche**: el icono tiene versión clara y oscura (`drawable-night`); cuál se ve depende del lanzador (muchos
+  no cambian el icono con el modo oscuro: Android no tiene una forma oficial de hacerlo). Los widgets cambian solos con el modo, y sus
+  vistas previas del selector también tienen las dos versiones.
 
 ## 0.8.2 — los widgets, también con los colores nuevos
 

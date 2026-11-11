@@ -159,7 +159,7 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     private val propios = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).let { p ->
         Triple(p.getLong("skin_fondo_propio", 0L), p.getLong("skin_tinta_propia", 0L), p.getLong("skin_acento_propio", 0L)).let { t ->
             // Sin nada elegido en Apariencia: los colores de Jonsu de serie
-            if (Skin.deSerieJonsu(p.getString("skin_fondo", ""), p.getString("skin_accent_id", "edicion"), t.first, t.second, t.third)) Triple(JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) else t } }
+            if (Skin.deSerieJonsu(p.getString("skin_fondo", ""), p.getString("skin_accent_id", "edicion"), t.first, t.second, t.third)) Triple(jonsuFondo(noche), jonsuTinta(noche), JONSU_ACENTO) else t } }
     private val tonos = Skin.conPropios(Widgets.fondo(ctx)?.tones ?: if (noche) edicion.paleta.dark else edicion.paleta.light,
         propios.first, propios.second, 0L)
     val papel = tonos.cPaper.toArgb()

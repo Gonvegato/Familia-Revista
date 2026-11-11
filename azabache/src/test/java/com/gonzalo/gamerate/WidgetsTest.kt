@@ -127,6 +127,9 @@ class WidgetsTest {
             if (prev != null && (w to h) == ls.first { it.first < 400f }) File(prev, "w_prev_${t.name.lowercase().replace("ano", "ano")}.png").outputStream().use {
                 p.bitmap(ctx, w, h, false, 1.6f).compress(Bitmap.CompressFormat.PNG, 100, it)
             }
+            if (prev != null && (w to h) == ls.first { it.first < 400f }) File(File(prev, "noche").apply { mkdirs() }, "w_prev_${t.name.lowercase()}.png").outputStream().use {
+                p.bitmap(ctx, w, h, true, 1.6f).compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
         }
         // La racha: al menos los 6 días seguidos de lectura sembrados (otros datos de ejemplo, fechados «a primeros de mes
         // + n días», pueden alargarla un día según el día del mes en que se pasen las pruebas; p. ej. el 21)

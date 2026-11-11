@@ -119,7 +119,7 @@ object Skin {
     val revista: Boolean get() = true
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "noche" })
+    var palette by mutableStateOf(PALETTES.first { it.id == "familia" })
     var display by mutableStateOf("Atrio")
     var body by mutableStateOf("Atrio")
     var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
@@ -130,7 +130,7 @@ object Skin {
     /** Colores invertidos: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene. */
     var invertido by mutableStateOf(false)
     /** Colores de Atrio (los que tienes puestos allí) en lugar de los de la paleta de Cobalto. */
-    var origenAtrio by mutableStateOf(true)
+    var origenAtrio by mutableStateOf(false)
     /** Colores elegidos a mano, como «A tu manera» de Atrio (0 = automático): por encima de todo lo demás. */
     var fondoPropio by mutableStateOf(0L)
     /** Un fondo de color de [FONDOS] (como en Atrio); "" = papel. */
@@ -232,7 +232,7 @@ object Skin {
     fun cargar(c: Context) {
         val p = p(c)
         if (!p.getBoolean("revista_v1", false)) { p.edit().clear().putBoolean("revista_v1", true).apply() }
-        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "noche") } ?: palette
+        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "familia") } ?: palette
         display = p.getString("display", "Atrio") ?: "Atrio"
         body = p.getString("body", "Atrio") ?: "Atrio"
         forma = FORMAS.firstOrNull { it.id == p.getString("forma", "revista") } ?: forma
@@ -246,10 +246,11 @@ object Skin {
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
-        // Thot, una vez (noviembre de 2026): los colores de serie de antes pasan a «Noche» (y viajan a tus otros dispositivos)
-        if (!p.getBoolean("noche_v1", false)) {
-            p.edit().putBoolean("noche_v1", true).apply()
-            if (aColoresNuevos()) { ajustesAt = System.currentTimeMillis(); persistir(c) }
+        // Noviembre de 2026, una vez: los colores de la familia (papel y negro, de día y de noche) con el acento de Thot, para todos; lo elegido
+        // a mano antes en Apariencia se quita (se puede volver a elegir). Viaja a tus otros dispositivos.
+        if (!p.getBoolean("familia_v1", false)) {
+            p.edit().putBoolean("familia_v1", true).apply()
+            aColoresDeSerie(); ajustesAt = System.currentTimeMillis(); persistir(c)
         }
         // Thot 0.6.0, una vez: el acento de serie de antes (el dorado #A79530) pasa al cobre (y viaja a tus otros dispositivos)
         if (!p.getBoolean("cobre_v1", false)) {
@@ -301,7 +302,6 @@ object Skin {
         Modo.eleccion = k.optInt("modo", Modo.eleccion).coerceIn(0, 2)
         fondoId = k.optString("fondoId").takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         fondoPropio = k.optLong("fondoPropio", 0L); tintaPropia = k.optLong("tintaPropia", 0L); acentoPropio = k.optLong("acentoPropio", 0L)
-        aColoresNuevos()  // (si llega de un dispositivo sin actualizar)
         aCobre()  // (si llega de un Thot de antes)
         ajustesAt = at
         persistir(c)
@@ -317,30 +317,11 @@ object Skin {
 }
 
 /**
- * Los colores de serie de Thot desde noviembre de 2026 («Noche»). Quien tenía los de serie de antes pasa a ellos; lo que
- * hubieras elegido tú (otros colores a mano, un fondo de color, otra paleta) se queda. Devuelve true si ha cambiado algo.
- */
-fun Skin.aColoresNuevos(): Boolean {
-    var nuevo = false
-        // Los de antes, puestos en «A tu manera» (#171E2B, #F1EBE0 y #C8703F): vuelven a automático
-        if (fondoPropio != 0L && (fondoPropio and 0xFFFFFFL) == 0x171E2BL && (tintaPropia == 0L || (tintaPropia and 0xFFFFFFL) == 0xF1EBE0L) &&
-            (acentoPropio == 0L || (acentoPropio and 0xFFFFFFL) == 0xC8703FL || (acentoPropio and 0xFFFFFFL) == 0xA79530L)) {
-            fondoPropio = 0L; tintaPropia = 0L; acentoPropio = 0L; nuevo = true
-        }
-    // La paleta de serie de antes, sin nada elegido encima: pasa a la nueva (y deja de seguir los colores de Jonsu, que no eran los suyos)
-    if (fondoPropio == 0L && tintaPropia == 0L && acentoPropio == 0L && accentId == "paleta" && fondoId.isEmpty() && palette.id in listOf("revista")) {
-        palette = PALETTES.first { it.id == "noche" }; origenAtrio = false; nuevo = true
-    }
-    if (nuevo && palette.id != "noche" && fondoPropio == 0L) { palette = PALETTES.first { it.id == "noche" }; accentId = "paleta"; origenAtrio = false }
-    return nuevo
-}
-
-/**
- * El botón «Colores de Thot» de Apariencia: pone los últimos colores diseñados para Thot («Noche»: la paleta de serie, con su versión de noche) y quita lo elegido a mano
+ * El botón «Colores de Thot» de Apariencia: pone los colores de la familia con el acento de Thot y quita lo elegido a mano
  * (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema (claro, oscuro, como el móvil) y el tamaño del texto se quedan.
  */
 fun Skin.aColoresDeSerie() {
-    palette = PALETTES.first { it.id == "noche" }; accentId = "paleta"
+    palette = PALETTES.first { it.id == "familia" }; accentId = "paleta"
     fondoPropio = 0L; tintaPropia = 0L; acentoPropio = 0L
     fondoId = ""; invertido = false; origenAtrio = false
 }

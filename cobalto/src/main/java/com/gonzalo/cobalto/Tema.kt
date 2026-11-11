@@ -71,6 +71,11 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // La familia (noviembre de 2026): las seis apps comparten papel #F8F0D4 y texto negro (de noche, al revés); a cada una la distingue
+    // su acento. El de Thot: pizarra azul (#5A7896).
+    Palette("familia", "Familia", "Thot",
+        t(0xF8F0D4, 0xFBF6E5, 0x000000, 0x5A7896, 0x000000, 0x57544A, 0x888475, 0x3F5469, 0x5A7896),
+        t(0x000000, 0x0F0E0D, 0xF8F0D4, 0x5A7896, 0xF8F0D4, 0xA19C8A, 0x706C5F, 0x899CA9, 0x5A7896)),
     // Thot, colores de serie desde noviembre de 2026: «Noche», azul noche apagado, gris claro y azul niebla (igual de día y de noche).
     Palette("noche", "Noche", "Thot",
         t(0x1C2129, 0x262B33, 0xE4E6E9, 0x8696AE, 0xE4E6E9, 0x9EA1A6, 0x767A7F, 0xA2AEC0, 0x8696AE),

@@ -71,6 +71,11 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // La familia (noviembre de 2026): las seis apps comparten papel #F8F0D4 y texto negro (de noche, al revés); a cada una la distingue
+    // su acento. El de Hathor: rosa viejo (#B56576).
+    Palette("familia", "Familia", "Hathor",
+        t(0xF8F0D4, 0xFBF6E5, 0x000000, 0xB56576, 0x000000, 0x57544A, 0x888475, 0x7F4753, 0xB56576),
+        t(0x000000, 0x0F0E0D, 0xF8F0D4, 0xB56576, 0xF8F0D4, 0xA19C8A, 0x706C5F, 0xC98F92, 0xB56576)),
     // Hathor, colores de serie desde noviembre de 2026: «Celuloide», gris cálido, casi negro y sepia; de noche, casi negro con el mismo gris de texto.
     Palette("celuloide", "Celuloide", "Hathor",
         t(0xE9E5DE, 0xF3F1ED, 0x1F1E1C, 0x8C6F4E, 0x1F1E1C, 0x666460, 0x8E8B87, 0x6B573F, 0x8C6F4E),

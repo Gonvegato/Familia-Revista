@@ -26,12 +26,12 @@ class DireccionCTest {
 
     // ---------------------------------------------------------------- los colores
 
-    @Test fun celuloideEsLaDeSerie() {
-        val p = PALETTES.first { it.id == "celuloide" }
-        assertEquals(0xFFE9E5DEL, p.light.paper); assertEquals(0xFF1F1E1CL, p.light.ink); assertEquals(0xFF8C6F4EL, p.light.general)
+    @Test fun familiaEsLaDeSerie() {
+        val p = PALETTES.first { it.id == "familia" }
+        assertEquals(0xFFF8F0D4L, p.light.paper); assertEquals(0xFF000000L, p.light.ink); assertEquals(0xFFB56576L, p.light.general)
         ctx.getSharedPreferences("mostaza_tema", Context.MODE_PRIVATE).edit().clear().commit()
         Skin.cargar(ctx)
-        assertEquals("celuloide", Skin.palette.id); assertEquals("paleta", Skin.accentId)
+        assertEquals("familia", Skin.palette.id); assertEquals("paleta", Skin.accentId)
         assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.acentoPropio)
     }
 
@@ -39,26 +39,15 @@ class DireccionCTest {
         Skin.palette = PALETTES.first { it.id == "revista" }; Skin.accentId = "mostaza"
         Skin.fondoPropio = 0xFF715021; Skin.tintaPropia = 0xFFFFFFFF; Skin.acentoPropio = 0xFFD4C1C0
         assertTrue(Skin.aPalomitas())
-        assertEquals("celuloide", Skin.palette.id); assertEquals("paleta", Skin.accentId)
+        assertEquals("familia", Skin.palette.id); assertEquals("paleta", Skin.accentId)
         assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.tintaPropia); assertEquals(0L, Skin.acentoPropio)
         assertFalse("la segunda vez no cambia nada", Skin.aPalomitas())
     }
 
-    /** Noviembre de 2026: quien tenía «Palomitas» sin nada encima pasa a «Celuloide»; con otro acento elegido, se queda. */
-    @Test fun palomitasPasaACeluloide() {
-        Skin.palette = PALETTES.first { it.id == "palomitas" }; Skin.accentId = "paleta"; Skin.fondoId = ""
-        Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L
-        assertTrue(Skin.aColoresNuevos()); assertEquals("celuloide", Skin.palette.id)
-        assertFalse("la segunda vez no cambia nada", Skin.aColoresNuevos())
-        Skin.palette = PALETTES.first { it.id == "palomitas" }; Skin.accentId = "azul"
-        assertFalse(Skin.aColoresNuevos()); assertEquals("palomitas", Skin.palette.id)
-        Skin.accentId = "paleta"
-    }
-
-    @Test fun elBotonPoneCeluloide() {
+    @Test fun elBotonPoneLaFamilia() {
         Skin.palette = PALETTES.first { it.id == "vitrina" }; Skin.accentId = "azul"; Skin.fondoPropio = 0xFF123456; Skin.acentoPropio = 0xFF00AA00
         Skin.aColoresDeSerie()
-        assertEquals("celuloide", Skin.palette.id); assertEquals("paleta", Skin.accentId); assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.acentoPropio)
+        assertEquals("familia", Skin.palette.id); assertEquals("paleta", Skin.accentId); assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.acentoPropio)
     }
 
     @Test fun loElegidoAManoSeQueda() {

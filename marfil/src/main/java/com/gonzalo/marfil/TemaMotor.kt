@@ -117,7 +117,7 @@ object Modo {
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "revista" })
+    var palette by mutableStateOf(PALETTES.first { it.id == "familia" })
     var display by mutableStateOf("Atrio")
     var body by mutableStateOf("Atrio")
     var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
@@ -128,7 +128,7 @@ object Skin {
     /** Colores invertidos: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene. */
     var invertido by mutableStateOf(false)
     /** Colores de Atrio (los que tienes puestos allí) en lugar de los de la paleta de Marfil. */
-    var origenAtrio by mutableStateOf(true)
+    var origenAtrio by mutableStateOf(false)
     /** Colores elegidos a mano, como «A tu manera» de Atrio (0 = automático): por encima de todo lo demás. */
     var fondoPropio by mutableStateOf(0L)
     /** Un fondo de color de [FONDOS] (como en Atrio); "" = papel. */
@@ -230,7 +230,7 @@ object Skin {
     fun cargar(c: Context) {
         val p = p(c)
         if (!p.getBoolean("revista_v1", false)) { p.edit().clear().putBoolean("revista_v1", true).apply() }
-        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "revista") } ?: palette
+        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "familia") } ?: palette
         display = p.getString("display", "Atrio") ?: "Atrio"
         body = p.getString("body", "Atrio") ?: "Atrio"
         forma = FORMAS.firstOrNull { it.id == p.getString("forma", "revista") } ?: forma
@@ -244,6 +244,12 @@ object Skin {
         fondoId = p.getString("fondo_id", "")?.takeIf { id -> FONDOS.any { it.id == id } } ?: ""
         ajustesAt = p.getLong("ajustes_at", 0L)
         fondoPropio = p.getLong("fondo_propio", 0L); tintaPropia = p.getLong("tinta_propia", 0L); acentoPropio = p.getLong("acento_propio", 0L)
+        // Noviembre de 2026, una vez: los colores de la familia (papel y negro, de día y de noche) con el acento de Seshat, para todos; lo elegido
+        // a mano antes en Apariencia se quita (se puede volver a elegir). Viaja a tus otros dispositivos.
+        if (!p.getBoolean("familia_v1", false)) {
+            p.edit().putBoolean("familia_v1", true).apply()
+            aColoresDeSerie(); ajustesAt = System.currentTimeMillis(); persistir(c)
+        }
     }
 
     /** Cuándo se cambió la apariencia (milisegundos): al sincronizar con tus otros Marfiles gana la más reciente. */
@@ -289,13 +295,12 @@ object Skin {
 }
 
 /**
- * El botón «Colores de Seshat» de Apariencia: pone los últimos colores diseñados para Seshat (papel amarillo, tinta casi negra y mostaza) y quita lo elegido a mano
+ * El botón «Colores de Seshat» de Apariencia: pone los colores de la familia con el acento de Seshat y quita lo elegido a mano
  * (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema (claro, oscuro, como el móvil) y el tamaño del texto se quedan.
  */
 fun Skin.aColoresDeSerie() {
-    // (los de Seshat van en «A tu manera»: papel amarillo #F8F0D4, tinta #050404 y mostaza #C68B00)
-    palette = PALETTES.first { it.id == "revista" }; accentId = "paleta"
-    fondoPropio = 0xFFF8F0D4L; tintaPropia = 0xFF050404L; acentoPropio = 0xFFC68B00L
+    palette = PALETTES.first { it.id == "familia" }; accentId = "paleta"
+    fondoPropio = 0L; tintaPropia = 0L; acentoPropio = 0L
     fondoId = ""; invertido = false; origenAtrio = false
 }
 

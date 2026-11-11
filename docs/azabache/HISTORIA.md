@@ -9,14 +9,21 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
-## 1.8.3 — el fondo de tus hermanas, y «Colores de Jonsu»
+## 1.8.3 — los colores de la familia, de día y de noche
 
-- **El fondo que pones en Seshat, Bastet o Hathor sale aquí.** Jonsu guardaba su propio fondo de cada cosa (en `az`) y no miraba el que
-  pones en la hermana: un libro con fondo en Seshat salía en Jonsu con el de serie. Ahora manda el de la cuenta (`fondo`/`fu` en juegos y
-  libros, `fimg`/`fu` en películas y series; «-» = quitado a propósito); el que guardaba Jonsu solo vale si no hay ninguno. Y al revés:
-  si cambias el fondo aquí, se sube a la cuenta y sale igual en la hermana (lo que llega de una copia no pisa el que ya hay).
-- **Ajustes → Apariencia → «Poner los colores de Jonsu»**: los últimos de serie («Ciruela»), quitando el fondo de color, el acento y
-  «A tu manera». El tema y el tamaño del texto se quedan.
+- **Las seis apps comparten colores**: de día, papel #F8F0D4 con texto negro; de noche, al revés (negro con texto #F8F0D4), siguiendo el
+  modo del móvil o el que elijas en Apariencia. A cada app la distingue su acento: el de Jonsu, **ciruela (#8E5A78)**. Seshat ocre, Jonsu
+  ciruela, Bastet oliva, Thot pizarra azul, Hathor rosa viejo y Nut granate oscuro.
+- **Una vez, sola**: lo que tuvieras elegido a mano en Apariencia (fondo de color, acento, «A tu manera») se quita para que todo quede así;
+  viaja a tus otros dispositivos. Se puede volver a elegir lo que quieras.
+- **«Poner los colores de Jonsu»**, arriba del todo en Ajustes → Apariencia: vuelve a estos colores de un toque (el tema y el tamaño del
+  texto se quedan).
+- **Icono y widgets, de día y de noche**: el icono tiene versión clara y oscura (`drawable-night`); cuál se ve depende del lanzador (muchos
+  no cambian el icono con el modo oscuro: Android no tiene una forma oficial de hacerlo). Los widgets cambian solos con el modo, y sus
+  vistas previas del selector también tienen las dos versiones.
+- **El fondo que pones en Seshat, Bastet o Hathor sale aquí.** Jonsu guardaba su propio fondo de cada cosa (en `az`) y no miraba el de la
+  hermana. Ahora manda el de la cuenta (`fondo`/`fu` en juegos y libros, `fimg`/`fu` en películas y series; «-» = quitado a propósito); el
+  de Jonsu solo vale si no hay ninguno. Y al revés: si lo cambias aquí, sube a la cuenta y sale igual en la hermana.
 
 ## 1.8.2 — los widgets, también con los colores nuevos
 

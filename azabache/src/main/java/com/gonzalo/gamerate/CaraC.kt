@@ -45,10 +45,16 @@ import kotlin.math.roundToInt
  * pestañas en bloque. Aquí solo las piezas; las pantallas las usan.
  */
 
-/** Los colores de Jonsu de serie (los del icono; «Ciruela» desde noviembre de 2026): fondo, texto y acento. Se usan si no has elegido otros en Apariencia. */
-const val JONSU_FONDO = 0xFF2B2529L
-const val JONSU_TINTA = 0xFFEAE2DDL
-const val JONSU_ACENTO = 0xFF9C7B86L
+/**
+ * Los colores de la familia (noviembre de 2026), los mismos en las seis apps: de día, papel #F8F0D4 con texto negro; de noche, al revés.
+ * Lo que distingue a cada app es el acento: el de Jonsu, ciruela #8E5A78. Se usan si no has elegido otros en Apariencia.
+ */
+const val PAPEL_FAMILIA = 0xFFF8F0D4L
+const val TINTA_FAMILIA = 0xFF000000L
+const val JONSU_ACENTO = 0xFF8E5A78L
+/** El fondo y el texto de Jonsu de serie, de día o de noche. */
+fun jonsuFondo(oscuro: Boolean): Long = if (oscuro) TINTA_FAMILIA else PAPEL_FAMILIA
+fun jonsuTinta(oscuro: Boolean): Long = if (oscuro) PAPEL_FAMILIA else TINTA_FAMILIA
 
 /** La grotesca de la dirección C: Bricolage Grotesque con el tamaño óptico de titular (48) y el ancho normal. */
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
@@ -81,8 +87,8 @@ fun acentoLegible(c: Color, fondo: Color, hacia: Color, minimo: Float = 4.5f): C
 }
 
 /**
- * El acento legible sobre la página: el elegido, aclarado lo justo para leerse con 4,5:1 (el malva de Jonsu, #9C7B86, sobre su gris
- * ciruela #2B2529 se queda corto): en letras, cifras, la pestaña elegida y el botón principal se aclara; en bloques e icono, tal cual.
+ * El acento legible sobre la página: el elegido, aclarado (de noche) u oscurecido (de día) lo justo para leerse con 4,5:1: en letras,
+ * cifras, la pestaña elegida y el botón principal; en bloques e icono, tal cual.
  */
 val Acento: Color get() = acentoLegible(AcentoBloque, Paper, Charcoal)
 /** El acento sobre la tinta (la cabecera crema con letra oscura): ajustado para leerse ahí. */

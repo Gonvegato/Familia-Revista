@@ -17,11 +17,11 @@ class TemaProviderTest {
     private val p get() = ctx.getSharedPreferences("gamerate", Context.MODE_PRIVATE).also { it.edit().clear().commit() }
     private val revista = PALETTES.first { it.id == "revista" }
 
-    @Test fun porDefectoSonLosDeJonsu() {
-        // Jonsu 1.8: sin nada elegido, los colores de Jonsu (los del icono), oscuros elija el tema que elija
-        for (modo in 0..2) {
-            val (t, oscuro) = TemaProvider.calcula(p, modo, sistemaOscuro = false)
-            assertTrue(oscuro); assertEquals(JONSU_FONDO, t.paper); assertEquals(JONSU_TINTA, t.ink); assertEquals(JONSU_ACENTO, t.general)
+    @Test fun porDefectoSonLosDeLaFamilia() {
+        // Sin nada elegido: los colores de la familia, claros u oscuros según el tema (y el ciruela de Jonsu)
+        for ((modo, sistema, noche) in listOf(Triple(1, true, false), Triple(2, false, true), Triple(0, false, false), Triple(0, true, true))) {
+            val (t, oscuro) = TemaProvider.calcula(p, modo, sistemaOscuro = sistema)
+            assertEquals(noche, oscuro); assertEquals(jonsuFondo(noche), t.paper); assertEquals(jonsuTinta(noche), t.ink); assertEquals(JONSU_ACENTO, t.general)
         }
     }
 

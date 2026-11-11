@@ -95,7 +95,7 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
 
         // Los colores de Jonsu, de un toque: los últimos diseñados («Ciruela»), sin nada elegido a mano
         SectionTitle("Colores de Jonsu")
-        Text("Pone los últimos colores diseñados para Jonsu («Ciruela»: gris ciruela, crema y malva gris) y quita lo que hayas elegido a mano aquí abajo (fondo de color, acento y «A tu manera»). El tema y el tamaño del texto se quedan.",
+        Text("Pone los colores de la familia con el acento de Jonsu (papel y negro, de día y de noche, y el ciruela) y quita lo que hayas elegido a mano aquí abajo (fondo de color, acento y «A tu manera»). El tema y el tamaño del texto se quedan.",
             color = Muted, fontSize = 13.sp)
         var puestos by remember { mutableStateOf(false) }
         Box(Modifier.padding(top = 10.dp, bottom = 18.dp).fillMaxWidth().heightIn(min = 52.dp).background(ColGeneral).clickable {

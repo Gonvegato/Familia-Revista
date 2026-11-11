@@ -401,8 +401,8 @@ object Skin {
     var letraTexto by mutableStateOf("")
     /** ¿El fondo propio es oscuro? (fija el modo, como los fondos de color); null sin fondo propio o en lo de tu pareja. */
     val fondoPropioOscuro: Boolean? get() = if (!revista || Mode.partnerShown) null else if (fondoPropio != 0L) Color(fondoPropio).luminance() < 0.4f
-        else if (sinElegir) Color(JONSU_FONDO).luminance() < 0.4f else null
-    /** Sin nada elegido en Apariencia (ni fondo de color, ni colores a mano, ni acento): se ven los colores de Jonsu ([JONSU_FONDO]…). */
+        else null  // (sin nada elegido, los colores de la familia siguen el modo claro u oscuro)
+    /** Sin nada elegido en Apariencia (ni fondo de color, ni colores a mano, ni acento): se ven los colores de la familia ([jonsuFondo]…). */
     val sinElegir: Boolean get() = deSerieJonsu(fondoId, accentId, fondoPropio, tintaPropia, acentoPropio)
     /** (también para los widgets y el proveedor de colores, que leen lo guardado) */
     fun deSerieJonsu(fondoId: String?, accentId: String?, fondo: Long, tinta: Long, acento: Long): Boolean =
@@ -447,7 +447,7 @@ object Skin {
     }
     /** Los colores a mano por encima de todo: el fondo (las tarjetas, líneas y grises salen de él y del texto), el texto y el acento. */
     private fun propios(t: Tones): Tones =
-        if (!revista || Mode.partnerShown) t else if (sinElegir) conPropios(t, JONSU_FONDO, JONSU_TINTA, JONSU_ACENTO) else conPropios(t, fondoPropio, tintaPropia, acentoPropio)
+        if (!revista || Mode.partnerShown) t else if (sinElegir) conPropios(t, jonsuFondo(Mode.dark), jonsuTinta(Mode.dark), JONSU_ACENTO) else conPropios(t, fondoPropio, tintaPropia, acentoPropio)
     /** (también para los widgets, que leen lo guardado) */
     fun conPropios(t: Tones, fondo: Long, tintaP: Long, acentoP: Long): Tones {
         var r = t
@@ -529,6 +529,13 @@ object Skin {
         accentId = p.getString("skin_accent_id", "edicion")?.takeIf { id -> id == "edicion" || ACCENT_COLORS.any { it.id == id } } ?: "edicion"
         edicion = Ediciones.porId(p.getString("skin_edicion", "atrio")).id
         fondoPropio = p.getLong("skin_fondo_propio", 0L); tintaPropia = p.getLong("skin_tinta_propia", 0L); acentoPropio = p.getLong("skin_acento_propio", 0L)
+        // Noviembre de 2026, una vez: los colores de la familia (papel y negro, de día y de noche, con el ciruela de Jonsu) para todos;
+        // lo elegido a mano antes en Apariencia se quita (se puede volver a elegir)
+        if (!p.getBoolean("familia_v1", false)) {
+            fondoId = ""; accentId = "edicion"; fondoPropio = 0L; tintaPropia = 0L; acentoPropio = 0L
+            p.edit().putBoolean("familia_v1", true).putString("skin_fondo", "").putString("skin_accent_id", "edicion")
+                .putLong("skin_fondo_propio", 0L).putLong("skin_tinta_propia", 0L).putLong("skin_acento_propio", 0L).apply()
+        }
         letraTitulos = p.getString("skin_letra_titulos", "").orEmpty(); letraTexto = p.getString("skin_letra_texto", "").orEmpty()
         covers = p.getInt("skin_covers", 0)
         listCovers = p.getBoolean("skin_listcovers", true)
