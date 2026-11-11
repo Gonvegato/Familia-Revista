@@ -40,7 +40,7 @@ object Tmdb {
     /** La clave v3 va en la dirección; el token de lectura, en la cabecera. */
     private fun get(path: String, key: String): JSONObject {
         val k = key.trim()
-        if (k.isEmpty()) throw IllegalArgumentException("añade tu clave de TMDB en Ajustes → Avanzado → Servicios")
+        if (k.isEmpty()) throw IllegalArgumentException("añade tu clave de TMDB en Ajustes → Claves")
         val token = k.startsWith("eyJ")
         val sep = if ('?' in path) '&' else '?'
         val url = API + path + if (token) "" else "${sep}api_key=${menc(k)}"

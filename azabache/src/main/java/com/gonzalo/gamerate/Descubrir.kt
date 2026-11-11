@@ -208,7 +208,7 @@ object Quiz {
     }
 
     suspend fun screen(t: Taste, key: String, mine: Set<String>): List<QuizItem> = withContext(Dispatchers.IO) {
-        if (key.isBlank()) throw IllegalStateException("Para descubrir pelis y series hace falta tu clave gratuita de TMDB (Ajustes → Avanzado).")
+        if (key.isBlank()) throw IllegalStateException("Para descubrir pelis y series hace falta tu clave gratuita de TMDB (Ajustes → Claves).")
         val type = t.pick("type")
         val kinds = when (type) { "movie" -> listOf(false); "tv" -> listOf(true); else -> listOf(false, true) }
         val liked = t.liked()
@@ -317,7 +317,7 @@ object Quiz {
 
     /** [years] y [plats]: los filtros que pones tú (mandan sobre lo que digan las respuestas y se aplican a todas las búsquedas). */
     suspend fun games(ctx: Context, t: Taste, key: String, mine: Set<String>, years: IntRange? = null, plats: Set<String> = emptySet()): List<QuizItem> = withContext(Dispatchers.IO) {
-        if (key.isBlank()) throw IllegalStateException("Para descubrir juegos hace falta tu clave gratuita de RAWG (Ajustes → Avanzado).")
+        if (key.isBlank()) throw IllegalStateException("Para descubrir juegos hace falta tu clave gratuita de RAWG (Ajustes → Claves).")
         val liked = t.liked().filter { g -> GameGenres.any { it.first == g } || g in setOf("educational") }
         val likedTags = t.likedTags()
         val badTags = t.tags.filter { it.value <= -2 }.keys

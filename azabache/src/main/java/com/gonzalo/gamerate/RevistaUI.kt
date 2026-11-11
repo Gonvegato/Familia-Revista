@@ -105,23 +105,59 @@ fun FiltroRevista(texto: String, on: Boolean, modifier: Modifier = Modifier, onC
             .padding(top = 8.dp, bottom = 13.dp))
 }
 
+/** Las pestañas de Ajustes: las de las hermanas (Apariencia · Jonsu · Cuenta · Avanzado) y una más para las claves. */
+val PESTANAS_AJUSTES = listOf("Apariencia", "Jonsu", "Cuenta", "Claves", "Avanzado")
+
 /**
- * Las pestañas de Ajustes, las mismas que en Hiedra, Marfil y Cobalto: Apariencia · Cuenta · Avanzado. [sel]: 0 Apariencia (la pantalla
- * de estilo), 1 Cuenta (tu perfil, la pareja, los objetivos…), 2 Avanzado.
+ * Ir a una pestaña de Ajustes. 0 Apariencia (la pantalla de estilo, que se pinta por encima); 1 Jonsu (objetivos, categorías, notas);
+ * 2 Cuenta, 3 Claves y 4 Avanzado (las tres, en [SettingsScreen], según [AjustesNav.pestana]).
+ */
+fun irAAjustes(i: Int, ir: (Screen) -> Unit) {
+    when (i) {
+        0 -> Skin.open = true
+        1 -> { Skin.open = false; ir(Screen.Profile) }
+        else -> { Skin.open = false; AjustesNav.pestana = i; ir(Screen.Settings) }
+    }
+}
+
+/** Ir a una pestaña de Ajustes desde la de Apariencia (que se pinta por encima, fuera de la navegación de la app); y cuál de Cuenta, Claves o Avanzado. */
+object AjustesNav {
+    var ir by androidx.compose.runtime.mutableStateOf<Screen?>(null)
+    var pestana by androidx.compose.runtime.mutableIntStateOf(2)
+}
+
+/**
+ * La cabecera de Ajustes, como en Bastet, Seshat y Thot: un bloque de tinta (de lado a lado y bajo la barra de arriba) con «← JONSU» y
+ * «AJUSTES.» en grotesca, y debajo las pestañas en bloques (la elegida, en un bloque del acento). Va fuera del margen de la página.
  */
 @Composable
-fun PestanasAjustes(sel: Int, ir: (Screen) -> Unit) =
-    PestanasRevista(listOf("Apariencia", "Cuenta", "Avanzado"), sel, Modifier.padding(bottom = 14.dp)) {
-        if (it == sel) return@PestanasRevista
-        when (it) {
-            0 -> Skin.open = true
-            1 -> { Skin.open = false; ir(Screen.Profile) }
-            else -> { Skin.open = false; ir(Screen.Settings) }
+fun CabeceraAjustes(sel: Int, onBack: () -> Unit, ir: (Screen) -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+            Text("← JONSU", color = Paper.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
+                modifier = Modifier.padding(top = 6.dp).semantics { role = Role.Button }.press(haptic = false, onClick = onBack).padding(vertical = 10.dp))
+            NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp), punto = acentoLegible(AcentoBloque, Charcoal, Paper))
         }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.Bottom) {
+            PESTANAS_AJUSTES.forEachIndexed { i, n ->
+                val on = i == sel
+                // (cinco pestañas: un poco más juntas que en las hermanas, para que quepan en el móvil)
+                Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 0.6.sp, maxLines = 1, softWrap = false,
+                    modifier = Modifier.semantics { selected = on; role = Role.Tab }.press(haptic = false) { if (!on) irAAjustes(i, ir) }
+                        .background(if (on) Acento else Color.Transparent).padding(horizontal = 9.dp, vertical = 12.dp))
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
     }
+}
 
-/** Ir a una pestaña de Ajustes desde la de Apariencia (que se pinta por encima, fuera de la navegación de la app). */
-object AjustesNav { var ir by androidx.compose.runtime.mutableStateOf<Screen?>(null) }
+/** Una sección de Ajustes, como en las hermanas: el filete de tinta y el título en grotesca, en mayúsculas. */
+@Composable
+fun SeccionAjustes(titulo: String, primera: Boolean = false) {
+    if (!primera) Box(Modifier.padding(top = 22.dp).fillMaxWidth().height(2.dp).background(Charcoal))
+    Text(titulo.uppercase(), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, letterSpacing = 0.sp,
+        modifier = Modifier.padding(top = if (primera) 18.dp else 14.dp, bottom = 6.dp))
+}
 
 
 /**

@@ -1112,7 +1112,7 @@ private fun AppContenido(
                                 diary = { go(4) },
                                 write = if (pv) null else ({ go(5) }),
                                 discover = null,
-                                profile = if (pv) null else ({ screen = Screen.Profile }),
+                                profile = if (pv) null else ({ Skin.open = true }),
                                 add = if (pv) null else ({ k -> if (k.isGame) Hermanas.abrir(ctx, Hermanas.PAQ_HIEDRA) else if (k.isBook) Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL)
                                     // Las películas y las series se añaden en Mostaza (si está; si no, aquí, y van igual a la cuenta de Mostaza)
                                     else if ((k.isMovie || k.isTv) && CosasMostaza.activa(ctx) && Hermanas.abrir(ctx, Hermanas.PAQ_MOSTAZA)) {}
@@ -1285,7 +1285,8 @@ private fun AppContenido(
                             undoImport = store.hasUndoImport
                         }
                     },
-                    pestanas = { PestanasAjustes(1) { screen = it } },
+                    ir = { screen = it },
+                    onFillStudios = { fillStudios() }, studioMsg = studioMsg,
                     categorias = {
                         Text("Tus categorías", fontWeight = FontWeight.Bold, fontSize = 24.sp, fontFamily = Display)
                         Text("Además de juegos, libros, pelis y series: discos, viajes, restaurantes… Salen en el menú de la portada.", color = Muted, fontSize = 13.sp)
@@ -1334,7 +1335,13 @@ private fun AppContenido(
                     onMassScores = { screen = Screen.MassScore(Screen.Settings) },
                     steamKey = store.steamKey, steamUser = store.steamUser,
                     onSteam = { k, u -> steamHours(k, u) },
-                    pestanas = { PestanasAjustes(2) { screen = it } }
+                    couple = {
+                        CoupleSettings(store, { partner = it }) {
+                            reloadAll()
+                            undoImport = store.hasUndoImport
+                        }
+                    },
+                    ir = { screen = it }
                 ) { screen = Screen.Home }
 
                 is Screen.Search -> if (s.manual || (kind.custom && !kind.online)) CustomAddScreen(
@@ -1358,7 +1365,7 @@ private fun AppContenido(
                     needsKey = kind.isGame || kind.isMovie, key = if (kind.isMovie) store.tmdbKey else key,
                     title = kind.title,
                     hint = when { kind.isGame -> "Título del juego"; kind.isBook -> "Título, autor o ISBN"; kind.isMovie -> "Título de la película"; else -> "Título de la serie" },
-                    keyMsg = if (kind.isMovie) "Para buscar películas, añade tu clave gratuita de TMDB en Ajustes → Avanzado → Servicios." else "Antes de buscar, añade tu API key en Ajustes.",
+                    keyMsg = if (kind.isMovie) "Para buscar películas, añade tu clave gratuita de TMDB en Ajustes → Claves." else "Antes de buscar, añade tu clave de SteamGridDB en Ajustes → Claves.",
                     escanear = kind.isBook,
                     // Si no aparece en la búsqueda, a mano (con fotos de tus archivos), en cualquier categoría
                     onManual = { name -> screen = Screen.Search(s.forPlay, true, name) },

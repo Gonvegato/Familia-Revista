@@ -710,10 +710,10 @@ object NubeSync {
         val suyo = Regex("""/app/share/(\d+)/""").find(x.l)?.groupValues?.get(1)
         val aqui = KDrive.drive(ctx)
         if (suyo != null && aqui.isNotBlank() && suyo != aqui)
-            return "Este dispositivo está conectado a otro kDrive (nº $aqui) y el archivo está en el nº $suyo: cámbialo en Ajustes → Avanzado → Tu nube"
+            return "Este dispositivo está conectado a otro kDrive (nº $aqui) y el archivo está en el nº $suyo: cámbialo en Ajustes → Cuenta → Tu nube"
         if (e is KDrive.Fail && e.message?.startsWith("No encuentro") == true)
             return if (runCatching { KDrive.reach(ctx) }.isSuccess) "Ese archivo ya no está en tu kDrive (¿lo borraste o lo moviste?): vuelve a adjuntarlo desde el dispositivo donde lo tengas"
-            else "No encuentro tu kDrive (nº $aqui) con este token: revísalo en Ajustes → Avanzado → Tu nube"
+            else "No encuentro tu kDrive (nº $aqui) con este token: revísalo en Ajustes → Cuenta → Tu nube"
         return e.message ?: "error"
     }
 
@@ -845,30 +845,30 @@ fun NubeSettings(say: (String) -> Unit) {
                 "El número de tu kDrive es el que sale en la dirección al abrirlo en el navegador, después de «/drive/». " +
                 "El token se guarda en tu cuenta, en una parte que solo tú puedes leer (tu pareja no), y lo usan también Bastet, Seshat y Thot."
         )
-        OutlinedTextField(token, { token = it }, label = { Text("Token de API") }, singleLine = true, shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(drive, { drive = it }, label = { Text("Número de tu kDrive (o su dirección)") }, singleLine = true, shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Button({
+        // (como en las hermanas: campos de la revista y un enlace para conectar)
+        CampoRevista("Token", token, "token de API de kDrive", secreto = true, ascii = true) { token = it }
+        CampoRevista("kDrive", drive, "número o dirección", ascii = true) { drive = it }
+        MagLink("Conectar", "Comprueba el token y busca tu carpeta", accent = true) {
+            if (token.isBlank() || drive.isBlank()) { say("Falta el token o el número de tu kDrive"); return@MagLink }
             KDrive.save(ctx, token, drive)
             scope.launch {
                 try { say(KDrive.test(ctx)); KDrive.confirma(ctx); on = true; NubeSync.enqueue(ctx) }
                 catch (e: Exception) { KDrive.descarta(ctx); say(e.message ?: "No se pudo conectar") }
             }
-        }, enabled = token.isNotBlank() && drive.isNotBlank(), shape = pillShape()) { Text("Conectar") }
+        }
     } else {
         Text("Conectada a tu kDrive ${KDrive.drive(ctx)}", fontWeight = FontWeight.SemiBold)
         val st = NubeSync.status.ifBlank { KDrive.lastMsg }
         if (st.isNotBlank()) Text(st, color = UiSoft, fontSize = 13.sp)
         androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Subir las capturas", modifier = Modifier.weight(1f))
-            Switch(shots, { shots = it; KDrive.setShots(ctx, it) })
+            Interruptor(shots) { shots = it; KDrive.setShots(ctx, it) }
         }
         Plegado("Todas, salvo las que quites de la nube al verlas. Normalmente las sube el PC al hacerlas; desde aquí se suben las que falten.")
-        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // En segundo plano (con su aviso): no se corta aunque salgas de aquí o cierres la app
-            Button({ NubeSync.enqueue(ctx, verify = true); say("Sincronizando con tu nube en segundo plano") }, enabled = !NubeSync.running, shape = pillShape()) { Text(if (NubeSync.running) "Sincronizando…" else "Sincronizar ahora") }
-            OutlinedButton({ KDrive.forget(ctx); on = false; token = ""; say("kDrive desconectado en las cuatro apps (lo subido sigue en tu kDrive)") }, shape = pillShape()) { Text("Desconectar") }
+        // En segundo plano (con su aviso): no se corta aunque salgas de aquí o cierres la app
+        MagLink(if (NubeSync.running) "Sincronizando…" else "Sincronizar ahora", accent = !NubeSync.running) {
+            if (!NubeSync.running) { NubeSync.enqueue(ctx, verify = true); say("Sincronizando con tu nube en segundo plano") }
         }
+        MagLink("Desconectar", "Lo subido sigue en tu kDrive") { KDrive.forget(ctx); on = false; token = ""; say("kDrive desconectado en todas las apps (lo subido sigue en tu kDrive)") }
     }
 }

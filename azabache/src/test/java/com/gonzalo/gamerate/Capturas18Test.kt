@@ -199,9 +199,11 @@ class Capturas18Test {
         Mode.dark = false
         val store = seed(); dia(95, 35, 0, 812); abrir(store)
         fun bajando(n: String) { shoot("aj_${n}_0"); repeat(5) { i -> rule.onRoot().performTouchInput { swipe(androidx.compose.ui.geometry.Offset(centerX, height * 0.85f), androidx.compose.ui.geometry.Offset(centerX, height * 0.2f), 500) }; shoot("aj_${n}_${i + 1}") } }
-        rule.runOnUiThread { Skin.open = true }; rule.waitForIdle(); bajando("apariencia")
-        texto("CUENTA")[0].performClick(); rule.waitForIdle(); repeat(6) { rule.onRoot().performTouchInput { swipeDown() } }; bajando("cuenta")
-        texto("AVANZADO")[0].performClick(); rule.waitForIdle(); repeat(6) { rule.onRoot().performTouchInput { swipeDown() } }; bajando("avanzado")
+        rule.runOnUiThread { Skin.open = true }; rule.waitForIdle(); bajando("0apariencia")
+        listOf("JONSU" to "1jonsu", "CUENTA" to "2cuenta", "CLAVES" to "3claves", "AVANZADO" to "4avanzado").forEach { (t, n) ->
+            repeat(6) { rule.onRoot().performTouchInput { swipeDown() } }
+            texto(t)[0].performClick(); rule.waitForIdle(); repeat(6) { rule.onRoot().performTouchInput { swipeDown() } }; bajando(n)
+        }
     }
 
     @Test fun dia() { org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true"); Mode.dark = false; recorrido("d_") }

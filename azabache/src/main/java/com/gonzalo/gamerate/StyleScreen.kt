@@ -84,17 +84,15 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
         Modifier.fillMaxSize().background(Paper)
             // Los toques no pasan a la pantalla de debajo
             .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) {}
-            .statusBarsPadding().navigationBarsPadding()
-            // En una tableta, una columna cómoda en el centro (como el resto de ajustes)
-            .wrapContentWidth().widthIn(max = 760.dp)
-            .verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)
+            .verticalScroll(rememberScrollState()).navigationBarsPadding()
     ) {
-        TopBar("Sección", onClose, "Ajustes")
-        // Las mismas pestañas que Cuenta y Avanzado (esta es Apariencia)
-        PestanasAjustes(0) { AjustesNav.ir = it }
+        // La cabecera de las hermanas (esta es Apariencia)
+        CabeceraAjustes(0, onClose) { AjustesNav.ir = it }
+        // En una tableta, una columna cómoda en el centro (como el resto de ajustes)
+        Column(Modifier.fillMaxWidth().wrapContentWidth().widthIn(max = 760.dp).padding(horizontal = 20.dp)) {
 
         // Los colores de Jonsu, de un toque: los últimos diseñados («Ciruela»), sin nada elegido a mano
-        SectionTitle("Colores de Jonsu")
+        SeccionAjustes("Colores de Jonsu", primera = true)
         Text("Pone los colores de la familia con el acento de Jonsu (papel y negro, de día y de noche, y el ciruela) y quita lo que hayas elegido a mano aquí abajo (fondo de color, acento y «A tu manera»). El tema y el tamaño del texto se quedan.",
             color = Muted, fontSize = 13.sp)
         var puestos by remember { mutableStateOf(false) }
@@ -105,7 +103,7 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
         }
 
         // Tema
-        SectionTitle("Tema")
+        SeccionAjustes("Tema")
         listOf(1 to "Claro", 2 to "Oscuro", 0 to "Como el móvil").forEachIndexed { i, (mode, name) ->
             if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Line))
             val on = themeMode == mode
@@ -118,10 +116,9 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
                 if (on) Text("✓", color = ColGeneral, fontWeight = FontWeight.Black, fontSize = 20.sp)
             }
         }
-        Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
 
         // Fondo de color para toda la app
-        SectionTitle("Fondo")
+        SeccionAjustes("Fondo")
         Text("Colores hondos y sobrios para toda la app, en lugar de papel claro u oscuro. «Papel» vuelve al tema de arriba.", color = Muted, fontSize = 13.sp)
         Spacer(Modifier.height(12.dp))
         listOf(null as Fondo?) .plus(FONDOS).chunked(4).forEach { row ->
@@ -149,10 +146,9 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
                 repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
-        Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
 
         // Tamaño del texto de toda la app
-        SectionTitle("Tamaño del texto")
+        SeccionAjustes("Tamaño del texto")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Bottom) {
             Skin.ESCALAS.forEach { (pct, nombre) ->
                 val on = kotlin.math.abs(Skin.textScale * 100 - pct) < 1f
@@ -163,42 +159,19 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
                 }
             }
         }
-        Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
 
-        // Acento
-        SectionTitle("Acento")
-        Text("El color de los antetítulos, las cifras, los enlaces y los botones. ", color = Muted, fontSize = 13.sp)
-        Spacer(Modifier.height(12.dp))
-        // (el rojo de siempre: sin ediciones, «el de la edición» y «Rojo» eran el mismo color repetido)
-        ACCENT_COLORS.chunked(4).forEach { row ->
-            Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                row.forEach { a ->
-                    val on = Skin.accentId == a.id || (a.id == "rojo" && Skin.accentId == "edicion")
-                    val c = Color(if (Mode.dark) a.dark else a.light)
-                    Column(
-                        // Se guarda dentro del cambio: withReveal lo hace más tarde (tras la foto de la pantalla)
-                        Modifier.weight(1f).clickable { if (!on) withReveal { Skin.accentId = a.id; Skin.acentoPropio = 0L; Skin.save(ctx) } },
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            Modifier.fillMaxWidth().aspectRatio(1f).background(c)
-                                .then(if (on) Modifier.border(3.dp, Charcoal) else Modifier),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (on) Text("✓", color = if (a.id == "tinta" || (a.id == "edicion" && c.luminance() < 0.12f && !Mode.dark)) Paper else Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
-                            else if (a.id == "edicion") Text("Aa", color = Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        }
-                        Text(a.name.uppercase(), color = if (on) Charcoal else Muted, fontSize = 10.sp, fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 6.dp), maxLines = 1)
-                    }
-                }
-                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
+        // Las listas con portada (como las sagas) o solo con títulos
+        SeccionAjustes("Listas")
+        Row(Modifier.fillMaxWidth().clickable { Skin.listCovers = !Skin.listCovers; Skin.save(ctx) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Portadas en las listas", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Charcoal)
+                Text(if (Skin.listCovers) "Cada título con su portada, como las sagas" else "Solo los títulos", color = Muted, fontSize = 13.sp)
             }
+            Interruptor(Skin.listCovers) { Skin.listCovers = it; Skin.save(ctx) }
         }
-        Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
 
         // A tu manera: cualquier color para el fondo, el texto y el acento, y las letras
-        SectionTitle("A tu manera")
+        SeccionAjustes("A tu manera")
         Text("El color que quieras para el fondo, el texto y el acento, y la letra de los títulos y del texto. Mandan sobre lo de arriba; «Quitar» vuelve a ello.", color = Muted, fontSize = 13.sp)
         SelectorColor("Fondo", Skin.fondoPropio, Paper, { Skin.fondoPropio = it }) { Skin.save(ctx) }
         Box(Modifier.fillMaxWidth().height(1.dp).background(Line))
@@ -210,10 +183,9 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
         SelectorLetra("Letra de los títulos", Skin.letraTitulos, letras) { Skin.letraTitulos = it; Skin.save(ctx) }
         Box(Modifier.fillMaxWidth().height(1.dp).background(Line))
         SelectorLetra("Letra del texto", Skin.letraTexto, remember { (BODY_FONTS + DISPLAY_FONTS).map { it.name }.distinct() }) { Skin.letraTexto = it; Skin.save(ctx) }
-        Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
 
         // Muestra: así se ve una ficha con lo elegido
-        SectionTitle("Así queda")
+        SeccionAjustes("Así queda")
         Antetitulo("Jugando · Videojuegos · Team Cherry", tam = 11.sp, color = ColGeneral, conCuadro = false)
         FitTitle("Hollow Knight: Silksong", 44.sp, 46.sp, letterSpacing = (-1).sp)
         Box(Modifier.padding(vertical = 10.dp).fillMaxWidth().height(1.dp).background(Charcoal))
@@ -224,5 +196,6 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
             Text("APUNTAR NOTAS\u00A0→", color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.padding(bottom = 12.dp))
         }
         Spacer(Modifier.height(32.dp))
+        }
     }
 }

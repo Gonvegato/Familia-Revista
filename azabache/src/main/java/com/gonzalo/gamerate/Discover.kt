@@ -274,7 +274,7 @@ object TimeToBeat {
                 if (last == null) last = Exception("RAWG no tiene horas de este juego")
             } catch (e: Exception) { if (last == null) last = e }
         }
-        throw last ?: Exception("pon tu Client ID y secreto de IGDB, o la clave de RAWG, en Ajustes → Avanzado → Servicios")
+        throw last ?: Exception("pon tu Client ID y secreto de IGDB, o la clave de RAWG, en Ajustes → Claves")
     }
 }
 

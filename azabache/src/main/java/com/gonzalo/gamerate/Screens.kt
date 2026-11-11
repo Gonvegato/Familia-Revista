@@ -326,21 +326,29 @@ private fun SettingsSection(title: String, delay: Int, content: @Composable Colu
     Panel(Modifier.padding(bottom = 14.dp).appear(delay), title, content)
 }
 
+/**
+ * Ajustes → Cuenta, Claves y Avanzado (la pestaña, en [AjustesNav.pestana]), con la cabecera de las hermanas. Cuenta: tu cuenta y la
+ * pareja, tu nube (kDrive) y Google Drive. Claves: las de los servicios (SteamGridDB, Steam, RAWG, IGDB, TMDB), que son de tu cuenta y
+ * usan todas las apps. Avanzado: actualizarse sola, las copias y de dónde sale cada cosa.
+ */
 @Composable
 fun SettingsScreen(
     key: String,
     onSaveKey: (String) -> Unit, onExport: () -> Unit, onImport: () -> Unit, onUndoImport: (() -> Unit)?,
     rawgKey: String, igdbId: String, igdbSecret: String, onSaveServices: (String, String, String) -> Unit,
     tmdbKey: String = "", onSaveTmdb: (String) -> Unit = {},
-    studioMsg: String, onFillStudios: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") studioMsg: String, @Suppress("UNUSED_PARAMETER") onFillStudios: () -> Unit,
     driveName: String?, driveInfo: String, onDriveLink: () -> Unit, onDriveRestore: () -> Unit,
     onDriveNow: () -> Unit, onDriveUnlink: () -> Unit,
-    importMsg: String = "", onGoodreads: () -> Unit = {}, onBookmory: () -> Unit = {}, onMassScores: () -> Unit = {}, onDuelos: () -> Unit = {},
+    importMsg: String = "", @Suppress("UNUSED_PARAMETER") onGoodreads: () -> Unit = {}, @Suppress("UNUSED_PARAMETER") onBookmory: () -> Unit = {},
+    @Suppress("UNUSED_PARAMETER") onMassScores: () -> Unit = {}, @Suppress("UNUSED_PARAMETER") onDuelos: () -> Unit = {},
     steamKey: String = "", steamUser: String = "", onSteam: (String, String) -> Unit = { _, _ -> },
     /** Tu nube (kDrive): libros, fotos y capturas en todos tus dispositivos. */
     nube: (@Composable () -> Unit)? = null,
-    /** Las pestañas de Ajustes (General · Avanzado), justo bajo el título. */
-    pestanas: @Composable () -> Unit = {},
+    /** Tu cuenta y la pareja. */
+    couple: @Composable () -> Unit = {},
+    /** Ir a otra pestaña de Ajustes. */
+    ir: (Screen) -> Unit = {},
     onBack: () -> Unit
 ) {
     var k by remember { mutableStateOf(key) }
@@ -351,141 +359,136 @@ fun SettingsScreen(
     var rk by remember { mutableStateOf(rawgKey) }
     var tk by remember { mutableStateOf(tmdbKey) }
     var confirm by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().imePadding().wrapContentWidth().widthIn(max = 760.dp).statusBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        if (Skin.revista) { TopBar("Sección", onBack, "Ajustes"); pestanas() }
-        else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            BackButton(onBack)
-            Column {
-                Overline("Perfil")
-                Text("Ajustes", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 33.sp)
-            }
-        }
-        Spacer(Modifier.height(18.dp))
-
-        SettingsSection("Portadas de juegos (SteamGridDB)", 120) {
-            OutlinedTextField(k, { k = it }, label = { Text("API key de SteamGridDB") }, singleLine = true,
-                shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Plegado("Se genera en tu perfil de steamgriddb.com, en Preferencias > API. Se guarda en tu cuenta: la usan también las demás apps.")
-            Button({ onSaveKey(k) }, shape = pillShape()) { Text("Guardar clave") }
-        }
-
-        SettingsSection("Servicios", 380) {
-            Text("Las claves de aquí (SteamGridDB, Steam, RAWG, IGDB, TMDB y kDrive) son de tu cuenta, en una parte que solo tú puedes leer (tu pareja no): Bastet, Seshat y Thot las usan sin pegarlas otra vez.", color = UiSoft, fontSize = 13.sp)
-            Spacer(Modifier.height(10.dp))
-            Text("RAWG (datos de los juegos, en Bastet)", fontWeight = FontWeight.SemiBold)
-            Plegado("Con una clave gratuita de rawg.io/apidocs, Bastet saca de RAWG la fecha, el estudio y los géneros de los juegos de consola; aquí se detectan mejor los estudios.")
-            OutlinedTextField(rk, { rk = it }, label = { Text("Clave de RAWG") }, singleLine = true,
-                shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(12.dp))
-            Text("IGDB (cuánto dura cada juego, en Bastet)", fontWeight = FontWeight.SemiBold)
-            Plegado(
-                "Da el tiempo que tardan sus jugadores en pasarse cada juego: deprisa, normal y al 100 %. Bastet se lo pone a cada juego. Es gratis y va con una cuenta de Twitch " +
-                    "(con verificación en dos pasos): en dev.twitch.tv/console registra una aplicación con cualquier nombre, " +
-                    "URL de redirección «http://localhost», categoría «Application Integration» y tipo «Confidencial». Copia aquí su Client ID y un secreto nuevo. " +
-                    "Sin esto se usa la media de horas de RAWG, o la pones a mano."
-            )
-            OutlinedTextField(iid, { iid = it }, label = { Text("Client ID de Twitch") }, singleLine = true,
-                shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(isec, { isec = it }, label = { Text("Secreto (Client Secret)") }, singleLine = true,
-                shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            Button({ onSaveServices(rk, iid, isec) }, shape = pillShape()) { Text("Guardar claves") }
-            Spacer(Modifier.height(16.dp))
-            Text("TMDB (películas)", fontWeight = FontWeight.SemiBold)
-            Plegado(
-                "Para buscar películas con sus pósters en español, sus fondos y su director. Es gratis: crea una cuenta en themoviedb.org " +
-                    "desde el ordenador, entra en los ajustes de tu cuenta → API y pide una clave para uso personal. " +
-                    "Pega aquí la «API Key» o el «API Read Access Token» (vale cualquiera de los dos). Las series no necesitan clave."
-            )
-            OutlinedTextField(tk, { tk = it }, label = { Text("Clave de TMDB") }, singleLine = true,
-                shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            Button({ onSaveTmdb(tk) }, shape = pillShape()) { Text("Guardar clave de TMDB") }
-            Spacer(Modifier.height(12.dp))
-            Text("Estudios que faltan", fontWeight = FontWeight.SemiBold)
-            Text("Busca en internet el estudio de todos tus juegos que no lo tengan.", color = UiSoft, fontSize = 13.sp)
-            Spacer(Modifier.height(6.dp))
-            OutlinedButton(onFillStudios, shape = pillShape()) { Text("Rellenar estudios") }
-            if (studioMsg.isNotEmpty()) Text(studioMsg, color = UiSoft, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
-        }
-
-        SettingsSection("Steam", 390) {
-            Text("Horas de Steam", fontWeight = FontWeight.SemiBold)
-            Plegado(
-                "La clave y el perfil de Steam los usa Bastet para traer tus horas (viajan con tu cuenta). Aquí también se copian en tus juegos, solo si Steam tiene más. " +
-                    "Necesitas una clave en steamcommunity.com/dev/apikey y que los detalles de juego de tu perfil sean públicos."
-            )
-            OutlinedTextField(sk, { sk = it }, label = { Text("Clave de Steam") }, singleLine = true,
-                shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(su, { su = it }, label = { Text("Tu perfil (URL, nombre o SteamID64)") }, singleLine = true,
-                shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton({ onSteam(sk, su) }, shape = pillShape(), enabled = sk.isNotBlank() && su.isNotBlank()) { Text("Traer horas de Steam") }
-            if (importMsg.isNotEmpty() && "Steam" in importMsg) ImportNote(importMsg)
-            Spacer(Modifier.height(14.dp))
-            // (cambiar notas en masa y los duelos de libros están una sola vez: en la pestaña General, «Repasar notas»)
-            Text("Después de importar, repasa las notas en la pestaña General → Repasar notas (en masa o con duelos de libros).", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
-        }
-
-        if (nube != null) SettingsSection("Tu nube (kDrive)", 395) { nube() }
-
-        SettingsSection("Google Drive", 400) {
-            if (driveName == null) {
-                Text(
-                    "Vincula un archivo de tu Google Drive y cada cambio se guardará ahí solo. " +
-                        "Al pulsar «Vincular», en el selector abre el menú de la izquierda, elige Drive y guarda el archivo.",
-                    color = UiSoft, fontSize = 13.sp
-                )
-                Spacer(Modifier.height(8.dp))
-                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onDriveLink, shape = pillShape()) { Text("Vincular") }
-                    OutlinedButton(onDriveRestore, shape = pillShape()) { Text("Recuperar de Drive") }
+    val pestana = AjustesNav.pestana.coerceIn(2, 4)
+    Column(Modifier.fillMaxSize().background(Paper).imePadding().verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+        CabeceraAjustes(pestana, onBack, ir)
+        Column(Modifier.fillMaxWidth().wrapContentWidth().widthIn(max = 760.dp).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+        when (pestana) {
+            2 -> {
+                SeccionAjustes("Cuenta y pareja", primera = true)
+                couple()
+                if (nube != null) { SeccionAjustes("Tu nube (kDrive)"); nube() }
+                SeccionAjustes("Google Drive")
+                if (driveName == null) {
+                    Text("Vincula un archivo de tu Google Drive y cada cambio se guardará ahí solo. Al pulsar «Vincular», en el selector abre el menú de la izquierda, elige Drive y guarda el archivo.",
+                        color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                    MagLink("Vincular Drive", "Una copia automática de tus datos", accent = true) { onDriveLink() }
+                    MagLink("Recuperar de Drive", "Si has reinstalado la app: elige tu archivo y se cargan tus datos") { onDriveRestore() }
+                } else {
+                    Text("Vinculado con $driveName", fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                    if (driveInfo.isNotEmpty()) Text(driveInfo, color = Muted, fontSize = 13.sp)
+                    MagLink("Guardar ahora", accent = true) { onDriveNow() }
+                    MagLink("Recuperar desde un archivo de Drive") { onDriveRestore() }
+                    MagLink("Desvincular") { onDriveUnlink() }
                 }
-                Text(
-                    "Si has reinstalado la app: «Recuperar de Drive», elige tu archivo y se cargan tus datos (y queda vinculado otra vez).",
-                    color = UiSoft, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp)
-                )
-            } else {
-                Text("Vinculado con $driveName", fontWeight = FontWeight.SemiBold)
-                if (driveInfo.isNotEmpty()) Text(driveInfo, color = UiSoft, fontSize = 13.sp)
-                Spacer(Modifier.height(8.dp))
-                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onDriveNow, shape = pillShape()) { Text("Guardar ahora") }
-                    OutlinedButton(onDriveUnlink, shape = pillShape()) { Text("Desvincular") }
+            }
+            3 -> {
+                SeccionAjustes("Tus claves", primera = true)
+                Text("Son de tu cuenta, en una parte que solo tú puedes leer (tu pareja no). Se ponen una vez y las usan Bastet, Seshat, Thot, Hathor y Nut sin pegarlas otra vez.",
+                    color = Muted, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
+                listOf("SteamGridDB" to key, "Steam" to steamKey, "RAWG" to rawgKey, "IGDB" to igdbId, "TMDB" to tmdbKey).forEach { (n, v) ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.Bottom) {
+                        Text(n, color = Charcoal, fontSize = 15.sp)
+                        Box(Modifier.weight(1f).padding(horizontal = 8.dp, vertical = 5.dp).height(1.dp).background(Line))
+                        Text(if (v.isNotBlank()) "puesta" else "ninguna", color = if (v.isNotBlank()) ColGeneral else Muted, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
                 }
-                TextButton(onDriveRestore) { Text("Recuperar desde un archivo de Drive", color = Muted) }
+                SeccionAjustes("SteamGridDB")
+                Text("Las portadas de los juegos. Se genera en tu perfil de steamgriddb.com, en Preferencias → API.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                CampoRevista("Clave", k, "API key de SteamGridDB", ascii = true) { k = it }
+                MagLink("Guardar la clave", accent = true) { onSaveKey(k) }
+                SeccionAjustes("TMDB")
+                Text("Películas: pósters en español, fondos y director.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Plegado("Es gratis: crea una cuenta en themoviedb.org desde el ordenador, entra en los ajustes de tu cuenta → API y pide una clave para uso personal. Pega aquí la «API Key» o el «API Read Access Token» (vale cualquiera de los dos). Las series no necesitan clave.")
+                CampoRevista("Clave", tk, "API Key o Read Access Token", ascii = true) { tk = it }
+                MagLink("Guardar y comprobar", accent = true) { onSaveTmdb(tk) }
+                SeccionAjustes("RAWG")
+                Text("Datos de los juegos en Bastet: fecha, estudio y géneros de los de consola.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Plegado("Con una clave gratuita de rawg.io/apidocs, Bastet saca de RAWG la fecha, el estudio y los géneros de los juegos de consola; aquí se detectan mejor los estudios.")
+                CampoRevista("Clave", rk, "clave de RAWG", ascii = true) { rk = it }
+                SeccionAjustes("IGDB")
+                Text("Cuánto dura cada juego (deprisa, normal y al 100 %), en Bastet.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Plegado(
+                    "Es gratis y va con una cuenta de Twitch (con verificación en dos pasos): en dev.twitch.tv/console registra una aplicación con cualquier nombre, " +
+                        "URL de redirección «http://localhost», categoría «Application Integration» y tipo «Confidencial». Copia aquí su Client ID y un secreto nuevo. " +
+                        "Sin esto se usa la media de horas de RAWG, o la pones a mano."
+                )
+                CampoRevista("Client ID", iid, "Client ID de Twitch", ascii = true) { iid = it }
+                CampoRevista("Secreto", isec, "Client Secret", secreto = true, ascii = true) { isec = it }
+                MagLink("Guardar RAWG e IGDB", accent = true) { onSaveServices(rk, iid, isec) }
+                SeccionAjustes("Steam")
+                Text("Tus horas de Steam: las trae Bastet y aquí se copian en tus juegos, solo si Steam tiene más.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Plegado("Necesitas una clave en steamcommunity.com/dev/apikey y que los detalles de juego de tu perfil sean públicos. La clave y el perfil viajan con tu cuenta.")
+                CampoRevista("Clave", sk, "clave de Steam", ascii = true) { sk = it }
+                CampoRevista("Perfil", su, "URL, nombre o SteamID64", ascii = true) { su = it }
+                MagLink("Traer las horas de Steam", accent = true) { if (sk.isNotBlank() && su.isNotBlank()) onSteam(sk, su) }
+                if (importMsg.isNotEmpty() && "Steam" in importMsg) ImportNote(importMsg)
             }
-        }
-
-        SettingsSection("Copia de seguridad", 420) {
-            Text(
-                "Exporta todo lo guardado (videojuegos y libros, valorados y en progreso, notas, apuntes y fechas) a un archivo. " +
-                    "El archivo incluye todas tus claves (SteamGridDB, RAWG, IGDB, Steam y TMDB), igual que la copia de Drive y la de la nube. Al importar, se sustituye todo lo que tienes ahora.",
-                color = UiSoft, modifier = Modifier.padding(bottom = 8.dp)
-            )
-            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button({ onExport() }, shape = pillShape()) { Text("Exportar datos") }
-                OutlinedButton({ confirm = true }, shape = pillShape()) { Text("Importar datos") }
-            }
-            if (onUndoImport != null) {
-                Spacer(Modifier.height(6.dp))
-                TextButton(onUndoImport) { Text("Deshacer la última importación", color = ColGeneral) }
-            }
-        }
-
-        SettingsSection("Acerca de", 500) {
-            // La versión sale del propio APK (antes estaba escrita a mano y se quedó en 3.6)
+            else -> {
+                SeccionAjustes("Actualizaciones", primera = true)
+                if (!KDrive.on(androidx.compose.ui.platform.LocalContext.current)) Text("Jonsu se actualiza sola desde la carpeta «versiones» de tu kDrive: conéctalo en Ajustes → Cuenta → Tu nube.",
+                    color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+        // Actualizarse sola desde la carpeta «versiones» de tu kDrive
+        run {
             val actx = androidx.compose.ui.platform.LocalContext.current
-            val ver = remember { try { actx.packageManager.getPackageInfo(actx.packageName, 0).versionName } catch (e: Exception) { null } ?: "" }
-            Text("Jonsu $ver", fontWeight = FontWeight.SemiBold)
-            Text(
-                "Portadas de juegos: SteamGridDB. Libros: Open Library y Google Books. Películas: TMDB (este producto usa la API de TMDB, pero TMDB no lo respalda ni lo certifica). Series: TVmaze (CC BY-SA). Recomendaciones: RAWG. Letras: Fraunces e Inter (SIL Open Font License).",
-                color = UiSoft, fontSize = 13.sp
-            )
+            if (KDrive.on(actx)) {
+                var auto by remember { mutableStateOf(Actualizador.activo(actx)) }
+                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Actualizarse sola", fontWeight = FontWeight.Medium)
+                        Text("Busca versiones nuevas en «versiones» de tu kDrive (con wifi o datos: al abrir, cada minuto mientras la usas y, cerrada, cada pocas horas) y se instala sola cuando no la estás usando", color = Muted, fontSize = 12.sp)
+                    }
+                    Interruptor(auto) { auto = it; Actualizador.ponActivo(actx, it) }
+                }
+                // Qué pasó la última vez, y comprobar ya (para saber por qué no se actualiza, si no lo hace)
+                val alcance = androidx.compose.runtime.rememberCoroutineScope()
+                var mirando by remember { mutableStateOf(false) }
+                val vers = remember { runCatching { actx.packageManager.getPackageInfo(actx.packageName, 0).versionName }.getOrDefault("?") }
+                Text("Versión instalada: $vers" + Actualizador.estadoGuardado(actx).let { if (it.isBlank()) "" else " · última comprobación: $it" }.let { if (Actualizador.estado.isNotBlank()) " · última comprobación: ${Actualizador.estado}" else it },
+                    color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
+                var resultado by remember { mutableStateOf("") }
+                // Actualizar ya: mira, baja y instala sin esperar a que cierres la app (para cuando lo automático falla)
+                MagLink(if (mirando) "Actualizando…" else "Actualizar ahora", "Mira, baja e instala sin esperar", accent = !mirando) {
+                    if (!mirando) { mirando = true; resultado = ""; alcance.launch { resultado = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Actualizador.actualizarAhora(actx) }; mirando = false } }
+                }
+                if (resultado.isNotBlank()) Text(resultado, color = ColGeneral, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
+                MagLink("Solo comprobar") {
+                    if (!mirando) { mirando = true; alcance.launch { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Actualizador.comprueba(actx, manual = true) }; mirando = false } }
+                }
+                // Reabrirse sola tras actualizar: Android pide este permiso para abrir una app «desde atrás»
+                var sobre by remember { mutableStateOf(Actualizador.puedeReabrirSola(actx)) }
+                val vida = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+                androidx.compose.runtime.DisposableEffect(vida) {
+                    val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(actx) }
+                    vida.addObserver(ob); onDispose { vida.removeObserver(ob) }
+                }
+                Text(if (sobre) "Tras actualizar, Jonsu se vuelve a abrir sola" else "Tras actualizar, Jonsu se cierra y te avisa para abrirla. Para que se reabra sola hace falta el permiso «Mostrar sobre otras apps»",
+                    color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
+                if (!sobre) MagLink("Dar permiso", accent = true) {
+                    runCatching { actx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${actx.packageName}")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
         }
-        Spacer(Modifier.navigationBarsPadding().height(16.dp))
+
+                SeccionAjustes("Copias")
+                Text("Exporta todo lo guardado (videojuegos y libros, valorados y en progreso, notas, apuntes, fechas y tus claves) a un archivo. Al importar, se sustituye todo lo que tienes ahora.",
+                    color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                MagLink("Exportar mis datos", "Un archivo con todo") { onExport() }
+                MagLink("Importar datos", "Sustituye lo que tienes (se puede deshacer justo después)") { confirm = true }
+                if (onUndoImport != null) MagLink("Deshacer la última importación", accent = true) { onUndoImport() }
+                SeccionAjustes("De dónde sale cada cosa")
+                Text("Portadas de juegos: SteamGridDB. Libros: Open Library y Google Books. Películas: TMDB (este producto usa la API de TMDB, pero TMDB no lo respalda ni lo certifica). Series: TVmaze (CC BY-SA). Recomendaciones: RAWG. Letras: Fraunces, Inter y Bricolage Grotesque (SIL Open Font License).",
+                    color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                val actx = androidx.compose.ui.platform.LocalContext.current
+                val ver = remember { try { actx.packageManager.getPackageInfo(actx.packageName, 0).versionName } catch (e: Exception) { null } ?: "" }
+                Box(Modifier.padding(top = 22.dp).fillMaxWidth().height(2.dp).background(Charcoal))
+                Text("JONSU $ver", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 14.dp))
+                Text("Jonsu es hermana de Bastet, Seshat, Thot, Hathor y Nut: lo que juegas, lees, escribes y ves allí aparece aquí para valorarlo.",
+                    color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
+        }
     }
     if (confirm) {
         AlertDialog(

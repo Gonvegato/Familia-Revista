@@ -9,6 +9,19 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.6 — los ajustes, como los de las hermanas
+
+- **La cabecera de Bastet, Seshat y Thot**: el bloque negro con «← JONSU» y «AJUSTES.», y las pestañas en bloques (la elegida, en
+  ciruela). Fuera el «Sección / Ajustes» y las pestañas subrayadas.
+- **Cinco pestañas**: **Apariencia** (colores de Jonsu, tema, fondo, tamaño del texto, portadas en las listas, «A tu manera»),
+  **Jonsu** (objetivos del año, tus categorías, repasar notas, lista negra, rellenar estudios), **Cuenta** (cuenta y pareja, tu nube,
+  Google Drive), **Claves** (nueva: arriba, cuáles tienes puestas; debajo, SteamGridDB, TMDB, RAWG, IGDB y Steam) y **Avanzado**
+  (actualizarse sola, copias, de dónde sale cada cosa).
+- Fuera la lista larga de acentos de Apariencia (más de 30 colores, que las hermanas no tienen; además marcaba «Rojo» aunque el acento
+  fuera otro). El acento a mano sigue en «A tu manera».
+- El engranaje de la portada abre Apariencia, como en las hermanas. Los avisos que mandaban a «Ajustes → Avanzado → Servicios» mandan ahora
+  a «Ajustes → Claves».
+
 ## 1.8.5 — la cabecera de color, de lado a lado
 
 - En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su
