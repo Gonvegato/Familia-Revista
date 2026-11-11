@@ -112,6 +112,19 @@ object Decodificadores {
         p(c).edit().putStringSet("android", ahora).apply()
         return usar
     }
+    /**
+     * ¿Es de 10 bits? En H.264 lo dice el perfil (`avc1.6E…` High 10, `7A` 4:2:2, `F4` 4:4:4): casi ningún decodificador de Android lo
+     * lee (ni el del aparato ni el de Android). En HEVC, el perfil 2 (Main 10), que la mayoría sí lee.
+     */
+    fun diezBits(f: androidx.media3.common.Format): Boolean {
+        val c = f.codecs.orEmpty().lowercase()
+        return when {
+            c.startsWith("avc1.") || c.startsWith("avc3.") -> c.substring(5).take(2) in setOf("6e", "7a", "f4")
+            c.startsWith("hvc1.2") || c.startsWith("hev1.2") -> true
+            else -> false
+        }
+    }
+
     fun nombre(mime: String?): String = when (mime) {
         "video/avc" -> "H.264"; "video/hevc" -> "HEVC (H.265)"; "video/mp4v-es" -> "MPEG-4 (XviD/DivX)"; "video/x-vnd.on2.vp9" -> "VP9"
         "video/av01" -> "AV1"; "video/mpeg2" -> "MPEG-2"; "video/3gpp" -> "H.263"; "video/dolby-vision" -> "Dolby Vision"
@@ -344,12 +357,16 @@ class ReproductorActivity : ComponentActivity() {
 
     /** Qué vídeo es y qué decodificador lo lee (se enseña arriba, con la fuente). */
     private var formatoVideo = ""
+    /** El vídeo es de 10 bits (H.264 «Hi10», HEVC Main 10…): muchos decodificadores no pueden, o lo rompen. */
+    private var diezBits = false
     private var decodificador = ""
     private val analitica = object : androidx.media3.exoplayer.analytics.AnalyticsListener {
         override fun onVideoInputFormatChanged(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, f: androidx.media3.common.Format,
             r: androidx.media3.exoplayer.DecoderReuseEvaluation?) {
             mimeVideo = f.sampleMimeType
-            formatoVideo = listOfNotNull(Decodificadores.nombre(f.sampleMimeType).ifBlank { null }, if (f.width > 0) "${f.width}×${f.height}" else null).joinToString(" · ")
+            diezBits = Decodificadores.diezBits(f)
+            formatoVideo = listOfNotNull(Decodificadores.nombre(f.sampleMimeType).ifBlank { null }, if (diezBits) "10 bits" else null,
+                if (f.width > 0) "${f.width}×${f.height}" else null).joinToString(" · ")
             pintaVideo()
         }
         override fun onVideoDecoderInitialized(t: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, nombre: String, ini: Long, dur: Long) {
@@ -413,11 +430,24 @@ class ReproductorActivity : ComponentActivity() {
         }
 
         override fun onPlayerError(error: PlaybackException) {
-            if (fallaEnTanteo()) return
-            estado.cargando = false
             val codec = error.errorCode in setOf(PlaybackException.ERROR_CODE_DECODER_INIT_FAILED, PlaybackException.ERROR_CODE_DECODER_QUERY_FAILED, PlaybackException.ERROR_CODE_DECODING_FAILED,
                 PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES, PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED, PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
-            estado.aviso = if (codec) "Este dispositivo no sabe reproducir este vídeo (su formato o su calidad). «Abrir con otro reproductor» suele poder (VLC, Just Player…), o prueba otra fuente."
+            // Con el decodificador de Android elegido para este formato y no puede con este vídeo: se olvida y se vuelve al del aparato
+            // (si no, ese formato no se abriría nunca más en este dispositivo)
+            val mime = mimeVideo
+            if (codec && mime != null && mime in Decodificadores.deAndroid(this@ReproductorActivity)) {
+                Decodificadores.cambia(this@ReproductorActivity, mime)
+                val (u, subs) = ultimoEmpiece ?: return
+                estado.mensaje = "El decodificador de Android no puede con este vídeo${if (diezBits) " (es de 10 bits)" else ""}: de vuelta al del aparato."
+                principal.postDelayed({ if (estado.mensaje?.startsWith("El decodificador de Android no puede") == true) estado.mensaje = null }, 7_000)
+                decodificador = ""
+                empieza(u, subs, player?.currentPosition ?: 0L)
+                return
+            }
+            if (fallaEnTanteo()) return
+            estado.cargando = false
+            estado.aviso = if (codec && diezBits) "Este vídeo es de 10 bits (${Decodificadores.nombre(mimeVideo)}), y este dispositivo no sabe decodificarlo bien. Ábrelo con VLC con la aceleración por hardware desactivada (en VLC: Ajustes → Vídeo), o prueba otra fuente."
+                else if (codec) "Este dispositivo no sabe reproducir este vídeo (su formato o su calidad). «Abrir con otro reproductor» suele poder (VLC, Just Player…), o prueba otra fuente."
                 else "No se puede ver esta fuente ahora (no responde, o el enlace ha caducado). Prueba con otra."
         }
     }

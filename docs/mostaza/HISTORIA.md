@@ -11,6 +11,13 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.11 — si el decodificador de Android no puede, se vuelve solo
+
+- Con «¿Se ve mal?» puesto para un formato, si el decodificador de Android no puede con un vídeo, Hathor lo olvida y vuelve a abrirlo con
+  el del aparato en el mismo punto (antes se quedaba recordado y ese formato ya no se abría).
+- Hathor reconoce los vídeos de 10 bits (H.264 «Hi10», HEVC Main 10) y lo dice arriba; si no se pueden decodificar, el aviso lo explica y
+  propone VLC con la aceleración por hardware desactivada.
+
 ## 0.7.10 — «¿Se ve mal?»: otro decodificador
 
 - **Si la imagen sale rota (bloques grises, trozos de otros fotogramas)** con un vídeo que en otro aparato se ve bien, es el decodificador de
