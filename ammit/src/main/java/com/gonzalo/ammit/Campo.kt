@@ -121,27 +121,28 @@ class Campo private constructor(val ancho: Int, val alto: Int) {
 
     // ------------------------------------------------------------------ pintar
 
-    private val dst = RectF()
+    // (todo lo de pintar es sin estado compartido: el fondo se hace en otro hilo mientras la pantalla pinta, y con un rectángulo o un
+    // pincel comunes las cadenas se descolocaban o cambiaban de tono a medio fotograma: el parpadeo de las cadenas de detrás)
     private val pSombra = Paint(Paint.FILTER_BITMAP_FLAG)
-    private val pBase = Paint()
-    /** Un pincel por cada nivel de oscuro (lo hondo, más oscuro), según [oscuro] del momento. */
-    private val pinceles = Array(9) { Paint(Paint.FILTER_BITMAP_FLAG) }
-    private var oscuroPuesto = -1f
+    /** Los pinceles de cada nivel de hondura (lo hondo, más oscuro), según el oscuro del momento (en centésimas), hechos una vez. */
+    private val pinceles = java.util.concurrent.ConcurrentHashMap<Int, Array<Paint>>()
 
-    private fun pinceles(oscuro: Float) {
-        if (abs(oscuro - oscuroPuesto) < 0.004f) return
-        oscuroPuesto = oscuro
-        pinceles.forEachIndexed { i, p ->
-            val f = (1f - i / 8f * 0.7f) * (1f - oscuro)
-            val m = (255 * f).roundToInt().coerceIn(0, 255)
-            p.colorFilter = LightingColorFilter((m shl 16) or (m shl 8) or m, 0)
+    private fun pinceles(oscuro: Float): Array<Paint> {
+        val clave = (oscuro * 100).roundToInt().coerceIn(0, 100)
+        return pinceles.getOrPut(clave) {
+            Array(9) { i ->
+                val f = (1f - i / 8f * 0.7f) * (1f - clave / 100f)
+                val m = (255 * f).roundToInt().coerceIn(0, 255)
+                Paint(Paint.FILTER_BITMAP_FLAG).apply { colorFilter = LightingColorFilter((m shl 16) or (m shl 8) or m, 0) }
+            }
         }
     }
 
     /** Una cadena de (x1, y1) a (x2, y2), dibujada hasta la fracción [p] desde (x1, y1). [nivel]: lo honda que está (0..8). */
     fun cadena(c: Canvas, x1: Float, y1: Float, x2: Float, y2: Float, p: Float, esc: Float, nivel: Int = 0, oscuro: Float = 0f) {
         if (p <= 0f) return
-        pinceles(oscuro)
+        val pp = pinceles(oscuro)
+        val dst = RectF()
         val e = ESCALAS.minBy { abs(it - esc) }
         val s = sitios[e] ?: return
         val l = hypot(x2 - x1, y2 - y1); val ang = atan2(y2 - y1, x2 - x1)
@@ -151,15 +152,15 @@ class Campo private constructor(val ancho: Int, val alto: Int) {
         // (la sombra cae abajo a la derecha de la pantalla: girada a lo local de la cadena)
         val ox = gros * (0.5f * cos(ang) + 0.8f * sin(ang)); val oy = gros * (-0.5f * sin(ang) + 0.8f * cos(ang))
         c.save(); c.translate(x1, y1); c.rotate(Math.toDegrees(ang.toDouble()).toFloat())
-        for (k in 0..cuantos) pon(c, atlas, s[if (k % 2 == 1) 3 else 2], k * paso + ox, oy, pSombra)
-        val pincel = pinceles[nivel.coerceIn(0, 8)]
+        for (k in 0..cuantos) pon(c, atlas, s[if (k % 2 == 1) 3 else 2], k * paso + ox, oy, pSombra, dst)
+        val pincel = pp[nivel.coerceIn(0, 8)]
         // primero los de canto y encima los de frente: así parece que pasan unos por dentro de otros
-        var k = 1; while (k <= cuantos) { pon(c, atlas, s[1], k * paso, 0f, pincel); k += 2 }
-        k = 0; while (k <= cuantos) { pon(c, atlas, s[0], k * paso, 0f, pincel); k += 2 }
+        var k = 1; while (k <= cuantos) { pon(c, atlas, s[1], k * paso, 0f, pincel, dst); k += 2 }
+        k = 0; while (k <= cuantos) { pon(c, atlas, s[0], k * paso, 0f, pincel, dst); k += 2 }
         c.restore()
     }
 
-    private fun pon(c: Canvas, b: Bitmap, r: Rect, x: Float, y: Float, p: Paint) {
+    private fun pon(c: Canvas, b: Bitmap, r: Rect, x: Float, y: Float, p: Paint, dst: RectF) {
         val w = r.width() / 2f; val h = r.height() / 2f
         dst.set(x - w, y - h, x + w, y + h)
         c.drawBitmap(b, r, dst, p)
@@ -170,7 +171,7 @@ class Campo private constructor(val ancho: Int, val alto: Int) {
      * detrás, el negro que tapa los huecos con opacidad [base].
      */
     fun pinta(c: Canvas, oscuro: Float, base: Float, prog: (Int) -> Float) {
-        if (base > 0f) { pBase.color = 0x0A0908 or ((255 * base.coerceIn(0f, 1f)).roundToInt() shl 24); c.drawRect(-200f, -200f, ancho + 200f, alto + 200f, pBase) }
+        if (base > 0f) c.drawRect(-200f, -200f, ancho + 200f, alto + 200f, Paint().apply { color = 0x0A0908 or ((255 * base.coerceIn(0f, 1f)).roundToInt() shl 24) })
         val ult = n - 1
         cadenas.forEachIndexed { k, ca ->
             val p = prog(k)

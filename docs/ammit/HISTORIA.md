@@ -4,6 +4,14 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.5.3 — las cadenas de detrás, quietas
+
+- **Las cadenas del fondo ya no parpadean**: el fondo se prepara en otro hilo mientras la pantalla pinta, y los dos compartían el
+  rectángulo y los pinceles con los que se copia cada eslabón; a medio fotograma, unos eslabones salían en el sitio o con el tono de
+  la otra pintada. Ahora cada pintada usa los suyos.
+- **El campo, anclado a la pantalla** (no a cada ventana): la cortina, el juicio y la pantalla de inicio lo pintan exactamente en el
+  mismo sitio, aunque alguna ventana no empiece en la esquina.
+
 ## 0.5.2 — el juicio, también con cortina
 
 - **Al acabar el juicio, sin el parpadeo grande**: cuando las cadenas tapan la pantalla, se pone la cortina de cadenas por encima de todo

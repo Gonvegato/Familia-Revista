@@ -9,6 +9,7 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.Image
@@ -116,6 +117,9 @@ class Aparicion(val anim: String, val reloj: Animatable<Float, AnimationVector1D
 
 val LocalAparicion = androidx.compose.runtime.compositionLocalOf<Aparicion?> { null }
 
+/** Dónde empieza esta vista en la pantalla (para pintar el campo anclado a la pantalla). */
+fun enPantalla(v: android.view.View): Pair<Float, Float> { val l = IntArray(2); v.getLocationOnScreen(l); return l[0].toFloat() to l[1].toFloat() }
+
 /** Cómo sale cada cosa: de pequeña a su tamaño, con un pequeño rebote. */
 private fun androidx.compose.ui.graphics.GraphicsLayerScope.sale(q: Float) {
     alpha = q
@@ -151,6 +155,7 @@ fun PantInicio(a: InicioActivity) {
     var tam by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     var fondo by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
     val ctx = LocalContext.current
+    val vista = androidx.compose.ui.platform.LocalView.current
     LaunchedEffect(tam) {
         if (tam.width > 0 && tam.height > 0) fondo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             Campo.paraTapar(ctx, tam.width.toFloat(), tam.height.toFloat()).fondo.asImageBitmap()
@@ -173,13 +178,17 @@ fun PantInicio(a: InicioActivity) {
         Canvas(Modifier.fillMaxSize().onSizeChanged { tam = it }) {
             // (el campo, del tamaño de la pantalla entera y desde la esquina: igual al píxel que el de la cortina y el del juicio)
             val c = Campo.paraTapar(ctx, size.width, size.height)
-            if (anim == "entrar") {
-                val ms = reloj.value
-                drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) } }
-            } else if (cadena > 0f) {
-                val f = fondo
-                if (f != null && f.width == c.ancho && f.height == c.alto) drawImage(f)
-                else drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }
+            // (anclado a la pantalla, no a la ventana: así coincide al píxel con el de la cortina aunque la ventana no empiece en la esquina)
+            val (ox, oy) = enPantalla(vista)
+            translate(-ox, -oy) {
+                if (anim == "entrar") {
+                    val ms = reloj.value
+                    drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) } }
+                } else if (cadena > 0f) {
+                    val f = fondo
+                    if (f != null && f.width == c.ancho && f.height == c.alto) drawImage(f)
+                    else drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }
+                }
             }
         }
         if (horizontal) Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 36.dp, vertical = 18.dp), horizontalArrangement = Arrangement.spacedBy(36.dp)) {

@@ -124,6 +124,15 @@ private class VistaCortina(private val c: Context, private val modo: String) : V
         if (t0 < 0) t0 = SystemClock.uptimeMillis()
         val ms = (SystemClock.uptimeMillis() - t0).toFloat()
         val n = campo.n
+        // (anclado a la pantalla: si la capa no empezara en la esquina, se corrige)
+        getLocationOnScreen(sitio)
+        cv.save(); cv.translate(-sitio[0].toFloat(), -sitio[1].toFloat())
+        try { pinta(cv, campo, ms, n) } finally { cv.restore() }
+    }
+
+    private val sitio = IntArray(2)
+
+    private fun pinta(cv: Canvas, campo: Campo, ms: Float, n: Int) {
         if (modo == "entrar" || modo == "tapar") {
             if (modo == "entrar") {
                 val (dx, dy) = Tiempos.temblor(ms, Tiempos.golpesEntrar(n))
