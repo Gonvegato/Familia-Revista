@@ -173,9 +173,48 @@ class Campo private constructor(val ancho: Int, val alto: Int) {
     fun pinta(c: Canvas, oscuro: Float, base: Float, prog: (Int) -> Float) {
         if (base > 0f) c.drawRect(-200f, -200f, ancho + 200f, alto + 200f, Paint().apply { color = 0x0A0908 or ((255 * base.coerceIn(0f, 1f)).roundToInt() shl 24) })
         val ult = n - 1
-        cadenas.forEachIndexed { k, ca ->
+        // Las que ya están enteras y quietas son siempre las primeras (todas tardan lo mismo y empiezan en orden): con aceleración,
+        // cada una es una lista de dibujo ya grabada ([nodo]) y se apagan todas juntas en una capa. Solo se dibujan eslabón a eslabón
+        // las que se están moviendo. (Unas 80 órdenes por fotograma en vez de unas 7.000.)
+        var desde = 0
+        if (c.isHardwareAccelerated) {
+            while (desde < n && prog(desde) >= 1f) desde++
+            if (desde > 0) {
+                if (oscuro > 0.001f) c.saveLayer(null, capa(oscuro)) else c.save()
+                for (k in 0 until desde) c.drawRenderNode(nodo(k))
+                c.restore()
+            }
+        }
+        for (k in desde until n) {
+            val ca = cadenas[k]
             val p = prog(k)
             if (p > 0f) cadena(c, ca.x1, ca.y1, ca.x2, ca.y2, min(1f, p), ca.esc, ((ult - k) * 8f / ult).roundToInt(), oscuro)
+        }
+    }
+
+    /** La lista de dibujo de la cadena [k] entera (con su hondura, sin el oscuro del momento): se graba una vez. */
+    private val nodos = arrayOfNulls<android.graphics.RenderNode>(82)
+    private fun nodo(k: Int): android.graphics.RenderNode {
+        nodos.getOrNull(k)?.let { if (it.hasDisplayList()) return it }
+        val ca = cadenas[k]; val ult = n - 1
+        val rn = android.graphics.RenderNode("cadena$k")
+        rn.setPosition(0, 0, ancho, alto)
+        rn.clipToBounds = false
+        val rc = rn.beginRecording(ancho, alto)
+        try { cadena(rc, ca.x1, ca.y1, ca.x2, ca.y2, 1f, ca.esc, ((ult - k) * 8f / ult).roundToInt(), 0f) } finally { rn.endRecording() }
+        if (k < nodos.size) nodos[k] = rn
+        return rn
+    }
+
+    /** Graba ya todas las cadenas (para que la primera animación no tenga que hacerlo a medias). Desde el hilo principal. */
+    fun precalentar() { for (k in 0 until n) nodo(k) }
+
+    private val capas = java.util.concurrent.ConcurrentHashMap<Int, Paint>()
+    private fun capa(oscuro: Float): Paint {
+        val clave = (oscuro * 100).roundToInt().coerceIn(0, 100)
+        return capas.getOrPut(clave) {
+            val m = (255 * (1f - clave / 100f)).roundToInt().coerceIn(0, 255)
+            Paint().apply { colorFilter = LightingColorFilter((m shl 16) or (m shl 8) or m, 0) }
         }
     }
 

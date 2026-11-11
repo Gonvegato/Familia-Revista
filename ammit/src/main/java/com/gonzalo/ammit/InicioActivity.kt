@@ -33,6 +33,8 @@ class InicioActivity : ComponentActivity() {
     private val mgr by lazy { AppWidgetManager.getInstance(this) }
 
     var apps by mutableStateOf<List<AppDeInicio>>(emptyList())
+    /** Las apps ya se han leído al menos una vez. */
+    @Volatile var cargadas = false
     var widgets by mutableStateOf<List<Ammit.Widget>>(emptyList())
     var colocando by mutableStateOf(false)
     var eligiendoWidget by mutableStateOf(false)
@@ -40,7 +42,12 @@ class InicioActivity : ComponentActivity() {
      * La animación que toca ahora: «entrar» (el sinfín de cadenas tapa la pantalla y salen las apps), «aparecer» (al volver del juicio:
      * solo salen las apps) o «salir» (las apps se van, antes de pasar a [SalidaActivity]); null, ninguna.
      */
-    var animacion by mutableStateOf<String?>(null)
+    var animacion: String?
+        get() = animEstado.value
+        set(v) { ms.floatValue = 0f; animEstado.value = v }
+    private val animEstado = mutableStateOf<String?>(null)
+    /** Por dónde va la animación (ms), a cada fotograma. */
+    val ms = androidx.compose.runtime.mutableFloatStateOf(0f)
     /** Al apagar (sin cortina): ya se han ido las apps; hasta irse, solo el campo de cadenas (nada de destellos). */
     var tapada by mutableStateOf(false)
 
@@ -58,13 +65,29 @@ class InicioActivity : ComponentActivity() {
         enableEdgeToEdge(SystemBarStyle.dark(AColor.TRANSPARENT), SystemBarStyle.dark(AColor.TRANSPARENT))
         super.onCreate(savedInstanceState)
         Ammit.cargar(this)
+        // Las cadenas del fondo, grabadas ya
+        window.decorView.post { runCatching { Campo.dePantalla(this).precalentar() } }
         host = AppWidgetHost(applicationContext, HOST_ID)
+        runCatching {
+            val f = android.content.IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REMOVED); addAction(Intent.ACTION_PACKAGE_CHANGED)
+                addAction(Intent.ACTION_PACKAGE_REPLACED); addDataScheme("package")
+            }
+            androidx.core.content.ContextCompat.registerReceiver(this, cambiosDeApps, f, androidx.core.content.ContextCompat.RECEIVER_EXPORTED)
+        }
         widgets = Ammit.widgets(this)
         setContent {
             BackHandler { if (eligiendoWidget) eligiendoWidget = false else if (colocando) colocando = false }
             PantInicio(this)
         }
     }
+
+    /** Al instalar, quitar o actualizar una app, la lista se vuelve a leer. */
+    private val cambiosDeApps = object : android.content.BroadcastReceiver() {
+        override fun onReceive(c: android.content.Context?, i: Intent?) { recargar(forzar = true) }
+    }
+
+    override fun onDestroy() { runCatching { unregisterReceiver(cambiosDeApps) }; super.onDestroy() }
 
     override fun onStart() { super.onStart(); runCatching { host.startListening() } }
     override fun onStop() { super.onStop(); runCatching { host.stopListening() } }
@@ -112,10 +135,23 @@ class InicioActivity : ComponentActivity() {
         }.getOrDefault(false)
     }
 
-    fun recargar() {
+    private var ultimaCarga = 0L
+    private var cargando = false
+
+    /**
+     * Lee tus apps (y sus iconos). Al volver a la pantalla de inicio solo si hace rato o si se ha instalado o quitado algo: leer todos
+     * los iconos en plena animación de las apps daba tirones.
+     */
+    fun recargar(forzar: Boolean = false) {
+        val ahora = android.os.SystemClock.elapsedRealtime()
+        if (cargando || (!forzar && cargadas && ahora - ultimaCarga < 10 * 60_000)) return
+        cargando = true; ultimaCarga = ahora
         lifecycleScope.launch {
             val l = withContext(Dispatchers.Default) { Apps.todas(this@InicioActivity) }
-            apps = l
+            // (si no ha cambiado nada, no se toca: así no se repinta la rejilla al volver al inicio)
+            if (l.map { it.clave + it.nombre } != apps.map { it.clave + it.nombre }) apps = l
+            cargadas = true
+            cargando = false
         }
     }
 

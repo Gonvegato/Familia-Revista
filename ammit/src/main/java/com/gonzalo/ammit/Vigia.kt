@@ -22,9 +22,13 @@ class Vigia : AccessibilityService() {
         @Volatile var vivo: Vigia? = null
     }
 
-    override fun onServiceConnected() { Ammit.cargar(this); vivo = this }
-    override fun onUnbind(intent: Intent?): Boolean { vivo = null; return super.onUnbind(intent) }
-    override fun onDestroy() { vivo = null; super.onDestroy() }
+    override fun onServiceConnected() {
+        Ammit.cargar(this); vivo = this
+        // Las cadenas, grabadas ya, para que la primera animación vaya fluida
+        android.os.Handler(mainLooper).post { runCatching { Campo.dePantalla(this).precalentar() } }
+    }
+    override fun onUnbind(intent: Intent?): Boolean { vivo = null; Cortina.quitarYa(); return super.onUnbind(intent) }
+    override fun onDestroy() { vivo = null; Cortina.quitarYa(); super.onDestroy() }
 
     /** Pone la cortina de cadenas ([Cortina]): «entrar» o «salir». */
     fun cortina(modo: String): Boolean = Cortina.poner(this, modo)
@@ -33,6 +37,8 @@ class Vigia : AccessibilityService() {
         if (e == null || e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         Ammit.cargar(this)
         if (!Ammit.encendida) return
+        // (con una cortina puesta, lo que pase debajo es cosa de Ammit)
+        if (Cortina.ocupada) return
         val paquete = e.packageName?.toString() ?: return
         if (Ammit.pasa(paquete, Ammit.teclados(this)) || paquete == inicioActual()) return
         // Solo las pantallas de verdad (actividades): no los avisos, menús o paneles que una app pinta por encima
@@ -44,7 +50,8 @@ class Vigia : AccessibilityService() {
         if (paquete == ultimo && ahora - cuando < 2_000) return
         ultimo = paquete; cuando = ahora
         val nombre = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(paquete, 0)).toString() }.getOrDefault(paquete)
-        JuicioActivity.abrir(this, nombre)
+        // El juicio, en la cortina por encima de todo (si no se pudiera, en su pantalla, a la antigua)
+        if (!Cortina.poner(this, "juicio", nombre)) JuicioActivity.abrir(this, nombre)
     }
 
     /** La pantalla de inicio que tiene puesta la tablet (normalmente Ammit). */

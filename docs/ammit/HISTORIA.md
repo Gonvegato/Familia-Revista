@@ -4,6 +4,23 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.6.0 — fluida y sin un parpadeo
+
+- **El juicio, entero en la cortina por encima de todo**: en cuanto se abre una app que no pasa, la pantalla se funde a negro, por debajo
+  se va esa app y se abre la pantalla de inicio de Ammit, y encima van las cuatro cadenas, «AMMIT.» y la ráfaga. Al acabar, la cortina
+  se funde sobre la pantalla de inicio (pintada igual) y salen las apps. Ya no hay ningún cambio de pantalla a la vista. También al tocar
+  una app encadenada desde el inicio de Ammit.
+- **Las apps salen con fluidez tras el juicio**: el paso de «tapada» a «salen las apps» rehacía la pantalla entera en un fotograma, y al
+  volver al inicio se releían todos los iconos justo durante la animación. Ahora la animación solo mueve capas, y las apps se leen solo
+  al instalar o quitar alguna (o cada diez minutos).
+- **Las cadenas, mucho más ligeras de pintar**: cada cadena entera se graba una vez como lista de dibujo y se reutiliza; por fotograma
+  son unas 80 órdenes en vez de unas 7.000. El fondo de la pantalla de inicio se pinta igual que la cortina, así que al fundirse no se
+  nota nada.
+- **Al apagar**, las cadenas esperan a que tu inicio de siempre termine de abrirse (y su propia animación) antes de dar el tirón e irse.
+- **Mientras está la cortina, los toques no pasan** a lo de debajo (no se abre nada sin querer); como mucho dura ocho segundos.
+- Con Ammit apagada, al darle a casa ya no asoman un instante la hora y las apps de Ammit antes de tu inicio.
+- Un solo toque cada vez: mientras dura una animación, el botón no hace nada.
+
 ## 0.5.3 — las cadenas de detrás, quietas
 
 - **Las cadenas del fondo ya no parpadean**: el fondo se prepara en otro hilo mientras la pantalla pinta, y los dos compartían el

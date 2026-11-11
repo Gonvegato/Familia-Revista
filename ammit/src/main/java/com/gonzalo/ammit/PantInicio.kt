@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as FormatoFecha
@@ -81,11 +82,14 @@ private val ES = Locale("es", "ES")
 private val SOMBRA = Shadow(Color(0x99000000), Offset(0f, 2f), 6f)
 
 /**
- * Lo que dura la animación en curso y cuándo aparece cada cosa. Se lee dentro de las capas (graphicsLayer), así que cada fotograma solo
- * se repinta, sin rehacer la pantalla.
+ * Lo que dura la animación en curso y cuándo aparece cada cosa. Es siempre el mismo objeto y solo se lee dentro de las capas
+ * (graphicsLayer) y del dibujo: al empezar o cambiar una animación no se rehace la pantalla (eso daba un tirón justo cuando salían las
+ * apps tras el juicio), solo se mueven las capas.
  */
-class Aparicion(val anim: String, val reloj: Animatable<Float, AnimationVector1D>, val cuantas: Int) {
-    private val ms get() = reloj.value
+class Aparicion(private val a: InicioActivity) {
+    private val ms get() = a.ms.floatValue
+    private val anim get() = if (a.tapada) "cortina" else a.animacion
+    private val paso get() = minOf(22f, 520f / a.apps.size.coerceAtLeast(1))
     /** La hora, los widgets: 0 sin ver, 1 del todo. */
     fun resto(): Float = when (anim) {
         "entrar" -> Tiempos.clamp((ms - Tiempos.ENTRAR_APPS) / 300)
@@ -95,15 +99,12 @@ class Aparicion(val anim: String, val reloj: Animatable<Float, AnimationVector1D
         else -> 1f
     }
     /** La app número [i]: salen una tras otra. */
-    fun icono(i: Int): Float {
-        val paso = minOf(22f, 520f / cuantas.coerceAtLeast(1))
-        return when (anim) {
-            "entrar" -> Tiempos.clamp((ms - Tiempos.ENTRAR_APPS - 50 - i * paso) / 260)
-            "aparecer" -> Tiempos.clamp((ms - 50 - i * paso) / 260)
-            "salir" -> 1 - Tiempos.clamp(ms / 250)
-            "cortina" -> 0f
-            else -> 1f
-        }
+    fun icono(i: Int): Float = when (anim) {
+        "entrar" -> Tiempos.clamp((ms - Tiempos.ENTRAR_APPS - 50 - i * paso) / 260)
+        "aparecer" -> Tiempos.clamp((ms - 50 - i * paso) / 260)
+        "salir" -> 1 - Tiempos.clamp(ms / 250)
+        "cortina" -> 0f
+        else -> 1f
     }
     companion object {
         fun dura(anim: String?, cuantas: Int) = when (anim) {
@@ -117,85 +118,95 @@ class Aparicion(val anim: String, val reloj: Animatable<Float, AnimationVector1D
 
 val LocalAparicion = androidx.compose.runtime.compositionLocalOf<Aparicion?> { null }
 
+/** El campo de la pantalla entera (o, si lo que hay que tapar es más grande, de ese tamaño). */
+fun paraTapar(pantalla: Pair<Int, Int>, w: Float, h: Float): Campo =
+    if (pantalla.first + 1 < w || pantalla.second + 1 < h) Campo.de(w.toInt(), h.toInt()) else Campo.de(pantalla.first, pantalla.second)
+
 /** Dónde empieza esta vista en la pantalla (para pintar el campo anclado a la pantalla). */
 fun enPantalla(v: android.view.View): Pair<Float, Float> { val l = IntArray(2); v.getLocationOnScreen(l); return l[0].toFloat() to l[1].toFloat() }
 
 /** Cómo sale cada cosa: de pequeña a su tamaño, con un pequeño rebote. */
 private fun androidx.compose.ui.graphics.GraphicsLayerScope.sale(q: Float) {
     alpha = q
-    if (q < 1f) { val e = 0.55f + 0.45f * Tiempos.ease(q) + 0.14f * kotlin.math.sin(q * Math.PI.toFloat()); scaleX = e; scaleY = e }
+    val e = if (q < 1f) 0.55f + 0.45f * Tiempos.ease(q) + 0.14f * kotlin.math.sin(q * Math.PI.toFloat()) else 1f
+    scaleX = e; scaleY = e
 }
 
 /** La pantalla de inicio de Ammit: el sinfín de cadenas de fondo, y encima la hora, los widgets de la familia y tus apps. */
 @Composable
 fun PantInicio(a: InicioActivity) {
     val horizontal = LocalConfiguration.current.let { it.screenWidthDp > it.screenHeightDp }
-    val anim = a.animacion
-    // (un reloj nuevo para cada animación: con el de la anterior, el primer fotograma salía con su final y daba un destello)
-    val reloj = remember(anim) { Animatable(0f) }
-    LaunchedEffect(anim) {
-        if (anim == null) return@LaunchedEffect
-        if (anim == "cortina") {
-            // Debajo de la cortina de cadenas: en cuanto esto está pintado, la cortina se puede quitar (y entonces salen las apps)
-            androidx.compose.runtime.withFrameNanos { }; androidx.compose.runtime.withFrameNanos { }; androidx.compose.runtime.withFrameNanos { }
-            Cortina.inicioListo = true
-            delay(5000)
-            if (a.animacion == "cortina") a.animacion = "aparecer"
-            return@LaunchedEffect
+    // El reloj de la animación, a cada fotograma (a.ms vuelve a 0 en cuanto cambia la animación, así el primer fotograma nunca sale
+    // con el final de la anterior)
+    LaunchedEffect(Unit) {
+        androidx.compose.runtime.snapshotFlow { a.animacion }.collectLatest { anim ->
+            if (anim == null) return@collectLatest
+            if (anim == "cortina") {
+                // Debajo de la cortina de cadenas: con las apps cargadas y esto pintado, la cortina se puede quitar (y entonces salen)
+                val hasta = android.os.SystemClock.uptimeMillis() + 1500
+                while (!a.cargadas && android.os.SystemClock.uptimeMillis() < hasta) delay(16)
+                repeat(3) { androidx.compose.runtime.withFrameNanos { } }
+                Cortina.inicioListo = true
+                delay(5000)
+                if (a.animacion == "cortina") a.animacion = "aparecer"
+                return@collectLatest
+            }
+            val d = Aparicion.dura(anim, a.apps.size).toFloat()
+            val t0 = androidx.compose.runtime.withFrameNanos { it }
+            while (true) {
+                val m = (androidx.compose.runtime.withFrameNanos { it } - t0) / 1_000_000f
+                a.ms.floatValue = minOf(m, d)
+                if (m >= d) break
+            }
+            a.alAcabarAnimacion()
         }
-        val d = Aparicion.dura(anim, a.apps.size)
-        reloj.snapTo(0f)
-        reloj.animateTo(d.toFloat(), androidx.compose.animation.core.tween(d, easing = androidx.compose.animation.core.LinearEasing))
-        a.alAcabarAnimacion()
     }
-    val ap = (if (a.tapada) "cortina" else anim)?.let { Aparicion(it, reloj, a.apps.size) }
-    // Las apps de fuera, encadenadas (también mientras se van, al apagar)
-    val cadena = if (Ammit.encendida || anim == "salir" || a.tapada) 1f else 0f
-    // El fondo de cadenas ya pintado (se hace aparte la primera vez; mientras, se dibuja al vuelo)
-    var tam by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
-    var fondo by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    // (lo que cambia la pantalla de verdad se deriva aparte: así pasar de «tapada» a «salen las apps» no la rehace)
+    val oculta by remember { androidx.compose.runtime.derivedStateOf { !Ammit.encendida && a.animacion == null && !a.tapada } }
+    val conTemblor by remember { androidx.compose.runtime.derivedStateOf { a.animacion == "entrar" || a.animacion == "salir" } }
+    val cadena by remember { androidx.compose.runtime.derivedStateOf { if (Ammit.encendida || a.animacion == "salir" || a.tapada) 1f else 0f } }
+    // Apagada y sin nada que animar, esta pantalla solo pasa a tu inicio de siempre: no se pinta nada (si no, al darle a casa se veían
+    // un instante la hora y las apps de Ammit antes de tu inicio)
+    if (oculta) { Box(Modifier.fillMaxSize()); return }
+    val ap = remember { Aparicion(a) }
     val ctx = LocalContext.current
+    val config = LocalConfiguration.current
+    // (el tamaño de la pantalla, una vez por giro, no a cada fotograma)
+    val pantalla = remember(config.orientation, config.screenWidthDp, config.screenHeightDp) { Campo.pantalla(ctx) }
     val vista = androidx.compose.ui.platform.LocalView.current
-    LaunchedEffect(tam) {
-        if (tam.width > 0 && tam.height > 0) fondo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            Campo.paraTapar(ctx, tam.width.toFloat(), tam.height.toFloat()).fondo.asImageBitmap()
-        }
-    }
     androidx.compose.runtime.CompositionLocalProvider(LocalCadena provides cadena, LocalAparicion provides ap) {
     // (la capa del temblor, solo mientras hay golpes: envolviendo siempre toda la pantalla, las capturas salían en blanco)
-    Box(Modifier.fillMaxSize().then(if (anim != "entrar" && anim != "salir") Modifier else Modifier.graphicsLayer {
+    Box(Modifier.fillMaxSize().then(if (!conTemblor) Modifier else Modifier.graphicsLayer {
         // El temblor: los golpes de las cadenas al llegar; al apagar, un tirón
-        val ms = reloj.value
-        val c = Campo.paraTapar(ctx, size.width, size.height)
-        val (dx, dy) = when (anim) {
+        val ms = a.ms.floatValue
+        val c = paraTapar(pantalla, size.width, size.height)
+        val (dx, dy) = when (a.animacion) {
             "entrar" -> Tiempos.temblor(ms, Tiempos.golpesEntrar(c.n))
             "salir" -> if (ms in 50f..250f) { val f = 14f * kotlin.math.sin((ms - 50) / 200 * Math.PI.toFloat()); f * 0.5f * kotlin.math.sin(ms * 0.9f) to f * 0.5f * kotlin.math.sin(ms * 1.13f) } else 0f to 0f
             else -> 0f to 0f
         }
         translationX = dx * c.u; translationY = dy * c.u
     }).pointerInput(Unit) { detectTapGestures(onLongPress = { a.colocando = true }) }) {
-        // El fondo: el sinfín de cadenas (al encender, llegando una tras otra sobre tu fondo de pantalla)
-        Canvas(Modifier.fillMaxSize().onSizeChanged { tam = it }) {
-            // (el campo, del tamaño de la pantalla entera y desde la esquina: igual al píxel que el de la cortina y el del juicio)
-            val c = Campo.paraTapar(ctx, size.width, size.height)
-            // (anclado a la pantalla, no a la ventana: así coincide al píxel con el de la cortina aunque la ventana no empiece en la esquina)
+        // El fondo: el sinfín de cadenas (al encender sin cortina, llegando una tras otra sobre tu fondo de pantalla)
+        Canvas(Modifier.fillMaxSize()) {
+            // (del tamaño de la pantalla entera y anclado a ella, no a la ventana: igual al píxel que el de la cortina)
+            val c = paraTapar(pantalla, size.width, size.height)
             val (ox, oy) = enPantalla(vista)
             translate(-ox, -oy) {
-                if (anim == "entrar") {
-                    val ms = reloj.value
+                if (a.animacion == "entrar") {
+                    val ms = a.ms.floatValue
                     drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) } }
                 } else if (cadena > 0f) {
-                    val f = fondo
-                    if (f != null && f.width == c.ancho && f.height == c.alto) drawImage(f)
-                    else drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }
+                    // (pintado igual que en la cortina, con las mismas listas de dibujo: así al fundirse no se nota nada)
+                    drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }
                 }
             }
         }
         if (horizontal) Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 36.dp, vertical = 18.dp), horizontalArrangement = Arrangement.spacedBy(36.dp)) {
-            Column(Modifier.weight(0.42f).fillMaxSize().graphicsLayer { alpha = ap?.resto() ?: 1f }.verticalScroll(rememberScrollState())) { Reloj(); Spacer(Modifier.height(18.dp)); Widgets(a) }
+            Column(Modifier.weight(0.42f).fillMaxSize().graphicsLayer { alpha = ap.resto() }.verticalScroll(rememberScrollState())) { Reloj(); Spacer(Modifier.height(18.dp)); Widgets(a) }
             Box(Modifier.weight(0.58f).fillMaxSize()) { Rejilla(a) }
         } else Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp)) {
-            Column(Modifier.fillMaxWidth().graphicsLayer { alpha = ap?.resto() ?: 1f }) {
+            Column(Modifier.fillMaxWidth().graphicsLayer { alpha = ap.resto() }) {
                 Reloj(); Spacer(Modifier.height(14.dp))
                 Column(Modifier.fillMaxWidth()) { Widgets(a) }
             }
@@ -295,7 +306,7 @@ private fun Rejilla(a: InicioActivity) {
                                 }
                             }
                             .clickable(enabled = arrastrando == null) { Apps.abrir(a, app) }
-                            .then(if (ap != null) Modifier.graphicsLayer { sale(ap.icono(i)) } else Modifier), contentAlignment = Alignment.TopCenter) {
+                            .then(if (Diseno.sinCapas) Modifier else Modifier.graphicsLayer { sale(ap?.icono(i) ?: 1f) }), contentAlignment = Alignment.TopCenter) {
                             Icono(app, a.colocando)
                         }
                     }

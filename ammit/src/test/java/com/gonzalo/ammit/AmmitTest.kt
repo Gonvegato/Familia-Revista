@@ -31,7 +31,8 @@ class AmmitTest {
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
     private val grabar = System.getProperty("roborazzi.test.record") == "true"
 
-    @Before fun limpia() { ctx.getSharedPreferences("ammit", Context.MODE_PRIVATE).edit().clear().commit(); Ammit.cargar(ctx) }
+    @Before fun limpia() { Diseno.sinCapas = true; limpia0() }
+    private fun limpia0() { ctx.getSharedPreferences("ammit", Context.MODE_PRIVATE).edit().clear().commit(); Ammit.cargar(ctx) }
 
     @Test fun pasanLaFamiliaYLoImprescindible() {
         listOf("com.gonzalo.gamerate", "com.gonzalo.hiedra", "com.gonzalo.marfil", "com.gonzalo.cobalto", "com.gonzalo.mostaza", "com.gonzalo.cobre")
@@ -107,7 +108,7 @@ class AmmitTest {
         Ammit.encender(ctx, true, animar = false)
         val inicio = Robolectric.buildActivity(InicioActivity::class.java).setup().get()
         inicio.apps = Apps.todas(inicio)
-        shadowOf(android.os.Looper.getMainLooper()).idle()
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(200))
         inicio.window.decorView.rootView.captureRoboImage("build/outputs/roborazzi/ammit_inicio.png")
         inicio.colocando = true
         shadowOf(android.os.Looper.getMainLooper()).idle()
@@ -136,6 +137,40 @@ class AmmitTest {
         assertEquals(Campo.OSCURO, Tiempos.juicioOscuro(Tiempos.JUICIO_MS.toFloat()))
         assertEquals(1f, Tiempos.juicio(Tiempos.JUICIO_MS.toFloat(), a.n - 1))
         assertEquals(0f, Tiempos.salir(Tiempos.salidaFin(a.n).toFloat(), 0, a.n))
+    }
+
+    /** La cortina: cada modo, en varios momentos, pinta sin fallar (y con nombres de app larguísimos). Con grabar, deja las imágenes. */
+    @Test fun laCortinaPintaSinFallar() {
+        val (w, h) = Campo.pantalla(ctx)
+        for ((modo, ms) in listOf("entrar" to listOf(0f, 300f, 900f, 1500f, 2000f), "salir" to listOf(0f, 100f, 600f, 900f, 1300f, 1800f),
+            "juicio" to listOf(0f, 50f, 400f, 1000f, 2000f, 2700f, 3200f, 3700f, 3950f), "tapar" to listOf(0f))) {
+            for (t in ms) for (app in listOf("Instagram", "Una aplicación con un nombre larguísimo que no cabe en ninguna parte")) {
+                val v = VistaCortina(ctx, modo, app); v.relojFijo = t
+                v.layout(0, 0, w, h)
+                val bm = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+                val cv = android.graphics.Canvas(bm); cv.drawColor(0xFF5C7A9E.toInt())
+                v.draw(cv)
+                if (grabar && app == "Instagram") {
+                    java.io.File("build/outputs/roborazzi").mkdirs()
+                    java.io.FileOutputStream("build/outputs/roborazzi/cortina_${modo}_${t.toInt()}.png").use { bm.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+                }
+                bm.recycle()
+            }
+        }
+    }
+
+    /** El camino de encender y apagar: sin vigilante se hace a la antigua; con la cortina puesta, la pantalla de inicio espera y luego saca las apps. */
+    @Test fun encenderYApagarSinVigilanteVaALaAntigua() {
+        assertFalse(Cortina.cambiar(ctx, true) {})
+        assertFalse(Cortina.ocupada)
+        sembrarApps(); Ammit.encender(ctx, true, animar = false)
+        Ammit.ponAnimacion(ctx, "cortina")
+        val inicio = Robolectric.buildActivity(InicioActivity::class.java).setup().get()
+        assertEquals("cortina", inicio.animacion)
+        Cortina.alQuitar?.invoke()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        // (ya ha dejado de estar tapada: o salen las apps, o ya han salido)
+        assertTrue(inicio.animacion == "aparecer" || inicio.animacion == null)
     }
 
     /** Fotogramas de encender, apagar y del juicio (como en la tablet). */
@@ -168,7 +203,7 @@ class AmmitTest {
         sembrarApps(); Ammit.encender(ctx, true, animar = false)
         val inicio = Robolectric.buildActivity(InicioActivity::class.java).setup().get()
         inicio.apps = Apps.todas(inicio)
-        shadowOf(android.os.Looper.getMainLooper()).idle()
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(200))
         inicio.window.decorView.rootView.captureRoboImage("build/outputs/roborazzi/ammit_inicio_vertical.png")
         @Suppress("UNUSED_VARIABLE") val m = Modifier.fillMaxSize()
     }

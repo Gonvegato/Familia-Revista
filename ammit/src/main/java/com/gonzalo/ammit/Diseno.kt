@@ -20,6 +20,9 @@ import kotlin.math.sin
 
 /** Los colores y las letras de la familia: papel y negro (de noche, al revés) y el acento de Ammit. */
 object Diseno {
+    /** Solo para las capturas de las pruebas (su pintor no dibuja bien las capas animadas): sin capas en la pantalla de inicio. */
+    @Volatile var sinCapas = false
+
     val PAPEL = Color(0xFFF8F0D4)
     val NEGRO = Color(0xFF000000)
     val ACENTO = Color(Ammit.ACENTO)

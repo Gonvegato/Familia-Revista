@@ -32,7 +32,13 @@ object Apps {
     }
 
     fun abrir(c: Context, a: AppDeInicio) {
-        if (Ammit.encendida && !a.deLaFamilia) { JuicioActivity.abrir(c, a.nombre); return }
+        if (Ammit.encendida && !a.deLaFamilia) {
+            // El juicio, en la cortina por encima de todo (como cuando se abre desde otro sitio); si no hay vigilante, en su pantalla
+            val v = Vigia.vivo
+            if (Cortina.ocupada) return
+            if (v == null || !Cortina.poner(v, "juicio", a.nombre)) JuicioActivity.abrir(c, a.nombre)
+            return
+        }
         runCatching {
             c.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(a.componente)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED))
