@@ -220,6 +220,8 @@ class CapturasCTest {
         grabando(); siembra(); montar(false)
         rule.onNodeWithContentDescription("Ajustes").performClick(); rule.waitForIdle(); foto("b40_ajustes")
         rule.onNodeWithText("JUEGOS").performClick(); rule.waitForIdle(); foto("b41_ajustes_juegos_reto")
+        rule.onNodeWithText("CUENTA").performClick(); rule.waitForIdle(); foto("b43_ajustes_cuenta")
+        rule.onNodeWithText("AVANZADO").performClick(); rule.waitForIdle(); foto("b44_ajustes_avanzado")
     }
     @Test fun vacia() { grabando(); CapturasTest().siembra(); Biblioteca.juegos.clear(); montar(false); foto("b42_vacia") }
     @Test fun diaClaro() {

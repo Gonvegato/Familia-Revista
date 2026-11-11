@@ -9,6 +9,11 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.5 — la cabecera de color, de lado a lado
+
+- En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su
+  derecha); la portada queda encima. Lo que va sobre una foto (la fecha de «En portada») no cambia de color.
+
 ## 1.8.4 — los widgets, con el estilo que elijas
 
 - **Al poner cualquier widget de Jonsu** (también la cabecera con el nombre, el calendario, el año, la actividad…) se abre una pantalla para

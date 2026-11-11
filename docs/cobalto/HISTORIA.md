@@ -10,6 +10,11 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.6.5 — la cabecera de color, de lado a lado
+
+- En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su
+  derecha); la portada queda encima. Lo que va sobre una foto (la fecha de «En portada») no cambia de color.
+
 ## 0.6.4 — los widgets, con el estilo que elijas
 
 - **Al poner cualquier widget de Thot** (también la cabecera con el nombre) se abre una pantalla para

@@ -7,6 +7,11 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.8.7 — la cabecera de color, de lado a lado
+
+- En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su
+  derecha); la portada queda encima. Lo que va sobre una foto (la fecha de «En portada») no cambia de color.
+
 ## 0.8.6 — los widgets, con el estilo que elijas
 
 - **Al poner cualquier widget de Bastet** (también la cabecera con el nombre) se abre una pantalla para

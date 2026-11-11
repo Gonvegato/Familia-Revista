@@ -237,7 +237,9 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
     private var bandaPuesta = false
 
     /** Lo que se escribe sobre la franja va en su color de texto. */
-    fun enBanda(x: Float, y: Float, color: Int): Int = banda?.let { if (y < it.bottom && x + 1f >= it.left) textoBanda else color } ?: color
+    // (solo los colores de sobre el papel: lo que va sobre una foto, en blanco, se queda como está)
+    fun enBanda(@Suppress("UNUSED_PARAMETER") x: Float, y: Float, color: Int): Int =
+        banda?.let { if (y < it.bottom && color in setOf(tinta, gris, acento, acentoBloque, linea)) textoBanda else color } ?: color
 
     /** Al medir: dónde cae cada etiqueta de arriba del todo. */
     private fun apunta(l: Layout, x: Float, y: Float) {
@@ -245,12 +247,10 @@ class Hoja(val ctx: Context, val w: Float, val h: Float, val noche: Boolean, s: 
         etiquetas += RectF(x + l.getLineLeft(0), y, x + l.getLineRight(0), y + l.height)
     }
 
-    /** La franja: hasta debajo de las etiquetas de arriba (si no hay, una tira fina); si empiezan más adentro (junto a una portada), desde ahí. */
+    /** La franja: de lado a lado, hasta debajo de las etiquetas de arriba (si no hay, una tira fina); una portada a la izquierda queda encima. */
     fun bandaMedida(): RectF {
         if (etiquetas.isEmpty()) return RectF(0f, 0f, w, 7f)
-        val izq = etiquetas.minOf { it.left }
-        val abajo = etiquetas.maxOf { it.bottom }
-        return RectF(if (izq <= 28f) 0f else izq - 10f, 0f, w, abajo + 7f)
+        return RectF(0f, 0f, w, etiquetas.maxOf { it.bottom } + 7f)
     }
 
     /** El bloque de tinta de la cabecera con papel (fondo, letra): teñido de acento, o el acento con la letra que mejor se lea. */

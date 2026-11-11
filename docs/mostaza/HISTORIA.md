@@ -11,6 +11,11 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.8 — la cabecera de color, de lado a lado
+
+- En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su
+  derecha); la portada queda encima. Lo que va sobre una foto (la fecha de «En portada») no cambia de color.
+
 ## 0.7.7 — los widgets, con el estilo que elijas
 
 - **Al poner cualquier widget de Hathor** (también la cabecera con el nombre) se abre una pantalla para

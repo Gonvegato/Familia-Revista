@@ -9,6 +9,11 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.8.5 — la cabecera de color, de lado a lado
+
+- En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su
+  derecha); la portada queda encima. Lo que va sobre una foto (la fecha de «En portada») no cambia de color.
+
 ## 0.8.4 — los widgets, con el estilo que elijas
 
 - **Al poner cualquier widget de Nut** (también la cabecera con el nombre) se abre una pantalla para
