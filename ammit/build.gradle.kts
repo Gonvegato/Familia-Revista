@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.ammit"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "0.3.0"
     }
     buildTypes {
         getByName("release") {
@@ -46,13 +46,19 @@ tasks.register<Copy>("copyRobolectricDeps") { from(robolectricDeps); into(layout
 
 dependencies {
     robolectricDeps("org.robolectric:android-all-instrumented:14-robolectric-10818077-i6")
+    // La caja cifrada de las claves (el token de tu kDrive) es la de la familia
+    implementation(project(":familia"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
+    // Actualizarse sola desde tu kDrive (Actualizador.kt, el mismo que Ptah): con la app cerrada, cada pocas horas
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.3")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("androidx.work:work-testing:2.9.1")
     testImplementation("io.github.takahirom.roborazzi:roborazzi:1.20.0")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.20.0")
     testImplementation("androidx.compose.ui:ui-test-junit4")

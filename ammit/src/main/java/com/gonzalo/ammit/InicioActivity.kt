@@ -36,6 +36,8 @@ class InicioActivity : ComponentActivity() {
     var widgets by mutableStateOf<List<Ammit.Widget>>(emptyList())
     var colocando by mutableStateOf(false)
     var eligiendoWidget by mutableStateOf(false)
+    /** La animación de las cadenas que toca ahora: «entrar» (se cierran) o «salir» (se caen); null, ninguna. */
+    var animacion by mutableStateOf<String?>(null)
 
     /** El widget a medio poner (esperando el permiso para ponerlo o su configuración). */
     private var pendiente = -1
@@ -65,8 +67,20 @@ class InicioActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Ammit.cargar(this)
-        if (!Ammit.encendida && pasarAlInicioNormal()) return
+        val anim = Ammit.tomaAnimacion(this)
+        if (!Ammit.encendida) {
+            // Al apagar: primero se caen las cadenas y luego, a la pantalla de inicio de siempre ([alAcabarAnimacion])
+            if (anim == "salir") { animacion = "salir"; recargar(); return }
+            if (pasarAlInicioNormal()) return
+        } else if (anim == "entrar") animacion = "entrar"
         recargar()
+    }
+
+    /** Ha terminado la animación de las cadenas: al apagar, se pasa a la pantalla de inicio de siempre. */
+    fun alAcabarAnimacion() {
+        val era = animacion
+        animacion = null
+        if (era == "salir" && !Ammit.encendida) pasarAlInicioNormal()
     }
 
     override fun onNewIntent(intent: Intent) {

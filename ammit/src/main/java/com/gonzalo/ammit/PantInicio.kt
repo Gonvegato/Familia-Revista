@@ -72,13 +72,31 @@ import kotlin.math.roundToInt
 
 private val ES = Locale("es", "ES")
 private val SOMBRA = Shadow(Color(0x99000000), Offset(0f, 2f), 6f)
-private val GRIS = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
 
 /** La pantalla de inicio de Ammit (sobre tu fondo de pantalla). */
 @Composable
 fun PantInicio(a: InicioActivity) {
     val horizontal = LocalConfiguration.current.let { it.screenWidthDp > it.screenHeightDp }
-    Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures(onLongPress = { a.colocando = true }) }) {
+    // La animación de las cadenas al encender y al apagar Ammit
+    val anim = a.animacion
+    val t = remember { androidx.compose.animation.core.Animatable(1f) }
+    LaunchedEffect(anim) {
+        if (anim == null) return@LaunchedEffect
+        t.snapTo(0f)
+        t.animateTo(1f, androidx.compose.animation.core.tween(if (anim == "entrar") 1600 else 1300, easing = androidx.compose.animation.core.LinearEasing))
+        a.alAcabarAnimacion()
+    }
+    val v = t.value
+    // Cuánto encadenadas están las apps de fuera: al entrar se encadenan cuando llegan las cadenas grandes; al salir, se sueltan primero
+    val cadena = when (anim) {
+        "entrar" -> ((v - 0.38f) / 0.4f).coerceIn(0f, 1f)
+        "salir" -> 1f - (v / 0.45f).coerceIn(0f, 1f)
+        else -> if (Ammit.encendida) 1f else 0f
+    }
+    // El golpe seco al cerrarse las cadenas (al entrar): la pantalla tiembla un momento
+    val golpe = if (anim == "entrar" && v in 0.5f..0.72f) kotlin.math.sin((v - 0.5f) * 90f) * 10f * (1f - (v - 0.5f) / 0.22f) else 0f
+    androidx.compose.runtime.CompositionLocalProvider(LocalCadena provides cadena) {
+    Box(Modifier.fillMaxSize().then(if (golpe != 0f) Modifier.graphicsLayer { translationX = golpe * density } else Modifier).pointerInput(Unit) { detectTapGestures(onLongPress = { a.colocando = true }) }) {
         // Un velo suave arriba y abajo para que se lea sobre cualquier fondo
         Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0x44000000), Color.Transparent, Color(0x33000000)))))
         if (horizontal) Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 36.dp, vertical = 18.dp), horizontalArrangement = Arrangement.spacedBy(36.dp)) {
@@ -92,6 +110,8 @@ fun PantInicio(a: InicioActivity) {
         }
         if (a.colocando) BarraColocar(a, Modifier.align(Alignment.BottomCenter))
         if (a.eligiendoWidget) ElegirWidget(a)
+        if (anim != null) CadenasGrandes(v, anim == "entrar")
+    }
     }
 }
 
@@ -151,6 +171,8 @@ private fun Rejilla(a: InicioActivity) {
         var arrastrando by remember { mutableStateOf<String?>(null) }
         var desplazado by remember { mutableStateOf(Offset.Zero) }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState(), enabled = arrastrando == null), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // (aire arriba: el candado de la esquina de los iconos de la primera fila sobresale y se cortaba)
+            Spacer(Modifier.height(10.dp))
             a.apps.chunked(columnas).forEach { fila ->
                 Row(Modifier.fillMaxWidth()) {
                     fila.forEach { app ->
@@ -191,20 +213,23 @@ private fun Rejilla(a: InicioActivity) {
 
 @Composable
 private fun Icono(app: AppDeInicio, colocando: Boolean) {
-    val fuera = Ammit.encendida && !app.deLaFamilia
+    // (k: cuánto encadenada; durante la animación va de 0 a 1 al encender y de 1 a 0 al apagar)
+    val k = if (app.deLaFamilia) 0f else LocalCadena.current
+    val fuera = k > 0.001f
+    val gris = remember(k) { ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(1f - k) }) }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(92.dp)) {
         Box(Modifier.size(60.dp)) {
-            app.icono?.let { Image(it, app.nombre, Modifier.fillMaxSize().graphicsLayer { alpha = if (fuera) 0.75f else 1f }, colorFilter = if (fuera) GRIS else null) }
+            app.icono?.let { Image(it, app.nombre, Modifier.fillMaxSize().graphicsLayer { alpha = 1f - 0.25f * k }, colorFilter = if (fuera) gris else null) }
                 ?: Box(Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).background(Diseno.PAPEL))
             if (fuera) {
-                // Las cadenas encima del icono, y el candado en la esquina
-                Box(Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp))) { Cadenas(Diseno.PAPEL, alfa = 0.85f, escala = 0.55f) }
-                Box(Modifier.align(Alignment.TopEnd).offset(6.dp, (-6).dp).size(22.dp).clip(CircleShape).background(Diseno.NEGRO).border(1.dp, Diseno.PAPEL.copy(alpha = 0.5f), CircleShape), contentAlignment = Alignment.Center) { Candado() }
+                // Las cadenas encima del icono (al soltarse, caen) y el candado en la esquina
+                Box(Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).graphicsLayer { translationY = (1f - k) * 26.dp.toPx(); alpha = k }) { Cadenas(Diseno.PAPEL, alfa = 0.85f, escala = 0.55f) }
+                Box(Modifier.align(Alignment.TopEnd).offset(6.dp, (-6).dp).size(22.dp).graphicsLayer { scaleX = k; scaleY = k; alpha = k }.clip(CircleShape).background(Diseno.NEGRO).border(1.dp, Diseno.PAPEL.copy(alpha = 0.5f), CircleShape), contentAlignment = Alignment.Center) { Candado() }
             }
             if (colocando && !fuera) Box(Modifier.align(Alignment.TopEnd).offset(4.dp, (-4).dp).size(10.dp).clip(CircleShape).background(Color(Ammit.ACENTO_NOCHE)))
         }
         BasicText(app.nombre, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            style = TextStyle(if (fuera) Color.White.copy(alpha = 0.6f) else Color.White, 12.5.sp, FontWeight.Medium, fontFamily = Diseno.Texto, shadow = SOMBRA, textAlign = TextAlign.Center),
+            style = TextStyle(Color.White.copy(alpha = 1f - 0.4f * k), 12.5.sp, FontWeight.Medium, fontFamily = Diseno.Texto, shadow = SOMBRA, textAlign = TextAlign.Center),
             modifier = Modifier.padding(top = 6.dp))
     }
 }

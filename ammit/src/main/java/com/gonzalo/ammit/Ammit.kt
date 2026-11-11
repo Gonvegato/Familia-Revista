@@ -63,8 +63,18 @@ object Ammit {
     fun cargar(c: Context) { encendida = prefs(c).getBoolean("on", false) }
 
     fun encender(c: Context, on: Boolean) {
+        val antes = prefs(c).getBoolean("on", false)
         encendida = on
-        prefs(c).edit().putBoolean("on", on).apply()
+        // La próxima vez que se vea la pantalla de inicio, la animación de las cadenas: cerrándose al encender, cayéndose al apagar
+        prefs(c).edit().putBoolean("on", on).apply { if (antes != on) putString("animar", if (on) "entrar" else "salir") }.apply()
+    }
+
+    /** La animación pendiente («entrar» o «salir»), una sola vez: se borra al leerla. */
+    fun tomaAnimacion(c: Context): String? {
+        val p = prefs(c)
+        val a = p.getString("animar", null) ?: return null
+        p.edit().remove("animar").apply()
+        return a
     }
 
     /** La pantalla de inicio de siempre (la de Samsung u otra), a la que se pasa con Ammit apagada. */

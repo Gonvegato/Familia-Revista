@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
@@ -133,6 +135,8 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
             Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Ammit → activar. Solo mira qué app se abre, nunca lo que hay dentro.", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
             if (Build.VERSION.SDK_INT >= 33) Paso(4, "El botón en la barra de arriba", "Lo pone con un toque; también se puede poner a mano desde el lápiz de la barra.", null, t, "PONER") { a.anadirBoton() }
 
+            ActualizarseSola(a, t)
+
             Titulo("Tu pantalla de inicio de siempre", t)
             BasicText("La que se abre con Ammit apagada.", style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto), modifier = Modifier.padding(bottom = 6.dp))
             if (otros.isEmpty()) BasicText("No hay otra en la tablet.", style = TextStyle(t.gris, 15.sp, fontFamily = Diseno.Texto))
@@ -183,4 +187,82 @@ private fun Interruptor(on: Boolean, t: Tonos) {
     Box(Modifier.size(width = 56.dp, height = 30.dp).background(if (on) t.acento else t.gris.copy(alpha = 0.3f)).padding(4.dp), contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart) {
         Box(Modifier.size(22.dp).background(if (on) t.fondo else t.tinta))
     }
+}
+
+/**
+ * Actualizarse sola desde tu kDrive, como las hermanas: busca «Ammit-<versión>.apk» en «Mi carpeta/versiones» y se instala sola cuando
+ * no la estás viendo. Ammit no tiene cuenta, así que el token de tu kDrive se pone aquí una vez (se guarda cifrado en la tablet).
+ */
+@Composable
+private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
+    val alcance = androidx.compose.runtime.rememberCoroutineScope()
+    var hay by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(KDrive.on(a)) }
+    var auto by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(Actualizador.activo(a)) }
+    var token by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var drive by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var aviso by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    var ocupado by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    Titulo("Actualizarse sola", t)
+    if (!hay) {
+        BasicText("Ammit busca sus versiones nuevas en «versiones» de tu kDrive. Pega aquí tu token de kDrive y el número de tu kDrive (el mismo que en las hermanas; se guarda cifrado en esta tablet).",
+            style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
+        Campo("TOKEN", token, "token de API de kDrive", t, secreto = true) { token = it }
+        Campo("KDRIVE", drive, "número o dirección", t) { drive = it }
+        BasicText("CONECTAR  →", style = TextStyle(t.fondo, 12.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp),
+            modifier = Modifier.padding(top = 10.dp).background(t.acento).clickable(enabled = !ocupado) {
+                if (token.isBlank() || drive.isBlank()) { aviso = "Falta el token o el número de tu kDrive."; return@clickable }
+                ocupado = true; aviso = null
+                KDrive.save(a, token, drive)
+                alcance.launch {
+                    val r = runCatching { KDrive.test(a) }
+                    if (r.isSuccess) { KDrive.confirma(a); token = ""; drive = ""; hay = true; aviso = r.getOrNull() } else { KDrive.descarta(a); aviso = r.exceptionOrNull()?.message ?: "No vale." }
+                    ocupado = false
+                }
+            }.padding(horizontal = 14.dp, vertical = 9.dp))
+    } else {
+        Row(Modifier.fillMaxWidth().clickable { auto = !auto; Actualizador.ponActivo(a, auto) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                BasicText("Actualizarse sola", style = TextStyle(t.tinta, 20.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
+                BasicText("Mira «versiones» de tu kDrive (kDrive ${KDrive.drive(a)}) y se instala cuando no la estás viendo", style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto))
+            }
+            Interruptor(auto, t)
+        }
+        val estado = Actualizador.estado.ifBlank { Actualizador.estadoGuardado(a) }
+        val ver = runCatching { a.packageManager.getPackageInfo(a.packageName, 0).versionName }.getOrNull().orEmpty()
+        BasicText("Versión instalada: $ver" + if (estado.isNotBlank()) " · $estado" else "", style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto))
+        BasicText(if (ocupado) "ACTUALIZANDO…" else "ACTUALIZAR AHORA  →", style = TextStyle(t.fondo, 12.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp),
+            modifier = Modifier.padding(top = 10.dp).background(t.acento).clickable(enabled = !ocupado) {
+                ocupado = true; aviso = null
+                alcance.launch { aviso = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Actualizador.actualizarAhora(a) }; ocupado = false }
+            }.padding(horizontal = 14.dp, vertical = 9.dp))
+        BasicText("Quitar el token", style = TextStyle(t.gris, 13.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
+            modifier = Modifier.padding(top = 10.dp).clickable { KDrive.forget(a); hay = false })
+    }
+    // Una versión nueva que Android pide confirmar (la primera vez, o sin el permiso de instalar sola)
+    Actualizador.nueva?.takeIf { !it.silenciosa }?.let { n ->
+        BasicText(if (Actualizador.faltaPermiso) "Hay una versión nueva: deja a Ammit instalar apps  →" else "Hay una versión nueva descargada: instalar  →",
+            style = TextStyle(t.acento, 15.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
+            modifier = Modifier.padding(top = 10.dp).clickable {
+                if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; runCatching { a.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${a.packageName}"))) } }
+                else runCatching { Actualizador.instala(a, n) }
+            })
+    }
+    aviso?.let { BasicText(it, style = TextStyle(t.acento, 14.sp, fontFamily = Diseno.Cursiva), modifier = Modifier.padding(top = 8.dp)) }
+}
+
+@Composable
+private fun Campo(etiqueta: String, valor: String, pista: String, t: Tonos, secreto: Boolean = false, alCambiar: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        BasicText(etiqueta, style = TextStyle(t.tinta, 10.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp), modifier = Modifier.width(80.dp))
+        Box(Modifier.weight(1f)) {
+            if (valor.isEmpty()) BasicText(pista, style = TextStyle(t.gris, 17.sp, fontFamily = Diseno.Cursiva))
+            androidx.compose.foundation.text.BasicTextField(valor, alCambiar, singleLine = true,
+                textStyle = TextStyle(t.tinta, 17.sp, fontFamily = Diseno.Texto),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(t.acento),
+                visualTransformation = if (secreto) androidx.compose.ui.text.input.PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(autoCorrectEnabled = false, keyboardType = androidx.compose.ui.text.input.KeyboardType.Ascii),
+                modifier = Modifier.fillMaxWidth())
+        }
+    }
+    Box(Modifier.fillMaxWidth().padding(top = 6.dp).height(2.dp).background(t.tinta))
 }

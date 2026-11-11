@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.ResolveInfo
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.test.core.app.ApplicationProvider
@@ -42,6 +43,14 @@ class AmmitTest {
         assertTrue("el teclado que tengas", Ammit.pasa("com.samsung.android.honeyboard", setOf("com.samsung.android.honeyboard")))
     }
 
+    @Test fun reconoceSusVersionesEnElKDrive() {
+        assertEquals(listOf(0, 3, 0), Actualizador.versionDe("Ammit-0.3.0.apk"))
+        assertEquals(null, Actualizador.versionDe("Jonsu-1.8.6.apk"))
+        assertEquals("versiones", KDrive.CARPETA)
+        val u = Actualizador.ultima(listOf("Ammit-0.2.0.apk" to 1L, "Ammit-0.10.0.apk" to 2L, "Nut-0.9.0.apk" to 3L))
+        assertEquals("Ammit-0.10.0.apk", u?.first)
+    }
+
     @Test fun lasAppsSeColocanComoLasDejaste() {
         val l = listOf("b", "a", "c", "d")
         assertEquals(listOf("c", "a", "b", "d"), Ammit.ordena(l, { it }, { it }, listOf("c", "a")))
@@ -56,6 +65,16 @@ class AmmitTest {
         Ammit.widgets(ctx).let { assertTrue(it.isEmpty()) }
         Ammit.ponWidgets(ctx, listOf(Ammit.Widget(3, 170)))
         assertEquals(listOf(Ammit.Widget(3, 170)), Ammit.widgets(ctx))
+    }
+
+    @Test fun alEncenderYApagarHayUnaAnimacionUnaSolaVez() {
+        Ammit.encender(ctx, true)
+        assertEquals("entrar", Ammit.tomaAnimacion(ctx))
+        assertEquals(null, Ammit.tomaAnimacion(ctx))
+        Ammit.encender(ctx, true)
+        assertEquals("sin cambio, sin animación", null, Ammit.tomaAnimacion(ctx))
+        Ammit.encender(ctx, false)
+        assertEquals("salir", Ammit.tomaAnimacion(ctx))
     }
 
     @Test fun apagadaElInicioPasaAlDeSiempre() {
@@ -99,6 +118,17 @@ class AmmitTest {
 
         val aj = Robolectric.buildActivity(AjustesActivity::class.java).setup().get()
         aj.window.decorView.rootView.captureRoboImage("build/outputs/roborazzi/ammit_ajustes.png")
+    }
+
+    /** Fotogramas de la animación de las cadenas (al encender y al apagar), sobre un fondo oscuro. */
+    @Test fun fotogramasDeLasCadenas() {
+        org.junit.Assume.assumeTrue(grabar)
+        for ((entrando, ts) in listOf(true to listOf(0.15f, 0.3f, 0.5f, 0.85f), false to listOf(0.2f, 0.45f, 0.75f)))
+            ts.forEach { t ->
+                com.github.takahirom.roborazzi.captureRoboImage("build/outputs/roborazzi/ammit_${if (entrando) "entrar" else "salir"}_${(t * 100).toInt()}.png") {
+                    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().then(androidx.compose.ui.Modifier.background(androidx.compose.ui.graphics.Color(0xFF3B4A5A)))) { CadenasGrandes(t, entrando) }
+                }
+            }
     }
 
     @Test @Config(qualifiers = "w1280dp-h800dp-land-night-xhdpi") fun capturasDeNoche() {

@@ -4,6 +4,22 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.3.0 — se actualiza sola
+
+- **Actualizarse sola desde tu kDrive**, como las hermanas: busca «Ammit-<versión>.apk» en «Mi carpeta/versiones» y se instala cuando no
+  la estás viendo (y con la tablet cerrada, cada pocas horas). Como Ammit no tiene cuenta, el token y el número de tu kDrive se pegan una
+  vez en sus ajustes (sección «Actualizarse sola»; se guardan cifrados en la tablet). Ahí están también «Actualizar ahora» y el
+  interruptor para apagarlo.
+- Esta versión todavía hay que instalarla a mano; las siguientes llegarán solas.
+
+## 0.2.0 — las cadenas, al entrar y al salir
+
+- **Al encender Ammit**: tres cadenas grandes entran cruzando la pantalla, una tras otra; al cerrarse, la pantalla da un golpe seco y las
+  apps de fuera se van poniendo en gris mientras se les enrollan sus cadenas y sale el candado.
+- **Al apagarla**: las cadenas de los iconos se sueltan y caen, los iconos recuperan el color, las cadenas grandes se caen de la pantalla
+  y, después, pasa a tu pantalla de inicio de siempre.
+- El candado de los iconos de la primera fila ya no sale cortado por arriba.
+
 ## 0.1.0 — la primera
 
 - **Pantalla de inicio**: tu fondo de pantalla, la hora, tus apps donde las coloques (mantener pulsada una y arrastrarla) y los widgets de
@@ -19,4 +35,3 @@ la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 - **Los pasos para dejarla lista**, desde su icono: Ammit como pantalla de inicio, permitir los ajustes restringidos, activar el
   vigilante y poner el botón; cada uno con su estado.
 - El icono: «A.» con la franja «JUICIO», en verde fayenza (el de los amuletos), de día y de noche.
-- Todavía no se actualiza sola desde el kDrive: las versiones nuevas se instalan a mano.
