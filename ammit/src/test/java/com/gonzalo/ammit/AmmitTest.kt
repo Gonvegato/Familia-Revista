@@ -120,22 +120,38 @@ class AmmitTest {
         aj.window.decorView.rootView.captureRoboImage("build/outputs/roborazzi/ammit_ajustes.png")
     }
 
-    /** Fotogramas de la animación de las cadenas (al encender y al apagar), sobre un fondo oscuro. */
-    @Test fun fotogramasDeLasCadenas() {
-        org.junit.Assume.assumeTrue(grabar)
-        for ((entrando, ts) in listOf(true to listOf(0.15f, 0.3f, 0.5f, 0.85f), false to listOf(0.2f, 0.45f, 0.75f)))
-            ts.forEach { t ->
-                com.github.takahirom.roborazzi.captureRoboImage("build/outputs/roborazzi/ammit_${if (entrando) "entrar" else "salir"}_${(t * 100).toInt()}.png") {
-                    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().then(androidx.compose.ui.Modifier.background(androidx.compose.ui.graphics.Color(0xFF3B4A5A)))) { CadenasGrandes(t, entrando) }
-                }
-            }
+    /** El campo de cadenas: siempre el mismo para el mismo tamaño, 82 cadenas, y todas cruzan la pantalla. */
+    @Test fun elCampoEsSiempreElMismo() {
+        val a = Campo.de(2560, 1600)
+        assertEquals(82, a.n)
+        val b = Campo.de(2560, 1600)
+        assertTrue(a === b)
+        a.cadenas.forEach { c ->
+            // de fuera a fuera: los dos extremos, fuera de la pantalla
+            fun fuera(x: Float, y: Float) = x < 0 || y < 0 || x > 2560 || y > 1600
+            assertTrue(fuera(c.x1, c.y1) && fuera(c.x2, c.y2))
+        }
+        // los tiempos: el juicio acaba con todo tapado y apagado como el fondo
+        assertEquals(1f, Tiempos.juicioBase(Tiempos.JUICIO_MS.toFloat()))
+        assertEquals(Campo.OSCURO, Tiempos.juicioOscuro(Tiempos.JUICIO_MS.toFloat()))
+        assertEquals(1f, Tiempos.juicio(Tiempos.JUICIO_MS.toFloat(), a.n - 1))
+        assertEquals(0f, Tiempos.salir(Tiempos.salidaFin(a.n).toFloat(), 0, a.n))
     }
 
-    /** Fotogramas del juicio animado: las cuatro cadenas, Ammit y el montón. */
-    @Test @Config(qualifiers = "w1280dp-h800dp-land-night-xhdpi") fun fotogramasDelJuicio() {
+    /** Fotogramas de encender, apagar y del juicio (como en la tablet). */
+    @Test fun fotogramas() {
         org.junit.Assume.assumeTrue(grabar)
-        listOf(0.05f, 0.14f, 0.23f, 0.33f, 0.45f, 0.62f, 0.78f, 0.95f).forEach { t ->
-            com.github.takahirom.roborazzi.captureRoboImage("build/outputs/roborazzi/juicio_${(t * 100).toInt()}.png") { PantJuicio("Instagram", t) }
+        fun campo(nombre: String, pinta: (Campo, android.graphics.Canvas) -> Unit) {
+            val bm = android.graphics.Bitmap.createBitmap(1280, 800, android.graphics.Bitmap.Config.ARGB_8888)
+            val cv = android.graphics.Canvas(bm); cv.drawColor(0xFF5C7A9E.toInt())
+            pinta(Campo.de(1280, 800), cv)
+            java.io.File("build/outputs/roborazzi").mkdirs()
+            java.io.FileOutputStream("build/outputs/roborazzi/$nombre.png").use { bm.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        listOf(500f, 900f, 1300f, 1700f).forEach { ms -> campo("ammit_entrar_${ms.toInt()}") { c, cv -> c.pinta(cv, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { Tiempos.entrar(ms, it) } } }
+        listOf(0f, 400f, 800f, 1100f).forEach { ms -> campo("ammit_salir_${ms.toInt()}") { c, cv -> c.pinta(cv, Campo.OSCURO, Tiempos.salirBase(ms)) { Tiempos.salir(ms, it, c.n) } } }
+        listOf(600f, 1500f, 2800f, 3300f, 3950f).forEach { ms ->
+            captureRoboImage("build/outputs/roborazzi/juicio_${ms.toInt()}.png") { PantJuicio("Instagram", ms) }
         }
     }
 

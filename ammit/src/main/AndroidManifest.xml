@@ -41,9 +41,14 @@
             <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" /></intent-filter>
         </activity>
 
-        <!-- «X no pasa el juicio»: las cadenas, un momento, y a la pantalla de inicio -->
+        <!-- «X no pasa el juicio»: las cadenas, Ammit y el sinfín de cadenas, que acaba siendo el fondo de la pantalla de inicio -->
         <activity android:name=".JuicioActivity" android:exported="false" android:theme="@style/Ammit.Juicio"
             android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.juicio" android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
+
+        <!-- Al apagar: una capa transparente encima de tu inicio de siempre, con las cadenas yéndose -->
+        <activity android:name=".SalidaActivity" android:exported="false" android:theme="@style/Ammit.Salida"
+            android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="com.gonzalo.ammit.salida"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
 
         <!-- El botón de la barra de arriba -->

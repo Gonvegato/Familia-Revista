@@ -4,7 +4,13 @@ import android.appwidget.AppWidgetHostView
 import android.content.Intent
 import android.os.Bundle
 import android.util.SizeF
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -73,44 +79,109 @@ import kotlin.math.roundToInt
 private val ES = Locale("es", "ES")
 private val SOMBRA = Shadow(Color(0x99000000), Offset(0f, 2f), 6f)
 
-/** La pantalla de inicio de Ammit (sobre tu fondo de pantalla). */
+/**
+ * Lo que dura la animación en curso y cuándo aparece cada cosa. Se lee dentro de las capas (graphicsLayer), así que cada fotograma solo
+ * se repinta, sin rehacer la pantalla.
+ */
+class Aparicion(val anim: String, val reloj: Animatable<Float, AnimationVector1D>, val cuantas: Int) {
+    private val ms get() = reloj.value
+    /** La hora, los widgets: 0 sin ver, 1 del todo. */
+    fun resto(): Float = when (anim) {
+        "entrar" -> Tiempos.clamp((ms - Tiempos.ENTRAR_APPS) / 300)
+        "aparecer" -> Tiempos.clamp(ms / 300)
+        "salir" -> 1 - Tiempos.clamp(ms / 250)
+        else -> 1f
+    }
+    /** La app número [i]: salen una tras otra. */
+    fun icono(i: Int): Float {
+        val paso = minOf(22f, 520f / cuantas.coerceAtLeast(1))
+        return when (anim) {
+            "entrar" -> Tiempos.clamp((ms - Tiempos.ENTRAR_APPS - 50 - i * paso) / 260)
+            "aparecer" -> Tiempos.clamp((ms - 50 - i * paso) / 260)
+            "salir" -> 1 - Tiempos.clamp(ms / 250)
+            else -> 1f
+        }
+    }
+    companion object {
+        fun dura(anim: String?, cuantas: Int) = when (anim) {
+            "entrar" -> Tiempos.ENTRAR_MS
+            "aparecer" -> (50 + minOf(22f, 520f / cuantas.coerceAtLeast(1)) * cuantas + 280).toInt()
+            "salir" -> 300
+            else -> 0
+        }
+    }
+}
+
+val LocalAparicion = androidx.compose.runtime.compositionLocalOf<Aparicion?> { null }
+
+/** Cómo sale cada cosa: de pequeña a su tamaño, con un pequeño rebote. */
+private fun androidx.compose.ui.graphics.GraphicsLayerScope.sale(q: Float) {
+    alpha = q
+    if (q < 1f) { val e = 0.55f + 0.45f * Tiempos.ease(q) + 0.14f * kotlin.math.sin(q * Math.PI.toFloat()); scaleX = e; scaleY = e }
+}
+
+/** La pantalla de inicio de Ammit: el sinfín de cadenas de fondo, y encima la hora, los widgets de la familia y tus apps. */
 @Composable
 fun PantInicio(a: InicioActivity) {
     val horizontal = LocalConfiguration.current.let { it.screenWidthDp > it.screenHeightDp }
-    // La animación de las cadenas al encender y al apagar Ammit
     val anim = a.animacion
-    val t = remember { androidx.compose.animation.core.Animatable(1f) }
+    val reloj = remember { Animatable(0f) }
     LaunchedEffect(anim) {
         if (anim == null) return@LaunchedEffect
-        t.snapTo(0f)
-        t.animateTo(1f, androidx.compose.animation.core.tween(if (anim == "entrar") 1600 else 1300, easing = androidx.compose.animation.core.LinearEasing))
+        val d = Aparicion.dura(anim, a.apps.size)
+        reloj.snapTo(0f)
+        reloj.animateTo(d.toFloat(), androidx.compose.animation.core.tween(d, easing = androidx.compose.animation.core.LinearEasing))
         a.alAcabarAnimacion()
     }
-    val v = t.value
-    // Cuánto encadenadas están las apps de fuera: al entrar se encadenan cuando llegan las cadenas grandes; al salir, se sueltan primero
-    val cadena = when (anim) {
-        "entrar" -> ((v - 0.38f) / 0.4f).coerceIn(0f, 1f)
-        "salir" -> 1f - (v / 0.45f).coerceIn(0f, 1f)
-        else -> if (Ammit.encendida) 1f else 0f
+    val ap = anim?.let { Aparicion(it, reloj, a.apps.size) }
+    // Las apps de fuera, encadenadas (también mientras se van, al apagar)
+    val cadena = if (Ammit.encendida || anim == "salir") 1f else 0f
+    // El fondo de cadenas ya pintado (se hace aparte la primera vez; mientras, se dibuja al vuelo)
+    var tam by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    var fondo by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    LaunchedEffect(tam) {
+        if (tam.width > 0 && tam.height > 0) fondo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            Campo.de(tam.width, tam.height).fondo.asImageBitmap()
+        }
     }
-    // El golpe seco al cerrarse las cadenas (al entrar): la pantalla tiembla un momento
-    val golpe = if (anim == "entrar" && v in 0.5f..0.72f) kotlin.math.sin((v - 0.5f) * 90f) * 10f * (1f - (v - 0.5f) / 0.22f) else 0f
-    androidx.compose.runtime.CompositionLocalProvider(LocalCadena provides cadena) {
-    Box(Modifier.fillMaxSize().then(if (golpe != 0f) Modifier.graphicsLayer { translationX = golpe * density } else Modifier).pointerInput(Unit) { detectTapGestures(onLongPress = { a.colocando = true }) }) {
-        // Un velo suave arriba y abajo para que se lea sobre cualquier fondo
-        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0x44000000), Color.Transparent, Color(0x33000000)))))
+    androidx.compose.runtime.CompositionLocalProvider(LocalCadena provides cadena, LocalAparicion provides ap) {
+    // (la capa del temblor, solo mientras hay golpes: envolviendo siempre toda la pantalla, las capturas salían en blanco)
+    Box(Modifier.fillMaxSize().then(if (anim != "entrar" && anim != "salir") Modifier else Modifier.graphicsLayer {
+        // El temblor: los golpes de las cadenas al llegar; al apagar, un tirón
+        val ms = reloj.value
+        val c = Campo.de(size.width.toInt(), size.height.toInt())
+        val (dx, dy) = when (anim) {
+            "entrar" -> Tiempos.temblor(ms, Tiempos.golpesEntrar(c.n))
+            "salir" -> if (ms in 50f..250f) { val f = 14f * kotlin.math.sin((ms - 50) / 200 * Math.PI.toFloat()); f * 0.5f * kotlin.math.sin(ms * 0.9f) to f * 0.5f * kotlin.math.sin(ms * 1.13f) } else 0f to 0f
+            else -> 0f to 0f
+        }
+        translationX = dx * c.u; translationY = dy * c.u
+    }).pointerInput(Unit) { detectTapGestures(onLongPress = { a.colocando = true }) }) {
+        // El fondo: el sinfín de cadenas (al encender, llegando una tras otra sobre tu fondo de pantalla)
+        Canvas(Modifier.fillMaxSize().onSizeChanged { tam = it }) {
+            val c = Campo.de(size.width.toInt(), size.height.toInt())
+            if (anim == "entrar") {
+                val ms = reloj.value
+                drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) } }
+            } else if (cadena > 0f) {
+                val f = fondo
+                if (f != null && f.width == size.width.toInt() && f.height == size.height.toInt()) drawImage(f)
+                else drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }
+            }
+        }
         if (horizontal) Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 36.dp, vertical = 18.dp), horizontalArrangement = Arrangement.spacedBy(36.dp)) {
-            Column(Modifier.weight(0.42f).fillMaxSize().verticalScroll(rememberScrollState())) { Reloj(); Spacer(Modifier.height(18.dp)); Widgets(a) }
+            Column(Modifier.weight(0.42f).fillMaxSize().graphicsLayer { alpha = ap?.resto() ?: 1f }.verticalScroll(rememberScrollState())) { Reloj(); Spacer(Modifier.height(18.dp)); Widgets(a) }
             Box(Modifier.weight(0.58f).fillMaxSize()) { Rejilla(a) }
         } else Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp)) {
-            Reloj(); Spacer(Modifier.height(14.dp))
-            Column(Modifier.fillMaxWidth()) { Widgets(a) }
+            Column(Modifier.fillMaxWidth().graphicsLayer { alpha = ap?.resto() ?: 1f }) {
+                Reloj(); Spacer(Modifier.height(14.dp))
+                Column(Modifier.fillMaxWidth()) { Widgets(a) }
+            }
             Spacer(Modifier.height(14.dp))
             Box(Modifier.weight(1f).fillMaxWidth()) { Rejilla(a) }
         }
         if (a.colocando) BarraColocar(a, Modifier.align(Alignment.BottomCenter))
         if (a.eligiendoWidget) ElegirWidget(a)
-        if (anim != null) CadenasGrandes(v, anim == "entrar")
     }
     }
 }
@@ -173,9 +244,11 @@ private fun Rejilla(a: InicioActivity) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState(), enabled = arrastrando == null), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             // (aire arriba: el candado de la esquina de los iconos de la primera fila sobresale y se cortaba)
             Spacer(Modifier.height(10.dp))
-            a.apps.chunked(columnas).forEach { fila ->
+            val ap = LocalAparicion.current
+            a.apps.chunked(columnas).forEachIndexed { nf, fila ->
                 Row(Modifier.fillMaxWidth()) {
-                    fila.forEach { app ->
+                    fila.forEachIndexed { nc, app ->
+                        val i = nf * columnas + nc
                         val esta = arrastrando == app.clave
                         Box(Modifier.weight(1f)
                             .onGloballyPositioned { sitios[app.clave] = it.boundsInRoot() }
@@ -199,7 +272,8 @@ private fun Rejilla(a: InicioActivity) {
                                     }
                                 }
                             }
-                            .clickable(enabled = arrastrando == null) { Apps.abrir(a, app) }, contentAlignment = Alignment.TopCenter) {
+                            .clickable(enabled = arrastrando == null) { Apps.abrir(a, app) }
+                            .then(if (ap != null) Modifier.graphicsLayer { sale(ap.icono(i)) } else Modifier), contentAlignment = Alignment.TopCenter) {
                             Icono(app, a.colocando)
                         }
                     }

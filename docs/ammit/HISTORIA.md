@@ -4,6 +4,19 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.5.0 — el sinfín de cadenas
+
+- **El fondo de Ammit es un sinfín de cadenas**: 82 cadenas gruesas de metal, unas encima de otras (las de abajo, más oscuras), siempre
+  las mismas y en el mismo sitio. Encima, la hora, los widgets y tus apps.
+- **Al encender**: las cadenas cruzan la pantalla una tras otra, pa-pa-pa, cada una con su golpe, hasta taparlo todo; ese muro se queda
+  de fondo y las apps salen encima, una tras otra. Sin candado.
+- **Al apagar**: las apps se van, las cadenas dan un tirón y se pasa a tu inicio de siempre con una capa encima en la que las cadenas se
+  retiran una a una por donde vinieron, hasta que se ve tu inicio.
+- **El juicio**: cuatro cadenas, «AMMIT.» con la frase (ahora un buen rato en pantalla) y la ráfaga, que son las mismas cadenas del fondo
+  y pasan por encima de todo. Cuando tapan la pantalla, ya es la pantalla de inicio de Ammit: salen las apps y estás en el inicio sin
+  volver tú.
+- Para que vaya fluido, cada eslabón se pinta una sola vez y luego solo se copia; el fondo quieto es una imagen ya hecha.
+
 ## 0.4.0 — el juicio animado, y con cuenta
 
 - **La pantalla del juicio, en tres tiempos**: entran cuatro cadenas, una tras otra (1, 2, 3, 4), cada una con su golpe; luego aparece

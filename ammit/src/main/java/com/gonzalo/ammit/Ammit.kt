@@ -69,7 +69,10 @@ object Ammit {
         prefs(c).edit().putBoolean("on", on).apply { if (antes != on) putString("animar", if (on) "entrar" else "salir") }.apply()
     }
 
-    /** La animación pendiente («entrar» o «salir»), una sola vez: se borra al leerla. */
+    /** Deja pendiente una animación para la próxima vez que se vea la pantalla de inicio (p. ej. «aparecer», al acabar el juicio). */
+    fun ponAnimacion(c: Context, a: String) { prefs(c).edit().putString("animar", a).apply() }
+
+    /** La animación pendiente («entrar», «salir» o «aparecer»), una sola vez: se borra al leerla. */
     fun tomaAnimacion(c: Context): String? {
         val p = prefs(c)
         val a = p.getString("animar", null) ?: return null

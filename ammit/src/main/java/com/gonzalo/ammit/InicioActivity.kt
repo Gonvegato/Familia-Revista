@@ -36,7 +36,10 @@ class InicioActivity : ComponentActivity() {
     var widgets by mutableStateOf<List<Ammit.Widget>>(emptyList())
     var colocando by mutableStateOf(false)
     var eligiendoWidget by mutableStateOf(false)
-    /** La animación de las cadenas que toca ahora: «entrar» (se cierran) o «salir» (se caen); null, ninguna. */
+    /**
+     * La animación que toca ahora: «entrar» (el sinfín de cadenas tapa la pantalla y salen las apps), «aparecer» (al volver del juicio:
+     * solo salen las apps) o «salir» (las apps se van, antes de pasar a [SalidaActivity]); null, ninguna.
+     */
     var animacion by mutableStateOf<String?>(null)
 
     /** El widget a medio poner (esperando el permiso para ponerlo o su configuración). */
@@ -69,18 +72,21 @@ class InicioActivity : ComponentActivity() {
         Ammit.cargar(this)
         val anim = Ammit.tomaAnimacion(this)
         if (!Ammit.encendida) {
-            // Al apagar: primero se caen las cadenas y luego, a la pantalla de inicio de siempre ([alAcabarAnimacion])
-            if (anim == "salir") { animacion = "salir"; recargar(); return }
+            // Al apagar: las apps se van, las cadenas dan un tirón y se pasa a tu inicio de siempre con las cadenas yéndose encima
+            if (anim == "salir") { animacion = "salir"; return }
             if (pasarAlInicioNormal()) return
-        } else if (anim == "entrar") animacion = "entrar"
+        } else if (anim == "entrar" || anim == "aparecer") animacion = anim
         recargar()
     }
 
-    /** Ha terminado la animación de las cadenas: al apagar, se pasa a la pantalla de inicio de siempre. */
+    /** Ha terminado la animación: al apagar, a tu inicio de siempre, con la capa de las cadenas yéndose ([SalidaActivity]). */
     fun alAcabarAnimacion() {
         val era = animacion
         animacion = null
-        if (era == "salir" && !Ammit.encendida) pasarAlInicioNormal()
+        if (era == "salir" && !Ammit.encendida) {
+            val cn = Ammit.inicioNormal(this)
+            if (cn == null || !SalidaActivity.abrir(this, cn)) pasarAlInicioNormal()
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
