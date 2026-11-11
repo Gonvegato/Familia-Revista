@@ -11,6 +11,13 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.6 — «Colores de Hathor», de un toque
+
+- **Ajustes → Apariencia → «Poner los colores de Hathor»**, arriba del todo: pone los últimos colores diseñados para Hathor («Celuloide») y
+  quita lo elegido a mano (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema y el tamaño del texto se quedan. Llega a tus
+  otros dispositivos.
+- **El fondo que pones aquí sale en Jonsu.** Jonsu enseñaba el fondo que guardaba para sí, no el tuyo: ahora usa el de la cuenta (y si lo cambias en Jonsu, cambia aquí).
+
 ## 0.7.5 — los widgets, también con los colores nuevos
 
 - Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:

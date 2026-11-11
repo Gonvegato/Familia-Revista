@@ -55,6 +55,12 @@ class DireccionCTest {
         Skin.accentId = "paleta"
     }
 
+    @Test fun elBotonPoneCeluloide() {
+        Skin.palette = PALETTES.first { it.id == "vitrina" }; Skin.accentId = "azul"; Skin.fondoPropio = 0xFF123456; Skin.acentoPropio = 0xFF00AA00
+        Skin.aColoresDeSerie()
+        assertEquals("celuloide", Skin.palette.id); assertEquals("paleta", Skin.accentId); assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.acentoPropio)
+    }
+
     @Test fun loElegidoAManoSeQueda() {
         Skin.palette = PALETTES.first { it.id == "vitrina" }; Skin.accentId = "azul"
         Skin.fondoPropio = 0xFF123456; Skin.tintaPropia = 0xFFFFFFFF; Skin.acentoPropio = 0xFF00AA00

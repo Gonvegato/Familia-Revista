@@ -35,6 +35,28 @@ object PortadasFamilia {
         return java.io.ByteArrayOutputStream().use { out -> b.compress(Bitmap.CompressFormat.JPEG, 85, out); out.toByteArray() }
     }
 
+    /**
+     * Un fondo listo para la cuenta: a lo ancho, como mucho 1600×1000 (unos 150–300 KB en JPEG), el mismo tamaño que usan Seshat, Bastet
+     * y Hathor. null si no es una imagen.
+     */
+    fun reducirFondo(bytes: ByteArray): ByteArray? {
+        if (!esImagen(bytes)) return null
+        val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
+        if (o.outWidth <= 0 || o.outHeight <= 0) return null
+        var s = 1; while (o.outWidth / (s * 2) >= 1600 || o.outHeight / (s * 2) >= 1000) s *= 2
+        val b0 = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = s }) ?: return null
+        val k = minOf(1f, 1600f / b0.width, 1000f / b0.height)
+        val b = if (k < 1f) Bitmap.createScaledBitmap(b0, (b0.width * k).toInt().coerceAtLeast(1), (b0.height * k).toInt().coerceAtLeast(1), true) else b0
+        return java.io.ByteArrayOutputStream().use { out -> b.compress(Bitmap.CompressFormat.JPEG, 84, out); out.toByteArray() }
+    }
+
+    /** Guarda una imagen como fondo en la cuenta y devuelve su hash; null si no es una imagen. */
+    fun guardarFondo(bytes: ByteArray): String? = reducirFondo(bytes)?.let { LaFamilia.familia.imagenes.guarda(it, "image/jpeg") }
+
+    /** «Sin fondo, a propósito»: lo que se escribe en la cuenta cuando quitas el fondo (en todas las apps de la familia). */
+    const val SIN_FONDO = "-"
+
     /** Guarda una imagen como portada (reducida) en la cuenta y devuelve su hash; null si no es una imagen. */
     fun guardar(bytes: ByteArray): String? = reducir(bytes)?.let { LaFamilia.familia.imagenes.guarda(it, "image/jpeg") }
 

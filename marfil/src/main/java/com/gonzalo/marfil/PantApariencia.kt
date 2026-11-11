@@ -42,6 +42,13 @@ fun SeccionApariencia() {
     // Elegir algo aquí manda sobre «seguir los colores de Atrio»
     fun propio() { Skin.origenAtrio = false; Skin.invertido = false }
 
+    // ---- Los colores de Seshat, de un toque
+    Antetitulo("Colores de Seshat", Modifier.padding(bottom = 4.dp))
+    Text("Pone los últimos colores diseñados para Seshat (papel amarillo, tinta casi negra y mostaza) y quita lo que hayas elegido a mano aquí abajo. El tema y el tamaño del texto se quedan. Llega también a tus otros dispositivos.",
+        color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
+    var puestos by remember { mutableStateOf(false) }
+    BotonC(if (puestos) "Puestos" else "Poner los colores de Seshat", Modifier.padding(top = 10.dp, bottom = 18.dp), fondo = Acento, letra = SobreAcento) { Skin.aColoresDeSerie(); guarda(); puestos = true }
+
     // ---- Tema
     Antetitulo("Tema", Modifier.padding(bottom = 4.dp))
     listOf(1 to "Claro", 2 to "Oscuro", 0 to "Como el móvil").forEachIndexed { i, (modo, nombre) ->

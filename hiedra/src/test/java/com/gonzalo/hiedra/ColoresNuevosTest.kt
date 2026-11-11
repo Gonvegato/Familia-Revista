@@ -40,4 +40,12 @@ class ColoresNuevosTest {
         Skin.cargar(ApplicationProvider.getApplicationContext())
         assertEquals("arena", Skin.palette.id); assertEquals(0L, Skin.fondoPropio)
     }
+
+    /** El botón «Colores de …» de Apariencia: los últimos de serie, quitando lo elegido a mano. */
+    @Test fun elBotonPoneLosUltimosColores() {
+        limpio(); Skin.fondoPropio = 0xFF123456; Skin.tintaPropia = 0xFFFFFFFF; Skin.acentoPropio = 0xFF00AA00; Skin.accentId = "azul"; Skin.fondoId = FONDOS.first().id; Skin.origenAtrio = true
+        Skin.aColoresDeSerie()
+        assertEquals("arena", Skin.palette.id); assertEquals("paleta", Skin.accentId); assertEquals("", Skin.fondoId)
+        assertEquals(0L, Skin.fondoPropio); assertEquals(0L, Skin.tintaPropia); assertEquals(0L, Skin.acentoPropio); assertFalse(Skin.origenAtrio)
+    }
 }

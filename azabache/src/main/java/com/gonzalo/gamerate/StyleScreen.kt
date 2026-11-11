@@ -93,6 +93,17 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
         // Las mismas pestañas que Cuenta y Avanzado (esta es Apariencia)
         PestanasAjustes(0) { AjustesNav.ir = it }
 
+        // Los colores de Jonsu, de un toque: los últimos diseñados («Ciruela»), sin nada elegido a mano
+        SectionTitle("Colores de Jonsu")
+        Text("Pone los últimos colores diseñados para Jonsu («Ciruela»: gris ciruela, crema y malva gris) y quita lo que hayas elegido a mano aquí abajo (fondo de color, acento y «A tu manera»). El tema y el tamaño del texto se quedan.",
+            color = Muted, fontSize = 13.sp)
+        var puestos by remember { mutableStateOf(false) }
+        Box(Modifier.padding(top = 10.dp, bottom = 18.dp).fillMaxWidth().heightIn(min = 52.dp).background(ColGeneral).clickable {
+            withReveal { Skin.fondoId = ""; Skin.accentId = "edicion"; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.save(ctx) }; puestos = true
+        }.padding(horizontal = 16.dp, vertical = 14.dp), contentAlignment = Alignment.CenterStart) {
+            Text(if (puestos) "PUESTOS" else "PONER LOS COLORES DE JONSU  →", color = if (ColGeneral.luminance() > 0.5f) Color(0xFF14151A) else Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 15.sp, letterSpacing = 1.sp)
+        }
+
         // Tema
         SectionTitle("Tema")
         listOf(1 to "Claro", 2 to "Oscuro", 0 to "Como el móvil").forEachIndexed { i, (mode, name) ->

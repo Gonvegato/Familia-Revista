@@ -184,6 +184,14 @@ object Cosas {
         if (o.optLong("start", 0L) <= 0L) o.put("start", dia(Fechas.ms(n.entero("an"))))
         o.put("updated", n.m.values.maxOrNull() ?: n.u)
         o.put("status", when (n.texto("estado")) { "en_curso" -> 1; "abandonado" -> 2; else -> 0 })
+        // El fondo: el de la cuenta (lo ponen Seshat y Bastet, y Jonsu al cambiarlo) manda sobre el que guardaba Jonsu para sí; «-» es que
+        // se quitó a propósito. Si aún no ha bajado, se ve el de internet del que salió.
+        val fh = n.texto("fondo")
+        when {
+            fondoPuesto[n.ref] != null -> o.put("hero", fondoPuesto[n.ref])
+            fh == PortadasFamilia.SIN_FONDO -> o.put("hero", "")
+            fh.isNotBlank() -> o.put("hero", PortadasFamilia.archivo(c, fh).ifBlank { faltan += fh; n.texto("fu") })
+        }
         if (!o.has("hero")) o.put("hero", "")
         if (!o.has("entries")) o.put("entries", JSONArray())
         return o
@@ -322,6 +330,31 @@ object Cosas {
         val cover = o.optString("cover")
         if (cover.isNotBlank() && cambiado("cover") && cover != PortadasFamilia.archivo(c, actual?.texto("portada").orEmpty()) && cover != actual?.texto("pu"))
             ponPortada(kind, ref, cover)
+        // El fondo, si lo has cambiado aquí: a la cuenta, para que salga igual en Seshat y en Bastet (y en tus otros dispositivos)
+        // (lo que llega de una copia o de antes no pisa el fondo que ya hay en la cuenta)
+        if (cambiado("hero") && (antes != null || actual?.texto("fondo").isNullOrBlank())) {
+            val hero = o.optString("hero")
+            val fh = actual?.texto("fondo").orEmpty()
+            if (hero.isBlank()) { if (antes != null && fh.isNotBlank() && fh != PortadasFamilia.SIN_FONDO) col.cambia(ref, mapOf("fondo" to PortadasFamilia.SIN_FONDO, "fu" to "")) }
+            else if (hero != PortadasFamilia.archivo(c, fh) && hero != actual?.texto("fu")) ponFondo(kind, ref, hero)
+        }
+    }
+
+    /** El fondo que acabas de poner, mientras sube: se ve ya (y no el de antes). */
+    private val fondoPuesto = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private fun ponFondo(kind: Int, ref: String, hero: String) {
+        fondoPuesto[ref] = hero
+        portadas.execute {
+            try {
+                val bytes = when {
+                    hero.startsWith("http") -> java.net.URL(hero).openConnection().apply { connectTimeout = 15_000; readTimeout = 20_000 }.getInputStream().use { it.readBytes() }
+                    else -> java.io.File(hero.removePrefix("file://").removePrefix("file:")).readBytes()
+                }
+                PortadasFamilia.guardarFondo(bytes)?.let { h -> col(kind).cambia(ref, mapOf("fondo" to h, "fu" to if (hero.startsWith("http")) hero else "")) }
+            } catch (e: Exception) {
+            } finally { if (fondoPuesto[ref] == hero) fondoPuesto.remove(ref); cambio(kind) }
+        }
     }
 
     private fun igual(a: Any?, b: Any?): Boolean = Store.canon(aOrg(a)) == Store.canon(aOrg(b))

@@ -314,6 +314,16 @@ fun Skin.aColoresNuevos(): Boolean {
     return nuevo
 }
 
+/**
+ * El botón «Colores de Nut» de Apariencia: pone los últimos colores diseñados para Nut («Vino viejo»: la paleta de serie, con su versión de noche) y quita lo elegido a mano
+ * (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema (claro, oscuro, como el móvil) y el tamaño del texto se quedan.
+ */
+fun Skin.aColoresDeSerie() {
+    palette = PALETTES.first { it.id == "vino" }; accentId = "paleta"
+    fondoPropio = 0L; tintaPropia = 0L; acentoPropio = 0L
+    fondoId = ""; invertido = false; origenAtrio = false
+}
+
 // ───── colores (los mismos nombres que en Atrio) ─────
 val Paper: Color get() = Skin.tones.cPaper
 val Crudo: Color get() = Skin.tones.cCrudo

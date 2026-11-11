@@ -5,6 +5,13 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.21.2 — «Colores de Seshat», de un toque
+
+- **Ajustes → Apariencia → «Poner los colores de Seshat»**, arriba del todo: pone los últimos colores diseñados para Seshat (papel amarillo, tinta casi negra y mostaza) y
+  quita lo elegido a mano (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema y el tamaño del texto se quedan. Llega a tus
+  otros dispositivos.
+- **El fondo que pones aquí sale en Jonsu.** Jonsu enseñaba el fondo que guardaba para sí, no el tuyo: ahora usa el de la cuenta (y si lo cambias en Jonsu, cambia aquí).
+
 ## Capturas
 
 Generadas en el ordenador con libros de ejemplo (`CapturasTest`, solo con `-Proborazzi.test.record=true`): [portada](docs/capturas/1_portada.png) ·

@@ -69,6 +69,7 @@ demás de la valoración (ver Azabache). Solo Azabache escribe esos campos; las 
 | `k` | Las claves de antes (`juego:<título>`, lanzadores que ya no tiene) |
 | `ln` | Los lanzadores: `[{tp, s, a, em, pk, u, o, pck, pcd}]` (dónde está la ROM en cada móvil NO va aquí) |
 | `portada`, `pu`, `ez`/`eox`/`eoy` | La portada (hash), de dónde salió si fue de internet, y su encuadre |
+| `fondo`, `fu` | El fondo (hash de `familia_img`, hasta 1600×1000; `-` = quitado a propósito) y de dónde salió. Lo ponen Bastet y Jonsu; Jonsu lo enseña antes que el suyo |
 | `dh`, `de`, `dc` | Lo que suele durar (minutos): historia, con extras, al completo |
 
 Las horas, en `tiempo/<id>~<fuente>` (`fuente` = el dispositivo —en el ordenador, `hiedra-linux-…` o `hiedra-mac-…`—, `steam`,
@@ -91,6 +92,7 @@ siempre de Marfil): el mismo libro en cualquier dispositivo tiene el mismo `kid`
 | `pg`, `po` | Páginas y de dónde sale ese número |
 | `fin` | Las veces que lo terminaste (lista de fechas en ms) |
 | `portada`, `pu` | La portada (hash de `familia_img`) y, si salió de internet, su dirección |
+| `fondo`, `fu` | El fondo (hash de `familia_img`, hasta 1600×1000; `-` = quitado a propósito) y de dónde salió. Lo ponen Seshat y Jonsu; Jonsu lo enseña antes que el suyo |
 | `archivo` | Nombre del archivo (con extensión) |
 | `nube` | Dónde está el archivo en tu kDrive: `{f: id, n: nombre, s: tamaño}` |
 

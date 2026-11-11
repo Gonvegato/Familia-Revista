@@ -288,6 +288,17 @@ object Skin {
     }
 }
 
+/**
+ * El botón «Colores de Seshat» de Apariencia: pone los últimos colores diseñados para Seshat (papel amarillo, tinta casi negra y mostaza) y quita lo elegido a mano
+ * (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema (claro, oscuro, como el móvil) y el tamaño del texto se quedan.
+ */
+fun Skin.aColoresDeSerie() {
+    // (los de Seshat van en «A tu manera»: papel amarillo #F8F0D4, tinta #050404 y mostaza #C68B00)
+    palette = PALETTES.first { it.id == "revista" }; accentId = "paleta"
+    fondoPropio = 0xFFF8F0D4L; tintaPropia = 0xFF050404L; acentoPropio = 0xFFC68B00L
+    fondoId = ""; invertido = false; origenAtrio = false
+}
+
 // ───── colores (los mismos nombres que en Atrio) ─────
 val Paper: Color get() = Skin.tones.cPaper
 val Crudo: Color get() = Skin.tones.cCrudo

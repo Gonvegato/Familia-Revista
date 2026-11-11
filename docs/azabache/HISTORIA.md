@@ -9,6 +9,15 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.3 — el fondo de tus hermanas, y «Colores de Jonsu»
+
+- **El fondo que pones en Seshat, Bastet o Hathor sale aquí.** Jonsu guardaba su propio fondo de cada cosa (en `az`) y no miraba el que
+  pones en la hermana: un libro con fondo en Seshat salía en Jonsu con el de serie. Ahora manda el de la cuenta (`fondo`/`fu` en juegos y
+  libros, `fimg`/`fu` en películas y series; «-» = quitado a propósito); el que guardaba Jonsu solo vale si no hay ninguno. Y al revés:
+  si cambias el fondo aquí, se sube a la cuenta y sale igual en la hermana (lo que llega de una copia no pisa el que ya hay).
+- **Ajustes → Apariencia → «Poner los colores de Jonsu»**: los últimos de serie («Ciruela»), quitando el fondo de color, el acento y
+  «A tu manera». El tema y el tamaño del texto se quedan.
+
 ## 1.8.2 — los widgets, también con los colores nuevos
 
 - Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:

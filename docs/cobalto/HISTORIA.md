@@ -10,6 +10,12 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.6.3 — «Colores de Thot», de un toque
+
+- **Ajustes → Apariencia → «Poner los colores de Thot»**, arriba del todo: pone los últimos colores diseñados para Thot («Noche») y
+  quita lo elegido a mano (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema y el tamaño del texto se quedan. Llega a tus
+  otros dispositivos.
+
 ## 0.6.2 — los widgets, también con los colores nuevos
 
 - Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:

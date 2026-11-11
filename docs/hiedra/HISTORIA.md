@@ -7,6 +7,13 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.8.5 — «Colores de Bastet», de un toque
+
+- **Ajustes → Apariencia → «Poner los colores de Bastet»**, arriba del todo: pone los últimos colores diseñados para Bastet («Arena») y
+  quita lo elegido a mano (fondo de color, acento, «A tu manera», seguir a Jonsu). El tema y el tamaño del texto se quedan. Llega a tus
+  otros dispositivos.
+- **El fondo que pones aquí sale en Jonsu.** Jonsu enseñaba el fondo que guardaba para sí, no el tuyo: ahora usa el de la cuenta (y si lo cambias en Jonsu, cambia aquí).
+
 ## 0.8.4 — los widgets, también con los colores nuevos
 
 - Las vistas previas de los widgets (lo que sale al elegir un widget en la pantalla de inicio) estaban hechas con los colores de antes:

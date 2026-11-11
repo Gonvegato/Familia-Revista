@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.8.2"
+const val VERSION = "0.8.3"
 
 /** La pestaña «Fútbol» de Ajustes (para llegar a ella desde un partido o desde el widget). */
 const val PESTANA_FUTBOL = 1
