@@ -11,6 +11,12 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.7.12 — un torrent que se ve roto, desde cero
+
+- Si un torrent se ve roto (bloques grises) en cualquier reproductor, también en VLC, lo que está mal es lo bajado en ese dispositivo
+  (libtorrent lo da por bueno). Con un torrent, **«¿Se ve mal?»** ahora borra lo bajado de él en ese dispositivo y lo vuelve a bajar
+  desde cero, en el mismo punto. Con las demás fuentes sigue cambiando de decodificador.
+
 ## 0.7.11 — si el decodificador de Android no puede, se vuelve solo
 
 - Con «¿Se ve mal?» puesto para un formato, si el decodificador de Android no puede con un vídeo, Hathor lo olvida y vuelve a abrirlo con

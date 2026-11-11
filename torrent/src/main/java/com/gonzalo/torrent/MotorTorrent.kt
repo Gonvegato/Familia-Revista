@@ -134,6 +134,20 @@ class MotorTorrent internal constructor(
         ambito.launch(serie) { suelta(t) }
     }
 
+    /**
+     * Lo para y borra lo que hay bajado de él aquí (también lo apuntado para reanudarlo): la próxima vez se baja desde cero. Para cuando
+     * lo guardado está mal (se ve roto en cualquier reproductor) aunque libtorrent lo dé por bueno.
+     */
+    fun olvida(infoHash: String) {
+        val hash = InfoHash.normaliza(infoHash) ?: return
+        val t = activos.remove(hash) ?: compartidos.remove(hash)
+        t?.detiene()
+        ambito.launch(serie) {
+            if (t != null) runCatching { suelta(t) }
+            Cache.borra(File(carpeta(), hash))
+        }
+    }
+
     /** Lo para todo y apaga la sesión y el servidor (sin esperar: se hace por detrás). */
     fun paraTodo() {
         val todos = activos.values.toList() + compartidos.values.toList()

@@ -20,6 +20,9 @@ interface FuenteTorrent {
     /** Deja ese torrent (al cerrar el reproductor). */
     fun para(infoHash: String)
 
+    /** Lo deja y borra lo bajado de él en este dispositivo (la próxima vez, desde cero). */
+    fun olvida(infoHash: String) = para(infoHash)
+
     /** Cómo va, en pocas palabras, para enseñarlo mientras carga («3 pares · 1,2 MB/s»); null si no se sabe. */
     fun estado(infoHash: String): String? = null
 
