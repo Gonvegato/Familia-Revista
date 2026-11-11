@@ -26,6 +26,8 @@ import android.view.WindowManager
 object Cortina {
     /** La pantalla de inicio de Ammit ya está pintada debajo (la cortina se puede quitar). */
     @Volatile var inicioListo = false
+    /** La cortina «tapar» ya está pintada (el juicio se puede ir por debajo). */
+    @Volatile var tapado = false
     /** Lo que hace la pantalla de inicio cuando se quita la cortina (sacar las apps). */
     @Volatile var alQuitar: (() -> Unit)? = null
 
@@ -52,7 +54,7 @@ object Cortina {
     /** Pone la capa (desde el vigilante). */
     fun poner(s: AccessibilityService, modo: String): Boolean = runCatching {
         val wm = s.getSystemService(WindowManager::class.java)
-        inicioListo = false
+        inicioListo = false; tapado = false
         val vista = VistaCortina(s, modo)
         val lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
@@ -93,10 +95,26 @@ private class VistaCortina(private val c: Context, private val modo: String) : V
     private fun fin() {
         if (hecho) return
         hecho = true
-        post {
-            quitar()
-            Cortina.alQuitar?.invoke()
+        post { quitar() }
+    }
+
+    /** Cuándo se vio que la pantalla de inicio estaba pintada debajo, y cuándo empezó a irse la cortina. */
+    private var tListo = -1f
+    private var tFundido = -1f
+
+    /**
+     * Encima de la pantalla de inicio de Ammit ya pintada: se espera un poco más (por si Android aún está cambiando de pantalla) y la
+     * cortina se va fundiendo (220 ms), mientras salen las apps. Si debajo hubiera la mínima diferencia, se ve un fundido, no un salto.
+     */
+    private fun irse(ms: Float, minimo: Float): Boolean {
+        if (tFundido < 0) {
+            if (Cortina.inicioListo && tListo < 0) tListo = ms
+            if ((tListo >= 0 && ms >= minimo && ms - tListo >= 180) || ms > 5000) { tFundido = ms; Cortina.alQuitar?.invoke() } else return false
         }
+        val f = Tiempos.clamp((ms - tFundido) / 220)
+        alpha = 1f - f
+        if (f >= 1f) { fin(); return true }
+        return false
     }
 
     override fun onDraw(cv: Canvas) {
@@ -106,19 +124,27 @@ private class VistaCortina(private val c: Context, private val modo: String) : V
         if (t0 < 0) t0 = SystemClock.uptimeMillis()
         val ms = (SystemClock.uptimeMillis() - t0).toFloat()
         val n = campo.n
-        if (modo == "entrar") {
-            val (dx, dy) = Tiempos.temblor(ms, Tiempos.golpesEntrar(n))
-            cv.save(); cv.translate(dx * campo.u, dy * campo.u)
-            campo.pinta(cv, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) }
-            cv.restore()
-            // Tapado del todo: debajo, la pantalla de inicio de Ammit (con el mismo campo de fondo)
-            if (ms >= 1480 && !pedido) {
-                pedido = true
-                Ammit.ponAnimacion(c, "cortina")
-                runCatching { c.startActivity(Intent(c, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) }
+        if (modo == "entrar" || modo == "tapar") {
+            if (modo == "entrar") {
+                val (dx, dy) = Tiempos.temblor(ms, Tiempos.golpesEntrar(n))
+                cv.save(); cv.translate(dx * campo.u, dy * campo.u)
+                campo.pinta(cv, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) }
+                cv.restore()
+            } else {
+                // (al acabar el juicio: el campo entero, igual que su último fotograma; el juicio se va por debajo)
+                val fondo = campo.fondoSiHay()
+                if (fondo != null) cv.drawBitmap(fondo, 0f, 0f, null) else campo.pinta(cv, Campo.OSCURO, 1f) { 1f }
+                Cortina.tapado = true
             }
-            // Se quita cuando ya está apagada como el fondo y la pantalla de inicio está pintada debajo (o, por si acaso, a los 5 s)
-            if ((ms >= 1950 && Cortina.inicioListo) || ms > 5000) { fin(); return }
+            // Tapado del todo: debajo, la pantalla de inicio de Ammit (con el mismo campo de fondo)
+            if ((modo == "tapar" || ms >= 1480) && !pedido) {
+                pedido = true
+                if (modo == "entrar") {
+                    Ammit.ponAnimacion(c, "cortina")
+                    runCatching { c.startActivity(Intent(c, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) }
+                }
+            }
+            if (irse(ms, if (modo == "entrar") 1950f else 0f)) return
         } else {
             // 0–150: aparece el campo entero (sobre la pantalla de Ammit no se nota: es su fondo); 200–420: el tirón; luego se van
             val a = Tiempos.clamp(ms / 150)

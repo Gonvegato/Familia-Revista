@@ -4,6 +4,13 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.5.2 — el juicio, también con cortina
+
+- **Al acabar el juicio, sin el parpadeo grande**: cuando las cadenas tapan la pantalla, se pone la cortina de cadenas por encima de todo
+  (igual que ese último momento) y el cambio a la pantalla de inicio de Ammit pasa por debajo, sin verse. Luego salen las apps.
+- **La cortina ya no se quita de golpe**: espera un poco más a que la pantalla de inicio esté pintada debajo y se funde en un cuarto de
+  segundo mientras salen las apps (el mini parpadeo del final al encender).
+
 ## 0.5.1 — sin destellos ni parpadeos
 
 - **Al encender ya no destella**: el primer fotograma salía con el final de la animación anterior (todo tapado) y luego saltaba al

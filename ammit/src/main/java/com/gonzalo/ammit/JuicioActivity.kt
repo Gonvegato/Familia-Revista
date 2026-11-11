@@ -38,6 +38,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /**
  * «X no pasa el juicio»: cuatro cadenas, una tras otra; «AMMIT.» con la frase, un buen rato; y la ráfaga, que son las mismas cadenas del
@@ -57,14 +59,27 @@ class JuicioActivity : ComponentActivity() {
 
     private var ido = false
 
-    /** A la pantalla de inicio de Ammit, sin transición: su fondo es el mismo campo de cadenas que hay ahora; allí salen las apps. */
+    /**
+     * A la pantalla de inicio de Ammit. Con el vigilante: primero la cortina de cadenas por encima de todo (igual que este último
+     * fotograma), y por debajo se cambia de pantalla sin que se vea; la cortina se funde cuando la pantalla de inicio ya está pintada.
+     */
     private fun alInicio() {
         if (ido) return
         ido = true
         Ammit.ponAnimacion(this, "aparecer")
-        runCatching { startActivity(Intent(this, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) }
-        finish()
-        @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+        val conCortina = Vigia.vivo?.cortina("tapar") == true
+        lifecycleScope.launch {
+            if (conCortina) {
+                Ammit.ponAnimacion(this@JuicioActivity, "cortina")
+                // (se espera a que la cortina esté pintada, hasta medio segundo)
+                val hasta = android.os.SystemClock.uptimeMillis() + 500
+                while (!Cortina.tapado && android.os.SystemClock.uptimeMillis() < hasta) kotlinx.coroutines.delay(16)
+                kotlinx.coroutines.delay(32)
+            }
+            runCatching { startActivity(Intent(this@JuicioActivity, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) }
+            finish()
+            @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
