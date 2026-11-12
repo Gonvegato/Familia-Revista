@@ -44,13 +44,9 @@ class Vigia : AccessibilityService() {
         // (con una cortina puesta, lo que pase debajo es cosa de Ammit)
         if (Cortina.ocupada) return
         val paquete = e.packageName?.toString() ?: return
-        // Tu pantalla de inicio de siempre (Ammit no tiene por qué serlo): encendida, en su lugar, la de Ammit; la cortina de cadenas tapa
-        // el cambio (es igual que su fondo), así no se ve tu inicio ni un instante
+        // Tu pantalla de inicio de siempre: pasa (Ammit ya no tiene pantalla de inicio propia; se queda la tuya)
         val casa = inicioActual()
-        if (casa != null && casa != Ammit.PROPIO && paquete == casa) {
-            if (!Cortina.ocupada && !Cortina.poner(this, "casa")) irAAmmit()
-            return
-        }
+        if (casa != null && paquete == casa) return
         if (Ammit.pasa(paquete, Ammit.teclados(this))) return
         // Solo las pantallas de verdad (actividades): no los avisos, menús o paneles que una app pinta por encima
         val clase = e.className?.toString() ?: return
@@ -65,9 +61,6 @@ class Vigia : AccessibilityService() {
         if (!Cortina.poner(this, "juicio", nombre)) JuicioActivity.abrir(this, nombre)
     }
 
-    private fun irAAmmit() = runCatching {
-        startActivity(Intent(this, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION))
-    }
 
     /** La pantalla de inicio que tiene puesta la tablet (la de siempre, o Ammit si la elegiste). */
     private fun inicioActual(): String? = runCatching {

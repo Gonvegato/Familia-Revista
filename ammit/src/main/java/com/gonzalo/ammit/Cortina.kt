@@ -133,8 +133,23 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
     private fun abrirInicioDebajo() {
         if (pedido) return
         pedido = true
-        Ammit.ponAnimacion(c, "cortina")
-        runCatching { c.startActivity(Intent(c, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) }
+        // Debajo, tu pantalla de inicio de siempre (la de Oppo, la de Samsung…): al irse las cadenas, es lo que queda
+        val casa = Ammit.inicioNormal(c)?.let { Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setComponent(it) }
+            ?: Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        runCatching { c.startActivity(casa.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) }
+    }
+
+    /**
+     * Las cadenas se van, una tras otra, por donde vinieron (desde [r] = 0), dejando ver tu inicio. Devuelve si ya no queda ninguna.
+     * [oscuro]: lo apagadas que estaban.
+     */
+    private fun retira(cv: Canvas, campo: Campo, r: Float, oscuro: Float): Boolean {
+        val n = campo.n
+        val (dx, dy) = Tiempos.temblor(r, Tiempos.golpesSalir(n))
+        cv.save(); cv.translate(dx * campo.u, dy * campo.u)
+        campo.pinta(cv, oscuro, Tiempos.salirBase(r)) { k -> Tiempos.salir(r, k, n) }
+        cv.restore()
+        return r >= Tiempos.salidaFin(n)
     }
 
     private fun fin() {
@@ -191,13 +206,16 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
         val u = campo.u
         when (modo) {
             "entrar" -> {
-                val (dx, dy) = Tiempos.temblor(ms, Tiempos.golpesEntrar(n))
-                cv.save(); cv.translate(dx * u, dy * u)
-                campo.pinta(cv, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) }
-                cv.restore()
-                // Tapado del todo: debajo, la pantalla de inicio de Ammit
-                if (ms >= 1480) abrirInicioDebajo()
-                if (irse(ms, 1950f)) return false
+                // El sinfín de cadenas tapa lo que haya; tapado, debajo se abre tu inicio de siempre (y se le deja acabar su animación);
+                // luego las cadenas se van y queda tu inicio, ya con Ammit encendida
+                val r = ms - 2150
+                if (r < 0) {
+                    val (dx, dy) = Tiempos.temblor(ms, Tiempos.golpesEntrar(n))
+                    cv.save(); cv.translate(dx * u, dy * u)
+                    campo.pinta(cv, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) }
+                    cv.restore()
+                    if (ms >= 1480) abrirInicioDebajo()
+                } else if (retira(cv, campo, r, Campo.OSCURO)) { fin(); return false }
             }
             "casa" -> {
                 // Encendida, ibas a tu inicio de siempre: el campo entero (aparece en un instante), debajo se abre el de Ammit con sus
@@ -217,6 +235,10 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
             }
             "juicio" -> {
                 if (ms >= 60) abrirInicioDebajo()
+                // Tapado del todo por la ráfaga, un momento quieto, y las cadenas se van: queda tu inicio de siempre (la app que no pasa,
+                // detrás, ya cerrada)
+                val r = ms - Tiempos.JUICIO_MS - 300
+                if (r >= 0) { if (retira(cv, campo, r, Campo.OSCURO)) { fin(); return false }; return true }
                 val (dx, dy) = Tiempos.temblor(ms, Tiempos.golpesJuicio(n))
                 // (un fundido a negro de un instante: la app que no pasa se apaga, no se corta)
                 negro.alpha = (255 * Tiempos.clamp(ms / 90)).toInt()
@@ -228,7 +250,6 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
                 rotulo(cv, campo, Tiempos.juicioRotulo(ms))
                 if (ms >= Tiempos.JUICIO_RAFAGA) campo.pinta(cv, Tiempos.juicioOscuro(ms), Tiempos.juicioBase(ms)) { k -> Tiempos.juicio(ms, k) }
                 cv.restore()
-                if (irse(ms, Tiempos.JUICIO_MS.toFloat())) return false
             }
             else -> {
                 // Apagar. 0–150: aparece el campo entero (sobre la pantalla de Ammit no se nota: es su fondo). Debajo se abre tu inicio de

@@ -4,6 +4,16 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.9.0 — tu inicio de siempre, y las cadenas solo cuando hacen falta
+
+- **Ammit ya no tiene pantalla de inicio propia en uso**: encendida, sigues en tu inicio de siempre (el de Oppo, el de Samsung).
+- **Al encenderla**: el sinfín de cadenas tapa la pantalla, debajo se abre tu inicio y las cadenas se retiran una a una hasta dejarlo a la
+  vista, ya con Ammit encendida.
+- **Al abrir una app que no es de la familia**: el juicio (cuatro cadenas, «AMMIT.», la ráfaga) y, tapado todo, las cadenas se retiran y
+  vuelves a tu inicio de siempre (la app, cerrada por detrás).
+- El gris para todo menos la familia no se puede en la pantalla de inicio de otra marca: Android solo pone en gris la pantalla entera, sin
+  excepciones, y una app no puede cambiar los iconos de otra pantalla de inicio.
+
 ## 0.8.2 — que el vigilante no se caiga
 
 - Lo que pinta la cortina de cadenas y lo que mira el vigilante ya no pueden tumbar el vigilante: si algo falla ahí, se apunta y se sigue

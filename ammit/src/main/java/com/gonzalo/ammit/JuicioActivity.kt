@@ -66,20 +66,10 @@ class JuicioActivity : ComponentActivity() {
     private fun alInicio() {
         if (ido) return
         ido = true
-        Ammit.ponAnimacion(this, "aparecer")
-        val conCortina = Vigia.vivo?.cortina("tapar") == true
-        lifecycleScope.launch {
-            if (conCortina) {
-                Ammit.ponAnimacion(this@JuicioActivity, "cortina")
-                // (se espera a que la cortina esté pintada, hasta medio segundo)
-                val hasta = android.os.SystemClock.uptimeMillis() + 500
-                while (!Cortina.tapado && android.os.SystemClock.uptimeMillis() < hasta) kotlinx.coroutines.delay(16)
-                kotlinx.coroutines.delay(32)
-            }
-            runCatching { startActivity(Intent(this@JuicioActivity, InicioActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)) }
-            finish()
-            @Suppress("DEPRECATION") overridePendingTransition(0, 0)
-        }
+        val casa = Ammit.inicioNormal(this)?.let { Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setComponent(it) }
+            ?: Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        runCatching { startActivity(casa.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        finish()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

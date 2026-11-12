@@ -195,8 +195,8 @@ class AmmitTest {
         }
     }
 
-    /** Encendida y sin ser la pantalla de inicio: al ir a tu inicio de siempre, el vigilante pone la cortina y te lleva al de Ammit. Apagada, nada. */
-    @Test fun alIrATuInicioTeLlevaAlDeAmmit() {
+    /** Tu inicio de siempre pasa siempre (Ammit ya no tiene pantalla de inicio propia): ni apagada ni encendida sale la cortina. */
+    @Test fun tuInicioDeSiemprePasa() {
         val pm = shadowOf(ctx.packageManager)
         val casa = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         pm.addResolveInfoForIntent(casa, resolve("com.oppo.launcher", "com.oppo.launcher.Launcher", "Inicio"))
@@ -209,7 +209,7 @@ class AmmitTest {
         assertFalse("apagada no hace nada", Cortina.ocupada)
         Ammit.encender(ctx, true, animar = false)
         v.onAccessibilityEvent(evento())
-        assertTrue("encendida, la cortina tapa tu inicio", Cortina.ocupada)
+        assertFalse("encendida, tu inicio también pasa", Cortina.ocupada)
     }
 
     /** La pantalla de «Ammit no te suelta», con progreso a medias. */
@@ -223,8 +223,8 @@ class AmmitTest {
     /** La cortina: cada modo, en varios momentos, pinta sin fallar (y con nombres de app larguísimos). Con grabar, deja las imágenes. */
     @Test fun laCortinaPintaSinFallar() {
         val (w, h) = Campo.pantalla(ctx)
-        for ((modo, ms) in listOf("entrar" to listOf(0f, 300f, 900f, 1500f, 2000f), "salir" to listOf(0f, 100f, 600f, 900f, 1300f, 1800f),
-            "juicio" to listOf(0f, 50f, 400f, 1000f, 2000f, 2700f, 3200f, 3700f, 3950f), "tapar" to listOf(0f))) {
+        for ((modo, ms) in listOf("entrar" to listOf(0f, 300f, 900f, 1500f, 2000f, 2600f, 3200f), "salir" to listOf(0f, 100f, 600f, 900f, 1300f, 1800f),
+            "juicio" to listOf(0f, 50f, 400f, 1000f, 2000f, 2700f, 3200f, 3700f, 3950f, 4500f, 5000f), "tapar" to listOf(0f))) {
             for (t in ms) for (app in listOf("Instagram", "Una aplicación con un nombre larguísimo que no cabe en ninguna parte")) {
                 val v = VistaCortina(ctx, modo, app); v.relojFijo = t
                 v.layout(0, 0, w, h)
