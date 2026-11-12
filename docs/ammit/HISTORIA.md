@@ -4,6 +4,12 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.9.1 — el widget, sin pantalla negra
+
+- Tocar el widget ya no abre ninguna pantalla de Ammit (aunque fuera invisible, Android enseñaba un momento su pantalla negra de arranque):
+  lo hace todo por detrás y solo se ven las cadenas. Si hay que mirar la cuenta antes de soltarla, unos segundos por detrás.
+- Desde el widget no se vuelve a abrir tu inicio al apagarla (ya estás en él).
+
 ## 0.9.0 — tu inicio de siempre, y las cadenas solo cuando hacen falta
 
 - **Ammit ya no tiene pantalla de inicio propia en uso**: encendida, sigues en tu inicio de siempre (el de Oppo, el de Samsung).

@@ -27,10 +27,19 @@ import kotlin.math.roundToInt
  * barra de arriba.
  */
 class WidgetAmmit : AppWidgetProvider() {
+    override fun onReceive(c: Context, i: Intent) {
+        if (i.action != TOCAR) { super.onReceive(c, i); return }
+        // El toque: sin pantallas; si hay que mirar la cuenta, unos segundos por detrás
+        val p = goAsync()
+        Interruptor.toca(c.applicationContext) { runCatching { p.finish() } }
+    }
+
     override fun onUpdate(c: Context, m: AppWidgetManager, ids: IntArray) { ids.forEach { pinta(c, m, it) } }
     override fun onAppWidgetOptionsChanged(c: Context, m: AppWidgetManager, id: Int, o: Bundle?) { pinta(c, m, id) }
 
     companion object {
+        const val TOCAR = "com.gonzalo.ammit.widget.TOCAR"
+
         /** Repinta todos los widgets de Ammit (al encender, al apagar, cuando cambia lo que falta). */
         fun repintar(c: Context) = runCatching {
             val m = AppWidgetManager.getInstance(c)
@@ -57,8 +66,10 @@ class WidgetAmmit : AppWidgetProvider() {
             val v = RemoteViews(c.packageName, R.layout.widget_ammit)
             v.setImageViewBitmap(R.id.imagen, dibujo(c, wDp, hDp))
             v.setContentDescription(R.id.imagen, if (Ammit.encendida) "Ammit encendida. Toca para soltarla" else "Ammit apagada. Toca para encenderla")
-            v.setOnClickPendingIntent(R.id.imagen, PendingIntent.getActivity(c, 0, Intent(c, InterruptorActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
+            // (un aviso a este mismo receptor, no una pantalla: abrir una pantalla de Ammit, aunque sea invisible, enseñaba un momento la
+            // pantalla negra de arranque de Android)
+            v.setOnClickPendingIntent(R.id.imagen, PendingIntent.getBroadcast(c, 0, Intent(c, WidgetAmmit::class.java).setAction(TOCAR),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             m.updateAppWidget(id, v)
         }
 
@@ -124,42 +135,46 @@ class WidgetAmmit : AppWidgetProvider() {
 }
 
 /**
- * Lo que hace el toque del widget (sin enseñar nada): encender (con la cortina de cadenas), o soltarla si ya se puede (si no, «Ammit no te
- * suelta»), o, si falta prepararla, sus ajustes.
+ * Lo que hace el toque del widget, sin enseñar ninguna pantalla de Ammit: encender (con la cortina de cadenas), o soltarla si ya se puede
+ * (si no, «Ammit no te suelta»), o, si falta prepararla, sus ajustes.
  */
-class InterruptorActivity : Activity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Ammit.cargar(this)
-        val abrir: (Intent) -> Unit = { runCatching { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
-        if (!Ammit.encendida) {
-            if (!Ammit.vigiaActivo(this)) abrir(Intent(this, AjustesActivity::class.java).putExtra(AjustesActivity.EXTRA_FALTA, true))
-            else if (!Cortina.cambiar(this, true, abrir)) {
-                Ammit.encender(this, true); BotonAmmit.avisar(this)
-                abrir(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
-            }
-            fin(); return
+object Interruptor {
+    fun toca(c: Context, alAcabar: () -> Unit) {
+        Ammit.cargar(c)
+        // (desde el widget ya estás en tu inicio: ni se abre otra vez, ni hay barra que plegar; solo las pantallas de Ammit, si hacen falta)
+        val abrir: (Intent) -> Unit = { i ->
+            val inicio = i.hasCategory(Intent.CATEGORY_HOME); val plegar = i.component?.className?.endsWith("PlegarActivity") == true
+            if (!inicio && !plegar) runCatching { c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         }
-        if (Candado.puede(this)) { soltar(abrir); fin(); return }
+        if (!Ammit.encendida) {
+            if (!Ammit.vigiaActivo(c)) abrir(Intent(c, AjustesActivity::class.java).putExtra(AjustesActivity.EXTRA_FALTA, true))
+            else if (!Cortina.cambiar(c, true, abrir)) { Ammit.encender(c, true); BotonAmmit.avisar(c) }
+            alAcabar(); return
+        }
+        if (Candado.puede(c)) { soltar(c, abrir); alAcabar(); return }
         // Lo de la cuenta puede estar viejo: se mira lo último (como mucho 2,5 s) antes de decir que no
         val principal = Handler(Looper.getMainLooper())
         var hecho = false
         fun decide() {
             if (hecho) return
             hecho = true
-            if (Candado.puede(this)) soltar(abrir) else CandadoActivity.abrir(this)
-            fin()
+            if (Candado.puede(c)) soltar(c, abrir) else CandadoActivity.abrir(c)
+            alAcabar()
         }
         Thread { runCatching { Candado.sincronizar() }; principal.post { decide() } }.start()
         principal.postDelayed({ decide() }, 2_500)
     }
 
-    private fun soltar(abrir: (Intent) -> Unit) {
-        if (!Cortina.cambiar(this, false, abrir)) {
-            Ammit.encender(this, false); BotonAmmit.avisar(this)
-            abrir(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
-        }
+    private fun soltar(c: Context, abrir: (Intent) -> Unit) {
+        if (!Cortina.cambiar(c, false, abrir)) { Ammit.encender(c, false); BotonAmmit.avisar(c) }
     }
+}
 
-    private fun fin() { finish(); @Suppress("DEPRECATION") overridePendingTransition(0, 0) }
+/** (De versiones anteriores: lo que hacía el toque del widget. Ahora lo hace [Interruptor] sin pantalla; esta solo lo llama y se va.) */
+class InterruptorActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Interruptor.toca(applicationContext) {}
+        finish(); @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+    }
 }
