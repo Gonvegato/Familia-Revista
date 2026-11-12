@@ -34,6 +34,11 @@ class Vigia : AccessibilityService() {
     fun cortina(modo: String): Boolean = Cortina.poner(this, modo)
 
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
+        // (nada de lo que pase aquí puede tumbar el vigilante: Android lo daría por «no funcionando» y lo apagaría)
+        try { mira(e) } catch (x: Throwable) { Fallos.apunta(this, "vigilante", x) }
+    }
+
+    private fun mira(e: AccessibilityEvent?) {
         // Apagada, no hace nada más que esta comprobación (el estado está en memoria: encender y apagar pasan por este mismo proceso)
         if (e == null || e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || !Ammit.encendida) return
         // (con una cortina puesta, lo que pase debajo es cosa de Ammit)

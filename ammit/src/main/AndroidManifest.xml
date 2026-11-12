@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Pedir que Android no cierre Ammit para ahorrar batería (si la cierra, el vigilante sale «No funcionando») -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Ofrecer el botón de la barra de arriba con un toque (Android 13+) no pide permiso; poner los widgets de la familia sí lo pide al ponerlos -->
     <application
         android:name=".AmmitApp"

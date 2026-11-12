@@ -204,10 +204,10 @@ fun PantInicio(a: InicioActivity) {
             translate(-ox, -oy) {
                 if (a.animacion == "entrar") {
                     val ms = a.ms.floatValue
-                    drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) } }
+                    drawIntoCanvas { cv -> runCatching { c.pinta(cv.nativeCanvas, Tiempos.entrarOscuro(ms), Tiempos.entrarBase(ms)) { k -> Tiempos.entrar(ms, k) } }.onFailure { Fallos.apunta(ctx, "inicio", it) } }
                 } else if (cadena > 0f) {
                     // (pintado igual que en la cortina, con las mismas listas de dibujo: así al fundirse no se nota nada)
-                    drawIntoCanvas { cv -> c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }
+                    drawIntoCanvas { cv -> runCatching { c.pinta(cv.nativeCanvas, Campo.OSCURO, 1f) { 1f } }.onFailure { Fallos.apunta(ctx, "inicio", it) } }
                 }
             }
         }

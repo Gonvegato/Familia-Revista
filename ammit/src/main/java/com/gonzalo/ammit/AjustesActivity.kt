@@ -95,6 +95,15 @@ class AjustesActivity : ComponentActivity() {
             .recoverCatching { startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
     }
     fun abrirInfoApp() = runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+    /** ¿Puede funcionar sin las restricciones de batería? */
+    fun sinRestricciones(): Boolean = runCatching { getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(packageName) }.getOrDefault(false)
+
+    @android.annotation.SuppressLint("BatteryLife")
+    fun pedirSinRestricciones() {
+        runCatching { startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))) }
+            .recoverCatching { abrirInfoApp() }
+    }
+
     fun abrirAccesibilidad() = runCatching { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
 
     fun anadirBoton() {
@@ -147,10 +156,12 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
             Titulo("Para dejarla lista", t)
             Paso(1, "Tu pantalla de inicio, la de siempre", "Ammit no es pantalla de inicio: encendida, al ir al inicio te lleva a la suya, y así los gestos y el cambio entre apps van como siempre (en los Oppo, con otra pantalla de inicio iban peor aunque Ammit estuviera apagada).", !casa, t, if (casa) "QUITAR" else "") { a.quitarCasa() }
             Paso(2, "Permitir los ajustes restringidos", "Android no deja activar el vigilante de una app que no viene de la Play Store hasta que lo permites: en la pantalla que se abre, menú ⋮ (arriba a la derecha) → «Permitir ajustes restringidos». Si no sale el menú, haz antes el paso 3 una vez: Android lo enseña después de avisarte.", vigia, t, "ABRIR") { a.abrirInfoApp() }
-            Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Ammit → activar. Solo mira qué app se abre, nunca lo que hay dentro.", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
-            if (Build.VERSION.SDK_INT >= 33) Paso(4, "El botón en la barra de arriba", "Lo pone con un toque; también se puede poner a mano desde el lápiz de la barra.", null, t, "PONER") { a.anadirBoton() }
+            Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Ammit → activar. Solo mira qué app se abre, nunca lo que hay dentro. Si ahí sale «No funcionando», desactívalo y vuelve a activarlo (y mira el paso 4).", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
+            Paso(4, "Que Android no la cierre", "Para ahorrar batería, algunos móviles (los Oppo y los Samsung sobre todo) cierran las apps en segundo plano, también el vigilante, y entonces sale «No funcionando». Permite que Ammit funcione sin restricciones de batería. En los Oppo, además: Ajustes → Batería → Ammit → «Permitir actividad en segundo plano» (y «Inicio automático» si sale).", a.sinRestricciones(), t, "PERMITIR") { a.pedirSinRestricciones() }
+            if (Build.VERSION.SDK_INT >= 33) Paso(5, "El botón en la barra de arriba", "Lo pone con un toque; también se puede poner a mano desde el lápiz de la barra.", null, t, "PONER") { a.anadirBoton() }
 
             TuCuenta(a, t)
+            UltimoFallo(a, t)
             ActualizarseSola(a, t)
 
             Titulo("Tu pantalla de inicio de siempre", t)
@@ -336,4 +347,21 @@ private fun TuCuenta(a: AjustesActivity, t: Tonos) {
             }.padding(horizontal = 14.dp, vertical = 9.dp))
         aviso?.let { BasicText(it, style = TextStyle(t.acento, 14.sp, fontFamily = Diseno.Cursiva), modifier = Modifier.padding(top = 8.dp)) }
     }
+}
+
+
+/** Si Ammit se ha cerrado por un fallo: qué fue (para poder arreglarlo). Se puede copiar (mantener pulsado) y olvidar. */
+@Composable
+private fun UltimoFallo(a: AjustesActivity, t: Tonos) {
+    var f by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(Fallos.ultimo(a)) }
+    if (f.isBlank()) return
+    Titulo("Último fallo", t)
+    BasicText("Ammit tuvo un fallo. Si el vigilante sale «No funcionando», esto ayuda a saber por qué: mantén pulsado para copiarlo y pásamelo.",
+        style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
+    androidx.compose.foundation.text.selection.SelectionContainer {
+        BasicText(f, style = TextStyle(t.tinta, 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, lineHeight = 15.sp),
+            modifier = Modifier.padding(vertical = 8.dp))
+    }
+    BasicText("Olvidarlo", style = TextStyle(t.gris, 13.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
+        modifier = Modifier.clickable { Fallos.olvida(a); f = "" })
 }

@@ -4,6 +4,14 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.8.2 — que el vigilante no se caiga
+
+- Lo que pinta la cortina de cadenas y lo que mira el vigilante ya no pueden tumbar el vigilante: si algo falla ahí, se apunta y se sigue
+  (antes, un fallo cerraba Ammit y Android daba el vigilante por «No funcionando» y lo dejaba apagado).
+- **Si Ammit se cierra por un fallo, se apunta** y sale en sus ajustes («Último fallo»), para poder copiarlo y arreglarlo.
+- **Paso nuevo, «Que Android no la cierre»**: pide funcionar sin restricciones de batería, y explica lo de los Oppo (actividad en segundo
+  plano e inicio automático), que también cierran el vigilante.
+
 ## 0.8.1 — fuera de pantalla de inicio, y el token de Jonsu
 
 - **Ammit ya no se ofrece como pantalla de inicio** (no le hace falta: encendida, el vigilante te lleva a la suya). Al actualizar, si la

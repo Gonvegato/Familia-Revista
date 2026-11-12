@@ -6,6 +6,8 @@ import android.app.Application
 class AmmitApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Si Ammit se cierra por un fallo, se apunta (sale en sus ajustes) antes de cerrarse como siempre
+        Fallos.vigila(this)
         runCatching { Secretos.inicia(this) }
         // La cuenta de la familia: la misma que las hermanas (entra sola si alguna la tiene) — de ella saca el token de tu kDrive
         runCatching { com.gonzalo.familia.LaFamilia.inicia(this); com.gonzalo.familia.LaFamilia.pideSesion() }

@@ -170,6 +170,11 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
 
     override fun onDraw(cv: Canvas) {
         if (hecho) return
+        // (esto corre dentro del vigilante: un fallo al pintar no puede tumbarlo, que Android lo daría por «no funcionando»)
+        try { dibuja(cv) } catch (e: Throwable) { Fallos.apunta(c, "cortina", e); fin() }
+    }
+
+    private fun dibuja(cv: Canvas) {
         val campo = campoGuardado ?: Campo.dePantalla(c).also { campoGuardado = it }
         if (t0 < 0) t0 = SystemClock.uptimeMillis()
         val ms = relojFijo ?: (SystemClock.uptimeMillis() - t0).toFloat()
