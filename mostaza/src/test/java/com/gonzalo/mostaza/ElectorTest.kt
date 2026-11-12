@@ -177,11 +177,11 @@ class ElectorTest {
         assertEquals(listOf("Dune [1080p] [Castellano]", "Dune 1080p LATINO", "Dune.2160p 🇬🇧", "web"), ord.map { it.fuente.nombre })
     }
 
-    /** H.264 de 10 bits: no se elige solo en un dispositivo cuyo decodificador no lo lee; HEVC de 10 bits, sí. */
+    /** H.264 de 10 bits: se reconoce; con el motor de VLC se ve también donde el decodificador del aparato no lo lee. */
     @org.junit.Test fun diezBitsEnH264() {
         val a = Analisis.de("El mentalista 1x01 720p x264 10bit Castellano")
         org.junit.Assert.assertTrue(a.diezBits); org.junit.Assert.assertEquals("avc", a.codec)
-        org.junit.Assert.assertFalse(Capacidades(avc10 = false).reproduce(a))
+        org.junit.Assert.assertTrue(Capacidades(avc10 = false).reproduce(a))
         org.junit.Assert.assertTrue(Capacidades(avc10 = true).reproduce(a))
         org.junit.Assert.assertTrue(Capacidades(avc10 = false).reproduce(Analisis.de("Peli 1080p x265 10bit HEVC")))
         org.junit.Assert.assertFalse(Analisis.de("Peli 1080p x264").diezBits)

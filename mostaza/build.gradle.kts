@@ -7,14 +7,14 @@ plugins {
 
 android {
     namespace = "com.gonzalo.mostaza"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         // Películas y series de la familia: otro paquete, otra app, la misma cuenta y la misma revista
         applicationId = "com.gonzalo.mostaza"
         minSdk = 29
         targetSdk = 35
-        versionCode = 29
-        versionName = "0.7.13"
+        versionCode = 30
+        versionName = "0.8.0"
         // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura
         ndk { abiFilters += "arm64-v8a" }
     }
@@ -76,6 +76,8 @@ dependencies {
     // El sonido que no todos los aparatos saben decodificar (AC3, E-AC3, DTS, TrueHD…: muchas tablets no traen la licencia de Dolby):
     // FFmpeg dentro de la app, precompilado por Jellyfin para Media3 (GPL-3.0). Se usa solo si el aparato no puede.
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1")
+    // El motor de VLC (libVLC, LGPL): para lo que los decodificadores de Android no leen bien (H.264 de 10 bits…)
+    implementation("org.videolan.android:libvlc-all:3.7.7")
     testImplementation("junit:junit:4.13.2")
     testImplementation(testFixtures(project(":nucleo")))
     testImplementation("org.json:json:20240303")

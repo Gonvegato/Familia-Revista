@@ -245,7 +245,6 @@ data class Capacidades(val hevc: Boolean = true, val av1: Boolean = false, val v
         a.codec == "hevc" && !hevc -> false
         a.codec == "av1" && !av1 -> false
         a.codec == "vp9" && !vp9 -> false
-        a.diezBits && a.codec == "avc" && !avc10 -> false   // H.264 de 10 bits: casi ningún decodificador de Android lo lee (sale roto)
         a.dv && !dv && !a.hdr && !hdr -> false     // Dolby Vision sin capa HDR10 en un dispositivo que no lo entiende: colores verdes y morados
         a.resolucion > maxima -> false
         else -> true

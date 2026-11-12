@@ -125,6 +125,12 @@ object Decodificadores {
         }
     }
 
+    /** El tipo de vídeo (formato y, si es de 10 bits, «10»): para recordar en este dispositivo cuáles van con el motor de VLC. */
+    fun claveVlc(f: androidx.media3.common.Format): String = (f.sampleMimeType ?: "?") + if (diezBits(f)) "·10" else ""
+    fun conVlc(c: Context, clave: String) = clave in p(c).getStringSet("vlc", emptySet()).orEmpty()
+    fun recuerdaVlc(c: Context, clave: String) { p(c).edit().putStringSet("vlc", p(c).getStringSet("vlc", emptySet()).orEmpty() + clave).apply() }
+    fun olvidaVlc(c: Context, clave: String) { p(c).edit().putStringSet("vlc", p(c).getStringSet("vlc", emptySet()).orEmpty() - clave).apply() }
+
     /** Las fuentes que este dispositivo no sabe decodificar (H.264 de 10 bits sin decodificador que lo lea): no se eligen solas. */
     fun noSabe(c: Context): (String) -> Boolean { val s = p(c).getStringSet("nosabe", emptySet()).orEmpty(); return { it in s } }
     fun apuntaNoSabe(c: Context, clave: String) {
@@ -150,6 +156,13 @@ object Decodificadores {
 @androidx.annotation.OptIn(UnstableApi::class)
 class ReproductorActivity : ComponentActivity() {
     private var player: ExoPlayer? = null
+    /** El motor de VLC, cuando lo usa este vídeo en lugar de Media3 ([MotorVlc]). */
+    private var vlc: MotorVlc? = null
+    private val conVlc = androidx.compose.runtime.mutableStateOf(false)
+    private val capaVlc by lazy { org.videolan.libvlc.util.VLCVideoLayout(this) }
+    /** Lo de ahora, venga del motor que venga. */
+    private val posAhora: Long get() = vlc?.posicion ?: player?.currentPosition ?: estado.pos
+    private val reproduceAhora: Boolean get() = vlc?.reproduce ?: player?.isPlaying ?: false
     private var vista: PlayerView? = null
     private lateinit var encargo: Encargo
     private var visionado: Visionado? = null
@@ -185,12 +198,12 @@ class ReproductorActivity : ComponentActivity() {
 
     private val pulso = object : Runnable {
         override fun run() {
-            val p = player ?: return
-            estado.pos = p.currentPosition.coerceAtLeast(0L); estado.dur = p.duration.takeIf { it > 0 } ?: estado.dur
-            if (p.isPlaying) visionado?.tick(estado.pos, estado.dur)
+            if (player == null && vlc == null) return
+            estado.pos = posAhora.coerceAtLeast(0L); estado.dur = (vlc?.duracion ?: player?.duration)?.takeIf { it > 0 } ?: estado.dur
+            if (reproduceAhora) visionado?.tick(estado.pos, estado.dur)
             visionado?.let { v -> if (v.entro && estado.mensaje == null && !avisadoEntrada) { avisadoEntrada = true; muestra("Ha entrado en «Viendo»") } }
             // Los controles se esconden solos mientras se reproduce
-            if (estado.visibles && p.isPlaying && estado.eleccion == null && SystemClock.elapsedRealtime() - ultimaInteraccion > 4_000L) estado.visibles = false
+            if (estado.visibles && reproduceAhora && estado.eleccion == null && SystemClock.elapsedRealtime() - ultimaInteraccion > 4_000L) estado.visibles = false
             // Un torrent que aún no ha empezado: cómo va y, si tarda demasiado, otra fuente
             if (torrentAbierto.isNotBlank() && !listo) {
                 val m = estado.mensaje
@@ -234,7 +247,9 @@ class ReproductorActivity : ComponentActivity() {
     @Composable
     private fun PantallaReproductor() {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            AndroidView({ c ->
+            // Con el motor de VLC, su propia capa de vídeo; si no, la de Media3
+            if (conVlc.value) AndroidView({ _ -> capaVlc.also { (it.parent as? android.view.ViewGroup)?.removeView(it) } }, Modifier.fillMaxSize())
+            else AndroidView({ c ->
                 PlayerView(c).apply {
                     useController = false
                     // (la cruceta no se para en el vídeo: con los controles escondidos, las teclas llegan a onKeyDown para saltar)
@@ -249,7 +264,7 @@ class ReproductorActivity : ComponentActivity() {
             }, Modifier.fillMaxSize(), update = { it.player = player })
             // Atrás (el del mando a distancia también): primero cierra lo que esté abierto encima (audio, subtítulos, fuente); si no, sale
             androidx.activity.compose.BackHandler(enabled = estado.eleccion != null) { estado.eleccion = null }
-            ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { s -> salta(s) }, alIr = { p -> player?.seekTo(p); visionado?.sesion?.salto() },
+            ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { s -> salta(s) }, alIr = { p -> vlc?.ve(p) ?: player?.seekTo(p); visionado?.sesion?.salto() },
                 alVolver = { finish() }, alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alFuente = { eligeFuente() }, alOtro = { conOtro() }, alDecodificador = { otroDecodificador() },
                 alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() }, alNoCambiar = { seguirConEsta() },
                 tele = tele, salto = AjustesReproductor.salto(this@ReproductorActivity))
@@ -330,6 +345,7 @@ class ReproductorActivity : ComponentActivity() {
         val datos = DefaultDataSource.Factory(this, conCabeceras)
         // Un reproductor nuevo para cada fuente (cada una con sus cabeceras)
         player?.let { viejo -> viejo.removeListener(oyente); viejo.release() }
+        vlc?.libera(); vlc = null; conVlc.value = false
         principal.removeCallbacks(pulso)
         // (con FFmpeg detrás de los decodificadores del aparato: el AC3 o el DTS que este no sepa, lo decodifica la app)
         ultimoEmpiece = u to subs
@@ -366,6 +382,58 @@ class ReproductorActivity : ComponentActivity() {
 
     /** Qué vídeo es y qué decodificador lo lee (se enseña arriba, con la fuente). */
     private var formatoVideo = ""
+    private var claveVideo: String? = null
+
+    /** Pasa este vídeo al motor de VLC, en el mismo punto (no con las fuentes que necesitan cabeceras: VLC no se las puede mandar). */
+    private fun aVlc(mensaje: String) {
+        if (cabeceras.isNotEmpty() || vlc != null) return
+        val (u, subs) = ultimoEmpiece ?: return
+        val pos = posAhora
+        player?.let { it.removeListener(oyente); it.release() }; player = null; vista?.player = null
+        conVlc.value = true
+        estado.cargando = true; estado.aviso = null
+        formatoVideo = formatoVideo.ifBlank { "" }; decodificador = "motor de VLC"; pintaVideo()
+        muestra(mensaje, 7_000L)
+        val m = MotorVlc(this, oyenteVlc)
+        vlc = m
+        // (la capa de VLC tiene que estar en la pantalla antes de ponerle el vídeo)
+        val arranca = { if (vlc === m) m.empieza(u, capaVlc, pos, subs.map { it.url }, "Mostaza/$VERSION") }
+        if (capaVlc.isAttachedToWindow) arranca() else capaVlc.addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: android.view.View) { capaVlc.removeOnAttachStateChangeListener(this); arranca() }
+            override fun onViewDetachedFromWindow(v: android.view.View) {}
+        })
+        principal.removeCallbacks(pulso); principal.post(pulso)
+    }
+
+    private val oyenteVlc = object : MotorVlc.Oyente {
+        override fun listo(dur: Long) {
+            listo = true; cargandoDesde = 0L; estado.cargando = false
+            if (dur > 0) estado.dur = dur
+            if (!subsDecididos) { subsDecididos = true; pistasVlc() }
+        }
+        override fun reproduciendo(si: Boolean) {
+            estado.reproduciendo = si
+            visionado?.sesion?.reproduciendo(si)
+            if (!si) visionado?.guarda(estado.pos, estado.dur)
+            if (si) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        override fun cargando(si: Boolean) { estado.cargando = si }
+        override fun terminado() { visionado?.guarda(estado.dur, estado.dur, forzar = true); alTerminar() }
+        override fun error() {
+            estado.cargando = false
+            estado.aviso = "Esta fuente no se puede ver tampoco con el motor de VLC (no responde, o el archivo está mal). Prueba con otra."
+        }
+    }
+
+    /** Con VLC: el audio en tu idioma si lo hay; sin subtítulos si el audio ya es tuyo (salvo que los quieras siempre). */
+    private fun pistasVlc() {
+        val v = vlc ?: return
+        val espanol = Regex("(?i)spa|esp|castell|español|lat")
+        val audioPref = AjustesReproductor.audio(this)
+        if (audioPref.isBlank() || normal(audioPref) == "es") v.audios().firstOrNull { espanol.containsMatchIn(it.second) }?.let { if (it.first != v.audio) v.ponAudio(it.first) }
+        val audioEsp = v.audios().firstOrNull { it.first == v.audio }?.second?.let { espanol.containsMatchIn(it) } ?: true
+        if (audioEsp && !AjustesReproductor.subsSiempre(this)) v.ponSubtitulo(-1)
+    }
     /** El vídeo es de 10 bits (H.264 «Hi10», HEVC Main 10…): muchos decodificadores no pueden, o lo rompen. */
     private var diezBits = false
     private var decodificador = ""
@@ -374,13 +442,15 @@ class ReproductorActivity : ComponentActivity() {
             r: androidx.media3.exoplayer.DecoderReuseEvaluation?) {
             mimeVideo = f.sampleMimeType
             diezBits = Decodificadores.diezBits(f)
+            claveVideo = Decodificadores.claveVlc(f)
             // H.264 de 10 bits y ningún decodificador de este dispositivo dice leerlo: saldría roto (bloques grises). Se para, se avisa y
             // esta fuente no se vuelve a elegir sola en este dispositivo.
-            if (diezBits && f.sampleMimeType == "video/avc" && !Conexion.capacidades(applicationContext).avc10) {
-                Decodificadores.apuntaNoSabe(applicationContext, Elector.clave(encargo.elegida.fuente))
-                player?.playWhenReady = false
-                estado.cargando = false
-                estado.aviso = "Este vídeo es H.264 de 10 bits y este dispositivo no sabe decodificarlo (se vería roto, en bloques). Prueba otra fuente, o ábrelo con VLC con la aceleración por hardware desactivada (en VLC: Ajustes → Vídeo → Aceleración por hardware)."
+            val clave = Decodificadores.claveVlc(f)
+            val sinDecodificador = diezBits && f.sampleMimeType == "video/avc" && !Conexion.capacidades(applicationContext).avc10
+            if (sinDecodificador || Decodificadores.conVlc(applicationContext, clave)) {
+                // Con el motor de VLC (decodifica él, por programa), en el mismo punto
+                principal.post { aVlc(if (sinDecodificador) "Este vídeo es H.264 de 10 bits, que este dispositivo no sabe decodificar: lo reproduce el motor de VLC." else "Con el motor de VLC (como elegiste para este tipo de vídeo en este dispositivo).") }
+                return
             }
             formatoVideo = listOfNotNull(Decodificadores.nombre(f.sampleMimeType).ifBlank { null }, if (diezBits) "10 bits" else null,
                 if (f.width > 0) "${f.width}×${f.height}" else null).joinToString(" · ")
@@ -396,6 +466,21 @@ class ReproductorActivity : ComponentActivity() {
 
     /** «¿Se ve mal?»: el mismo vídeo, en el mismo punto, con el otro decodificador (y se recuerda para este formato en este dispositivo). */
     private fun otroDecodificador() {
+        // Con el motor de VLC: de vuelta al de siempre (y se olvida para este tipo de vídeo)
+        if (vlc != null) {
+            claveVideo?.let { Decodificadores.olvidaVlc(this, it) }
+            val (u, subs) = ultimoEmpiece ?: return
+            val pos = posAhora
+            muestra("De vuelta al reproductor de siempre.", 5_000L)
+            empieza(u, subs, pos)
+            return
+        }
+        // Lo normal: el motor de VLC (lee bien lo que el decodificador del aparato rompe), recordado para este tipo de vídeo aquí
+        if (cabeceras.isEmpty()) {
+            claveVideo?.let { Decodificadores.recuerdaVlc(this, it) }
+            aVlc("Con el motor de VLC para este tipo de vídeo en este dispositivo (otra vez «¿Se ve mal?» para volver).")
+            return
+        }
         val mime = mimeVideo ?: run { estado.mensaje = "Aún no se sabe qué vídeo es: espera a que empiece."; return }
         val (u, subs) = ultimoEmpiece ?: return
         val pos = player?.currentPosition ?: 0L
@@ -602,10 +687,20 @@ class ReproductorActivity : ComponentActivity() {
     }
 
     private fun tocado() { ultimaInteraccion = SystemClock.elapsedRealtime(); estado.visibles = !estado.visibles || estado.eleccion != null }
-    private fun alternar() { ultimaInteraccion = SystemClock.elapsedRealtime(); player?.let { if (it.isPlaying) it.pause() else it.play() } }
-    private fun salta(seg: Int) { ultimaInteraccion = SystemClock.elapsedRealtime(); player?.let { it.seekTo((it.currentPosition + seg * 1000L).coerceIn(0L, it.duration.coerceAtLeast(0L))) } }
+    private fun alternar() { ultimaInteraccion = SystemClock.elapsedRealtime(); vlc?.let { it.alterna(); return }; player?.let { if (it.isPlaying) it.pause() else it.play() } }
+    private fun salta(seg: Int) {
+        ultimaInteraccion = SystemClock.elapsedRealtime()
+        vlc?.let { v -> v.ve((v.posicion + seg * 1000L).coerceIn(0L, v.duracion.takeIf { it > 0 } ?: Long.MAX_VALUE)); visionado?.sesion?.salto(); return }
+        player?.let { it.seekTo((it.currentPosition + seg * 1000L).coerceIn(0L, it.duration.coerceAtLeast(0L))) }
+    }
 
     private fun eligeAudio() {
+        vlc?.let { v ->
+            val ops = v.audios()
+            if (ops.size <= 1) { muestra("Esta fuente solo tiene un audio"); return }
+            estado.eleccion = Triple("Audio", ops.map { (id, n) -> n.ifBlank { "Pista $id" } to (id == v.audio) }) { k -> v.ponAudio(ops[k].first); estado.eleccion = null }
+            return
+        }
         val p = player ?: return
         val g = p.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
         val ops = g.flatMap { gr -> (0 until gr.length).map { i -> gr to i } }
@@ -618,6 +713,13 @@ class ReproductorActivity : ComponentActivity() {
     }
 
     private fun eligeSubs() {
+        vlc?.let { v ->
+            val ops = v.subtitulos(); val ahora = v.subtitulo
+            estado.eleccion = Triple("Subtítulos", listOf("Sin subtítulos" to (ahora < 0)) + ops.map { (id, n) -> n.ifBlank { "Pista $id" } to (id == ahora) }) { k ->
+                v.ponSubtitulo(if (k == 0) -1 else ops[k - 1].first); estado.eleccion = null
+            }
+            return
+        }
         val p = player ?: return
         val g = p.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
         val ops = g.flatMap { gr -> (0 until gr.length).map { i -> gr to i } }
@@ -642,7 +744,7 @@ class ReproductorActivity : ComponentActivity() {
     private fun cambiaA(c: Candidata) {
         // La eliges tú: se acabó probar solas
         tanteo?.cancela(); tanteo = null; estado.mensaje = null
-        val pos = player?.currentPosition ?: 0L
+        val pos = posAhora
         visionado?.guarda(pos, estado.dur, forzar = true)
         cierraTorrent()
         Reanudar.pon(applicationContext, visionado?.videoId ?: encargo.breve.id, pos, estado.dur)
@@ -673,8 +775,8 @@ class ReproductorActivity : ComponentActivity() {
     private fun seguirConEsta() { estado.corte = null; noCambiar = true; cortes.clear() }
 
     private fun conOtro() {
-        val pos = player?.currentPosition ?: 0L
-        player?.pause()
+        val pos = posAhora
+        player?.pause(); vlc?.pausa()
         if (encargo.elegida.fuente.privada) { muestra("Esta es de tu kDrive: no se abre en otra app (le darías tu token). Se ve aquí."); return }
         val r = Reproducir.conOtro(this, url, estado.titulo, pos, cabeceras)
         if (r != null) muestra(r) else finish()
@@ -747,8 +849,8 @@ class ReproductorActivity : ComponentActivity() {
         // Las teclas de los mandos a distancia (las de reproducir, la de subtítulos, la de audio, la de información…), siempre
         when (keyCode) {
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_HEADSETHOOK -> { alternar(); return true }
-            KeyEvent.KEYCODE_MEDIA_PLAY -> { player?.play(); return true }
-            KeyEvent.KEYCODE_MEDIA_PAUSE -> { player?.pause(); return true }
+            KeyEvent.KEYCODE_MEDIA_PLAY -> { vlc?.play() ?: player?.play(); return true }
+            KeyEvent.KEYCODE_MEDIA_PAUSE -> { vlc?.pausa() ?: player?.pause(); return true }
             KeyEvent.KEYCODE_MEDIA_REWIND, KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD, KeyEvent.KEYCODE_MEDIA_STEP_BACKWARD -> { salta(-AjustesReproductor.salto(this)); return true }
             KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD, KeyEvent.KEYCODE_MEDIA_STEP_FORWARD -> { salta(AjustesReproductor.salto(this)); return true }
             KeyEvent.KEYCODE_MEDIA_STOP -> { finish(); return true }
@@ -771,8 +873,8 @@ class ReproductorActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         // Salir del reproductor termina la sesión (regla 1): lo de antes no se junta con lo de cuando vuelvas
-        player?.pause()
-        visionado?.termina(player?.currentPosition ?: estado.pos, estado.dur)
+        player?.pause(); vlc?.pausa()
+        visionado?.termina(posAhora, estado.dur)
         parado = true
         val kbps = DefaultBandwidthMeter.getSingletonInstance(this).bitrateEstimate / 1000L
         if (listo && cortes.isEmpty()) Conexion.apunta(applicationContext, kbps)
@@ -783,9 +885,10 @@ class ReproductorActivity : ComponentActivity() {
     override fun onDestroy() {
         principal.removeCallbacksAndMessages(null)
         ambito.cancel()
-        if (::encargo.isInitialized && !parado) visionado?.termina(player?.currentPosition ?: estado.pos, estado.dur)
+        if (::encargo.isInitialized && !parado) visionado?.termina(posAhora, estado.dur)
         cierraTorrent()
         player?.release(); player = null
+        vlc?.libera(); vlc = null
         Actualizador.ocupada = (Actualizador.ocupada - 1).coerceAtLeast(0)
         super.onDestroy()
     }

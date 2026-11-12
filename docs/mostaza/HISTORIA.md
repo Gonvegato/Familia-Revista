@@ -11,6 +11,17 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.8.0 — el motor de VLC dentro
+
+- **Hathor lleva dentro el motor de VLC (libVLC 3.7.7)** para lo que los decodificadores de Android no leen bien. Decodifica por programa,
+  como VLC con la aceleración por hardware desactivada, y con los mismos controles, tiempo visto, reanudación, audio y subtítulos.
+- **Los vídeos H.264 de 10 bits** («Hi10P») en un dispositivo que no los sabe leer pasan solos al motor de VLC en el mismo punto, sin
+  enseñarlos rotos. Por eso esas fuentes ya no se apartan al elegir.
+- **«¿Se ve mal?»** ahora pasa el vídeo al motor de VLC y lo recuerda para ese tipo de vídeo en ese dispositivo; otra vez, y vuelve al
+  reproductor de siempre. (Las fuentes que necesitan cabeceras, como las de tu kDrive, siguen cambiando de decodificador: VLC no se las
+  puede mandar.)
+- La app pesa unos 24 MB más.
+
 ## 0.7.13 — los vídeos H.264 de 10 bits
 
 - Lo de la imagen rota en la tablet era el decodificador: el vídeo es H.264 de 10 bits («Hi10P»), que casi ningún decodificador de Android
