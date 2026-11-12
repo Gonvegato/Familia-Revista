@@ -82,7 +82,18 @@ class AjustesActivity : ComponentActivity() {
         else abrirAjustesInicio()
     }
 
-    fun abrirAjustesInicio() = runCatching { startActivity(Intent(Settings.ACTION_HOME_SETTINGS)) }
+    /** Deja de ofrecer Ammit como pantalla de inicio (Android vuelve a la tuya) y, por si acaso, abre dónde se elige. */
+    fun quitarCasa() {
+        Ammit.ponCasa(this, false)
+        vuelta++
+        if (Ammit.esInicio(this)) abrirAjustesInicio()
+    }
+
+    fun abrirAjustesInicio() {
+        // (en algunos móviles no está la pantalla de «pantalla de inicio»: entonces, la de apps predeterminadas)
+        runCatching { startActivity(Intent(Settings.ACTION_HOME_SETTINGS)) }
+            .recoverCatching { startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
+    }
     fun abrirInfoApp() = runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
     fun abrirAccesibilidad() = runCatching { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
 
@@ -105,6 +116,7 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
     val t = tonos()
     @Suppress("UNUSED_VARIABLE") val v = vuelta   // (leerlo hace que se repinte al volver)
     val esInicio = Ammit.esInicio(a)
+    val casa = Ammit.casaActiva(a) || esInicio
     val vigia = Ammit.vigiaActivo(a)
     // (Ammit ya no necesita ser la pantalla de inicio: encendida, el vigilante te lleva a la suya)
     val listo = vigia
@@ -133,7 +145,7 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
             }
 
             Titulo("Para dejarla lista", t)
-            Paso(1, "Tu pantalla de inicio, la de siempre", "Ammit no tiene que ser tu pantalla de inicio: encendida, al ir al inicio te lleva a la suya. Y mejor que no lo sea: en móviles como los Oppo, con otra pantalla de inicio los gestos y el cambio entre apps van peor aunque Ammit esté apagada. Si la elegiste, vuelve aquí a la tuya.", !esInicio, t, "ELEGIR") { a.abrirAjustesInicio() }
+            Paso(1, "Tu pantalla de inicio, la de siempre", "Ammit no es pantalla de inicio: encendida, al ir al inicio te lleva a la suya, y así los gestos y el cambio entre apps van como siempre (en los Oppo, con otra pantalla de inicio iban peor aunque Ammit estuviera apagada).", !casa, t, if (casa) "QUITAR" else "") { a.quitarCasa() }
             Paso(2, "Permitir los ajustes restringidos", "Android no deja activar el vigilante de una app que no viene de la Play Store hasta que lo permites: en la pantalla que se abre, menú ⋮ (arriba a la derecha) → «Permitir ajustes restringidos». Si no sale el menú, haz antes el paso 3 una vez: Android lo enseña después de avisarte.", vigia, t, "ABRIR") { a.abrirInfoApp() }
             Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Ammit → activar. Solo mira qué app se abre, nunca lo que hay dentro.", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
             if (Build.VERSION.SDK_INT >= 33) Paso(4, "El botón en la barra de arriba", "Lo pone con un toque; también se puede poner a mano desde el lápiz de la barra.", null, t, "PONER") { a.anadirBoton() }
@@ -201,6 +213,15 @@ private fun Interruptor(on: Boolean, t: Tonos) {
 private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
     val alcance = androidx.compose.runtime.rememberCoroutineScope()
     var hay by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(KDrive.on(a)) }
+    var porQue by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    // Al abrir: si no hay token, se coge la cuenta de una hermana y se mira la cuenta (ahí está el que pusiste en Jonsu)
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (!hay) {
+            porQue = "Mirando tu cuenta…"
+            porQue = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { KDrive.asegura(a) }.getOrDefault("") }
+            hay = KDrive.on(a)
+        }
+    }
     var auto by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(Actualizador.activo(a)) }
     var token by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
     var drive by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
@@ -208,6 +229,7 @@ private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
     var ocupado by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     Titulo("Actualizarse sola", t)
     if (!hay) {
+        if (porQue.isNotBlank()) BasicText(porQue, style = TextStyle(t.acento, 14.sp, FontWeight.Bold, fontFamily = Diseno.Texto, lineHeight = 20.sp), modifier = Modifier.padding(bottom = 6.dp))
         BasicText("Ammit busca sus versiones nuevas en «versiones» de tu kDrive. Con la cuenta, usa el token que pusiste en Jonsu (Ajustes → Cuenta → Tu nube); si aún no lo has puesto, puedes pegarlo aquí (pasa a la cuenta y lo tienen todas).",
             style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
         Campo("TOKEN", token, "token de API de kDrive", t, secreto = true) { token = it }
@@ -286,7 +308,8 @@ private fun TuCuenta(a: AjustesActivity, t: Tonos) {
     var ocupado by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(Unit) {
         // Si una hermana tiene la cuenta, se entra solo (se mira un momento después de abrir)
-        repeat(6) { if (!dentro) { kotlinx.coroutines.delay(1_000); dentro = fam?.sesion?.dentro == true } }
+        if (!dentro) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { com.gonzalo.familia.Acceso.pideAHermanas(a) } }
+        repeat(15) { if (!dentro) { kotlinx.coroutines.delay(1_000); dentro = fam?.sesion?.dentro == true } }
     }
     Titulo("Tu cuenta", t)
     if (fam == null) { BasicText("La cuenta no está disponible en este dispositivo.", style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto)); return }

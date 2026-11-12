@@ -22,13 +22,17 @@
         <activity android:name=".InicioActivity" android:exported="true" android:launchMode="singleTask"
             android:theme="@style/Ammit.Inicio" android:excludeFromRecents="true" android:stateNotNeeded="true"
             android:resumeWhilePausing="true" android:clearTaskOnLaunch="true"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density">
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density" />
+
+        <!-- Ammit como pantalla de inicio de la tablet: no hace falta (encendida, el vigilante te lleva a la suya) y en algunos móviles
+             (ColorOS) empeora los gestos; por eso viene quitado y solo se pone si lo eliges en sus ajustes -->
+        <activity-alias android:name=".InicioCasa" android:targetActivity=".InicioActivity" android:exported="true" android:enabled="false">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <!-- Lo que se ve en el cajón de apps: los pasos para dejarlo listo y el interruptor -->
         <activity android:name=".AjustesActivity" android:exported="true" android:taskAffinity="com.gonzalo.ammit.ajustes"

@@ -201,6 +201,7 @@ object Actualizador {
     /** Se llama nada más abrir la app y luego cada minuto mientras está abierta (siempre en segundo plano). */
     fun comprueba(ctx: Context, manual: Boolean = false, forzar: Boolean = false) {
         if (!activo(ctx) && !forzar) { if (manual) anota(ctx, "apagada (interruptor de arriba)"); return }
+        runCatching { KDrive.asegura(ctx) }
         if (!KDrive.on(ctx)) { anota(ctx, "kDrive sin conectar (Ajustes → Actualizar)"); return }
         if (!hayInternet(ctx)) { anota(ctx, "sin internet"); return }
         if (!ocupado.compareAndSet(false, true)) return
@@ -213,7 +214,7 @@ object Actualizador {
      * Es bloqueante (red): llamar fuera del hilo principal. Devuelve lo que ha pasado, para enseñarlo.
      */
     fun actualizarAhora(ctx: Context): String {
-        if (!KDrive.on(ctx)) return "kDrive sin conectar"
+        KDrive.asegura(ctx).takeIf { it.isNotBlank() }?.let { return it }
         if (!hayInternet(ctx)) return "Sin internet"
         // (si justo hay otra comprobación en marcha, se espera a que acabe)
         var esperas = 0
@@ -342,7 +343,9 @@ class ActualizadorReabrir : BroadcastReceiver() {
 class ActualizadorWorker(ctx: Context, p: androidx.work.WorkerParameters) : androidx.work.CoroutineWorker(ctx, p) {
     override suspend fun doWork(): Result {
         val c = applicationContext
-        if (!Actualizador.activo(c) || !KDrive.on(c)) return Result.success()
+        if (!Actualizador.activo(c)) return Result.success()
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { KDrive.asegura(c) } }
+        if (!KDrive.on(c)) return Result.success()
         // (si ya está bajada y lista, no hace falta volver a mirar)
         if (Actualizador.nueva == null) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { Actualizador.comprueba(c) } }
         // (si justo la estás usando, espera a que salgas)

@@ -36,6 +36,20 @@ object KDrive {
     fun deLaCuenta(): Boolean = clave("kdrive_token").isNotBlank() && clave("kdrive_id").isNotBlank()
     fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
 
+    /**
+     * Si aún no hay token: coge la cuenta de una hermana (si Ammit no la tiene) y baja lo último de la cuenta, que es donde está el token
+     * que pusiste en Jonsu. Bloquea (red): fuera del hilo principal. Devuelve por qué no hay, si sigue sin haber ("" si ya hay).
+     */
+    fun asegura(ctx: Context): String {
+        if (on(ctx)) return ""
+        val fam = runCatching { com.gonzalo.familia.LaFamilia.familia }.getOrNull() ?: return "La cuenta no está disponible."
+        if (!fam.sesion.dentro) runCatching { com.gonzalo.familia.Acceso.pideAHermanas(ctx) }
+        if (!fam.sesion.dentro) return "Ammit no tiene la cuenta: ninguna hermana se la ha pasado (¿Jonsu está actualizado?). Entra en «Tu cuenta», abajo."
+        runCatching { com.gonzalo.familia.LaFamilia.sincronizaYa() }
+        if (on(ctx)) return ""
+        return "En tu cuenta no está el token de kDrive: ponlo en Jonsu (Ajustes → Cuenta → Tu nube) o pégalo aquí."
+    }
+
     fun save(ctx: Context, token: String, drive: String) {
         // El id del kDrive puede venir con la dirección entera («…/app/drive/123456/…»)
         val d = Regex("""drive/(\d+)""").find(drive)?.groupValues?.get(1) ?: drive.filter { it.isDigit() }

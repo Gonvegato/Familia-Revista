@@ -4,6 +4,16 @@ La devoradora del juicio de Osiris: en la Sala de las Dos Verdades, Anubis pesab
 apuntaba el resultado y, si el corazón pesaba más, Ammit se lo comía. Aquí guarda la puerta de la tablet: encendida, solo pasan las apps de
 la familia (Jonsu, Bastet, Seshat, Thot, Hathor y Nut).
 
+## 0.8.1 — fuera de pantalla de inicio, y el token de Jonsu
+
+- **Ammit ya no se ofrece como pantalla de inicio** (no le hace falta: encendida, el vigilante te lleva a la suya). Al actualizar, si la
+  tenías de pantalla de inicio, Android vuelve a la tuya de siempre. Si alguna vez la quieres, se puede volver a poner (por código; no hay
+  botón).
+- **El token de kDrive de Jonsu**: antes de decir «kDrive sin conectar», Ammit coge la cuenta de una hermana (si no la tenía) y baja lo
+  último de la cuenta, que es donde está el token que pusiste en Jonsu. En sus ajustes, «Actualizarse sola» lo mira al abrirse y dice por
+  qué no lo encuentra, si es el caso (sin cuenta, o sin token en la cuenta). Lo mismo al comprobar sola y en «Actualizar ahora».
+- «Tu cuenta» pide la cuenta a las hermanas al abrirse y espera más a que llegue.
+
 ## 0.8.0 — el widget de Ammit
 
 - **Un widget para tu pantalla de inicio de siempre**: «AMMIT.» con cadenas. Apagada, un toque la enciende (con su animación de cadenas).

@@ -103,6 +103,15 @@ object Ammit {
             .sortedBy { (cn, _) -> if (cn.packageName.contains("sec.android") || cn.packageName.contains("launcher")) 0 else 1 }
     }
 
+    /** ¿Se ofrece Ammit como pantalla de inicio? (viene quitado: no hace falta) */
+    fun casaActiva(c: Context): Boolean = c.packageManager.getComponentEnabledSetting(ComponentName(c, "$PROPIO.InicioCasa")) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+
+    /** Ofrece (o deja de ofrecer) Ammit como pantalla de inicio. Al quitarlo, Android vuelve a la de siempre. */
+    fun ponCasa(c: Context, si: Boolean) {
+        c.packageManager.setComponentEnabledSetting(ComponentName(c, "$PROPIO.InicioCasa"),
+            if (si) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+    }
+
     /** ¿Es Ammit la pantalla de inicio de la tablet? */
     fun esInicio(c: Context): Boolean {
         val rm = c.getSystemService(android.app.role.RoleManager::class.java)
