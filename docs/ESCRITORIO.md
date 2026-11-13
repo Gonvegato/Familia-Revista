@@ -82,6 +82,16 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   y «Volver a donde estabas». Los ajustes de lectura viajan con las mismas claves que el móvil (los de cada libro y los de siempre; el
   brillo y lo del PDF, no). Las posiciones se escriben como las escribe foliate en el móvil, letra por letra (probado contra el lector
   del móvil de verdad): antes, desde el capítulo 2, el ordenador abría un párrafo antes de donde ibas en el móvil, y al revés.
+  Desde la 1.3.0, **la cara del móvil** (la de Seshat 0.22 de Android), pensada para el Mac: la cabecera de tinta con «SESHAT.» en
+  grotesca (en el Mac, la barra de la ventana es de su mismo color, con los tres botones encima), las pestañas Portada · Leyendo ·
+  Pendientes · Leídos · Abandonados · Escritos con el bloque del acento que se desliza, y las páginas, que se pasan pulsando la pestaña,
+  con ⌘1…⌘6 o con dos dedos en el trackpad; al bajar, el nombre grande se recoge. La portada va a dos lados (lo que lees ahora y lo
+  demás que lees; el reto, esta semana con los minutos de cada día y lo último que subrayaste) y las listas, a dos columnas con sus
+  cifras y su orden. La ficha de un libro nace de la fila que pulsas, a doble página (la portada sobre la tinta; cómo va, tu lectura,
+  tus subrayados y lo que dice Jonsu), y vuelve a ella al cerrarla con «← Volver», Esc o ⌘[. **Buscar** (⌘F) crece desde su palabra y
+  busca según escribes en tus libros y en tus subrayados. Al pasar el ratón, lo que se pulsa se levanta un poco; al pulsarlo, se hunde
+  con un muelle. Las piezas son las de `familia/` del móvil, copiadas en `escritorio/familia/…/pc/mov` (lo de Android —vibrar, el gesto
+  de atrás— cambia por lo del ordenador) y la cara común en `…/pc/revista/CaraC.kt`, para las seis.
 - **Hathor** (desde la 1.0.0): tus películas y series de la cuenta, y verlas, como Hathor del móvil (0.2.0) y con su misma lógica, letra
   a letra (el protocolo de los addons de Stremio, el elector de fuentes, las pistas de verdad, TMDB y las tres reglas son el mismo código,
   con las mismas pruebas): la portada (con tu clave de TMDB, la de una plataforma: destacado, «Seguir viendo», «Pendientes», tendencias,

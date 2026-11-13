@@ -90,9 +90,26 @@ private fun ventanaDeLaFamilia(
             if (k.type == androidx.compose.ui.input.key.KeyEventType.KeyDown && (k.key == androidx.compose.ui.input.key.Key.F11 ||
                     (mac && k.isCtrlPressed && k.isMetaPressed && k.key == androidx.compose.ui.input.key.Key.F))) {
                 VentanaFamilia.pantallaCompleta = !VentanaFamilia.pantallaCompleta; true
-            } else false
+            } else com.gonzalo.familia.pc.mov.Atajos.maneja(k)
         }
     ) {
+        // En el Mac, la barra de la ventana del color de la cabecera de tinta de la app (si la app lo pide): una sola pieza con los tres
+        // botones encima. Sin título escrito (el nombre ya está grande en la cabecera). Sigue arrastrándose como siempre.
+        val tinta = VentanaFamilia.barraDeTinta
+        LaunchedEffect(tinta) {
+            if (Sitio.sistema != Sitio.Sistema.MAC) return@LaunchedEffect
+            val raiz = window.rootPane
+            if (tinta == null) {
+                raiz.putClientProperty("apple.awt.transparentTitleBar", false)
+                raiz.putClientProperty("apple.awt.windowTitleVisible", true)
+            } else {
+                window.background = java.awt.Color(tinta.red, tinta.green, tinta.blue)
+                raiz.putClientProperty("apple.awt.transparentTitleBar", true)
+                raiz.putClientProperty("apple.awt.windowTitleVisible", false)
+                // (los botones y lo poco que se vea de la barra, en claro u oscuro según la tinta)
+                window.rootPane.putClientProperty("apple.awt.windowAppearance", if (tinta.luminance2() < 0.5f) "NSAppearanceNameDarkAqua" else "NSAppearanceNameAqua")
+            }
+        }
         LaunchedEffect(estado) {
             snapshotFlow { Triple(estado.placement, estado.position, estado.size) }.collect { (pl, p, t) ->
                 if (pl != WindowPlacement.Fullscreen) normal = Triple(pl == WindowPlacement.Maximized, p, t)
@@ -155,6 +172,8 @@ object VentanaFamilia {
     /** Pantalla completa (F11; en el Mac también ⌃⌘F). Una app puede ponerla y quitarla (p. ej. un modo concentración). */
     var pantallaCompleta by mutableStateOf(false)
     internal var antes: WindowPlacement = WindowPlacement.Floating
+    /** En el Mac, el color de la barra de la ventana: el de la cabecera de tinta de la app (null: la barra normal del sistema). */
+    var barraDeTinta by mutableStateOf<androidx.compose.ui.graphics.Color?>(null)
 }
 
 /** El programa de una app instalada: `<App>/bin/<App>` en Linux; el `<App>.app` en el Mac. */

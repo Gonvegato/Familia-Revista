@@ -1,7 +1,7 @@
 # Las versiones de escritorio (Linux y Mac) de Azabache, Cobalto, Hiedra, Marfil, Mostaza y Cobre: pruebas contra el emulador de Firebase (con las
 # reglas del repositorio) y los paquetes de cada sistema. El de Mac se hace en un Mac de GitHub (Apple Silicon): un .dmg solo se
 # puede hacer en un Mac; allí, además, se abre cada app y se hace una captura. Los paquetes quedan como artefactos de cada ejecución.
-name: Escritorio (Linux y Mac)
+name: Escritorio (Mac)
 
 on:
   push:
@@ -15,86 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  linux:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '21' }
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - uses: gradle/actions/setup-gradle@v4
-      - name: El emulador de Firebase (base de datos y cuentas, con nube/reglas.json)
-        run: |
-          cd nube
-          nohup npx --yes firebase-tools@14 emulators:start --only database,auth --project demo-familia > ../emulador.log 2>&1 &
-          for i in $(seq 1 120); do
-            if curl -s -o /dev/null http://127.0.0.1:9000/ && curl -s -o /dev/null http://127.0.0.1:9099/; then echo "Encendido"; exit 0; fi
-            sleep 2
-          done
-          cat ../emulador.log; exit 1
-      - name: "mpv (el reproductor de Mostaza y de Cobre del ordenador: sus pruebas lo abren de verdad, sin pantalla ni sonido)"
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq mpv ffmpeg > /dev/null
-      - name: Pruebas
-        run: ./gradlew -PsoloEscritorio test --continue --console=plain
-      - name: Qué pruebas se han hecho (y cuáles se han saltado)
-        if: always()
-        run: python3 herramientas/escritorio/resumen-pruebas.py
-      - name: Paquetes de Linux (.deb y .tar.gz)
-        run: ./gradlew -PsoloEscritorio packageDeb createDistributable --console=plain
-      - name: Con su nombre de versión (App-x.y.z-linux.tar.gz con su instalar.sh, y App-x.y.z-linux.deb)
-        run: |
-          for d in escritorio/*/; do
-            grep -q nativeDistributions "$d/build.gradle.kts" || continue
-            herramientas/escritorio/empaqueta-linux.sh "$d" dist
-          done
-          ls -la dist
-      - name: El instalar.sh de verdad (instala Bastet en una carpeta de prueba, encima de una de antes con el nombre viejo, y mira el menú)
-        run: |
-          mkdir -p /tmp/prueba && tar -C /tmp/prueba -xzf dist/Bastet-*-linux.tar.gz
-          # una instalación de antes (Hiedra): tiene que quedar solo el atajo a la nueva
-          mkdir -p /tmp/prueba/datos/familia-apps/Hiedra/bin /tmp/prueba/datos/familia-apps/Hiedra/lib && touch /tmp/prueba/datos/familia-apps/Hiedra/lib/vieja
-          XDG_DATA_HOME=/tmp/prueba/datos XDG_CONFIG_HOME=/tmp/prueba/config sh /tmp/prueba/instalar.sh --al-iniciar --destino=/tmp/prueba/datos/familia-apps/Hiedra
-          test -x /tmp/prueba/datos/familia-apps/Bastet/bin/Bastet
-          test ! -e /tmp/prueba/datos/familia-apps/Hiedra/lib/vieja
-          grep -q 'familia-apps/Bastet/bin/Bastet' /tmp/prueba/datos/familia-apps/Hiedra/bin/Hiedra
-          cat /tmp/prueba/datos/applications/familia-hiedra.desktop
-          test -f /tmp/prueba/config/autostart/familia-hiedra.desktop
-          # al entrar en la sesión, Hiedra se abre ya en la sala; desde el menú, en su ventana
-          grep -q '^Exec=.*/bin/Bastet" --sala$' /tmp/prueba/config/autostart/familia-hiedra.desktop
-          grep -q '^Name=Bastet$' /tmp/prueba/datos/applications/familia-hiedra.desktop
-          if grep -q -- '--sala' /tmp/prueba/datos/applications/familia-hiedra.desktop; then echo "el menú no debe llevar --sala"; exit 1; fi
-      - name: Cada app se abre en Linux, instalada con su instalar.sh (y una captura de cada una)
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb imagemagick > /dev/null
-          mkdir -p capturas-linux /tmp/apps
-          export FAMILIA_DIR="$RUNNER_TEMP/familia"
-          for t in dist/*-linux.tar.gz; do
-            A=$(basename "$t" | cut -d- -f1)
-            rm -rf /tmp/apps/x && mkdir -p /tmp/apps/x && tar -C /tmp/apps/x -xzf "$t"
-            XDG_DATA_HOME=/tmp/apps/datos XDG_CONFIG_HOME=/tmp/apps/config sh /tmp/apps/x/instalar.sh --callada
-            b=/tmp/apps/datos/familia-apps/$A/bin/$A
-            xvfb-run -a -s "-screen 0 1280x800x24" bash -c "
-              '$b' > capturas-linux/$A.log 2>&1 & p=\$!
-              sleep 25
-              if ! kill -0 \$p 2>/dev/null; then echo '$A se ha cerrado sola:'; cat capturas-linux/$A.log; exit 1; fi
-              import -window root capturas-linux/$A.png || echo '(sin captura de $A)'
-              kill \$p; wait \$p 2>/dev/null || true"
-            echo "$A se abre bien"
-          done
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with: { name: capturas-linux, path: capturas-linux/, retention-days: 30 }
-      - uses: actions/upload-artifact@v4
-        with: { name: escritorio-linux, path: dist/, retention-days: 30 }
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with: { name: pruebas-linux, path: '**/build/test-results/test/*.xml', retention-days: 14 }
-      - if: failure()
-        uses: actions/upload-artifact@v4
-        with: { name: informes-linux, path: '**/build/reports/tests/', retention-days: 7 }
-
+  # (Linux, apartado por ahora: solo el Mac. Lo de Linux está en la historia del repositorio, en este mismo archivo, para volver a ponerlo.)
   mac:
     runs-on: macos-latest
     timeout-minutes: 60

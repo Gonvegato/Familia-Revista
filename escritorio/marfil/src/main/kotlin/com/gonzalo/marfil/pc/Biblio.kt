@@ -1,6 +1,8 @@
 package com.gonzalo.marfil.pc
 
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -61,176 +63,77 @@ fun TarjetaLibro(l: Libro, modifier: Modifier = Modifier, onClick: () -> Unit) {
     }
 }
 
+/**
+ * La ficha de un libro, a doble página (como en el móvil, abierta): a la izquierda su portada con su paspartú sobre la tinta; a la derecha
+ * cómo va, leerlo, tu lectura, tus subrayados y lo que dice Jonsu. Nace de la fila que pulsaste; «← Volver» o Esc la cierran.
+ */
 @Composable
-fun PantPortada(nav: Nav) {
+fun PantFicha(id: String, nav: Nav, alCerrar: () -> Unit) {
     LaFamilia.cambios
-    val libros = Libros.todos()
-    val leyendo = libros.filter { it.estado == Estado.LEYENDO }.sortedByDescending { it.ultima }
-    val ano = LocalDate.now().year
-    val inicio = LocalDate.of(ano, 1, 1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    val delAno = libros.filter { l -> l.estado == Estado.LEIDO && l.terminados.any { it >= inicio } }
-    val (minDia, objAno, deAno) = Libros.objetivo()
-    var anadir by remember { mutableStateOf(false) }
-    Pagina {
-        Text("Número de ${LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ES))}".uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
-        Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(96.sp, texto = "SESHAT") }
-            BotonAcento("+ Añadir libro", alto = 44.dp, modifier = Modifier.width(180.dp)) { anadir = true }
-        }
-        FileteCabecera()
-        Spacer(Modifier.height(14.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(44.dp)) {
-            val hoy = Libros.minutosHoy()
-            Cifra(tiempoDe(hoy), if (minDia > 0) "hoy · tu meta: ${minDia} min" else "leídos hoy", acento = true)
-            Cifra(if (objAno > 0 && (deAno == 0 || deAno == ano)) "${delAno.size} / $objAno" else delAno.size.toString(), "reto $ano")
-            Cifra(leyendo.size.toString(), "leyendo")
-            Cifra(libros.size.toString(), "en tu biblioteca")
-        }
-        val sigue = leyendo.firstOrNull()
-        if (sigue != null) {
-            Spacer(Modifier.height(26.dp)); Filete(2.dp)
-            Row(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Leer(sigue.id, Pantalla.Portada)) }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                PortadaCosa(sigue.portada, sigue.portadaUrl, sigue.titulo, Modifier.width(120.dp), pie = sigue.autor)
-                Spacer(Modifier.width(24.dp))
-                Column(Modifier.weight(1f)) {
-                    Antetitulo("Sigue leyendo")
-                    Spacer(Modifier.height(6.dp))
-                    Text(sigue.titulo, color = Charcoal, fontFamily = Display, fontSize = 38.sp, lineHeight = 42.sp, fontWeight = FontWeight.SemiBold)
-                    Text(sigue.autor, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 19.sp)
-                    Spacer(Modifier.height(10.dp))
-                    Libros.posicion(sigue.id)?.etiqueta?.takeIf { it.isNotBlank() }?.let { Text("Ibas por «$it»", color = Muted, fontFamily = Body, fontSize = 13.sp) }
-                    Spacer(Modifier.height(6.dp))
-                    Box(Modifier.width(360.dp).height(4.dp).background(Sand)) { Box(Modifier.fillMaxWidth(sigue.fraccion).fillMaxHeight().background(Acento)) }
-                    Text("${(sigue.fraccion * 100).toInt()} % · ${tiempoDe(sigue.minutos)} leyendo", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-                    Spacer(Modifier.height(10.dp))
-                    EnlaceRevista("Seguir leyendo →", acento = true) { nav.ir(Pantalla.Leer(sigue.id, Pantalla.Portada)) }
-                }
-                // Lo último que subrayaste en él (en cualquier dispositivo), como el destacado de una revista
-                Marcas.de(sigue.id, Marcas.SUBRAYADOS).filter { !it.delTextoDeUnPdf }.maxByOrNull { it.creada }?.let { m ->
-                    Spacer(Modifier.width(36.dp))
-                    Row(Modifier.width(380.dp).height(IntrinsicSize.Min).clickable { nav.ir(Pantalla.Leer(sigue.id, Pantalla.Portada, ir = m.valor)) }) {
-                        Box(Modifier.width(3.dp).fillMaxHeight().background(Acento))
-                        Spacer(Modifier.width(16.dp))
-                        Column {
-                            Antetitulo("Lo último que subrayaste", tam = 11.sp)
-                            Spacer(Modifier.height(8.dp))
-                            Text("«${m.texto}»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 21.sp, lineHeight = 28.sp, maxLines = 5, overflow = TextOverflow.Ellipsis)
-                            if (m.nota.isNotBlank()) Text(m.nota, color = Acento, fontFamily = Display, fontSize = 15.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
-                            Etiqueta(listOfNotNull(m.etiqueta.ifBlank { null }, if (m.creada > 0) fechaDe(m.creada) else null).joinToString(" · "), Modifier.padding(top = 8.dp))
-                        }
-                    }
-                }
-            }
-        }
-        if (leyendo.size > 1) { Spacer(Modifier.height(10.dp)); Filete(2.dp); Antetitulo("También estás leyendo", Modifier.padding(vertical = 10.dp)); Fila(leyendo.drop(1).take(6), nav) }
-        if (delAno.isNotEmpty()) { Spacer(Modifier.height(10.dp)); Filete(2.dp); Antetitulo("Leídos en $ano", Modifier.padding(vertical = 10.dp)); Fila(delAno.sortedByDescending { it.terminados.lastOrNull() ?: 0L }.take(12), nav) }
-        if (libros.isEmpty()) Vacio("Tu biblioteca está vacía", "Añade un libro (EPUB, PDF o cómic) o ábrelo en Seshat del móvil: los de la cuenta salen aquí.")
-    }
-    if (anadir) DialogoAnadir(nav) { anadir = false }
-}
-
-@Composable
-private fun Fila(l: List<Libro>, nav: Nav) {
-    l.chunked(6).forEach { f ->
-        Row(Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            f.forEach { x -> TarjetaLibro(x, Modifier.weight(1f)) { nav.ir(Pantalla.Ficha(x.id, Pantalla.Portada)) } }
-            repeat(6 - f.size) { Spacer(Modifier.weight(1f)) }
-        }
-    }
-}
-
-@Composable
-fun PantLista(e: Estado, nav: Nav) {
-    LaFamilia.cambios
-    var buscar by remember(e) { mutableStateOf("") }
-    var anadir by remember { mutableStateOf(false) }
-    val q = Libros.norm(buscar)
-    val l = Libros.todos().filter { it.estado == e && (q.isEmpty() || Libros.norm(it.titulo + " " + it.autor).contains(q)) }
-        .let { if (e == Estado.LEIDO) it.sortedByDescending { x -> x.terminados.lastOrNull() ?: 0L } else it }
-    val estado = rememberLazyGridState()
-    Box(Modifier.fillMaxSize()) {
-        LazyVerticalGrid(GridCells.Adaptive(160.dp), Modifier.fillMaxSize(), estado, contentPadding = PaddingValues(horizontal = 40.dp, vertical = 30.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Column {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Box(Modifier.weight(1f)) { Cabecera(76.sp, texto = (if (e == Estado.LEIDO) "LEÍDOS" else if (e == Estado.LEYENDO) "LEYENDO" else e.nombre.uppercase() + "S")) }
-                        BotonAcento("+ Añadir libro", alto = 44.dp, modifier = Modifier.width(180.dp)) { anadir = true }
-                    }
-                    FileteCabecera()
-                    Spacer(Modifier.height(14.dp))
-                    OutlinedTextField(buscar, { buscar = it }, Modifier.width(380.dp), placeholder = { Text("Buscar por título o autor") }, singleLine = true)
-                    if (l.isEmpty()) Vacio(if (q.isNotEmpty()) "Nada con «$buscar»" else "Aquí no hay ningún libro")
-                }
-            }
-            items(l, key = { it.id }) { x -> TarjetaLibro(x) { nav.ir(Pantalla.Ficha(x.id, Pantalla.Lista(e))) } }
-        }
-        VerticalScrollbar(rememberScrollbarAdapter(estado), Modifier.align(Alignment.CenterEnd).fillMaxHeight())
-    }
-    if (anadir) DialogoAnadir(nav) { anadir = false }
-}
-
-/** La ficha de un libro: su portada, cómo va, lo que dice Azabache y leerlo. */
-@Composable
-fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
-    LaFamilia.cambios
-    val l = Libros.por(id) ?: run { Pagina { VolverRevista({ nav.ir(volver) }); Vacio("Este libro ya no está") }; return }
+    val l = Libros.por(id) ?: run { PaginaC { EnlaceCabecera("← Volver", Charcoal) { alCerrar() }; Vacio("Este libro ya no está") }; return }
+    val volver = Pantalla.Ficha(id, Pantalla.Portada)
     val scope = rememberCoroutineScope()
     var borrar by remember { mutableStateOf(false) }
     var trabajo by remember { mutableStateOf("") }
     val aqui = Libros.archivo(id)
-    Pagina {
-        VolverRevista({ nav.ir(volver) }, texto = "Volver")
-        Spacer(Modifier.height(18.dp))
-        Row {
-            Column(Modifier.width(280.dp)) {
-                PortadaCosa(l.portada, l.portadaUrl, l.titulo, Modifier.fillMaxWidth(), pie = l.autor)
-                Spacer(Modifier.height(14.dp))
-                BotonAcento(if (l.fraccion > 0 && l.estado != Estado.LEIDO) "Seguir leyendo" else "Leer", modifier = Modifier.fillMaxWidth()) {
-                    if (aqui != null || l.nube != null) nav.ir(Pantalla.Leer(id, Pantalla.Ficha(id, volver))) else nav.aviso("Este libro no está en este ordenador ni en tu kDrive: súbelo desde el móvil donde lo tienes.")
+    fun leer() { if (aqui != null || l.nube != null) nav.ir(Pantalla.Leer(id, volver)) else nav.aviso("Este libro no está en este ordenador ni en tu kDrive: súbelo desde el móvil donde lo tienes.") }
+    Row(Modifier.fillMaxSize().background(Paper)) {
+        // ---- La página de la izquierda: la portada sobre la tinta
+        Column(Modifier.width(500.dp).fillMaxHeight().background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(androidx.compose.ui.graphics.Color(0xFF3A2418), androidx.compose.ui.graphics.Color(0xFF0C0A09))))
+            .padding(horizontal = 44.dp, vertical = 30.dp)) {
+            EnlaceCabecera("← Volver", Paper, atajo = "esc") { alCerrar() }
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { TapaConPaspartu(l, 290.dp) }
+            Text(listOfNotNull(l.formato.uppercase().ifBlank { null }, if (l.paginas > 0) "${l.paginas} páginas" else null, if (l.anadido > 0) "añadido el " + fechaDe(l.anadido) else null).joinToString(" · ").uppercase(),
+                color = Paper.copy(alpha = 0.7f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.3.sp)
+        }
+        // ---- La página de la derecha
+        val scroll = rememberScrollState()
+        Box(Modifier.weight(1f).fillMaxHeight()) {
+            Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 56.dp, vertical = 44.dp).widthIn(max = 760.dp)) {
+                Text(l.estado.nombre.uppercase(), color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.6.sp, modifier = Modifier.background(Acento).padding(horizontal = 10.dp, vertical = 6.dp))
+                Text(l.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 52.sp, lineHeight = 54.sp, modifier = Modifier.padding(top = 16.dp))
+                if (l.autor.isNotBlank()) Text(l.autor.uppercase(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 2.sp, modifier = Modifier.padding(top = 10.dp))
+                if (l.estado != Estado.PENDIENTE) Box(Modifier.padding(top = 18.dp).fillMaxWidth().height(8.dp).background(Line)) { Box(Modifier.fillMaxWidth(if (l.estado == Estado.LEIDO) 1f else l.fraccion).fillMaxHeight().background(Acento)) }
+                Spacer(Modifier.height(20.dp))
+                BotonC(if (l.fraccion > 0 && l.estado != Estado.LEIDO) "Seguir leyendo" else "Leer", fondo = Charcoal, letra = Paper) { leer() }
+                Text(when { aqui != null -> "El archivo está en este ordenador" + if (l.nube != null) " y en tu kDrive." else "."; l.nube != null -> "Está en tu kDrive: se baja al abrirlo."; else -> "El archivo no está aquí ni en tu kDrive." },
+                    color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    if (aqui != null && l.nube == null && KDrive().activo) EnlaceRevista(if (trabajo.isNotBlank()) trabajo else "Subir a tu kDrive", modifier = Modifier.padding(top = 6.dp)) {
+                        trabajo = "Subiendo…"; scope.launch { val r = withContext(Dispatchers.IO) { runCatching { NubeLibros.sube(l, aqui) } }; trabajo = ""; nav.aviso(r.fold({ "En tu kDrive" }, { it.message ?: "No se ha podido" })) }
+                    }
+                    if (aqui == null && l.nube != null) EnlaceRevista(if (trabajo.isNotBlank()) trabajo else "Bajar a este ordenador", modifier = Modifier.padding(top = 6.dp)) {
+                        trabajo = "Bajando…"; scope.launch { val r = withContext(Dispatchers.IO) { runCatching { NubeLibros.baja(l) } }; trabajo = ""; nav.aviso(r.fold({ "Ya está aquí" }, { it.message ?: "No se ha podido" })) }
+                    }
                 }
-                Spacer(Modifier.height(10.dp))
-                Cuerpo(when { aqui != null -> "El archivo está en este ordenador" + if (l.nube != null) " y en tu kDrive." else "."; l.nube != null -> "Está en tu kDrive: se baja al abrirlo."; else -> "El archivo no está aquí ni en tu kDrive." }, tam = 12)
-                if (aqui != null && l.nube == null && KDrive().activo) EnlaceRevista(if (trabajo.isNotBlank()) trabajo else "Subir a tu kDrive", modifier = Modifier.padding(top = 6.dp)) {
-                    trabajo = "Subiendo…"; scope.launch { val r = withContext(Dispatchers.IO) { runCatching { NubeLibros.sube(l, aqui) } }; trabajo = ""; nav.aviso(r.fold({ "En tu kDrive" }, { it.message ?: "No se ha podido" })) }
-                }
-                if (aqui == null && l.nube != null) EnlaceRevista(if (trabajo.isNotBlank()) trabajo else "Bajar a este ordenador", modifier = Modifier.padding(top = 6.dp)) {
-                    trabajo = "Bajando…"; scope.launch { val r = withContext(Dispatchers.IO) { runCatching { NubeLibros.baja(l) } }; trabajo = ""; nav.aviso(r.fold({ "Ya está aquí" }, { it.message ?: "No se ha podido" })) }
-                }
-            }
-            Spacer(Modifier.width(40.dp))
-            Column(Modifier.weight(1f)) {
-                RevistaHeadline(l.titulo, l.autor.ifBlank { null })
-                Spacer(Modifier.height(16.dp))
-                MagChoice(Estado.entries.map { it.nombre }, l.estado.ordinal, "Cómo va") { Libros.ponEstado(l, Estado.entries[it]) }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                    Text("Favorito", Modifier.weight(1f), color = Charcoal, fontFamily = Display, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(26.dp))
+                TituloC("Cómo va")
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { Estado.entries.forEach { e -> FiltroC(e.nombre, e == l.estado) { Libros.ponEstado(l, e) } } }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 14.dp)) {
+                    Text("Favorito", Modifier.weight(1f), color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Interruptor(l.fav) { Libros.cambia(id, mapOf("fav" to it)) }
                 }
-                Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-                Antetitulo("Tu lectura")
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(26.dp))
+                TituloC("Tu lectura")
                 MagFact("Llevas", avance(l))
                 Libros.posicion(id)?.let { p -> if (p.etiqueta.isNotBlank()) MagFact("Ibas por", p.etiqueta); if (p.cuando > 0) MagFact("Última vez", fechaDe(p.cuando)) }
                 MagFact("Tiempo leyendo", tiempoDe(l.minutos))
                 if (l.paginas > 0) MagFact("Páginas", l.paginas.toString())
                 l.terminados.takeIf { it.isNotEmpty() }?.let { MagFact(if (it.size > 1) "Lo terminaste" else "Terminado", it.joinToString(", ") { t -> fechaDe(t) }) }
-                if (l.anadido > 0) MagFact("Añadido", fechaDe(l.anadido))
-                if (l.formato.isNotBlank()) MagFact("Formato", l.formato.uppercase())
                 SubrayadosDeLaFicha(l, nav, volver, aqui != null || l.nube != null)
-                Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-                Antetitulo("En Jonsu")
-                Spacer(Modifier.height(6.dp))
-                Text(l.nota?.toString() ?: "Sin valorar", color = if (l.nota != null) Acento else Muted, fontFamily = Display, fontSize = if (l.nota != null) 44.sp else 26.sp, fontStyle = if (l.nota == null) FontStyle.Italic else FontStyle.Normal)
+                Spacer(Modifier.height(26.dp))
+                TituloC("En Jonsu")
+                Text(l.nota?.toString() ?: "Sin valorar", color = if (l.nota != null) Acento else Muted, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = if (l.nota != null) 44.sp else 22.sp)
                 l.n.texto("resena").takeIf { it.isNotBlank() }?.let { Text("«$it»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 26.sp) }
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(30.dp))
                 EnlaceRevista("Borrar de tu biblioteca", acento = true) { borrar = true }
             }
+            VerticalScrollbar(rememberScrollbarAdapter(scroll), Modifier.align(Alignment.CenterEnd).fillMaxHeight())
         }
     }
     if (borrar) Dialogo("¿Borrar «${l.titulo}»?", { borrar = false }, botones = {
         BotonSuave("Cancelar") { borrar = false }
-        BotonSuave("Borrar", peligro = true) { Libros.quita(id); borrar = false; nav.ir(volver); nav.aviso("Borrado") }
+        BotonSuave("Borrar", peligro = true) { Libros.quita(id); borrar = false; alCerrar(); nav.aviso("Borrado") }
     }) { Cuerpo("Sale de tu biblioteca en todos tus dispositivos (y de Jonsu). El archivo de tu kDrive no se borra.", tam = 14) }
 }
 
@@ -243,9 +146,8 @@ private fun SubrayadosDeLaFicha(l: Libro, nav: Nav, volver: Pantalla, sePuedeAbr
     val notas = Marcas.de(l.id, Marcas.SUBRAYADOS).filter { !it.delTextoDeUnPdf }
         .sortedWith { a, b -> val x = EpubCfi.lee(a.valor); val y = EpubCfi.lee(b.valor); (if (x != null && y != null) EpubCfi.compara(x, y) else 0).takeIf { it != 0 } ?: a.creada.compareTo(b.creada) }
     var todas by remember(l.id) { mutableStateOf(false) }
-    Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
-    Antetitulo("Subrayados y notas")
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(26.dp))
+    TituloC("Subrayados y notas")
     if (notas.isEmpty()) {
         Text("Aún no has subrayado nada. En el lector, selecciona un trozo con el ratón y elige Subrayar o Nota (lo que subrayes en el móvil sale aquí).",
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp)
@@ -282,7 +184,7 @@ fun DialogoAnadir(nav: Nav, onCerrar: () -> Unit) {
         scope.launch {
             val r = withContext(Dispatchers.IO) { runCatching { anadeArchivo(f) } }
             trabajo = ""
-            r.onSuccess { id -> onCerrar(); nav.aviso("Añadido"); nav.ir(Pantalla.Ficha(id, Pantalla.Portada)) }.onFailure { nav.aviso(it.message ?: "No se ha podido añadir") }
+            r.onSuccess { id -> onCerrar(); nav.aviso("Añadido"); nav.ir(Pantalla.Ficha(id, Pantalla.Lista(Estado.PENDIENTE))) }.onFailure { nav.aviso(it.message ?: "No se ha podido añadir") }
         }
     }
     Dialogo("Añadir un libro", onCerrar, botones = {
@@ -316,11 +218,12 @@ fun anadeArchivo(f: File): String {
 }
 
 @Composable
-fun PantAjustes(nav: Nav) {
+fun PantAjustes(nav: Nav, alCerrar: () -> Unit) {
     var pestana by remember { mutableStateOf(0) }
-    Pagina(ancho = 900.dp) {
-        Cabecera(84.sp, texto = "AJUSTES")
-        FileteCabecera()
+    PaginaC(ancho = 960.dp) {
+        EnlaceCabecera("← Volver", Charcoal, atajo = "esc") { alCerrar() }
+        NombreConPunto("Ajustes", 72.sp, Charcoal, Modifier.padding(top = 10.dp, bottom = 6.dp))
+        Filete(3.dp)
         Spacer(Modifier.height(14.dp))
         PestanasRevista(listOf("Cuenta", "Libros", "Apariencia", "Versión"), pestana) { pestana = it }
         Spacer(Modifier.height(22.dp))

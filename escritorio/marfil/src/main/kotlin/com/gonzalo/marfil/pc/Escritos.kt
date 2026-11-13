@@ -27,20 +27,19 @@ fun PantEscritos(nav: Nav) {
     LaFamilia.cambios
     val caps = LaFamilia.coleccion("capitulos").vivos()
     val obras = caps.groupBy { it.texto("ref").ifBlank { it.ref.substringBefore('~') } }
-    Pagina(ancho = 900.dp) {
-        Cabecera(84.sp, texto = "ESCRITOS")
-        FileteCabecera()
+    PaginaC(ancho = 1000.dp) {
+        Text("ESCRITOS", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 2.sp)
         Spacer(Modifier.height(8.dp))
         Text("Los capítulos que das por terminados en Thot, para leerlos aquí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp)
         if (obras.isEmpty()) Vacio("Nada todavía", "En Thot, marca un capítulo como terminado y aparece aquí.")
         obras.forEach { (_, l) ->
             val o = l.first()
             Spacer(Modifier.height(20.dp)); Filete(2.dp)
-            Text(o.texto("t"), color = Charcoal, fontFamily = Display, fontSize = 30.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
+            Text(o.texto("t"), color = Charcoal, fontFamily = Grotesca, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = 10.dp))
             if (o.texto("a").isNotBlank()) Text(o.texto("a"), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
             l.sortedBy { it.entero("n") }.forEach { c ->
-                Row(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Capitulo(c.ref)) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("${c.entero("n")}. " + c.texto("c").ifBlank { "Capítulo" }, Modifier.weight(1f), color = Charcoal, fontFamily = Display, fontSize = 19.sp)
+                Row(Modifier.fillMaxWidth().levanta(alto = 1.dp) { nav.ir(Pantalla.Capitulo(c.ref)) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("${c.entero("n")}. " + c.texto("c").ifBlank { "Capítulo" }, Modifier.weight(1f), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Text("${c.entero("p")} palabras", color = Muted, fontFamily = Body, fontSize = 12.sp)
                 }
             }
