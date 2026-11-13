@@ -44,6 +44,7 @@ import java.io.File
 import java.text.DateFormat
 import java.util.Date
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
@@ -184,9 +185,9 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
                     scaleX = e; scaleY = e
                 }) {
                 Box(Modifier.fillMaxSize()
-                    .onGloballyPositioned { c -> com.gonzalo.familia.Vuelo.destino = c.boundsInRoot() }
+                    .onGloballyPositioned { c -> com.gonzalo.familia.Vuelo.destino = c.boundsInRoot(); com.gonzalo.familia.Vuelo.coords = c }
                     .graphicsLayer {
-                        alpha = if (com.gonzalo.familia.Vuelo.clave == l.id) 0f else 1f
+                        alpha = com.gonzalo.familia.Vuelo.alfaDestino(l.id)
                         rotationX = giroX.value; rotationY = giroY.value
                         cameraDistance = 14f * density
                         shadowElevation = 22.dp.toPx()
@@ -223,7 +224,10 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
         val etiqueta = when (l.estado) { Estado.LEYENDO, Estado.ABANDONADO -> "${l.estado.nombre.uppercase()} · $pct %"; else -> l.estado.nombre.uppercase() }
         Column(Modifier.fillMaxWidth().entrada("$ent:titulo", 1)) {
             Box(Modifier.padding(start = 20.dp).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
-                Text(etiqueta, color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
+                androidx.compose.animation.AnimatedContent(etiqueta, transitionSpec = {
+                    androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(180, delayMillis = 60)) togetherWith androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(120)) using
+                        androidx.compose.animation.SizeTransform(clip = false) { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.86f, stiffness = 420f) }
+                }, label = "etiqueta") { e -> Text(e, color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1) }
             }
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
                 FitTitle(l.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)

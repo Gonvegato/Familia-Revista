@@ -33,6 +33,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.layout
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -161,3 +164,13 @@ fun llenado(clave: String, fraccion: Float, retraso: Long = 140): Float {
     return v.value
 }
 
+
+/**
+ * Algo que aparece poco a poco según [f] (0: no está; 1: está entero): su ancho y su opacidad crecen juntos, así lo que tiene al lado se
+ * aparta suavemente en vez de saltar. (Para lo que sale y entra al plegar una cabecera, por ejemplo.)
+ */
+fun Modifier.apareceSegun(f: Float): Modifier = this.then(Modifier.clipToBounds().layout { m, c ->
+    val p = m.measure(c.copy(minWidth = 0))
+    val w = (p.width * f.coerceIn(0f, 1f)).roundToInt()
+    layout(w, p.height) { if (w > 0) p.placeWithLayer(0, 0) { alpha = f.coerceIn(0f, 1f); compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha } }
+})

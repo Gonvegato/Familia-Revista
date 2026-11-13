@@ -5,6 +5,22 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.22.3 — ningún salto al final
+
+Repaso de todas las animaciones para que ninguna acabe (ni empiece) de golpe:
+
+- La ficha, un autor, una saga y el buscador: el papel aparece al empezar y se funde al acabar (antes aparecía y se quitaba de golpe).
+- La tapa que vuela y la de verdad se funden al despegar y al aterrizar (antes se cambiaban de golpe y se notaba que no eran idénticas).
+- Tras el gesto de atrás, lo encogido se deshace mientras se cierra, y la tapa sale de donde está ahora (aunque hayas bajado en la ficha).
+- BUSCAR ya no se queda en ocre mientras buscas (al cerrar volvía a blanco de golpe).
+- Mantener pulsado: el desenfoque de detrás se va a la vez que el libro vuelve a su sitio, no después.
+- Cabecera plegada: el nombre pequeño entra y la fecha se va poco a poco, sin saltito de la fila.
+- Pestañas: el color del texto sigue al bloque mientras deslizas (antes cambiaba de golpe a mitad), y los degradados de los bordes aparecen
+  poco a poco.
+- Listas: al cambiar un libro de estante o el orden, las filas se mueven, salen y entran con un muelle; una saga se despliega creciendo.
+- La etiqueta de estado de la ficha cambia con un fundido; el globo del día de la semana entra y sale, y la barra cambia de color suave.
+- Página de un autor: la numeración de sus libros ya no puede cambiar al repintar.
+
 ## 0.22.2 — nada cortado mientras entra
 
 - La etiqueta del estado de la ficha («PENDIENTE», «LEYENDO · 80 %»), que pisa el borde de la foto, salía cortada por arriba hasta que

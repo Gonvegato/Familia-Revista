@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import com.gonzalo.familia.pulsable
+import com.gonzalo.familia.apareceSegun
+import androidx.compose.animation.animateContentSize
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.graphics.graphicsLayer
 import com.gonzalo.familia.entrada
@@ -165,7 +167,7 @@ fun resumenSaga(todos: List<Libro>): String {
 @Composable
 fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAbrirSaga: (Saga) -> Unit, alAbrirLibro: (Libro) -> Unit, directo: Boolean = false) {
     val todos = remember(f.saga, Biblioteca.libros.size) { Sagas.libros(f.saga) }
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().animateContentSize(androidx.compose.animation.core.spring(dampingRatio = 0.9f, stiffness = 380f))) {
         // (en la página de Sagas, tocarla abre su página, que nace de esta fila; en los estantes, se despliega aquí)
         val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
         Row(Modifier.fillMaxWidth().onGloballyPositioned { sitio[0] = it }
@@ -200,8 +202,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.filas(
     val filas = Sagas.agrupar(libros)
     itemsIndexed(filas, key = { _, it -> when (it) { is FilaLista.Suelto -> "l:" + it.libro.id; is FilaLista.DeSaga -> "s:" + it.saga.id } }) { i, f ->
         when (f) {
-            is FilaLista.Suelto -> { FilaLibro(f.libro, alAbrir, conEstado = conEstado, extra = f.saga?.let { "Saga ${it.nombre} · ${f.numero}" }.orEmpty(), orden = i + 1); Filete(2.dp) }
-            is FilaLista.DeSaga -> FilaSaga(f, f.saga.id in abiertas, { alternar(f.saga.id) }, alAbrirSaga, alAbrir)
+            is FilaLista.Suelto -> Column(Modifier.animateItem()) { FilaLibro(f.libro, alAbrir, conEstado = conEstado, extra = f.saga?.let { "Saga ${it.nombre} · ${f.numero}" }.orEmpty(), orden = i + 1); Filete(2.dp) }
+            is FilaLista.DeSaga -> Column(Modifier.animateItem()) { FilaSaga(f, f.saga.id in abiertas, { alternar(f.saga.id) }, alAbrirSaga, alAbrir) }
         }
     }
 }
@@ -367,15 +369,18 @@ fun PantPrincipal(
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         // ---- La cabecera de la dirección C: un bloque de tinta con la fila pequeña y «SESHAT.» en grotesca enorme
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = if (altoNombre > 0 && recogido >= altoNombre - 1) 4.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
-                // Plegada del todo: el nombre, pequeño, a la izquierda de la fila (y ningún hueco negro debajo)
-                if (altoNombre > 0 && recogido >= altoNombre - 1) NombreConPunto("Seshat", 22.sp, Paper, Modifier.padding(end = 14.dp))
-                EnlaceRevista("Buscar", Modifier.onGloballyPositioned { sitioBuscar[0] = it }, color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) {
+            // Al plegarse, el nombre pequeño entra a la izquierda y la fecha se va, poco a poco y apartando lo de al lado (antes aparecían y
+            // desaparecían de golpe al final, con un saltito de la fila)
+            val plegado = if (altoNombre > 0) ((recogido / altoNombre - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
+                if (plegado > 0f) NombreConPunto("Seshat", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
+                EnlaceRevista("Buscar", Modifier.onGloballyPositioned { sitioBuscar[0] = it }, color = Paper.copy(alpha = 0.75f)) {
                     if (!buscando) { com.gonzalo.familia.Vibra.clic(vista); aperturaBusca++; buscando = true }
                 }
                 EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = Acento) { alAnadir() }
                 Spacer(Modifier.weight(1f))
-                if (!(altoNombre > 0 && recogido >= altoNombre - 1)) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                if (plegado < 1f) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1,
+                    modifier = Modifier.apareceSegun(1f - plegado))
                 androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 4.dp).clickable(onClick = alAjustes).padding(6.dp).size(20.dp))
             }
             // El nombre: su alto se mide una vez y se va quitando según se recoge
@@ -446,8 +451,9 @@ private fun PestanasPaginas(nombres: List<String>, pager: androidx.compose.found
                 // Un degradado en los bordes cuando hay más pestañas por un lado o por otro (para que no parezcan cortadas)
                 drawContent()
                 val f = 28.dp.toPx()
-                if (scroll.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
-                if (scroll.value < scroll.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
+                val izq = (scroll.value / f).coerceIn(0f, 1f); val der = ((scroll.maxValue - scroll.value) / f).coerceIn(0f, 1f)
+                if (izq > 0f) drawRect(Brush.horizontalGradient(listOf(Paper.copy(alpha = izq), Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
+                if (der > 0f) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper.copy(alpha = der)), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
             }.horizontalScroll(scroll).height(IntrinsicSize.Max)
             // El bloque del acento: se pinta (sin recomponer) donde va la página, entre dos pestañas si estás a medio camino
             .drawBehind {
@@ -470,10 +476,11 @@ private fun PestanasPaginas(nombres: List<String>, pager: androidx.compose.found
                 Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).let { kotlin.math.round(it).toInt() } to c.size.width }
                     .pulsable(hundido = 0.94f, vibra = if (on) null else com.gonzalo.familia.Vibra::tic) { onSel(i) }
                     .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
+                    val cerca = (1f - kotlin.math.abs(pager.currentPage + pager.currentPageOffsetFraction - i)).coerceIn(0f, 1f)
+                    Text(n.uppercase(), color = androidx.compose.ui.graphics.lerp(Charcoal, SobreAcento, cerca), fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
                     cuentas.getOrNull(i)?.let { c ->
                         Text(" ", fontSize = 13.sp)
-                        com.gonzalo.familia.Rodante(c) { v -> Text("$v", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                        com.gonzalo.familia.Rodante(c) { v -> Text("$v", color = androidx.compose.ui.graphics.lerp(Acento, SobreAcento, cerca), fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
                     }
                 }
             }
@@ -483,4 +490,4 @@ private fun PestanasPaginas(nombres: List<String>, pager: androidx.compose.found
 }
 
 /** Mientras la tapa de este libro vuela hacia su ficha (o vuelve), la de aquí se esconde: solo se ve una. */
-fun Modifier.tapaQueVuela(id: String): Modifier = this.then(Modifier.graphicsLayer { alpha = if (com.gonzalo.familia.Vuelo.clave == id) 0f else 1f })
+fun Modifier.tapaQueVuela(id: String): Modifier = this.then(Modifier.graphicsLayer { alpha = com.gonzalo.familia.Vuelo.alfaOrigen(id) })

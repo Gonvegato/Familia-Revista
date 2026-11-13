@@ -127,7 +127,8 @@ fun Buscador(desde: () -> Rect?, apertura: Int, todos: List<Libro>, cuentas: Lis
     Column(Modifier.fillMaxSize().graphicsLayer {
         clip = true
         shape = FormaEntre(origen, t.value)
-        alpha = if (origen == null) t.value.coerceIn(0f, 1f) else 1f
+        // (aparece al empezar y, al cerrar, se funde con la palabra BUSCAR al llegar: nada de golpe)
+        alpha = if (origen == null) t.value.coerceIn(0f, 1f) else com.gonzalo.familia.fundidoBorde(t.value)
     }.background(Paper)) {
         // ---- El campo, arriba, sobre la franja de tinta
         Row(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -165,12 +166,12 @@ fun Buscador(desde: () -> Rect?, apertura: Int, todos: List<Libro>, cuentas: Lis
                     val sigues = todos.filter { it.estado == Estado.LEYENDO }.sortedByDescending { it.ultima }.take(5)
                     if (sigues.isNotEmpty()) {
                         item { Grupo("Sigues con", null, Modifier.entrada("$tanda:sig", 4)) }
-                        items(sigues, key = { "s:" + it.id }) { l -> FilaBusqueda(l, "", Modifier.entrada("$tanda:${l.id}", 5)) { Recientes.apunta(ctx, texto); alAbrir(l) } }
+                        items(sigues, key = { "s:" + it.id }) { l -> FilaBusqueda(l, "", Modifier.animateItem().entrada("$tanda:${l.id}", 5)) { Recientes.apunta(ctx, texto); alAbrir(l) } }
                     }
                 } else {
                     if (libros.isNotEmpty()) {
                         item { Grupo("Libros", libros.size, Modifier.entrada("$tanda:lib", 0)) }
-                        items(libros, key = { "l:" + it.id }) { l -> FilaBusqueda(l, q, Modifier.entrada("$tanda:l:${l.id}", 1)) { Recientes.apunta(ctx, texto); alAbrir(l) } }
+                        items(libros, key = { "l:" + it.id }) { l -> FilaBusqueda(l, q, Modifier.animateItem().entrada("$tanda:l:${l.id}", 1)) { Recientes.apunta(ctx, texto); alAbrir(l) } }
                     }
                     if (enSubrayados.isNotEmpty()) {
                         item { Grupo("En tus subrayados", enSubrayados.size, Modifier.entrada("$tanda:sub", 2)) }

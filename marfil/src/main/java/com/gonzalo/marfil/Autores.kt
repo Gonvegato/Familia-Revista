@@ -56,6 +56,8 @@ fun CapaPagina(clave: String?, alCerrar: () -> Unit, contenido: @Composable (Str
             t.animateTo(1f, spring(dampingRatio = 0.9f, stiffness = 240f))
         } else if (visible != null) {
             Vibra.tic(vista)
+            // (lo encogido con el gesto de atrás se deshace a la vez, para aterrizar justo sobre la fila)
+            launch { atras.animateTo(0f, spring(dampingRatio = 1f, stiffness = 300f)) }
             t.animateTo(0f, spring(dampingRatio = 1f, stiffness = 300f))
             visible = null; atras.snapTo(0f); Capas.pagina = false
         }
@@ -78,8 +80,8 @@ fun CapaPagina(clave: String?, alCerrar: () -> Unit, contenido: @Composable (Str
         val s = (1f - 0.1f * p) * (if (o == null) 0.96f + 0.04f * tt else 1f)
         scaleX = s; scaleY = s
         translationX = (if (desdeIzquierda) 1f else -1f) * p * with(densidad) { 24.dp.toPx() }
-        // Al cerrar, el último tramo (cuando el papel ya tiene el tamaño de la fila) se funde con la fila en vez de quitarse de golpe
-        alpha = if (o == null) tt.coerceIn(0f, 1f) else if (clave == null) (tt / 0.28f).coerceIn(0f, 1f) else 1f
+        // El papel aparece al empezar y se funde con la fila al acabar: nada de golpe
+        alpha = if (o == null) tt.coerceIn(0f, 1f) else com.gonzalo.familia.fundidoBorde(tt)
     }) {
         Box(Modifier.fillMaxSize().background(Paper))
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = if (clave == null) ((t.value - 0.45f) / 0.55f).coerceIn(0f, 1f) else (t.value * 2.5f).coerceIn(0f, 1f) }) { contenido(k) }
@@ -114,7 +116,6 @@ fun PantAutor(nombre: String, alCerrar: () -> Unit, alAbrir: (Libro) -> Unit) {
                 if (libros.isNotEmpty()) Abanico(libros.sortedByDescending { it.ultima }.take(5), Modifier.padding(top = 24.dp))
             }
         }
-        var n = 0
         listOf(Estado.LEYENDO to "Leyendo", Estado.PENDIENTE to "Pendientes", Estado.LEIDO to "Leídos", Estado.ABANDONADO to "Abandonados").forEach { (e, titulo) ->
             val de = libros.filter { it.estado == e }.sortedWith(compareByDescending<Libro> { it.ultima }.thenBy { norm(it.titulo) })
             if (de.isEmpty()) return@forEach
@@ -125,9 +126,9 @@ fun PantAutor(nombre: String, alCerrar: () -> Unit, alAbrir: (Libro) -> Unit) {
                 }
             }
             itemsIndexed(de, key = { _, l -> "l:" + l.id }) { i, l ->
-                Column(Modifier.padding(horizontal = 20.dp)) {
+                Column(Modifier.animateItem().padding(horizontal = 20.dp)) {
                     Filete(2.dp)
-                    FilaLibro(l, alAbrir, orden = (++n).coerceAtMost(9), extra = Sagas.de(l.clave)?.let { "Saga ${it.nombre} · ${it.claves.indexOf(l.clave) + 1}" }.orEmpty())
+                    FilaLibro(l, alAbrir, orden = (i + 1).coerceAtMost(9), extra = Sagas.de(l.clave)?.let { "Saga ${it.nombre} · ${it.claves.indexOf(l.clave) + 1}" }.orEmpty())
                 }
             }
         }
@@ -160,6 +161,8 @@ private fun Abanico(libros: List<Libro>, modifier: Modifier = Modifier) {
 /** Mantener pulsado un libro: qué libro y dónde estaba su fila. */
 object Asomo {
     var libro by mutableStateOf<String?>(null)
+    /** Volviendo a su sitio (el desenfoque de detrás se va a la vez, no después). */
+    var saliendo by mutableStateOf(false)
     var donde by mutableStateOf<Rect?>(null)
     fun abre(id: String, fila: androidx.compose.ui.layout.LayoutCoordinates?) { donde = fila?.takeIf { it.isAttached }?.boundsInRoot(); libro = id; Capas.asomo = true }
 }
@@ -179,8 +182,8 @@ fun CapaAsomo(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit) {
     var cerrando by remember(id) { mutableStateOf(false) }
     LaunchedEffect(id) { t.animateTo(1f, spring(dampingRatio = 0.72f, stiffness = 380f)) }
     fun cierra(despues: () -> Unit = {}) {
-        if (cerrando) return; cerrando = true
-        ambito.launch { t.animateTo(0f, tween(200)); Asomo.libro = null; Capas.asomo = false; despues() }
+        if (cerrando) return; cerrando = true; Asomo.saliendo = true
+        ambito.launch { t.animateTo(0f, spring(dampingRatio = 1f, stiffness = 420f)); Asomo.libro = null; Asomo.saliendo = false; Capas.asomo = false; despues() }
     }
     androidx.activity.compose.BackHandler { cierra() }
     val densidad = LocalDensity.current
@@ -194,6 +197,8 @@ fun CapaAsomo(alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit) {
                 translationY = (desde - with(densidad) { arriba.toPx() }) * (1f - t.value)
                 val e = 1f + 0.04f * t.value; scaleX = e; scaleY = e
                 shadowElevation = 24.dp.toPx() * t.value.coerceIn(0f, 1f)
+                // (al volver, se funde con su fila, que ya se está desenfocando menos)
+                alpha = (t.value / 0.3f).coerceIn(0f, 1f)
             }.background(Paper).padding(horizontal = 14.dp)) {
                 FilaLibro(l, { cierra { Origen.apunta(l.id, null, null); alAbrir(l) } })
             }

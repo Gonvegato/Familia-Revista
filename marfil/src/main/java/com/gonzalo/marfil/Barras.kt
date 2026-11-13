@@ -1,5 +1,7 @@
 package com.gonzalo.marfil
 
+import androidx.compose.ui.graphics.graphicsLayer
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -175,10 +177,12 @@ fun SemanaTocable(d: DatosLectura, modifier: Modifier = Modifier, alto: Int = 74
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(Modifier.fillMaxWidth().height(alto.dp), contentAlignment = Alignment.BottomCenter) {
+                    val color by androidx.compose.animation.animateColorAsState(if (sel) Acento else if (m >= 1) Charcoal else Line, androidx.compose.animation.core.tween(180), label = "barra")
+                    val globo by androidx.compose.animation.core.animateFloatAsState(if (sel) 1f else 0f, androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 520f), label = "globo")
                     Box(Modifier.fillMaxWidth().height(if (m >= 1) maxOf(4f, alto * m / tope).dp else 3.dp)
-                        .background(if (sel) Acento else if (m >= 1) Charcoal else Line)
+                        .background(color)
                         .then(if (sel) Modifier.border(2.dp, Charcoal) else Modifier))
-                    if (sel) {
+                    if (globo > 0.01f) {
                         // La etiqueta, encima de la barra (puede salirse de su columna; no se recorta)
                         val arriba = if (m >= 1) maxOf(4f, alto * m / tope) else 3f
                         Text("$letra · ${minutosDia(m)}", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, maxLines = 1, softWrap = false,
@@ -186,6 +190,11 @@ fun SemanaTocable(d: DatosLectura, modifier: Modifier = Modifier, alto: Int = 74
                                 .offset(y = (-(arriba + 6)).dp)
                                 // (en los extremos se pega a su lado, para no salirse de la pantalla)
                                 .wrapContentWidth(align = when (i) { 0 -> Alignment.Start; d.semana.lastIndex -> Alignment.End; else -> Alignment.CenterHorizontally }, unbounded = true)
+                                .graphicsLayer {
+                                    alpha = globo.coerceIn(0f, 1f); val e = 0.85f + 0.15f * globo; scaleX = e; scaleY = e
+                                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+                                    compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha
+                                }
                                 .background(Charcoal).padding(horizontal = 7.dp, vertical = 4.dp))
                     }
                 }

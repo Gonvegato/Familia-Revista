@@ -75,7 +75,8 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
     // Desde cualquier página o desde Ajustes, Atrás vuelve a la portada (y desde la portada, sale)
     BackHandler(enabled = fichaId == null && sagaId == null && autor == null && d != Destino.Portada) { destino = 0 }
     // (asomarse a un libro desenfoca lo de detrás)
-    val desenfoque by androidx.compose.animation.core.animateDpAsState(if (Asomo.libro != null) 10.dp else 0.dp, label = "asomo")
+    val desenfoque by androidx.compose.animation.core.animateDpAsState(if (Asomo.libro != null && !Asomo.saliendo) 10.dp else 0.dp,
+        androidx.compose.animation.core.spring(dampingRatio = 1f, stiffness = 420f), label = "asomo")
 
     Box(Modifier.fillMaxSize().background(Paper)) {
         // La portada y las secciones son páginas de una sola pantalla (se pasan con las pestañas o con el dedo); Ajustes va aparte
@@ -114,12 +115,16 @@ private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) ->
             if (visible != fichaId) { origen = com.gonzalo.familia.Origen.toma(fichaId); visible = fichaId; aperturas++; t.snapTo(0f); atras.snapTo(0f) }
             Capas.ficha = true
             if (origen?.tapa != null) com.gonzalo.familia.Vuelo.clave = fichaId
-            t.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.9f, stiffness = 230f))
+            t.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.9f, stiffness = 230f)) { com.gonzalo.familia.Vuelo.t = value }
             com.gonzalo.familia.Vuelo.clave = null
         } else if (visible != null) {
             com.gonzalo.familia.Vibra.tic(vista)
+            // La tapa sale de donde está ahora (aunque hayas bajado en la ficha o la hayas encogido con el gesto de atrás)
+            com.gonzalo.familia.Vuelo.destino = com.gonzalo.familia.Vuelo.destinoAhora()
             if (origen?.tapa != null) com.gonzalo.familia.Vuelo.clave = visible
-            t.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 1f, stiffness = 300f))
+            // Lo que encogió el gesto de atrás se deshace a la vez: así la ficha aterriza justo sobre su fila (sin salto al final)
+            launch { atras.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 1f, stiffness = 300f)) }
+            t.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 1f, stiffness = 300f)) { com.gonzalo.familia.Vuelo.t = value }
             com.gonzalo.familia.Vuelo.clave = null; com.gonzalo.familia.Vuelo.destino = null
             visible = null; atras.snapTo(0f); Capas.ficha = false
         }
@@ -145,8 +150,8 @@ private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) ->
         val s = (1f - 0.1f * p) * (if (o == null) 0.96f + 0.04f * tt else 1f)
         scaleX = s; scaleY = s
         translationX = (if (desdeIzquierda) 1f else -1f) * p * with(densidad) { 24.dp.toPx() }
-        // Al cerrar, el último tramo (cuando el papel ya tiene el tamaño de la fila) se funde con la fila en vez de quitarse de golpe
-        alpha = if (o == null) tt.coerceIn(0f, 1f) else if (fichaId == null) (tt / 0.28f).coerceIn(0f, 1f) else 1f
+        // El papel aparece al empezar y, al cerrar, el último tramo (ya del tamaño de la fila) se funde con ella: nada de golpe
+        alpha = if (o == null) tt.coerceIn(0f, 1f) else com.gonzalo.familia.fundidoBorde(tt)
     }) {
         // El papel de la ficha crece y encoge entero; lo de dentro aparece pronto al abrir y se va pronto al cerrar (sin transparencias
         // a medio camino encima de la lista)
@@ -168,6 +173,7 @@ private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) ->
                 translationX = r.left; translationY = r.top
                 scaleX = r.width / hasta.width; scaleY = r.height / hasta.height
                 shadowElevation = 18.dp.toPx() * t.value
+                alpha = com.gonzalo.familia.Vuelo.alfaCopia()
             }) { PortadaLibro(libro, Modifier.fillMaxSize(), radio = 0, conAutor = false) }
         }
     }

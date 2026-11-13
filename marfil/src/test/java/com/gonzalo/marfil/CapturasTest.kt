@@ -395,7 +395,7 @@ class CapturasTest {
         rule.mainClock.advanceTimeBy(1200); rule.waitForIdle()
         rule.onRoot().captureRoboImage("build/outputs/roborazzi/9c_buscar_subrayados.png")
         rule.onNodeWithText("CERRAR").performClick(); rule.mainClock.autoAdvance = false
-        rule.mainClock.advanceTimeBy(90); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_busca_cierra.png")
+        listOf(90L, 90L, 90L, 90L).fold(0L) { acc, ms -> val t = acc + ms; rule.mainClock.advanceTimeBy(ms); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_busca_cierra_$t.png"); t }
         rule.mainClock.autoAdvance = true
     }
 
@@ -409,7 +409,7 @@ class CapturasTest {
         listOf(60L, 140L, 260L).forEach { ms -> rule.mainClock.advanceTimeBy(ms); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_abre_$ms.png") }
         rule.mainClock.advanceTimeBy(2000); rule.waitForIdle()
         rule.onNodeWithText("← VOLVER").performClick()
-        listOf(60L, 140L).forEach { ms -> rule.mainClock.advanceTimeBy(ms); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_cierra_$ms.png") }
+        listOf(60L, 80L, 80L, 80L, 80L, 80L).fold(0L) { acc, ms -> val t = acc + ms; rule.mainClock.advanceTimeBy(ms); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_cierra_$t.png"); t }
         rule.mainClock.autoAdvance = true
     }
 

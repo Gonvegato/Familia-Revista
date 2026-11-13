@@ -55,12 +55,33 @@ object Origen {
     fun toma(clave: String): Datos? = pendiente?.takeIf { it.clave == clave }.also { pendiente = null }
 }
 
-/** La tapa que va volando (para esconder, mientras tanto, la de la fila y la de destino). */
+/**
+ * La tapa que va volando entre la fila y la ficha. [t] es por dónde va (0: en la fila; 1: en la ficha). Al despegar y al aterrizar, la copia
+ * que vuela y la tapa de verdad se funden (no se cambia una por otra de golpe): así no se nota que no son idénticas (con o sin autor
+ * pintado, con o sin marco).
+ */
 object Vuelo {
     var clave by mutableStateOf<String?>(null)
     /** Dónde está la tapa de destino (la de la ficha), en la pantalla. */
     var destino by mutableStateOf<Rect?>(null)
+    /** La tapa de destino (para saber dónde está justo al cerrar, aunque se haya movido al bajar o con el gesto de atrás). */
+    var coords: LayoutCoordinates? = null
+    var t by androidx.compose.runtime.mutableFloatStateOf(0f)
+
+    private fun despega() = (t / 0.12f).coerceIn(0f, 1f)
+    private fun aterriza() = ((1f - t) / 0.15f).coerceIn(0f, 1f)
+    /** Lo que se ve de la copia que vuela. */
+    fun alfaCopia(): Float = minOf(despega(), aterriza())
+    /** Lo que se ve de la tapa de la fila (de donde sale y adonde vuelve). */
+    fun alfaOrigen(id: String): Float = if (clave != id) 1f else 1f - despega()
+    /** Lo que se ve de la tapa de la ficha. */
+    fun alfaDestino(id: String): Float = if (clave != id) 1f else 1f - aterriza()
+    /** Dónde está ahora la tapa de destino (o la última que se supo). */
+    fun destinoAhora(): Rect? = coords?.takeIf { it.isAttached }?.boundsInRoot() ?: destino
 }
+
+/** Lo que se ve del papel que crece desde una fila (o una palabra): aparece al empezar y se funde al acabar, sin aparecer ni irse de golpe. */
+fun fundidoBorde(t: Float): Float = (t / 0.22f).coerceIn(0f, 1f)
 
 fun lerpRect(a: Rect, b: Rect, t: Float) = Rect(lerp(a.left, b.left, t), lerp(a.top, b.top, t), lerp(a.right, b.right, t), lerp(a.bottom, b.bottom, t))
 
