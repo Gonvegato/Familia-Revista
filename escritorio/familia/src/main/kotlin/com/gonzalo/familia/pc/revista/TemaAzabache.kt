@@ -29,6 +29,10 @@ object TemaAzabache {
     fun tonosDe(s: Map<String, Any?>, sistema: Boolean = Modo.oscuro): Tones {
         val fondo = FONDOS.firstOrNull { it.id == s.texto("skin_fondo") }
         val oscuro = oscuroDe(s, sistema)
+        // Sin nada elegido en Apariencia de Jonsu (ni fondo, ni acento, ni colores a mano): los colores de la familia con su ciruela, como en Android
+        if (s.texto("skin_fondo").isEmpty() && s.texto("skin_accent_id").ifBlank { "edicion" } == "edicion" &&
+            s.largo("skin_fondo_propio") == 0L && s.largo("skin_tinta_propia") == 0L && s.largo("skin_acento_propio") == 0L)
+            return paletaFamilia("azabache").let { if (oscuro) it.dark else it.light }
         val paleta = PALETTES.first { it.id == "revista" }
         val base = fondo?.tones ?: if (oscuro) paleta.dark else paleta.light
         val acento = s.texto("skin_accent_id").ifBlank { "edicion" }

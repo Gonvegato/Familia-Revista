@@ -66,8 +66,36 @@ internal fun t(
     if (sand == 0L) 0 else sand or 0xFF000000, if (line == 0L) 0 else line or 0xFF000000,
     if (edge == 0L) 0 else edge or 0xFF000000, if (muted == 0L) 0 else muted or 0xFF000000)
 
-/** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
-val PALETTES: List<Palette> = listOf(
+/**
+ * Los colores de la familia (noviembre de 2026), los mismos que en Android: papel #F8F0D4 y texto negro (de noche, al revés), y a cada
+ * app la distingue su acento: app → (acento, su versión oscura, su versión clara). Los de serie en las seis.
+ */
+private val ACENTOS_FAMILIA = mapOf(
+    "marfil" to Triple(0xB0791EL, 0x7B5515L, 0xC69D55L),    // Seshat, ocre
+    "hiedra" to Triple(0x7A8A3AL, 0x556129L, 0xA0A968L),    // Bastet, oliva
+    "cobalto" to Triple(0x5A7896L, 0x3F5469L, 0x899CA9L),   // Thot, azul pizarra
+    "mostaza" to Triple(0xB56576L, 0x7F4753L, 0xC98F92L),   // Hathor, rosa viejo
+    "cobre" to Triple(0x5D1414L, 0x410E0EL, 0x8C564EL),     // Nut, vino
+    "azabache" to Triple(0x8E5A78L, 0x633F54L, 0xB38E98L),  // Jonsu, ciruela
+)
+private val NOMBRES_FAMILIA = mapOf("marfil" to "Seshat", "hiedra" to "Bastet", "cobalto" to "Thot", "mostaza" to "Hathor", "cobre" to "Nut", "azabache" to "Jonsu")
+
+/** El acento de serie de [app] (el de la familia). */
+fun acentoFamilia(app: String = com.gonzalo.familia.pc.LaFamilia.app): Long = (ACENTOS_FAMILIA[app] ?: ACENTOS_FAMILIA.getValue("marfil")).first or 0xFF000000
+
+/** La paleta «Familia» de [app] (la de la app que está abierta). */
+fun paletaFamilia(app: String = com.gonzalo.familia.pc.LaFamilia.app): Palette {
+    val (a, o, c) = ACENTOS_FAMILIA[app] ?: ACENTOS_FAMILIA.getValue("marfil")
+    return Palette("familia", "Familia", NOMBRES_FAMILIA[app] ?: "Seshat",
+        t(0xF8F0D4, 0xFBF6E5, 0x000000, a, 0x000000, 0x57544A, 0x888475, o, a),
+        t(0x000000, 0x0F0E0D, 0xF8F0D4, a, 0xF8F0D4, 0xA19C8A, 0x706C5F, c, a))
+}
+
+/** Las paletas: la de la familia (con el acento de esta app) y las de antes, para elegir en Apariencia. */
+val PALETTES: List<Palette> get() = listOf(paletaFamilia()) + PALETAS_ATRIO
+
+/** Las paletas de antes. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
+private val PALETAS_ATRIO: List<Palette> = listOf(
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)

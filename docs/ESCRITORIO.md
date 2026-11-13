@@ -180,6 +180,12 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
   sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. La Sala (para la tele) sigue con su cara propia.
 
+
+**Los colores, como en el móvil (noviembre de 2026).** De serie, las seis usan los colores de la familia: papel #F8F0D4 y texto negro (de
+noche, al revés), y el acento de cada una: Seshat ocre #B0791E, Bastet oliva #7A8A3A, Thot azul pizarra #5A7896, Hathor rosa viejo
+#B56576, Nut vino #5D1414 y Jonsu ciruela #8E5A78. Es la paleta «familia» que el móvil guarda en la cuenta (`ajustes/<app>` → `skin`),
+así que lo que elijas en Apariencia del móvil se ve igual aquí. Antes el ordenador no conocía esa paleta y se quedaba con el rojo de imprenta.
+
 ## Lo que todavía no hacen (para no engañar)
 
 - **Jonsu**: «Ver en Hathor» (ya hay Hathor para el ordenador, pero la ficha de Jonsu aún dice que no y no la abre) y, en la vista de tu pareja, sus películas y series

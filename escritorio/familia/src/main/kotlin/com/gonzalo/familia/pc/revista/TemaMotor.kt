@@ -113,7 +113,7 @@ object Modo {
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "revista" })
+    var palette by mutableStateOf(PALETTES.first { it.id == "familia" })
     var display by mutableStateOf("Atrio")
     var body by mutableStateOf("Atrio")
     var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
@@ -124,7 +124,7 @@ object Skin {
     /** Colores invertidos: el fondo con el color del texto y el texto con el del fondo; el acento se mantiene. */
     var invertido by mutableStateOf(false)
     /** Los colores de Azabache (los que tienes puestos allí, leídos de la cuenta) en lugar de los de la paleta de esta app. */
-    var origenAtrio by mutableStateOf(true)
+    var origenAtrio by mutableStateOf(false)
     /** Colores elegidos a mano, como «A tu manera» de Azabache (0 = automático): por encima de todo lo demás. */
     var fondoPropio by mutableStateOf(0L)
     /** Un fondo de color de [FONDOS]; "" = papel. */
@@ -150,7 +150,12 @@ object Skin {
     }
 
     /** La paleta de la app (con su acento elegido), en claro o en oscuro. */
-    private fun propiosPara(noche: Boolean): Tones = (if (noche) palette.dark else palette.light).let { b ->
+    private fun propiosPara(noche: Boolean): Tones {
+        // (la de la familia, con el acento de la app que está abierta)
+        val pal = if (palette.id == "familia") paletaFamilia() else palette
+        return propiosDe(pal, noche)
+    }
+    private fun propiosDe(pal: Palette, noche: Boolean): Tones = (if (noche) pal.dark else pal.light).let { b ->
         ACCENT_COLORS.firstOrNull { it.id == accentId }?.let { a -> b.copy(general = (if (noche) a.dark else a.light) or 0xFF000000) } ?: b
     }
 

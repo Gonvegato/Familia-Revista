@@ -4,15 +4,12 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.gonzalo.familia.pc.LaFamilia
 import com.gonzalo.familia.pc.appDeLaFamilia
-import com.gonzalo.familia.pc.revista.Skin
 
 fun main(args: Array<String>) {
     val icono = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
         ?.let { runCatching { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }.getOrNull() }
     appDeLaFamilia("cobre", "Nut", icono, args = args,
         alIniciar = {
-            // (sin apariencia tuya todavía, el acento de Cobre, como en el móvil)
-            if (Skin.ajustesAt == 0L) Skin.accentId = "cobre"
             Mando.inicia()
             // Cada lista se pone al día si le toca (sin molestar); y, si lo elegiste, el último canal, como una tele
             LaFamilia.alEntrar { Tele.alAbrir() }

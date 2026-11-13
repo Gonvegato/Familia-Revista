@@ -155,7 +155,7 @@ class CapturasTest : ConCuenta() {
             "temp" to 1L, "ep" to e.toLong(), "pos" to 50 * 60_000L, "dur" to 50 * 60_000L, "visto" to true, "ul" to ahora - 86_400_000L * (3 - e))) }
         check(otro.sincroniza().ok); sincroniza()
         Apariencia.inicia("cobre")
-        Skin.accentId = "cobre"
+        Skin.accentId = "paleta"  // (el de la familia: el vino de Nut)
 
         fun captura(nombre: String, pant: Pantalla, oscuro: Boolean = false, antes: () -> Unit = {}) {
             com.gonzalo.familia.pc.revista.Modo.eleccion = if (oscuro) 2 else 1
