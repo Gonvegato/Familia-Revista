@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import com.gonzalo.familia.pulsable
+import com.gonzalo.familia.entrada
+import com.gonzalo.familia.llenado
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -92,7 +95,7 @@ fun metaLibro(l: Libro, conEstado: Boolean = false): String = listOf(
 fun FilaLibro(l: Libro, alAbrir: (Libro) -> Unit, modifier: Modifier = Modifier, portada: Dp = 84.dp, numero: Int = 0, conEstado: Boolean = false, sangria: Dp = 0.dp, extra: String = "", orden: Int = 0) {
     val alto = portada * 1.5f
     // (la fila mide lo que la portada o, si el texto no cabe —letra grande—, lo que el texto; así lo de abajo va abajo)
-    Row(modifier.fillMaxWidth().clickable { alAbrir(l) }.padding(start = sangria, top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
+    Row(modifier.fillMaxWidth().then(if (orden in 1..9) Modifier.entrada("fila:${l.id}:$orden", orden) else Modifier).pulsable { alAbrir(l) }.padding(start = sangria, top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
         PortadaLibro(l, Modifier.width(portada).height(alto), radio = 0)
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
             val num = when { orden > 0 -> "%02d".format(orden); numero > 0 -> "Nº $numero"; else -> "" }
@@ -122,7 +125,8 @@ private fun PieFila(l: Libro) {
     when (l.estado) {
         Estado.LEYENDO, Estado.ABANDONADO -> {
             linea(porcentaje(l.fraccion), Paginas.texto(l))
-            Box(Modifier.padding(top = 5.dp).fillMaxWidth().height(5.dp).background(Line)) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+            val f = llenado("fila:${l.id}", l.fraccion.coerceIn(0f, 1f))
+            Box(Modifier.padding(top = 5.dp).fillMaxWidth().height(5.dp).background(Line)) { Box(Modifier.fillMaxWidth(f).fillMaxHeight().background(Acento)) }
         }
         Estado.PENDIENTE -> linea(Paginas.texto(l).uppercase(), "")
         Estado.LEIDO -> linea(if (l.terminado > 0) "TERMINADO EL ${Formato.fecha(l.terminado).uppercase()}" else "TERMINADO", if (l.paginas > 0) "${Formato.cifra(l.paginas)} PÁGS" else "")
@@ -156,7 +160,7 @@ fun resumenSaga(todos: List<Libro>): String {
 fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAbrirSaga: (Saga) -> Unit, alAbrirLibro: (Libro) -> Unit) {
     val todos = remember(f.saga, Biblioteca.libros.size) { Sagas.libros(f.saga) }
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().clickable(onClick = alAlternar).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().pulsable(vibra = com.gonzalo.familia.Vibra::tic, onClick = alAlternar).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             AbanicoSaga(f.miembros)
             Column(Modifier.weight(1f).padding(start = 16.dp, end = 8.dp)) {
                 Text(f.saga.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -340,7 +344,9 @@ fun PantPrincipal(
     val ambito = rememberCoroutineScope()
     // Lo que pide fuera (Atrás, un widget, otra app) mueve las páginas; lo que mueves tú con el dedo, se cuenta fuera
     LaunchedEffect(pagina) { val p = pagina.coerceIn(0, PAGINAS.size - 1); if (pager.currentPage != p) pager.animateScrollToPage(p) }
-    LaunchedEffect(pager.settledPage) { alPagina(pager.settledPage) }
+    val vista = androidx.compose.ui.platform.LocalView.current
+    var asentada by remember { mutableIntStateOf(pager.settledPage) }
+    LaunchedEffect(pager.settledPage) { if (pager.settledPage != asentada) { asentada = pager.settledPage; com.gonzalo.familia.Vibra.tic(vista) }; alPagina(pager.settledPage) }
     var buscando by rememberSaveable { mutableStateOf(false) }
     var busca by rememberSaveable { mutableStateOf("") }
     val todos = Biblioteca.propios()
@@ -400,11 +406,11 @@ fun PantPrincipal(
                 NombreConPunto("Seshat", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
-        PestanasPaginas(NOMBRES_PAGINAS, pager.currentPage, cuentas) { i -> buscando = false; busca = ""; ambito.launch { pager.animateScrollToPage(i) } }
+        PestanasPaginas(NOMBRES_PAGINAS, pager, cuentas) { i -> buscando = false; busca = ""; ambito.launch { pager.animateScrollToPage(i) } }
         if (buscando) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) { CampoRevista("Buscar", busca, "título, autor o saga") { busca = it } }
         if (busca.isNotBlank()) Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) { Resultados(busca, todos, alAbrir) }
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
-        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }) { i ->
+        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }, flingBehavior = com.gonzalo.familia.pasoDePagina(pager)) { i ->
             when (PAGINAS[i]) {
                 Destino.Portada -> PaginaPortada(alAbrir = alAbrir, alLeer = alLeer, alAnadir = alAnadir, alIr = { d -> ambito.launch { pager.animateScrollToPage(PAGINAS.indexOf(d).coerceAtLeast(0)) } }, alAjustes = alAjustes)
                 Destino.Escritos -> PantEscritos(alVolver = {}, alLeer = alLeer, abrir = escritoPedido, alAbierto = alEscritoAbierto, enPagina = true)
@@ -423,17 +429,23 @@ fun PantPrincipal(
     }
 }
 
-/** Las pestañas de las secciones (como las de Atrio): la elegida en tinta con el subrayado de acento; su número, en acento. Si no caben, se deslizan y la elegida siempre se ve. */
+/**
+ * Las pestañas de las secciones. La barra se desliza sola con el dedo (sin mover la página) y el bloque del acento va pegado a la página:
+ * sigue al dedo mientras pasas de una a otra, se estira un poco a mitad de camino y se recoge al llegar. Al cambiar de página, la barra
+ * trae la pestaña elegida al centro con un muelle. Los números ruedan cuando cambian.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>, onSel: (Int) -> Unit) {
-    // La fila se desplaza sola solo si la pestaña elegida no se ve entera (y entonces la centra): así no se corta la de al lado
+private fun PestanasPaginas(nombres: List<String>, pager: androidx.compose.foundation.pager.PagerState, cuentas: List<Int?>, onSel: (Int) -> Unit) {
     val scroll = androidx.compose.foundation.rememberScrollState()
     val sitios = remember { androidx.compose.runtime.mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
     var anchoFila by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    val sel = pager.currentPage
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
     LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
         val (x, w) = sitios[sel] ?: return@LaunchedEffect
-        if (anchoFila <= 0) return@LaunchedEffect
-        if (x < scroll.value || x + w > scroll.value + anchoFila) scroll.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, scroll.maxValue))
+        if (anchoFila <= 0 || scroll.maxValue <= 0) return@LaunchedEffect
+        scroll.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, scroll.maxValue), androidx.compose.animation.core.spring(dampingRatio = 0.95f, stiffness = 220f))
     }
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().onGloballyPositioned { anchoFila = it.size.width }.drawWithContent {
@@ -442,15 +454,33 @@ private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>
                 val f = 28.dp.toPx()
                 if (scroll.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
                 if (scroll.value < scroll.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-            }.horizontalScroll(scroll).height(IntrinsicSize.Max), verticalAlignment = Alignment.CenterVertically) {
+            }.horizontalScroll(scroll).height(IntrinsicSize.Max)
+            // El bloque del acento: se pinta (sin recomponer) donde va la página, entre dos pestañas si estás a medio camino
+            .drawBehind {
+                val p = pager.currentPage + pager.currentPageOffsetFraction
+                val i0 = kotlin.math.floor(p).toInt().coerceIn(0, nombres.size - 1)
+                val i1 = (i0 + 1).coerceAtMost(nombres.size - 1)
+                val f = (p - i0).coerceIn(0f, 1f)
+                val a = sitios[i0] ?: return@drawBehind
+                val b = sitios[i1] ?: a
+                var x = a.first + (b.first - a.first) * f
+                var w = a.second + (b.second - a.second) * f
+                if (i0 != i1) {
+                    val estira = kotlin.math.sin(Math.PI * f).toFloat() * minOf(with(densidad) { 26.dp.toPx() }, kotlin.math.abs(b.first - a.first) * 0.18f)
+                    x -= estira * 0.3f; w += estira
+                }
+                drawRect(Acento, Offset(x, 0f), Size(w, size.height))
+            }, verticalAlignment = Alignment.CenterVertically) {
             nombres.forEachIndexed { i, n ->
                 val on = i == sel
-                Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).let { kotlin.math.round(it).toInt() } to c.size.width }.clickable { onSel(i) }
-                    .background(if (on) Acento else Color.Transparent)
+                Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).let { kotlin.math.round(it).toInt() } to c.size.width }
+                    .pulsable(hundido = 0.94f, vibra = if (on) null else com.gonzalo.familia.Vibra::tic) { onSel(i) }
                     .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Dirección C: la elegida, en un bloque del acento
                     Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                    cuentas.getOrNull(i)?.let { c ->
+                        Text(" ", fontSize = 13.sp)
+                        com.gonzalo.familia.Rodante(c) { v -> Text("$v", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                    }
                 }
             }
         }

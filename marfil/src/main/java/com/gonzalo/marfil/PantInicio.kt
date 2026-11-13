@@ -1,5 +1,7 @@
 package com.gonzalo.marfil
 
+import com.gonzalo.familia.pulsable
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -211,7 +213,7 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
     val acentoClaro = lerpColor(Acento, Color.White, 0.35f)
     // La portada (con su paspartú) va entera en el hueco de arriba y acaba antes del texto: el oscurecido solo queda detrás del texto, nunca
     // encima de la portada (antes el degradado de abajo se comía el pie del marco y parecía cortado). El hueco se ajusta al tamaño de letra.
-    Box(Modifier.fillMaxWidth().height(ALTO_CARTEL).background(Brush.verticalGradient(listOf(claro, oscuro))).clickable { alAbrir(l) }) {
+    Box(Modifier.fillMaxWidth().height(ALTO_CARTEL).background(Brush.verticalGradient(listOf(claro, oscuro))).pulsable(hundido = 0.985f) { alAbrir(l) }) {
         val conFondo = l.fondo.isNotBlank()
         if (conFondo) {
             // Con fondo elegido: el fondo ocupa el cartel (recortado) y la portada va encima, grande, arriba a la izquierda
@@ -229,7 +231,8 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
             Text("AHORA LEES · ${porcentaje(l.fraccion)}", color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp, maxLines = 1)
             Text(l.titulo.uppercase(), color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 4.dp))
-            Box(Modifier.padding(top = 10.dp).fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.22f))) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+            val fr = com.gonzalo.familia.llenado("cartel:${l.id}", l.fraccion.coerceIn(0f, 1f), 260)
+            Box(Modifier.padding(top = 10.dp).fillMaxWidth().height(6.dp).background(Color.White.copy(alpha = 0.22f))) { Box(Modifier.fillMaxWidth(fr).fillMaxHeight().background(Acento)) }
             Row(Modifier.fillMaxWidth().padding(top = 7.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(l.autor.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 val derecha = listOf(Paginas.texto(l), if (l.msLeidos > 0) tiempo(l.msLeidos) else "").filter { it.isNotBlank() }.joinToString(" · ")
@@ -264,7 +267,7 @@ private fun BloqueReto(meta: Int, hechos: Int, ano: Int, alIr: () -> Unit, alPon
         }
         if (meta > 0) {
             Box(Modifier.padding(top = 8.dp).fillMaxWidth().height(9.dp).background(Line)) {
-                Box(Modifier.fillMaxWidth((hechos.toFloat() / meta).coerceIn(0f, 1f)).fillMaxHeight().background(Acento))
+                Box(Modifier.fillMaxWidth(com.gonzalo.familia.llenado("reto:$ano", (hechos.toFloat() / meta).coerceIn(0f, 1f), 320)).fillMaxHeight().background(Acento))
             }
             Text(ritmoReto(meta, hechos).texto(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, letterSpacing = 1.sp, lineHeight = 14.sp,
                 modifier = Modifier.padding(top = 6.dp))
@@ -288,7 +291,7 @@ private fun EncabezadoCorto(titulo: String, enlace: String, alIr: () -> Unit) {
 /** Una tapa de «También lees», con su barra y su porcentaje. */
 @Composable
 private fun TapaConAvance(l: Libro, ancho: Int, alAbrir: (Libro) -> Unit) {
-    Column(Modifier.width(ancho.dp).clickable { alAbrir(l) }) {
+    Column(Modifier.width(ancho.dp).pulsable { alAbrir(l) }) {
         PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp), radio = 0)
         Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
         Text("${(l.fraccion * 100).toInt().coerceIn(0, 100)} %", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
@@ -298,7 +301,7 @@ private fun TapaConAvance(l: Libro, ancho: Int, alAbrir: (Libro) -> Unit) {
 /** Una tapa de «Pendientes» (de una saga, cuántos más quedan). */
 @Composable
 private fun TapaPendiente(l: Libro, saga: FilaLista.DeSaga?, ancho: Int, alAbrir: (Libro) -> Unit) {
-    Column(Modifier.width(ancho.dp).clickable { alAbrir(l) }) {
+    Column(Modifier.width(ancho.dp).pulsable { alAbrir(l) }) {
         PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp), radio = 0)
         if (saga != null) Text("+${saga.miembros.size - 1} DE LA SAGA", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.4.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
     }
