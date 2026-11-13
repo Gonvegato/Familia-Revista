@@ -19,8 +19,11 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ApplicationProvider
@@ -340,6 +343,24 @@ class CapturasTest {
         // (en Leyendo solo está «Dune»: sale como libro suelto, con su saga al lado)
         rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4_ficha")
         rule.onNodeWithText("Añadido", useUnmergedTree = true).performScrollTo(); foto("4b_ficha_abajo")
+    }
+
+    /** El buscador: creciendo desde BUSCAR, vacío (atajos) y buscando en los subrayados. */
+    @Test fun buscador() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithText("BUSCAR").performClick()
+        rule.mainClock.advanceTimeBy(110); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_busca_110.png")
+        rule.mainClock.advanceTimeBy(1500); rule.mainClock.autoAdvance = true; rule.waitForIdle()
+        rule.waitForIdle(); rule.onRoot().captureRoboImage("build/outputs/roborazzi/9b_buscar.png")
+        Thread.sleep(500); org.robolectric.shadows.ShadowLooper.idleMainLooper(); rule.waitForIdle()
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("especia"); rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performImeAction(); org.robolectric.shadows.ShadowLooper.idleMainLooper(); rule.waitForIdle(); Thread.sleep(600); rule.waitForIdle()
+        rule.mainClock.advanceTimeBy(1200); rule.waitForIdle()
+        rule.onRoot().captureRoboImage("build/outputs/roborazzi/9c_buscar_subrayados.png")
+        rule.onNodeWithText("CERRAR").performClick(); rule.mainClock.autoAdvance = false
+        rule.mainClock.advanceTimeBy(90); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_busca_cierra.png")
+        rule.mainClock.autoAdvance = true
     }
 
     /** La ficha naciendo de la fila (con la tapa volando) y volviendo: fotogramas a mitad de camino. */

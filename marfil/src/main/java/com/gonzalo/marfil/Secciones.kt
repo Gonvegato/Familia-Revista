@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import com.gonzalo.familia.pulsable
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.graphics.graphicsLayer
 import com.gonzalo.familia.entrada
 import com.gonzalo.familia.llenado
@@ -314,20 +315,6 @@ private fun PaginaSagas(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSag
     }
 }
 
-/** Lo que sale al buscar: todos los libros que cuadran, estén en el estante que estén. */
-@Composable
-private fun Resultados(busca: String, todos: List<Libro>, alAbrir: (Libro) -> Unit) {
-    val q = norm(busca)
-    val l = remember(busca, todos) {
-        todos.filter { norm(it.titulo).contains(q) || norm(it.autor).contains(q) || Sagas.de(it.clave)?.let { s -> norm(s.nombre).contains(q) } == true }
-            .sortedWith(compareByDescending<Libro> { it.ultima }.thenByDescending { it.anadido })
-    }
-    LazyColumn(Modifier.fillMaxSize()) {
-        item { Antetitulo("Resultados · ${l.size}", Modifier.padding(top = 14.dp, bottom = 6.dp), color = Acento, conCuadro = false); Filete(2.dp) }
-        if (l.isEmpty()) item { Text("Nada con «$busca».", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 24.dp)) }
-        itemsIndexed(l, key = { _, it -> it.id }) { i, x -> FilaLibro(x, alAbrir, conEstado = true, orden = i + 1); Filete(2.dp) }
-    }
-}
 
 /** Las páginas de Seshat, en el orden de las pestañas: la portada y luego las secciones (los índices son los de [Destino]). */
 val PAGINAS = listOf(Destino.Portada, Destino.Leyendo, Destino.Pendientes, Destino.Leidos, Destino.Abandonados, Destino.Autores, Destino.Sagas, Destino.Escritos)
@@ -353,7 +340,8 @@ fun PantPrincipal(
     var asentada by remember { mutableIntStateOf(pager.settledPage) }
     LaunchedEffect(pager.settledPage) { if (pager.settledPage != asentada) { asentada = pager.settledPage; com.gonzalo.familia.Vibra.tic(vista) }; alPagina(pager.settledPage) }
     var buscando by rememberSaveable { mutableStateOf(false) }
-    var busca by rememberSaveable { mutableStateOf("") }
+    var aperturaBusca by remember { mutableIntStateOf(0) }
+    val sitioBuscar = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
     val todos = Biblioteca.propios()
     val cuentas: List<Int?> = buildList {
         add(null)
@@ -379,13 +367,16 @@ fun PantPrincipal(
         }
     }
     val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         // ---- La cabecera de la dirección C: un bloque de tinta con la fila pequeña y «SESHAT.» en grotesca enorme
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = if (altoNombre > 0 && recogido >= altoNombre - 1) 4.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
                 // Plegada del todo: el nombre, pequeño, a la izquierda de la fila (y ningún hueco negro debajo)
                 if (altoNombre > 0 && recogido >= altoNombre - 1) NombreConPunto("Seshat", 22.sp, Paper, Modifier.padding(end = 14.dp))
-                EnlaceRevista("Buscar", color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) { buscando = !buscando; if (!buscando) busca = "" }
+                EnlaceRevista("Buscar", Modifier.onGloballyPositioned { sitioBuscar[0] = it }, color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) {
+                    if (!buscando) { com.gonzalo.familia.Vibra.clic(vista); aperturaBusca++; buscando = true }
+                }
                 EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = Acento) { alAnadir() }
                 Spacer(Modifier.weight(1f))
                 if (!(altoNombre > 0 && recogido >= altoNombre - 1)) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
@@ -411,11 +402,9 @@ fun PantPrincipal(
                 NombreConPunto("Seshat", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
-        PestanasPaginas(NOMBRES_PAGINAS, pager, cuentas) { i -> buscando = false; busca = ""; ambito.launch { pager.animateScrollToPage(i) } }
-        if (buscando) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) { CampoRevista("Buscar", busca, "título, autor o saga") { busca = it } }
-        if (busca.isNotBlank()) Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) { Resultados(busca, todos, alAbrir) }
+        PestanasPaginas(NOMBRES_PAGINAS, pager, cuentas) { i -> ambito.launch { pager.animateScrollToPage(i) } }
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
-        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }, flingBehavior = com.gonzalo.familia.pasoDePagina(pager)) { i ->
+        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }, flingBehavior = com.gonzalo.familia.pasoDePagina(pager)) { i ->
             when (PAGINAS[i]) {
                 Destino.Portada -> PaginaPortada(alAbrir = alAbrir, alLeer = alLeer, alAnadir = alAnadir, alIr = { d -> ambito.launch { pager.animateScrollToPage(PAGINAS.indexOf(d).coerceAtLeast(0)) } }, alAjustes = alAjustes)
                 Destino.Escritos -> PantEscritos(alVolver = {}, alLeer = alLeer, abrir = escritoPedido, alAbierto = alEscritoAbierto, enPagina = true)
@@ -431,6 +420,10 @@ fun PantPrincipal(
                 }
             }
         }
+    }
+    // El buscador, encima de todo (la ficha que abre va aún más arriba, y al cerrarla se vuelve aquí)
+    if (buscando) Buscador(desde = { sitioBuscar[0]?.takeIf { it.isAttached }?.let { it.boundsInRoot() } }, apertura = aperturaBusca,
+        todos = todos, cuentas = cuentas, alIrA = { i -> ambito.launch { pager.animateScrollToPage(i) } }, alAbrir = alAbrir, alCerrado = { buscando = false })
     }
 }
 
