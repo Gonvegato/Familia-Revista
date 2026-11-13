@@ -1,5 +1,6 @@
 package com.gonzalo.hiedra
 
+import com.gonzalo.familia.CapaAvisos
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -94,7 +95,6 @@ fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrir
     BackHandler(enabled = fichaId == null && sagaId == null && encima == null && pagina != 0) { pagina = 0 }
     BackHandler(enabled = fichaId == null && sagaId == null && encima != null) { encima = if (encima == Destino.Sistemas) Destino.Ajustes else null }
     BackHandler(enabled = sagaId != null && fichaId == null) { sagaId = null }
-    BackHandler(enabled = fichaId != null) { fichaId = null }
 
     Box(Modifier.fillMaxSize().background(Paper)) {
         // La portada y las secciones son páginas de una sola pantalla (se pasan con las pestañas o con el dedo); Ajustes y Tu PC van encima
@@ -107,12 +107,14 @@ fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrir
         AnimatedVisibility(sagaId != null, enter = entraHoja, exit = saleHoja) {
             sagaId?.let { id -> PantSaga(id, alCerrar = { sagaId = null }, alAbrir = { fichaId = it.id }, alJugar = ::jugar) }
         }
-        AnimatedVisibility(fichaId != null, enter = entraHoja, exit = saleHoja) {
-            fichaId?.let { id -> Ficha(id, alCerrar = { fichaId = null }, alJugar = ::jugar, alVincular = { abrirAnadir(null, it.id) }, alIrA = { fichaId = it }, alAbrirSaga = { sagaId = it.id }) }
+        // La ficha nace de la fila que tocaste y se cierra con el gesto de atrás (con vista previa)
+        com.gonzalo.familia.CapaQueNace(fichaId, alCerrar = { fichaId = null }, fondo = Paper, atrasActivo = captura == null) { id, _ ->
+            Ficha(id, alCerrar = { fichaId = null }, alJugar = ::jugar, alVincular = { abrirAnadir(null, it.id) }, alIrA = { fichaId = it }, alAbrirSaga = { sagaId = it.id })
         }
         AnimatedVisibility(captura != null, enter = fadeIn(), exit = fadeOut()) {
             captura?.let { s -> VisorCaptura(s, alCerrar = { captura = null }, alBorrar = { Suite.deleteLocal(s); captura = null }) }
         }
+        CapaAvisos(Charcoal, Paper, Acento, Body)
     }
     BackHandler(enabled = captura != null) { captura = null }
     jugarPc?.let { j -> DialogoJugarPc(j) { jugarPc = null } }

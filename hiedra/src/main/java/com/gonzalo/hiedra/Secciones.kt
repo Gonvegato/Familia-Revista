@@ -1,5 +1,7 @@
 package com.gonzalo.hiedra
 
+import androidx.compose.ui.layout.boundsInRoot
+import com.gonzalo.familia.apareceSegun
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -120,7 +122,8 @@ fun horasCortas(ms: Long): String { val m = ms / 60_000L; return when { m <= 0 -
 fun FilaJuego(j: Juego, alAbrir: (Juego) -> Unit, alJugar: ((Juego) -> Unit)? = null, modifier: Modifier = Modifier, portada: Dp = 84.dp, numero: Int = 0, conEstado: Boolean = false, extra: String = "", orden: Int = 0) {
     val alto = portada * 1.5f
     // (la fila mide lo que la portada o, si el texto no cabe —letra grande—, lo que el texto; así lo de abajo va abajo)
-    Row(modifier.fillMaxWidth().tocable { alAbrir(j) }.testTag("fila-" + j.id).padding(top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
+    val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
+    Row(modifier.fillMaxWidth().onGloballyPositioned { sitio[0] = it }.tocable { com.gonzalo.familia.Origen.apunta(j.id, sitio[0], null); alAbrir(j) }.testTag("fila-" + j.id).padding(top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
         Box(Modifier.width(portada).height(alto)) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = (portada.value * 0.4f).toInt()) }
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
             val num = when { orden > 0 -> "%02d".format(orden); numero > 0 -> "Nº $numero"; else -> "" }
@@ -359,10 +362,13 @@ fun PantPrincipal(
     val ambito = rememberCoroutineScope()
     // Lo que pide fuera (Atrás, un widget, otra app) mueve las páginas; lo que mueves tú con el dedo, se cuenta fuera
     LaunchedEffect(pagina) { val p = pagina.coerceIn(0, PAGINAS.size - 1); if (pager.currentPage != p) pager.animateScrollToPage(p) }
-    LaunchedEffect(pager.settledPage) { alPagina(pager.settledPage) }
+    val vista = androidx.compose.ui.platform.LocalView.current
+    var asentada by remember { mutableIntStateOf(pager.settledPage) }
+    LaunchedEffect(pager.settledPage) { if (pager.settledPage != asentada) { asentada = pager.settledPage; com.gonzalo.familia.Vibra.tic(vista) }; alPagina(pager.settledPage) }
     var buscando by rememberSaveable { mutableStateOf(buscandoInicial) }
-    LaunchedEffect(buscandoInicial) { if (buscandoInicial) { buscando = true; alBuscado() } }
-    var busca by rememberSaveable { mutableStateOf("") }
+    var aperturaBusca by remember { mutableIntStateOf(0) }
+    val sitioBuscar = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
+    LaunchedEffect(buscandoInicial) { if (buscandoInicial) { aperturaBusca++; buscando = true; alBuscado() } }
     // El menú pequeño elegido se mantiene al pasar de una sección a otra
     var menu by rememberSaveable { mutableStateOf<Menu?>(null) }
     val todos = Biblioteca.juegos.toList()
@@ -371,8 +377,6 @@ fun PantPrincipal(
         listOf(Estado.JUGANDO, Estado.PENDIENTE, Estado.PASADO, Estado.ABANDONADO).forEach { e -> add(todos.count { it.estado == e }) }
         add(Sagas.lista.size); add(null)
     }
-    val foco = remember { FocusRequester() }
-    LaunchedEffect(buscando) { if (buscando) runCatching { foco.requestFocus() } }
     // El nombre grande se recoge al bajar (y vuelve al subir): lo que la página aún no ha movido, lo mueve la cabecera
     var altoNombre by remember { mutableIntStateOf(0) }
     var recogido by remember { mutableFloatStateOf(0f) }
@@ -393,17 +397,20 @@ fun PantPrincipal(
     val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
     // En la tablet, las páginas de listas no pasan de 960 dp de ancho (como una revista abierta: las filas no se estiran de lado a lado)
     val tablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700
-    val plegada = altoNombre > 0 && recogido >= altoNombre - 1
+    val plegado = if (altoNombre > 0) ((recogido / altoNombre - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         // ---- La cabecera de la dirección C: un bloque de tinta con la fila pequeña y «BASTET.» en grotesca enorme
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = if (tablet) 40.dp else 20.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = if (plegada) 4.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
-                // Plegada del todo: el nombre, pequeño, a la izquierda de la fila (y ningún hueco negro debajo)
-                if (plegada) NombreConPunto("Bastet", 22.sp, Paper, Modifier.padding(end = 14.dp))
-                EnlaceRevista("Buscar", color = if (buscando) Acento else Paper.copy(alpha = 0.75f)) { buscando = !buscando; if (!buscando) busca = "" }
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
+                // Al plegarse: el nombre, pequeño, aparece poco a poco a la izquierda de la fila (y ningún hueco negro debajo)
+                if (plegado > 0f) NombreConPunto("Bastet", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
+                EnlaceRevista("Buscar", Modifier.onGloballyPositioned { sitioBuscar[0] = it }, color = Paper.copy(alpha = 0.75f)) {
+                    if (!buscando) { com.gonzalo.familia.Vibra.clic(vista); aperturaBusca++; buscando = true }
+                }
                 EnlaceRevista("+ Añadir", Modifier.padding(start = 14.dp), color = acentoSobreTinta()) { alAnadir(null) }
                 Spacer(Modifier.weight(1f))
-                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                if (plegado < 1f) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1, modifier = Modifier.apareceSegun(1f - plegado))
                 androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 4.dp).tocable { alAjustes(0) }.padding(6.dp).size(20.dp))
             }
             // El nombre: su alto se mide una vez y se va quitando según se recoge; encoge con su hueco desde la esquina de arriba a la izquierda
@@ -422,11 +429,10 @@ fun PantPrincipal(
                 NombreConPunto("Bastet", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
-        PestanasPaginas(NOMBRES_PAGINAS, pager.currentPage, cuentas) { i -> buscando = false; busca = ""; ambito.launch { pager.animateScrollToPage(i) } }
-        if (buscando) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) { CampoBusquedaRevista(busca, "título, sistema o saga", foco) { busca = it } }
-        if (busca.isNotBlank()) Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.TopCenter) { Box(Modifier.widthIn(max = 960.dp)) { Resultados(busca, todos, alAbrir, alJugar) } }
+        com.gonzalo.familia.PestanasPager(NOMBRES_PAGINAS, pager, cuentas, Paper, Charcoal, Acento, SobreAcento, Body, Grotesca,
+            toque = { m, _, f -> m.tocable(fuera = 0.dp, onClick = f) }) { i -> ambito.launch { pager.animateScrollToPage(i) } }
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
-        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }) { i ->
+        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }, flingBehavior = com.gonzalo.familia.pasoDePagina(pager)) { i ->
             when (PAGINAS[i]) {
                 Destino.Portada -> PaginaPortada(alAbrir = alAbrir, alJugar = alJugar, alAnadir = alAnadir, alIr = { d -> val p = paginaDe(d); if (p >= 0) ambito.launch { pager.animateScrollToPage(p) } else alIr(d) },
                     alAbrirSaga = alAbrirSaga, alAjustes = alAjustes)
@@ -445,42 +451,14 @@ fun PantPrincipal(
             }
         }
     }
+    // El buscador: crece desde BUSCAR (la ficha que abre va encima; al cerrarla se vuelve aquí)
+    if (buscando) com.gonzalo.familia.CapaBuscar(desde = { sitioBuscar[0]?.takeIf { it.isAttached }?.boundsInRoot() }, apertura = aperturaBusca, pista = "Título, sistema o saga",
+        papel = Paper, tinta = Charcoal, acento = Acento, gris = Muted, letra = Body, bloqueado = com.gonzalo.familia.CapasAbiertas.ficha, alCerrado = { buscando = false }) { q ->
+        Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.TopCenter) { Box(Modifier.widthIn(max = 960.dp)) { Resultados(q, todos, alAbrir, alJugar) } }
+    }
+    }
 }
 
 /** El acento sobre la tinta de la cabecera (que es oscura de día y clara de noche): el elegido, ajustado para leerse ahí. */
 fun acentoSobreTinta(): Color = acentoLegible(AcentoBloque, Charcoal, Paper)
 
-/** Las pestañas de las páginas (dirección C): la elegida, en un bloque del acento; su número al lado. Si no caben, se deslizan y la elegida siempre se ve. */
-@Composable
-private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>, onSel: (Int) -> Unit) {
-    // La fila se desplaza sola solo si la pestaña elegida no se ve entera (y entonces la centra): así no se corta la de al lado
-    val scroll = rememberScrollState()
-    val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }   // pestaña → (x, ancho), en coordenadas del contenido
-    var anchoFila by remember { mutableIntStateOf(0) }
-    LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
-        val (x, w) = sitios[sel] ?: return@LaunchedEffect
-        if (anchoFila <= 0) return@LaunchedEffect
-        if (x < scroll.value || x + w > scroll.value + anchoFila) scroll.animateScrollTo((x + w / 2 - anchoFila / 2).coerceIn(0, scroll.maxValue))
-    }
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().onGloballyPositioned { anchoFila = it.size.width }.drawWithContent {
-                // Un degradado en los bordes cuando hay más pestañas por un lado o por otro (para que no parezcan cortadas)
-                drawContent()
-                val f = 28.dp.toPx()
-                if (scroll.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
-                if (scroll.value < scroll.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-            }.horizontalScroll(scroll).height(IntrinsicSize.Max), verticalAlignment = Alignment.CenterVertically) {
-            nombres.forEachIndexed { i, n ->
-                val on = i == sel
-                Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }.tocable(fuera = 0.dp) { onSel(i) }
-                    .background(if (on) Acento else Color.Transparent)
-                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Dirección C: la elegida, en un bloque del acento
-                    Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
-                }
-            }
-        }
-        Filete(2.dp)
-    }
-}

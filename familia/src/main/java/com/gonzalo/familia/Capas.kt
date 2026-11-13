@@ -63,6 +63,15 @@ object Tapas {
     fun de(clave: String): LayoutCoordinates? = sitios[clave]?.takeIf { it.isAttached }
 }
 
+/** Dónde está cada fila (la última vez que se colocó en pantalla): lo que se abre sin haber apuntado su origen nace de ahí. */
+object Filas {
+    internal val sitios = HashMap<String, LayoutCoordinates>()
+    fun de(clave: String): LayoutCoordinates? = sitios[clave]?.takeIf { it.isAttached }
+}
+
+/** La fila (o tarjeta) de [clave]: su ficha nace de aquí aunque se toque con el toque propio de la app (el del mando, por ejemplo). */
+fun Modifier.filaDe(clave: String): Modifier = this.onGloballyPositioned { Filas.sitios[clave] = it }
+
 /** La tapa (portada, carátula, escudo…) de [clave] en una lista: se apunta dónde está y se esconde mientras vuela hacia su ficha. */
 fun Modifier.tapaDe(clave: String): Modifier = this
     .onGloballyPositioned { Tapas.sitios[clave] = it }
@@ -122,7 +131,10 @@ fun CapaQueNace(
             marca(true); alUsarInstante(); return@LaunchedEffect
         }
         if (clave != null) {
-            if (visible != clave) { origen = Origen.toma(clave); visible = clave; aperturas++; t.snapTo(0f); atras.snapTo(0f) }
+            if (visible != clave) {
+                origen = Origen.toma(clave) ?: Filas.de(clave)?.let { f -> Origen.Datos(clave, f.boundsInRoot(), Tapas.de(clave)?.boundsInRoot()) }
+                visible = clave; aperturas++; t.snapTo(0f); atras.snapTo(0f)
+            }
             marca(true)
             val vuela = tapa != null && origen?.tapa != null
             if (vuela) Vuelo.clave = clave
@@ -190,7 +202,10 @@ fun CapaQueNace(
 fun PestanasPager(
     nombres: List<String>, pager: PagerState, cuentas: List<Int?>,
     fondo: Color, tinta: Color, acento: Color, sobreAcento: Color, letra: FontFamily, cifras: FontFamily,
-    modifier: Modifier = Modifier, filete: Color = tinta, onSel: (Int) -> Unit,
+    modifier: Modifier = Modifier, filete: Color = tinta,
+    /** El toque de cada pestaña (por defecto, el de la familia; las apps con mando pasan el suyo, con su marco de foco). */
+    toque: ((Modifier, Boolean, () -> Unit) -> Modifier)? = null,
+    onSel: (Int) -> Unit,
 ) {
     val scroll = rememberScrollState()
     val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
@@ -229,7 +244,7 @@ fun PestanasPager(
                 val on = i == sel
                 val cerca = (1f - kotlin.math.abs(pager.currentPage + pager.currentPageOffsetFraction - i)).coerceIn(0f, 1f)
                 Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = kotlin.math.round(c.positionInParent().x).toInt() to c.size.width }
-                    .pulsable(hundido = 0.94f, vibra = if (on) null else Vibra::tic) { onSel(i) }
+                    .let { m -> if (toque != null) toque(m, on) { onSel(i) } else m.pulsable(hundido = 0.94f, vibra = if (on) null else Vibra::tic) { onSel(i) } }
                     .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                     BasicText(n.uppercase(), style = TextStyle(lerp(tinta, sobreAcento, cerca), 12.sp, FontWeight.Black, fontFamily = letra, letterSpacing = 1.sp), maxLines = 1)
                     cuentas.getOrNull(i)?.let { c ->

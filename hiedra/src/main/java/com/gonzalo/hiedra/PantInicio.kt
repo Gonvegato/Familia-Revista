@@ -1,5 +1,6 @@
 package com.gonzalo.hiedra
 
+import com.gonzalo.familia.filaDe
 import android.content.Intent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -300,7 +301,7 @@ private fun EncabezadoCorto(titulo: String, enlace: String, alIr: () -> Unit) {
 /** Una tapa de juego en la portada (2:3, recta), que se toca y se enfoca con el mando. */
 @Composable
 private fun Tapa(j: Juego, ancho: Int, alJugar: () -> Unit, alAbrir: () -> Unit) {
-    Box(Modifier.width(ancho.dp).height((ancho * 1.5f).dp).tocableMando(alJugar, alAbrir).testTag("loseta-" + j.id)) {
+    Box(Modifier.width(ancho.dp).height((ancho * 1.5f).dp).filaDe(j.id).tocableMando(alJugar, alAbrir).testTag("loseta-" + j.id)) {
         PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = (ancho * 0.4f).toInt())
     }
 }

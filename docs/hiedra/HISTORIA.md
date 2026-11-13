@@ -7,6 +7,16 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.9.0 — movimiento como Seshat
+
+- La ficha de un juego nace de la fila (o de la portada) que tocas y vuelve a ella al cerrarla; con el gesto de atrás de Android 14+ se ve
+  cómo se cierra mientras arrastras.
+- Las páginas pasan con menos recorrido del dedo (15 %) y vibran un poco al asentarse; las pestañas son las comunes (bloque que se desliza,
+  números que ruedan) y se pueden deslizar sin mover la página.
+- Buscar crece desde BUSCAR en vez de abrirse en medio; al cerrarlo vuelve a encogerse allí.
+- Todo lo que se toca se hunde con un muelle y vibra; con mando sigue el marco de foco de siempre.
+- Al plegar la cabecera, el nombre pequeño y la fecha entran y salen poco a poco, sin saltos.
+
 ## 0.8.9 — registro de fallos
 
 - Si Bastet se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,

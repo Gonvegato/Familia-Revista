@@ -1,5 +1,6 @@
 package com.gonzalo.hiedra
 
+import com.gonzalo.familia.muelleAlPulsar
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.LocalIndication
@@ -68,5 +69,8 @@ fun Modifier.atrapaFoco(): Modifier = this.focusProperties { exit = { FocusReque
 /** Como `clickable`, y con el marco de foco del mando ([marcoFoco]). */
 fun Modifier.tocable(enabled: Boolean = true, role: Role? = null, fuera: Dp = 4.dp, onClick: () -> Unit): Modifier = composed {
     val src = remember { MutableInteractionSource() }
-    this.marcoFoco(src, fuera).clickable(interactionSource = src, indication = LocalIndication.current, enabled = enabled, role = role, onClick = onClick)
+    val vista = androidx.compose.ui.platform.LocalView.current
+    // Al tocarlo se hunde un poco y vuelve con un muelle, y vibra; con el mando, el marco del foco sigue igual
+    this.marcoFoco(src, fuera).muelleAlPulsar(src)
+        .clickable(interactionSource = src, indication = null, enabled = enabled, role = role, onClick = { com.gonzalo.familia.Vibra.clic(vista); onClick() })
 }
