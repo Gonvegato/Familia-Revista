@@ -1,5 +1,6 @@
 package com.gonzalo.cobalto
 
+import com.gonzalo.familia.CapaAvisos
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -72,17 +73,13 @@ fun CobaltoApp(pedida: Peticion? = null, alAbrirPedido: () -> Unit = {}) {
     BackHandler(enabled = obraId == null && fichaId == null && !pareja && ajustes == null && pagina != 0) { pagina = 0 }
     BackHandler(enabled = obraId == null && fichaId == null && pareja) { pareja = false }
     BackHandler(enabled = obraId == null && ajustes != null) { ajustes = null }
-    BackHandler(enabled = obraId == null && fichaId != null && ajustes == null) { fichaId = null }
 
     Box(Modifier.fillMaxSize().background(Paper)) {
         PantPrincipal(pagina, alPagina = { pagina = it }, alAbrir = { ficha(it) }, alSeguir = { o, s -> estudio(o, s) }, alNueva = { nueva = true },
             alAjustes = { ajustes = 0 }, alPareja = { pareja = true }, alMeta = { ajustes = 1 }, alSprint = { estudio(it, sprint = true) })
-        AnimatedVisibility(fichaId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
-            fichaId?.let { id ->
-                Box(Modifier.fillMaxSize().background(Paper)) {
-                    PantFicha(id, alCerrar = { fichaId = null }, alEstudio = { s, c, p -> estudio(id, s, cap = c, pestana = p) }, alSprint = { estudio(id, sprint = true) })
-                }
-            }
+        // La ficha nace de la fila que tocaste y se cierra con el gesto de atrás (con vista previa)
+        com.gonzalo.familia.CapaQueNace(fichaId, alCerrar = { fichaId = null }, fondo = Paper, atrasActivo = obraId == null && ajustes == null && !pareja) { id, _ ->
+            PantFicha(id, alCerrar = { fichaId = null }, alEstudio = { s, c, p -> estudio(id, s, cap = c, pestana = p) }, alSprint = { estudio(id, sprint = true) })
         }
         AnimatedVisibility(ajustes != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
             Box(Modifier.fillMaxSize().background(Paper)) { PantEstilo(alVolver = { ajustes = null }, pestanaInicial = ajustes ?: 0) }
@@ -93,6 +90,7 @@ fun CobaltoApp(pedida: Peticion? = null, alAbrirPedido: () -> Unit = {}) {
         AnimatedVisibility(obraId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
             obraId?.let { id -> Box(Modifier.fillMaxSize().background(Paper)) { Estudio(id, escenaInicial, sprintInicial, capInicial = capInicial, onCerrar = { obraId = null; escenaInicial = null; capInicial = null; sprintInicial = false }) } }
         }
+        Box(Modifier.fillMaxSize()) { CapaAvisos(Charcoal, Paper, Acento, Body) }
     }
     if (nueva) ObraDialogo(e, null, onCerrar = { nueva = false }, onCreada = { ficha(it.id) })
 }

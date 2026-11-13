@@ -174,3 +174,15 @@ fun Modifier.apareceSegun(f: Float): Modifier = this.then(Modifier.clipToBounds(
     val w = (p.width * f.coerceIn(0f, 1f)).roundToInt()
     layout(w, p.height) { if (w > 0) p.placeWithLayer(0, 0) { alpha = f.coerceIn(0f, 1f); compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha } }
 })
+
+/**
+ * El muelle de [pulsable] para algo que ya tiene su propio toque (y su propia [fuente] de interacciones, por ejemplo con el marco del
+ * foco del mando): al apretar se hunde un poco y al soltar vuelve con un muelle. Así las apps que se usan también con mando lo tienen
+ * sin cambiar cómo se enfocan.
+ */
+fun Modifier.muelleAlPulsar(fuente: androidx.compose.foundation.interaction.InteractionSource, hundido: Float = 0.965f): Modifier = composed {
+    val apretado by fuente.collectIsPressedAsState()
+    val escala = remember { Animatable(1f) }
+    LaunchedEffect(apretado) { if (apretado) escala.animateTo(hundido, tween(110)) else escala.animateTo(1f, Muelle.vivo()) }
+    graphicsLayer { scaleX = escala.value; scaleY = escala.value }
+}

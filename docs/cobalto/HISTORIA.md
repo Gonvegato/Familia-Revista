@@ -10,6 +10,19 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.7.0 — Thot en movimiento
+
+Lo mismo que Seshat: todo sigue al dedo, se puede interrumpir y nada acaba de golpe.
+
+- **Páginas**: basta un 15 % del ancho (o un gesto rápido corto) para pasar a la siguiente. El bloque del acento de las pestañas va pegado
+  a la página y se estira a mitad de camino; el color del texto lo sigue. La barra de pestañas se desliza sola sin mover la página y trae
+  la elegida al centro. Los números de las pestañas ruedan.
+- **Pulsar se nota**: filas, tapas y botones se hunden un poco y vuelven con un muelle, y vibran.
+- **Las obras entran** una sola vez (sin parpadeos al volver o al deslizar).
+- **La ficha** nace de la fila que tocas y, al cerrar, encoge hacia ella y se funde; con el gesto de atrás de Android encoge con el dedo.
+- **Buscar**: crece desde la palabra BUSCAR (antes salía una casilla a media pantalla), con lo último que buscaste.
+- **Cabecera plegada**: el nombre pequeño entra y la fecha se va poco a poco, sin saltos.
+
 ## 0.6.7 — registro de fallos
 
 - Si Thot se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,

@@ -1,5 +1,6 @@
 package com.gonzalo.cobalto
 
+import com.gonzalo.familia.abre
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -159,7 +160,7 @@ private fun TapaConAvance(e: Escritos, o: Doc, ancho: Int, alAbrir: (String) -> 
     val ver = e.version
     val palabras = remember(ver, o.id) { e.palabrasObra(o.id) }
     val meta = o.i("meta")
-    Column(Modifier.width(ancho.dp).clickable { alAbrir(o.id) }) {
+    Column(Modifier.width(ancho.dp).abre(o.id) { alAbrir(o.id) }) {
         PortadaObra(o, Modifier.width(ancho.dp).height((ancho * 1.5f).dp))
         if (meta > 0) Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(e.avance(o)).fillMaxHeight().background(Acento)) }
         Text(if (meta > 0) "${(palabras * 100L / meta).coerceAtMost(999)} %" else "${palabrasCorto(palabras)} PAL.", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp,
@@ -180,7 +181,7 @@ private fun MosaicoAno(obras: List<Doc>, caps: Map<String, Int>, alAbrir: (Strin
                 fila.forEach { o ->
                     Box(Modifier.weight(1f).aspectRatio(0.67f)) {
                         if (o != null) {
-                            PortadaObra(o, Modifier.fillMaxSize().clickable { alAbrir(o.id) })
+                            PortadaObra(o, Modifier.fillMaxSize().abre(o.id) { alAbrir(o.id) })
                             Text("${caps[o.id] ?: 0} CAP.", color = Paper, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, letterSpacing = 0.6.sp, maxLines = 1,
                                 modifier = Modifier.align(Alignment.BottomStart).background(Charcoal).padding(horizontal = 5.dp, vertical = 2.dp))
                         } else Box(Modifier.fillMaxSize().background(Charcoal), contentAlignment = Alignment.Center) {

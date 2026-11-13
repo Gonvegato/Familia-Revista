@@ -1,5 +1,9 @@
 package com.gonzalo.cobalto
 
+import androidx.compose.ui.layout.boundsInRoot
+import com.gonzalo.familia.apareceSegun
+import com.gonzalo.familia.entrada
+import com.gonzalo.familia.abre
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -105,7 +109,7 @@ fun FilaObra(e: Escritos, o: Doc, alAbrir: (String) -> Unit, modifier: Modifier 
     val hoy = remember(ver, o.id) { e.escritas(Escritos.hoy(), o.id) }
     val meta = o.i("meta")
     val alto = portada * 1.5f
-    Row(modifier.fillMaxWidth().clickable { alAbrir(o.id) }.padding(top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
+    Row(modifier.fillMaxWidth().then(if (orden in 1..9) Modifier.entrada("obra:${o.id}:$orden", orden) else Modifier).abre(o.id) { alAbrir(o.id) }.padding(top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
         PortadaObra(o, Modifier.width(portada).height(alto))
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
             if (orden > 0) Text("%02d".format(orden), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
@@ -215,9 +219,12 @@ fun PantPrincipal(
     val pager = rememberPagerState(initialPage = pagina.coerceIn(0, PAGINAS.size - 1)) { PAGINAS.size }
     val ambito = rememberCoroutineScope()
     LaunchedEffect(pagina) { val p = pagina.coerceIn(0, PAGINAS.size - 1); if (pager.currentPage != p) pager.animateScrollToPage(p) }
-    LaunchedEffect(pager.settledPage) { alPagina(pager.settledPage) }
+    val vista = androidx.compose.ui.platform.LocalView.current
+    var asentada by remember { mutableIntStateOf(pager.settledPage) }
+    LaunchedEffect(pager.settledPage) { if (pager.settledPage != asentada) { asentada = pager.settledPage; com.gonzalo.familia.Vibra.tic(vista) }; alPagina(pager.settledPage) }
     var buscando by rememberSaveable { mutableStateOf(false) }
-    var busca by rememberSaveable { mutableStateOf("") }
+    var aperturaBusca by remember { mutableIntStateOf(0) }
+    val sitioBuscar = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
     var aviso by remember { mutableStateOf("") }
     val cuentas: List<Int?> = remember(ver) { listOf(null) + PAGINAS.drop(1).map { d -> e.obrasDe(d.estado()!!).size } }
     val importar = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
@@ -253,17 +260,20 @@ fun PantPrincipal(
     }
     val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
     val tablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700
-    val plegada = altoNombre > 0 && recogido >= altoNombre - 1
+    val plegado = if (altoNombre > 0) ((recogido / altoNombre - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         // ---- La cabecera de la dirección C: un bloque de tinta (crema en Thot) con la fila pequeña y «THOT.» en grotesca enorme
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = if (tablet) 40.dp else 20.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = if (plegada) 4.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (plegada) NombreConPunto("Thot", 22.sp, Paper, Modifier.padding(end = 14.dp))
-                EnlaceRevista("Buscar", color = if (buscando) acentoSobreTinta() else Paper.copy(alpha = 0.75f)) { buscando = !buscando; if (!buscando) busca = "" }
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
+                if (plegado > 0f) NombreConPunto("Thot", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
+                EnlaceRevista("Buscar", Modifier.onGloballyPositioned { sitioBuscar[0] = it }, color = Paper.copy(alpha = 0.75f)) {
+                    if (!buscando) { com.gonzalo.familia.Vibra.clic(vista); aperturaBusca++; buscando = true }
+                }
                 EnlaceRevista("+ Nueva", Modifier.padding(start = 14.dp), color = acentoSobreTinta()) { alNueva() }
                 Spacer(Modifier.weight(1f))
-                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body,
-                    fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                if (plegado < 1f) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body,
+                    fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1, modifier = Modifier.apareceSegun(1f - plegado))
                 androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 4.dp).clickable(onClick = alAjustes).padding(6.dp).size(20.dp))
             }
             Box(Modifier.fillMaxWidth().layout { m, c ->
@@ -281,12 +291,10 @@ fun PantPrincipal(
                 NombreConPunto("Thot", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
-        PestanasPaginas(NOMBRES_PAGINAS, pager.currentPage, cuentas) { i -> buscando = false; busca = ""; ambito.launch { pager.animateScrollToPage(i) } }
-        if (buscando) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) { CampoRevista("Buscar", busca, "título, autor o género") { busca = it } }
+        com.gonzalo.familia.PestanasPager(NOMBRES_PAGINAS, pager, cuentas, Paper, Charcoal, Acento, SobreAcento, Body, Grotesca) { i -> ambito.launch { pager.animateScrollToPage(i) } }
         if (aviso.isNotEmpty()) Text(aviso, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp).clickable { aviso = "" })
-        if (busca.isNotBlank()) Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.TopCenter) { Box(Modifier.widthIn(max = 960.dp)) { Resultados(busca, e, alAbrir) } }
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
-        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }) { i ->
+        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }, flingBehavior = com.gonzalo.familia.pasoDePagina(pager)) { i ->
             when (val d = PAGINAS[i]) {
                 Destino.Portada -> PaginaPortada(alAbrir = alAbrir, alSeguir = alSeguir, alNueva = alNueva, alIr = { x -> val p = PAGINAS.indexOf(x); if (p >= 0) ambito.launch { pager.animateScrollToPage(p) } },
                     alPareja = alPareja, alMeta = alMeta, alSprint = alSprint)
@@ -297,6 +305,12 @@ fun PantPrincipal(
                 }
             }
         }
+    }
+    // El buscador: crece desde BUSCAR (la ficha que abre va encima; al cerrarla se vuelve aquí)
+    if (buscando) com.gonzalo.familia.CapaBuscar(desde = { sitioBuscar[0]?.takeIf { it.isAttached }?.boundsInRoot() }, apertura = aperturaBusca, pista = "Título, autor o género",
+        papel = Paper, tinta = Charcoal, acento = Acento, gris = Muted, letra = Body, bloqueado = com.gonzalo.familia.CapasAbiertas.ficha, alCerrado = { buscando = false }) { q ->
+        Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.TopCenter) { Box(Modifier.widthIn(max = 960.dp)) { Resultados(q, e, alAbrir) } }
+    }
     }
 }
 

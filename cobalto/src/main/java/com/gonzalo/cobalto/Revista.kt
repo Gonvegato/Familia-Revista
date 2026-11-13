@@ -1,5 +1,6 @@
 package com.gonzalo.cobalto
 
+import com.gonzalo.familia.pulsable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -386,7 +387,7 @@ fun RejillaCifras(bloques: List<BloqueCifra>, modifier: Modifier = Modifier) {
 /** El botón recto de ancho completo de la dirección C: texto a la izquierda y flecha a la derecha («SEGUIR LEYENDO →»). */
 @Composable
 fun BotonC(texto: String, modifier: Modifier = Modifier, fondo: Color = Charcoal, letra: Color = Paper, enabled: Boolean = true, onClick: () -> Unit) {
-    Row(modifier.fillMaxWidth().heightIn(min = 54.dp).background(if (enabled) fondo else fondo.copy(alpha = 0.35f)).clickable(enabled = enabled, onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
+    Row(modifier.fillMaxWidth().heightIn(min = 54.dp).pulsable(enabled = enabled, hundido = 0.975f, onClick = onClick).background(if (enabled) fondo else fondo.copy(alpha = 0.35f)).padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Text(texto.uppercase(), color = letra, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, lineHeight = 18.sp, letterSpacing = 1.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(end = 8.dp))
         Text("→", color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 18.sp)
