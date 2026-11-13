@@ -1133,9 +1133,9 @@ private fun AppContenido(
                     nombre = if (pv) p!!.name else "Jonsu",
                     paginas = paginasJonsu(sectionKinds, { k -> (gs(k).map { it.id } + ps(k).map { it.id }).distinct().size }, conEscritos = !pv),
                     destino = dest, alDestino = { d -> go(d) },
-                    alBuscar = { buscandoTodo = !buscandoTodo }, buscando = buscandoTodo,
+                    alBuscar = { buscandoTodo = true }, buscando = buscandoTodo,
                     alPareja = m.partner, alAjustes = m.profile,
-                    buscador = { BuscadorGeneral(m) { buscandoTodo = false } }
+                    buscador = { q -> BuscadorGeneral(m, q) { buscandoTodo = false } }, alBuscado = { buscandoTodo = false }
                 ) { pg ->
                     when {
                         pg.destino == 0 -> ShellHome(m)

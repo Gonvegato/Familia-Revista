@@ -312,9 +312,8 @@ private fun RevLink(t: String, f: () -> Unit) = EnlaceRevista(t, Modifier.paddin
  * tildes), y también en lo que has subrayado en tus libros (tocar una cita abre el libro justo ahí).
  */
 @Composable
-internal fun BuscadorGeneral(m: ShellModel, onClose: () -> Unit) {
+internal fun BuscadorGeneral(m: ShellModel, q: String, onClose: () -> Unit) {
     val ctx = LocalContext.current
-    var q by remember { mutableStateOf("") }
     val todo = remember(m.kinds) { m.kinds.flatMap { k -> m.entries(k) } }
     val libros = remember(todo) { todo.filter { it.kind.isBook }.distinctBy { it.id } }
     // Las citas de tus libros (con el lector), para buscar también en ellas
@@ -324,24 +323,7 @@ internal fun BuscadorGeneral(m: ShellModel, onClose: () -> Unit) {
     // Y en lo que has escrito en tu diario
     val resNotas = remember(q, DiarioHub.notas) { if (q.trim().length < 3 || m.readOnly) emptyList() else DiarioHub.notas.filter { libMatches(q, it.texto, "") }.sortedByDescending { it.dia }.take(30) }
     val recientes = remember(todo) { todo.sortedByDescending { it.activity }.distinctBy { it.kind.id to it.id }.take(8) }
-    androidx.compose.ui.window.Dialog(onDismissRequest = onClose, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        val foco = remember { androidx.compose.ui.focus.FocusRequester() }
-        Column(Modifier.fillMaxSize().background(Paper2).statusBarsPadding().navigationBarsPadding().imePadding().padding(horizontal = 22.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Buscar en todo", fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Ink2, modifier = Modifier.weight(1f))
-                Text("CERRAR", color = Ink2, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, modifier = Modifier.press { onClose() }.padding(8.dp))
-            }
-            Rule(3.dp)
-            androidx.compose.foundation.text.BasicTextField(
-                q, { q = it }, singleLine = true,
-                textStyle = androidx.compose.ui.text.TextStyle(color = Ink2, fontSize = 22.sp, fontFamily = Display),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(Red2),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp).focusRequester(foco),
-                decorationBox = { inner -> Box { if (q.isEmpty()) Text("Título, autor, una frase que subrayaste o escribiste", color = Grey2, fontSize = 17.sp, fontFamily = Display, fontStyle = FontStyle.Italic); inner() } }
-            )
-            LaunchedEffect(Unit) { kotlinx.coroutines.delay(150); runCatching { foco.requestFocus() } }
-            Rule(1.dp)
-            androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
+    androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize().navigationBarsPadding().imePadding().padding(horizontal = 22.dp)) {
                 if (q.isBlank()) {
                     item { RevSectionPad("Lo último") }
                     items(recientes.size) { i -> ResultadoFila(recientes[i]) { onClose(); m.open(recientes[i]) } }
@@ -382,8 +364,6 @@ internal fun BuscadorGeneral(m: ShellModel, onClose: () -> Unit) {
                     }
                 }
                 item { Spacer(Modifier.height(24.dp)) }
-            }
-        }
     }
 }
 

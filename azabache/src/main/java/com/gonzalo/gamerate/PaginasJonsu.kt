@@ -1,5 +1,8 @@
 package com.gonzalo.gamerate
 
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import com.gonzalo.familia.apareceSegun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -46,14 +49,22 @@ fun paginasJonsu(kinds: List<Kind>, cuenta: (Kind) -> Int, conEscritos: Boolean)
 fun PantPaginas(
     nombre: String, paginas: List<PaginaJonsu>, destino: Int, alDestino: (Int) -> Unit,
     alBuscar: () -> Unit, buscando: Boolean, alPareja: (() -> Unit)?, alAjustes: (() -> Unit)?,
-    buscador: @Composable () -> Unit, pagina: @Composable (PaginaJonsu) -> Unit,
+    buscador: @Composable (String) -> Unit, alBuscado: () -> Unit = {}, pagina: @Composable (PaginaJonsu) -> Unit,
 ) {
     val indice = paginas.indexOfFirst { it.destino == destino }.coerceAtLeast(0)
     val pager = rememberPagerState(initialPage = indice) { paginas.size }
     val ambito = rememberCoroutineScope()
     // Lo que pide fuera (Atrás, un widget, «Ver todo» de la portada) mueve las páginas; lo que mueves tú con el dedo, se cuenta fuera
     LaunchedEffect(indice) { if (pager.currentPage != indice) pager.animateScrollToPage(indice) }
-    LaunchedEffect(pager.settledPage) { paginas.getOrNull(pager.settledPage)?.let { if (it.destino != destino) alDestino(it.destino) } }
+    val vista = androidx.compose.ui.platform.LocalView.current
+    var asentada by remember { mutableIntStateOf(pager.settledPage) }
+    LaunchedEffect(pager.settledPage) {
+        if (pager.settledPage != asentada) { asentada = pager.settledPage; com.gonzalo.familia.Vibra.tic(vista) }
+        paginas.getOrNull(pager.settledPage)?.let { if (it.destino != destino) alDestino(it.destino) }
+    }
+    var aperturaBusca by remember { mutableIntStateOf(0) }
+    LaunchedEffect(buscando) { if (buscando) aperturaBusca++ }
+    val sitioBuscar = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
     // El nombre grande se recoge al bajar (y vuelve al subir): lo que la página aún no ha movido, lo mueve la cabecera
     var altoNombre by remember { mutableIntStateOf(0) }
     var recogido by remember { mutableFloatStateOf(0f) }
@@ -73,20 +84,21 @@ fun PantPaginas(
     }
     val ancho = minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080)
     val tablet = ancho >= 700
-    val plegada = altoNombre > 0 && recogido >= altoNombre - 1
+    val plegado = if (altoNombre > 0) ((recogido / altoNombre - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
     // La cabecera es un bloque de la tinta (crema en Jonsu) con letra del color de la página (oscura)
     val tinta = Charcoal; val sobreTinta = Paper; val acentoCab = acentoSobreTinta()
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         Column(Modifier.fillMaxWidth().background(tinta).statusBarsPadding().padding(horizontal = if (tablet) 40.dp else 20.dp).testTag("cabecera")) {
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = if (plegada) 4.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (plegada) NombreConPunto(nombre, 22.sp, sobreTinta, Modifier.padding(end = 14.dp), punto = acentoCab)
-                EnlaceCabecera(if (buscando) "Cerrar" else "Buscar", if (buscando) acentoCab else sobreTinta.copy(alpha = 0.8f), alBuscar)
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
+                if (plegado > 0f) NombreConPunto(nombre, 22.sp, sobreTinta, Modifier.apareceSegun(plegado).padding(end = 14.dp), punto = acentoCab)
+                EnlaceCabecera("Buscar", sobreTinta.copy(alpha = 0.8f), { if (!buscando) { com.gonzalo.familia.Vibra.clic(vista); alBuscar() } }, Modifier.onGloballyPositioned { sitioBuscar[0] = it })
                 if (alPareja != null) EnlaceCabecera("Pareja", sobreTinta.copy(alpha = 0.8f), alPareja, Modifier.padding(start = 14.dp))
                 Spacer(Modifier.weight(1f))
-                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = sobreTinta.copy(alpha = 0.8f), fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                if (plegado < 1f) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = sobreTinta.copy(alpha = 0.8f), fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1, modifier = Modifier.apareceSegun(1f - plegado))
                 if (alAjustes != null) androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Settings, "Ajustes", tint = sobreTinta.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(start = 4.dp).clickable(onClick = alAjustes).padding(6.dp).size(20.dp))
+                    modifier = Modifier.padding(start = 4.dp).press(onClick = alAjustes).padding(6.dp).size(20.dp))
             }
             // Al recogerse, el hueco se encoge y el nombre encoge con él (desde la esquina de arriba a la izquierda): nunca se corta a media letra
             Box(Modifier.fillMaxWidth().layout { m, c ->
@@ -104,16 +116,21 @@ fun PantPaginas(
                 NombreConPunto(nombre, if (tablet) 104.sp else 64.sp, sobreTinta, Modifier.padding(top = 2.dp, bottom = 12.dp), punto = acentoCab)
             }
         }
-        PestanasC(paginas.map { it.nombre }, pager.currentPage, paginas.map { it.cuenta }) { i -> ambito.launch { pager.animateScrollToPage(i) } }
-        if (buscando) Box(Modifier.weight(1f).fillMaxWidth().consumeWindowInsets(WindowInsets.statusBars)) { buscador() }
+        com.gonzalo.familia.PestanasPager(paginas.map { it.nombre }, pager, paginas.map { it.cuenta }, Paper, Charcoal, Acento, SobreAcento, Body, Grotesca) { i -> ambito.launch { pager.animateScrollToPage(i) } }
         // (sin páginas vecinas precompuestas: con ellas, en las páginas que no son la primera los enlaces de la cabecera no recibían el toque)
-        else HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth().consumeWindowInsets(WindowInsets.statusBars).testTag("paginas"), key = { paginas[it].destino }) { i ->
+        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth().consumeWindowInsets(WindowInsets.statusBars).testTag("paginas"), key = { paginas[it].destino },
+            flingBehavior = com.gonzalo.familia.pasoDePagina(pager)) { i ->
             pagina(paginas[i])
         }
+    }
+    // El buscador: crece desde BUSCAR y se recoge hacia allí
+    if (buscando) com.gonzalo.familia.CapaBuscar(desde = { sitioBuscar[0]?.takeIf { it.isAttached }?.boundsInRoot() }, apertura = aperturaBusca,
+        pista = "Título, autor, una frase que subrayaste o escribiste", papel = Paper, tinta = Charcoal, acento = Acento, gris = Muted, letra = Body,
+        alCerrado = alBuscado) { q -> buscador(q) }
     }
 }
 
 @Composable
 private fun EnlaceCabecera(texto: String, color: androidx.compose.ui.graphics.Color, alTocar: () -> Unit, modifier: Modifier = Modifier) =
     Text(texto.uppercase(), color = color, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
-        modifier = modifier.clickable(onClick = alTocar).padding(vertical = 10.dp))
+        modifier = modifier.press(onClick = alTocar).padding(vertical = 10.dp))

@@ -9,6 +9,15 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.9.0 — movimiento como sus hermanas
+
+- Buscar en todo ya no es una ventana encima: crece desde BUSCAR, con el campo arriba y el teclado listo, y se recoge hacia allí al cerrarlo
+  (o con Atrás). Antes de escribir, lo último que buscaste.
+- Las páginas pasan con menos recorrido del dedo (15 %) y vibran un poco al asentarse; las pestañas son las comunes de la familia (bloque
+  que se desliza, números que ruedan) y se pueden deslizar sin mover la página.
+- Al plegar la cabecera, el nombre pequeño y la fecha entran y salen poco a poco, sin saltos; BUSCAR, PAREJA y ⚙ se hunden con un muelle.
+- La ficha sigue abriéndose como hasta ahora (la portada vuela hasta ella).
+
 ## 1.8.8 — registro de fallos
 
 - Si Jonsu se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,
