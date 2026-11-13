@@ -2,6 +2,7 @@
 
 package com.gonzalo.gamerate
 
+import androidx.compose.animation.EnterTransition
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -933,6 +934,9 @@ private fun AppContenido(
         SagaHub.exists = { id, kid -> myKinds.find { it.id == kid }?.let { k -> gamesOf(k).any { it.id == id } || playsOf(k).any { it.id == id } } == true }
     }
 
+    // La ficha (y lo que se abre como ella) se cierra con el gesto de atrás de Android 14+: encoge con el dedo y, al soltar, vuelve a su sitio
+    val atrasFicha = remember { androidx.compose.animation.core.Animatable(0f) }
+    var atrasIzq by remember { mutableStateOf(true) }
     BackHandler(enabled = dest != 0 || section != -1 || screen !is Screen.Home || pv) {
         val cur = screen
         when {
@@ -943,6 +947,18 @@ private fun AppContenido(
             dest != 0 -> go(0)
             section != -1 -> section = -1
             else -> togglePartner()
+        }
+    }
+
+    val fichaConGesto = screen !is Screen.Home && screen !is Screen.ShotView && screen !is Screen.MassScore && screen !is Screen.Duelos
+    androidx.activity.compose.PredictiveBackHandler(enabled = fichaConGesto) { progreso ->
+        try {
+            progreso.collect { e -> atrasIzq = e.swipeEdge == androidx.activity.BackEventCompat.EDGE_LEFT; atrasFicha.snapTo(e.progress) }
+            scope.launch { atrasFicha.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 1f, stiffness = 300f)) }
+            atras()
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            scope.launch { atrasFicha.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 420f)) }
+            throw c
         }
     }
 
@@ -965,6 +981,10 @@ private fun AppContenido(
     // las dos; antes la que salía se volvía la nueva al instante y luego se fundía consigo misma: un parpadeo)
     // (con las páginas, cambiar de pestaña no rehace la pantalla: la clave de la portada ya no lleva la página)
     val shown: Any = if (screen is Screen.Home) "top:$pv" else screen
+    val anchoPx = with(androidx.compose.ui.platform.LocalDensity.current) { minOf(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp, 1080).dp.toPx() }
+    val altoFranja = with(androidx.compose.ui.platform.LocalDensity.current) { 96.dp.toPx() }
+    val nace = remember { NaceFicha() }
+    nace.cambia(shown, Mode.touch, anchoPx, altoFranja)
     val topLevel = screen is Screen.Home
     // Al volver de una ficha abierta desde Feed, Revista o Escritorio, se vuelve a esa pantalla (no a la biblioteca)
     LaunchedEffect(screen is Screen.Home) {
@@ -1034,7 +1054,12 @@ private fun AppContenido(
             targetState = shown,
             transitionSpec = {
                 val a = initialState; val b = targetState
-                if (a is String && b is String) {
+                val conOrigen = Skin.revista && nace.origen != null
+                if (conOrigen && a is String && b !is String) {
+                    (EnterTransition.None togetherWith fadeOut(tween(1, delayMillis = 560))).apply { targetContentZIndex = 1f }
+                } else if (conOrigen && a !is String && b is String) {
+                    (EnterTransition.None togetherWith fadeOut(tween(1, delayMillis = 560))).apply { targetContentZIndex = -1f }
+                } else if (a is String && b is String) {
                     // Entre destinos del dock: fundido rápido con un leve desplazamiento
                     (fadeIn(tween(Motion.ms(200))) + scaleIn(tween(Motion.ms(240)), initialScale = 0.985f)) togetherWith fadeOut(tween(Motion.ms(120)))
                 } else if (a is String) {
@@ -1223,6 +1248,7 @@ private fun AppContenido(
                     }
                 }
             } else {
+            CapaFichaJonsu(this, if (Skin.revista) nace.origen else null, atrasFicha.value, atrasIzq) {
             when (s) {
                 Screen.Stats -> StatsScreen(
                     kind, myGames.filter { !Hermanas.sinValorar(it) }, myPlays, side,
@@ -1604,6 +1630,7 @@ private fun AppContenido(
                     }
                 }
                 else -> Unit
+            }
             }
             }
             }

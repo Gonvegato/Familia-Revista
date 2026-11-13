@@ -9,6 +9,12 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.9.1 — la ficha nace de lo que tocas
+
+- La ficha (y lo que se abre como ella) nace de la franja de la pantalla que tocaste: el papel crece desde ahí hasta la pantalla entera,
+  con la portada volando encima como antes; al cerrarla, vuelve a esa franja.
+- Con el gesto de atrás de Android 14+, la ficha encoge y se aparta con el dedo mientras arrastras; si sueltas sin llegar, vuelve a su sitio.
+
 ## 1.9.0 — movimiento como sus hermanas
 
 - Buscar en todo ya no es una ventana encima: crece desde BUSCAR, con el campo arriba y el teclado listo, y se recoge hacia allí al cerrarlo
