@@ -355,7 +355,7 @@ object Widgets {
     const val ACCION_CANAL = "com.gonzalo.cobre.FUTBOL_CANAL"
     /** Abrir Nut en una página (el nombre de un [Destino]). */
     const val EXTRA_DESTINO = "destino"
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + com.gonzalo.familia.Fallos.paraCorrutinas("widget"))
     @Volatile private var pendiente: Job? = null
     private val fuentes = HashMap<Int, Typeface>()
 
@@ -469,7 +469,7 @@ object Widgets {
                 withTimeoutOrNull(9_000) {
                     preparar(app)
                     runCatching { TemaAtrio.refrescar(app) }
-                    ids.forEach { id -> try { pintarUno(app, tipo, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } }
+                    ids.forEach { id -> try { pintarUno(app, tipo, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { com.gonzalo.familia.Fallos.apunta("widget", e) } }
                 }
             } finally { res?.finish() }
             // «Próximo partido»: después de pintar lo guardado, se pide lo que haya caducado (y si cambia algo, se vuelve a pintar)
@@ -493,7 +493,7 @@ object Widgets {
         pendiente?.cancel()
         pendiente = scope.launch {
             delay(1_200)
-            hay.forEach { (t, ids) -> ids.forEach { id -> try { pintarUno(app, t, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } } }
+            hay.forEach { (t, ids) -> ids.forEach { id -> try { pintarUno(app, t, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { com.gonzalo.familia.Fallos.apunta("widget", e) } } }
         }
     }
 

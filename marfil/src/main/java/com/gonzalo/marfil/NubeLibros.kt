@@ -24,7 +24,7 @@ class NubeLibro(val f: Long, val n: String, val s: Long)
  * que vienen de Atrio apuntan a su archivo de «Atrio/Libros/…»: no se duplican.
  */
 object NubeLibros {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("nube de libros"))
     private val subiendo = AtomicBoolean(false)
     /** «Tener aquí todos los libros de tu kDrive» es tuyo y viaja con la cuenta (`ajustes/marfil_nube`); los fallos de cada libro, de aquí. */
     val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("marfil_nube", "marfil_nube", { k -> if (k == "auto_bajar") EspejoCuenta.Tipo.SI_NO else null },

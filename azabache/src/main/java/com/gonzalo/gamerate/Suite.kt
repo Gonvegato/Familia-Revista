@@ -217,7 +217,7 @@ object Suite {
         if (scope != null && uid == store.accUid) return
         stop()
         uid = store.accUid
-        val sc = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val sc = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("suite"))
         scope = sc
         // (lo que cambie en tus otros dispositivos lo escucha Sincro)
         suiteStream = FbStream("suite", { f -> authUrl("/users/$uid/suite", f) }, { t, _ -> onSuite(t) }, { s -> state = s }).also { it.start(sc) }

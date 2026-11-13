@@ -24,7 +24,7 @@ object CuentaEscritos : NubeEscritos {
 
 private object EscritosApp {
     @Volatile var inst: Escritos? = null
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("escritos"))
     var programada: Job? = null
     var fallos = 0
     @Volatile var ordenada = 0L

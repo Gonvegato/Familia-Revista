@@ -425,7 +425,8 @@ fun SettingsScreen(
                 if (importMsg.isNotEmpty() && "Steam" in importMsg) ImportNote(importMsg)
             }
             else -> {
-                SeccionAjustes("Actualizaciones", primera = true)
+                com.gonzalo.familia.UltimoFallo("Jonsu", Charcoal, Muted, Body) { SeccionAjustes("Último fallo", primera = true) }
+                SeccionAjustes("Actualizaciones", primera = com.gonzalo.familia.Fallos.ultimo(androidx.compose.ui.platform.LocalContext.current).isBlank())
                 if (!KDrive.on(androidx.compose.ui.platform.LocalContext.current)) Text("Jonsu se actualiza sola desde la carpeta «versiones» de tu kDrive: conéctalo en Ajustes → Cuenta → Tu nube.",
                     color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
         // Actualizarse sola desde la carpeta «versiones» de tu kDrive

@@ -37,7 +37,7 @@ object Sincro {
     /** Subir y mezclar, de uno en uno (lo usan Couple.push y Couple.syncOwn). */
     val candado = Mutex()
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("sincronización"))
     @Volatile private var app: Context? = null
     private var programada: Job? = null
     @Volatile private var cuando = 0L

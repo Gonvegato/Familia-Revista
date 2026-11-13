@@ -167,7 +167,7 @@ object Suite {
         if (scope != null && uid == Cuenta.uid) return
         stop()
         uid = Cuenta.uid
-        val sc = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val sc = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("suite"))
         scope = sc
         stream = FbStream("suite", { renovar -> Cuenta.urlFlujo("/users/$uid/suite", renovar) }, { t, _ -> onSuite(t) }, { s -> state = s }).also { it.start(sc) }
         // Presencia: este móvil está conectado (el PC lo enseña) y latido para el cronómetro

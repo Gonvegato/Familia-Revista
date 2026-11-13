@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.8.5"
+const val VERSION = "0.8.6"
 
 /** La pestaña «Fútbol» de Ajustes (para llegar a ella desde un partido o desde el widget). */
 const val PESTANA_FUTBOL = 1
@@ -166,6 +166,7 @@ private fun SeccionCuenta() {
 @Composable
 private fun SeccionAvanzado() {
     val ctx = LocalContext.current
+    com.gonzalo.familia.UltimoFallo("Nut", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
     val ambito = rememberCoroutineScope()
     Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
     SeccionActualizaciones()

@@ -11,6 +11,12 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.8.1 — registro de fallos
+
+- Si Hathor se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,
+  para copiarlo y saber qué pasó. Solo en este dispositivo; no va a ningún sitio. Con «Olvidarlo» se borra.
+- Los widgets y los trabajos de fondo que fallan ya no pueden cerrar la app: el fallo se apunta ahí y sigue.
+
 ## 0.8.0 — el motor de VLC dentro
 
 - **Hathor lleva dentro el motor de VLC (libVLC 3.7.7)** para lo que los decodificadores de Android no leen bien. Decodifica por programa,

@@ -9,6 +9,13 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.8.6 — registro de fallos
+
+- Si Nut se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,
+  para copiarlo y saber qué pasó. Solo en este dispositivo; no va a ningún sitio. Con «Olvidarlo» se borra.
+- Los widgets y los trabajos de fondo que fallan ya no pueden cerrar la app: el fallo se apunta ahí y sigue.
+- Reconoce a Ammit como de la familia (le puede pasar la sesión de la cuenta).
+
 ## 0.8.5 — la cabecera de color, de lado a lado
 
 - En el estilo «cabecera de color» la franja del acento llega de un borde al otro del widget (antes, junto a una portada, empezaba a su

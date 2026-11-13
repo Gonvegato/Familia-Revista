@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.8.0"
+const val VERSION = "0.8.1"
 
 /** «Ajustes» en pestañas, como las hermanas: Apariencia · Catálogo · Reproductor · Fuentes · Cuenta · Avanzado. Todo lo que eliges aquí viaja con tu cuenta. */
 @Composable
@@ -217,6 +217,7 @@ private fun SeccionCuenta() {
 @Composable
 private fun SeccionAvanzado() {
     val ctx = LocalContext.current
+    com.gonzalo.familia.UltimoFallo("Hathor", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
     Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
     SeccionActualizaciones()
     Spacer(Modifier.height(14.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))

@@ -17,5 +17,11 @@
             android:name="com.gonzalo.familia.AccesoProvider"
             android:authorities="${applicationId}.familia.acceso"
             android:exported="true" />
+        <!-- El registro de fallos (Ajustes → Avanzado → Último fallo): arranca solo, no expone nada -->
+        <provider
+            android:name="com.gonzalo.familia.FallosProvider"
+            android:authorities="${applicationId}.familia.fallos"
+            android:initOrder="1000"
+            android:exported="false" />
     </application>
 </manifest>

@@ -5,6 +5,12 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.21.6 — registro de fallos
+
+- Si Seshat se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,
+  para copiarlo y saber qué pasó. Solo en este dispositivo; no va a ningún sitio. Con «Olvidarlo» se borra.
+- Los widgets y los trabajos de fondo que fallan ya no pueden cerrar la app: el fallo se apunta ahí y sigue.
+
 ## 0.21.5 — sin la raya bajo la cabecera de color
 
 - En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja

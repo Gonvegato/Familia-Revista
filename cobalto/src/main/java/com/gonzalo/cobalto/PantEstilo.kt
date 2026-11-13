@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.6.6"
+const val VERSION = "0.6.7"
 
 /** «Ajustes»: Apariencia (como la de Atrio), cuenta de Atrio y pareja, actualizaciones, escritura y copias. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -91,6 +91,7 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
                 SeccionCuenta()
             }
             else -> {
+                com.gonzalo.familia.UltimoFallo("Thot", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
                 Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
                 SeccionActualizaciones()
                 Spacer(Modifier.height(14.dp))

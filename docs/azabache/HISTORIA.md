@@ -9,6 +9,12 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.8.8 — registro de fallos
+
+- Si Jonsu se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,
+  para copiarlo y saber qué pasó. Solo en este dispositivo; no va a ningún sitio. Con «Olvidarlo» se borra.
+- Los widgets y los trabajos de fondo que fallan ya no pueden cerrar la app: el fallo se apunta ahí y sigue.
+
 ## 1.8.7 — sin la raya bajo la cabecera de color
 
 - En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja

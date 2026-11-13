@@ -70,7 +70,7 @@ class Escritos(private val dir: File, private val dev: () -> String = { "local" 
         const val ESPERA = 700L
 
         @Volatile private var inst: Escritos? = null
-        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("escritos"))
         private var programada: Job? = null
         private var fallos = 0
         @Volatile private var ordenada = 0L

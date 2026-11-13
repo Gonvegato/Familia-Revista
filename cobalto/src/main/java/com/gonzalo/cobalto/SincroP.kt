@@ -14,7 +14,7 @@ import org.json.JSONObject
  * ([LaFamilia]): la apariencia (`ajustes/cobalto`) y lo que leen Azabache y Marfil ([Publicar]: obras, capítulos y palabras).
  */
 object SincroP {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("sincronización"))
     @Volatile private var app: Context? = null
     @Volatile private var de: Any? = null
     private var escuchaEscritos: FbStream? = null

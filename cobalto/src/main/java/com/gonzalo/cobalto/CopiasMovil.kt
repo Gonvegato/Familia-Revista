@@ -35,7 +35,7 @@ object CopiasMovil {
     const val GUARDA = 40
     const val TOPE = 100L * 1024 * 1024
     @Volatile private var copias: CopiasEscritos? = null
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("copias"))
     private var trabajo: Job? = null
 
     fun carpeta(ctx: Context) = File(ctx.applicationContext.filesDir, "copias")

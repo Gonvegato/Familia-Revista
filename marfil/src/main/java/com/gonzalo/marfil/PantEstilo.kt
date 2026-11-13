@@ -37,7 +37,7 @@ import androidx.compose.material3.TextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.21.5"
+const val VERSION = "0.21.6"
 
 /** «Ajustes» en pestañas, como Atrio: Apariencia · Lectura · Cuenta (Atrio y libros en la nube) · Avanzado (actualizaciones y copias). */
 @OptIn(ExperimentalLayoutApi::class)
@@ -92,6 +92,7 @@ fun PantEstilo(alVolver: () -> Unit) {
                 SeccionLibros()
             }
             else -> {
+                com.gonzalo.familia.UltimoFallo("Seshat", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
                 Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
                 SeccionActualizaciones()
                 Spacer(Modifier.height(14.dp))

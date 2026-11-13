@@ -419,7 +419,7 @@ class WDatos(val ctx: Context) {
 
 object Widgets {
     const val ACCION = "com.gonzalo.marfil.WIDGET"
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + com.gonzalo.familia.Fallos.paraCorrutinas("widget"))
     @Volatile private var pendiente: Job? = null
     private val fuentes = HashMap<Int, Typeface>()
 
@@ -541,7 +541,7 @@ object Widgets {
                 withTimeoutOrNull(9_000) {
                     preparar(app)
                     runCatching { TemaAtrio.refrescar(app) }
-                    ids.forEach { id -> try { pintarUno(app, tipo, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } }
+                    ids.forEach { id -> try { pintarUno(app, tipo, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { com.gonzalo.familia.Fallos.apunta("widget", e) } }
                 }
             } finally { res?.finish() }
         }
@@ -564,7 +564,7 @@ object Widgets {
         pendiente?.cancel()
         pendiente = scope.launch {
             delay(1_200)
-            hay.forEach { (t, ids) -> ids.forEach { id -> try { pintarUno(app, t, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { } } }
+            hay.forEach { (t, ids) -> ids.forEach { id -> try { pintarUno(app, t, id) } catch (e: CancellationException) { throw e } catch (e: Exception) { com.gonzalo.familia.Fallos.apunta("widget", e) } } }
         }
     }
 

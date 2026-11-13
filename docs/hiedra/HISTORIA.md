@@ -7,6 +7,12 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.8.9 — registro de fallos
+
+- Si Bastet se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,
+  para copiarlo y saber qué pasó. Solo en este dispositivo; no va a ningún sitio. Con «Olvidarlo» se borra.
+- Los widgets y los trabajos de fondo que fallan ya no pueden cerrar la app: el fallo se apunta ahí y sigue.
+
 ## 0.8.8 — sin la raya bajo la cabecera de color
 
 - En el estilo «cabecera de color», los widgets con antetítulo arriba (Recientes y los demás) ya no llevan la raya fina debajo: la franja
