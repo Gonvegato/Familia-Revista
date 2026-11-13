@@ -26,6 +26,7 @@ import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.test.longClick
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.Dispatchers
 import org.junit.Rule
@@ -44,6 +45,14 @@ import java.io.File
 class CapturasTest {
     @get:Rule val rule = createComposeRule()
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
+
+    /** Lo que queda abierto de una prueba (asomarse, la ficha, una tapa volando) vive en objetos estáticos: se limpia antes de cada una. */
+    @org.junit.Before fun limpiaCapas() {
+        Asomo.libro = null; Asomo.donde = null
+        Capas.ficha = false; Capas.pagina = false; Capas.asomo = false
+        com.gonzalo.familia.Vuelo.clave = null; com.gonzalo.familia.Vuelo.destino = null
+        com.gonzalo.familia.Avisos.quita()
+    }
 
     private fun portada(nombre: String, a: Int, b: Int): String {
         val f = File(ctx.cacheDir, "p_${nombre.hashCode()}.png")
@@ -325,10 +334,7 @@ class CapturasTest {
         siembra(); montar(false)
         rule.onNodeWithText("LEÍDOS").performClick(); rule.waitForIdle(); foto("3e_leidos")
         rule.onAllNodesWithText("ABANDONADOS")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("3f_abandonados")
-        rule.onAllNodesWithText("AUTORES")[0].performScrollTo().performClick(); rule.waitForIdle()
-        rule.onNodeWithText("Frank Herbert", useUnmergedTree = true).performClick(); foto("3g_autores")
-        rule.onAllNodesWithText("SAGAS")[0].performScrollTo().performClick(); rule.waitForIdle(); foto("3h_sagas")
-        rule.onAllNodesWithText("Crónicas de Dune", useUnmergedTree = true).onLast().performClick(); rule.waitForIdle(); foto("3i_sagas_abierta")
+        // (los autores y las sagas, con sus páginas, en autoresYAsomo y sagaDesdeSagas)
     }
 
     @Test fun vacia() {
@@ -343,6 +349,31 @@ class CapturasTest {
         // (en Leyendo solo está «Dune»: sale como libro suelto, con su saga al lado)
         rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick(); foto("4_ficha")
         rule.onNodeWithText("Añadido", useUnmergedTree = true).performScrollTo(); foto("4b_ficha_abajo")
+    }
+
+    /** Autores y sagas: la página de un autor (que nace de su fila), asomarse a un libro y la página de una saga. */
+    @Test fun autoresYAsomo() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onAllNodesWithText("AUTORES")[0].performScrollTo().performClick(); rule.waitForIdle(); Thread.sleep(400); rule.mainClock.advanceTimeBy(1000); rule.waitForIdle()
+        foto("3g_autores")
+        rule.mainClock.autoAdvance = false
+        rule.onAllNodesWithText("Frank Herbert", useUnmergedTree = true)[0].performClick()
+        rule.mainClock.advanceTimeBy(130); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_autor_130.png")
+        rule.mainClock.advanceTimeBy(1500); rule.mainClock.autoAdvance = true; rule.waitForIdle()
+        foto("3j_autor")
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performTouchInput { longClick() }
+        rule.mainClock.advanceTimeBy(800); rule.waitForIdle(); foto("3k_asomo")
+    }
+
+    @Test fun sagaDesdeSagas() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onAllNodesWithText("SAGAS")[0].performScrollTo(); rule.mainClock.advanceTimeBy(800); rule.waitForIdle()
+        rule.onAllNodesWithText("SAGAS")[0].performClick(); rule.mainClock.advanceTimeBy(1500); rule.waitForIdle()
+        foto("3h_sagas")
+        rule.onAllNodesWithText("Crónicas de Dune", useUnmergedTree = true)[0].performClick(); rule.mainClock.advanceTimeBy(1200); rule.waitForIdle()
+        foto("3i_saga_desde_sagas")
     }
 
     /** El buscador: creciendo desde BUSCAR, vacío (atajos) y buscando en los subrayados. */

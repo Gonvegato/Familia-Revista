@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -46,6 +47,7 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
     var destino by rememberSaveable { mutableIntStateOf(0) }
     var fichaId by rememberSaveable { mutableStateOf<String?>(null) }
     var sagaId by rememberSaveable { mutableStateOf<String?>(null) }
+    var autor by rememberSaveable { mutableStateOf<String?>(null) }
     val d = Destino.entries[destino]
     // Un widget (o un aviso) pide abrir un libro
     LaunchedEffect(libroPedido) { if (libroPedido != null && Biblioteca.por(libroPedido) != null) { fichaId = libroPedido; destino = 0 }; if (libroPedido != null) alAbrirPedido() }
@@ -54,7 +56,7 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
     LaunchedEffect(irPedido) {
         if (irPedido != null) {
             val seccion = irPedido.substringBefore(':'); escritoPedido = irPedido.substringAfter(':', "").ifBlank { null }
-            Destino.entries.firstOrNull { it.name.equals(seccion, true) }?.let { fichaId = null; sagaId = null; destino = it.ordinal }
+            Destino.entries.firstOrNull { it.name.equals(seccion, true) }?.let { fichaId = null; sagaId = null; autor = null; destino = it.ordinal }
             alIrPedido()
         }
     }
@@ -71,17 +73,23 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
 
     AvisoActualizacion()
     // Desde cualquier página o desde Ajustes, Atrás vuelve a la portada (y desde la portada, sale)
-    BackHandler(enabled = fichaId == null && sagaId == null && d != Destino.Portada) { destino = 0 }
-    BackHandler(enabled = sagaId != null && fichaId == null) { sagaId = null }
+    BackHandler(enabled = fichaId == null && sagaId == null && autor == null && d != Destino.Portada) { destino = 0 }
+    // (asomarse a un libro desenfoca lo de detrás)
+    val desenfoque by androidx.compose.animation.core.animateDpAsState(if (Asomo.libro != null) 10.dp else 0.dp, label = "asomo")
 
     Box(Modifier.fillMaxSize().background(Paper)) {
         // La portada y las secciones son páginas de una sola pantalla (se pasan con las pestañas o con el dedo); Ajustes va aparte
-        if (d == Destino.Ajustes) PantEstilo(alVolver = { destino = 0 })
-        else PantPrincipal(pagina = destino, alPagina = { destino = it }, alAbrir = { fichaId = it.id }, alLeer = ::leer, alAbrirSaga = { sagaId = it.id }, alAnadir = ::anadir,
-            alAjustes = { destino = Destino.Ajustes.ordinal }, escritoPedido = escritoPedido, alEscritoAbierto = { escritoPedido = null })
-        AnimatedVisibility(sagaId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
-            sagaId?.let { id -> PantSaga(id, alCerrar = { sagaId = null }, alAbrir = { fichaId = it.id }) }
+        Box(Modifier.fillMaxSize().then(if (desenfoque > 0.dp) Modifier.blur(desenfoque) else Modifier)) {
+            if (d == Destino.Ajustes) PantEstilo(alVolver = { destino = 0 })
+            else PantPrincipal(pagina = destino, alPagina = { destino = it }, alAbrir = { fichaId = it.id }, alLeer = ::leer, alAbrirSaga = { sagaId = it.id }, alAnadir = ::anadir,
+                alAjustes = { destino = Destino.Ajustes.ordinal }, escritoPedido = escritoPedido, alEscritoAbierto = { escritoPedido = null }, alAbrirAutor = { autor = it })
+            // La página de una saga o de un autor: nace de su fila, como la ficha
+            CapaPagina(sagaId?.let { "saga:$it" } ?: autor?.let { "autor:$it" }, alCerrar = { sagaId = null; autor = null }) { k ->
+                if (k.startsWith("saga:")) PantSaga(k.removePrefix("saga:"), alCerrar = { sagaId = null }, alAbrir = { fichaId = it.id })
+                else PantAutor(k.removePrefix("autor:"), alCerrar = { autor = null }, alAbrir = { fichaId = it.id })
+            }
         }
+        CapaAsomo(alAbrir = { fichaId = it.id }, alLeer = ::leer)
         CapaFicha(fichaId, alCerrar = { fichaId = null }, alLeer = ::leer)
         CapaAvisos(Charcoal, Paper, Acento, Body)
     }
@@ -104,6 +112,7 @@ private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) ->
     LaunchedEffect(fichaId) {
         if (fichaId != null) {
             if (visible != fichaId) { origen = com.gonzalo.familia.Origen.toma(fichaId); visible = fichaId; aperturas++; t.snapTo(0f); atras.snapTo(0f) }
+            Capas.ficha = true
             if (origen?.tapa != null) com.gonzalo.familia.Vuelo.clave = fichaId
             t.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.9f, stiffness = 230f))
             com.gonzalo.familia.Vuelo.clave = null
@@ -112,7 +121,7 @@ private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) ->
             if (origen?.tapa != null) com.gonzalo.familia.Vuelo.clave = visible
             t.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 1f, stiffness = 300f))
             com.gonzalo.familia.Vuelo.clave = null; com.gonzalo.familia.Vuelo.destino = null
-            visible = null; atras.snapTo(0f)
+            visible = null; atras.snapTo(0f); Capas.ficha = false
         }
     }
     // El gesto de atrás con vista previa (Android 14+; antes, un toque de atrás normal)

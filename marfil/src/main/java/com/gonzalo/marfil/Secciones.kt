@@ -101,7 +101,7 @@ fun FilaLibro(l: Libro, alAbrir: (Libro) -> Unit, modifier: Modifier = Modifier,
     // (la fila mide lo que la portada o, si el texto no cabe —letra grande—, lo que el texto; así lo de abajo va abajo)
     Row(modifier.fillMaxWidth().then(if (orden in 1..9) Modifier.entrada("fila:${l.id}:$orden", orden) else Modifier)
         .onGloballyPositioned { sitio[0] = it }
-        .pulsable { com.gonzalo.familia.Origen.apunta(l.id, sitio[0], sitio[1]); alAbrir(l) }.padding(start = sangria, top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
+        .pulsable(alMantener = { Asomo.abre(l.id, sitio[0]) }) { com.gonzalo.familia.Origen.apunta(l.id, sitio[0], sitio[1]); alAbrir(l) }.padding(start = sangria, top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
         PortadaLibro(l, Modifier.width(portada).height(alto).onGloballyPositioned { sitio[1] = it }.tapaQueVuela(l.id), radio = 0)
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
             val num = when { orden > 0 -> "%02d".format(orden); numero > 0 -> "Nº $numero"; else -> "" }
@@ -163,16 +163,21 @@ fun resumenSaga(todos: List<Libro>): String {
 
 /** Una saga en una lista: el abanico, su nombre y cuántos hay; un toque la abre y enseña sus libros; «Ver saga →» va a su página. */
 @Composable
-fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAbrirSaga: (Saga) -> Unit, alAbrirLibro: (Libro) -> Unit) {
+fun FilaSaga(f: FilaLista.DeSaga, abierta: Boolean, alAlternar: () -> Unit, alAbrirSaga: (Saga) -> Unit, alAbrirLibro: (Libro) -> Unit, directo: Boolean = false) {
     val todos = remember(f.saga, Biblioteca.libros.size) { Sagas.libros(f.saga) }
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().pulsable(vibra = com.gonzalo.familia.Vibra::tic, onClick = alAlternar).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        // (en la página de Sagas, tocarla abre su página, que nace de esta fila; en los estantes, se despliega aquí)
+        val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
+        Row(Modifier.fillMaxWidth().onGloballyPositioned { sitio[0] = it }
+            .pulsable(vibra = if (directo) com.gonzalo.familia.Vibra::clic else com.gonzalo.familia.Vibra::tic) {
+                if (directo) { com.gonzalo.familia.Origen.apunta("saga:${f.saga.id}", sitio[0], null); alAbrirSaga(f.saga) } else alAlternar()
+            }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             AbanicoSaga(f.miembros)
             Column(Modifier.weight(1f).padding(start = 16.dp, end = 8.dp)) {
                 Text(f.saga.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(("Saga · " + resumenSaga(todos)).uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 2, modifier = Modifier.padding(top = 2.dp))
             }
-            Text(if (abierta) "−" else "+", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Text(if (directo) "→" else if (abierta) "−" else "+", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = if (directo) 18.sp else 22.sp)
         }
         if (abierta) {
             Column(Modifier.fillMaxWidth().padding(start = 10.dp)) {
@@ -245,12 +250,10 @@ private fun PaginaEstante(estado: Estado, titulo: String, todos: List<Libro>, al
     }
 }
 
-/** Los autores: un toque en uno enseña sus libros (con sus sagas juntas). */
+/** Los autores: cada uno con sus tapas en pequeño y cuántos libros tienes; al tocarlo, se abre su página (que nace de su fila). */
 @Composable
-private fun PaginaAutores(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit) {
+private fun PaginaAutores(todos: List<Libro>, alAbrirAutor: (String) -> Unit) {
     val autores = remember(todos) { todos.filter { it.autor.isNotBlank() }.groupBy { norm(it.autor) }.entries.sortedBy { it.key }.map { (k, ls) -> Triple(k, ls.first().autor, ls) } }
-    var abiertos by rememberSaveable { mutableStateOf(setOf<String>()) }
-    var sagasAbiertas by rememberSaveable { mutableStateOf(setOf<String>()) }
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Column {
@@ -259,27 +262,20 @@ private fun PaginaAutores(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirS
             }
         }
         if (autores.isEmpty()) item { Text("Aún no hay autores: los libros sin autor no salen aquí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(top = 30.dp)) }
-        autores.forEach { (k, nombre, ls) ->
-            item(key = "a:$k") {
-                val abierto = k in abiertos
-                Row(Modifier.fillMaxWidth().clickable { abiertos = if (abierto) abiertos - k else abiertos + k }.padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, modifier = Modifier.weight(1f))
-                    Text("${ls.size} ${if (ls.size == 1) "libro" else "libros"}".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    Text(if (abierto) "  −" else "  +", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 20.sp)
-                }
-                Filete(1.dp, Line)
-            }
-            if (k in abiertos) {
-                val filas = Sagas.agrupar(ls.sortedBy { norm(it.titulo) })
-                items(filas, key = { "a:$k:" + when (it) { is FilaLista.Suelto -> "l" + it.libro.id; is FilaLista.DeSaga -> "s" + it.saga.id } }) { f ->
-                    Column(Modifier.padding(start = 12.dp)) {
-                        when (f) {
-                            is FilaLista.Suelto -> { FilaLibro(f.libro, alAbrir, conEstado = true, extra = f.saga?.let { "Saga ${it.nombre} · ${f.numero}" }.orEmpty()); Filete(1.dp, Line) }
-                            is FilaLista.DeSaga -> FilaSaga(f, f.saga.id in sagasAbiertas, { sagasAbiertas = if (f.saga.id in sagasAbiertas) sagasAbiertas - f.saga.id else sagasAbiertas + f.saga.id }, alAbrirSaga, alAbrir)
-                        }
+        itemsIndexed(autores, key = { _, a -> "a:" + a.first }) { i, (k, nombre, ls) ->
+            val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(1) }
+            Row(Modifier.fillMaxWidth().then(if (i < 9) Modifier.entrada("autor:$k", i) else Modifier).onGloballyPositioned { sitio[0] = it }
+                .pulsable { com.gonzalo.familia.Origen.apunta("autor:$nombre", sitio[0], null); alAbrirAutor(nombre) }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                // Sus tapas, en pequeño y montadas
+                Row(Modifier.padding(horizontal = 10.dp)) {
+                    ls.sortedByDescending { it.ultima }.take(3).forEachIndexed { j, l ->
+                        PortadaLibro(l, Modifier.offset(x = (-8 * j).dp).width(24.dp).height(36.dp), radio = 0, conTitulo = false)
                     }
                 }
+                Text("${ls.size} ${if (ls.size == 1) "libro" else "libros"} →".uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
             }
+            Filete(1.dp, Line)
         }
         item { Spacer(Modifier.height(24.dp)) }
     }
@@ -306,7 +302,7 @@ private fun PaginaSagas(todos: List<Libro>, alAbrir: (Libro) -> Unit, alAbrirSag
                 color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 30.dp))
         }
         items(filas, key = { "s:" + it.saga.id }) { f ->
-            FilaSaga(f, f.saga.id in abiertas, { abiertas = if (f.saga.id in abiertas) abiertas - f.saga.id else abiertas + f.saga.id }, alAbrirSaga, alAbrir)
+            FilaSaga(f, false, {}, alAbrirSaga, alAbrir, directo = true)
         }
         item { Spacer(Modifier.height(24.dp)) }
     }
@@ -330,7 +326,7 @@ private val NOMBRES_PAGINAS = listOf("Portada", "Leyendo", "Pendientes", "Leído
 @Composable
 fun PantPrincipal(
     pagina: Int, alPagina: (Int) -> Unit, alAbrir: (Libro) -> Unit, alLeer: (Libro) -> Unit, alAbrirSaga: (Saga) -> Unit, alAnadir: () -> Unit,
-    alAjustes: () -> Unit, escritoPedido: String? = null, alEscritoAbierto: () -> Unit = {},
+    alAjustes: () -> Unit, escritoPedido: String? = null, alEscritoAbierto: () -> Unit = {}, alAbrirAutor: (String) -> Unit = {},
 ) {
     val pager = rememberPagerState(initialPage = pagina.coerceIn(0, PAGINAS.size - 1)) { PAGINAS.size }
     val ambito = rememberCoroutineScope()
@@ -415,7 +411,7 @@ fun PantPrincipal(
                         Destino.Leidos -> PaginaEstante(Estado.LEIDO, "Leídos", todos, alAbrir, alAbrirSaga, alAnadir)
                         Destino.Abandonados -> PaginaEstante(Estado.ABANDONADO, "Abandonados", todos, alAbrir, alAbrirSaga, alAnadir)
                         Destino.Sagas -> PaginaSagas(todos, alAbrir, alAbrirSaga)
-                        else -> PaginaAutores(todos, alAbrir, alAbrirSaga)
+                        else -> PaginaAutores(todos, alAbrirAutor)
                     }
                 }
             }

@@ -104,7 +104,7 @@ fun Buscador(desde: () -> Rect?, apertura: Int, todos: List<Libro>, cuentas: Lis
         t.animateTo(0f, spring(dampingRatio = 1f, stiffness = 340f))
         alCerrado()
     }
-    BackHandler(enabled = !cerrando) { cerrando = true }
+    BackHandler(enabled = !cerrando && !Capas.ficha && !Capas.pagina && !Capas.asomo) { cerrando = true }
     // Los subrayados de todos los libros, una vez por apertura (fuera del hilo de la pantalla)
     var subrayados by remember(apertura) { mutableStateOf<List<Subrayado>>(emptyList()) }
     LaunchedEffect(apertura) {

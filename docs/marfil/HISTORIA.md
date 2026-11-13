@@ -5,6 +5,25 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.22.0 — Seshat en movimiento
+
+Todo sigue al dedo y se puede interrumpir a medio camino (lo probado en la maqueta «Seshat en movimiento»).
+
+- **Páginas**: basta un 15 % del ancho (o un gesto rápido corto) para pasar a la siguiente; nunca salta más de una. El bloque del acento de
+  las pestañas va pegado a la página mientras deslizas y se estira un poco a mitad de camino. La barra de pestañas se desliza sola sin mover
+  la página y, al cambiar, trae la elegida al centro. Los números de las pestañas ruedan al cambiar.
+- **Pulsar se nota**: filas, tapas, el cartel y los botones se hunden un poco y vuelven con un muelle; cada gesto vibra distinto.
+- **Sin parpadeos**: cada cosa hace su entrada una sola vez (al asomar la página), y las barras se llenan desde cero.
+- **La ficha** nace de la fila que tocas y la tapa vuela hasta su sitio; al cerrar vuelve a su hueco. Con el gesto de atrás de Android, la
+  ficha encoge con el dedo (vista previa). Apertura nueva: el color de la tapa (o tu fondo) con la tapa flotando, paralaje al bajar y una
+  barra arriba que se vuelve de papel con el título. La tapa se inclina con el dedo.
+- **Leído**: la casilla negra se desliza; al marcar «Leído» cae un sello sobre la tapa, vibra y abajo sale «Deshacer».
+- **Buscador nuevo**: crece desde la palabra BUSCAR (antes salía una casilla a media pantalla). Antes de escribir, lo último que buscaste,
+  atajos a cada sección y los libros que sigues; al escribir, busca también **en tus subrayados**, con lo que coincide marcado.
+- **Autores**: al tocar un autor se abre su página (su nombre en grande, sus tapas en abanico y sus libros por estante). En la página de
+  Sagas, una saga abre su página directamente.
+- **Mantener pulsado** un libro: el fondo se desenfoca y salen acciones rápidas (abrir, seguir leyendo, marcar como leído).
+
 ## 0.21.6 — registro de fallos
 
 - Si Seshat se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,
