@@ -11,6 +11,17 @@ fuentes, con tu Real-Debrid configurado en el suyo (esas dan enlaces directos, q
 addon de fuentes ni de torrents: los pones tú.
 
 
+## 0.9.0 — movimiento como Seshat
+
+- La ficha nace del póster o de la fila que tocas y vuelve a ella al cerrarla; con el gesto de atrás de Android 14+ se ve cómo se cierra
+  mientras arrastras.
+- Buscar ya no es otra pantalla: crece desde BUSCAR, enseña lo de tu biblioteca al momento y, tras una pausa corta al escribir, lo de TMDB
+  (o de tus addons). Recuerda lo último que buscaste.
+- Las páginas pasan con menos recorrido del dedo (15 %) y vibran un poco al asentarse; las pestañas son las comunes (bloque que se desliza,
+  números que ruedan) y se pueden deslizar sin mover la página.
+- Todo lo que se toca se hunde con un muelle y vibra; con mando sigue el marco de foco de siempre.
+- Al plegar la cabecera, el nombre pequeño y la fecha entran y salen poco a poco, sin saltos.
+
 ## 0.8.1 — registro de fallos
 
 - Si Hathor se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,

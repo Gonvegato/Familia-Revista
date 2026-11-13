@@ -101,7 +101,7 @@ private fun PantExplorarAddons(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Uni
                 }
             }
         }
-        items(cosas.orEmpty(), key = { it.tipo + it.id }) { b -> TarjetaPoster(b.poster, b.nombre, Dp.Unspecified, b.ano) { alAbrir(b) } }
+        items(cosas.orEmpty(), key = { it.tipo + it.id }) { b -> TarjetaPoster(b.poster, b.nombre, Dp.Unspecified, b.ano, clave = b.id) { alAbrir(b) } }
         if (cosas?.isNotEmpty() == true && !fin) item(span = { GridItemSpan(maxLineSpan) }) {
             EnlaceRevista(if (cargandoMas) "Cargando…" else "Más →", acento = true) {
                 val s = sel ?: return@EnlaceRevista
@@ -119,6 +119,45 @@ private fun PantExplorarAddons(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Uni
 }
 
 /** Buscar en todos los catálogos de tus addons que buscan (cada uno en su fila). */
+/**
+ * Lo que sale en el buscador que crece desde BUSCAR, según escribes: lo de tu biblioteca al momento y, tras una pausa corta al teclear,
+ * lo de TMDB (o de tus addons, si no hay TMDB).
+ */
+@Composable
+fun ResultadosBuscar(q: String, alAbrir: (MetaBreve) -> Unit) {
+    val t = q.trim()
+    var resultados by remember { mutableStateOf<List<Triple<Addon, Catalogo, List<MetaBreve>>>?>(null) }
+    var deTmdb by remember { mutableStateOf<List<MetaBreve>?>(null) }
+    var buscando by remember { mutableStateOf(false) }
+    val enTu = Biblioteca.titulos.toList().filter { t.length >= 2 && it.nombre.contains(t, ignoreCase = true) }
+    LaunchedEffect(t) {
+        resultados = null; deTmdb = null; buscando = false
+        if (t.length < 2) return@LaunchedEffect
+        kotlinx.coroutines.delay(450)
+        buscando = true
+        try {
+            if (Tmdb.activo) deTmdb = try { Tmdb.busca(t) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { emptyList() }
+            else resultados = try { Addons.busca(t) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { emptyList() }
+        } finally { buscando = false }
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = margen())) {
+        if (enTu.isNotEmpty()) FilaPosters("En tu biblioteca", enTu.map { it.breve() }, alAbrir, sub = { b -> enTu.firstOrNull { it.idStremio == b.id }?.estado?.nombre.orEmpty() },
+            imagen = { b -> enTu.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster })
+        if (buscando) Nota("Buscando «$t»…", Modifier.padding(top = 18.dp))
+        deTmdb?.let { l ->
+            if (l.isEmpty()) Nota("Nada con «$t».", Modifier.padding(top = 18.dp))
+            val pelis = l.filter { it.tipo == "movie" }; val series = l.filter { it.tipo == "series" }
+            if (pelis.isNotEmpty()) FilaPosters("Películas", pelis, alAbrir)
+            if (series.isNotEmpty()) FilaPosters("Series", series, alAbrir)
+        }
+        resultados?.let { r ->
+            if (r.isEmpty()) Nota("Nada en tus addons con «$t».", Modifier.padding(top = 18.dp))
+            r.forEach { (a, c, l) -> FilaPosters("${tiposNombre(c.tipo)} · ${a.nombre}", l, alAbrir) }
+        }
+        Spacer(Modifier.height(40.dp))
+    }
+}
+
 @Composable
 fun PantBuscar(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
     val ambito = rememberCoroutineScope()

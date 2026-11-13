@@ -1,5 +1,8 @@
 package com.gonzalo.mostaza
 
+import androidx.compose.ui.composed
+import com.gonzalo.familia.muelleAlPulsar
+import com.gonzalo.familia.filaDe
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,11 +59,11 @@ fun Poster(imagen: String, nombre: String, modifier: Modifier = Modifier) {
 
 /** Una tarjeta de póster con su nombre debajo (siempre dos líneas reservadas: la fila no salta) y, si se pasa, lo que llevas visto. */
 @Composable
-fun TarjetaPoster(imagen: String, nombre: String, ancho: Dp = Dp.Unspecified, sub: String = "", progreso: Float? = null, alAbrir: () -> Unit) {
+fun TarjetaPoster(imagen: String, nombre: String, ancho: Dp = Dp.Unspecified, sub: String = "", progreso: Float? = null, clave: String? = null, alAbrir: () -> Unit) {
     val src = remember { MutableInteractionSource() }
     val foco by src.collectIsFocusedAsState()
     val escala by animateFloatAsState(if (foco) 1.06f else 1f, label = "poster")
-    Column((if (ancho != Dp.Unspecified) Modifier.width(ancho) else Modifier.fillMaxWidth()).tocableCon(src) { alAbrir() }) {
+    Column((if (ancho != Dp.Unspecified) Modifier.width(ancho) else Modifier.fillMaxWidth()).then(if (clave != null) Modifier.filaDe(clave) else Modifier).tocableCon(src) { alAbrir() }) {
         Box(Modifier.scale(escala)) {
             Poster(imagen, nombre, Modifier.fillMaxWidth())
             if (progreso != null && progreso > 0f) Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color(0x66000000))) {
@@ -74,8 +77,10 @@ fun TarjetaPoster(imagen: String, nombre: String, ancho: Dp = Dp.Unspecified, su
 }
 
 /** Como [tocable], con la fuente de interacción de fuera (para saber si tiene el foco). */
-fun Modifier.tocableCon(src: MutableInteractionSource, onClick: () -> Unit): Modifier =
-    this.marcoFoco(src, 4.dp).clickable(interactionSource = src, indication = null, onClick = onClick)
+fun Modifier.tocableCon(src: MutableInteractionSource, onClick: () -> Unit): Modifier = composed {
+    val vista = androidx.compose.ui.platform.LocalView.current
+    this.marcoFoco(src, 4.dp).muelleAlPulsar(src).clickable(interactionSource = src, indication = null, onClick = { com.gonzalo.familia.Vibra.clic(vista); onClick() })
+}
 
 /** Una fila de pósteres que se desliza, con su antetítulo y, si se pasa, «Ver todo». */
 @Composable
@@ -89,7 +94,7 @@ fun FilaPosters(titulo: String, cosas: List<MetaBreve>, alAbrir: (MetaBreve) -> 
         Filete(1.dp)
         Spacer(Modifier.height(12.dp))
         LazyRow(Modifier.fillMaxWidth().sangrado(8.dp), contentPadding = PaddingValues(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            items(cosas, key = { it.tipo + it.id }) { m -> TarjetaPoster(imagen(m), m.nombre, ancho, sub(m), progreso(m)) { alAbrir(m) } }
+            items(cosas, key = { it.tipo + it.id }) { m -> TarjetaPoster(imagen(m), m.nombre, ancho, sub(m), progreso(m), clave = m.id) { alAbrir(m) } }
         }
     }
 }

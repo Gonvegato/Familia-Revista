@@ -1,5 +1,6 @@
 package com.gonzalo.mostaza
 
+import com.gonzalo.familia.filaDe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -289,7 +290,7 @@ private fun EncabezadoCorto(titulo: String, enlace: String, alIr: () -> Unit) {
 /** Una tapa de la portada (2:3, recta) con su pie: por dónde vas (lo que ves) o «película · 2024» (lo pendiente). */
 @Composable
 private fun TapaConPie(t: Titulo, ancho: Int, alAbrir: (Titulo) -> Unit) {
-    Column(Modifier.width(ancho.dp).tocable { alAbrir(t) }.testTag("loseta-" + t.ref)) {
+    Column(Modifier.width(ancho.dp).filaDe(t.idStremio).tocable { alAbrir(t) }.testTag("loseta-" + t.ref)) {
         Box(Modifier.width(ancho.dp).height((ancho * 1.5f).dp)) { PortadaTitulo(t, Modifier.matchParentSize()) }
         val p = Biblioteca.ultimo(t.ref)
         if (t.estado == Estado.VIENDO) {
@@ -314,7 +315,7 @@ private fun MosaicoTerminadas(l: List<Titulo>, alAbrir: (Titulo) -> Unit, alVerT
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 fila.forEach { t ->
                     Box(Modifier.weight(1f).aspectRatio(2f / 3f)) {
-                        if (t != null) Box(Modifier.fillMaxSize().tocable { alAbrir(t) }) { PortadaTitulo(t, Modifier.matchParentSize()) }
+                        if (t != null) Box(Modifier.fillMaxSize().filaDe(t.idStremio).tocable { alAbrir(t) }) { PortadaTitulo(t, Modifier.matchParentSize()) }
                         else Box(Modifier.fillMaxSize().background(Charcoal).tocable(onClick = alVerTodas), contentAlignment = Alignment.Center) {
                             Text("+${sobran + 1}", color = Paper, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, maxLines = 1)
                         }

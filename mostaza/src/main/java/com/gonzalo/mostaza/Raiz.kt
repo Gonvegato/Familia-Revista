@@ -1,5 +1,6 @@
 package com.gonzalo.mostaza
 
+import com.gonzalo.familia.CapaAvisos
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -69,7 +70,9 @@ fun MostazaApp(fichaPedida: String? = null, addonPedido: String? = null, seccion
     AvisoActualizacion()
     BackHandler(enabled = ficha == null && encima == null && pagina != 0) { pagina = 0 }
     BackHandler(enabled = ficha == null && encima != null) { encima = null }
-    BackHandler(enabled = ficha != null) { ficha = null }
+    // (las fichas abiertas, por su id: la que se cierra se sigue pintando mientras vuelve a su fila)
+    val fichas = remember { mutableMapOf<String, MetaBreve>() }
+    ficha?.let { fichas[it.id] = it }
     Box(Modifier.fillMaxSize().background(Paper)) {
         when (encima) {
             Destino.Explorar -> PantExplorar(alVolver = { encima = null }, alAbrir = { ficha = it; verAlAbrir = false })
@@ -79,8 +82,10 @@ fun MostazaApp(fichaPedida: String? = null, addonPedido: String? = null, seccion
             else -> PantPrincipal(pagina = pagina, alPagina = { pagina = it }, alAbrir = { ficha = it.breve(); verAlAbrir = false }, alAbrirBreve = { ficha = it; verAlAbrir = false },
                 alVer = { ficha = it.breve(); verAlAbrir = true }, alIr = ::ir, alReto = { pestanaAjustes = 5; encima = Destino.Ajustes })
         }
-        AnimatedVisibility(ficha != null, enter = entraHoja, exit = saleHoja) {
-            ficha?.let { b -> PantFicha(b, alCerrar = { ficha = null }, alAbrir = { ficha = it; verAlAbrir = false }, verAlAbrir = verAlAbrir, alVisto = { verAlAbrir = false }) }
+        // La ficha nace del póster o la fila que tocaste y se cierra con el gesto de atrás (con vista previa)
+        com.gonzalo.familia.CapaQueNace(ficha?.id, alCerrar = { ficha = null }, fondo = Paper) { id, _ ->
+            fichas[id]?.let { b -> PantFicha(b, alCerrar = { ficha = null }, alAbrir = { ficha = it; verAlAbrir = false }, verAlAbrir = verAlAbrir, alVisto = { verAlAbrir = false }) }
         }
+        CapaAvisos(Charcoal, Paper, Acento, Body)
     }
 }
