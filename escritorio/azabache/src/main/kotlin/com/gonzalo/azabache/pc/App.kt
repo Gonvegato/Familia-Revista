@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.gonzalo.familia.pc.LaFamilia
 import com.gonzalo.familia.pc.revista.*
+import com.gonzalo.familia.pc.mov.atrasConEsc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,6 +41,8 @@ class Nav(val ir: (Pantalla) -> Unit, val aviso: (String) -> Unit)
 fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
     LaFamilia.cambios
     var pantalla by remember { mutableStateOf(inicial) }
+    // Desde dónde se abrió Ajustes (la ⚙): Esc vuelve allí, como en Seshat
+    var antesDeAjustes by remember { mutableStateOf<Pantalla>(Pantalla.Inicio) }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val nav = remember { Nav({ pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
@@ -63,8 +66,20 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
             else -> d == p
         }
     }.coerceAtLeast(0)
-    Column(Modifier.fillMaxSize()) {
-        CabeceraConPestanas("Jonsu", destinos.map { it.first }, sel) { i -> pantalla = destinos[i].second }
+    // Esc (o ⌘[): de una ficha a donde estabas, de una saga a Sagas, de lo de tu pareja a Pareja, de Ajustes a donde estabas
+    val atras: Pantalla? = when (val p = pantalla) {
+        is Pantalla.Detalle -> p.volver
+        is Pantalla.UnaSaga -> Pantalla.Sagas
+        is Pantalla.DeLaPareja -> Pantalla.Pareja
+        Pantalla.Ajustes -> antesDeAjustes
+        else -> null
+    }
+    Column(Modifier.fillMaxSize().atrasConEsc { atras?.let { pantalla = it; true } ?: false }) {
+        CabeceraConPestanas("Jonsu", destinos.map { it.first }, sel) { i ->
+            val d = destinos[i].second
+            if (d == Pantalla.Ajustes && pantalla != Pantalla.Ajustes) antesDeAjustes = pantalla
+            pantalla = d
+        }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             // Como en el móvil: abrir una ficha la sube un poco desde abajo; entre secciones, un fundido rápido
             AnimatedContent(pantalla, transitionSpec = {

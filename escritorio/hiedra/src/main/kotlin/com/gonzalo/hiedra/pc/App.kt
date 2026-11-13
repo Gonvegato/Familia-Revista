@@ -1,5 +1,6 @@
 package com.gonzalo.hiedra.pc
 
+import com.gonzalo.familia.pc.mov.atrasConEsc
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -80,6 +81,7 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
     LaunchedEffect(Unit) { snapshotFlow { SalaPedida.veces }.collect { if (it > 0) enSala = true } }
     if (enSala) { PantallaSala(estSala) { enSala = false }; return }
     var pantalla by remember { mutableStateOf(inicial) }
+    var antesDeAjustes by remember { mutableStateOf<Pantalla>(Pantalla.Portada) }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val nav = remember { Nav({ pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
@@ -91,7 +93,12 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
         add(Entrada("En este ordenador", Pc.yaMirado()?.size, grupo = "Más")); add(Entrada("Ajustes", grupo = "Más")); add(Entrada("Modo sala", grupo = "Para la tele"))
     }
     val sel = when (val p = pantalla) { Pantalla.Portada -> 0; is Pantalla.Lista -> 1 + estados.indexOf(p.estado); Pantalla.EsteOrdenador -> 5; Pantalla.Ajustes -> 6; is Pantalla.Ficha -> (p.volver as? Pantalla.Lista)?.let { 1 + estados.indexOf(it.estado) } ?: 0 }
-    fun ve(i: Int) { if (i == 7) enSala = true else pantalla = when (i) { 0 -> Pantalla.Portada; in 1..4 -> Pantalla.Lista(estados[i - 1]); 5 -> Pantalla.EsteOrdenador; else -> Pantalla.Ajustes } }
+    fun ve(i: Int) {
+        if (i == 7) { enSala = true; return }
+        val d = when (i) { 0 -> Pantalla.Portada; in 1..4 -> Pantalla.Lista(estados[i - 1]); 5 -> Pantalla.EsteOrdenador; else -> Pantalla.Ajustes }
+        if (d == Pantalla.Ajustes && pantalla != Pantalla.Ajustes) antesDeAjustes = pantalla
+        pantalla = d
+    }
     // El mando también en la ventana: la cruceta mueve el foco, A pulsa, B vuelve, LB/RB cambian de sección y ⧉ o ☰ abren la sala
     // (F11 es la pantalla completa de las cuatro apps, sin la sala)
     val fm = androidx.compose.ui.platform.LocalFocusManager.current
@@ -114,7 +121,10 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
         Entrada.manejador = h
         onDispose { if (Entrada.manejador === h) Entrada.manejador = null }
     }
-    Column(Modifier.fillMaxSize()) {
+    // Esc (o ⌘[), como B en el mando: de la ficha a donde estabas; de Ajustes (la ⚙), a donde estabas
+    Column(Modifier.fillMaxSize().atrasConEsc {
+        when (val p = pantalla) { is Pantalla.Ficha -> { pantalla = p.volver; true }; Pantalla.Ajustes -> { pantalla = antesDeAjustes; true }; else -> false }
+    }) {
         CabeceraConPestanas("Bastet", entradas, sel) { i -> ve(i) }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             Crossfade(pantalla, label = "pantalla") { p ->

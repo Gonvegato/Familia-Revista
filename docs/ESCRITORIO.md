@@ -181,6 +181,12 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. La Sala (para la tele) sigue con su cara propia.
 
 
+
+**Atrás con Esc (o ⌘[), en las seis.** Seshat y Nut cierran lo que está encima; Hathor vuelve a la pantalla anterior. Desde Thot 1.3.1,
+Bastet 1.3.1 y Jonsu 1.4.1 también: en Jonsu, de una ficha a donde estabas, de una saga a Sagas y de lo de tu pareja a Pareja; en
+Bastet, de la ficha a su lista (como B en el mando); en las tres, de Ajustes (la rueda) a donde estabas, y en Thot también de la
+Papelera. Solo cuando nada de dentro usa el Esc: el editor, las fichas, el árbol, la concentración o el diseñador siguen con el suyo.
+
 **Los colores, como en el móvil (noviembre de 2026).** De serie, las seis usan los colores de la familia: papel #F8F0D4 y texto negro (de
 noche, al revés), y el acento de cada una: Seshat ocre #B0791E, Bastet oliva #7A8A3A, Thot azul pizarra #5A7896, Hathor rosa viejo
 #B56576, Nut vino #5D1414 y Jonsu ciruela #8E5A78. Es la paleta «familia» que el móvil guarda en la cuenta (`ajustes/<app>` → `skin`),

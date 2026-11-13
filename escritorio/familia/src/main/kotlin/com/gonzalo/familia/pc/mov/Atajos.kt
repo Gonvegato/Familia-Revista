@@ -11,6 +11,9 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.focusable
 
 /**
  * El teclado de la ventana: «atrás» (Esc, o ⌘[ en el Mac y Ctrl+[ en Linux) cierra lo de más arriba (el buscador, una ficha encima de
@@ -59,4 +62,19 @@ fun Teclas(maneja: (KeyEvent) -> Boolean) {
         Atajos.ponTeclas(h)
         onDispose { Atajos.quitaTeclas(h) }
     }
+}
+
+/**
+ * «Atrás» para la raíz de una app que lleva su propia navegación (Thot, Bastet, Jonsu): Esc, o ⌘[ / Ctrl+[, cuando nada de dentro lo ha
+ * usado antes (un campo, el editor, un diálogo, el diseñador). Por eso va en la fase normal del teclado, de dentro hacia fuera, y no en
+ * la de la ventana: así no le quita el Esc a nadie. [alAtras] devuelve true si ha vuelto a algún sitio.
+ */
+@Composable
+fun androidx.compose.ui.Modifier.atrasConEsc(alAtras: () -> Boolean): androidx.compose.ui.Modifier {
+    val raiz = androidx.compose.runtime.remember { androidx.compose.ui.focus.FocusRequester() }
+    val f by rememberUpdatedState(alAtras)
+    androidx.compose.runtime.LaunchedEffect(Unit) { runCatching { raiz.requestFocus() } }
+    return this.then(androidx.compose.ui.Modifier.focusRequester(raiz).focusable().onKeyEvent { k ->
+        k.type == KeyEventType.KeyDown && (k.key == Key.Escape || ((k.isMetaPressed || k.isCtrlPressed) && k.key == Key.LeftBracket)) && f()
+    })
 }

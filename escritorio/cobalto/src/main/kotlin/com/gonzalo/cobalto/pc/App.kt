@@ -1,5 +1,6 @@
 package com.gonzalo.cobalto.pc
 
+import com.gonzalo.familia.pc.mov.atrasConEsc
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.SnackbarHost
@@ -30,9 +31,13 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
     val e = Cuaderno.escritos
     e.version
     var pantalla by remember { mutableStateOf(inicial) }
+    // Desde dónde se abrió Ajustes o la Papelera: Esc vuelve allí, como al cerrar Ajustes en Seshat
+    var antes by remember { mutableStateOf<Pantalla>(Pantalla.Portada) }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val nav = remember { Nav({ Editor.guardaYa(); Estudio.concentra(false); pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
+    val nav = remember { Nav({ Editor.guardaYa(); Estudio.concentra(false)
+        if ((it == Pantalla.Ajustes || it == Pantalla.Papelera) && pantalla != Pantalla.Ajustes && pantalla != Pantalla.Papelera) antes = pantalla
+        pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
     // Los sprints siguen aunque cambies de pantalla
     VigilaSprint(e)
     // La columna: la portada, tus obras por menú (como en el móvil) y lo demás
@@ -51,7 +56,11 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
     }
     // (el menú del botón derecho de los textos, en español: el de Compose viene en inglés)
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLocalization provides MenuEnEspanol) {
-    Column(Modifier.fillMaxSize()) {
+    // Esc (o ⌘[), cuando nada de dentro lo usa (el editor, las fichas, el árbol y la concentración tienen el suyo): de Ajustes o la
+    // Papelera, a donde estabas
+    Column(Modifier.fillMaxSize().atrasConEsc {
+        if (pantalla == Pantalla.Ajustes || pantalla == Pantalla.Papelera) { nav.ir(antes); true } else false
+    }) {
         // (en la concentración solo queda la página: ni la cabecera)
         if (!Estudio.concentracion) {
             CabeceraConPestanas("Thot", entradas, sel) { i ->
