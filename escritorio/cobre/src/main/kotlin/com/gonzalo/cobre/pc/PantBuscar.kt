@@ -45,7 +45,7 @@ fun PantBuscar(nav: Nav) {
         }
     }
     Pagina(ancho = 1180.dp) {
-        CabeceraPagina("Nut", "Buscar")
+        CabeceraPagina("Nut", "Buscar canal", volver = { nav.volver() })
         Spacer(Modifier.height(14.dp))
         OutlinedTextField(texto, { texto = it }, Modifier.fillMaxWidth().focusRequester(campo), label = { Text("Un canal, una película o una serie") }, singleLine = true)
         val h = hallado

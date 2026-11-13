@@ -20,7 +20,7 @@ fun main(args: Array<String>) {
             AlAbrir.ultimoCanal()
         },
         // Al cerrar: lo que se estaba viendo se apunta (antes de subir lo pendiente a la cuenta)
-        alCerrar = { Reproductor.alCerrarLaApp(); Mando.para() }) { AppCobre() }
+        alCerrar = { Reproductor.alCerrarLaApp(); Mando.para() }) { AppCobre(paginaInicial = 0) }
 }
 
 /** «Al abrir Cobre, el último canal que viste» (`ajustes/cobre_directo` → `alAbrir`), como una tele. */

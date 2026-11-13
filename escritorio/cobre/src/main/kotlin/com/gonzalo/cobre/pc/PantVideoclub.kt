@@ -145,7 +145,7 @@ fun PantFichaPelicula(l: Lista, p: Pelicula, nav: Nav) {
             f == null && error == null -> Nota("Leyendo la ficha…")
             f == null -> Nota(error!!)
             else -> {
-                if (f.descripcion.isNotBlank()) Text(f.descripcion, color = Charcoal, fontFamily = Display, fontSize = 18.sp, lineHeight = 26.sp)
+                if (f.descripcion.isNotBlank()) Text(f.descripcion, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, lineHeight = 26.sp)
                 Spacer(Modifier.height(12.dp))
                 if (f.director.isNotBlank()) MagFact("Dirección", f.director)
                 if (f.reparto.isNotBlank()) { Etiqueta("Reparto", Modifier.padding(top = 8.dp)); Cuerpo(f.reparto) }
@@ -178,7 +178,7 @@ fun PantFichaSerie(l: Lista, s: Serie, nav: Nav) {
         if (toca != null) BotonAcento((if (progresos.isEmpty()) "Ver" else "Seguir") + " · T${toca.temporada} · E${toca.numero}", modifier = Modifier.fillMaxWidth()) {
             nav.ver(Encargo.DeEpisodio(l, serie, f, toca))
         }
-        if (serie.trama.isNotBlank()) Text(serie.trama, color = Charcoal, fontFamily = Display, fontSize = 18.sp, lineHeight = 26.sp, modifier = Modifier.padding(top = 14.dp))
+        if (serie.trama.isNotBlank()) Text(serie.trama, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, lineHeight = 26.sp, modifier = Modifier.padding(top = 14.dp))
         when {
             f == null && error == null -> Nota("Leyendo los episodios…", Modifier.padding(top = 12.dp))
             f == null -> Nota(error!!, Modifier.padding(top = 12.dp))
@@ -188,9 +188,9 @@ fun PantFichaSerie(l: Lista, s: Serie, nav: Nav) {
                 f.episodios[temp].orEmpty().forEach { e ->
                     val p = progresos[e.id]
                     Row(Modifier.fillMaxWidth().pulsable { nav.ver(Encargo.DeEpisodio(l, serie, f, e)) }.padding(vertical = 10.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("${e.numero}", color = if (p?.visto == true) Muted else Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(44.dp))
+                        Text("${e.numero}", color = if (p?.visto == true) Muted else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(44.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(tituloEpisodio(e, serie.nombre), color = if (p?.visto == true) Muted else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(tituloEpisodio(e, serie.nombre), color = if (p?.visto == true) Muted else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             val sub = listOfNotNull(e.duracionSeg.takeIf { it > 0 }?.let { Formato.duracion(it * 1000) }, if (p?.visto == true) "visto" else p?.takeIf { it.pos > 0 }?.let { "vas por ${Formato.tiempo(it.pos)}" })
                             if (sub.isNotEmpty()) Etiqueta(sub.joinToString(" · "))
                             if (p != null && !p.visto && p.fraccion > 0f) Barra(p.fraccion, Modifier.padding(top = 4.dp).widthIn(max = 280.dp))

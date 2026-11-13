@@ -1,5 +1,8 @@
 package com.gonzalo.cobre.pc
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.gonzalo.familia.pc.mov.CapaQueNace
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -61,7 +64,7 @@ class Nav(val ir: (Pantalla) -> Unit, val volver: () -> Unit, val aviso: (String
  * mpv tiene algo puesto, la banda del reproductor (con la lista de canales).
  */
 @Composable
-fun AppCobre(inicial: Pantalla = Pantalla.Directo) {
+fun AppCobre(inicial: Pantalla = Pantalla.Directo, paginaInicial: Int? = null) {
     LaFamilia.cambios
     var pantalla by remember { mutableStateOf(inicial) }
     val historia = remember { mutableStateListOf<Pantalla>() }
@@ -79,21 +82,27 @@ fun AppCobre(inicial: Pantalla = Pantalla.Directo) {
     }
     val nav = remember { Nav({ ir(it) }, { volver() }, { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } }, { pantalla }) }
     val hayVideoclub = Listas.usables().any { it.esXtream }
-    val destinos = buildList<Pair<Entrada, Pantalla>> {
-        add(Entrada("Directo", grupo = "La tele") to Pantalla.Directo); add(Entrada("Guía", grupo = "La tele") to Pantalla.Guia)
-        add(Entrada("Películas", grupo = "El videoclub") to Pantalla.Peliculas); add(Entrada("Series", grupo = "El videoclub") to Pantalla.Series)
-        add(Entrada("Buscar", grupo = "Más") to Pantalla.Buscar); add(Entrada("Ajustes", grupo = "Más") to Pantalla.Ajustes())
+    // Las páginas (como Nut del móvil 0.9): el fútbol y la tele, en pestañas; lo demás (Buscar, Ajustes, las fichas), encima
+    val paginas = listOf("Portada", "Hoy", "Competiciones", "Tus equipos", "Directo", "Guía", "Películas", "Series")
+    val deTele = listOf<Pantalla>(Pantalla.Directo, Pantalla.Guia, Pantalla.Peliculas, Pantalla.Series)
+    val inicialPagina = paginaInicial ?: deTele.indexOf(inicial).let { if (it >= 0) 4 + it else 0 }
+    val pager = androidx.compose.foundation.pager.rememberPagerState(initialPage = inicialPagina) { paginas.size }
+    // Lo de encima de las páginas: Buscar, Ajustes o la ficha de una película o una serie (null: nada)
+    val encima = pantalla.takeIf { it is Pantalla.Buscar || it is Pantalla.Ajustes || it is Pantalla.FichaPelicula || it is Pantalla.FichaSerie }
+    var fichas by remember { mutableStateOf(listOf<FichaF>()) }
+    val abreF: (FichaF) -> Unit = { fichas = fichas + it }
+    // (ir a Directo, la Guía… desde otra pantalla pasa a esa página; volver de algo de encima no mueve la página)
+    val antes = remember { arrayOfNulls<Pantalla>(1) }
+    LaunchedEffect(pantalla) {
+        val vieneDeEncima = antes[0].let { it is Pantalla.Buscar || it is Pantalla.Ajustes || it is Pantalla.FichaPelicula || it is Pantalla.FichaSerie }
+        if (!vieneDeEncima && antes[0] != null) deTele.indexOf(pantalla).takeIf { it >= 0 }?.let { pager.animateScrollToPage(4 + it) }
+        antes[0] = pantalla
     }
-    val sel = destinos.indexOfFirst { (_, d) ->
-        when (val p = pantalla) {
-            is Pantalla.FichaPelicula -> d == Pantalla.Peliculas; is Pantalla.FichaSerie -> d == Pantalla.Series
-            is Pantalla.Ajustes -> d is Pantalla.Ajustes; else -> d == p
-        }
-    }
+    LaunchedEffect(Unit) { Futbol.cargar(); withContext(Dispatchers.IO) { Futbol.limpia() } }
     val foco = LocalFocusManager.current
     val raiz = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { raiz.requestFocus() } }
-    val teclasSeccion = listOf(Key.One, Key.Two, Key.Three, Key.Four, Key.Five, Key.Six)
+    val mios = AjustesFutbol.equipos().size
     Column(Modifier.fillMaxSize().focusRequester(raiz).focusable().onKeyEvent { k ->
         if (k.type != KeyEventType.KeyDown) return@onKeyEvent false
         val mod = if (Sitio.sistema == Sitio.Sistema.MAC) k.isMetaPressed else k.isCtrlPressed
@@ -105,12 +114,11 @@ fun AppCobre(inicial: Pantalla = Pantalla.Directo) {
             k.key == Key.DirectionUp -> foco.moveFocus(FocusDirection.Up)
             k.key == Key.DirectionDown -> foco.moveFocus(FocusDirection.Down)
             k.key == Key.Escape && e.lista != null -> { Reproductor.cierraLista(); true }
-            k.key == Key.Escape || (k.key == Key.Backspace && k.isAltPressed) -> { volver(); true }
+            k.key == Key.Escape || (k.key == Key.Backspace && k.isAltPressed) -> { if (encima != null) volver(); true }
             mod && k.key == Key.F -> { ir(Pantalla.Buscar); true }
-            mod && k.key in teclasSeccion -> { destinos.getOrNull(teclasSeccion.indexOf(k.key))?.let { ir(it.second) }; true }
-            // (las secciones con los gatillos del mando o con Ctrl+Re Pág / Av Pág)
-            mod && k.key == Key.PageUp -> { destinos.getOrNull((if (sel < 0) 0 else sel) - 1)?.let { ir(it.second) }; true }
-            mod && k.key == Key.PageDown -> { destinos.getOrNull((if (sel < 0) 0 else sel) + 1)?.let { ir(it.second) }; true }
+            // (las páginas con los gatillos del mando o con Ctrl+Re Pág / Av Pág)
+            mod && k.key == Key.PageUp -> { scope.launch { pager.animateScrollToPage((pager.currentPage - 1).coerceAtLeast(0)) }; true }
+            mod && k.key == Key.PageDown -> { scope.launch { pager.animateScrollToPage((pager.currentPage + 1).coerceAtMost(paginas.size - 1)) }; true }
             // Con un canal puesto: Re Pág / Av Pág (y los botones de canal) cambian de canal
             e.activo && e.directo && (k.key == Key.PageUp || k.key == Key.ChannelUp) -> { Reproductor.arriba(); true }
             e.activo && e.directo && (k.key == Key.PageDown || k.key == Key.ChannelDown) -> { Reproductor.abajo(); true }
@@ -118,27 +126,48 @@ fun AppCobre(inicial: Pantalla = Pantalla.Directo) {
             else -> false
         }
     }) {
-        Row(Modifier.weight(1f).fillMaxWidth()) {
-            Lateral("Nut", destinos.map { it.first }, sel) { i -> ir(destinos[i].second) }
-            Box(Modifier.width(1.dp).fillMaxHeight()) { Filete(1.dp, Line, Modifier.fillMaxHeight()) }
-            Box(Modifier.weight(1f).fillMaxHeight()) {
-                AnimatedContent(pantalla, transitionSpec = {
-                    if (targetState is Pantalla.FichaPelicula || targetState is Pantalla.FichaSerie) (fadeIn(tween(240)) + slideInVertically(tween(300)) { it / 16 }) togetherWith fadeOut(tween(160))
-                    else fadeIn(tween(200)) togetherWith fadeOut(tween(140))
-                }, label = "pantalla") { p ->
-                    when (p) {
-                        Pantalla.Directo -> PantDirecto(nav)
-                        Pantalla.Guia -> PantGuia(nav)
-                        Pantalla.Peliculas -> PantPeliculas(nav, hayVideoclub)
-                        Pantalla.Series -> PantSeries(nav, hayVideoclub)
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            PaginasC("Nut", paginas, listOf(null, null, null, mios.takeIf { it > 0 }, null, null, null, null), pager, alAjustes = { ir(Pantalla.Ajustes()) }, enlaces = {
+                EnlaceCabecera("Buscar canal", Paper.copy(alpha = 0.75f), atajo = TeclaMando + "F") { ir(Pantalla.Buscar) }
+            }) { i ->
+                when (i) {
+                    0 -> PaginaPortadaF(nav, abreF) { n -> scope.launch { pager.animateScrollToPage(n) } }
+                    1 -> PaginaHoy(nav, abreF)
+                    2 -> PaginaCompeticiones(abreF)
+                    3 -> PaginaTusEquipos(nav, abreF)
+                    4 -> PantDirecto(nav)
+                    5 -> PantGuia(nav)
+                    6 -> PantPeliculas(nav, hayVideoclub)
+                    else -> PantSeries(nav, hayVideoclub)
+                }
+            }
+            // Buscar, Ajustes y las fichas de la tele, encima (Esc o ⌘[ vuelven)
+            CapaQueNace(encima?.let { it::class.simpleName + (it as? Pantalla.FichaPelicula)?.pelicula?.id + (it as? Pantalla.FichaSerie)?.serie?.id }, alCerrar = { volver() }, fondo = Paper, esPagina = true) { _, _ ->
+                Box(Modifier.fillMaxSize().background(Paper)) {
+                    when (val p = encima) {
                         Pantalla.Buscar -> PantBuscar(nav)
                         is Pantalla.Ajustes -> PantAjustes(nav, p.pestana, p.editar)
                         is Pantalla.FichaPelicula -> PantFichaPelicula(p.lista, p.pelicula, nav)
                         is Pantalla.FichaSerie -> PantFichaSerie(p.lista, p.serie, nav)
+                        else -> {}
                     }
                 }
-                SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(16.dp))
             }
+            // Las fichas del fútbol, unas encima de otras: cada una nace de la fila que pulsaste
+            val niveles = remember { HashMap<Int, FichaF>() }
+            fichas.forEachIndexed { i, f -> niveles[i] = f }
+            for (i in 0 until maxOf(6, fichas.size + 1)) androidx.compose.runtime.key(i) {
+                CapaQueNace(fichas.getOrNull(i)?.clave, alCerrar = { fichas = fichas.take(i) }, fondo = Paper, atrasActivo = i == fichas.size - 1) { _, _ ->
+                    val cierra = { fichas = fichas.take(i) }
+                    when (val f = niveles[i]) {
+                        is FichaF.DePartido -> FichaPartidoC(f.partido, nav, cierra, abreF)
+                        is FichaF.DeEquipo -> FichaEquipoC(f.equipo, f.liga, nav, cierra, abreF)
+                        is FichaF.DeCompeticion -> FichaCompeticionC(f.liga, cierra, abreF)
+                        null -> {}
+                    }
+                }
+            }
+            SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).padding(16.dp))
         }
         BandaReproductor()
     }
@@ -159,7 +188,7 @@ fun BandaReproductor() {
         Filete(2.dp)
         Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             if (e.activo && e.directo) {
-                Text("${e.numero}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.padding(end = 14.dp))
+                Text("${e.numero}", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.padding(end = 14.dp))
                 Logo(e.logo, e.titulo, 40.dp)
                 Spacer(Modifier.width(12.dp))
             }
@@ -167,7 +196,7 @@ fun BandaReproductor() {
                 if (e.activo) {
                     Text((if (e.cargando) "CARGANDO · " else if (e.reproduciendo) (if (e.directo) "EN DIRECTO · " else "VIENDO · ") else "EN PAUSA · ") + e.subtitulo.uppercase(),
                         color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(e.titulo + (if (e.tecleado.isNotBlank()) "  ·  canal ${e.tecleado}…" else ""), color = Charcoal, fontFamily = Display, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
+                    Text(e.titulo + (if (e.tecleado.isNotBlank()) "  ·  canal ${e.tecleado}…" else ""), color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (e.directo) AhoraYDespues(e.ahora, e.despues, System.currentTimeMillis(), Modifier.padding(top = 2.dp).widthIn(max = 620.dp))
                     else if (e.dur > 0) { Barra(e.pos.toFloat() / e.dur, Modifier.padding(top = 4.dp).widthIn(max = 520.dp)); Text("${Formato.tiempo(e.pos)} de ${Formato.tiempo(e.dur)}", color = Muted, fontFamily = Body, fontSize = 11.sp) }
@@ -229,7 +258,7 @@ private fun ListaRapida(canales: List<com.gonzalo.iptv.Canal>, actual: Int) {
                 Text("${if (c.numero > 0) c.numero else i + 1}", color = if (i == actual) Acento else Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 36.dp).padding(end = 8.dp))
                 Logo(c.logo, c.nombre, 30.dp)
                 Spacer(Modifier.width(10.dp))
-                Text(c.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(240.dp))
+                Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(240.dp))
                 AhoraYDespues(a, d, ahora, Modifier.weight(1f))
             }
         }

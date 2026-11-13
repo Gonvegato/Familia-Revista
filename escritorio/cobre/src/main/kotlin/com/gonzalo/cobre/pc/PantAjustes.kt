@@ -35,8 +35,9 @@ import java.io.File
 fun PantAjustes(nav: Nav, inicial: Int = 0, editar: Lista? = null) {
     var pestana by remember { mutableStateOf(inicial) }
     Pagina(ancho = 900.dp) {
-        Cabecera(84.sp, texto = "AJUSTES")
-        FileteCabecera()
+        EnlaceCabecera("← Volver", Charcoal, atajo = "esc") { nav.volver() }
+        NombreConPunto("Ajustes", 72.sp, Charcoal, Modifier.padding(top = 10.dp, bottom = 6.dp))
+        Filete(3.dp)
         Spacer(Modifier.height(14.dp))
         PestanasRevista(listOf("Listas", "Guía", "Reproductor", "Cuenta", "Apariencia", "Versión"), pestana) { pestana = it }
         Spacer(Modifier.height(22.dp))
@@ -93,7 +94,7 @@ private fun AjustesListas(nav: Nav, editar: Lista?) {
         Panel {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(l.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                    Text(l.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                     Etiqueta(descripcion(l))
                 }
                 if (i > 0) EnlaceRevista("↑") { Listas.mueve(l.id, -1) }
@@ -112,7 +113,7 @@ private fun AjustesListas(nav: Nav, editar: Lista?) {
     }
     quitar?.let { l ->
         Panel {
-            Text("¿Quitar «${l.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+            Text("¿Quitar «${l.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp)
             Cuerpo("Se quita de tu cuenta (en todos tus dispositivos) con lo que se ha bajado aquí. Tus favoritos y lo visto de esa lista se quedan en tu cuenta por si la vuelves a poner.")
             Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 EnlaceRevista("Sí, quitarla", acento = true) { Listas.quita(l.id); Tele.olvida(l); quitar = null }

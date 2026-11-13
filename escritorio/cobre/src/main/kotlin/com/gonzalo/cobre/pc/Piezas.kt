@@ -76,7 +76,7 @@ fun Logo(url: String, nombre: String, tam: Dp = 44.dp) {
     val forma = esquina(6.dp)
     Box(Modifier.size(tam).clip(forma).background(Sand).border(1.dp, Line, forma), contentAlignment = Alignment.Center) {
         if (img != null) Image(img, nombre, Modifier.fillMaxSize().padding(4.dp), contentScale = ContentScale.Fit)
-        else Text(nombre.filter { it.isLetterOrDigit() }.take(2).uppercase(), color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (tam.value * 0.36f).sp)
+        else Text(nombre.filter { it.isLetterOrDigit() }.take(2).uppercase(), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (tam.value * 0.36f).sp)
     }
 }
 
@@ -102,7 +102,7 @@ fun TarjetaPoster(url: String, nombre: String, ancho: Dp, sub: String = "", prog
             if (progreso != null && progreso > 0f) Barra(progreso, Modifier.align(Alignment.BottomStart))
         }
         Spacer(Modifier.height(7.dp))
-        Text(nombre, color = Charcoal, fontFamily = Display, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold, maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis)
         if (sub.isNotBlank()) Text(sub, color = Muted, fontFamily = Body, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -114,13 +114,16 @@ fun Nota(t: String, modifier: Modifier = Modifier) = Text(t, modifier, color = M
 /** La cabecera de una página: antetítulo, el titular grande y su filete. */
 @Composable
 fun CabeceraPagina(antetitulo: String, titulo: String, volver: (() -> Unit)? = null, derecha: @Composable RowScope.() -> Unit = {}) {
+    // Desde la 1.2.0: una página de las pestañas ya tiene su nombre en la pestaña (solo sus acciones, a la derecha); lo que va encima
+    // (Buscar, la ficha de una película…) lleva «← Volver» y su título en la grotesca de las hermanas.
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (volver != null) VolverRevista(volver)
+        if (volver != null) EnlaceCabecera("← Volver", Charcoal, atajo = "esc") { volver() }
         Spacer(Modifier.weight(1f))
         derecha()
     }
-    Antetitulo(antetitulo, Modifier.padding(top = 6.dp), color = Acento, conCuadro = false)
-    Text(titulo, color = Charcoal, fontFamily = Display, fontSize = 56.sp, lineHeight = 58.sp, letterSpacing = (-1.5).sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    if (volver == null) return
+    Text(antetitulo.uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.8.sp, modifier = Modifier.padding(top = 10.dp))
+    Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 52.sp, lineHeight = 54.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     Filete(3.dp)
 }
 

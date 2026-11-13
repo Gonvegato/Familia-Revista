@@ -97,7 +97,7 @@ fun PantDirecto(nav: Nav) {
                     LazyColumn(Modifier.fillMaxSize().padding(end = 10.dp), state = eg) {
                         itemsIndexed(todos, key = { _, g -> g }) { i, g ->
                             val on = g == grupo
-                            Text(nombreGrupo(g) + if (g in ocultos) " (escondido)" else "", color = if (on) Acento else if (g in ocultos) Muted else Charcoal, fontFamily = Display,
+                            Text(nombreGrupo(g) + if (g in ocultos) " (escondido)" else "", color = if (on) Acento else if (g in ocultos) Muted else Charcoal, fontFamily = Grotesca,
                                 fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.fillMaxWidth().pulsable { elige(g) }.padding(vertical = 8.dp, horizontal = 6.dp))
                             if (i == 1) Filete(1.dp, Line)
@@ -147,7 +147,7 @@ fun FilaCanal(l: Lista, cg: Cargada, c: Canal, i: Int, ahora: Long, fav: Favorit
             Logo(c.logo, c.nombre, 46.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 if (ya != null || luego != null) AhoraYDespues(ya, luego, ahora, Modifier.padding(top = 2.dp))
                 else if (c.grupo.isNotBlank()) Text(c.grupo.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1)
             }

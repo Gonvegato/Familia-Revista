@@ -192,5 +192,39 @@ class CapturasTest : ConCuenta() {
             e.ahora = null; e.despues = null; e.siguiente = null
         }
         e.activo = false
+        // El fútbol (como Nut 0.9 del móvil), con unos partidos fijos de ejemplo (sin red: los escudos, la forma de escudo de cada uno)
+        fun eq(id: String, n: String, c: String = n) = com.gonzalo.iptv.futbol.Equipo(id, n, c)
+        val bar = eq("83", "Barcelona"); val atm = eq("1068", "Atlético de Madrid", "Atlético"); val rma = eq("86", "Real Madrid"); val val_ = eq("94", "Valencia")
+        val bet = eq("244", "Real Betis", "Betis"); val sev = eq("243", "Sevilla"); val esp = eq("164", "España")
+        val vivo = com.gonzalo.iptv.futbol.Partido("p1", "esp.1", ahora - 67 * 60_000L, atm, bar, com.gonzalo.iptv.futbol.Estado.EN_JUEGO, 1, 2, reloj = "67'", estadio = "Riyadh Air Metropolitano")
+        val luego = com.gonzalo.iptv.futbol.Partido("p2", "esp.1", ahora + 3 * 3_600_000L, rma, val_, estadio = "Santiago Bernabéu")
+        val fin = com.gonzalo.iptv.futbol.Partido("p3", "esp.1", ahora - 4 * 3_600_000L, bet, sev, com.gonzalo.iptv.futbol.Estado.FINAL, 2, 2)
+        val antes = (1..5).map { i -> com.gonzalo.iptv.futbol.Partido("a$i", "esp.1", ahora - i * 7 * 86_400_000L, if (i % 2 == 0) bar else eq("9$i", "Rival $i"), if (i % 2 == 0) eq("9$i", "Rival $i") else bar, com.gonzalo.iptv.futbol.Estado.FINAL, i % 3, (i + 1) % 3) }
+        val ficha = com.gonzalo.iptv.futbol.FichaPartido(vivo, listOf(
+            com.gonzalo.iptv.futbol.Evento("8'", com.gonzalo.iptv.futbol.TipoEvento.GOL, "83", "Raphinha", "Fermín López"), com.gonzalo.iptv.futbol.Evento("41'", com.gonzalo.iptv.futbol.TipoEvento.AMARILLA, "1068", "Koke"), com.gonzalo.iptv.futbol.Evento("52'", com.gonzalo.iptv.futbol.TipoEvento.GOL, "1068", "Julián Álvarez"),
+            com.gonzalo.iptv.futbol.Evento("64'", com.gonzalo.iptv.futbol.TipoEvento.GOL, "83", "Lamine Yamal", "Pedri"), com.gonzalo.iptv.futbol.Evento("66'", com.gonzalo.iptv.futbol.TipoEvento.CAMBIO, "1068", "Sorloth", "Griezmann")),
+            emptyList(), listOf(com.gonzalo.iptv.futbol.Cifra("Posesión", "42 %", "58 %"), com.gonzalo.iptv.futbol.Cifra("Tiros a puerta", "3", "7"), com.gonzalo.iptv.futbol.Cifra("Tiros", "7", "13")))
+        val tabla = com.gonzalo.iptv.futbol.Clasificacion("esp.1", listOf("" to listOf(com.gonzalo.iptv.futbol.Fila(1, bar, 12, 10, 0, 2, 40, 6, 34, 30), com.gonzalo.iptv.futbol.Fila(2, atm, 12, 9, 1, 2, 24, 10, 14, 28), com.gonzalo.iptv.futbol.Fila(3, rma, 12, 8, 3, 1, 26, 8, 18, 27),
+            com.gonzalo.iptv.futbol.Fila(4, bet, 12, 6, 5, 1, 18, 14, 4, 23), com.gonzalo.iptv.futbol.Fila(5, sev, 12, 5, 4, 3, 15, 15, 0, 19))))
+        Futbol.fijo = Futbol.Fijo(equipos = listOf(bar to "esp.1", esp to "uefa.nations"), rivales = listOf(rma to "esp.1"), partidos = listOf(vivo, luego) + antes,
+            partidosDia = listOf(vivo, luego, fin), fichas = mapOf("p1" to ficha), clasificaciones = mapOf("esp.1" to tabla))
+        fun capturaF(nombre: String, pagina: Int = 0, oscuro: Boolean = false, contenido: (@androidx.compose.runtime.Composable () -> Unit)? = null) {
+            com.gonzalo.familia.pc.revista.Modo.eleccion = if (oscuro) 2 else 1
+            val escena = ImageComposeScene(1440, 900, Density(1f)) { TemaFamilia { TextoAireado { Box(Modifier.fillMaxSize().background(Paper)) {
+                if (contenido != null) contenido() else AppCobre(paginaInicial = pagina)
+            } } } }
+            var img = escena.render(0)
+            repeat(14) { i -> Thread.sleep(200); img = escena.render((i + 1) * 300_000_000L) }
+            File(salida, "$nombre.png").writeBytes(img.encodeToData(EncodedImageFormat.PNG)!!.bytes)
+            escena.close()
+        }
+        val nav = Nav({}, {}, {}, { Pantalla.Directo })
+        capturaF("futbol-portada", 0)
+        capturaF("futbol-hoy", 1)
+        capturaF("futbol-tus-equipos", 3)
+        capturaF("futbol-ficha") { FichaPartidoC(vivo, nav, {}, {}) }
+        capturaF("futbol-ficha-noche", oscuro = true) { FichaPartidoC(vivo, nav, {}, {}) }
+        capturaF("futbol-equipo") { FichaEquipoC(bar, "esp.1", nav, {}, {}) }
+        Futbol.fijo = null
     }
 }

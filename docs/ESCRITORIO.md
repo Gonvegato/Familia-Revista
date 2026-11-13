@@ -135,6 +135,16 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   vas en la cuenta, visto al 90 % y el episodio siguiente en 8 segundos. Abajo, la banda del reproductor (el canal, cambiar, la lista de
   canales, volver a conectar, audio, subtítulos, cerrar). Con el teclado y el mando como Hathor (Ctrl/⌘+1…6 las secciones; con un canal
   puesto, Re Pág / Av Pág cambian de canal también desde la ventana de Nut).
+  Desde la 1.2.0, **el fútbol y la cara del móvil** (la de Nut 0.9 de Android): la cabecera de tinta con «NUT.», las pestañas Portada ·
+  Hoy · Competiciones · Tus equipos · Directo · Guía · Películas · Series (⌘1…⌘8, o dos dedos en el trackpad) y, en el fútbol, lo mismo
+  que el móvil con los mismos datos (ESPN, con su caché en `cobre_futbol/` de este ordenador) y lo que eliges en el móvil, de la cuenta
+  (`ajustes/cobre_futbol`: tus equipos, tus rivales, tus grupos de canales, tus competiciones). La portada a dos lados (tu partido con
+  los colores de los dos equipos en diagonal y «Ver en …», que lo pone en mpv; los de hoy; la racha G · E · P y tus equipos), Hoy por
+  competiciones a dos columnas, y las fichas del partido (Resumen · Alineaciones · Estadísticas; solo goles y rojas, quién marcó
+  debajo del marcador), del equipo y de la competición (sus partidos, su tabla y sus goleadores), que nacen de la fila que pulsas y se
+  cierran con Esc. Las horas, en las de este ordenador (en Irlanda, una menos que en España). Los equipos y los canales se eligen en el
+  móvil (Ajustes → Fútbol) y llegan solos; aquí, «+ Seguir» y «Rival» en la página de un equipo. La tele, igual que antes, con la
+  letra de las hermanas y sin el título repetido bajo cada pestaña; Buscar, Ajustes y las fichas de películas y series van encima.
 - **Bastet**: tus juegos de la cuenta (los mismos de Bastet del móvil), los de Steam instalados en el ordenador (se abren con Steam: sus
   horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Bastet cuenta el tiempo hasta que los cierras, en
   `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Bastet del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil

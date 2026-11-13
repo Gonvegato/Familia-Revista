@@ -98,7 +98,7 @@ fun PantGuia(nav: Nav) {
             Box(Modifier.fillMaxSize().background(Color(0x99000000)).pulsable { info = null }, contentAlignment = Alignment.Center) {
                 Column(Modifier.widthIn(max = 600.dp).padding(24.dp).background(Paper).padding(24.dp)) {
                     Antetitulo("${c.nombre} · ${Formato.dia(p.inicio)} · ${franja(p)}", Modifier.padding(bottom = 6.dp))
-                    Text(p.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
+                    Text(p.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
                     if (p.subtitulo.isNotBlank()) Text(p.subtitulo, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
                     if (p.categoria.isNotBlank() || p.episodio.isNotBlank()) Etiqueta(listOf(p.categoria, p.episodio).filter { it.isNotBlank() }.joinToString(" · "), Modifier.padding(top = 6.dp))
                     if (p.descripcion.isNotBlank()) Text(p.descripcion, color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 10.dp))
@@ -124,7 +124,7 @@ private fun FilaGuia(l: Lista, cg: Cargada, c: Canal, desde: Long, hasta: Long, 
             Text("${c.numero.takeIf { it > 0 } ?: ""}", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 30.dp).padding(end = 6.dp))
             Logo(c.logo, c.nombre, 38.dp)
             Spacer(Modifier.width(8.dp))
-            Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(vertical = 5.dp)) {
             val w = maxWidth; val total = (hasta - desde).toFloat()
