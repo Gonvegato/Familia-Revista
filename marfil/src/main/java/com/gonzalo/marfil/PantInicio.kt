@@ -1,6 +1,7 @@
 package com.gonzalo.marfil
 
 import com.gonzalo.familia.pulsable
+import androidx.compose.ui.layout.onGloballyPositioned
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -213,7 +214,9 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
     val acentoClaro = lerpColor(Acento, Color.White, 0.35f)
     // La portada (con su paspartú) va entera en el hueco de arriba y acaba antes del texto: el oscurecido solo queda detrás del texto, nunca
     // encima de la portada (antes el degradado de abajo se comía el pie del marco y parecía cortado). El hueco se ajusta al tamaño de letra.
-    Box(Modifier.fillMaxWidth().height(ALTO_CARTEL).background(Brush.verticalGradient(listOf(claro, oscuro))).pulsable(hundido = 0.985f) { alAbrir(l) }) {
+    val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(2) }
+    Box(Modifier.fillMaxWidth().height(ALTO_CARTEL).background(Brush.verticalGradient(listOf(claro, oscuro))).onGloballyPositioned { sitio[0] = it }
+        .pulsable(hundido = 0.985f) { com.gonzalo.familia.Origen.apunta(l.id, sitio[0], sitio[1]); alAbrir(l) }) {
         val conFondo = l.fondo.isNotBlank()
         if (conFondo) {
             // Con fondo elegido: el fondo ocupa el cartel (recortado) y la portada va encima, grande, arriba a la izquierda
@@ -225,7 +228,7 @@ private fun Cartel(l: Libro, alAbrir: (Libro) -> Unit) {
         Box(Modifier.weight(1f).fillMaxWidth().padding(top = if (conFondo) 20.dp else 16.dp, bottom = 14.dp, start = 20.dp, end = 20.dp),
             contentAlignment = if (conFondo) Alignment.TopStart else Alignment.TopCenter) {
             val tope = if (conFondo) 225.dp else 330.dp
-            PortadaSobreFondo(l, Modifier.heightIn(max = tope).fillMaxHeight().aspectRatio(2f / 3f, matchHeightConstraintsFirst = true), sombra = 22.dp)
+            PortadaSobreFondo(l, Modifier.heightIn(max = tope).fillMaxHeight().aspectRatio(2f / 3f, matchHeightConstraintsFirst = true).onGloballyPositioned { sitio[1] = it }.tapaQueVuela(l.id), sombra = 22.dp)
         }
         Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 18.dp)) {
             Text("AHORA LEES · ${porcentaje(l.fraccion)}", color = acentoClaro, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.6.sp, maxLines = 1)
@@ -291,8 +294,9 @@ private fun EncabezadoCorto(titulo: String, enlace: String, alIr: () -> Unit) {
 /** Una tapa de «También lees», con su barra y su porcentaje. */
 @Composable
 private fun TapaConAvance(l: Libro, ancho: Int, alAbrir: (Libro) -> Unit) {
-    Column(Modifier.width(ancho.dp).pulsable { alAbrir(l) }) {
-        PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp), radio = 0)
+    val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(2) }
+    Column(Modifier.width(ancho.dp).onGloballyPositioned { sitio[0] = it }.pulsable { com.gonzalo.familia.Origen.apunta(l.id, sitio[0], sitio[1]); alAbrir(l) }) {
+        PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp).onGloballyPositioned { sitio[1] = it }.tapaQueVuela(l.id), radio = 0)
         Box(Modifier.padding(top = 7.dp).fillMaxWidth().height(4.dp).background(Line)) { Box(Modifier.fillMaxWidth(l.fraccion.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
         Text("${(l.fraccion * 100).toInt().coerceIn(0, 100)} %", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 0.6.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
     }
@@ -301,8 +305,9 @@ private fun TapaConAvance(l: Libro, ancho: Int, alAbrir: (Libro) -> Unit) {
 /** Una tapa de «Pendientes» (de una saga, cuántos más quedan). */
 @Composable
 private fun TapaPendiente(l: Libro, saga: FilaLista.DeSaga?, ancho: Int, alAbrir: (Libro) -> Unit) {
-    Column(Modifier.width(ancho.dp).pulsable { alAbrir(l) }) {
-        PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp), radio = 0)
+    val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(2) }
+    Column(Modifier.width(ancho.dp).onGloballyPositioned { sitio[0] = it }.pulsable { com.gonzalo.familia.Origen.apunta(l.id, sitio[0], sitio[1]); alAbrir(l) }) {
+        PortadaLibro(l, Modifier.width(ancho.dp).height((ancho * 1.5f).dp).onGloballyPositioned { sitio[1] = it }.tapaQueVuela(l.id), radio = 0)
         if (saga != null) Text("+${saga.miembros.size - 1} DE LA SAGA", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.4.sp, maxLines = 2, modifier = Modifier.padding(top = 4.dp))
     }
 }

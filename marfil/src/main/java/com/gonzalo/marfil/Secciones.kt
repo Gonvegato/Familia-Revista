@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import com.gonzalo.familia.pulsable
+import androidx.compose.ui.graphics.graphicsLayer
 import com.gonzalo.familia.entrada
 import com.gonzalo.familia.llenado
 import androidx.compose.ui.draw.drawWithContent
@@ -94,9 +95,13 @@ fun metaLibro(l: Libro, conEstado: Boolean = false): String = listOf(
 @Composable
 fun FilaLibro(l: Libro, alAbrir: (Libro) -> Unit, modifier: Modifier = Modifier, portada: Dp = 84.dp, numero: Int = 0, conEstado: Boolean = false, sangria: Dp = 0.dp, extra: String = "", orden: Int = 0) {
     val alto = portada * 1.5f
+    // (de dónde sale la ficha al tocarla: esta fila y su tapa)
+    val sitio = remember { arrayOfNulls<androidx.compose.ui.layout.LayoutCoordinates>(2) }
     // (la fila mide lo que la portada o, si el texto no cabe —letra grande—, lo que el texto; así lo de abajo va abajo)
-    Row(modifier.fillMaxWidth().then(if (orden in 1..9) Modifier.entrada("fila:${l.id}:$orden", orden) else Modifier).pulsable { alAbrir(l) }.padding(start = sangria, top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
-        PortadaLibro(l, Modifier.width(portada).height(alto), radio = 0)
+    Row(modifier.fillMaxWidth().then(if (orden in 1..9) Modifier.entrada("fila:${l.id}:$orden", orden) else Modifier)
+        .onGloballyPositioned { sitio[0] = it }
+        .pulsable { com.gonzalo.familia.Origen.apunta(l.id, sitio[0], sitio[1]); alAbrir(l) }.padding(start = sangria, top = 14.dp, bottom = 14.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.Top) {
+        PortadaLibro(l, Modifier.width(portada).height(alto).onGloballyPositioned { sitio[1] = it }.tapaQueVuela(l.id), radio = 0)
         Column(Modifier.weight(1f).fillMaxHeight().heightIn(min = alto).padding(start = 14.dp)) {
             val num = when { orden > 0 -> "%02d".format(orden); numero > 0 -> "Nº $numero"; else -> "" }
             if (num.isNotEmpty()) Text(num, color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.sp, maxLines = 1)
@@ -487,3 +492,6 @@ private fun PestanasPaginas(nombres: List<String>, pager: androidx.compose.found
         Filete(2.dp)
     }
 }
+
+/** Mientras la tapa de este libro vuela hacia su ficha (o vuelve), la de aquí se esconde: solo se ve una. */
+fun Modifier.tapaQueVuela(id: String): Modifier = this.then(Modifier.graphicsLayer { alpha = if (com.gonzalo.familia.Vuelo.clave == id) 0f else 1f })

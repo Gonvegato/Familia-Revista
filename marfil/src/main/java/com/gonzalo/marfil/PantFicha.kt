@@ -43,6 +43,15 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.DateFormat
 import java.util.Date
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
+import com.gonzalo.familia.pulsable
+import com.gonzalo.familia.entrada
+import com.gonzalo.familia.llenado
 
 /** El encabezado de una sección de la ficha: su número (01, 02…) en el acento y el nombre en grotesca; a la derecha, su acción si la tiene. */
 @Composable
@@ -91,7 +100,7 @@ fun tamanoLegible(b: Long): String = when { b >= 1_048_576 -> "%.1f MB".format(b
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
+fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertura: Int = 0) {
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
     val l = Biblioteca.por(id)
@@ -141,55 +150,88 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
     var nSec = 0
     fun sig() = ++nSec
 
-    Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
-        // ---- «Doble página»: la tapa ampliada como foto de apertura, a todo el ancho y recortada, sobre su color medio
-        val tela = remember(l.portada, l.titulo) { colorDePortada(l.portada) ?: telaDe(l.titulo) }
-        val conFondo = l.fondo.isNotBlank()
-        Box(Modifier.fillMaxWidth().height(ALTO_APERTURA).clipToBounds()
-            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(lerpColor(tela, androidx.compose.ui.graphics.Color.White, 0.12f), lerpColor(tela, androidx.compose.ui.graphics.Color.Black, 0.55f))))) {
-            // (más ancha que la pantalla y recortada: la tapa como foto de apertura)
-            // Con fondo elegido: el fondo es la foto de apertura (y la portada asoma abajo a la derecha, más abajo)
-            if (conFondo) ImagenEncuadrada(l.fondo, l.encFondo, Modifier.fillMaxSize().clickable(enabled = !l.esEscrito) { imagenesFondo = true; portada = true }, "Fondo de ${l.titulo}")
-            else BoxWithConstraints(Modifier.fillMaxSize()) {
-                val w = maxWidth + 24.dp
-                PortadaLibro(l, Modifier.align(Alignment.TopCenter).padding(top = 30.dp).requiredWidth(w).requiredHeight(w * 1.5f).clickable(enabled = !l.esEscrito) { imagenesFondo = false; portada = true }, radio = 0, conAutor = false)
+    val scroll = rememberScrollState()
+    val vista = androidx.compose.ui.platform.LocalView.current
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
+    val ent = "ficha:${l.id}:$apertura"
+    // El relieve de la tapa (se inclina con el dedo) y el sello de «Leído» (con un pequeño golpe de la tapa)
+    val giroX = remember { androidx.compose.animation.core.Animatable(0f) }
+    val giroY = remember { androidx.compose.animation.core.Animatable(0f) }
+    val sello = remember(l.id) { androidx.compose.animation.core.Animatable(if (l.estado == Estado.LEIDO) 1f else 0f) }
+    val golpe = remember { androidx.compose.animation.core.Animatable(1f) }
+    val arriba = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val altoApertura = arriba + ALTO_APERTURA + 64.dp
+    val tela = remember(l.portada, l.titulo) { colorDePortada(l.portada) ?: telaDe(l.titulo) }
+    val conFondo = l.fondo.isNotBlank()
+    // Lo que se ha bajado (para la barra de cristal de arriba): 0 arriba del todo, 1 cuando la tapa ya se ha ido
+    val cristal by remember { derivedStateOf { with(densidad) { ((scroll.value - (altoApertura - 120.dp).toPx()) / 60.dp.toPx()).coerceIn(0f, 1f) } } }
+    Box(Modifier.fillMaxSize().background(Paper)) {
+    Column(Modifier.fillMaxSize().verticalScroll(scroll).navigationBarsPadding()) {
+        // ---- La apertura: el color de la tapa (o el fondo elegido) y la tapa flotando encima. Al bajar, el fondo va más lento que el texto
+        // y la tapa se queda un poco atrás y encoge.
+        Box(Modifier.fillMaxWidth().height(altoApertura).clipToBounds()) {
+            Box(Modifier.fillMaxSize().graphicsLayer { translationY = scroll.value * 0.5f }) {
+                if (conFondo) ImagenEncuadrada(l.fondo, l.encFondo, Modifier.fillMaxSize(), "Fondo de ${l.titulo}")
+                else Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.radialGradient(
+                    listOf(lerpColor(tela, androidx.compose.ui.graphics.Color.White, 0.12f), lerpColor(tela, androidx.compose.ui.graphics.Color.Black, 0.6f)))))
             }
-            // Un velo arriba para que se lean «Volver» y las acciones sobre cualquier tapa
             Box(Modifier.fillMaxWidth().height(VELO_APERTURA).background(veloArriba()))
-            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp).padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                EnlaceRevista("← Volver", color = PAPEL_CLARO) { alCerrar() }
-                Spacer(Modifier.weight(1f))
-                // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
-                if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", color = PAPEL_CLARO) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
-                else Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    EnlaceRevista("Imágenes", color = PAPEL_CLARO) { imagenesFondo = false; portada = true }
-                    EnlaceRevista("Editar", color = PAPEL_CLARO) { renombrar = true }
-                    EnlaceRevista("Borrar", color = PAPEL_CLARO) { quitar = true }
+            Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(90.dp).background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Transparent, Paper))))
+            Box(Modifier.align(Alignment.TopCenter).padding(top = arriba + 56.dp).width(ANCHO_TAPA_FICHA).height(ANCHO_TAPA_FICHA * 1.5f)
+                .graphicsLayer {
+                    translationY = scroll.value * 0.28f
+                    val e = (1f - scroll.value.coerceAtMost(320) / 1100f) * golpe.value
+                    scaleX = e; scaleY = e
+                }) {
+                Box(Modifier.fillMaxSize()
+                    .onGloballyPositioned { c -> com.gonzalo.familia.Vuelo.destino = c.boundsInRoot() }
+                    .graphicsLayer {
+                        alpha = if (com.gonzalo.familia.Vuelo.clave == l.id) 0f else 1f
+                        rotationX = giroX.value; rotationY = giroY.value
+                        cameraDistance = 14f * density
+                        shadowElevation = 22.dp.toPx()
+                    }
+                    .pointerInput(l.id) {
+                        // Se inclina hacia donde está el dedo y, al soltar, vuelve con un muelle (sin quitarle el toque a la tapa)
+                        awaitEachGesture {
+                            val d = awaitFirstDown(requireUnconsumed = false)
+                            fun inclina(x: Float, y: Float) { ambito.launch { giroY.snapTo(((x / size.width).coerceIn(0f, 1f) - 0.5f) * 16f) }; ambito.launch { giroX.snapTo(-((y / size.height).coerceIn(0f, 1f) - 0.5f) * 16f) } }
+                            inclina(d.position.x, d.position.y)
+                            while (true) {
+                                val ev = awaitPointerEvent()
+                                val c = ev.changes.firstOrNull() ?: break
+                                if (!c.pressed) break
+                                inclina(c.position.x, c.position.y)
+                            }
+                            ambito.launch { giroX.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.45f, stiffness = 260f)) }
+                            ambito.launch { giroY.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.45f, stiffness = 260f)) }
+                        }
+                    }
+                    .clickable(enabled = !l.esEscrito, indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) { imagenesFondo = false; portada = true }) {
+                    PortadaLibro(l, Modifier.fillMaxSize(), radio = 0, conAutor = false)
+                    // El sello de «Leído»: cae sobre la tapa, girado, cuando lo marcas
+                    if (sello.value > 0.01f) Box(Modifier.align(Alignment.Center).graphicsLayer {
+                        val v = sello.value; alpha = v.coerceIn(0f, 1f); val e = 1.9f - 0.9f * v; scaleX = e; scaleY = e; rotationZ = -9f
+                    }.border(3.dp, Acento).background(androidx.compose.ui.graphics.Color(0xCC0A0908)).padding(horizontal = 12.dp, vertical = 5.dp)) {
+                        Text("LEÍDO", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, letterSpacing = 3.sp, maxLines = 1)
+                    }
                 }
             }
         }
         // La etiqueta del estado, en el acento, pisando el borde de la foto
         val pct = (frac * 100).toInt().coerceIn(0, 100)
         val etiqueta = when (l.estado) { Estado.LEYENDO, Estado.ABANDONADO -> "${l.estado.nombre.uppercase()} · $pct %"; else -> l.estado.nombre.uppercase() }
-        // Con fondo, la portada (120×180) asoma abajo a la derecha pisando el borde de la foto; el título se aparta para no chocar con ella
-        Box(Modifier.fillMaxWidth()) {
-            Column(Modifier.fillMaxWidth()) {
-                Box(Modifier.padding(start = 20.dp).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
-                    Text(etiqueta, color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
-                }
-                Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = if (conFondo) 156.dp else 20.dp)) {
-                    FitTitle(l.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
-                    val de = listOfNotNull(l.autor.ifBlank { null }?.let { "de $it" }, miSaga?.let { "${it.nombre}, ${it.claves.indexOf(l.clave) + 1}" }).joinToString(" · ")
-                    if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
-                }
+        Column(Modifier.fillMaxWidth().entrada("$ent:titulo", 1)) {
+            Box(Modifier.padding(start = 20.dp).offset(y = (-16).dp).background(Acento).padding(horizontal = 10.dp, vertical = 6.dp)) {
+                Text(etiqueta, color = SobreAcento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1)
             }
-            // (en una caja de 116 dp que la deja salir 64 dp por arriba: así no estira el hueco hasta el botón)
-            if (conFondo) Box(Modifier.align(Alignment.TopEnd).padding(end = 20.dp).width(120.dp).height(116.dp)) {
-                PortadaSobreFondo(l, Modifier.align(Alignment.BottomCenter).wrapContentHeight(Alignment.Bottom, unbounded = true).requiredHeight(180.dp).fillMaxWidth(), sombra = 14.dp,
-                    alTocar = if (l.esEscrito) null else ({ imagenesFondo = false; portada = true }))
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+                FitTitle(l.titulo.uppercase(), 38.sp, 40.sp, color = Charcoal, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.4).sp, maxLines = 4, minSize = 20f)
+                val de = listOfNotNull(l.autor.ifBlank { null }?.let { "de $it" }, miSaga?.let { "${it.nombre}, ${it.claves.indexOf(l.clave) + 1}" }).joinToString(" · ")
+                if (de.isNotBlank()) Text(de, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
             }
         }
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+        Column(Modifier.fillMaxWidth().entrada("$ent:cuerpo", 3).padding(horizontal = 20.dp)) {
             Spacer(Modifier.height(16.dp))
             // La acción principal, ancha y negra; a su lado, lo del archivo
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -226,7 +268,8 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
 
             // ---- 01 Tu lectura: la barra gruesa, cómo vas, el estante (cambiar de estado) y el favorito
             SeccionNumerada(sig(), if (l.esEscrito) "Tu lectura" else "Tu lectura")
-            Box(Modifier.fillMaxWidth().height(8.dp).background(Line)) { Box(Modifier.fillMaxWidth(frac.coerceIn(0f, 1f)).fillMaxHeight().background(Acento)) }
+            val lleno = llenado(ent, frac.coerceIn(0f, 1f), 320)
+            Box(Modifier.fillMaxWidth().height(8.dp).background(Line)) { Box(Modifier.fillMaxWidth(lleno).fillMaxHeight().background(Acento)) }
             val min = l.msLeidos / 60_000L
             val notas = st.optJSONArray("notes")?.length() ?: 0
             val linea = listOfNotNull(
@@ -239,10 +282,29 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
             if (otra.isNotBlank()) Text(otra, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
             if (!l.esEscrito) {
                 Spacer(Modifier.height(14.dp))
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).drawBehind { drawRect(Charcoal, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) }) {
+                val sitio = remember { androidx.compose.animation.core.Animatable(Estado.entries.indexOf(l.estado).toFloat()) }
+                LaunchedEffect(l.estado) { sitio.animateTo(Estado.entries.indexOf(l.estado).toFloat(), com.gonzalo.familia.Muelle.seleccion()) }
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).drawBehind {
+                    val w = size.width / Estado.entries.size
+                    drawRect(Charcoal, androidx.compose.ui.geometry.Offset(sitio.value * w, 0f), androidx.compose.ui.geometry.Size(w, size.height))
+                    drawRect(Charcoal, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+                }) {
                     Estado.entries.forEach { e ->
                         val on = e == l.estado
-                        Box(Modifier.weight(1f).fillMaxHeight().background(if (on) Charcoal else Paper).clickable { Biblioteca.poner(l.copy(estado = e)) }.padding(vertical = 12.dp, horizontal = 2.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.weight(1f).fillMaxHeight().pulsable(hundido = 0.94f, vibra = null) {
+                            if (e == l.estado) return@pulsable
+                            val antes = l
+                            Biblioteca.poner(l.copy(estado = e))
+                            if (e == Estado.LEIDO) {
+                                com.gonzalo.familia.Vibra.hecho(vista)
+                                ambito.launch { sello.snapTo(0f); sello.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.62f, stiffness = 520f)) }
+                                ambito.launch { golpe.snapTo(0.95f); golpe.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.45f, stiffness = 600f)) }
+                                com.gonzalo.familia.Avisos.di("Movido a Leídos") { Biblioteca.poner(antes) }
+                            } else {
+                                com.gonzalo.familia.Vibra.tic(vista)
+                                ambito.launch { sello.animateTo(0f, androidx.compose.animation.core.tween(160)) }
+                            }
+                        }.padding(vertical = 12.dp, horizontal = 2.dp), contentAlignment = Alignment.Center) {
                             // (si no cabe, la letra se encoge: nada de «ABANDONAD»)
                             FitTitle(e.nombre.uppercase(), 11.sp, 13.sp, color = if (on) Paper else Charcoal, family = Body, fontWeight = FontWeight.Black, letterSpacing = 0.4.sp, maxLines = 1, unaLinea = true, minSize = 6f,
                                 align = androidx.compose.ui.text.style.TextAlign.Center)
@@ -337,6 +399,30 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
         Spacer(Modifier.height(30.dp))
         }
     }
+    // ---- La barra de arriba: fija. Sobre la apertura, letras claras; al bajar, se vuelve de papel (de cristal) con el título
+    Box(Modifier.fillMaxWidth()) {
+        Box(Modifier.matchParentSize().graphicsLayer { alpha = cristal }.background(Paper.copy(alpha = 0.95f)).drawBehind {
+            drawRect(Charcoal, androidx.compose.ui.geometry.Offset(0f, size.height - 2.dp.toPx()), androidx.compose.ui.geometry.Size(size.width, 2.dp.toPx()))
+        })
+        val tinta = lerpColor(PAPEL_CLARO, Charcoal, cristal)
+        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp).padding(top = 6.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            EnlaceRevista("← Volver", color = tinta) { alCerrar() }
+            Box(Modifier.weight(1f).padding(horizontal = 12.dp), contentAlignment = Alignment.CenterEnd) {
+                if (cristal > 0.01f) Text(l.titulo.uppercase(), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, letterSpacing = 0.6.sp, maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = cristal })
+                // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
+                if (cristal < 0.99f) Row(Modifier.graphicsLayer { alpha = 1f - cristal }, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", color = tinta) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
+                    else {
+                        EnlaceRevista("Imágenes", color = tinta) { imagenesFondo = false; portada = true }
+                        EnlaceRevista("Editar", color = tinta) { renombrar = true }
+                        EnlaceRevista("Borrar", color = tinta) { quitar = true }
+                    }
+                }
+            }
+        }
+    }
+    }
 
     if (portada) SelectorImagenes(l, fondo = imagenesFondo) { portada = false }
 
@@ -411,3 +497,6 @@ val VELO_APERTURA = 110.dp
 
 /** El velo: negro al 80 % arriba, transparente abajo. */
 fun veloArriba() = androidx.compose.ui.graphics.Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f), androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.35f), androidx.compose.ui.graphics.Color.Transparent))
+
+/** El ancho de la tapa en la apertura de la ficha. */
+val ANCHO_TAPA_FICHA = 156.dp

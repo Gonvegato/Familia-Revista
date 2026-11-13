@@ -13,6 +13,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -20,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.gonzalo.familia.CapaAvisos
 
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
@@ -69,7 +73,6 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
     // Desde cualquier página o desde Ajustes, Atrás vuelve a la portada (y desde la portada, sale)
     BackHandler(enabled = fichaId == null && sagaId == null && d != Destino.Portada) { destino = 0 }
     BackHandler(enabled = sagaId != null && fichaId == null) { sagaId = null }
-    BackHandler(enabled = fichaId != null) { fichaId = null }
 
     Box(Modifier.fillMaxSize().background(Paper)) {
         // La portada y las secciones son páginas de una sola pantalla (se pasan con las pestañas o con el dedo); Ajustes va aparte
@@ -79,8 +82,83 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
         AnimatedVisibility(sagaId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
             sagaId?.let { id -> PantSaga(id, alCerrar = { sagaId = null }, alAbrir = { fichaId = it.id }) }
         }
-        AnimatedVisibility(fichaId != null, enter = slideInVertically { it / 8 } + fadeIn(), exit = slideOutVertically { it / 8 } + fadeOut()) {
-            fichaId?.let { id -> PantFicha(id, alCerrar = { fichaId = null }, alLeer = ::leer) }
+        CapaFicha(fichaId, alCerrar = { fichaId = null }, alLeer = ::leer)
+        CapaAvisos(Charcoal, Paper, Acento, Body)
+    }
+}
+
+/**
+ * La ficha por encima de las secciones. Nace de la fila que tocaste (o, si se abrió desde fuera, aparece en su sitio) y la tapa vuela desde
+ * la fila hasta su hueco; al cerrar hace lo contrario. Todo con un muelle y se puede dar la vuelta a medio camino. Con el gesto de atrás de
+ * Android, la ficha encoge con el dedo (vista previa): si sueltas, se cierra; si te arrepientes, vuelve.
+ */
+@Composable
+private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
+    var visible by remember { mutableStateOf<String?>(null) }
+    var origen by remember { mutableStateOf<com.gonzalo.familia.Origen.Datos?>(null) }
+    var aperturas by remember { mutableIntStateOf(0) }
+    val t = remember { androidx.compose.animation.core.Animatable(0f) }
+    val atras = remember { androidx.compose.animation.core.Animatable(0f) }
+    var desdeIzquierda by remember { mutableStateOf(true) }
+    val vista = androidx.compose.ui.platform.LocalView.current
+    LaunchedEffect(fichaId) {
+        if (fichaId != null) {
+            if (visible != fichaId) { origen = com.gonzalo.familia.Origen.toma(fichaId); visible = fichaId; aperturas++; t.snapTo(0f); atras.snapTo(0f) }
+            if (origen?.tapa != null) com.gonzalo.familia.Vuelo.clave = fichaId
+            t.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.9f, stiffness = 230f))
+            com.gonzalo.familia.Vuelo.clave = null
+        } else if (visible != null) {
+            com.gonzalo.familia.Vibra.tic(vista)
+            if (origen?.tapa != null) com.gonzalo.familia.Vuelo.clave = visible
+            t.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 1f, stiffness = 300f))
+            com.gonzalo.familia.Vuelo.clave = null; com.gonzalo.familia.Vuelo.destino = null
+            visible = null; atras.snapTo(0f)
+        }
+    }
+    // El gesto de atrás con vista previa (Android 14+; antes, un toque de atrás normal)
+    androidx.activity.compose.PredictiveBackHandler(enabled = fichaId != null) { progreso ->
+        try {
+            progreso.collect { e -> desdeIzquierda = e.swipeEdge == androidx.activity.BackEventCompat.EDGE_LEFT; atras.snapTo(e.progress) }
+            alCerrar()
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            atras.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 420f)); throw c
+        }
+    }
+    val id = visible ?: return
+    val o = origen
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
+    Box(Modifier.fillMaxSize().graphicsLayer {
+        val tt = t.value
+        val p = atras.value
+        val radioAtras = with(densidad) { 26.dp.toPx() } * (p * 4f).coerceAtMost(1f)
+        clip = true
+        shape = com.gonzalo.familia.FormaEntre(o?.fila, tt, radioAtras)
+        val s = (1f - 0.1f * p) * (if (o == null) 0.96f + 0.04f * tt else 1f)
+        scaleX = s; scaleY = s
+        translationX = (if (desdeIzquierda) 1f else -1f) * p * with(densidad) { 24.dp.toPx() }
+        alpha = if (o == null) tt.coerceIn(0f, 1f) else 1f
+    }) {
+        // El papel de la ficha crece y encoge entero; lo de dentro aparece pronto al abrir y se va pronto al cerrar (sin transparencias
+        // a medio camino encima de la lista)
+        Box(Modifier.fillMaxSize().background(Paper))
+        Box(Modifier.fillMaxSize().graphicsLayer {
+            val tt = t.value
+            alpha = if (fichaId == null) ((tt - 0.45f) / 0.55f).coerceIn(0f, 1f) else (tt * 2.5f).coerceIn(0f, 1f)
+        }) { PantFicha(id, alCerrar = alCerrar, alLeer = alLeer, apertura = aperturas) }
+    }
+    // La tapa que vuela entre la fila y la ficha
+    val desde = o?.tapa
+    val hasta = com.gonzalo.familia.Vuelo.destino
+    val libro = Biblioteca.por(id)
+    if (desde != null && hasta != null && libro != null && com.gonzalo.familia.Vuelo.clave == id) {
+        with(densidad) {
+            Box(Modifier.size(hasta.width.toDp(), hasta.height.toDp()).graphicsLayer {
+                val r = com.gonzalo.familia.lerpRect(desde, hasta, t.value)
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                translationX = r.left; translationY = r.top
+                scaleX = r.width / hasta.width; scaleY = r.height / hasta.height
+                shadowElevation = 18.dp.toPx() * t.value
+            }) { PortadaLibro(libro, Modifier.fillMaxSize(), radio = 0, conAutor = false) }
         }
     }
 }

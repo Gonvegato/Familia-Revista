@@ -342,6 +342,20 @@ class CapturasTest {
         rule.onNodeWithText("Añadido", useUnmergedTree = true).performScrollTo(); foto("4b_ficha_abajo")
     }
 
+    /** La ficha naciendo de la fila (con la tapa volando) y volviendo: fotogramas a mitad de camino. */
+    @Test fun fichaQueNaceDeLaFila() {
+        org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
+        siembra(); montar(false)
+        rule.onNodeWithText("LEYENDO").performClick(); rule.waitForIdle(); Thread.sleep(400); rule.waitForIdle()
+        rule.mainClock.autoAdvance = false
+        rule.onAllNodesWithText("Dune", useUnmergedTree = true)[0].performClick()
+        listOf(60L, 140L, 260L).forEach { ms -> rule.mainClock.advanceTimeBy(ms); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_abre_$ms.png") }
+        rule.mainClock.advanceTimeBy(2000); rule.waitForIdle()
+        rule.onNodeWithText("← VOLVER").performClick()
+        listOf(60L, 140L).forEach { ms -> rule.mainClock.advanceTimeBy(ms); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_cierra_$ms.png") }
+        rule.mainClock.autoAdvance = true
+    }
+
     /** La ficha de un pendiente (la de una portada generada, recortada) y la de Dune de noche. */
     @Test fun fichaPendienteYNoche() {
         org.junit.Assume.assumeTrue(System.getProperty("roborazzi.test.record") == "true")
