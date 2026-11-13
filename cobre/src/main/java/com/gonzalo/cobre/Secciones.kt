@@ -1,5 +1,8 @@
 package com.gonzalo.cobre
 
+import com.gonzalo.familia.apareceSegun
+import com.gonzalo.iptv.futbol.Estado
+import com.gonzalo.familia.filaDe
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -80,21 +83,21 @@ object FormaEquipo {
     /** El puesto de un equipo en una clasificación (la primera tabla en la que salga), o null. */
     fun puesto(c: Clasificacion, equipo: String): Int? = c.tablas.firstNotNullOfOrNull { (_, f) -> f.firstOrNull { it.equipo.id == equipo }?.puesto }
 
-    val VICTORIA = Color(0xFF3C8D5A)
-    val EMPATE = Color(0xFF6F6860)
-    val DERROTA = Color(0xFFB8433A)
+    val VICTORIA = Color(0xFF2E7D4F)
+    val EMPATE = Color(0xFF9A948A)
+    val DERROTA = Color(0xFFD6332A)
     fun color(r: Char): Color = when (r) { 'V' -> VICTORIA; 'D' -> DERROTA; else -> EMPATE }
 }
 
-/** Los cinco últimos en bloques de color (verde, gris, rojo) con su letra. */
+/** Los cinco últimos en cuadritos de color (verde, gris, rojo) con su letra: G, E, P. */
 @Composable
 fun BloquesForma(forma: List<Char>, modifier: Modifier = Modifier, grande: Boolean = false) {
-    val lado = if (grande) 34.dp else 26.dp
+    val lado = if (grande) 26.dp else 17.dp
     Row(modifier.semantics { contentDescription = "Últimos: " + forma.joinToString(", ") { when (it) { 'V' -> "victoria"; 'D' -> "derrota"; else -> "empate" } } },
         horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         forma.forEach { r ->
             Box(Modifier.size(lado).background(FormaEquipo.color(r)), contentAlignment = Alignment.Center) {
-                Text("$r", color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = if (grande) 16.sp else 13.sp, maxLines = 1)
+                Text(when (r) { 'V' -> "G"; 'D' -> "P"; else -> "E" }, color = Color.White, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = if (grande) 13.sp else 9.5.sp, maxLines = 1)
             }
         }
         repeat(5 - forma.size) { Box(Modifier.size(lado).background(Line)) }
@@ -114,7 +117,9 @@ fun PantPrincipal(pagina: Int, alPagina: (Int) -> Unit, alIr: (Destino) -> Unit,
     val ambito = rememberCoroutineScope()
     val ctx = LocalContext.current
     LaunchedEffect(pagina) { val p = pagina.coerceIn(0, PAGINAS.size - 1); if (pager.currentPage != p) pager.animateScrollToPage(p) }
-    LaunchedEffect(pager.settledPage) { alPagina(pager.settledPage) }
+    val vista = androidx.compose.ui.platform.LocalView.current
+    var asentada by remember { mutableIntStateOf(pager.settledPage) }
+    LaunchedEffect(pager.settledPage) { if (pager.settledPage != asentada) { asentada = pager.settledPage; com.gonzalo.familia.Vibra.tic(vista) }; alPagina(pager.settledPage) }
     EspejoCuenta.version
     val nEquipos = AjustesFutbol.equipos(ctx).size
     val cuentas: List<Int?> = listOf(null, null, null, nEquipos.takeIf { it > 0 }, null)
@@ -139,16 +144,16 @@ fun PantPrincipal(pagina: Int, alPagina: (Int) -> Unit, alIr: (Destino) -> Unit,
     val tablet = cfg.screenWidthDp >= 700
     // (en la tele, más pequeña: lo que importa tiene que verse en la primera pantalla)
     val bajita = enTele() || cfg.screenHeightDp < 600
-    val plegada = altoNombre > 0 && recogido >= altoNombre - 1
+    val plegado = if (altoNombre > 0) ((recogido / altoNombre - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
     val irA: (Destino) -> Unit = { d -> val p = paginaDe(d); if (p >= 0) ambito.launch { pager.animateScrollToPage(p) } else alIr(d) }
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = if (tablet) 40.dp else 20.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = if (plegada) 4.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (plegada) NombreConPunto("Nut", 22.sp, Paper, Modifier.padding(end = 14.dp))
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
+                if (plegado > 0f) NombreConPunto("Nut", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
                 EnlaceRevista("Buscar canal", Modifier.focoInicial("principal"), color = Paper.copy(alpha = 0.75f)) { alIr(Destino.Buscar) }
                 EnlaceRevista("+ Equipos", Modifier.padding(start = 14.dp), color = acentoSobreTinta()) { alIr(Destino.AjustesFutbol) }
                 Spacer(Modifier.weight(1f))
-                if (!plegada) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+                if (plegado < 1f) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.75f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1, modifier = Modifier.apareceSegun(1f - plegado))
                 androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Settings, "Ajustes", tint = Paper.copy(alpha = 0.75f), modifier = Modifier.padding(start = 4.dp).tocable { alIr(Destino.Ajustes) }.padding(6.dp).size(20.dp))
             }
             Box(Modifier.fillMaxWidth().layout { m, c ->
@@ -166,8 +171,9 @@ fun PantPrincipal(pagina: Int, alPagina: (Int) -> Unit, alIr: (Destino) -> Unit,
                 NombreConPunto("Nut", if (bajita) 56.sp else if (ancho >= 700) 104.sp else 72.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
-        PestanasPaginas(NOMBRES_PAGINAS, pager.currentPage, cuentas) { i -> ambito.launch { pager.animateScrollToPage(i) } }
-        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }) { i ->
+        com.gonzalo.familia.PestanasPager(NOMBRES_PAGINAS, pager, cuentas, Paper, Charcoal, AcentoBloque, SobreBloque, Body, Grotesca,
+            toque = { m, _, f -> m.tocable(fuera = 0.dp, onClick = f) }) { i -> ambito.launch { pager.animateScrollToPage(i) } }
+        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth(), key = { PAGINAS[it].name }, flingBehavior = com.gonzalo.familia.pasoDePagina(pager)) { i ->
             when (PAGINAS[i]) {
                 Destino.Portada -> PaginaPortada(irA, alFicha)
                 Destino.Hoy -> PantDia(alIr = irA, alFicha = alFicha, enPagina = true)
@@ -181,43 +187,6 @@ fun PantPrincipal(pagina: Int, alPagina: (Int) -> Unit, alIr: (Destino) -> Unit,
 
 /** El acento sobre la tinta de la cabecera (o sobre otro [fondo]): el elegido, ajustado para leerse ahí. */
 fun acentoSobreTinta(fondo: Color = Charcoal): Color = acentoLegible(AcentoBloque, fondo, if (fondo.luminance2() > 0.5f) Color.Black else if (fondo == Charcoal) Paper else Color.White)
-
-/** Las pestañas de las páginas (dirección C): la elegida, en un bloque del acento. Si no caben, se deslizan y la elegida siempre se ve. */
-@Composable
-private fun PestanasPaginas(nombres: List<String>, sel: Int, cuentas: List<Int?>, onSel: (Int) -> Unit) {
-    val scroll = rememberScrollState()
-    val sitios = remember { mutableStateMapOf<Int, Pair<Int, Int>>() }
-    var anchoFila by remember { mutableIntStateOf(0) }
-    var relleno by remember { mutableIntStateOf(0) }
-    LaunchedEffect(sel, sitios[sel] != null, anchoFila) {
-        if (anchoFila <= 0 || sitios[sel] == null) return@LaunchedEffect
-        val obj = desplazamientoPestanas(sitios, sel, anchoFila, scroll.value)
-        val contenido = scroll.maxValue + anchoFila - relleno
-        relleno = (obj + anchoFila - contenido).coerceAtLeast(0)
-        kotlinx.coroutines.withTimeoutOrNull(600) { snapshotFlow { scroll.maxValue }.first { it >= obj } }
-        if (obj != scroll.value) scroll.animateScrollTo(obj)
-    }
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().onGloballyPositioned { anchoFila = it.size.width }.drawWithContent {
-                drawContent()
-                val f = 14.dp.toPx()
-                if (scroll.value > 0) drawRect(Brush.horizontalGradient(listOf(Paper, Color.Transparent), 0f, f), Offset.Zero, Size(f, size.height))
-                if (scroll.value < scroll.maxValue) drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Paper), size.width - f, size.width), Offset(size.width - f, 0f), Size(f, size.height))
-            }.horizontalScroll(scroll).height(IntrinsicSize.Max), verticalAlignment = Alignment.CenterVertically) {
-            nombres.forEachIndexed { i, n ->
-                val on = i == sel
-                Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = (c.positionInParent().x).roundToInt() to c.size.width }.tocable(fuera = 0.dp) { onSel(i) }
-                    .background(if (on) AcentoBloque else Color.Transparent)
-                    .padding(horizontal = 12.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(n.uppercase(), color = if (on) SobreBloque else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1)
-                    cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreBloque else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
-                }
-            }
-            if (relleno > 0) Spacer(Modifier.width(with(androidx.compose.ui.platform.LocalDensity.current) { relleno.toDp() }))
-        }
-        Filete(2.dp)
-    }
-}
 
 // ---------------------------------------------------------------- la portada
 
@@ -247,7 +216,13 @@ fun PaginaPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
     val cartel = todos?.let { Orden.tusPartidos(it, ids, ahora).firstOrNull() }
     val hoyL = rememberDia(Hora.diaDe(ahora))
     val m = margen()
+    val sem = remember(TiempoVisto.version) { SemanaVista.de(TiempoVisto.dias(ctx)) }
+    val mios = ids.toSet()
+    val riv = AjustesFutbol.rivales(ctx).map { it.first.id }.toSet()
+    // (lo que está en juego primero; luego lo de los tuyos; luego lo que falta; lo terminado, al final)
+    val deHoy = hoyL?.let { l -> l.sortedWith(compareBy({ !it.estado.enDirecto }, { !(mios.any { m2 -> it.juega(m2) }) }, { it.estado.terminado }, { it.inicio })) }
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState())) {
+        // ---- El marcador: tu partido de ahora (o el próximo), con los colores de los dos equipos
         when {
             eqs.isEmpty() -> CartelSinEquipos(alIr)
             cartel != null -> CartelPartido(cartel, ids.toSet(), ahora) { alFicha(Ficha.DePartido(cartel)) }
@@ -255,46 +230,36 @@ fun PaginaPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = m).widthIn(max = 960.dp)) {
             if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Nut entra sola). Tus equipos, tus canales y lo que ves van con tu cuenta.", Modifier.padding(top = 16.dp))
-            val sem = remember(TiempoVisto.version) { SemanaVista.de(TiempoVisto.dias(ctx)) }
-            val enJuego = hoyL.orEmpty().count { it.estado.enDirecto }
-            RejillaCifras(listOf(
-                BloqueCifra(minutosCorto(sem.hoyMin), "Visto hoy", AcentoBloque, SobreBloque),
-                BloqueCifra("$enJuego", "En juego", Paper, Charcoal) { alIr(Destino.Hoy) },
-                BloqueCifra("${sem.racha}", "Días seguidos", Bloque2, Color.White)), Modifier.padding(top = 18.dp))
-            // ---- La racha de tus equipos
-            if (eqs.isNotEmpty()) {
-                TituloBloque("La racha de tus equipos")
-                eqs.forEach { (e, liga) -> FilaRacha(e, liga, todos) { alFicha(Ficha.DeEquipo(e, liga)) } }
-            }
-            // ---- Esta semana (lo que has visto en Nut)
-            TituloBloque("Esta semana", derecha = "${minutosCorto(sem.totalMin)} · hoy ${minutosCorto(sem.hoyMin)}")
-            SemanaTocable(sem)
-            if (sem.totalMin == 0L) Text("Lo que veas en Nut (canales, partidos, películas) se suma aquí, día a día y en todos tus dispositivos.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))
-            // ---- Hoy: lo que se juega (lo que está en juego, primero)
-            val mios = ids.toSet()
-            val riv = AjustesFutbol.rivales(ctx).map { it.first.id }.toSet()
-            val deHoy = hoyL?.let { l -> l.sortedWith(compareBy({ !it.estado.enDirecto }, { !(mios.any { m2 -> it.juega(m2) }) }, { it.estado.terminado }, { it.inicio })) }
-            TituloBloque("Hoy", derecha = deHoy?.let { "${it.size} partidos →" }, alDerecha = { alIr(Destino.Hoy) })
+            // ---- Hoy: lo que se juega
+            TituloSeccion("Hoy", derecha = deHoy?.let { "${it.size} partidos →" }, alDerecha = { alIr(Destino.Hoy) })
             when {
                 deHoy == null -> Nota("Mirando los partidos de hoy…", Modifier.padding(top = 10.dp))
                 deHoy.isEmpty() -> Nota("Hoy no hay partidos en tus competiciones.", Modifier.padding(top = 10.dp))
-                else -> deHoy.take(6).forEach { p -> FilaDia(p, mios, riv) { alFicha(Ficha.DePartido(p)) } }
+                else -> deHoy.take(4).forEach { p -> FilaDia(p, mios, riv) { alFicha(Ficha.DePartido(p)) } }
             }
-            // ---- Tus equipos, en grande
-            TituloBloque("Tus equipos", derecha = "+ Elegir", alDerecha = { alIr(Destino.AjustesFutbol) })
+            // ---- La racha de tus equipos
+            if (eqs.isNotEmpty()) {
+                TituloSeccion("La racha de tus equipos")
+                eqs.forEach { (e, liga) -> FilaRacha(e, liga, todos) { alFicha(Ficha.DeEquipo(e, liga)) } }
+            }
+            // ---- Tus equipos
+            TituloSeccion("Tus equipos", derecha = "+ Elegir", alDerecha = { alIr(Destino.AjustesFutbol) })
             if (eqs.isEmpty()) Nota("Elige tus equipos y sus partidos saldrán los primeros, con sus canales.", Modifier.padding(top = 10.dp))
-            else Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            else Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 eqs.forEach { (e, liga) ->
-                    Column(Modifier.width(96.dp).tocable { alFicha(Ficha.DeEquipo(e, liga)) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                        EscudoConPaspartu(e, 96.dp, sombra = 0.dp)
-                        Text(e.corto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, lineHeight = 16.sp, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+                    Column(Modifier.width(80.dp).filaDe("e:" + e.id).tocable { alFicha(Ficha.DeEquipo(e, liga)) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                        EscudoEquipo(e, 60.dp)
+                        Text(e.corto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, lineHeight = 15.sp, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
                     }
                 }
             }
+            // ---- Esta semana (lo que has visto en Nut)
+            TituloSeccion("Esta semana", derecha = "${minutosCorto(sem.totalMin)} · hoy ${minutosCorto(sem.hoyMin)}")
+            SemanaTocable(sem)
+            if (sem.totalMin == 0L) Nota("Lo que veas en Nut (canales, partidos, películas) se suma aquí, día a día y en todos tus dispositivos.", Modifier.padding(top = 8.dp))
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 PieFuente()
-                Text("Nut · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.padding(top = 16.dp))
-                Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 2.dp))
+                Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 10.dp))
                 Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
             }
         }
@@ -309,15 +274,14 @@ private fun FilaRacha(e: Equipo, liga: String, todos: List<Partido>?, alAbrir: (
     val tabla = if (Competiciones.tieneTabla(suLiga)) rememberDato(suLiga, "tabla") { f -> Futbol.clasificacion(ctx, suLiga, f) } else null
     val puesto = tabla?.let { FormaEquipo.puesto(it, e.id) }
     val forma = todos?.let { FormaEquipo.de(it, e.id) }.orEmpty()
-    Row(Modifier.fillMaxWidth().tocable(onClick = alAbrir).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        EscudoEquipo(e, 40.dp)
-        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(e.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(listOfNotNull(puesto?.let { "${it}º" }, Competiciones.de(suLiga).corto).joinToString(" · ").uppercase(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.sp, letterSpacing = 1.sp, maxLines = 1)
+    Row(Modifier.fillMaxWidth().filaDe("e:" + e.id).tocable(onClick = alAbrir).padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+        EscudoEquipo(e, 26.dp)
+        Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+            Text(e.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(listOfNotNull(puesto?.let { "${it}º" }, Competiciones.de(suLiga).corto).joinToString(" · ").uppercase(), color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 9.5.sp, letterSpacing = 1.sp, maxLines = 1)
         }
         if (todos == null) Text("…", color = Muted, fontFamily = Body) else BloquesForma(forma)
     }
-    Filete(1.dp, Line)
 }
 
 /** El alto del cartel: el de las hermanas, algo menos en pantallas bajas. */
@@ -330,22 +294,28 @@ private fun altoCartel(): Dp = if (androidx.compose.ui.platform.LocalConfigurati
  */
 @Composable
 fun CartelPartido(p: Partido, mios: Set<String>, ahora: Long, alAbrir: () -> Unit) {
+    val ctx = LocalContext.current
+    ImagenesEquipo.version
     val nuestro = if (p.local.id in mios) p.local else if (p.visitante.id in mios) p.visitante else p.local
+    // (si le pusiste un fondo a tu equipo, ese; si no, los colores de los dos)
+    val propio = ImagenesEquipo.fondo(ctx, nuestro.id).isNotBlank()
     val canal = canalDe(p)
-    Box(Modifier.fillMaxWidth().heightIn(min = altoCartel()).height(IntrinsicSize.Min).tocable(onClick = alAbrir)
+    Box(Modifier.fillMaxWidth().height(IntrinsicSize.Min).filaDe("p:" + p.id).tocable(onClick = alAbrir)
         .semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" }) {
-        FondoEquipo(nuestro, Modifier.matchParentSize())
-        Box(Modifier.matchParentSize().background(veloArriba()))
-        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.82f))))
+        if (propio) {
+            FondoEquipo(nuestro, Modifier.matchParentSize())
+            Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.45f), Color.Black.copy(alpha = 0.75f)))))
+        } else FondoDuelo(p.local, p.visitante, Modifier.matchParentSize())
         Column(Modifier.fillMaxWidth().padding(horizontal = margen()).padding(top = 18.dp, bottom = 20.dp)) {
-            val blanco = Color.White.copy(alpha = 0.88f)
-            EtiquetaBloque(if (p.estado.enDirecto) etiquetaPartido(p, ahora) else "Tu próximo partido")
-            Text(p.competicion.nombre.uppercase(), color = blanco, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
-            Spacer(Modifier.weight(1f).heightIn(min = 24.dp))
-            Enfrentados(p, ahora, 104.dp)
-            val cuando = if (p.estado.enDirecto) null else Hora.diaYHora(p.inicio, ahora)
-            Text(listOfNotNull(cuando, p.estadio.ifBlank { null }).joinToString(" · "), color = blanco, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 12.dp))
-            Text((if (canal != null) "En $canal" else "Sin canal elegido").uppercase(), color = if (canal != null) acentoSobreTinta(Color.Black) else blanco, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.2.sp, modifier = Modifier.padding(top = 6.dp))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                EtiquetaEstado(p, ahora, siNoVivo = if (p.estado == Estado.POR_JUGAR) "Tu próximo partido · " + Hora.diaYHora(p.inicio, ahora) else null, modifier = Modifier.weight(1f, fill = false))
+                Spacer(Modifier.width(10.dp).weight(1f))
+                Text(p.competicion.corto.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, letterSpacing = 1.6.sp, maxLines = 1, softWrap = false)
+            }
+            Duelo(p, if (esAncha()) 88.dp else 64.dp, modifier = Modifier.padding(top = 22.dp, bottom = 10.dp))
+            val donde = listOfNotNull(p.estadio.ifBlank { null }, canal?.let { "en $it" }).joinToString(" · ")
+            if (donde.isNotBlank()) Text(donde, color = Color.White.copy(alpha = 0.8f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 2,
+                modifier = Modifier.fillMaxWidth())
         }
     }
     BotonVerCanal(p)

@@ -9,6 +9,24 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.9.0 — Nut, otra vez
+
+- **Una sola letra.** Equipos, competiciones, marcadores y jugadores, en la grotesca de las hermanas; la letra con remate queda solo para
+  alguna frase suelta.
+- **Escudos limpios.** El escudo a su tamaño, sin paspartú ni círculo; sobre el marcador oscuro, la variante oscura de ESPN si la tiene.
+  Un equipo sin escudo lleva una forma de escudo con sus colores, no unas siglas.
+- **El partido, con sus colores.** El marcador de la portada y la cabecera de la ficha se pintan con los colores de los dos equipos,
+  partidos en diagonal, bajo un velo oscuro; «en directo» con un punto que late. (Si le pusiste un fondo a tu equipo, la portada lo usa.)
+- **Menos cargado.** Fuera las cifras de la portada; los títulos sin raya gruesa ni números; una raya fina entre partidos y ninguna entre
+  los dos equipos de uno; el que gana, en negrita; los canales, como etiquetas pequeñas dentro de su partido; la racha en cuadritos G · E · P.
+- **La ficha del partido, por partes:** Resumen · Alineaciones · Estadísticas. En el resumen, solo goles y rojas (con quién asistió) y
+  «ver todos los momentos» para lo demás; debajo del marcador, quién marcó; las cifras, con el color de cada equipo. El botón dice dónde
+  lo ves: «VER EN MOVISTAR».
+- **Hoy:** los días en una fila de pastillas; los partidos agrupados por competición con un antetítulo y una raya.
+- **Movimiento como Seshat:** cada ficha (partido, equipo, competición) nace de la fila que tocas y vuelve a ella al cerrarse, también una
+  encima de otra; el gesto de atrás de Android 14+ la va cerrando mientras arrastras. Pestañas comunes (bloque que se desliza, números que
+  ruedan), páginas al 15 % con vibración, todo lo que se toca se hunde con un muelle, y la cabecera se pliega sin saltos.
+
 ## 0.8.6 — registro de fallos
 
 - Si Nut se cierra por un error, queda apuntado en el dispositivo (cuándo, dónde y la traza) y sale en Ajustes → Avanzado → «Último fallo»,

@@ -184,7 +184,7 @@ private val Double.em get() = this.toFloat().em
 @Composable
 fun MagLink(text: String, sub: String? = null, accent: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(modifier.fillMaxWidth().tocable(onClick = onClick).padding(vertical = 5.dp)) {
-        Text("$text →", fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp, color = if (accent) Acento else Charcoal)
+        Text("$text →", fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, color = if (accent) Acento else Charcoal)
         if (sub != null) Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     }
 }
@@ -348,7 +348,7 @@ fun BarraPlegada(nombre: String, visible: Boolean, acciones: @Composable android
     androidx.compose.animation.AnimatedVisibility(visible, enter = androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.fadeOut()) {
         Column(Modifier.fillMaxWidth().background(Paper).statusBarsPadding().padding(horizontal = 28.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(nombre.uppercase(), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 1.sp, maxLines = 1)
+                Text(nombre.uppercase(), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 1.sp, maxLines = 1)
                 Spacer(Modifier.weight(1f))
                 acciones()
             }

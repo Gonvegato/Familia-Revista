@@ -147,27 +147,26 @@ fun rememberColorEquipo(e: Equipo): Color? {
     return r
 }
 
-/** El escudo de un equipo: el tuyo (si pusiste uno) o el de ESPN (sin escudo, sus siglas). */
+/**
+ * El escudo de un equipo, limpio y a su tamaño: el tuyo (si pusiste uno) o el de ESPN (sin escudo, una forma de escudo con sus colores).
+ * [oscuro]: va sobre un fondo oscuro (el marcador): se usa la variante para fondos oscuros de ESPN, si la tiene.
+ */
 @Composable
-fun EscudoEquipo(e: Equipo, tam: Dp, modifier: Modifier = Modifier) {
+fun EscudoEquipo(e: Equipo, tam: Dp, modifier: Modifier = Modifier, oscuro: Boolean = false) {
     val ctx = LocalContext.current
     ImagenesEquipo.version
     val propio = ImagenesEquipo.escudo(ctx, e.id)
     if (propio.isNotBlank()) AsyncImage(File(propio), e.nombre, modifier.size(tam), contentScale = ContentScale.Fit)
-    else Escudo(e, tam, modifier)
+    else Escudo(e, tam, modifier, oscuro)
 }
 
 /**
- * El escudo sobre una imagen o un color (el cartel, la apertura de las fichas), en un PASPARTÚ cuadrado: el crema fijo de la familia, o el
- * oscuro si el escudo es muy claro ([UMBRAL_PASPARTU]).
+ * El escudo sobre una imagen o un color (el cartel, la apertura de las fichas, «Tus equipos»): desde la 0.9.0, sin paspartú (limpio, a su
+ * tamaño, con la variante para fondos oscuros si la hay). [sombra] ya no se usa (se deja por compatibilidad).
  */
 @Composable
-fun EscudoConPaspartu(e: Equipo, tam: Dp, modifier: Modifier = Modifier, sombra: Dp = 10.dp) {
-    val c = rememberColorEquipo(e)
-    val marco = colorPaspartu(c?.let { luminancia(it) } ?: 0f)
-    Box(modifier.size(tam).shadow(sombra).background(marco).padding(grosorPaspartu(tam) + tam * 0.08f), contentAlignment = Alignment.Center) {
-        EscudoEquipo(e, tam - (grosorPaspartu(tam) + tam * 0.08f) * 2)
-    }
+fun EscudoConPaspartu(e: Equipo, tam: Dp, modifier: Modifier = Modifier, @Suppress("UNUSED_PARAMETER") sombra: Dp = 10.dp, oscuro: Boolean = false) {
+    Box(modifier.size(tam), contentAlignment = Alignment.Center) { EscudoEquipo(e, tam * 0.86f, oscuro = oscuro) }
 }
 
 /** Detrás de un equipo (cartel, apertura): su fondo encuadrado en este dispositivo o, sin fondo, el color de su club oscurecido. */

@@ -1,5 +1,9 @@
 package com.gonzalo.cobre
 
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
+import com.gonzalo.familia.filaDe
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -92,16 +96,20 @@ fun <T> rememberDato(vararg claves: Any?, leer: (Boolean) -> T?): T? {
 
 // ---------------------------------------------------------------- piezas
 
-/** El escudo de un equipo (sin escudo, o mientras llega, sus siglas en un círculo de papel). */
+/**
+ * El escudo de un equipo de ESPN (sin escudo, o mientras llega, una forma de escudo con sus colores; nunca unas siglas en un círculo).
+ * [oscuro]: sobre fondo oscuro, la variante «dark» de ESPN (si no la hay, la normal).
+ */
 @Composable
-fun Escudo(e: Equipo, tam: Dp, modifier: Modifier = Modifier) {
+fun Escudo(e: Equipo, tam: Dp, modifier: Modifier = Modifier, oscuro: Boolean = false) {
     Box(modifier.size(tam), contentAlignment = Alignment.Center) {
-        @Composable fun Siglas() = Box(Modifier.fillMaxSize().clip(androidx.compose.foundation.shape.CircleShape).background(Sand), contentAlignment = Alignment.Center) {
-            Text(e.siglas.ifBlank { iniciales(e.nombre) }.take(3), color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = (tam.value * 0.28f).sp, lineHeight = (tam.value * 0.3f).sp, maxLines = 1, softWrap = false,
-                style = androidx.compose.ui.text.TextStyle(platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false)))
+        if (e.escudo.isBlank()) EscudoGenerico(e, tam)
+        else {
+            val oscura = if (oscuro) ImagenesEquipo.escudoOscuroEspn(e.escudo) else null
+            SubcomposeAsyncImage(model = oscura ?: e.escudo, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(),
+                loading = { EscudoGenerico(e, tam) },
+                error = { if (oscura != null) SubcomposeAsyncImage(model = e.escudo, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(), error = { EscudoGenerico(e, tam) }) else EscudoGenerico(e, tam) })
         }
-        if (e.escudo.isBlank()) Siglas()
-        else SubcomposeAsyncImage(model = e.escudo, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(), loading = { Siglas() }, error = { Siglas() })
     }
 }
 
@@ -137,12 +145,12 @@ fun marcaDe(p: Partido): String? {
 /** Un equipo y sus goles, en una línea (el nombre, en hasta dos líneas: con la letra grande no se corta). Un rival, en cursiva. */
 @Composable
 fun LineaEquipo(e: Equipo, goles: Int?, tam: Dp, letra: Int, ganador: Boolean, mio: Boolean, rival: Boolean = false) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 3.5.dp), verticalAlignment = Alignment.CenterVertically) {
         EscudoEquipo(e, tam)
-        Spacer(Modifier.width(10.dp))
-        Text(e.nombre, color = if (mio) Charcoal else Charcoal.copy(alpha = 0.88f), fontFamily = Display, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = if (ganador || mio) FontWeight.Bold else FontWeight.SemiBold,
-            fontSize = letra.sp, lineHeight = (letra * 1.15f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        if (goles != null) Text("$goles", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = (letra + 8).sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
+        Spacer(Modifier.width(9.dp))
+        Text(e.nombre, color = Charcoal, fontFamily = Grotesca, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = if (ganador) FontWeight.Black else if (mio) FontWeight.ExtraBold else FontWeight.Bold,
+            fontSize = letra.sp, lineHeight = (letra * 1.18f).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        if (goles != null) Text("$goles", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Black, fontSize = (letra + 1).sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
     }
 }
 
@@ -158,12 +166,12 @@ fun TarjetaPartido(p: Partido, ahora: Long, alAbrir: () -> Unit, alConfigurar: (
     val marca = marcaDe(p)
     val vivo = p.estado.enDirecto
     Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
-        Column(Modifier.fillMaxWidth().tocable(onClick = alAbrir).semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" + (marca?.let { ", ${it.lowercase()}" } ?: "") }.padding(vertical = 4.dp)) {
+        Column(Modifier.fillMaxWidth().filaDe("p:" + p.id).tocable(onClick = alAbrir).semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" + (marca?.let { ", ${it.lowercase()}" } ?: "") }.padding(vertical = 4.dp)) {
             if (marca != null) MarcaRival(marca, Modifier.padding(bottom = 6.dp))
             LineaPartido(p, ahora, Modifier.padding(bottom = 6.dp))
             val gl = p.golesLocal; val gv = p.golesVisitante
-            LineaEquipo(p.local, gl, if (vivo) 38.dp else 32.dp, if (vivo) 22 else 20, gl != null && gv != null && gl > gv && p.estado.terminado, p.local.id in mios, p.local.id in riv)
-            LineaEquipo(p.visitante, gv, if (vivo) 38.dp else 32.dp, if (vivo) 22 else 20, gl != null && gv != null && gv > gl && p.estado.terminado, p.visitante.id in mios, p.visitante.id in riv)
+            LineaEquipo(p.local, gl, if (vivo) 30.dp else 26.dp, if (vivo) 19 else 17, gl != null && gv != null && gl > gv && p.estado.terminado, p.local.id in mios, p.local.id in riv)
+            LineaEquipo(p.visitante, gv, if (vivo) 30.dp else 26.dp, if (vivo) 19 else 17, gl != null && gv != null && gv > gl && p.estado.terminado, p.visitante.id in mios, p.visitante.id in riv)
             if (p.penaltis.isNotBlank()) Etiqueta("Penaltis: ${p.penaltis}", Modifier.padding(top = 2.dp))
         }
         if (!p.estado.terminado && p.estado != Estado.CANCELADO) BotonesCanal(p, alConfigurar, Modifier.padding(top = 8.dp))
@@ -175,22 +183,22 @@ fun TarjetaPartido(p: Partido, ahora: Long, alAbrir: () -> Unit, alConfigurar: (
 /** Un partido en una línea (las listas de «Fútbol»): a la izquierda, el día y la hora (o «Final»); los dos equipos con sus goles. */
 @Composable
 fun FilaPartido(p: Partido, ahora: Long, mios: Set<String>, rivales: Set<String> = emptySet(), alAbrir: () -> Unit) {
-    Row(Modifier.fillMaxWidth().tocable(onClick = alAbrir).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().filaDe("p:" + p.id).tocable(onClick = alAbrir).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.widthIn(min = 78.dp).padding(end = 10.dp)) {
             val (a, b) = when {
                 p.estado.enDirecto -> "En directo" to p.cuando(ahora)
                 p.estado == Estado.POR_JUGAR -> Hora.diaRelativo(p.inicio, ahora) to Hora.reloj(p.inicio)
                 else -> Hora.dia(p.inicio) to p.estado.texto
             }
-            Text(a.uppercase(), color = if (p.estado.enDirecto) Acento else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false)
-            Text(b, color = if (p.estado.enDirecto) Acento else Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+            Text(a.uppercase(), color = if (p.estado.enDirecto) VIVO else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false)
+            Text(b, color = if (p.estado.enDirecto) VIVO else Charcoal, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
             Text(p.competicion.corto.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false)
             marcaDe(p)?.let { MarcaRival(if (it == "Rival") it else "Tu rival", Modifier.padding(top = 3.dp)) }
         }
         Column(Modifier.weight(1f)) {
             val gl = p.golesLocal; val gv = p.golesVisitante
-            LineaEquipo(p.local, gl, 30.dp, 16, gl != null && gv != null && gl > gv, p.local.id in mios, p.local.id in rivales)
-            LineaEquipo(p.visitante, gv, 30.dp, 16, gl != null && gv != null && gv > gl, p.visitante.id in mios, p.visitante.id in rivales)
+            LineaEquipo(p.local, gl, 22.dp, 15, gl != null && gv != null && gl > gv, p.local.id in mios, p.local.id in rivales)
+            LineaEquipo(p.visitante, gv, 22.dp, 15, gl != null && gv != null && gv > gl, p.visitante.id in mios, p.visitante.id in rivales)
         }
     }
     Filete(1.dp, Line)
@@ -199,12 +207,12 @@ fun FilaPartido(p: Partido, ahora: Long, mios: Set<String>, rivales: Set<String>
 /** Un botón de canal: relleno de acento (el primero) o con el contorno de tinta; en versalitas y en una línea. */
 @Composable
 private fun BotonCanal(texto: String, lleno: Boolean, alHacer: () -> Unit) {
-    val col = if (lleno) SobreAcento else Charcoal
-    Row(Modifier.heightIn(min = 40.dp).clip(pildora()).let { if (lleno) it.background(Acento) else it.border(1.5.dp, Charcoal, pildora()) }
-        .semantics { role = Role.Button }.tocable(onClick = alHacer).padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Rounded.PlayArrow, null, tint = col, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(6.dp))
-        Text(texto.uppercase(), color = col, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.2.sp, maxLines = 1, softWrap = false)
+    val col = if (lleno) Paper else Charcoal
+    Row(Modifier.heightIn(min = 32.dp).semantics { role = Role.Button }.tocable(onClick = alHacer).let { if (lleno) it.background(Charcoal) else it.border(1.5.dp, Charcoal) }
+        .padding(start = 8.dp, end = 10.dp, top = 5.dp, bottom = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Rounded.PlayArrow, null, tint = col, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(texto.uppercase(), color = col, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, letterSpacing = 1.sp, maxLines = 1, softWrap = false)
     }
 }
 
@@ -225,7 +233,7 @@ fun BotonesCanal(p: Partido, alConfigurar: () -> Unit, modifier: Modifier = Modi
         val aviso = withContext(Dispatchers.IO) { Futbol.pon(ctx, g, i) }
         if (aviso != null) Toast.makeText(ctx, aviso, Toast.LENGTH_LONG).show()
     }
-    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         grupos.forEachIndexed { gi, g ->
             if (g.canales.isEmpty()) EnlaceRevista("${g.boton}: elegir canales →", onClick = alConfigurar)
             else Row(verticalAlignment = Alignment.CenterVertically) {
@@ -359,13 +367,13 @@ private fun SeccionEquipos(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
         Antetitulo(t, Modifier.padding(top = 18.dp, bottom = 4.dp)); Filete(1.dp)
         if (l.isEmpty()) Nota(if (t == "Tus rivales") "Sin rivales todavía." else "Aún no sigues a ningún equipo.", Modifier.padding(top = 8.dp))
         l.forEach { (e, liga) ->
-            Row(Modifier.fillMaxWidth().tocable { alFicha(Ficha.DeEquipo(e, liga)) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().filaDe("e:" + e.id).tocable { alFicha(Ficha.DeEquipo(e, liga)) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Escudo(e, 34.dp); Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(e.nombre, color = Charcoal, fontFamily = Display, fontStyle = if (t == "Tus rivales") FontStyle.Italic else null, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 23.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(e.nombre, color = Charcoal, fontFamily = Grotesca, fontStyle = if (t == "Tus rivales") FontStyle.Italic else null, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 23.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Etiqueta(if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(liga).nombre)
                 }
-                Text("→", color = Acento, fontFamily = Display, fontSize = 20.sp)
+                Text("→", color = Acento, fontFamily = Grotesca, fontSize = 20.sp)
             }
             Filete(1.dp, Line)
         }
@@ -410,7 +418,7 @@ fun TablaClasificacion(c: Clasificacion, mios: Set<String>, rivales: Set<String>
                 Spacer(Modifier.width(8.dp))
                 val rival = f.equipo.id in rivales
                 Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                    Text(f.equipo.nombre, color = if (mio) Acento else Charcoal, fontFamily = Display, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = if (mio || rival) FontWeight.Bold else FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 18.sp,
+                    Text(f.equipo.nombre, color = if (mio) Acento else Charcoal, fontFamily = Grotesca, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = if (mio || rival) FontWeight.Bold else FontWeight.Bold, fontSize = 16.sp, lineHeight = 18.sp,
                         maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                     if (rival) MarcaRival("Rival", Modifier.padding(start = 6.dp))
                 }
@@ -442,10 +450,10 @@ fun GoleadoresDe(liga: String) {
                 Escudo(x.equipo, 22.dp)
                 Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(x.nombre, color = if (x.equipo.id in mios) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(x.nombre, color = if (x.equipo.id in mios) Acento else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text((x.equipo.nombre + if (x.partidos > 0) " · ${x.partidos} partidos" else "").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2)
                 }
-                Text("${x.cifra}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
+                Text("${x.cifra}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 10.dp))
             }
             Filete(1.dp, Line)
         }
@@ -473,35 +481,64 @@ fun PantFichaPartido(p0: Partido, alCerrar: () -> Unit, alConfigurar: () -> Unit
     val p = f?.partido ?: p0
     val ahora = System.currentTimeMillis()
     val m = margen()
+    var pestana by rememberSaveable(p0.id) { mutableIntStateOf(0) }
+    var todos by rememberSaveable(p0.id) { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(Paper).atrapaFoco()) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding()) {
-            // ---- La apertura (doble página): el fondo del equipo de casa (o su color) con un velo oscuro, los escudos enfrentados con su
-            // paspartú, la etiqueta del estado y el marcador enorme
-            AperturaPartido(p, ahora, alCerrar) { e -> alFicha(Ficha.DeEquipo(e, p.liga)) }
+            // ---- La apertura: los colores de los dos en diagonal, el marcador, quién marcó y las pestañas
+            AperturaPartido(p, ahora, f, pestana, { pestana = it }, alCerrar) { e -> alFicha(Ficha.DeEquipo(e, p.liga)) }
             if (!p.estado.terminado && p.estado != Estado.CANCELADO) BotonVerCanal(p)
             Column(Modifier.padding(horizontal = m).widthIn(max = 900.dp)) {
                 val x = f
-                SeccionNumerada(1, "El partido")
-                when {
-                    p.estado == Estado.POR_JUGAR -> Nota("Aún no ha empezado.")
-                    x == null -> Nota("Leyendo la ficha…")
-                    else -> Eventos(x)
+                when (pestana) {
+                    0 -> {
+                        TituloSeccion("Lo importante")
+                        when {
+                            p.estado == Estado.POR_JUGAR -> Nota("Aún no ha empezado.", Modifier.padding(top = 6.dp))
+                            x == null -> Nota("Leyendo la ficha…", Modifier.padding(top = 6.dp))
+                            else -> Momentos(x, todos) { todos = !todos }
+                        }
+                        if (x != null && x.cifras.isNotEmpty()) {
+                            TituloSeccion("En números", derecha = "Todas →", alDerecha = { pestana = 2 })
+                            CifrasCortas(x)
+                        }
+                        TituloSeccion("Dónde verlo")
+                        DondeVerlo(p, conTitulo = false)
+                        TituloSeccion("Clasificación")
+                        ClasificacionDe(p.liga, setOf(p.local.id, p.visitante.id))
+                        TituloSeccion("Cara a cara")
+                        if (x == null) Nota("Leyendo los últimos partidos entre los dos…") else CaraACara(x) { q -> alFicha(Ficha.DePartido(q)) }
+                    }
+                    1 -> if (x == null) Nota("Aún sin alineaciones.", Modifier.padding(top = 18.dp)) else Alineaciones(x)
+                    else -> if (x == null) Nota("Aún sin estadísticas.", Modifier.padding(top = 18.dp)) else Cifras(x)
                 }
-                SeccionNumerada(2, "Dónde verlo")
-                DondeVerlo(p, conTitulo = false)
-                SeccionNumerada(3, "Alineaciones")
-                if (x == null) Nota("Aún sin alineaciones.") else Alineaciones(x)
-                SeccionNumerada(4, "Estadísticas")
-                if (x == null) Nota("Aún sin estadísticas.") else Cifras(x)
-                SeccionNumerada(5, "Clasificación")
-                ClasificacionDe(p.liga, setOf(p.local.id, p.visitante.id))
-                SeccionNumerada(6, "Cara a cara")
-                if (x == null) Nota("Leyendo los últimos partidos entre los dos…") else CaraACara(x) { q -> alFicha(Ficha.DePartido(q)) }
                 PieFuente()
             }
             Spacer(Modifier.height(40.dp))
         }
     }
+}
+
+/** Lo importante del partido: solo goles y rojas (lo último, arriba); «ver todos los momentos» enseña también cambios y tarjetas. */
+@Composable
+private fun Momentos(f: FichaPartido, todos: Boolean, alTodos: () -> Unit) {
+    val p = f.partido
+    val importantes = f.eventos.filter { it.tipo.esGol || it.tipo == TipoEvento.ROJA || it.tipo == TipoEvento.SEGUNDA_AMARILLA }.reversed()
+    if (todos) Eventos(f)
+    else if (importantes.isEmpty()) Nota(if (f.eventos.isEmpty()) "Sin nada que contar todavía." else "Sin goles ni rojas por ahora.", Modifier.padding(top = 6.dp))
+    else importantes.forEach { FilaEvento(it, p) }
+    if (f.eventos.size > importantes.size) Text(if (todos) "SOLO LO IMPORTANTE ←" else "VER TODOS LOS MOMENTOS (CAMBIOS Y TARJETAS) →", color = Acento, fontFamily = Body,
+        fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.2.sp, modifier = Modifier.tocable(onClick = alTodos).padding(vertical = 12.dp))
+}
+
+/** Las dos o tres cifras que más dicen (posesión y tiros), con el color de cada equipo. */
+@Composable
+private fun CifrasCortas(f: FichaPartido) {
+    val p = f.partido
+    val ca = colorDuelo(p.local); val cb = colorDuelo(p.visitante)
+    val claves = listOf("posesi", "tiros a puerta", "tiros")
+    val elegidas = claves.mapNotNull { k -> f.cifras.firstOrNull { it.nombre.lowercase().startsWith(k) } }.distinct().take(3).ifEmpty { f.cifras.take(2) }
+    elegidas.forEach { c -> BarraCifra(c.nombre, c.local, c.visitante, ca, cb) }
 }
 
 /** La etiqueta del estado de un partido en la apertura y en el cartel: «PRÓXIMO · SÁB 14 NOV · 21:00», «EN DIRECTO · 67'», «FINAL». */
@@ -513,12 +550,9 @@ fun etiquetaPartido(p: Partido, ahora: Long): String = when {
 
 /** El encabezado de una sección de las fichas: su número (01, 02…) en el acento y el nombre en grotesca. */
 @Composable
-fun SeccionNumerada(n: Int, texto: String, arriba: Dp = 26.dp) {
-    Row(Modifier.fillMaxWidth().padding(top = arriba, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
-        Text("%02d".format(n), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, maxLines = 1)
-        Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, maxLines = 2, lineHeight = 22.sp, modifier = Modifier.weight(1f).padding(start = 10.dp, bottom = 1.dp))
-    }
-    Filete(2.dp)
+fun SeccionNumerada(@Suppress("UNUSED_PARAMETER") n: Int, texto: String, arriba: Dp = 26.dp) {
+    // (desde la 0.9.0, sin el número ni la raya gruesa: un título limpio, como en la ficha del partido)
+    TituloSeccion(texto, Modifier.padding(top = (arriba - 24.dp).coerceAtLeast(0.dp)))
 }
 
 /** La etiqueta en un bloque del acento (el estado del partido, «TU PRÓXIMO PARTIDO»…). */
@@ -551,22 +585,37 @@ fun Enfrentados(p: Partido, ahora: Long, tamEscudo: Dp, alEquipo: ((Equipo) -> U
     }
 }
 
-/** La apertura de la ficha de un partido. */
+/**
+ * La apertura de la ficha de un partido: los colores de los dos equipos en diagonal con el velo, «← Volver» y la competición, el estado (en
+ * directo, con el punto que late), los dos equipos con el marcador, quién marcó y las pestañas Resumen · Alineaciones · Estadísticas.
+ */
 @Composable
-private fun AperturaPartido(p: Partido, ahora: Long, alCerrar: () -> Unit, alEquipo: (Equipo) -> Unit) {
+private fun AperturaPartido(p: Partido, ahora: Long, f: FichaPartido?, pestana: Int, alPestana: (Int) -> Unit, alCerrar: () -> Unit, alEquipo: (Equipo) -> Unit) {
     val m = margen()
-    val grande = esAncha()
     Box(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-        FondoEquipo(p.local, Modifier.matchParentSize())
-        Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.45f)))
-        Box(Modifier.matchParentSize().background(veloArriba()))
-        Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = m).padding(bottom = 22.dp)) {
-            EnlaceRevista("← Volver", Modifier.padding(top = 6.dp), color = Color.White.copy(alpha = 0.85f)) { alCerrar() }
-            Text(p.competicion.nombre.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.6.sp, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
-            EtiquetaBloque(etiquetaPartido(p, ahora), Modifier.padding(top = 8.dp, bottom = 18.dp))
-            Enfrentados(p, ahora, if (grande) 128.dp else 104.dp, alEquipo)
-            val donde = listOfNotNull(if (p.estado != Estado.POR_JUGAR) Hora.diaYHora(p.inicio, ahora) else null, p.estadio.ifBlank { null }).joinToString(" · ")
-            if (donde.isNotBlank()) Text(donde, color = Color.White.copy(alpha = 0.85f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, modifier = Modifier.padding(top = 10.dp))
+        FondoDuelo(p.local, p.visitante, Modifier.matchParentSize())
+        Column(Modifier.fillMaxWidth().statusBarsPadding()) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = m).padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                EnlaceRevista("← Volver", color = Color.White.copy(alpha = 0.92f)) { alCerrar() }
+                Spacer(Modifier.weight(1f))
+                Text(p.competicion.corto.uppercase(), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 10.5.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1, softWrap = false)
+            }
+            Box(Modifier.fillMaxWidth().padding(top = 10.dp, start = m, end = m), contentAlignment = Alignment.Center) { EtiquetaEstado(p, ahora) }
+            Duelo(p, if (esAncha()) 96.dp else 72.dp, alEquipo, Modifier.padding(horizontal = m).padding(top = 20.dp, bottom = 10.dp))
+            val marcaron = f?.let { goleadores(it) }.orEmpty()
+            val linea = marcaron.ifBlank { listOfNotNull(if (p.estado != Estado.POR_JUGAR) Hora.diaYHora(p.inicio, ahora) else null, p.estadio.ifBlank { null }).joinToString(" · ") }
+            if (linea.isNotBlank()) Text(linea, color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp, textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = m))
+            Row(Modifier.fillMaxWidth().padding(top = 16.dp).background(Color.Black.copy(alpha = 0.25f))) {
+                listOf("Resumen", "Alineaciones", "Estadísticas").forEachIndexed { i, t ->
+                    val on = i == pestana
+                    Box(Modifier.weight(1f).tocable(fuera = 0.dp) { alPestana(i) }.drawBehind {
+                        if (on) drawRect(Color.White, topLeft = Offset(0f, size.height - 3.dp.toPx()), size = Size(size.width, 3.dp.toPx()))
+                    }.padding(vertical = 13.dp), contentAlignment = Alignment.Center) {
+                        Text(t.uppercase(), color = if (on) Color.White else Color.White.copy(alpha = 0.68f), fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 10.5.sp, letterSpacing = 1.1.sp, maxLines = 1, softWrap = false)
+                    }
+                }
+            }
         }
     }
 }
@@ -588,7 +637,7 @@ fun BotonVerCanal(p: Partido, modifier: Modifier = Modifier) {
         val aviso = withContext(Dispatchers.IO) { Futbol.pon(ctx, g, 0) }
         if (aviso != null) Toast.makeText(ctx, aviso, Toast.LENGTH_LONG).show()
     }
-    BotonC(if (ver != null) "Ver en tu canal" else "Elegir canal", modifier.focoInicial(p.id + "ver"), fondo = AcentoBloque, letra = SobreBloque) {
+    BotonC(if (ver != null) "Ver en ${ver.grupo.boton}" else "Elegir canal", modifier.focoInicial(p.id + "ver"), fondo = AcentoBloque, letra = SobreBloque) {
         if (ver != null) pon(ver.grupo) else eligiendo = ops.firstOrNull()
     }
     eligiendo?.let { o -> EligeCanal(o, { eligiendo = null }) { g -> eligiendo = null; v++; pon(g) } }
@@ -609,14 +658,14 @@ private fun Marcador(p: Partido, ahora: Long, alEquipo: (Equipo) -> Unit = {}) {
     Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.Top) {
         @Composable fun Lado(e: Equipo, mod: Modifier) = Column(mod.tocable { alEquipo(e) }, horizontalAlignment = Alignment.CenterHorizontally) {
             Escudo(e, if (grande) 84.dp else 60.dp)
-            Text(e.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
+            Text(e.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
         }
         Lado(p.local, Modifier.weight(1f))
         Column(Modifier.padding(horizontal = 8.dp).widthIn(min = 96.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             val vivo = p.estado.enDirecto
             if (p.golesLocal != null && p.golesVisitante != null)
-                Text("${p.golesLocal}–${p.golesVisitante}", color = if (vivo) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = if (grande) 64.sp else 46.sp, maxLines = 1, softWrap = false)
-            else Text(Hora.reloj(p.inicio), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = if (grande) 48.sp else 34.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 8.dp))
+                Text("${p.golesLocal}–${p.golesVisitante}", color = if (vivo) Acento else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = if (grande) 64.sp else 46.sp, maxLines = 1, softWrap = false)
+            else Text(Hora.reloj(p.inicio), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = if (grande) 48.sp else 34.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 8.dp))
             val estado = when {
                 vivo -> p.cuando(ahora)
                 p.estado == Estado.POR_JUGAR -> Hora.diaRelativo(p.inicio, ahora)
@@ -661,13 +710,17 @@ private fun FilaEvento(e: Evento, p: Partido) {
     }
     val equipo = if (e.equipo == p.local.id) p.local else if (e.equipo == p.visitante.id) p.visitante else null
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.Top) {
-        Text(e.minuto, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 52.dp).padding(top = 2.dp, end = 6.dp))
+        Text(e.minuto, color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 44.dp).padding(top = 1.dp, end = 6.dp))
         Box(Modifier.padding(top = 5.dp, end = 10.dp).size(width = if (e.tipo.esTarjeta) 8.dp else 10.dp, height = if (e.tipo.esTarjeta) 12.dp else 10.dp)
             .clip(if (e.tipo.esGol) androidx.compose.foundation.shape.CircleShape else esquina(2.dp)).background(colorEvento(e.tipo)))
         Column(Modifier.weight(1f)) {
-            val texto = e.frase().removePrefix("${e.minuto} ")
-            Text(texto, color = Charcoal, fontFamily = Display, fontWeight = if (e.tipo.esGol) FontWeight.Bold else FontWeight.Normal, fontSize = 16.sp, lineHeight = 21.sp)
-            if (equipo != null) Text(equipo.nombre.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // Un gol: quién lo marcó, en grande; debajo, el equipo y quién asistió (o cómo fue). Lo demás, su frase.
+            val gol = e.tipo.esGol && e.jugador.isNotBlank()
+            val texto = if (gol) e.jugador else e.frase().removePrefix("${e.minuto} ")
+            val como = when (e.tipo) { TipoEvento.GOL_CABEZA -> "de cabeza"; TipoEvento.GOL_FALTA -> "de falta"; TipoEvento.GOL_PENALTI -> "de penalti"; TipoEvento.GOL_PROPIA -> "en propia puerta"; else -> "" }
+            val sub = listOfNotNull(equipo?.nombre, if (gol && e.otro.isNotBlank()) "asiste ${e.otro}" else null, if (gol) como.ifBlank { null } else null).joinToString(" · ")
+            Text(texto, color = Charcoal, fontFamily = Grotesca, fontWeight = if (e.tipo.esGol) FontWeight.ExtraBold else FontWeight.Bold, fontSize = if (gol) 15.sp else 14.sp, lineHeight = 19.sp)
+            if (sub.isNotBlank()) Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
         }
     }
     Filete(1.dp, Line)
@@ -684,7 +737,7 @@ private fun Alineaciones(f: FichaPartido) {
 private fun Alineacion1(a: Alineacion) {
     Row(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Escudo(a.equipo, 26.dp); Spacer(Modifier.width(8.dp))
-        Text(a.equipo.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Text(a.equipo.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Black, fontSize = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         if (a.formacion.isNotBlank()) Text(a.formacion, color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, letterSpacing = 1.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
     }
     Filete(2.dp)
@@ -704,7 +757,7 @@ private fun posicion(p: String): String = when (p.substringBefore('-').uppercase
 private fun FilaJugador(j: Jugador) {
     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(j.dorsal, color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, textAlign = TextAlign.End, modifier = Modifier.widthIn(min = 28.dp).padding(end = 10.dp))
-        Text(j.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Text(j.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         val marca = when { j.entra -> "↑ entra"; j.sale -> "↓ sale"; else -> "" }
         if (marca.isNotBlank()) Text(marca.uppercase(), color = if (j.entra) Acento else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 0.8.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
         val pos = posicion(j.posicion)
@@ -722,22 +775,8 @@ private fun Cifras(f: FichaPartido) {
         Text(p.visitante.corto.uppercase(), color = Charcoal, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
     }
     Filete(2.dp)
-    f.cifras.forEach { c ->
-        val a = c.local.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f
-        val b = c.visitante.filter { it.isDigit() || it == '.' }.toFloatOrNull() ?: 0f
-        Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(c.local, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 15.sp, maxLines = 1, softWrap = false)
-                Text(c.nombre, color = Muted, fontFamily = Body, fontSize = 13.sp, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
-                Text(c.visitante, color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 15.sp, maxLines = 1, softWrap = false)
-            }
-            if (a + b > 0f) Row(Modifier.fillMaxWidth().padding(top = 5.dp).height(4.dp)) {
-                Box(Modifier.weight(maxOf(a, 0.001f)).fillMaxHeight().background(if (a >= b) Acento else Line))
-                Spacer(Modifier.width(3.dp))
-                Box(Modifier.weight(maxOf(b, 0.001f)).fillMaxHeight().background(if (b > a) Acento else Line))
-            }
-        }
-    }
+    val ca = colorDuelo(p.local); val cb = colorDuelo(p.visitante)
+    f.cifras.forEach { c -> BarraCifra(c.nombre, c.local, c.visitante, ca, cb) }
 }
 
 /** «Cara a cara»: los últimos entre los dos y los últimos de cada uno. Un toque abre su ficha. */

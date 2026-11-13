@@ -75,7 +75,7 @@ fun Modifier.tocableCon(src: MutableInteractionSource, onClick: () -> Unit): Mod
 fun Logo(url: String, nombre: String, modifier: Modifier = Modifier, tam: Dp = 44.dp) {
     val forma = esquina(4.dp)
     Box(modifier.size(tam).clip(forma).background(Sand), contentAlignment = Alignment.Center) {
-        @Composable fun Iniciales() = Text(iniciales(nombre), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (tam.value * 0.36f).sp, maxLines = 1)
+        @Composable fun Iniciales() = Text(iniciales(nombre), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (tam.value * 0.36f).sp, maxLines = 1)
         if (url.isBlank()) Iniciales()
         else SubcomposeAsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(tam * 0.08f),
             loading = { Iniciales() }, error = { Iniciales() })
@@ -99,7 +99,7 @@ fun Poster(imagen: String, nombre: String, modifier: Modifier = Modifier) {
     val forma = esquina(4.dp)
     Box(modifier.aspectRatio(2f / 3f).clip(forma).background(Sand)) {
         @Composable fun Tapa() = Box(Modifier.fillMaxSize().background(Sand).border(1.dp, Line, forma).padding(10.dp), contentAlignment = Alignment.Center) {
-            Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 18.sp, textAlign = TextAlign.Center, maxLines = 5, overflow = TextOverflow.Ellipsis)
+            Text(nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 18.sp, textAlign = TextAlign.Center, maxLines = 5, overflow = TextOverflow.Ellipsis)
         }
         if (imagen.isBlank()) Tapa()
         else SubcomposeAsyncImage(model = imagen, contentDescription = nombre, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(), loading = { Tapa() }, error = { Tapa() })
@@ -119,7 +119,7 @@ fun TarjetaPoster(imagen: String, nombre: String, ancho: Dp = Dp.Unspecified, su
                 Box(Modifier.fillMaxWidth(progreso.coerceIn(0f, 1f)).fillMaxHeight().background(Acento))
             }
         }
-        Text(nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 17.sp, maxLines = 2, minLines = 2,
+        Text(nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 17.sp, maxLines = 2, minLines = 2,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
         Text(sub.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }

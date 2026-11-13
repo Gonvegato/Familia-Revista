@@ -89,7 +89,7 @@ fun PantGuia(alVolver: () -> Unit, alIr: (Destino) -> Unit) {
             Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0x99000000)).tocable { info = null }, contentAlignment = Alignment.Center) {
                 Column(Modifier.widthIn(max = 560.dp).padding(24.dp).background(Paper).padding(22.dp).atrapaFoco()) {
                     Antetitulo("${c.nombre} · ${franja(p)}", Modifier.padding(bottom = 6.dp))
-                    Text(p.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 30.sp)
+                    Text(p.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 30.sp)
                     if (p.subtitulo.isNotBlank()) Text(p.subtitulo, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp)
                     if (p.categoria.isNotBlank() || p.episodio.isNotBlank()) Etiqueta(listOf(p.categoria, p.episodio).filter { it.isNotBlank() }.joinToString(" · "), Modifier.padding(top = 6.dp))
                     if (p.descripcion.isNotBlank()) Text(p.descripcion, color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 10.dp))
@@ -112,7 +112,7 @@ private fun FilaGuia(l: Lista, cg: Cargada, c: Canal, desde: Long, hasta: Long, 
     Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.width(izq).fillMaxHeight().tocable { alVer() }.padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Logo(c.logo, c.nombre, Modifier.padding(end = 8.dp), 38.dp)
-            Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().padding(vertical = 5.dp)) {
             val w = maxWidth; val total = (hasta - desde).toFloat()

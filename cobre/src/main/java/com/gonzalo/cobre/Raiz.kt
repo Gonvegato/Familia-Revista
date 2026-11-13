@@ -105,7 +105,6 @@ fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
     // (lo que pide un widget o un aviso: abrir una página)
     LaunchedEffect(pedido) { pedido?.destino?.let { ir(it) } }
     AvisoActualizacion()
-    BackHandler(enabled = fichas.isNotEmpty()) { cierra() }
     // Atrás: lo de la tele vuelve a la página IPTV; lo demás, a la página en la que estabas; en una página, a la portada
     BackHandler(enabled = fichas.isEmpty() && d != null) { if (d!!.deLaTele) pagina = paginaDe(Destino.Tele); encima = -1 }
     BackHandler(enabled = fichas.isEmpty() && d == null && pagina != 0) { pagina = 0 }
@@ -131,11 +130,13 @@ fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
                 else -> PantPrincipal(pagina = pagina, alPagina = { pagina = it }, alIr = ::ir, alFicha = abre)
             }
         }
-        // Las fichas, unas encima de otras (se pinta la de arriba)
-        AnimatedVisibility(fichas.isNotEmpty(), enter = entraHoja, exit = saleHoja) {
-            val f = fichas.lastOrNull()
-            androidx.compose.runtime.key(fichas.size) {
-                when (f) {
+        // Las fichas, unas encima de otras: cada una nace de la fila que tocaste (en la página o en la ficha de debajo) y se cierra con el
+        // gesto de atrás (con vista previa); debajo se sigue viendo la anterior
+        val niveles = remember { HashMap<Int, Ficha>() }
+        fichas.forEachIndexed { i, f -> niveles[i] = f }
+        for (i in 0 until maxOf(6, fichas.size + 1)) androidx.compose.runtime.key(i) {
+            com.gonzalo.familia.CapaQueNace(fichas.getOrNull(i)?.let { claveDe(it) }, alCerrar = { fichas = fichas.take(i) }, fondo = Paper, atrasActivo = i == fichas.size - 1) { _, _ ->
+                when (val f = niveles[i]) {
                     is Ficha.DePelicula -> PantFichaPelicula(f.lista, f.pelicula, alCerrar = cierra)
                     is Ficha.DeSerie -> PantFichaSerie(f.lista, f.serie, alCerrar = cierra)
                     is Ficha.DePartido -> PantFichaPartido(f.partido, alCerrar = cierra, alConfigurar = { ir(Destino.AjustesFutbol) }, alFicha = abre)
@@ -147,4 +148,14 @@ fun CobreApp(inicial: Destino = Destino.Portada, pedido: Pedido? = null) {
             }
         }
     }
+}
+
+/** La clave de una ficha: con ella sabe de qué fila nace (la fila de un partido, un equipo o una competición se apunta con la misma). */
+fun claveDe(f: Ficha): String = when (f) {
+    is Ficha.DePartido -> "p:" + f.partido.id
+    is Ficha.DeEquipo -> "e:" + f.equipo.id
+    is Ficha.DeCompeticion -> "c:" + f.liga
+    is Ficha.ImagenesDeEquipo -> "img:" + f.equipo.id
+    is Ficha.DePelicula -> "peli:" + System.identityHashCode(f)
+    is Ficha.DeSerie -> "serie:" + System.identityHashCode(f)
 }

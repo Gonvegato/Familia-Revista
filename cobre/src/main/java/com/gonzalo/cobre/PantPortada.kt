@@ -88,7 +88,7 @@ fun PantPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, alVolver: () 
                 Filete(1.dp)
                 Spacer(Modifier.height(10.dp))
                 Text("Nut no trae canales: es tu reproductor. Pon tu lista M3U (una dirección o un archivo) o el login de tu servidor de Xtream Codes (servidor, usuario y contraseña) y aquí tendrás tus canales con su guía y los partidos de tus equipos, con su canal a un toque.",
-                    color = Charcoal, fontFamily = Display, fontSize = 19.sp, lineHeight = 26.sp)
+                    color = Charcoal, fontFamily = Grotesca, fontSize = 19.sp, lineHeight = 26.sp)
                 Spacer(Modifier.height(14.dp))
                 BotonAcento("Añadir una lista", modifier = Modifier.focoInicial("vacia")) { alIr(Destino.Listas) }
             }
@@ -185,7 +185,7 @@ fun TarjetaCanal(l: Lista, c: Canal, cg: Cargada?, alAbrir: () -> Unit) {
             Logo(c.logo, c.nombre, Modifier, ancho * 0.42f)
             if (ahora != null) Barra(ahora.avance(System.currentTimeMillis()), Modifier.align(Alignment.BottomStart))
         }
-        Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+        Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
         Text((ahora?.titulo ?: l.nombre).uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

@@ -57,7 +57,7 @@ fun SeccionFutbol() {
     AjustesFutbol.competiciones(ctx).forEachIndexed { i, c ->
         val oculta = c.slug in ocultas
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(c.nombre, color = if (oculta) Muted else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text(c.nombre, color = if (oculta) Muted else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             if (i > 0) EnlaceRevista("↑", Modifier.padding(horizontal = 8.dp)) { cambia { AjustesFutbol.mueveCompeticion(ctx, c.slug, -1) } }
             Interruptor(!oculta) { cambia { AjustesFutbol.alternaOculta(ctx, c.slug) } }
         }
@@ -83,7 +83,7 @@ fun SeccionFutbol() {
     var renombrando by remember { mutableStateOf<String?>(null) }
     grupos.forEach { g ->
         Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(g.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text(g.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             EnlaceRevista("Nombre", Modifier.padding(start = 8.dp)) { renombrando = if (renombrando == g.id) null else g.id }
             EnlaceRevista("Borrar", Modifier.padding(start = 12.dp)) { cambia { AjustesFutbol.ponGrupos(ctx, grupos.filter { it.id != g.id }) } }
         }
@@ -96,8 +96,8 @@ fun SeccionFutbol() {
         if (g.canales.isEmpty()) Nota("Vacío: elige sus canales de tu lista.", Modifier.padding(top = 6.dp))
         g.canales.forEachIndexed { i, e ->
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("${i + 1}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 26.dp))
-                Text(e.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text("${i + 1}", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 26.dp))
+                Text(e.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 if (i > 0) EnlaceRevista("↑", Modifier.padding(horizontal = 6.dp)) { cambia { AjustesFutbol.cambiaGrupo(ctx, g.id) { CanalesFutbol.mueve(it, i, -1) } } }
                 EnlaceRevista("Quitar", Modifier.padding(start = 6.dp)) { cambia { AjustesFutbol.cambiaGrupo(ctx, g.id) { CanalesFutbol.quita(it, i) } } }
             }
@@ -151,7 +151,7 @@ fun SeccionFutbol() {
     val asig = AjustesFutbol.asignacion(ctx)
     Competiciones.TODAS.forEach { comp ->
         val suyos = asig[comp.slug].orEmpty()
-        Text(comp.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.padding(top = 12.dp))
+        Text(comp.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 12.dp))
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             grupos.forEach { g -> val k = suyos.indexOf(g.id); FiltroRevista(if (k >= 0) "${k + 1}. ${g.nombre}" else g.nombre, k >= 0) { cambia { AjustesFutbol.alternaAsignado(ctx, comp.slug, g.id) } } }
         }
@@ -181,7 +181,7 @@ private fun ListaEquipos(rival: Boolean, alCambiar: () -> Unit) {
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Escudo(e, 30.dp); Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text(e.nombre, color = Charcoal, fontFamily = Display, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(e.nombre, color = Charcoal, fontFamily = Grotesca, fontStyle = if (rival) FontStyle.Italic else null, fontWeight = FontWeight.Bold, fontSize = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Etiqueta(if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(liga).nombre)
             }
             if (i > 0) EnlaceRevista("↑", Modifier.padding(horizontal = 6.dp)) { cambia { AjustesFutbol.mueve(ctx, e.id, -1, rival) } }
@@ -226,7 +226,7 @@ private fun ElegirEquipo(rival: Boolean, alCambiar: () -> Unit) {
                 val marcado = if (rival) suRival else mio
                 Row(Modifier.fillMaxWidth().tocable { AjustesFutbol.alterna(ctx, e, liga, rival); v++; alCambiar() }.padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
                     Escudo(e, 24.dp); Spacer(Modifier.width(10.dp))
-                    Text(e.nombre, color = if (mio) Acento else Charcoal, fontFamily = Display, fontStyle = if (suRival) FontStyle.Italic else null, fontWeight = if (mio || suRival) FontWeight.Bold else FontWeight.Normal, fontSize = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Text(e.nombre, color = if (mio) Acento else Charcoal, fontFamily = Grotesca, fontStyle = if (suRival) FontStyle.Italic else null, fontWeight = if (mio || suRival) FontWeight.Bold else FontWeight.Bold, fontSize = 17.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     val t = when { marcado && rival -> "✓ RIVAL"; marcado -> "✓ TUYO"; rival && mio -> "TUYO · HACER RIVAL"; !rival && suRival -> "RIVAL · HACER TUYO"; rival -> "+ RIVAL"; else -> "+ SEGUIR" }
                     Text(t, color = if (marcado && !rival) Acento else if (marcado) Charcoal else Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.padding(start = 8.dp).widthIn(max = 130.dp))
                 }
@@ -306,7 +306,7 @@ fun SelectorCanalContenido(titulo: String, sub: String, alCerrar: () -> Unit, al
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = m)) {
         RevistaTopBar(alCerrar, "Cancelar")
         Antetitulo("Elegir canal", Modifier.padding(top = 8.dp), color = Acento, conCuadro = false)
-        Text(titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        Text(titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
         if (sub.isNotBlank()) Etiqueta(sub, Modifier.padding(top = 2.dp))
         Box(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 6.dp)) {
             if (q.isEmpty()) Text("Buscar (si quieres): DAZN, M+…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -322,7 +322,7 @@ fun SelectorCanalContenido(titulo: String, sub: String, alCerrar: () -> Unit, al
                         Row(Modifier.fillMaxWidth().let { if (k == 0 || filas.getOrNull(k - 1) is FilaSel.Titulo) it.focoInicial(f.grupo) else it }
                             .tocable { val c = f.lista.id + "\u0000" + f.grupo; abiertos = if (c in abiertos) abiertos - c else abiertos + c }.padding(vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(if (f.abierto) "▾" else "▸", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 16.sp, modifier = Modifier.widthIn(min = 22.dp))
-                            Text(nombreGrupo(f.grupo), color = if (f.abierto) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                            Text(nombreGrupo(f.grupo), color = if (f.abierto) Acento else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 21.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                             Text(Formato.cifra(f.n), color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
                         }
                         Filete(1.dp, Line)
@@ -344,7 +344,7 @@ private fun FilaElegir(c: Canal, i: Int, alElegir: () -> Unit) {
     Row(Modifier.fillMaxWidth().tocable(onClick = alElegir).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("${if (c.numero > 0) c.numero else i + 1}", color = Muted, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 34.dp).padding(end = 8.dp))
         Logo(c.logo, c.nombre, Modifier.padding(end = 12.dp), 40.dp)
-        Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         Text(Calidades_texto(c.nombre), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
     }
     Filete(1.dp, Line)

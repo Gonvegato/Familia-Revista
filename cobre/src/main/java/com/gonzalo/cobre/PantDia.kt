@@ -1,5 +1,6 @@
 package com.gonzalo.cobre
 
+import com.gonzalo.familia.filaDe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -113,13 +114,13 @@ fun TiraDias(dia: LocalDate, alElegir: (LocalDate) -> Unit) {
     // Sin deslizar (una tira que se desliza se veía cortada por el borde): el día elegido con dos a cada lado, ‹ › para moverse
     // de uno en uno y «Fecha» para cualquier otro. Si no caben en una línea (letra grande), siguen en la siguiente, enteros.
     val ventana = (-2..2).map { dia.plusDays(it.toLong()) }
-    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.Center) {
-        EnlaceRevista("‹", Modifier.semantics { contentDescription = "Día anterior" }) { alElegir(dia.minusDays(1)) }
-        ventana.forEach { d -> FiltroRevista(if (d in dias) Hora.nombreDia(d, ahora) else Hora.dia(d.atStartOfDay(Hora.ESPANA).toInstant().toEpochMilli()), d == dia) { alElegir(d) } }
-        EnlaceRevista("›", Modifier.semantics { contentDescription = "Día siguiente" }) { alElegir(dia.plusDays(1)) }
-        EnlaceRevista("Fecha", acento = true) { calendario = true }
+    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp), horizontalArrangement = Arrangement.spacedBy(0.dp), verticalArrangement = Arrangement.Center) {
+        PildoraDia("‹", false, Modifier.semantics { contentDescription = "Día anterior" }) { alElegir(dia.minusDays(1)) }
+        ventana.forEach { d -> PildoraDia(if (d in dias) Hora.nombreDia(d, ahora) else Hora.dia(d.atStartOfDay(Hora.ESPANA).toInstant().toEpochMilli()), d == dia) { alElegir(d) } }
+        PildoraDia("›", false, Modifier.semantics { contentDescription = "Día siguiente" }) { alElegir(dia.plusDays(1)) }
+        Text("FECHA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.6.sp, maxLines = 1, softWrap = false,
+            modifier = Modifier.tocable { calendario = true }.padding(horizontal = 8.dp, vertical = 8.dp))
     }
-    Filete(1.dp, Line)
     if (calendario) {
         val st = androidx.compose.material3.rememberDatePickerState(initialSelectedDateMillis = dia.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli())
         androidx.compose.material3.DatePickerDialog(onDismissRequest = { calendario = false },
@@ -137,19 +138,20 @@ fun TiraDias(dia: LocalDate, alElegir: (LocalDate) -> Unit) {
  * sus goles. Los tuyos, en negrita; los rivales, en cursiva (y su marca). Un toque abre la ficha.
  */
 @Composable
-fun FilaDia(p: Partido, mios: Set<String>, rivales: Set<String>, alAbrir: () -> Unit) {
+fun FilaDia(p: Partido, mios: Set<String>, rivales: Set<String>, debajo: @Composable () -> Unit = {}, alAbrir: () -> Unit) {
     val vivo = p.estado.enDirecto
-    Row(Modifier.fillMaxWidth().tocable(onClick = alAbrir).semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.widthIn(min = 60.dp).padding(end = 8.dp)) {
-            Text(Dia.cuando(p), color = if (vivo) Acento else if (p.estado.terminado) Muted else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false)
+    Row(Modifier.fillMaxWidth().filaDe("p:" + p.id).tocable(onClick = alAbrir).semantics { contentDescription = "${p.local.nombre} contra ${p.visitante.nombre}" }.padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.widthIn(min = 52.dp).padding(end = 8.dp)) {
+            Text(Dia.cuando(p).uppercase(), color = if (vivo) VIVO else Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.sp, maxLines = 1, softWrap = false)
             marcaDe(p)?.let { MarcaRival(if (it == "Rival") it else "Tu rival", Modifier.padding(top = 3.dp)) }
         }
         Column(Modifier.weight(1f)) {
             val gl = p.golesLocal; val gv = p.golesVisitante
-            LineaEquipo(p.local, gl, 30.dp, 16, gl != null && gv != null && gl > gv && p.estado.terminado, p.local.id in mios, p.local.id in rivales)
-            LineaEquipo(p.visitante, gv, 30.dp, 16, gl != null && gv != null && gv > gl && p.estado.terminado, p.visitante.id in mios, p.visitante.id in rivales)
+            LineaEquipo(p.local, gl, 22.dp, 15, gl != null && gv != null && gl > gv && (p.estado.terminado || vivo), p.local.id in mios, p.local.id in rivales)
+            LineaEquipo(p.visitante, gv, 22.dp, 15, gl != null && gv != null && gv > gl && (p.estado.terminado || vivo), p.visitante.id in mios, p.visitante.id in rivales)
         }
     }
+    debajo()
     Filete(1.dp, Line)
 }
 
@@ -203,24 +205,22 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, enPagina: Boolean
                             MagLink("Seguir al FC Barcelona", "O elige otros en Ajustes → Fútbol", accent = true) { AjustesFutbol.alterna(ctx, com.gonzalo.iptv.futbol.CanalesFutbol.SUGERIDO, Competiciones.LALIGA.slug) }
                         }
                         Spacer(Modifier.height(14.dp))
-                        Antetitulo("Partidos · " + Hora.largo(dia), Modifier.padding(bottom = 2.dp))
                         TiraDias(dia) { diaN = it.toEpochDay() }
                     }
                     is FilaPortada.Titulo -> Row(Modifier.fillMaxWidth().padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                         val c = x.s.competicion
-                        Row(Modifier.weight(1f).let { m2 -> if (c != null) m2.tocable { alFicha(Ficha.DeCompeticion(c.slug)) } else m2 }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Antetitulo(x.s.titulo, Modifier.weight(1f, fill = false), color = if (c == null) Acento else Charcoal)
-                            if (c != null) Text(" →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                        Row(Modifier.weight(1f).let { m2 -> if (c != null) m2.filaDe("c:" + c.slug).tocable { alFicha(Ficha.DeCompeticion(c.slug)) } else m2 }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            AntetituloRaya(x.s.titulo + if (c != null) " →" else "", Modifier.weight(1f))
                         }
                         Text("${x.s.partidos.size} " + if (x.plegada) "▸" else "▾", color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false,
                             modifier = Modifier.semantics { contentDescription = if (x.plegada) "Desplegar ${x.s.titulo}" else "Plegar ${x.s.titulo}" }
                                 .tocable { plegadas = if (x.plegada) plegadas - x.s.clave else plegadas + x.s.clave }.padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 2.dp))
                     }
                     is FilaPortada.Uno -> Column {
-                        if (filas.getOrNull(k - 1) is FilaPortada.Titulo) Filete(2.dp)
-                        FilaDia(x.p, mios.toSet(), riv) { alFicha(Ficha.DePartido(x.p)) }
-                        // (los tuyos, con sus canales a un toque)
-                        if (x.tuyo && !x.p.estado.terminado && x.p.estado != Estado.CANCELADO) BotonesCanal(x.p, { alIr(Destino.AjustesFutbol) }, Modifier.padding(start = 68.dp, top = 2.dp, bottom = 10.dp))
+                        // (los tuyos, con sus canales a un toque, dentro de su partido)
+                        FilaDia(x.p, mios.toSet(), riv, debajo = {
+                            if (x.tuyo && !x.p.estado.terminado && x.p.estado != Estado.CANCELADO) BotonesCanal(x.p, { alIr(Destino.AjustesFutbol) }, Modifier.padding(start = 60.dp, bottom = 10.dp))
+                        }) { alFicha(Ficha.DePartido(x.p)) }
                     }
                     is FilaPortada.Aviso -> Nota(x.t, Modifier.padding(top = 16.dp))
                 }
@@ -254,7 +254,7 @@ fun PantCompeticiones(alVolver: () -> Unit, alFicha: (Ficha) -> Unit, enPagina: 
             Antetitulo(t, Modifier.padding(top = 18.dp, bottom = 4.dp)); Filete(1.dp)
             l.forEachIndexed { k, c ->
                 FilaRevista(c.nombre, if (c.slug in ocultas) "Escondida en los partidos del día" else if (Competiciones.tieneTabla(c.slug)) "Partidos · clasificación · goleadores" else "Partidos · goleadores",
-                    Modifier.let { if (k == 0 && t == "De clubes") it.focoInicial() else it }) { alFicha(Ficha.DeCompeticion(c.slug)) }
+                    Modifier.filaDe("c:" + c.slug).let { if (k == 0 && t == "De clubes") it.focoInicial() else it }) { alFicha(Ficha.DeCompeticion(c.slug)) }
             }
         }
         PieFuente()
@@ -340,7 +340,7 @@ fun PantEquipo(e: Equipo, liga: String, alCerrar: () -> Unit, alFicha: (Ficha) -
                         EnlaceRevista("Imágenes", Modifier.padding(start = 14.dp), color = blanco) { alImagenes(e) }
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        EscudoConPaspartu(e, if (esAncha()) 140.dp else 112.dp)
+                        EscudoConPaspartu(e, if (esAncha()) 140.dp else 112.dp, oscuro = true)
                         Column(Modifier.weight(1f).padding(start = 16.dp)) {
                             Text((if (Competiciones.esDeSelecciones(liga)) "Selección" else Competiciones.de(suLiga).nombre).uppercase(), color = blanco, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 2)
                             if (puesto != null) EtiquetaBloque("${puesto}º en la tabla", Modifier.padding(top = 8.dp))
@@ -391,7 +391,7 @@ fun Plantilla(e: Equipo, liga: String) {
         js.forEach { j ->
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(j.dorsal, color = Muted, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 34.dp))
-                Text(j.nombre, color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text(j.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             }
             Filete(1.dp, Line)
         }

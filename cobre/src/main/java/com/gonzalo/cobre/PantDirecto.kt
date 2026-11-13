@@ -82,7 +82,7 @@ fun PantDirecto(alVolver: () -> Unit, alIr: (Destino) -> Unit) {
                     LazyColumn(Modifier.width(300.dp).fillMaxHeight()) {
                         itemsIndexed(todos, key = { _, g -> g }) { i, g ->
                             val on = g == grupo
-                            Text(nombreGrupo(g) + if (g in ocultos) " (escondido)" else "", color = if (on) Acento else if (g in ocultos) Muted else Charcoal, fontFamily = Display,
+                            Text(nombreGrupo(g) + if (g in ocultos) " (escondido)" else "", color = if (on) Acento else if (g in ocultos) Muted else Charcoal, fontFamily = Grotesca,
                                 fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.fillMaxWidth().let { if (on) it.focoInicial(l.id) else it }.tocable { elige(g) }.padding(vertical = 9.dp, horizontal = 4.dp))
                             if (i == 1) Filete(1.dp, Line)
@@ -133,7 +133,7 @@ fun FilaCanal(l: Lista, cg: Cargada, c: Canal, i: Int, ahora: Long, alVer: () ->
                 modifier = Modifier.widthIn(min = 34.dp).padding(end = 8.dp))
             Logo(c.logo, c.nombre, Modifier.padding(end = 12.dp), 40.dp)
             Column(Modifier.weight(1f)) {
-                Text(c.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Text(c.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 20.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 if (ya != null) {
                     Text("${hora(ya.inicio)} · ${ya.titulo}", color = Charcoal.copy(alpha = 0.85f), fontFamily = Body, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Barra(ya.avance(ahora), Modifier.padding(top = 4.dp, end = 40.dp).widthIn(max = 360.dp))

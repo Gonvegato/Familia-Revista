@@ -62,7 +62,7 @@ fun PantListas(alVolver: () -> Unit) {
                 Panel {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(l.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                            Text(l.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                             Etiqueta(Tele.tipoNombre(l.tipo) + when (l.tipo) {
                                 TipoLista.XTREAM -> " · " + Servidor.normaliza(l.url).substringAfter("://") + " · " + l.usuario.take(2) + "…"
                                 TipoLista.M3U -> " · " + Secretos.tapa(l.url, l.secretos.filter { it != l.url }).substringAfter("://").substringBefore('/') + "/…"
@@ -85,7 +85,7 @@ fun PantListas(alVolver: () -> Unit) {
             }
             quitar?.let { l ->
                 Panel {
-                    Text("¿Quitar «${l.nombre}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                    Text("¿Quitar «${l.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                     Cuerpo("Se quita de tu cuenta (en todos tus dispositivos) con lo que se ha bajado aquí. Tus favoritos y lo visto de esa lista se quedan en tu cuenta por si la vuelves a poner.")
                     Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                         EnlaceRevista("Sí, quitarla", Modifier.focoInicial(l.id), acento = true) { Listas.quita(l.id); Tele.olvida(l); quitar = null }
