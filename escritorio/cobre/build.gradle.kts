@@ -37,7 +37,8 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.gonzalo.cobre.pc.MainKt"
-        jvmArgs += listOf("-Dfamilia.version=$version")
+        // (en la app empaquetada del Mac la huella SHA-1 de la biblioteca nativa no coincide con la del jar; LWJGL solo lo avisa y sigue: se calla el aviso)
+        jvmArgs += listOf("-Dfamilia.version=$version", "-Dorg.lwjgl.util.NoHashChecks=true")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Deb)
             packageName = "Nut"

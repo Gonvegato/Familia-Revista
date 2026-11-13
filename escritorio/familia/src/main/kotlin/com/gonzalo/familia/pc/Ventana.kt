@@ -224,11 +224,14 @@ fun PantallaEntrar(titulo: String) {
             r.exceptionOrNull()?.let { error = it.message ?: "No se ha podido entrar." }
         }
     }
-    Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), contentAlignment = Alignment.TopCenter) {
-        Column(Modifier.widthIn(max = 520.dp).padding(horizontal = 32.dp, vertical = 56.dp)) {
-            Cabecera(88.sp, texto = titulo.uppercase())
-            FileteCabecera()
-            Spacer(Modifier.height(28.dp))
+    // La misma cara que dentro: la cabecera de tinta con el nombre y su punto (y, en el Mac, la barra de la ventana de ese color)
+    val tinta = com.gonzalo.familia.pc.revista.TintaCabecera
+    DisposableEffect(tinta) { VentanaFamilia.barraDeTinta = tinta; onDispose { VentanaFamilia.barraDeTinta = null } }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Box(Modifier.fillMaxWidth().background(tinta).padding(start = 48.dp, end = 48.dp, top = 44.dp, bottom = 22.dp)) {
+            com.gonzalo.familia.pc.revista.NombreConPunto(titulo, 96.sp, com.gonzalo.familia.pc.revista.PapelCabecera)
+        }
+        Column(Modifier.widthIn(max = 616.dp).padding(horizontal = 48.dp).padding(top = 40.dp, bottom = 48.dp)) {
             Antetitulo("La cuenta de la familia")
             Spacer(Modifier.height(10.dp))
             Cuerpo("La misma que en el móvil. Todo lo tuyo está en la cuenta: lo que hagas aquí lo verás en tus otros dispositivos y en tus otras apps. " +

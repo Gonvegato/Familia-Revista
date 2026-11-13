@@ -121,6 +121,15 @@ class CapturasTest {
         ajustes("flow" to "paginated", "columns" to true)
         captura("marfil-lector-mac", leer, w = 1280, h = 800, vueltas = 22)
         captura("marfil-leidos-oscuro", Pantalla.Lista(Estado.LEIDO), oscuro = true)
+        // La pantalla de entrar (la primera que se ve en un ordenador nuevo), con la cabecera de tinta de las páginas
+        for ((n, osc) in listOf("entrar" to false, "entrar-oscuro" to true)) {
+            com.gonzalo.familia.pc.revista.Modo.eleccion = if (osc) 2 else 1
+            val escena = ImageComposeScene(1280, 800, Density(1f)) { TemaFamilia { TextoAireado { Box(Modifier.fillMaxSize().background(Paper)) { com.gonzalo.familia.pc.PantallaEntrar("Seshat") } } } }
+            var img = escena.render(0)
+            repeat(6) { i -> Thread.sleep(100); img = escena.render((i + 1) * 500_000_000L) }
+            File(dir, "$n.png").writeBytes(img.encodeToData(EncodedImageFormat.PNG)!!.bytes)
+            escena.close()
+        }
         LaFamilia.reiniciaParaPruebas()
     }
 }
