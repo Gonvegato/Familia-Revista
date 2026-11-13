@@ -143,7 +143,9 @@ fun Modifier.entrada(clave: String, orden: Int = 0, desde: Int = 26): Modifier =
         launch { a.animateTo(1f, spring(dampingRatio = 1f, stiffness = 300f)) }
         y.animateTo(0f, spring(dampingRatio = 0.86f, stiffness = 240f))
     }
-    graphicsLayer { translationY = y.value; alpha = a.value }
+    // (sin capa aparte: con una, lo que sobresale de su caja —la etiqueta de estado que pisa la foto, por ejemplo— salía cortado hasta que
+    // la entrada acababa; así la transparencia se aplica a cada cosa y nada se recorta)
+    graphicsLayer { translationY = y.value; alpha = a.value; compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha }
 }
 
 /** Una fracción que se llena desde 0 la primera vez que sale [clave] (barras de avance); luego sigue sus cambios con un muelle. */

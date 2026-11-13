@@ -5,6 +5,11 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.22.2 — nada cortado mientras entra
+
+- La etiqueta del estado de la ficha («PENDIENTE», «LEYENDO · 80 %»), que pisa el borde de la foto, salía cortada por arriba hasta que
+  acababa la entrada. Ahora se ve entera desde el principio; lo mismo para cualquier cosa que sobresalga de su sitio al entrar.
+
 ## 0.22.1 — el final del cierre, sin tirón
 
 - Al cerrar una saga, un autor o la ficha, el papel encoge hasta su fila y, en el último tramo, se funde con ella (antes se quitaba de golpe
