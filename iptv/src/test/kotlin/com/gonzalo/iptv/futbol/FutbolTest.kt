@@ -456,4 +456,20 @@ class FutbolTest {
         assertTrue(DondeVer.opciones("esp.1", g4, a).all { it is Donde.Ver })
         assertEquals("Tus canales para LaLiga", DondeVer.titulo("esp.1"))
     }
+
+    @Test fun lasHorasVanEnLaZonaDelMovilEnIrlandaUnaMenosQueEnEspana() {
+        val antes = Hora.zona
+        try {
+            // Un partido a las 21:00 de España, en invierno (13 nov) y en verano (15 ago)
+            val invierno = java.time.LocalDateTime.of(2026, 11, 13, 21, 0).atZone(Hora.ESPANA).toInstant().toEpochMilli()
+            val verano = java.time.LocalDateTime.of(2026, 8, 15, 21, 0).atZone(Hora.ESPANA).toInstant().toEpochMilli()
+            Hora.zona = Hora.ESPANA
+            assertEquals("21:00", Hora.reloj(invierno)); assertEquals("21:00", Hora.reloj(verano))
+            Hora.zona = java.time.ZoneId.of("Europe/Dublin")
+            assertEquals("20:00", Hora.reloj(invierno)); assertEquals("20:00", Hora.reloj(verano))
+            // Uno a las 00:30 de España es aún el día anterior en Irlanda
+            val tarde = java.time.LocalDateTime.of(2026, 11, 14, 0, 30).atZone(Hora.ESPANA).toInstant().toEpochMilli()
+            assertEquals(LocalDate.of(2026, 11, 13), Hora.diaDe(tarde))
+        } finally { Hora.zona = antes }
+    }
 }

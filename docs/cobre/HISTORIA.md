@@ -9,6 +9,11 @@ es `com.gonzalo.cobre`. Un solo APK para el móvil, la tablet y la tele (Android
 servidor de Xtream Codes (servidor, usuario y contraseña).
 
 
+## 0.9.1 — las horas, en las del móvil
+
+- Las horas de los partidos (y qué partidos son «de hoy») van ahora en la zona horaria del móvil, no siempre en la de España: en Irlanda,
+  una hora menos (un partido a las 21:00 de España sale a las 20:00), también en los widgets. Si viajas, siguen la hora de donde estés.
+
 ## 0.9.0 — Nut, otra vez
 
 - **Una sola letra.** Equipos, competiciones, marcadores y jugadores, en la grotesca de las hermanas; la letra con remate queda solo para

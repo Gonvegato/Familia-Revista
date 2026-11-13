@@ -151,6 +151,8 @@ object Futbol {
     const val FUENTE = "Datos: ESPN"
 
     fun cargar(c: Context) {
+        // (las horas de los partidos, en la del móvil: también para los widgets, que no pasan por la portada)
+        Hora.zona = java.time.ZoneId.systemDefault()
         if (dir != null) return
         dir = File(c.filesDir, "cobre_futbol")
     }

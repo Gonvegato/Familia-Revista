@@ -27,6 +27,8 @@ import kotlinx.coroutines.withContext
 
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
+    // Las horas de los partidos, en la del móvil (en Irlanda, una menos que en España)
+    com.gonzalo.iptv.futbol.Hora.zona = java.time.ZoneId.systemDefault()
     Cuenta.cargar(c)
     Skin.cargar(c); TemaAtrio.cargarGuardado(c)
     Listas.cargar(c)

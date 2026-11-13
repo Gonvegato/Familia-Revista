@@ -168,13 +168,18 @@ interface FuenteFutbol {
     fun plantilla(liga: String, equipo: String, edad: Long = 0L): List<Jugador>
 }
 
-/** Las horas, siempre en la de España (Europe/Madrid), como las dicen las teles: «Hoy · 21:00», «Mañana · 18:30», «Dom 8 nov · 21:00». */
+/**
+ * Las horas de los partidos: «Hoy · 21:00», «Mañana · 18:30», «Dom 8 nov · 21:00». En la zona de [zona]: la app la pone a la del móvil
+ * (en Irlanda, una hora menos que en España); sin decir nada, la de España.
+ */
 object Hora {
     val ESPANA: ZoneId = ZoneId.of("Europe/Madrid")
+    /** La zona en la que se dicen las horas y se cuentan los días (la del móvil, en la app). */
+    @Volatile var zona: ZoneId = ESPANA
     private val DIAS = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
     private val MESES = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic")
 
-    fun enEspana(ms: Long): ZonedDateTime = Instant.ofEpochMilli(ms).atZone(ESPANA)
+    fun enEspana(ms: Long): ZonedDateTime = Instant.ofEpochMilli(ms).atZone(zona)
 
     /** «2026-11-08T20:00Z» (o con segundos, o con desfase): ms desde 1970; 0 si no se entiende. */
     fun lee(s: String): Long = runCatching { Instant.parse(if (Regex("T\\d\\d:\\d\\dZ$").containsMatchIn(s)) s.dropLast(1) + ":00Z" else s).toEpochMilli() }

@@ -116,7 +116,7 @@ fun TiraDias(dia: LocalDate, alElegir: (LocalDate) -> Unit) {
     val ventana = (-2..2).map { dia.plusDays(it.toLong()) }
     androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp), horizontalArrangement = Arrangement.spacedBy(0.dp), verticalArrangement = Arrangement.Center) {
         PildoraDia("‹", false, Modifier.semantics { contentDescription = "Día anterior" }) { alElegir(dia.minusDays(1)) }
-        ventana.forEach { d -> PildoraDia(if (d in dias) Hora.nombreDia(d, ahora) else Hora.dia(d.atStartOfDay(Hora.ESPANA).toInstant().toEpochMilli()), d == dia) { alElegir(d) } }
+        ventana.forEach { d -> PildoraDia(if (d in dias) Hora.nombreDia(d, ahora) else Hora.dia(d.atStartOfDay(Hora.zona).toInstant().toEpochMilli()), d == dia) { alElegir(d) } }
         PildoraDia("›", false, Modifier.semantics { contentDescription = "Día siguiente" }) { alElegir(dia.plusDays(1)) }
         Text("FECHA", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 0.6.sp, maxLines = 1, softWrap = false,
             modifier = Modifier.tocable { calendario = true }.padding(horizontal = 8.dp, vertical = 8.dp))
