@@ -9,6 +9,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+
 class MainActivity : ComponentActivity() {
     /** El libro que pide abrir un widget (se consume al abrirlo). */
     private var fichaPedida by androidx.compose.runtime.mutableStateOf<String?>(null)
@@ -28,8 +31,13 @@ class MainActivity : ComponentActivity() {
     private fun seguirLeyendoPedido(i: android.content.Intent?) {
         val id = i?.getStringExtra("leer") ?: return
         i.removeExtra("leer")
-        Biblioteca.por(id)?.let { Lector.abrir(this, it) }
+        Biblioteca.por(id)?.let { lectorDelante = true; Lector.abrir(this, it) }
     }
+
+    /** Arrancada solo para abrir el lector: la portada no se pinta debajo (se veía un instante antes del libro); sale al volver. */
+    private var lectorDelante by androidx.compose.runtime.mutableStateOf(false)
+
+    override fun onRestart() { super.onRestart(); lectorDelante = false }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -48,7 +56,8 @@ class MainActivity : ComponentActivity() {
                         navigationBarStyle = if (oscuro) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
                     )
                 }
-                MarfilApp(fichaPedida, { fichaPedida = null }, irPedido) { irPedido = null }
+                if (lectorDelante) androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize().background(Paper))
+                else MarfilApp(fichaPedida, { fichaPedida = null }, irPedido) { irPedido = null }
             }
         }
     }

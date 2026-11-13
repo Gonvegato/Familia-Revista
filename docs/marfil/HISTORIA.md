@@ -5,6 +5,14 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.22.4 — del widget al libro, sin pasar por otra pantalla
+
+- «Seguir leyendo» desde el widget: el lector se abre al momento con el color de tu tema de lectura (antes se quedaba un segundo la pantalla
+  de inicio y luego cambiaba de golpe) y el libro aparece fundiéndose cuando ya está en tu página. Lo pesado (la biblioteca, el WebView y
+  el libro) se monta justo después del primer fotograma.
+- Abrir la ficha de un libro desde un widget: Seshat arranca ya con la ficha puesta, sin enseñar antes la portada ni una animación de entrada.
+- El atajo «Seguir leyendo» del icono: la portada ya no se ve un instante debajo del libro.
+
 ## 0.22.3 — ningún salto al final
 
 Repaso de todas las animaciones para que ninguna acabe (ni empiece) de golpe:

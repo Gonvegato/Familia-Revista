@@ -45,12 +45,18 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
     val ctx = LocalContext.current
     val ambito = rememberCoroutineScope()
     var destino by rememberSaveable { mutableIntStateOf(0) }
-    var fichaId by rememberSaveable { mutableStateOf<String?>(null) }
+    // (un libro pedido por un widget se pone ya en la primera pantalla: sin ver antes la portada ni una animación de entrada)
+    val pedidoAlArrancar = remember { libroPedido?.takeIf { Biblioteca.por(it) != null } }
+    var fichaId by rememberSaveable { mutableStateOf(pedidoAlArrancar) }
+    var fichaAlInstante by remember { mutableStateOf(pedidoAlArrancar != null) }
     var sagaId by rememberSaveable { mutableStateOf<String?>(null) }
     var autor by rememberSaveable { mutableStateOf<String?>(null) }
     val d = Destino.entries[destino]
     // Un widget (o un aviso) pide abrir un libro
-    LaunchedEffect(libroPedido) { if (libroPedido != null && Biblioteca.por(libroPedido) != null) { fichaId = libroPedido; destino = 0 }; if (libroPedido != null) alAbrirPedido() }
+    LaunchedEffect(libroPedido) {
+        if (libroPedido != null && Biblioteca.por(libroPedido) != null && fichaId != libroPedido) { fichaAlInstante = true; fichaId = libroPedido; destino = 0 }
+        if (libroPedido != null) alAbrirPedido()
+    }
     // Otra app (Azabache) pide una sección: «escritos», «leyendo»…
     var escritoPedido by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(irPedido) {
@@ -91,7 +97,7 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
             }
         }
         CapaAsomo(alAbrir = { fichaId = it.id }, alLeer = ::leer)
-        CapaFicha(fichaId, alCerrar = { fichaId = null }, alLeer = ::leer)
+        CapaFicha(fichaId, alCerrar = { fichaId = null }, alLeer = ::leer, alInstante = fichaAlInstante, alUsarInstante = { fichaAlInstante = false })
         CapaAvisos(Charcoal, Paper, Acento, Body)
     }
 }
@@ -102,15 +108,21 @@ fun MarfilApp(libroPedido: String? = null, alAbrirPedido: () -> Unit = {}, irPed
  * Android, la ficha encoge con el dedo (vista previa): si sueltas, se cierra; si te arrepientes, vuelve.
  */
 @Composable
-private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) -> Unit) {
-    var visible by remember { mutableStateOf<String?>(null) }
+private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, alInstante: Boolean = false, alUsarInstante: () -> Unit = {}) {
+    // (pedida desde fuera al arrancar: ya puesta desde el primer fotograma)
+    var visible by remember { mutableStateOf<String?>(if (alInstante) fichaId else null) }
     var origen by remember { mutableStateOf<com.gonzalo.familia.Origen.Datos?>(null) }
     var aperturas by remember { mutableIntStateOf(0) }
-    val t = remember { androidx.compose.animation.core.Animatable(0f) }
+    val t = remember { androidx.compose.animation.core.Animatable(if (alInstante && fichaId != null) 1f else 0f) }
     val atras = remember { androidx.compose.animation.core.Animatable(0f) }
     var desdeIzquierda by remember { mutableStateOf(true) }
     val vista = androidx.compose.ui.platform.LocalView.current
     LaunchedEffect(fichaId) {
+        if (fichaId != null && alInstante) {
+            // Pedida por un widget: sin animación de entrada (al abrir la app ya se ve la ficha)
+            origen = null; visible = fichaId; aperturas++; atras.snapTo(0f); t.snapTo(1f); com.gonzalo.familia.Vuelo.t = 1f
+            Capas.ficha = true; alUsarInstante(); return@LaunchedEffect
+        }
         if (fichaId != null) {
             if (visible != fichaId) { origen = com.gonzalo.familia.Origen.toma(fichaId); visible = fichaId; aperturas++; t.snapTo(0f); atras.snapTo(0f) }
             Capas.ficha = true

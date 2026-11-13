@@ -130,13 +130,9 @@ class LectorActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Con un libro abierto, la versión nueva no se instala (Android cerraría la app y te sacaría del libro); y el actualizador se pone
-        // en marcha también si se entra directamente aquí (desde el widget), sin pasar por la portada
-        Actualizador.ocupada++; Actualizador.init(applicationContext)
-        // (si se abre desde un widget con la app cerrada, hay que cargar la biblioteca y la cuenta antes)
-        iniciar(applicationContext)
+        // Con un libro abierto, la versión nueva no se instala (Android cerraría la app y te sacaría del libro)
+        Actualizador.ocupada++
         id = intent.getStringExtra("id").orEmpty()
-        uri = EstadoLectura.archivo(this, id)?.let { Uri.parse(it) }
         WindowCompat.setDecorFitsSystemWindows(window, false)
         // La página también bajo la cámara / la franja de la barra de estado: con las barras ocultas, Android deja por
         // defecto esa zona en negro (ahí van ahora la hora y la batería)
@@ -146,6 +142,43 @@ class LectorActivity : ComponentActivity() {
         }
         window.statusBarColor = AColor.TRANSPARENT
         window.navigationBarColor = AColor.TRANSPARENT
+        // Desde el primer fotograma, el fondo del tema que usas (si no, al abrir con Negro se veía un destello claro). Ese primer fotograma
+        // es solo ese color y sale enseguida: al tocar el widget, el lector se abre al momento con su animación, en vez de quedarse un rato
+        // la pantalla de inicio y cambiar de golpe. El libro, el WebView y la biblioteca se montan justo después y el libro aparece
+        // fundiéndose cuando ya está en su sitio.
+        Skin.cargar(applicationContext)
+        val tema0 = (EstadoLectura.estado(this, id).optJSONObject("settings")
+            ?: runCatching { JSONObject(getSharedPreferences("lector", MODE_PRIVATE).getString("ajustes", "{}") ?: "{}") }.getOrNull())?.optString("theme").orEmpty()
+        bg0 = AColor.parseColor(themeBg(tema0))
+        window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(bg0))
+        marco = android.widget.FrameLayout(this).also { it.setBackgroundColor(bg0) }
+        setContentView(marco)
+        bars(false)
+        window.decorView.viewTreeObserver.registerFrameCommitCallback { montar() }
+        // (por si ese fotograma tarda: no se espera más de medio segundo)
+        handler.postDelayed({ montar() }, 500)
+    }
+
+    private var bg0 = AColor.BLACK
+    private lateinit var marco: android.widget.FrameLayout
+    private var montado = false
+    private var libroVisible = false
+    /** El libro, a la vista: se funde sobre el fondo en cuanto está colocado en tu página (o, por si acaso, a los 4,5 s). */
+    private fun mostrarLibro() {
+        if (libroVisible || !::web.isInitialized) return
+        libroVisible = true
+        web.animate().alpha(1f).setDuration(240).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+    }
+
+    /** Todo lo que pesa (la biblioteca y la cuenta, el WebView y el libro), una vez, tras el primer fotograma. */
+    private fun montar() {
+        if (montado || isFinishing || isDestroyed) return
+        montado = true
+        // El actualizador se pone en marcha también si se entra directamente aquí (desde el widget), sin pasar por la portada
+        Actualizador.init(applicationContext)
+        // (si se abre desde un widget con la app cerrada, hay que cargar la biblioteca y la cuenta antes)
+        iniciar(applicationContext)
+        uri = EstadoLectura.archivo(this, id)?.let { Uri.parse(it) }
         val loader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/") { path ->
                 try { WebResourceResponse(mime(path), "utf-8", assets.open(path)) } catch (e: Exception) { null }
@@ -172,12 +205,10 @@ class LectorActivity : ComponentActivity() {
         web.settings.domStorageEnabled = true
         web.settings.allowFileAccess = false
         web.settings.allowContentAccess = false
-        // Desde el primer fotograma, el fondo del tema que usas (si no, al abrir con Negro se veía un destello claro)
-        val tema0 = (EstadoLectura.estado(this, id).optJSONObject("settings")
-            ?: runCatching { JSONObject(getSharedPreferences("lector", MODE_PRIVATE).getString("ajustes", "{}") ?: "{}") }.getOrNull())?.optString("theme").orEmpty()
-        val bg0 = AColor.parseColor(themeBg(tema0))
-        window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(bg0))
         web.setBackgroundColor(bg0)
+        // (invisible hasta que el libro está en su sitio: así no se ve cómo se monta)
+        web.alpha = 0f
+        handler.postDelayed({ mostrarLibro() }, 4500)
         web.webChromeClient = object : WebChromeClient() {
             // La consola del lector va al registro de Android (adb logcat -s MarfilLector)
             override fun onConsoleMessage(m: android.webkit.ConsoleMessage): Boolean {
@@ -219,7 +250,7 @@ class LectorActivity : ComponentActivity() {
             }
         }
         web.addJavascriptInterface(Bridge(), "Atrio")
-        setContentView(web)
+        marco.addView(web, android.widget.FrameLayout.LayoutParams(-1, -1))
         // El lector necesita un WebView reciente (se actualiza solo desde Google Play)
         val wv = androidx.webkit.WebViewCompat.getCurrentWebViewPackage(this)
         val major = wv?.versionName?.substringBefore('.')?.toIntOrNull() ?: 0
@@ -236,6 +267,7 @@ class LectorActivity : ComponentActivity() {
         // veces seguidas sale del libro (una sola vez no, para no salir sin querer)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                if (!::web.isInitialized) { salir(); return }
                 web.evaluateJavascript("window.atrioBack ? atrioBack() : false") { r ->
                     if (r == "true") return@evaluateJavascript
                     val now = android.os.SystemClock.uptimeMillis()
@@ -256,7 +288,6 @@ class LectorActivity : ComponentActivity() {
             }
             ins
         }
-        bars(false)
     }
 
     /** El menú de selección de Android, pero sin opciones (y sin barra visible): la selección se mantiene. */
@@ -417,7 +448,8 @@ class LectorActivity : ComponentActivity() {
     override fun onDestroy() {
         ambito.coroutineContext[kotlinx.coroutines.Job]?.cancel()
         tts?.stop(); tts?.shutdown(); tts = null
-        if (!webMuerta) { (web.parent as? android.view.ViewGroup)?.removeView(web); web.destroy() }
+        handler.removeCallbacksAndMessages(null)
+        if (!webMuerta && ::web.isInitialized) { (web.parent as? android.view.ViewGroup)?.removeView(web); web.destroy() }
         Actualizador.ocupada = (Actualizador.ocupada - 1).coerceAtLeast(0)
         super.onDestroy()
     }
@@ -462,6 +494,7 @@ class LectorActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun saveProgress(cfi: String, fraction: Double, label: String) {
+            runOnUiThread { mostrarLibro() }
             val o = EstadoLectura.estado(this@LectorActivity, id)
             // Al abrir el libro el lector «llega» a la posición guardada y avisa igualmente: eso no es leer
             if (o.has("cfi") && kotlin.math.abs(o.optDouble("fraction", -1.0) - fraction) < 0.0005) return
@@ -489,6 +522,7 @@ class LectorActivity : ComponentActivity() {
         /** «Voy por aquí» (tras un salto largo): esta es tu posición de verdad, aunque sea menos de lo que llegaste. Viaja a tus otros dispositivos. */
         @JavascriptInterface
         fun fijarPosicion(cfi: String, fraction: Double, label: String) {
+            runOnUiThread { mostrarLibro() }
             val o = EstadoLectura.estado(this@LectorActivity, id)
             val ahora = System.currentTimeMillis()
             o.put("cfi", cfi).put("fraction", fraction).put("label", label).put("read", ahora)
