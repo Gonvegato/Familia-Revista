@@ -85,7 +85,7 @@ private fun FilaLista(titulo: String, sub: String, color: androidx.compose.ui.gr
         Punto(color, 10.dp)
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text(titulo, color = Charcoal, fontFamily = Display, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(titulo, color = Charcoal, fontFamily = Grotesca, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(sub, color = Muted, fontFamily = Body, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -116,7 +116,7 @@ fun Fichas(obra: Doc, nav: Nav, modo: ModoPagina, abrirEscena: (String) -> Unit,
         else LecturaFicha(e, f, AccionesLectura(editar = { modo.edita() }, verDoc = { x -> if (e.get(x)?.t == Escritos.T_FICHA) { tipo = ""; q = ""; modo.elige(x) } else abre.ver(x) }, abrirEscena = abrirEscena, verArbol = verArbol))
     }, vacio = {
         Column(Modifier.padding(top = 30.dp)) {
-            Text("El mundo de tu historia", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 34.sp)
+            Text("El mundo de tu historia", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 34.sp)
             Spacer(Modifier.height(10.dp))
             Text("Personajes, lugares, objetos y reglas del mundo en fichas. Cuando escribas su nombre (o un alias) en una escena, quedará subrayado: pasa el ratón por encima para ver su ficha, o haz doble clic para abrirla.",
                 color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 27.sp)
@@ -145,7 +145,7 @@ fun Notas(obra: Doc, nav: Nav, modo: ModoPagina) {
         else LecturaNota(e, n, AccionesLectura(editar = { modo.edita() }))
     }, vacio = {
         Column(Modifier.padding(top = 30.dp)) {
-            Text("El tablón", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 34.sp)
+            Text("El tablón", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 34.sp)
             Spacer(Modifier.height(10.dp))
             Text("Ideas sueltas, investigación, cosas por arreglar y plantillas (como una ficha de escena) que puedes tener junto al texto mientras escribes, en el panel del editor.",
                 color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 27.sp)
@@ -162,7 +162,7 @@ fun PantPapelera(nav: Nav) {
     var vaciar by remember { mutableStateOf(false) }
     Pagina(ancho = 900.dp) {
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(84.sp, texto = "PAPELERA") }
+            Box(Modifier.weight(1f)) { TituloPagina("PAPELERA") }
             if (l.isNotEmpty()) BotonSuave("Vaciar", peligro = true) { vaciar = true }
         }
         FileteCabecera()
@@ -175,7 +175,7 @@ fun PantPapelera(nav: Nav) {
             val con = e.conElBorrado(d.id).size
             Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(nombre, color = Charcoal, fontFamily = Display, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                    Text(nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     Text("$tipo · ${e.cualquiera(d.pid)?.s("titulo").orEmpty()}" + (if (con > 0) " · con $con más dentro" else "") + " · " + hace(d.n("dt", d.u)), color = Muted, fontFamily = Body, fontSize = 12.sp)
                 }
                 EnlaceRevista("Recuperar", acento = true) { e.restaura(d.id); nav.aviso("Recuperado: $nombre") }
@@ -196,7 +196,7 @@ fun PantAjustes(nav: Nav) {
     var pestana by remember { mutableStateOf(0) }
     var abierta by remember { mutableStateOf<CopiasEscritos.Copia?>(null) }
     Pagina(ancho = 900.dp) {
-        Cabecera(84.sp, texto = "AJUSTES")
+        TituloPagina("AJUSTES")
         FileteCabecera()
         Spacer(Modifier.height(14.dp))
         PestanasRevista(listOf("Cuenta", "Copias", "Apariencia", "Escribir", "Versión"), pestana) { pestana = it }
@@ -250,7 +250,7 @@ fun PantAjustes(nav: Nav) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text("Tamaño de la letra", Modifier.weight(1f), color = Charcoal, fontFamily = Body, fontSize = 14.sp)
                     BotonSuave("−") { PrefsEditor.letra(-1) }
-                    Text("${PrefsEditor.tam.toInt()}", color = Charcoal, fontFamily = Display, fontSize = 22.sp)
+                    Text("${PrefsEditor.tam.toInt()}", color = Charcoal, fontFamily = Grotesca, fontSize = 22.sp)
                     BotonSuave("+") { PrefsEditor.letra(+1) }
                 }
                 MagChoice(listOf("Con serifa", "De palo seco", "De máquina"), PrefsEditor.fuente, "Tipo de letra") { PrefsEditor.fuente = it; PrefsEditor.guarda() }
@@ -292,7 +292,7 @@ private fun DialogoCopia(c: CopiasEscritos.Copia, nav: Nav, onCerrar: () -> Unit
             val (palabras, escenas) = remember(docs, o.id) { CopiasEscritos.resumen(docs, o.id) }
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(o.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text(o.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     Text("${com.gonzalo.cobalto.Formato.cifra(palabras)} palabras · $escenas ${if (escenas == 1) "escena" else "escenas"}" + if (o.borrado) " · estaba en la papelera" else "",
                         color = Muted, fontFamily = Body, fontSize = 13.sp)
                 }

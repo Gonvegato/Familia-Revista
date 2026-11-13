@@ -63,10 +63,9 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
             else -> d == p
         }
     }.coerceAtLeast(0)
-    Row(Modifier.fillMaxSize()) {
-        Lateral("Jonsu", destinos.map { it.first }, sel) { i -> pantalla = destinos[i].second }
-        Box(Modifier.width(1.dp).fillMaxHeight().padding(vertical = 0.dp)) { Filete(1.dp, Line, Modifier.fillMaxHeight()) }
-        Box(Modifier.weight(1f).fillMaxHeight()) {
+    Column(Modifier.fillMaxSize()) {
+        CabeceraConPestanas("Jonsu", destinos.map { it.first }, sel) { i -> pantalla = destinos[i].second }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
             // Como en el móvil: abrir una ficha la sube un poco desde abajo; entre secciones, un fundido rápido
             AnimatedContent(pantalla, transitionSpec = {
                 if (targetState is Pantalla.Detalle || targetState is Pantalla.DeLaPareja)

@@ -67,7 +67,7 @@ fun PantFicha(b: MetaBreve, nav: Nav) {
     if (x == null) {
         Pagina {
             VolverRevista({ nav.volver() })
-            Text(b.nombre, color = Charcoal, fontFamily = Display, fontSize = 48.sp, lineHeight = 50.sp, modifier = Modifier.padding(top = 18.dp))
+            Text(b.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 48.sp, lineHeight = 50.sp, modifier = Modifier.padding(top = 18.dp))
             Nota(if (hecho) "No se ha podido leer la ficha (¿sin conexión?)." else "Leyendo la ficha…", Modifier.padding(top = 12.dp))
         }
         return
@@ -122,7 +122,7 @@ private fun FichaDe(b: MetaBreve, nav: Nav) {
             Box(Modifier.width(200.dp).aspectRatio(2f / 3f).border(1.dp, Line)) { ImagenCosa(t?.portada.orEmpty(), t?.poster?.ifBlank { null } ?: m?.poster?.ifBlank { null } ?: b.poster, nombre, Modifier.fillMaxSize()) }
             Column(Modifier.weight(1f).padding(start = 24.dp)) {
                 Text((tipoNombre(tipo) + (t?.let { " · " + it.estado.nombre } ?: "")).uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1)
-                Text(nombre, color = Charcoal, fontFamily = Display, fontSize = 56.sp, lineHeight = 58.sp, letterSpacing = (-1).sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Text(nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 56.sp, lineHeight = 58.sp, letterSpacing = (-1).sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 val datos = listOfNotNull(m?.ano?.ifBlank { null } ?: b.ano.ifBlank { null }, m?.minutos?.takeIf { it > 0 }?.let { duracion(it) }, m?.nota?.ifBlank { null }?.let { "★ $it" })
                 if (datos.isNotEmpty()) Text(datos.joinToString(" · ").uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
@@ -173,7 +173,7 @@ private fun FichaDe(b: MetaBreve, nav: Nav) {
                     Spacer(Modifier.height(16.dp))
                     Antetitulo("En Jonsu", Modifier.padding(bottom = 4.dp))
                     if (nota > 0) Row(verticalAlignment = Alignment.Bottom) {
-                        Text("$nota", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
+                        Text("$nota", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
                         Text(" / 100", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
                     } else Nota("Sin valorar todavía.")
                     if (resena.isNotBlank()) Text("«$resena»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
@@ -244,9 +244,9 @@ private fun FilaEpisodio(v: Video, t: Titulo?, m: Meta, alVer: () -> Unit, alFue
     val estrenado = v.estrenado()
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().pulsable(enabled = estrenado) { alVer() }.padding(vertical = 12.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (v.episodio > 0) "${v.episodio}" else "·", color = if (p?.visto == true) Muted else Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp, modifier = Modifier.width(44.dp))
+            Text(if (v.episodio > 0) "${v.episodio}" else "·", color = if (p?.visto == true) Muted else Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp, modifier = Modifier.width(44.dp))
             Column(Modifier.weight(1f)) {
-                Text(v.titulo.ifBlank { "Episodio ${v.episodio}" }, color = if (estrenado) Charcoal else Muted, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(v.titulo.ifBlank { "Episodio ${v.episodio}" }, color = if (estrenado) Charcoal else Muted, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val linea = listOfNotNull(if (v.estreno > 0) Formato.fecha(v.estreno) else null, if (!estrenado) "aún no se ha estrenado" else null, if (p?.visto == true) "visto" else if (p != null && p.pos > 0 && p.dur > 0) "vas por ${tiempo(p.pos)}" else null)
                 if (linea.isNotEmpty()) Text(linea.joinToString(" · ").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp)
                 if (p != null && !p.visto && p.fraccion > 0f) Barra(p.fraccion, Modifier.padding(top = 4.dp))
@@ -309,7 +309,7 @@ private fun FilaFuente(c: Candidata, elegida: Boolean, alPoner: () -> Unit) {
             if (elegida) Text("LA MEJOR PARA TI", color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp, modifier = Modifier.border(1.dp, Acento).padding(horizontal = 6.dp, vertical = 2.dp))
             c.analisis.resumen().takeIf { it.isNotBlank() }?.let { Text(it.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp) }
         }
-        if (f.nombre.isNotBlank()) Text(f.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
+        if (f.nombre.isNotBlank()) Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
         if (f.descripcion.isNotBlank()) Text(f.descripcion, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
     }
     Filete(1.dp, Line)

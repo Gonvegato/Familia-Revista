@@ -1,5 +1,10 @@
 package com.gonzalo.familia.pc.revista
 
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -106,7 +111,7 @@ fun PaginasC(
 ) {
     val ambito = rememberCoroutineScope()
     // La barra de la ventana del Mac, del color de la tinta mientras se ven las páginas
-    val tinta = Charcoal
+    val tinta = TintaCabecera
     DisposableEffect(tinta) { VentanaFamilia.barraDeTinta = tinta; onDispose { VentanaFamilia.barraDeTinta = null } }
     // ⌘1…⌘9: a esa página
     Teclas { k ->
@@ -133,14 +138,14 @@ fun PaginasC(
     val plegado = if (altoNombre > 0) ((recogido / altoNombre - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
     val margen = 48.dp
     Column(modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
-        Column(Modifier.fillMaxWidth().background(Charcoal).padding(horizontal = margen)) {
+        Column(Modifier.fillMaxWidth().background(TintaCabecera).padding(horizontal = margen)) {
             Row(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 6.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
-                if (plegado > 0f) NombreConPunto(nombre, 24.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 18.dp))
+                if (plegado > 0f) NombreConPunto(nombre, 24.sp, PapelCabecera, Modifier.apareceSegun(plegado).padding(end = 18.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(26.dp), verticalAlignment = Alignment.CenterVertically) { enlaces() }
                 Spacer(Modifier.weight(1f))
-                if (plegado < 1f) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = Paper.copy(alpha = 0.7f), fontFamily = Body,
+                if (plegado < 1f) Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = PapelCabecera.copy(alpha = 0.7f), fontFamily = Body,
                     fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1, modifier = Modifier.apareceSegun(1f - plegado))
-                if (alAjustes != null) Text("⚙", color = Paper.copy(alpha = 0.7f), fontSize = 18.sp, modifier = Modifier.padding(start = 14.dp).levanta(alto = 0.dp, hundido = 0.9f, alPulsar = alAjustes).padding(6.dp))
+                if (alAjustes != null) Rueda(PapelCabecera.copy(alpha = 0.7f), Modifier.padding(start = 14.dp).levanta(alto = 0.dp, hundido = 0.9f, alPulsar = alAjustes).padding(6.dp))
             }
             // El nombre: su alto se mide una vez y se va quitando según se recoge; encoge con su hueco desde la esquina de arriba a la izquierda
             Box(Modifier.fillMaxWidth().layout { m, c ->
@@ -150,7 +155,7 @@ fun PaginasC(
                 val escala = if (p.height > 0) h.toFloat() / p.height else 1f
                 layout(p.width, h) { if (h > 0) p.placeWithLayer(0, 0) { scaleX = escala; scaleY = escala; transformOrigin = TransformOrigin(0f, 0f) } }
             }) {
-                NombreConPunto(nombre, 96.sp, Paper, Modifier.padding(top = 2.dp, bottom = 16.dp))
+                NombreConPunto(nombre, 96.sp, PapelCabecera, Modifier.padding(top = 2.dp, bottom = 16.dp))
             }
         }
         Row(Modifier.fillMaxWidth().background(Paper), verticalAlignment = Alignment.Bottom) {
@@ -204,3 +209,86 @@ fun BotonC(texto: String, modifier: Modifier = Modifier, fondo: Color = Acento, 
         Text("→", color = letra, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 20.sp)
     }
 }
+
+/**
+ * Las pestañas de las secciones (sin páginas que se deslizan): la elegida, en un bloque del acento que va de una a otra con un muelle; su
+ * número al lado. Si no caben, la fila se desliza con el trackpad y la elegida siempre se ve.
+ */
+@Composable
+fun PestanasC(nombres: List<String>, sel: Int, cuentas: List<Int?>, modifier: Modifier = Modifier, onSel: (Int) -> Unit) {
+    val scroll = androidx.compose.foundation.rememberScrollState()
+    val sitios = remember { androidx.compose.runtime.mutableStateMapOf<Int, Pair<Float, Float>>() }
+    val x = remember { androidx.compose.animation.core.Animatable(0f) }
+    val w = remember { androidx.compose.animation.core.Animatable(0f) }
+    var primera by remember { mutableStateOf(true) }
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
+    LaunchedEffect(sel, sitios[sel]) {
+        val (a, b) = sitios[sel] ?: return@LaunchedEffect
+        if (primera) { x.snapTo(a); w.snapTo(b); primera = false; return@LaunchedEffect }
+        kotlinx.coroutines.coroutineScope {
+            launch { x.animateTo(a, spring(dampingRatio = 0.78f, stiffness = 420f)) }
+            launch { w.animateTo(b, spring(dampingRatio = 0.78f, stiffness = 420f)) }
+            launch { val vis = scroll.value; val ancho = scroll.viewportSize; if (a < vis || a + b > vis + ancho) scroll.animateScrollTo((a + b / 2 - ancho / 2).toInt().coerceIn(0, scroll.maxValue)) }
+        }
+    }
+    Column(modifier.fillMaxWidth().background(Paper)) {
+        Box(Modifier.fillMaxWidth().horizontalScroll(scroll)) {
+            if (sel in nombres.indices && w.value > 0f) Box(Modifier.padding(start = with(densidad) { x.value.toDp() }).width(with(densidad) { w.value.toDp() }).height(48.dp).background(Acento))
+            Row(Modifier.height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+                nombres.forEachIndexed { i, n ->
+                    val on = i == sel
+                    Row(Modifier.fillMaxHeight().onGloballyPositioned { c -> sitios[i] = c.positionInParent().x to c.size.width.toFloat() }
+                        .levanta(alto = 0.dp, hundido = 0.95f) { onSel(i) }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(n.uppercase(), color = if (on) SobreAcento else Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 12.5.sp, letterSpacing = 1.sp, maxLines = 1, softWrap = false)
+                        cuentas.getOrNull(i)?.let { c -> Text(" $c", color = if (on) SobreAcento else Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, maxLines = 1) }
+                    }
+                }
+            }
+        }
+        Filete(2.dp)
+    }
+}
+
+/**
+ * La cabecera de una app sin páginas que se deslizan (la que tenía la columna de la izquierda): la cabecera de tinta con su nombre y sus
+ * secciones en pestañas; «Ajustes», si está entre ellas, va en ⚙. ⌘1…⌘9 cambian de sección. En el Mac, la barra de la ventana toma el color
+ * de la tinta.
+ */
+@Composable
+fun CabeceraConPestanas(nombre: String, entradas: List<Entrada>, sel: Int, enlaces: @Composable RowScope.() -> Unit = {}, onSel: (Int) -> Unit) {
+    val tinta = TintaCabecera
+    DisposableEffect(tinta) { VentanaFamilia.barraDeTinta = tinta; onDispose { VentanaFamilia.barraDeTinta = null } }
+    val ajustes = entradas.indexOfFirst { it.texto == "Ajustes" }
+    val visibles = entradas.indices.filter { it != ajustes }
+    Teclas { k ->
+        val n = listOf(Key.One, Key.Two, Key.Three, Key.Four, Key.Five, Key.Six, Key.Seven, Key.Eight, Key.Nine).indexOf(k.key)
+        if (Atajos.mando(k) && n in visibles.indices) { onSel(visibles[n]); true } else false
+    }
+    Column(Modifier.fillMaxWidth().background(TintaCabecera).padding(horizontal = 48.dp)) {
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(26.dp), verticalAlignment = Alignment.CenterVertically) { enlaces() }
+            Spacer(Modifier.weight(1f))
+            Text(java.text.SimpleDateFormat("dd.MM.yy", java.util.Locale("es", "ES")).format(java.util.Date()), color = PapelCabecera.copy(alpha = 0.7f), fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
+            if (ajustes >= 0) Rueda(if (sel == ajustes) Acento else PapelCabecera.copy(alpha = 0.7f), Modifier.padding(start = 14.dp).levanta(alto = 0.dp, hundido = 0.9f) { onSel(ajustes) }.padding(6.dp))
+        }
+        NombreConPunto(nombre, 72.sp, PapelCabecera, Modifier.padding(top = 2.dp, bottom = 14.dp))
+    }
+    PestanasC(visibles.map { entradas[it].texto }, visibles.indexOf(sel), visibles.map { entradas[it].cuenta }, Modifier.padding(start = 0.dp)) { i -> onSel(visibles[i]) }
+}
+
+/** La rueda de Ajustes de la cabecera, dibujada con la tinta (no el emoji, que sale en color y distinto en cada sistema). */
+@Composable
+fun Rueda(color: Color, modifier: Modifier = Modifier) {
+    androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Outlined.Settings, contentDescription = "Ajustes", tint = color, modifier = modifier.size(20.dp))
+}
+
+/** El nombre de una página bajo la cabecera de tinta (como en Seshat): pequeño, en el acento; el nombre grande ya está arriba. */
+@Composable
+fun TituloPagina(texto: String, modifier: Modifier = Modifier) {
+    Text(texto.uppercase(), color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 2.sp, modifier = modifier.padding(top = 6.dp, bottom = 12.dp))
+}
+
+/** La tinta de la cabecera: la del tema; de noche (cuando la tinta es clara) casi negra, para que la cabecera siga siendo de tinta. */
+val TintaCabecera: Color get() = if (Charcoal.luminance() > 0.5f) Color(0xFF0C0A09) else Charcoal
+/** La letra sobre la cabecera: el papel de día; de noche, la tinta clara. */
+val PapelCabecera: Color get() = if (Charcoal.luminance() > 0.5f) Charcoal else Paper

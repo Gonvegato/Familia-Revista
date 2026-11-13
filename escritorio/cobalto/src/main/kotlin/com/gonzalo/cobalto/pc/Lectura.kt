@@ -192,7 +192,7 @@ private fun CabeceraLectura(ante: String, titulo: String, color: Color, acc: Acc
         Column(Modifier.weight(1f)) {
             AnteLectura(ante)
             val (fs, lh) = when { titulo.length <= 14 -> 66.sp to 68.sp; titulo.length <= 28 -> 52.sp to 56.sp; else -> 40.sp to 44.sp }
-            FitTitle(titulo, fs, lh, letterSpacing = (-1.2).sp, color = Charcoal)
+            FitTitle(titulo, fs, lh, letterSpacing = (-1.2).sp, color = Charcoal, family = Grotesca)
         }
         Spacer(Modifier.width(16.dp))
         Row(Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {

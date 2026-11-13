@@ -45,7 +45,7 @@ fun PantPareja(uid: String, nav: Nav) {
     fun abre(k: Kind, f: Ficha) = nav.ir(Pantalla.DeLaPareja(uid, k.id, f.id))
     Pagina {
         Text("LA REVISTA DE TU PAREJA · SOLO PARA LEER", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-        Cabecera(96.sp, texto = nombre.uppercase())
+        TituloPagina(nombre.uppercase())
         FileteCabecera()
         if (todas.isEmpty()) {
             Vacio("Aún no se ve nada de $nombre", "Sale en cuanto te ponga como pareja en su Jonsu (Ajustes → Cuenta) y llegue lo suyo de su cuenta.")
@@ -61,9 +61,9 @@ fun PantPareja(uid: String, nav: Nav) {
                     Seccion("Sus notas más altas")
                     mejores.forEach { (k, f) ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("${f.general}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 58.sp, lineHeight = 58.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(120.dp))
+                            Text("${f.general}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 58.sp, lineHeight = 58.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(120.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(f.nombre, color = Charcoal, fontFamily = Display, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                 Text(k.title.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
                             }
                         }
@@ -78,7 +78,7 @@ fun PantPareja(uid: String, nav: Nav) {
                     else {
                         val dist = porKind.sumOf { it.distancia * it.comunes } / comunes
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text("${Math.round(100 - dist).coerceIn(0, 100)} %", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 64.sp)
+                            Text("${Math.round(100 - dist).coerceIn(0, 100)} %", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 64.sp)
                             Spacer(Modifier.width(14.dp))
                             Pie("de afinidad", modifier = Modifier.padding(bottom = 12.dp))
                         }

@@ -50,7 +50,7 @@ fun PantLista(k: Kind, nav: Nav) {
                     androidx.compose.material3.Text("SECCIÓN · $total ${if (total == 1) k.unit else k.units}".uppercase(), color = Acento, fontFamily = Body, fontSize = 12.sp,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Black, letterSpacing = 2.sp)
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Box(Modifier.weight(1f)) { Cabecera(76.sp, texto = k.title.uppercase()) }
+                        Box(Modifier.weight(1f)) { TituloPagina(k.title.uppercase()) }
                         Spacer(Modifier.width(20.dp))
                         BotonAcento("+ Añadir", alto = 44.dp, modifier = Modifier.padding(bottom = 12.dp).width(150.dp)) { anadir = true }
                     }
@@ -92,14 +92,14 @@ fun EntradaIndice(f: Ficha, k: Kind, modifier: Modifier = Modifier, onClick: () 
             MiniPortada(f, Modifier.width(48.dp))
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
-                FitTitle(f.nombre, 26.sp, 28.sp, letterSpacing = (-0.5).sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                FitTitle(f.nombre, 26.sp, 28.sp, letterSpacing = (-0.5).sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, family = Grotesca)
                 val linea = listOf(f.creador, f.plataforma).filter { it.isNotBlank() }.joinToString(" · ")
                 if (linea.isNotBlank()) Text(linea.uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, letterSpacing = 1.4.sp, maxLines = 1)
             }
             Spacer(Modifier.width(12.dp))
             if (f.valorada) {
                 if (f.sinValorar) Text("Sin valorar", color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 16.sp)
-                else Text("${f.general}", color = Charcoal, fontFamily = Display, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
+                else Text("${f.general}", color = Charcoal, fontFamily = Grotesca, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontSize = 48.sp, lineHeight = 48.sp)
             } else Text(estadoDe(f, k).uppercase(), color = if (f.estado == 1) Acento else Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Black, letterSpacing = 1.2.sp)
         }
         Filete(1.dp, Line)

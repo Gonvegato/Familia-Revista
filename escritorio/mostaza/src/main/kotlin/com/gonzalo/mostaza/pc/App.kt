@@ -105,10 +105,9 @@ fun AppMostaza(inicial: Pantalla = Pantalla.Portada) {
             else -> false
         }
     }) {
-        Row(Modifier.weight(1f).fillMaxWidth()) {
-            Lateral("Hathor", destinos.map { it.first }, sel) { i -> ir(destinos[i].second) }
-            Box(Modifier.width(1.dp).fillMaxHeight()) { Filete(1.dp, Line, Modifier.fillMaxHeight()) }
-            Box(Modifier.weight(1f).fillMaxHeight()) {
+        Column(Modifier.weight(1f).fillMaxWidth()) {
+            CabeceraConPestanas("Hathor", destinos.map { it.first }, sel) { i -> ir(destinos[i].second) }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
                 // Como en el móvil: abrir una ficha la sube un poco desde abajo; entre secciones, un fundido rápido
                 AnimatedContent(pantalla, transitionSpec = {
                     if (targetState is Pantalla.Ficha || targetState is Pantalla.Fuentes) (fadeIn(tween(240)) + slideInVertically(tween(300)) { it / 16 }) togetherWith fadeOut(tween(160))
@@ -149,7 +148,7 @@ fun BandaReproductor(nav: Nav) {
                 if (e.activo) {
                     Text((if (e.cargando) "CARGANDO · " else if (e.reproduciendo) "VIENDO · " else "EN PAUSA · ") + e.fuente.uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp,
                         fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(listOf(e.titulo, e.subtitulo).filter { it.isNotBlank() }.joinToString(" · "), color = Charcoal, fontFamily = Display, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
+                    Text(listOf(e.titulo, e.subtitulo).filter { it.isNotBlank() }.joinToString(" · "), color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (e.dur > 0) { Barra(e.pos.toFloat() / e.dur, Modifier.padding(top = 4.dp).widthIn(max = 520.dp)); Text("${tiempo(e.pos)} de ${tiempo(e.dur)}", color = Muted, fontFamily = Body, fontSize = 11.sp) }
                 }

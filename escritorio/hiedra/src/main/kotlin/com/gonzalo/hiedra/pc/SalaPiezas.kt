@@ -1,5 +1,6 @@
 package com.gonzalo.hiedra.pc
 
+import com.gonzalo.familia.pc.revista.Grotesca
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -153,7 +154,7 @@ fun Tapa(f: Ficha) {
     val claro = lerp(base, tinta.tinta, 0.12f)
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(claro, base)))) {
         Text(f.titulo.trim().take(1).uppercase(), Modifier.align(Alignment.TopEnd).padding(end = 12.dp, top = 2.dp), color = Color.White.copy(alpha = 0.16f),
-            fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 120.sp, lineHeight = 120.sp)
+            fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 120.sp, lineHeight = 120.sp)
         Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Box(Modifier.width(26.dp).height(3.dp).background(tinta.acento))
             Text(f.titulo, color = Color.White, fontFamily = Display, fontSize = 22.sp, lineHeight = 25.sp, fontStyle = FontStyle.Italic, fontWeight = FontWeight.SemiBold, maxLines = 6, overflow = TextOverflow.Ellipsis)

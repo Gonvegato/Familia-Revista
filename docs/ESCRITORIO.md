@@ -54,6 +54,10 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   deja borrada en Hathor. Lo de antes (`azabache/items_<categoría>~<id>`) no se toca. La casilla «Progreso» se pinta también aquí (los
   episodios, o por dónde vas en una película). Las mismas reglas que el móvil, letra a letra (`MostazaTest`, con el código del móvil y el
   contrato que deja Hathor).
+  Desde la 1.4.0, **la cara de Seshat y Nut**: la cabecera de tinta con «JONSU.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
+  nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
+  sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera.
 - **Thot**: el núcleo de los escritos (formato, sincronización, mezcla a tres bandas), la estructura, el texto (Markdown ligero,
   tipografía automática, deshacer), exportar e importar son **los mismos archivos** que compila Thot de Android (se copian de
   `cobalto/src` al compilar; las pruebas de la mezcla y de la estructura, también). Portada (palabras de hoy, racha, últimos días, seguir
@@ -72,6 +76,11 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   Desde la 1.1.1, **los sprints van en la cuenta** (también el que está en marcha: lo empiezas en el móvil y aquí se ve y se para), y
   Ajustes → Copias **saca una obra de cualquier copia como obra nueva** («… (copia)», sin tocar nada de lo que hay). Las copias de cada
   15 minutos se hacen solo si algo ha cambiado (las de al cerrar y las de a mano, siempre).
+  Desde la 1.3.0, **la cara de Seshat y Nut**: la cabecera de tinta con «THOT.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
+  nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
+  sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. El texto del manuscrito y del lector no cambia de
+  letra.
 - **Seshat**: tus libros de la cuenta y leerlos por donde ibas en el móvil. EPUB (leído como XML, sin reordenar: la posición que guarda es
   el mismo EPUB CFI que guarda foliate en el móvil, y la del móvil se abre aquí en el mismo párrafo), PDF (Apache PDFBox) y cómics (CBZ).
   Lo leído (`lectura/<kid>`), «Leyendo» y «Leído» con su fecha (las reglas del móvil), el tiempo de este ordenador, el reto del año, los
@@ -113,6 +122,11 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   cabeceras van a mpv por su socket, nunca por su línea de órdenes, y mpv no guarda nada (sin su «seguir donde lo dejé» y sin yt-dlp).
   **Torrents**, con el motor de la familia (`escritorio/torrent`: los mismos archivos que el del móvil, con libtorrent4j y su biblioteca
   de Linux x86-64 o del Mac con Apple Silicon): se ven mientras se bajan; si no se puede cargar, solo las fuentes directas o de tu debrid.
+  Desde la 1.2.0, **la cara de Seshat y Nut**: la cabecera de tinta con «HATHOR.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
+  nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
+  sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. Las secciones de tu biblioteca (Viendo, Pendiente,
+  Visto, Abandonado) son pestañas de arriba y ya no se repiten dentro de la página.
 - **Nut** (desde la 1.0.0): la tele de la familia (IPTV) en el ordenador, como Nut del móvil (0.1.0) y con su mismo código para todo lo
   que no es pantalla: **el módulo `iptv/` tal cual** (las listas M3U, el cliente de Xtream Codes, la guía XMLTV a trozos, emparejar canales y
   guía, el almacén de cada lista y lo que va a la cuenta). Nut no trae ningún canal ni ninguna lista: pones tú la tuya (Ajustes → Listas:
@@ -161,6 +175,10 @@ kDrive con `herramientas/escritorio/subir-escritorio.py`.
   Desde la 1.1.1, como «Tu PC», **hace capturas para el móvil** (de la pantalla entera, a su tamaño: con Spectacle en KDE, grim, GNOME o
   `import` en X11; en el Mac, `screencapture`), guarda una copia en Imágenes/Hiedra/<juego> y el móvil la recibe tal cual; y **prepara
   el streaming con Steam Link** (abre Steam si no lo está y el juego que pidas). Ajustes → Este PC dice si se permite cada cosa.
+  Desde la 1.3.0, **la cara de Seshat y Nut**: la cabecera de tinta con «BASTET.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
+  nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
+  sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. La Sala (para la tele) sigue con su cara propia.
 
 ## Lo que todavía no hacen (para no engañar)
 

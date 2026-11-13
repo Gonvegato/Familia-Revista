@@ -117,10 +117,10 @@ fun Hermanas(actual: String, modifier: Modifier = Modifier) {
 
 /** Una página con barra de desplazamiento a la derecha y el ancho de lectura de una revista. */
 @Composable
-fun Pagina(modifier: Modifier = Modifier, ancho: Dp = 1180.dp, scroll: ScrollState = rememberScrollState(), contenido: @Composable ColumnScope.() -> Unit) {
+fun Pagina(modifier: Modifier = Modifier, ancho: Dp = 1440.dp, scroll: ScrollState = rememberScrollState(), contenido: @Composable ColumnScope.() -> Unit) {
     Box(modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize().verticalScroll(scroll), contentAlignment = Alignment.TopCenter) {
-            Column(Modifier.widthIn(max = ancho).fillMaxWidth().padding(horizontal = 40.dp, vertical = 30.dp), content = contenido)
+            Column(Modifier.widthIn(max = ancho).fillMaxWidth().padding(horizontal = 48.dp).padding(top = 30.dp, bottom = 48.dp), content = contenido)
         }
         VerticalScrollbar(rememberScrollbarAdapter(scroll), Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(vertical = 4.dp))
     }
@@ -148,7 +148,7 @@ fun PortadaCosa(hash: String, url: String, titulo: String, modifier: Modifier = 
 @Composable
 fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier, acento: Boolean = false) {
     Column(modifier) {
-        Text(valor, color = if (acento) Acento else Charcoal, fontFamily = Display, fontSize = 44.sp, lineHeight = 46.sp, fontWeight = FontWeight.SemiBold)
+        Text(valor, color = if (acento) Acento else Charcoal, fontFamily = Grotesca, fontSize = 44.sp, lineHeight = 46.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-1.2).sp)
         Text(etiqueta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.SemiBold)
     }
 }

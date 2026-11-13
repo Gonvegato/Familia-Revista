@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
 fun PantAjustes(nav: Nav, inicial: Int = 0) {
     var pestana by remember { mutableStateOf(inicial) }
     Pagina(ancho = 900.dp) {
-        Cabecera(84.sp, texto = "AJUSTES")
+        TituloPagina("AJUSTES")
         FileteCabecera()
         Spacer(Modifier.height(14.dp))
         PestanasRevista(listOf("Catálogo", "Fuentes", "Reproductor", "Cuenta", "Apariencia", "Versión"), pestana) { pestana = it }
@@ -106,8 +106,8 @@ private fun AjustesFuentes(nav: Nav) {
     orden.forEachIndexed { i, id ->
         val on = id in p.idiomas
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (on) "${p.idiomas.indexOf(id) + 1}" else "·", color = if (on) Acento else Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(32.dp))
-            Text(PrefsElector.nombre(id), color = if (on) Charcoal else Muted, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(1f))
+            Text(if (on) "${p.idiomas.indexOf(id) + 1}" else "·", color = if (on) Acento else Muted, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.width(32.dp))
+            Text(PrefsElector.nombre(id), color = if (on) Charcoal else Muted, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, modifier = Modifier.weight(1f))
             if (on && p.idiomas.indexOf(id) > 0) EnlaceRevista("↑") { val l = p.idiomas.toMutableList(); val k = l.indexOf(id); l.removeAt(k); l.add(k - 1, id); pon(p.copy(idiomas = l)) }
             Spacer(Modifier.width(10.dp))
             EnlaceRevista(if (on) "Quitar" else "Poner", acento = !on) { pon(p.copy(idiomas = if (on) (p.idiomas - id).ifEmpty { listOf("castellano") } else p.idiomas + id)) }

@@ -165,7 +165,7 @@ fun PantDetalle(k: Kind, id: Long, volver: Pantalla, nav: Nav, disenar: Boolean 
                     if (valorada) CampoFecha("Terminado", n("end"), Modifier.weight(1f)) { pon("end", it) } else Spacer(Modifier.weight(1f))
                 }
                 Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Favorito", Modifier.weight(1f), color = Charcoal, fontFamily = Display, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Favorito", Modifier.weight(1f), color = Charcoal, fontFamily = Grotesca, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
                     Interruptor(o["fav"] == true) { pon("fav", it) }
                 }
                 // El tiempo (de Hiedra, Marfil, Steam…: se suman los dispositivos)
@@ -211,7 +211,7 @@ fun BarraNota(nombre: String, v: Int, grande: Boolean = false, onCambia: (Int) -
         Slider(v.toFloat(), { onCambia(it.toInt()) }, Modifier.weight(1f), valueRange = 0f..100f,
             colors = SliderDefaults.colors(thumbColor = Acento, activeTrackColor = Acento, inactiveTrackColor = Sand))
         Spacer(Modifier.width(14.dp))
-        Text(v.toString(), Modifier.width(52.dp), color = if (grande) Acento else Charcoal, fontFamily = Display, fontSize = if (grande) 34.sp else 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(v.toString(), Modifier.width(52.dp), color = if (grande) Acento else Charcoal, fontFamily = Grotesca, fontSize = if (grande) 34.sp else 20.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 

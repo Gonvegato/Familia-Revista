@@ -56,7 +56,7 @@ fun PantPortada(nav: Nav) {
     }
     val hoy = remember { LocalDate.now() }
     Pagina {
-        Cabecera(132.sp, texto = "HATHOR")
+        Spacer(Modifier.height(6.dp))
         FileteCabecera()
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             Text("Nº ${hoy.dayOfYear}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
@@ -116,7 +116,6 @@ fun Rejilla(cabecera: @Composable ColumnScope.() -> Unit, cosas: List<Pair<Strin
 /** Las secciones de tu biblioteca: Viendo · Pendiente · Visto · Abandonado, cada una con sus películas y series, en rejilla. */
 @Composable
 fun PantSeccion(estado: Estado, nav: Nav) {
-    val secciones = listOf(Estado.VIENDO, Estado.PENDIENTE, Estado.VISTO, Estado.ABANDONADO)
     val orden = OrdenGuardado.de(estado)
     val filtro = OrdenGuardado.filtro(estado)
     val todos = Biblioteca.titulos()
@@ -130,8 +129,8 @@ fun PantSeccion(estado: Estado, nav: Nav) {
         } }
     Rejilla({
         CabeceraPagina("Tu biblioteca", estado.nombre)
-        PestanasRevista(secciones.map { it.nombre }, secciones.indexOf(estado), cuentas = secciones.map { s -> todos.count { it.estado == s } }) { i -> nav.ir(Pantalla.Seccion(secciones[i])) }
-        Spacer(Modifier.height(6.dp))
+        // (Viendo · Pendiente · Visto · Abandonado ya están en las pestañas de arriba)
+        Spacer(Modifier.height(10.dp))
         FiltrosRevista(OrdenGuardado.Filtro.entries.map { it.nombre }, filtro.ordinal) { i -> OrdenGuardado.ponFiltro(estado, OrdenGuardado.Filtro.entries[i]) }
         Row(verticalAlignment = Alignment.Top) {
             Text("ORDEN  ", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 9.dp))

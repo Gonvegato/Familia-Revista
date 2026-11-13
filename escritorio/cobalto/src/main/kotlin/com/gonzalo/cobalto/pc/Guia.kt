@@ -87,7 +87,7 @@ fun TarjetaGuia(e: Escritos, obra: Doc, hacer: (Int) -> Unit, verGuia: () -> Uni
     val p = GuiaNovela.PASOS.first { it.id == id }
     Column(Modifier.fillMaxWidth().padding(bottom = 10.dp).border(1.dp, Acento).padding(12.dp)) {
         Text("GUÍA · PASO $id DE ${GuiaNovela.PASOS.size}", color = Acento, fontFamily = Body, fontSize = 9.5.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
-        Text(p.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp)
+        Text(p.titulo, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 21.sp)
         Text(p.que, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 3)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             AccionPeque(p.accion, acento = true) { hacer(id) }
@@ -112,7 +112,7 @@ fun GuiaObra(e: Escritos, obra: Doc, hacer: (Int) -> Unit) {
         Row(verticalAlignment = Alignment.Bottom) {
             Column(Modifier.weight(1f)) {
                 Antetitulo("La guía de la novela")
-                Text("$hechos de ${GuiaNovela.PASOS.size} pasos", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 40.sp, lineHeight = 44.sp)
+                Text("$hechos de ${GuiaNovela.PASOS.size} pasos", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 40.sp, lineHeight = 44.sp)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(if (GuiaNovela.activa(obra)) "Activada: el paso que toca sale en el manuscrito" else "Desactivada: no sale nada en el manuscrito", color = Muted, fontFamily = Body, fontSize = 12.sp)
@@ -133,13 +133,13 @@ fun GuiaObra(e: Escritos, obra: Doc, hacer: (Int) -> Unit) {
                 Box(Modifier.size(32.dp).clip(CircleShape).background(if (hecho) Charcoal else Color.Transparent).border(1.5.dp, if (p.id == sig) Acento else if (hecho) Charcoal else Muted, CircleShape), contentAlignment = Alignment.Center) {
                     Text(when (s.estado) { "hecho" -> "✓"; "saltado" -> "–"; "curso" -> "…"; else -> p.id.toString() }, color = if (hecho) Paper else if (p.id == sig) Acento else Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Black)
                 }
-                Text(p.titulo, Modifier.weight(1f), color = if (hecho) Muted else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp)
+                Text(p.titulo, Modifier.weight(1f), color = if (hecho) Muted else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 22.sp)
                 Text(when { s.estado == "hecho" -> "HECHO"; s.estado == "saltado" -> "SALTADO"; s.estado == "curso" -> "REPOSO: ${s.dias} ${if (s.dias == 1) "DÍA" else "DÍAS"}"; p.id == sig -> "TOCA AHORA"; else -> "" },
                     color = if (p.id == sig || s.estado == "curso") Acento else Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
             }
             if (abre) Column(Modifier.fillMaxWidth().padding(start = 46.dp, bottom = 20.dp, end = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(p.que, color = Charcoal, fontFamily = Display, fontSize = 18.sp, lineHeight = 26.sp)
-                p.como.forEach { Row { Text("•", Modifier.width(18.dp), color = Acento, fontFamily = Display, fontSize = 16.sp); Text(it, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp) } }
+                Text(p.que, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, lineHeight = 26.sp)
+                p.como.forEach { Row { Text("•", Modifier.width(18.dp), color = Acento, fontFamily = Grotesca, fontSize = 16.sp); Text(it, color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp) } }
                 if (p.id == 6) {
                     val meta = obra.i("meta")
                     if (meta > 0) Progreso(d.palabras.toFloat() / meta, color, 4.dp, Modifier.padding(top = 4.dp))

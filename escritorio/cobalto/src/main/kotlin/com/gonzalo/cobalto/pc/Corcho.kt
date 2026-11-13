@@ -132,7 +132,7 @@ private fun TarjetaCapitulo(e: Escritos, c: Doc, n: Int, onClick: () -> Unit) {
         Box(Modifier.fillMaxWidth().height(6.dp).background(color))
         Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(marcas.uppercase(), color = if (Publica.hecho(e, c)) Acento else Muted, fontFamily = Body, fontSize = 9.5.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(c.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, lineHeight = 22.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(c.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, lineHeight = 22.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Text(texto.ifBlank { "Sin escribir todavía." }, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
             val cuenta = IntArray(3); esc.forEach { cuenta[it.i("estado").coerceIn(0, 2)]++ }
             if (esc.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(top = 4.dp).height(4.dp)) { (0..2).forEach { i -> if (cuenta[i] > 0) Box(Modifier.weight(cuenta[i].toFloat()).fillMaxHeight().background(colorEstado(i))) } }
@@ -146,7 +146,7 @@ private fun TarjetaCapitulo(e: Escritos, c: Doc, n: Int, onClick: () -> Unit) {
 private fun NuevoCuadro(texto: String, onClick: () -> Unit) {
     Column(Modifier.width(236.dp).heightIn(min = 176.dp).clip(esquina(6.dp)).border(1.dp, Line, esquina(6.dp)).pointerHoverIcon(PointerIcon.Hand).clickable(onClick = onClick).padding(12.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("+", color = Muted, fontFamily = Display, fontSize = 34.sp)
+        Text("+", color = Muted, fontFamily = Grotesca, fontSize = 34.sp)
         Text(texto.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
     }
 }

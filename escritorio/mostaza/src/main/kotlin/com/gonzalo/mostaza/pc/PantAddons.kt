@@ -52,9 +52,9 @@ fun PantAddons(nav: Nav) {
             val m = manifiestos[a.url]
             Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${i + 1}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, modifier = Modifier.width(38.dp))
+                    Text("${i + 1}", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 28.sp, modifier = Modifier.width(38.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(m?.nombre ?: a.nombre.ifBlank { Addons.sitioDe(a.url) }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(m?.nombre ?: a.nombre.ifBlank { Addons.sitioDe(a.url) }, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(listOfNotNull(m?.version?.takeIf { it.isNotBlank() }?.let { "v$it" }, m?.tipos?.joinToString(", ") { tiposNombre(it) }?.takeIf { it.isNotBlank() },
                             m?.recursos?.joinToString(", ") { nombreRecurso(it.nombre) }, if (m == null) "sin respuesta ahora" else null, Addons.sitioDe(a.url)).joinToString(" · ").uppercase(),
                             color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, maxLines = 2)

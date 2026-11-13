@@ -37,7 +37,7 @@ fun PantPortada(nav: Nav) {
     Pagina {
         Text(("Número de " + LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ES))).uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(96.sp, texto = "THOT") }
+            Box(Modifier.weight(1f)) { Spacer(Modifier.height(6.dp)) }
             BotonAcento("+ Nueva obra", alto = 44.dp, modifier = Modifier.width(170.dp)) { nueva = true }
         }
         FileteCabecera()
@@ -56,7 +56,7 @@ fun PantPortada(nav: Nav) {
             Column(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Obra(ultima.pid, ultima.id)) }.padding(vertical = 14.dp)) {
                 Antetitulo("Sigue escribiendo")
                 Spacer(Modifier.height(6.dp))
-                Text(ultima.s("titulo").ifBlank { "Escena sin título" }, color = Charcoal, fontFamily = Display, fontSize = 34.sp, fontWeight = FontWeight.SemiBold)
+                Text(ultima.s("titulo").ifBlank { "Escena sin título" }, color = Charcoal, fontFamily = Grotesca, fontSize = 34.sp, fontWeight = FontWeight.SemiBold)
                 Text("${obra?.s("titulo").orEmpty()} · ${e.get(ultima.s("cid"))?.s("titulo").orEmpty()}", color = Muted, fontFamily = Body, fontSize = 13.sp)
                 val final = ultima.s("texto").trim().split('\n').lastOrNull { it.isNotBlank() && it.trim() != "***" }.orEmpty().replace("*", "")
                 if (final.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text("«…${final.takeLast(220)}»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 19.sp, lineHeight = 27.sp, maxLines = 3, overflow = TextOverflow.Ellipsis) }
@@ -75,7 +75,7 @@ fun PantPortada(nav: Nav) {
             Antetitulo(est.plural, Modifier.padding(top = 10.dp, bottom = 6.dp))
             l.forEach { o ->
                 Column(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Obra(o.id)) }.padding(vertical = 10.dp)) {
-                    Text(o.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+                    Text(o.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Grotesca, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
                     Text(metaObra(e, o) + " · " + hace(e.ultimaEdicion(o.id)), color = Muted, fontFamily = Body, fontSize = 13.sp)
                     val meta = o.i("meta")
                     if (meta > 0) {

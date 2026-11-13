@@ -97,7 +97,7 @@ fun CifrasObra(obra: Doc, abrirEscena: (String) -> Unit) {
                 Row(Modifier.fillMaxWidth().pointerHoverIcon(if (primera != null) PointerIcon.Hand else PointerIcon.Default).clickable(enabled = primera != null) { primera?.let { abrirEscena(it.id) } }.padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("${i + 1}", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.width(24.dp))
-                    Text(c.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(240.dp))
+                    Text(c.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Grotesca, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(240.dp))
                     Box(Modifier.weight(1f).height(10.dp).background(Sand)) { Box(Modifier.fillMaxHeight().fillMaxWidth(p.toFloat() / maxCap).background(if (Publica.hecho(e, c)) Acento else Charcoal.copy(alpha = 0.75f))) }
                     Text(Formato.cifra(p), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.width(60.dp))
                 }

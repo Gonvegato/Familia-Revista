@@ -1,5 +1,6 @@
 package com.gonzalo.hiedra.pc
 
+import com.gonzalo.familia.pc.revista.Grotesca
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -329,7 +330,7 @@ private fun BarraSala(est: EstadoSala, bib: Biblioteca) {
     LaunchedEffect(Unit) { while (true) { delay(1000L * (60 - LocalTime.now().second).coerceAtLeast(1)); hora = LocalTime.now() } }
     Column(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(tinta.fondo, tinta.fondo.copy(alpha = 0.92f))))) {
         Row(Modifier.fillMaxWidth().height(96.dp).padding(horizontal = 72.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("BASTET", color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, letterSpacing = 3.sp)
+            Text("BASTET", color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 40.sp, letterSpacing = 3.sp)
             Spacer(Modifier.width(56.dp))
             Glifo(Accion.LB, 30.dp)
             Spacer(Modifier.width(22.dp))
@@ -347,7 +348,7 @@ private fun BarraSala(est: EstadoSala, bib: Biblioteca) {
             Glifo(Accion.RB, 30.dp)
             Spacer(Modifier.weight(1f))
             bib.ahora?.let { p -> EnMarcha(p) ; Spacer(Modifier.width(36.dp)) }
-            Text(hora.format(DateTimeFormatter.ofPattern("HH:mm")), color = tinta.tinta, fontFamily = Display, fontSize = 38.sp, fontWeight = FontWeight.SemiBold)
+            Text(hora.format(DateTimeFormatter.ofPattern("HH:mm")), color = tinta.tinta, fontFamily = Grotesca, fontSize = 38.sp, fontWeight = FontWeight.SemiBold)
         }
         Box(Modifier.fillMaxWidth().padding(horizontal = 72.dp).height(2.dp).background(tinta.tinta.copy(alpha = 0.85f)))
     }
@@ -454,7 +455,7 @@ private fun Cartel(f: Ficha?, bib: Biblioteca, modifier: Modifier) {
                 Text(listOfNotNull(ff.etiqueta.ifBlank { null }, ff.estado?.nombre, if (!ff.jugable) "No está en este PC" else null, if (ahora != null) "Jugando ahora" else null)
                     .joinToString("  ·  ").uppercase(), color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 17.sp, letterSpacing = 3.sp, maxLines = 1)
                 Spacer(Modifier.height(8.dp))
-                FitTitle(ff.titulo, 88.sp, 90.sp, color = tinta.tinta, letterSpacing = (-1.5).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, minSize = 40f)
+                FitTitle(ff.titulo, 88.sp, 90.sp, color = tinta.tinta, letterSpacing = (-1.5).sp, maxLines = 2, overflow = TextOverflow.Ellipsis, minSize = 40f, family = Grotesca)
                 Spacer(Modifier.height(10.dp))
                 Text(meta(ff), color = tinta.tinta.copy(alpha = 0.78f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 24.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -486,7 +487,7 @@ private fun FilaSala(f: Hilera, est: EstadoSala, ctl: ControlSala) {
         Row(Modifier.padding(horizontal = 72.dp), verticalAlignment = Alignment.Bottom) {
             AnteSala(f.titulo, tam = 18.sp)
             Spacer(Modifier.width(16.dp))
-            Text(f.fichas.size.toString(), color = tinta.gris, fontFamily = Display, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+            Text(f.fichas.size.toString(), color = tinta.gris, fontFamily = Grotesca, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
             if (f.sub.isNotBlank()) { Spacer(Modifier.width(16.dp)); Text(f.sub.uppercase(), color = tinta.gris, fontFamily = Body, fontSize = 13.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold) }
         }
         CompositionLocalProvider(LocalBringIntoViewSpec provides remember { TraerAVista(300f) }) {
@@ -515,7 +516,7 @@ private fun Carta(f: Ficha, id: String, est: EstadoSala, ctl: ControlSala, ancho
             if (f.fav) Text("★", color = tinta.acento, fontSize = 26.sp, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp))
         }
         Spacer(Modifier.height(24.dp))
-        Text(f.titulo, color = if (enfocada) tinta.tinta else tinta.tinta.copy(alpha = 0.86f), fontFamily = Display, fontSize = 19.sp, lineHeight = 22.sp,
+        Text(f.titulo, color = if (enfocada) tinta.tinta else tinta.tinta.copy(alpha = 0.86f), fontFamily = Grotesca, fontSize = 19.sp, lineHeight = 22.sp,
             fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(listOf(f.etiqueta, if (f.ms > 0) horas(f.ms) else "").filter { it.isNotBlank() }.joinToString(" · ").uppercase(), color = tinta.gris, fontFamily = Body,
             fontSize = 12.sp, letterSpacing = 1.3.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -542,7 +543,7 @@ private fun Rejilla(bib: Biblioteca, est: EstadoSala, ctl: ControlSala) {
                 item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
                     Column {
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text("Biblioteca", color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, letterSpacing = (-1).sp)
+                            Text("Biblioteca", color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 64.sp, letterSpacing = (-1).sp)
                             Spacer(Modifier.width(22.dp))
                             Text("${l.size} ${if (l.size == 1) "juego" else "juegos"}", color = tinta.gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 26.sp, modifier = Modifier.padding(bottom = 12.dp))
                         }
@@ -564,7 +565,7 @@ private fun Rejilla(bib: Biblioteca, est: EstadoSala, ctl: ControlSala) {
         val actual = foco.actual?.removePrefix("f:")?.toIntOrNull()?.let { l.getOrNull(it) }?.letra
         if (actual != null) Column(Modifier.align(Alignment.CenterEnd).padding(end = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Glifo(Accion.LT, 28.dp)
-            Text(actual.toString(), color = tinta.acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 64.sp, modifier = Modifier.padding(vertical = 6.dp))
+            Text(actual.toString(), color = tinta.acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 64.sp, modifier = Modifier.padding(vertical = 6.dp))
             Glifo(Accion.RT, 28.dp)
         }
         if (l.isEmpty()) Text("Aquí no hay ningún juego", color = tinta.gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 34.sp, modifier = Modifier.align(Alignment.Center))
@@ -586,7 +587,7 @@ private fun PaginaJuego(f: Ficha?, est: EstadoSala, ctl: ControlSala) {
             Column(Modifier.weight(1f)) {
                 Text(listOfNotNull(f.etiqueta.ifBlank { null }, f.estado?.nombre).joinToString("  ·  ").uppercase(), color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 18.sp, letterSpacing = 3.sp)
                 Spacer(Modifier.height(10.dp))
-                FitTitle(f.titulo, 96.sp, 98.sp, color = tinta.tinta, letterSpacing = (-2).sp, maxLines = 3, overflow = TextOverflow.Ellipsis, minSize = 44f)
+                FitTitle(f.titulo, 96.sp, 98.sp, color = tinta.tinta, letterSpacing = (-2).sp, maxLines = 3, overflow = TextOverflow.Ellipsis, minSize = 44f, family = Grotesca)
                 Spacer(Modifier.height(12.dp))
                 Text(meta(f), color = tinta.tinta.copy(alpha = 0.8f), fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 26.sp)
                 Spacer(Modifier.height(36.dp))
@@ -666,7 +667,7 @@ private fun Lateral(titulo: String, ante: String, alCerrar: () -> Unit, contenid
             .pointerInput(Unit) { detectTapGesturesFuera {} }) {
             Text(ante.uppercase(), color = tinta.acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 16.sp, letterSpacing = 3.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(8.dp))
-            Text(titulo, color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(titulo, color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(18.dp))
             Box(Modifier.fillMaxWidth().height(2.dp).background(tinta.tinta))
             Spacer(Modifier.height(18.dp))
@@ -688,7 +689,7 @@ private fun OpcionSala(texto: String, id: String, sub: String = "", marcada: Boo
         Box(Modifier.width(4.dp).height(26.dp).background(if (marcada) tinta.acento else Color.Transparent))
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(texto, color = if (peligro) tinta.acento else tinta.tinta, fontFamily = Display, fontSize = 27.sp, fontWeight = if (marcada) FontWeight.Bold else FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(texto, color = if (peligro) tinta.acento else tinta.tinta, fontFamily = Grotesca, fontSize = 27.sp, fontWeight = if (marcada) FontWeight.Bold else FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (sub.isNotBlank()) Text(sub.uppercase(), color = tinta.gris, fontFamily = Body, fontSize = 12.sp, letterSpacing = 1.4.sp, fontWeight = FontWeight.Bold, maxLines = 1)
         }
         if (marcada) Text("✓", color = tinta.acento, fontSize = 26.sp, fontFamily = Body, fontWeight = FontWeight.Bold)
@@ -747,7 +748,7 @@ private fun PanelConfirmar(c: Confirmacion, est: EstadoSala, ctl: ControlSala) {
     val tinta = LocalTinta.current
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
         Column(Modifier.width(860.dp).clip(formaSala(18.dp)).background(tinta.fondo).padding(56.dp)) {
-            Text(c.titulo, color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp)
+            Text(c.titulo, color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 48.sp)
             Spacer(Modifier.height(16.dp))
             Text(c.texto, color = tinta.gris, fontFamily = Body, fontSize = 21.sp, lineHeight = 31.sp)
             Spacer(Modifier.height(36.dp))
@@ -773,7 +774,7 @@ private fun PanelBuscar(bib: Biblioteca, est: EstadoSala, ctl: ControlSala) {
             AnteSala("Buscar en tu biblioteca y en este PC", tam = 16.sp)
             Spacer(Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(est.consulta.ifEmpty { " " }, color = tinta.tinta, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 76.sp, maxLines = 1)
+                Text(est.consulta.ifEmpty { " " }, color = tinta.tinta, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 76.sp, maxLines = 1)
                 Box(Modifier.padding(bottom = 18.dp, start = 4.dp).width(5.dp).height(64.dp).background(if (caret) tinta.acento else Color.Transparent))
                 Spacer(Modifier.weight(1f))
                 if (est.consulta.isNotEmpty()) Text("${res.size} ${if (res.size == 1) "resultado" else "resultados"}", color = tinta.gris, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 26.sp, modifier = Modifier.padding(bottom = 16.dp))
@@ -813,7 +814,7 @@ private fun CartaBusqueda(f: Ficha, id: String, est: EstadoSala, ctl: ControlSal
             PortadaSala(f, Modifier.fillMaxWidth(), radio = 8.dp, sombra = 8.dp)
         }
         Spacer(Modifier.height(10.dp))
-        Text(f.titulo, color = tinta.tinta, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(f.titulo, color = tinta.tinta, fontFamily = Grotesca, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 

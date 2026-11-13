@@ -109,7 +109,7 @@ fun EditorDePagina(k: Kind, f: Ficha, casillas: Map<String, Casilla>, onListo: (
             Column(Modifier.weight(1f)) {
                 Text("DISEÑANDO LA PÁGINA · ${k.title.uppercase()} · ${if (enCurso) k.statuses.getOrElse(f.estado) { "" }.uppercase() else k.doneWord.removeSuffix("s").uppercase()}",
                     color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(f.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 33.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             EnlaceRevista("Datos y nota") { onDatos() }
             Spacer(Modifier.width(22.dp))
@@ -253,7 +253,7 @@ private fun ColumnScope.CasillaEnElEditor(c: CasillaMaqueta, k: Kind, enCurso: B
     when (c.tipo) {
         "texto" -> {
             if (c.titulo.isNotBlank()) MagLabel(c.titulo)
-            if (c.texto.isNotBlank()) Text(c.texto, color = Charcoal, fontFamily = Display, fontSize = 18.sp, lineHeight = 27.sp)
+            if (c.texto.isNotBlank()) Text(c.texto, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, lineHeight = 27.sp)
             else MagVacio("Texto libre: escríbelo a la derecha.")
         }
         "imagen" -> {
@@ -484,7 +484,7 @@ private fun Opcion(t: String, on: Boolean, nota: String? = null, onClick: () -> 
     val encima by hover.collectIsHoveredAsState()
     Row(Modifier.fillMaxWidth().clip(esquina(4.dp)).background(if (encima && !on) Sand.copy(alpha = 0.6f) else Sand.copy(alpha = 0f)).hoverable(hover)
         .pointerHoverIcon(PointerIcon.Hand).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(t, color = if (on) Acento else Charcoal, fontFamily = Display, fontSize = 18.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
+        Text(t, color = if (on) Acento else Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
         if (nota != null) Text(nota.uppercase(), color = Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(end = 8.dp))
         if (on) Text("●", color = Acento, fontSize = 12.sp)
     }

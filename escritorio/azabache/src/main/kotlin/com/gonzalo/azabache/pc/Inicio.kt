@@ -101,7 +101,7 @@ fun PantInicio(nav: Nav) {
         EnlaceRevista("Buscar en todo") { buscando = true }
         // La cabecera: el nombre de lado a lado, el número (el día del año) y la fecha
         // (grande: encoge hasta llegar justo de lado a lado, como en el quiosco)
-        Cabecera(240.sp, texto = "JONSU")
+        Spacer(Modifier.height(6.dp))
         FileteCabecera()
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             Text("Nº ${hoy.dayOfYear}", color = Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
@@ -126,11 +126,11 @@ fun PantInicio(nav: Nav) {
                     Seccion("Ahora mismo")
                     ahora.take(8).forEachIndexed { i, (k, f) ->
                         Row(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("%02d".format(i + 1), color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.width(60.dp))
+                            Text("%02d".format(i + 1), color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.width(60.dp))
                             MiniPortada(f, Modifier.width(44.dp))
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(f.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                 Text(listOf(k.title, f.creador).filter { it.isNotBlank() }.joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 13.sp, maxLines = 1)
                             }
                         }
@@ -141,11 +141,11 @@ fun PantInicio(nav: Nav) {
                     Seccion("Las notas más altas")
                     mejores.forEach { (k, f) ->
                         Row(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("${f.general}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 58.sp, lineHeight = 58.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(120.dp))
+                            Text("${f.general}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 58.sp, lineHeight = 58.sp, maxLines = 1, softWrap = false, modifier = Modifier.width(120.dp))
                             MiniPortada(f, Modifier.width(44.dp))
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(f.nombre, color = Charcoal, fontFamily = Display, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                 Text(k.title.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
                             }
                         }
@@ -265,7 +265,7 @@ fun EnPortada(l: List<Pair<Kind, Ficha>>, nav: Nav) {
                     Text(listOf(k.statuses.getOrElse(f.estado) { "" }, k.title).filter { it.isNotBlank() }.joinToString(" · ").uppercase(), color = Acento, fontFamily = Body,
                         fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
                     val (fs, lh) = headlineSize(f.nombre)
-                    FitTitle(f.nombre, (fs.value * 1.3f).sp, (lh.value * 1.3f).sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().padding(top = 6.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) })
+                    FitTitle(f.nombre, (fs.value * 1.3f).sp, (lh.value * 1.3f).sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth().padding(top = 6.dp).clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }, family = Grotesca)
                     Text(listOf(f.creador, f.plataforma, if (!k.isBook && f.minutos > 0) duracion(f.minutos.toLong()) else "").filter { it.isNotBlank() }.joinToString(" · "),
                         color = Muted, fontFamily = Body, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
                     val ses = remember(f.ref, LaFamilia.cambios) { sesionesDe(f.ref?.let { Cuenta.porDia(it) }.orEmpty().mapNotNull { (d, ms) -> runCatching { LocalDate.parse(d).toEpochDay() }.getOrNull()?.let { it to ms } }.toMap(), hoy.toEpochDay()) }

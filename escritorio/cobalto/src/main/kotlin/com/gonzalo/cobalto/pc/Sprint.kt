@@ -122,11 +122,11 @@ private fun ResultadoSprint(s: Sprint, e: Escritos, onCerrar: () -> Unit) {
     val antes = remember(s) { SprintEscribir.historial(s.pid).filter { it.desde != s.desde } }
     val record = antes.isNotEmpty() && s.porMinuto > antes.maxOf { it.porMinuto }
     Dialogo("Sprint terminado", onCerrar, ancho = 560.dp, botones = { BotonAcento("Seguir", alto = 44.dp, modifier = Modifier.width(130.dp)) { onCerrar() } }) {
-        Text(Formato.cifra(s.palabras), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 72.sp, lineHeight = 74.sp)
+        Text(Formato.cifra(s.palabras), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 72.sp, lineHeight = 74.sp)
         Text(if (s.minutos >= 1) "PALABRAS EN ${s.minutos} MIN · ${s.porMinuto} POR MINUTO" else "PALABRAS EN MENOS DE UN MINUTO", color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
         Spacer(Modifier.height(10.dp))
         if (s.meta > 0) Text(if (s.palabras >= s.meta) "Meta de ${Formato.cifra(s.meta)} conseguida." else "Te quedaste a ${Formato.cifra(s.meta - s.palabras)} de la meta (${Formato.cifra(s.meta)}).",
-            color = Charcoal, fontFamily = Display, fontSize = 21.sp)
+            color = Charcoal, fontFamily = Grotesca, fontSize = 21.sp)
         if (record) Text("Es tu mejor ritmo en esta obra.", color = Acento, fontFamily = Body, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
         e.get(s.pid)?.let { Text("En «${it.s("titulo")}»", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp)) }
     }

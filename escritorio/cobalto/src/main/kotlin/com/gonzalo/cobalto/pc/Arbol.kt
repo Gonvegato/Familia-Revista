@@ -152,7 +152,7 @@ fun ArbolObra(obra: Doc, nav: Nav, abre: AbreDoc, foco: String?, abrirEscena: (S
         fs.associate { f ->
             val t = ArbolEscribir.tam(f); val fz = ArbolEscribir.TAM.getValue(t).third; val base = colorEscrito(f.s("color"))
             val ls = ArbolEscribir.lineasNombre(f.s("nombre"), ArbolEscribir.letras(t))
-            val estilo = TextStyle(fontSize = fz.sp, fontWeight = FontWeight.Bold, color = tinta, fontFamily = Display, lineHeight = (fz * 1.08f).sp, textAlign = TextAlign.Center)
+            val estilo = TextStyle(fontSize = fz.sp, fontWeight = FontWeight.Bold, color = tinta, fontFamily = Grotesca, lineHeight = (fz * 1.08f).sp, textAlign = TextAlign.Center)
             f.id to (medidor.measure(ls.joinToString("\n"), estilo) to medidor.measure(singularFicha(f.s("tipo")).uppercase(), TextStyle(fontFamily = Body, fontSize = 8.5.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, color = lerp(base, tinta, 0.35f))))
         }
     }
@@ -252,7 +252,7 @@ fun ArbolObra(obra: Doc, nav: Nav, abre: AbreDoc, foco: String?, abrirEscena: (S
         )
         if (fs.isEmpty()) {
             Column(Modifier.padding(vertical = 30.dp)) {
-                Text("El árbol de tu historia", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 34.sp)
+                Text("El árbol de tu historia", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 34.sp)
                 Spacer(Modifier.height(10.dp))
                 Text("Crea fichas (personajes, lugares, objetos…) y únelas: «enemigos», «amantes», «hogar», «pertenencia»… Con todo lo que quieras contar de cada unión.",
                     color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 27.sp)
@@ -417,7 +417,7 @@ fun ArbolObra(obra: Doc, nav: Nav, abre: AbreDoc, foco: String?, abrirEscena: (S
                         Spacer(Modifier.width(8.dp))
                         Text(singularFicha(f.s("tipo")).uppercase() + " · " + (if (n == 0) "SIN UNIONES" else "$n ${if (n == 1) "UNIÓN" else "UNIONES"}"), color = Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
                     }
-                    Text(f.s("nombre").ifBlank { "Sin nombre" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp)
+                    Text(f.s("nombre").ifBlank { "Sin nombre" }, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 22.sp)
                     if (f.s("resumen").isNotBlank()) Text(f.s("resumen"), color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         AccionPeque("Abrir", acento = true) { abre.ver(f.id) }

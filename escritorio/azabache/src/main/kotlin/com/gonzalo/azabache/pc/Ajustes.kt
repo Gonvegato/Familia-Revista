@@ -39,7 +39,7 @@ val CLAVES = listOf(
 fun PantAjustes(nav: Nav) {
     var pestana by remember { mutableStateOf(0) }
     Pagina(ancho = 900.dp) {
-        Cabecera(84.sp, texto = "AJUSTES")
+        TituloPagina("AJUSTES")
         FileteCabecera()
         Spacer(Modifier.height(14.dp))
         PestanasRevista(listOf("Cuenta", "Servicios", "Categorías", "Apariencia", "Versión"), pestana) { pestana = it }

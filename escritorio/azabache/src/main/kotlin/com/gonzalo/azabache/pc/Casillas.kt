@@ -135,7 +135,7 @@ fun MagScore(general: Int, scores: List<Int>, kind: Kind) {
     // En una casilla estrecha, la cifra encoge (nunca se parte en dos líneas)
     val k = (LocalCellFraction.current / 0.5f).coerceIn(0.55f, 1f)
     Row(verticalAlignment = Alignment.Bottom) {
-        Text("$general", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (96 * k).sp, lineHeight = (90 * k).sp, letterSpacing = (-3 * k).sp, maxLines = 1, softWrap = false)
+        Text("$general", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (96 * k).sp, lineHeight = (90 * k).sp, letterSpacing = (-3 * k).sp, maxLines = 1, softWrap = false)
         Text("/100", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, bottom = 14.dp))
     }
     if (kind.crit > 1) {
@@ -150,10 +150,10 @@ fun MagBody(text: String) {
     val t = text.trim()
     Text(
         buildAnnotatedString {
-            withStyle(SpanStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold, color = Acento, fontFamily = Display)) { append(t.take(1)) }
+            withStyle(SpanStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold, color = Acento, fontFamily = Grotesca)) { append(t.take(1)) }
             append(t.drop(1))
         },
-        color = Charcoal, fontFamily = Display, fontSize = 20.sp, lineHeight = 31.sp
+        color = Charcoal, fontFamily = Grotesca, fontSize = 20.sp, lineHeight = 31.sp
     )
 }
 
@@ -186,7 +186,7 @@ fun horasCortas(min: Int): String {
 fun MagHours(mine: Int, main: Int, extra: Int, full: Int, enCurso: Boolean) {
     if (mine > 0) {
         val k = (LocalCellFraction.current / 0.5f).coerceIn(0.6f, 1f)
-        Text(horasCortas(mine), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = (44 * k).sp, lineHeight = (46 * k).sp, maxLines = 1, softWrap = false)
+        Text(horasCortas(mine), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = (44 * k).sp, lineHeight = (46 * k).sp, maxLines = 1, softWrap = false)
         Pie("Tus horas")
         if (enCurso && main > 0) {
             val pct = mine * 100 / main
@@ -241,7 +241,7 @@ fun NotaCasilla(t: String) = Text(t, color = Muted, fontFamily = Body, fontSize 
 /** Algo que se toca en la casilla («Escribir en el diario →»), en una línea. */
 @Composable
 fun AccionCasilla(t: String, onClick: () -> Unit) =
-    Text("$t →", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, modifier = Modifier.clickable(onClick = onClick).padding(vertical = 4.dp))
+    Text("$t →", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, modifier = Modifier.clickable(onClick = onClick).padding(vertical = 4.dp))
 
 /**
  * Una portada pequeña (en las listas): la imagen si la tiene; si no, su inicial en grande sobre arena, como en las listas del móvil
@@ -255,6 +255,6 @@ fun MiniPortada(f: Ficha, modifier: Modifier = Modifier, deUid: String? = null) 
 fun PortadaPequena(hash: String, url: String, titulo: String, modifier: Modifier = Modifier, deUid: String? = null) {
     if (hash.isNotBlank() || url.isNotBlank()) { PortadaCosa(hash, url, titulo, modifier, deUid = deUid); return }
     Box(modifier.aspectRatio(2f / 3f).background(Sand), contentAlignment = Alignment.Center) {
-        Text(titulo.trim().trimStart('¿', '¡', '«', '"', '(').take(1).uppercase(), color = Muted, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+        Text(titulo.trim().trimStart('¿', '¡', '«', '"', '(').take(1).uppercase(), color = Muted, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 22.sp)
     }
 }

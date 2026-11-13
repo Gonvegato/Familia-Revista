@@ -159,7 +159,7 @@ fun RevistaHeadline(title: String, overline: String?) {
     val (fs, lh) = headlineSize(title)
     Column(Modifier.fillMaxWidth()) {
         if (overline != null) Text(overline.uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        FitTitle(title, fs, lh, letterSpacing = (-1.5).sp)
+        FitTitle(title, fs, lh, letterSpacing = (-1.5).sp, family = Grotesca)
     }
 }
 

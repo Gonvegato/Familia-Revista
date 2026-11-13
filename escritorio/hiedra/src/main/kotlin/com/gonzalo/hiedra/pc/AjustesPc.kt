@@ -54,7 +54,7 @@ fun AjustesEmulacion(nav: Nav) {
         if (carpetas.isEmpty()) Cuerpo("Todavía no has añadido ninguna.", tam = 13)
         carpetas.forEach { c ->
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(c.path, Modifier.weight(1f), color = if (c.isDirectory) Charcoal else Muted, fontFamily = Display, fontSize = 18.sp, maxLines = 1)
+                Text(c.path, Modifier.weight(1f), color = if (c.isDirectory) Charcoal else Muted, fontFamily = Grotesca, fontSize = 18.sp, maxLines = 1)
                 if (!c.isDirectory) Etiqueta("No está", Modifier.padding(end = 12.dp), color = Acento)
                 EnlaceRevista("Quitar") { Emulacion.quitaCarpeta(c); cambios++; Pc.refresca(escanear = true) }
             }
@@ -193,7 +193,7 @@ fun AjustesCapturasStreaming(nav: Nav) {
                         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Sand)) {
                             if (img != null) androidx.compose.foundation.Image(img, c.juego, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                         }
-                        Text(c.juego.ifBlank { "Escritorio" }, color = Charcoal, fontFamily = Display, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+                        Text(c.juego.ifBlank { "Escritorio" }, color = Charcoal, fontFamily = Grotesca, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
                         Etiqueta("${c.w}×${c.h} · ${fecha(c.t)}")
                     }
                 }

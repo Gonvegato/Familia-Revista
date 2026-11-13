@@ -107,7 +107,7 @@ fun DialogoAnadir(k: Kind, estadoInicial: Int, nav: Nav, onCerrar: () -> Unit) {
                         MiniWeb(h.portada, h.nombre, Modifier.width(46.dp))
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(h.nombre, color = Charcoal, fontFamily = Display, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(h.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             if (h.sub.isNotBlank()) Text(h.sub, color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1)
                         }
                         Text("Añadir →", color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold)

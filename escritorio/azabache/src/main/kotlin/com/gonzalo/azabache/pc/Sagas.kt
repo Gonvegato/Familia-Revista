@@ -35,7 +35,7 @@ fun PantSagas(nav: Nav) {
     val sagas = Cuenta.sagas().sortedByDescending { it.updated }
     Pagina {
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(84.sp, texto = "SAGAS") }
+            Box(Modifier.weight(1f)) { TituloPagina("SAGAS") }
             BotonAcento("+ Nueva saga", alto = 44.dp, modifier = Modifier.padding(bottom = 12.dp).width(170.dp)) { nueva = true }
         }
         FileteCabecera()
@@ -48,7 +48,7 @@ fun PantSagas(nav: Nav) {
             val l = fichasDe(s)
             Column(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.UnaSaga(s.id)) }.padding(vertical = 14.dp)) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(s.name, Modifier.weight(1f), color = Charcoal, fontFamily = Display, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
+                    Text(s.name, Modifier.weight(1f), color = Charcoal, fontFamily = Grotesca, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
                     Text(lineaDe(s, k), color = Muted, fontFamily = Body, fontSize = 12.sp)
                 }
                 Spacer(Modifier.height(10.dp))
@@ -155,7 +155,7 @@ fun DialogoSaga(k: Kind, f: Ficha, nav: Nav, onCerrar: () -> Unit) {
             Row(Modifier.fillMaxWidth().clickable {
                 scope.launch { withContext(Dispatchers.IO) { Cuenta.guardaSaga(if (dentro) s.copy(items = s.items - f.id) else s.copy(items = s.items + f.id)) } }
             }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(s.name, Modifier.weight(1f), color = Charcoal, fontFamily = Display, fontSize = 20.sp)
+                Text(s.name, Modifier.weight(1f), color = Charcoal, fontFamily = Grotesca, fontSize = 20.sp)
                 Text(if (dentro) "Está ✓" else "Añadir", color = if (dentro) Acento else Muted, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             Filete(1.dp, Line)

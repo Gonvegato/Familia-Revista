@@ -59,8 +59,8 @@ fun VinculosEdicion(e: Escritos, pid: String, elegidos: List<String>, onCambia: 
     Text("Sale también con esa parte o ese capítulo.", color = Muted, fontFamily = Body, fontSize = 11.sp)
 }
 
-private val estiloNombre get() = TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 38.sp, lineHeight = 44.sp)
-private val estiloLargo get() = TextStyle(fontFamily = Display, fontSize = 17.sp, lineHeight = 26.sp)
+private val estiloNombre get() = TextStyle(fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 38.sp, lineHeight = 44.sp)
+private val estiloLargo get() = TextStyle(fontFamily = Grotesca, fontSize = 17.sp, lineHeight = 26.sp)
 
 /** Editar una ficha: tipo, nombre, alias, entradilla, datos, el texto largo, color, tamaño en el árbol y vínculos. */
 @Composable

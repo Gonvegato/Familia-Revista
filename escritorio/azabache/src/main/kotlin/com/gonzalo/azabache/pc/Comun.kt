@@ -62,7 +62,7 @@ fun Tarjeta(f: Ficha, k: Kind, modifier: Modifier = Modifier, deUid: String? = n
             if (f.fav) Text("★", Modifier.align(Alignment.TopEnd).padding(8.dp), color = Dorado, fontSize = 18.sp)
         }
         Spacer(Modifier.height(8.dp))
-        Text(f.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(metaDe(f, k).ifBlank { estadoDe(f, k) }, color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -74,7 +74,7 @@ fun FilaFicha(f: Ficha, k: Kind, sub: String, modifier: Modifier = Modifier, der
         MiniPortada(f, Modifier.width(44.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(f.nombre, color = Charcoal, fontFamily = Display, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (sub.isNotBlank()) Text(sub, color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         derecha()

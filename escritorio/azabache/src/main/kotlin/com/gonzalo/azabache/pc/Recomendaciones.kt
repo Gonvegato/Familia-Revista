@@ -84,7 +84,7 @@ fun DialogoRecomendar(f: Ficha, k: Kind, pareja: String, nav: Nav, onCerrar: () 
             MiniPortada(f, Modifier.width(54.dp))
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
-                Text(f.nombre, color = Charcoal, fontFamily = Display, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(listOf(k.title, f.creador).filter { it.isNotBlank() }.joinToString(" · ").uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
             }
         }
@@ -115,7 +115,7 @@ fun TeRecomienda(uid: String, nombre: String, nav: Nav, maximo: Int = 6, conTitu
                 PortadaPequena("", r.portada, r.nombre, Modifier.width(48.dp))
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
-                    FitTitle(r.nombre, 22.sp, 25.sp, color = Charcoal, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    FitTitle(r.nombre, 22.sp, 25.sp, color = Charcoal, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, family = Grotesca)
                     Text(listOf(k.title, r.creador, if (r.hora > 0) haceDias(diaDeMs(r.hora), LocalDate.now().toEpochDay()) else "").filter { it.isNotBlank() }.joinToString(" · ").uppercase(),
                         color = Muted, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -157,7 +157,7 @@ fun LeHasRecomendado(nombre: String, nav: Nav) {
             PortadaPequena(tuya?.portada.orEmpty(), r.portada.ifBlank { tuya?.portadaWeb.orEmpty() }, r.nombre, Modifier.width(36.dp))
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(r.nombre, color = Charcoal, fontFamily = Display, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(r.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text((listOf(k.title, Formato.fecha(r.hora)).joinToString(" · ") + if (r.nota.isNotBlank()) " · «${r.nota}»" else "").uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp,
                     fontWeight = FontWeight.Bold, letterSpacing = 1.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }

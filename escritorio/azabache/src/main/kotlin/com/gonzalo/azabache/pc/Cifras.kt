@@ -76,7 +76,7 @@ fun PantCifras(nav: Nav) {
     val fichas = if (k == null) todas.map { it.second } else Cuenta.fichas(k.id)
     val c = remember(fichas, ano) { cifrasDe(fichas, ano) }
     Pagina {
-        Cabecera(84.sp, texto = "CIFRAS")
+        TituloPagina("CIFRAS")
         FileteCabecera()
         Spacer(Modifier.height(10.dp))
         PestanasRevista(listOf("Todo") + kinds.map { it.title }, if (k == null) 0 else kinds.indexOf(k) + 1) { cat = if (it == 0) -1 else kinds[it - 1].id }
@@ -99,8 +99,8 @@ fun PantCifras(nav: Nav) {
                 if ((k == null || k.isBook) && ano == esteAno && objetivo > 0 && (deAno == 0 || deAno == esteAno)) Bloque("Reto de lectura de $esteAno") {
                     val leidos = Cuenta.fichas(BOOKS.id).count { it.valorada && it.terminado > 0 && LocalDate.ofEpochDay(it.terminado).year == esteAno }
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Text("$leidos", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 56.sp, lineHeight = 56.sp)
-                        Text(" de $objetivo libros", color = Muted, fontFamily = Display, fontSize = 20.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        Text("$leidos", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 56.sp, lineHeight = 56.sp)
+                        Text(" de $objetivo libros", color = Muted, fontFamily = Grotesca, fontSize = 20.sp, modifier = Modifier.padding(bottom = 8.dp))
                     }
                     BarraAvance(leidos.toFloat() / objetivo, Modifier.padding(top = 8.dp))
                     val dia = LocalDate.now().dayOfYear; val dif = leidos - objetivo * dia / LocalDate.now().lengthOfYear().toDouble()

@@ -102,7 +102,7 @@ fun LineaObra(obra: Doc, abre: AbreDoc, abrirEscena: (String) -> Unit) {
                 }
                 if (orden.isEmpty()) item("vacio") {
                     Column(Modifier.padding(vertical = 24.dp).widthIn(max = 760.dp)) {
-                        Text("La línea de tu historia", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 34.sp)
+                        Text("La línea de tu historia", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 34.sp)
                         Spacer(Modifier.height(10.dp))
                         Text("Apunta lo que pasa (aunque no salga en el libro, o salga en otro orden) y saca ramas para las tramas que van a la vez.",
                             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 27.sp)
@@ -131,7 +131,7 @@ fun LineaObra(obra: Doc, abre: AbreDoc, abrirEscena: (String) -> Unit) {
                             Row(Modifier.weight(1f).padding(start = 8.dp, bottom = 14.dp)) {
                                 Column(Modifier.weight(1f).pointerHoverIcon(PointerIcon.Hand).clickable { abre.ver(d.id) }.padding(top = 10.dp, end = 4.dp)) {
                                     if (d.s("cuando").isNotBlank()) Text(d.s("cuando").uppercase(), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                                    Text(d.s("titulo").ifBlank { "Sin título" }, color = if (encima) Acento else Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp)
+                                    Text(d.s("titulo").ifBlank { "Sin título" }, color = if (encima) Acento else Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 26.sp)
                                     if (d.s("nota").isNotBlank()) Text(d.s("nota").lineSequence().first().take(220), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                     if (esc != null) Text("→ " + esc.s("titulo").ifBlank { "escena" }, Modifier.pointerHoverIcon(PointerIcon.Hand).clickable { abrirEscena(esc.id) }.padding(vertical = 2.dp),
                                         color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
@@ -152,7 +152,7 @@ fun LineaObra(obra: Doc, abre: AbreDoc, abrirEscena: (String) -> Unit) {
                             Column(Modifier.weight(1f).padding(start = 8.dp, top = 6.dp, bottom = 14.dp).clip(esquina(6.dp)).background(c.copy(alpha = 0.08f)).border(1.dp, c.copy(alpha = 0.5f), esquina(6.dp))
                                 .pointerHoverIcon(PointerIcon.Hand).clickable { abre.editar(d.id) }.padding(horizontal = 14.dp, vertical = 9.dp)) {
                                 Text(if (f.tipo == "inicio") "NACE LA RAMA" else "VUELVE A LA PRINCIPAL", color = c, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
-                                Text(d.s("titulo").ifBlank { "Rama" }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                                Text(d.s("titulo").ifBlank { "Rama" }, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
                                 if (f.tipo == "inicio" && d.s("texto").isNotBlank()) Text(d.s("texto").lineSequence().first().take(160), color = Muted, fontFamily = Body, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             }
                         }
@@ -169,7 +169,7 @@ fun LineaObra(obra: Doc, abre: AbreDoc, abrirEscena: (String) -> Unit) {
                 conFecha.forEach { s ->
                     Column(Modifier.fillMaxWidth().pointerHoverIcon(PointerIcon.Hand).clickable { abrirEscena(s.id) }.padding(vertical = 7.dp)) {
                         Text(s.s("cuando").uppercase(), color = Acento, fontFamily = Body, fontSize = 10.5.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                        Text(s.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Display, fontSize = 17.sp)
+                        Text(s.s("titulo").ifBlank { "Sin título" }, color = Charcoal, fontFamily = Grotesca, fontSize = 17.sp)
                     }
                 }
             }

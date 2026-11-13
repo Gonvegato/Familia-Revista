@@ -60,13 +60,13 @@ fun TalDiaComoHoy(todas: List<Pair<Kind, Ficha>>, nav: Nav) {
         if (i > 0) Filete(1.dp, Line)
         Row(Modifier.fillMaxWidth().clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Inicio)) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.width(86.dp)) {
-                Text("$anos", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 44.sp)
+                Text("$anos", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 44.sp)
                 Text(if (anos == 1) "AÑO" else "AÑOS", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
             }
             MiniPortada(f, Modifier.width(40.dp))
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                FitTitle(f.nombre, 22.sp, 25.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                FitTitle(f.nombre, 22.sp, 25.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, family = Grotesca)
                 Text(listOfNotNull(verboDeTerminar(k), if (!f.sinValorar) "nota ${f.general}" else null).joinToString(" · ").uppercase(), color = Acento, fontFamily = Body,
                     fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
             }
@@ -110,10 +110,10 @@ fun DialogoBuscarEnTodo(nav: Nav, onCerrar: () -> Unit) {
                         MiniPortada(f, Modifier.width(36.dp))
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(f.nombre, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(f.nombre, color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(listOf(kk.title, estadoDe(f, kk), f.creador, f.plataforma).filter { it.isNotBlank() }.joinToString(" · "), color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        if (f.valorada && !f.sinValorar) Text("${f.general}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp)
+                        if (f.valorada && !f.sinValorar) Text("${f.general}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp)
                     }
                     Filete(1.dp, Line)
                 }
@@ -123,7 +123,7 @@ fun DialogoBuscarEnTodo(nav: Nav, onCerrar: () -> Unit) {
                 items(notas, key = { "n${it.id}" }) { n ->
                     Column(Modifier.fillMaxWidth().pointerHoverIcon(PointerIcon.Hand).clickable { onCerrar(); nav.ir(Pantalla.Diario) }.padding(vertical = 8.dp)) {
                         Pie(if (n.dia == LocalDate.now().toEpochDay()) "Hoy" else diaLargo(LocalDate.ofEpochDay(n.dia)))
-                        Text(n.texto.let { if (it.length > 220) it.take(220).trimEnd() + "…" else it }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Normal, fontSize = 17.sp, lineHeight = 23.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
+                        Text(n.texto.let { if (it.length > 220) it.take(220).trimEnd() + "…" else it }, color = Charcoal, fontFamily = Grotesca, fontStyle = FontStyle.Normal, fontSize = 17.sp, lineHeight = 23.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
                     }
                     Filete(1.dp, Line)
                 }

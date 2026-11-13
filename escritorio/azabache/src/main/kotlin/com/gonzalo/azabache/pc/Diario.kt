@@ -41,7 +41,7 @@ fun PantDiario(nav: Nav) {
         Row(verticalAlignment = Alignment.Bottom) {
             Column(Modifier.weight(1f)) {
                 Text(diaLargo(LocalDate.now()).uppercase(), color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-                Cabecera(84.sp, texto = "DIARIO")
+                TituloPagina("DIARIO")
             }
             BotonAcento("Escribir", alto = 44.dp, modifier = Modifier.padding(bottom = 12.dp).width(150.dp)) { escribir = true }
         }
@@ -78,7 +78,7 @@ fun PantDiario(nav: Nav) {
             }
             Column(Modifier.fillMaxWidth()) {
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp), verticalAlignment = Alignment.Bottom) {
-                    Text(if (d == hoy) "Hoy" else "${LocalDate.ofEpochDay(d).dayOfMonth}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
+                    Text(if (d == hoy) "Hoy" else "${LocalDate.ofEpochDay(d).dayOfMonth}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
                     Text(LocalDate.ofEpochDay(d).dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("es", "ES")), color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, modifier = Modifier.padding(start = 10.dp, bottom = 4.dp))
                     Spacer(Modifier.weight(1f))
                     EnlaceRevista("Escribir") { escribirDia = d }
@@ -86,7 +86,7 @@ fun PantDiario(nav: Nav) {
                 if (ns.isEmpty() && ts.isEmpty() && tm.isEmpty()) MagVacio("Nada todavía. ¿Escribes algo?")
                 ns.forEach { n ->
                     Column(Modifier.fillMaxWidth().clickable { editar = n }.padding(vertical = 8.dp)) {
-                        Text(n.texto, color = Charcoal, fontFamily = Display, fontSize = 19.sp, lineHeight = 27.sp)
+                        Text(n.texto, color = Charcoal, fontFamily = Grotesca, fontSize = 19.sp, lineHeight = 27.sp)
                         val sobre = n.sobre.mapNotNull { porClave[it] }
                         if (sobre.isNotEmpty()) Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             sobre.forEach { (k, f) -> Text("${f.nombre} →", color = Acento, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Diario)) }) }
@@ -95,7 +95,7 @@ fun PantDiario(nav: Nav) {
                 }
                 ts.forEach { (_, k, f) ->
                     FilaFicha(f, k, (if (k.isMovie || k.isTv) "La terminaste" else "Lo terminaste"), derecha = {
-                        if (!f.sinValorar) Text("${f.general}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp)
+                        if (!f.sinValorar) Text("${f.general}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 28.sp)
                     }) { nav.ir(Pantalla.Detalle(k.id, f.id, Pantalla.Diario)) }
                 }
                 tm.entries.sortedByDescending { it.value }.forEach { (ref, ms) ->

@@ -10,7 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.2.0"
+val version = "1.3.0"
 val android = rootProject.file("cobalto/src")
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }

@@ -123,7 +123,7 @@ fun CabeceraDeFicha(k: Kind, f: Ficha, escala: Float = 1.45f) {
     val antetitulo = listOfNotNull(if (enCurso) k.statuses.getOrNull(f.estado) else null, k.title, f.creador.ifBlank { null }).joinToString(" · ")
     Text(antetitulo.uppercase(), color = Acento, fontFamily = Body, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     val (fs, lh) = headlineSize(f.nombre.ifBlank { "Sin nombre" })
-    FitTitle(f.nombre.ifBlank { "Sin nombre" }, (fs.value * escala).sp, (lh.value * escala).sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth())
+    FitTitle(f.nombre.ifBlank { "Sin nombre" }, (fs.value * escala).sp, (lh.value * escala).sp, letterSpacing = (-1.5).sp, modifier = Modifier.fillMaxWidth(), family = Grotesca)
     val entradilla = listOfNotNull(
         f.plataforma.ifBlank { null },
         if (!enCurso && f.terminado > 0) "terminado el ${Formato.fechaDia(f.terminado)}" else null,
@@ -143,7 +143,7 @@ fun visibleEnLectura(c: CasillaMaqueta, casillas: Map<String, Casilla>) = when (
 
 /** Lo que pinta una casilla de la maqueta (las tuyas: texto e imagen; las de la ficha, de [casillas]). */
 fun casillaDe(c: CasillaMaqueta, casillas: Map<String, Casilla>, filaFija: Boolean): Casilla = when (c.tipo) {
-    "texto" -> Casilla(c.titulo.ifBlank { null }) { if (c.texto.isNotBlank()) Text(c.texto, color = Charcoal, fontFamily = Display, fontSize = 18.sp, lineHeight = 27.sp) }
+    "texto" -> Casilla(c.titulo.ifBlank { null }) { if (c.texto.isNotBlank()) Text(c.texto, color = Charcoal, fontFamily = Grotesca, fontSize = 18.sp, lineHeight = 27.sp) }
     "imagen" -> Casilla(c.titulo.ifBlank { null }) { ImagenDeCasilla(c, filaFija) }
     else -> casillas.getValue(c.tipo)
 }
@@ -161,7 +161,7 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
     if (k.isGame || k.isBook) casillas["portada"] = Casilla("Portada") { MagPortada(f, k, deUid) }
     if (!enCurso) casillas["nota"] = Casilla("Nota") {
         if (f.sinValorar) {
-            Text("Sin valorar", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
+            Text("Sin valorar", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
             MagVacio(if (soloLectura) "Aún no le ha puesto nota." else if (k.isBook) "Lo diste por leído en Seshat." else if (k.isGame) "Lo diste por pasado en Bastet." else if (f.mostaza) "La viste entera en Hathor." else "Aún sin nota.")
             if (!soloLectura) MagLink("Valorar", accent = true) { a.valorar() }
         } else MagScore(f.general, f.notas, k)
@@ -170,7 +170,7 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
     if (enCurso) casillas["estado"] = Casilla(if (apuntes.isNotEmpty()) "Nota" else "Estado") {
         if (apuntes.isNotEmpty()) MagScore(apuntes.map { it.notas[0] }.average().toInt(), NOTAS.indices.map { i -> apuntes.map { it.notas[i] }.average().toInt() }, k)
         else {
-            FitTitle(k.statuses.getOrElse(f.estado) { "" }, 32.sp, 34.sp)
+            FitTitle(k.statuses.getOrElse(f.estado) { "" }, 32.sp, 34.sp, family = Grotesca)
             MagVacio("Aún sin nota")
         }
         Spacer(Modifier.height(8.dp))
@@ -203,10 +203,10 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
         apuntes.take(6).forEach { ap ->
             Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text("${ap.notas[0]}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.padding(end = 10.dp))
+                    Text("${ap.notas[0]}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 30.sp, modifier = Modifier.padding(end = 10.dp))
                     Pie(listOfNotNull(if (ap.hora > 0) Formato.fecha(ap.hora) else null, if (k.isBook && ap.capitulo > 0) "cap. ${ap.capitulo}" else null).joinToString(" · "), modifier = Modifier.padding(bottom = 6.dp))
                 }
-                if (ap.texto.isNotBlank()) Text(ap.texto, color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 25.sp)
+                if (ap.texto.isNotBlank()) Text(ap.texto, color = Charcoal, fontFamily = Grotesca, fontSize = 17.sp, lineHeight = 25.sp)
             }
         }
     }
@@ -216,7 +216,7 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
         delDiario.take(4).forEach { n ->
             Column(Modifier.fillMaxWidth().clickable { a.nota(n) }.padding(vertical = 6.dp)) {
                 Pie(if (n.dia == hoy) "Hoy" else diaLargo(LocalDate.ofEpochDay(n.dia)))
-                if (n.texto.isNotBlank()) Text(n.texto.let { if (it.length > 320) it.take(320).trimEnd() + "…" else it }, color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 25.sp)
+                if (n.texto.isNotBlank()) Text(n.texto.let { if (it.length > 320) it.take(320).trimEnd() + "…" else it }, color = Charcoal, fontFamily = Grotesca, fontSize = 17.sp, lineHeight = 25.sp)
             }
         }
         if (delDiario.size > 4) NotaCasilla("y ${delDiario.size - 4} más en tu diario")
@@ -252,7 +252,7 @@ fun casillasDeFicha(k: Kind, f: Ficha, nav: Nav, a: AccionesFicha, deUid: String
         val (mk, t) = tuya
         if (t.valorada && !t.sinValorar) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("${t.general}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 56.sp, lineHeight = 56.sp)
+                Text("${t.general}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 56.sp, lineHeight = 56.sp)
                 if (!f.sinValorar && f.valorada) Pie(if (t.general == f.general) "lo mismo" else if (t.general > f.general) "${t.general - f.general} más que tu pareja" else "${f.general - t.general} menos que tu pareja", modifier = Modifier.padding(start = 10.dp, bottom = 10.dp))
             }
         } else MagVacio(if (t.valorada) "Tú aún no le has puesto nota." else "Lo tienes como «${estadoDe(t, mk).lowercase()}».")
@@ -282,7 +282,7 @@ private fun CasillaProgreso(k: Kind, f: Ficha, soloLectura: Boolean) {
             val hechos = partes.count { it.second }
             val pct = hechos * 100 / partes.size
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("$pct %", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
+                Text("$pct %", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
                 Pie("$hechos de ${partes.size} ${if (k.isTv) "episodios" else "completados"}", modifier = Modifier.padding(start = 10.dp, bottom = 6.dp))
             }
             BarraAvance(pct / 100f, Modifier.padding(top = 8.dp, bottom = 6.dp))
@@ -297,7 +297,7 @@ private fun CasillaProgreso(k: Kind, f: Ficha, soloLectura: Boolean) {
         }
         k.isTv && vistos.any { it.episodio > 0 && it.visto } -> {
             val eps = vistos.filter { it.episodio > 0 && it.visto }
-            Text("${eps.size}", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 42.sp)
+            Text("${eps.size}", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 42.sp)
             Pie(if (eps.size == 1) "episodio visto en Hathor" else "episodios vistos en Hathor")
             val ultimo = vistos.filter { it.episodio > 0 }.maxByOrNull { it.cuando }
             if (ultimo != null) MagFact("El último", "T${ultimo.temporada} · E${ultimo.episodio}" + if (!ultimo.visto && ultimo.durMs > 0 && ultimo.posMs > 0) " (a medias)" else "")
@@ -305,7 +305,7 @@ private fun CasillaProgreso(k: Kind, f: Ficha, soloLectura: Boolean) {
         !k.isTv && vistos.firstOrNull()?.let { it.posMs > 0 && it.durMs > 0 } == true -> {
             val v = vistos.first()
             val frac = (v.posMs.toFloat() / v.durMs).coerceIn(0f, 1f)
-            Text("${(frac * 100).toInt()} %", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
+            Text("${(frac * 100).toInt()} %", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
             BarraAvance(frac, Modifier.padding(top = 8.dp))
             Pie(if (v.visto) "Vista en Hathor" else "Por ${duracion(v.posMs / 60_000L)} de ${duracion(v.durMs / 60_000L)} · quedan ${duracion(((v.durMs - v.posMs) / 60_000L).coerceAtLeast(1L))}", modifier = Modifier.padding(top = 5.dp))
         }
@@ -318,7 +318,7 @@ private fun CasillaProgreso(k: Kind, f: Ficha, soloLectura: Boolean) {
 @Composable
 private fun CasillaLectura(k: Kind, f: Ficha, enCurso: Boolean) {
     if (f.minutos > 0) {
-        Text(duracion(f.minutos.toLong()), color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
+        Text(duracion(f.minutos.toLong()), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 34.sp)
         Pie("Leyendo, según Seshat")
     } else MagVacio("Seshat aún no ha contado tiempo de este libro.")
     val avance = remember(f.ref, LaFamilia.cambios) { Cuenta.nodo(k.id, f)?.decimal("fr")?.toFloat() ?: 0f }

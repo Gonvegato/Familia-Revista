@@ -94,7 +94,7 @@ fun TarjetaPoster(hash: String, url: String, nombre: String, ancho: Dp, sub: Str
             if (progreso != null && progreso > 0f) Barra(progreso, Modifier.align(Alignment.BottomStart))
         }
         Spacer(Modifier.height(7.dp))
-        Text(nombre, color = Charcoal, fontFamily = Display, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis)
         if (sub.isNotBlank()) Text(sub, color = Muted, fontFamily = Body, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -124,11 +124,11 @@ fun FilaPosters(titulo: String, cosas: List<MetaBreve>, alAbrir: (MetaBreve) -> 
 fun Destacado(b: MetaBreve, alAbrir: (MetaBreve) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 18.dp)) {
         Box(Modifier.fillMaxWidth().aspectRatio(2.6f).clip(esquina(3.dp)).border(1.dp, Line, esquina(3.dp)).pulsable(forma = esquina(3.dp)) { alAbrir(b) }) {
-            ImagenCosa("", b.fondo.ifBlank { b.poster }, b.nombre, Modifier.fillMaxSize())
+            ImagenCosa("", b.fondo.ifBlank { b.poster }, "", Modifier.fillMaxSize())
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.45f to Color.Black.copy(alpha = 0f), 1f to Color.Black.copy(alpha = 0.85f))))
             Column(Modifier.align(Alignment.BottomStart).padding(22.dp)) {
                 Text("DESTACADO · ${tipoNombre(b.tipo).uppercase()}", color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, maxLines = 1)
-                Text(b.nombre, color = Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 46.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(b.nombre, color = Color.White, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 46.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val datos = listOfNotNull(b.ano.ifBlank { null }, b.generos.take(2).joinToString(", ").ifBlank { null }, b.nota.ifBlank { null }?.let { "★ $it" })
                 if (datos.isNotEmpty()) Text(datos.joinToString(" · "), color = Color.White.copy(alpha = 0.85f), fontFamily = Body, fontSize = 13.sp, maxLines = 1)
             }
@@ -144,13 +144,23 @@ fun Nota(t: String, modifier: Modifier = Modifier) = Text(t, modifier, color = M
 /** La cabecera de una página: antetítulo, el titular grande y su filete. */
 @Composable
 fun CabeceraPagina(antetitulo: String, titulo: String, volver: (() -> Unit)? = null, derecha: @Composable RowScope.() -> Unit = {}) {
+    // Una pestaña de arriba (sin «volver»): su nombre ya está en la cabecera de tinta, así que aquí va pequeño, como en Seshat
+    if (volver == null) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            com.gonzalo.familia.pc.revista.TituloPagina(titulo)
+            Spacer(Modifier.weight(1f))
+            derecha()
+        }
+        Filete(2.dp)
+        return
+    }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (volver != null) VolverRevista(volver)
+        VolverRevista(volver)
         Spacer(Modifier.weight(1f))
         derecha()
     }
     Antetitulo(antetitulo, Modifier.padding(top = 6.dp), color = Acento, conCuadro = false)
-    Text(titulo, color = Charcoal, fontFamily = Display, fontSize = 60.sp, lineHeight = 62.sp, letterSpacing = (-1.5).sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    Text(titulo, color = Charcoal, fontFamily = Grotesca, fontSize = 60.sp, lineHeight = 62.sp, letterSpacing = (-1.5).sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     Filete(3.dp)
 }
 

@@ -86,7 +86,7 @@ fun PantObra(pid: String, eidInicial: String?, nav: Nav, pestanaInicial: Int = 0
             Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f)) {
                     Text(estadoDe(obra).nombre.uppercase() + (obra.s("genero").takeIf { it.isNotBlank() }?.let { " · ${it.uppercase()}" } ?: ""), color = Acento, fontFamily = Body, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-                    FitTitle(obra.s("titulo").ifBlank { "Sin título" }, 52.sp, 54.sp, maxLines = 1, letterSpacing = (-1).sp)
+                    FitTitle(obra.s("titulo").ifBlank { "Sin título" }, 52.sp, 54.sp, maxLines = 1, letterSpacing = (-1).sp, family = Grotesca)
                     Text(metaObra(e, obra), color = Muted, fontFamily = Body, fontSize = 13.sp)
                 }
                 Spacer(Modifier.width(20.dp))
@@ -144,7 +144,7 @@ private fun Manuscrito(obra: Doc, eid: String?, abre: (String?) -> Unit, nav: Na
                 LaunchedEffect(titulo) { if (titulo != esc.s("titulo")) { kotlinx.coroutines.delay(400); e.edita(esc.id) { put("titulo", titulo) } } }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp, end = 4.dp)) {
                     androidx.compose.foundation.text.BasicTextField(titulo, { titulo = it.replace("\n", "") }, Modifier.weight(1f), singleLine = true,
-                        textStyle = androidx.compose.ui.text.TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = Charcoal),
+                        textStyle = androidx.compose.ui.text.TextStyle(fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = Charcoal),
                         cursorBrush = androidx.compose.ui.graphics.SolidColor(Acento),
                         decorationBox = { inner -> Box { if (titulo.isEmpty()) Text("Escena sin título", color = Muted, fontFamily = Display, fontSize = 28.sp, fontStyle = FontStyle.Italic); inner() } })
                     Text((cap?.let { c -> "Capítulo ${e.capitulos(pid).indexOfFirst { it.id == c.id } + 1} · " + c.s("titulo") } ?: "").uppercase(), color = Acento, fontFamily = Body, fontSize = 10.sp,
@@ -200,7 +200,7 @@ private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Est
                 val hecho = Publica.hecho(e, c)
                 Row(Modifier.fillMaxWidth().padding(start = sangria.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (c.s("color").isNotBlank()) { Punto(colorEscrito(c.s("color")), 8.dp); Spacer(Modifier.width(6.dp)) }
-                    Text("$n. " + c.s("titulo").ifBlank { "Capítulo sin título" }, Modifier.weight(1f).pointerHoverIcon(PointerIcon.Hand).clickable { renombrar(c) }, color = Charcoal, fontFamily = Display,
+                    Text("$n. " + c.s("titulo").ifBlank { "Capítulo sin título" }, Modifier.weight(1f).pointerHoverIcon(PointerIcon.Hand).clickable { renombrar(c) }, color = Charcoal, fontFamily = Grotesca,
                         fontSize = 17.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (hecho) Text("✓", color = Acento, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     Text(" " + Formato.cifra(e.palabrasCapitulo(c.id)), color = Muted, fontFamily = Body, fontSize = 11.sp)
@@ -260,7 +260,7 @@ private fun IndiceManuscrito(e: Escritos, obra: Doc, est: EscribirEstructura.Est
                     val aqui = c.id == s.s("cid")
                     Text("${i + 1}. " + c.s("titulo").ifBlank { "Sin título" }, Modifier.fillMaxWidth().pointerHoverIcon(if (aqui) PointerIcon.Default else PointerIcon.Hand)
                         .clickable(enabled = !aqui) { e.mueveEscena(s.id, c.id, e.escenas(c.id).lastOrNull { it.id != s.id }?.id, null); mover = null }.padding(vertical = 9.dp),
-                        color = if (aqui) Muted else Charcoal, fontFamily = Display, fontSize = 19.sp)
+                        color = if (aqui) Muted else Charcoal, fontFamily = Grotesca, fontSize = 19.sp)
                 }
             }
         }
@@ -301,7 +301,7 @@ private fun DialogoNombre(d: Doc, nav: Nav, onCerrar: () -> Unit) {
             e.edita(d.id) { put("titulo", t.trim()); put("resumen", resumen.trim()); if (color.isNotBlank()) put("color", color) else remove("color") }; onCerrar()
         }
     }) {
-        CampoRevista(t, { t = it }, "Título", estilo = androidx.compose.ui.text.TextStyle(fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 26.sp))
+        CampoRevista(t, { t = it }, "Título", estilo = androidx.compose.ui.text.TextStyle(fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 26.sp))
         CampoRevista(resumen, { resumen = it }, if (esParte) "Qué pasa en esta parte" else "Resumen", lineas = 3, pista = "Cuenta para la guía (el esquema)")
         val partes = remember(e.version) { e.partes(d.pid) }
         if (!esParte && partes.isNotEmpty()) Desplegable("En qué parte", d.s("aid").takeIf { a -> partes.any { it.id == a } }.orEmpty(),

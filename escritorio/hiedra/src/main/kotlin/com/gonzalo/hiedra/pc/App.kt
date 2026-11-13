@@ -114,10 +114,9 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
         Entrada.manejador = h
         onDispose { if (Entrada.manejador === h) Entrada.manejador = null }
     }
-    Row(Modifier.fillMaxSize()) {
-        Lateral("Bastet", entradas, sel) { i -> ve(i) }
-        Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
-        Box(Modifier.weight(1f).fillMaxHeight()) {
+    Column(Modifier.fillMaxSize()) {
+        CabeceraConPestanas("Bastet", entradas, sel) { i -> ve(i) }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
             Crossfade(pantalla, label = "pantalla") { p ->
                 when (p) {
                     Pantalla.Portada -> PantPortada(nav) { enSala = true }
@@ -148,7 +147,7 @@ fun Tarjeta(j: Juego, modifier: Modifier = Modifier, onClick: () -> Unit) {
         if (local != null) PortadaPc(local, j, Modifier.fillMaxWidth())
         else PortadaCosa(j.portada, j.portadaUrl, j.titulo, Modifier.fillMaxWidth(), pie = j.donde)
         Spacer(Modifier.height(8.dp))
-        Text(j.titulo, color = Charcoal, fontFamily = Display, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(j.titulo, color = Charcoal, fontFamily = Grotesca, fontSize = 16.sp, lineHeight = 19.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Text(listOf(j.donde, if (j.ms > 0) horas(j.ms) else "").filter { it.isNotBlank() }.joinToString(" · ").ifBlank { j.estado.nombre }, color = Muted, fontFamily = Body, fontSize = 12.sp, maxLines = 1)
     }
 }
@@ -174,7 +173,7 @@ fun PantPortada(nav: Nav, alSala: () -> Unit = {}) {
     val p = Pc.ahora
     Pagina {
         Text("Número de ${LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ES))}".uppercase(), color = Muted, fontFamily = Body, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
-        Cabecera(96.sp, texto = "BASTET")
+        Spacer(Modifier.height(6.dp))
         FileteCabecera()
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -192,7 +191,7 @@ fun PantPortada(nav: Nav, alSala: () -> Unit = {}) {
         if (p != null) {
             Spacer(Modifier.height(22.dp)); Filete(2.dp)
             Antetitulo("Ahora en este ordenador", Modifier.padding(top = 10.dp))
-            Text(p.nombre, color = Charcoal, fontFamily = Display, fontSize = 34.sp, fontWeight = FontWeight.SemiBold)
+            Text(p.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 34.sp, fontWeight = FontWeight.SemiBold)
             Text("Desde las " + java.time.Instant.ofEpochMilli(p.desde).atZone(ZoneId.systemDefault()).toLocalTime().toString().take(5), color = Muted, fontFamily = Body, fontSize = 13.sp)
         }
         Spacer(Modifier.height(22.dp)); Filete(2.dp)
@@ -216,7 +215,7 @@ fun PantLista(e: Estado, nav: Nav) {
             horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
-                    Cabecera(76.sp, texto = if (e == Estado.JUGANDO) "JUGANDO" else e.nombre.uppercase() + "S")
+                    TituloPagina(if (e == Estado.JUGANDO) "JUGANDO" else e.nombre.uppercase() + "S")
                     FileteCabecera()
                     Spacer(Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -251,7 +250,7 @@ fun PantOrdenador(nav: Nav) {
     val l = lista.orEmpty().filter { (filtro == 0 || origenDe(it) == origenes.getOrNull(filtro)) && (q.isEmpty() || Juegos.norm(it.nombre).contains(q)) }.sortedBy { it.nombre.lowercase() }
     Pagina {
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f)) { Cabecera(72.sp, texto = "EN ESTE ORDENADOR") }
+            Box(Modifier.weight(1f)) { TituloPagina("EN ESTE ORDENADOR") }
             BotonSuave(if (Pc.mirando) "Mirando…" else "Volver a mirar", modifier = Modifier.padding(end = 12.dp)) { Pc.refresca(escanear = true) { nav.aviso("Mirado de nuevo: ${Pc.yaMirado().orEmpty().size} juegos") } }
             BotonAcento("+ Programa", alto = 44.dp, modifier = Modifier.width(160.dp)) { nuevo = true }
         }
@@ -275,7 +274,7 @@ fun PantOrdenador(nav: Nav) {
                     Column(Modifier.weight(1f)) {
                         PortadaPc(j, h, Modifier.fillMaxWidth())
                         Spacer(Modifier.height(8.dp))
-                        Text(j.nombre, color = Charcoal, fontFamily = Display, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(j.nombre, color = Charcoal, fontFamily = Grotesca, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(j.etiqueta.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             EnlaceRevista("Jugar", acento = true) { jugar(Ficha(h, j), enSala = false) { nav.aviso(it) } }
@@ -372,7 +371,7 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
                 Spacer(Modifier.height(16.dp))
                 MagChoice(Estado.entries.map { it.nombre }, Estado.entries.indexOf(j.estado), "Cómo va") { Juegos.ponEstado(j, Estado.entries[it]) }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                    Text("Favorito", Modifier.weight(1f), color = Charcoal, fontFamily = Display, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Favorito", Modifier.weight(1f), color = Charcoal, fontFamily = Grotesca, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
                     Interruptor(j.fav) { Juegos.cambia(id, mapOf("fav" to it)) }
                 }
                 Spacer(Modifier.height(18.dp)); Filete(2.dp); Spacer(Modifier.height(10.dp))
@@ -401,7 +400,7 @@ fun PantFicha(id: String, volver: Pantalla, nav: Nav) {
 fun PantAjustes(nav: Nav, alSala: () -> Unit = {}) {
     var pestana by remember { mutableStateOf(0) }
     Pagina(ancho = 980.dp) {
-        Cabecera(84.sp, texto = "AJUSTES")
+        TituloPagina("AJUSTES")
         FileteCabecera()
         Spacer(Modifier.height(14.dp))
         PestanasRevista(listOf("Cuenta", "Este PC", "Emulación", "Sala y mando", "Apariencia", "Versión"), pestana) { pestana = it }

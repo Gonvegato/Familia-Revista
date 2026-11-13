@@ -51,10 +51,10 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
     }
     // (el menú del botón derecho de los textos, en español: el de Compose viene en inglés)
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLocalization provides MenuEnEspanol) {
-    Row(Modifier.fillMaxSize()) {
-        // (en la concentración solo queda la página: ni la columna)
+    Column(Modifier.fillMaxSize()) {
+        // (en la concentración solo queda la página: ni la cabecera)
         if (!Estudio.concentracion) {
-            Lateral("Thot", entradas, sel) { i ->
+            CabeceraConPestanas("Thot", entradas, sel) { i ->
                 nav.ir(when {
                     i == 0 -> Pantalla.Portada
                     i <= obras.size -> Pantalla.Obra(obras[i - 1].id)
@@ -62,9 +62,8 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
                     else -> Pantalla.Ajustes
                 })
             }
-            Filete(1.dp, Line, Modifier.fillMaxHeight().width(1.dp))
         }
-        Box(Modifier.weight(1f).fillMaxHeight()) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
             Crossfade(pantalla, label = "pantalla") { p ->
                 when (p) {
                     Pantalla.Portada -> PantPortada(nav)
