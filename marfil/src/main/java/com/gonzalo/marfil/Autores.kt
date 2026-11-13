@@ -78,7 +78,8 @@ fun CapaPagina(clave: String?, alCerrar: () -> Unit, contenido: @Composable (Str
         val s = (1f - 0.1f * p) * (if (o == null) 0.96f + 0.04f * tt else 1f)
         scaleX = s; scaleY = s
         translationX = (if (desdeIzquierda) 1f else -1f) * p * with(densidad) { 24.dp.toPx() }
-        alpha = if (o == null) tt.coerceIn(0f, 1f) else 1f
+        // Al cerrar, el último tramo (cuando el papel ya tiene el tamaño de la fila) se funde con la fila en vez de quitarse de golpe
+        alpha = if (o == null) tt.coerceIn(0f, 1f) else if (clave == null) (tt / 0.28f).coerceIn(0f, 1f) else 1f
     }) {
         Box(Modifier.fillMaxSize().background(Paper))
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = if (clave == null) ((t.value - 0.45f) / 0.55f).coerceIn(0f, 1f) else (t.value * 2.5f).coerceIn(0f, 1f) }) { contenido(k) }
@@ -99,7 +100,7 @@ fun PantAutor(nombre: String, alCerrar: () -> Unit, alAbrir: (Libro) -> Unit) {
     LazyColumn(Modifier.fillMaxSize().background(Paper), contentPadding = PaddingValues(bottom = 40.dp)) {
         item {
             Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 26.dp)) {
-                EnlaceRevista("← Volver", color = PAPEL_CLARO) { alCerrar() }
+                EnlaceRevista("← Volver", color = Paper.copy(alpha = 0.85f)) { alCerrar() }
                 Text("AUTOR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 2.sp, modifier = Modifier.padding(top = 6.dp).entrada("$clave:a", 0))
                 FitTitle(nombre, 46.sp, 48.sp, color = Paper, family = Grotesca, fontWeight = FontWeight.ExtraBold, letterSpacing = (-1).sp, maxLines = 3, minSize = 24f,
                     modifier = Modifier.padding(top = 6.dp).entrada("$clave:n", 1))

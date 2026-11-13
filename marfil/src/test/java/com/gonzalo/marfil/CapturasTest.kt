@@ -374,6 +374,11 @@ class CapturasTest {
         foto("3h_sagas")
         rule.onAllNodesWithText("Crónicas de Dune", useUnmergedTree = true)[0].performClick(); rule.mainClock.advanceTimeBy(1200); rule.waitForIdle()
         foto("3i_saga_desde_sagas")
+        // El cierre, hasta el final: la página encoge hacia su fila y se funde con ella (sin tirón al terminar)
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithText("← VOLVER").performClick()
+        listOf(120L, 120L, 80L, 80L, 80L).fold(0L) { acc, ms -> val t = acc + ms; rule.mainClock.advanceTimeBy(ms); com.github.takahirom.roborazzi.captureScreenRoboImage("build/outputs/roborazzi/m_saga_cierra_$t.png"); t }
+        rule.mainClock.autoAdvance = true
     }
 
     /** El buscador: creciendo desde BUSCAR, vacío (atajos) y buscando en los subrayados. */

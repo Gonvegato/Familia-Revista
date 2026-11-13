@@ -145,7 +145,8 @@ private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) ->
         val s = (1f - 0.1f * p) * (if (o == null) 0.96f + 0.04f * tt else 1f)
         scaleX = s; scaleY = s
         translationX = (if (desdeIzquierda) 1f else -1f) * p * with(densidad) { 24.dp.toPx() }
-        alpha = if (o == null) tt.coerceIn(0f, 1f) else 1f
+        // Al cerrar, el último tramo (cuando el papel ya tiene el tamaño de la fila) se funde con la fila en vez de quitarse de golpe
+        alpha = if (o == null) tt.coerceIn(0f, 1f) else if (fichaId == null) (tt / 0.28f).coerceIn(0f, 1f) else 1f
     }) {
         // El papel de la ficha crece y encoge entero; lo de dentro aparece pronto al abrir y se va pronto al cerrar (sin transparencias
         // a medio camino encima de la lista)

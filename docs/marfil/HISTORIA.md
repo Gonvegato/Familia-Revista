@@ -5,6 +5,12 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.22.1 — el final del cierre, sin tirón
+
+- Al cerrar una saga, un autor o la ficha, el papel encoge hasta su fila y, en el último tramo, se funde con ella (antes se quitaba de golpe
+  y la fila aparecía con un pequeño tirón).
+- «← Volver» en la página de un autor se ve con cualquier tema (antes, con fondos claros, no se veía).
+
 ## 0.22.0 — Seshat en movimiento
 
 Todo sigue al dedo y se puede interrumpir a medio camino (lo probado en la maqueta «Seshat en movimiento»).
