@@ -2,6 +2,12 @@ package com.gonzalo.mostaza
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -34,7 +40,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         iniciar(this)
-        Actualizador.init(this)
+        // (la de pruebas no se actualiza sola: es otra app y se manda a mano)
+        if (!BuildConfig.DEBUG) Actualizador.init(this)
         lee(intent)
         setContent {
             MostazaTheme {
@@ -49,8 +56,15 @@ class MainActivity : ComponentActivity() {
                 Sala.enTablet
                 val sala = Sala.activa(this)
                 LaunchedEffect(sala) { pantallaCompleta(sala) }
-                if (sala) SalaApp(fichaPedida, addonPedido, seccionPedida, alAtender = { fichaPedida = null; addonPedido = null; seccionPedida = null })
-                else MostazaApp(fichaPedida, addonPedido, seccionPedida) { fichaPedida = null; addonPedido = null; seccionPedida = null }
+                androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier) {
+                    if (sala) SalaApp(fichaPedida, addonPedido, seccionPedida, alAtender = { fichaPedida = null; addonPedido = null; seccionPedida = null })
+                    else MostazaApp(fichaPedida, addonPedido, seccionPedida) { fichaPedida = null; addonPedido = null; seccionPedida = null }
+                    // Solo en la de pruebas: ver la de la tele en el móvil (en horizontal, como una tele) y volver
+                    if (BuildConfig.DEBUG && android.os.Build.FINGERPRINT != "robolectric") BotonTele(sala) { Sala.ponEnTablet(this@MainActivity, !Sala.enTablet) }
+                }
+                if (BuildConfig.DEBUG) LaunchedEffect(sala) {
+                    requestedOrientation = if (sala) android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
             }
         }
     }
@@ -73,4 +87,21 @@ class MainActivity : ComponentActivity() {
         // Los próximos capítulos de tus series (el widget), si toca
         Proximos.alDia(c)
     }
+}
+
+/** El botón de la versión de pruebas: «Ver en la tele» / «Volver al móvil», abajo a la izquierda, por encima de todo. */
+@androidx.compose.runtime.Composable
+private fun androidx.compose.foundation.layout.BoxScope.BotonTele(enLaTele: Boolean, alPulsar: () -> Unit) {
+    androidx.compose.material3.Text(
+        if (enLaTele) "VOLVER AL MÓVIL" else "VER EN LA TELE",
+        color = androidx.compose.ui.graphics.Color.White,
+        fontSize = androidx.compose.ui.unit.TextUnit(13f, androidx.compose.ui.unit.TextUnitType.Sp),
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Black,
+        modifier = androidx.compose.ui.Modifier.align(androidx.compose.ui.Alignment.BottomStart)
+            .padding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.asPaddingValues())
+            .padding(14.dp)
+            .background(androidx.compose.ui.graphics.Color(0xFFB56576), androidx.compose.foundation.shape.RoundedCornerShape(50))
+            .clickable(onClick = alPulsar)
+            .padding(horizontal = 18.dp, vertical = 12.dp)
+    )
 }

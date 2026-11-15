@@ -18,10 +18,17 @@ android {
         // 64 bits (móviles y tabletas) y 32 bits (teles como la Xiaomi Mi Box, con Android 9 y sistema de 32 bits): el motor de torrents,
         // FFmpeg y VLC traen su biblioteca nativa para las dos
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+        manifestPlaceholders["etiqueta"] = "Hathor"
     }
     // (las bibliotecas nativas, comprimidas en el APK: la del motor ocupa unos 6 MB en vez de 16)
     packaging { jniLibs { useLegacyPackaging = true } }
     buildTypes {
+        // La de pruebas: otra app al lado de Hathor (otro paquete, «Hathor debug»), con el botón para ver la de la tele en el móvil
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            manifestPlaceholders["etiqueta"] = "Hathor debug"
+        }
         getByName("release") {
             isDebuggable = false
             isMinifyEnabled = true
@@ -31,7 +38,7 @@ android {
             signingConfig = null
         }
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     testOptions {
         unitTests {
