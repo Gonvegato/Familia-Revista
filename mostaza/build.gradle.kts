@@ -11,12 +11,13 @@ android {
     defaultConfig {
         // Películas y series de la familia: otro paquete, otra app, la misma cuenta y la misma revista
         applicationId = "com.gonzalo.mostaza"
-        minSdk = 29
+        minSdk = 28
         targetSdk = 35
-        versionCode = 32
-        versionName = "0.9.0"
-        // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura
-        ndk { abiFilters += "arm64-v8a" }
+        versionCode = 33
+        versionName = "0.9.1"
+        // 64 bits (móviles y tabletas) y 32 bits (teles como la Xiaomi Mi Box, con Android 9 y sistema de 32 bits): el motor de torrents,
+        // FFmpeg y VLC traen su biblioteca nativa para las dos
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
     // (las bibliotecas nativas, comprimidas en el APK: la del motor ocupa unos 6 MB en vez de 16)
     packaging { jniLibs { useLegacyPackaging = true } }
