@@ -128,7 +128,9 @@ fun Modifier.enfocable(id: String, radio: Dp = 10.dp, crece: Float = 1.06f, alEn
         .focusProperties { canFocus = activa }
         .onFocusChanged { f ->
             enfocado = f.isFocused
-            if (f.isFocused) { foco.enfoca(id); marca(); enfocar?.invoke() } else foco.suelta(id)
+            // (si el foco pasa a algo de dentro, como el campo de Buscar al escribir, sigue siendo suyo: si no, la sala creería que se ha
+            // perdido y lo volvería a poner aquí, y el teclado de la tele se cerraría al segundo)
+            if (f.isFocused) { foco.enfoca(id); marca(); enfocar?.invoke() } else if (!f.hasFocus) foco.suelta(id)
         }
         .focusable(activa)
         .onGloballyPositioned { c -> sitio[0] = c; if (enfocado) marca() }
