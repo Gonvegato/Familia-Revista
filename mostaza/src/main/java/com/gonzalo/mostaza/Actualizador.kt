@@ -28,6 +28,9 @@ import kotlinx.coroutines.launch
  *  - si Android no lo deja, con un aviso para actualizar ahora (Android pide su confirmación), y al terminar se vuelve a
  *    abrir sola (o te avisa para abrirla).
  */
+/** La de pruebas y la de la tele no se actualizan solas (la del kDrive es la del móvil: no vale para la tele). */
+val sinActualizar: Boolean get() = BuildConfig.DEBUG || BuildConfig.TELE
+
 object Actualizador {
     class Nueva(val nombre: String, val versionCode: Long, val archivo: File, val silenciosa: Boolean)
 
@@ -116,6 +119,8 @@ object Actualizador {
     /** Que el archivo bajado sea de verdad una versión más nueva de Mostaza, firmada con la misma clave que la instalada. */
     @Suppress("DEPRECATION")
     fun valida(ctx: Context, f: File): Long? {
+        // (antes de Android 9 no se puede leer la firma así; ahí, que es la versión de la tele, no se actualiza)
+        if (android.os.Build.VERSION.SDK_INT < 28) return null
         val pm = ctx.packageManager
         val nuevo = pm.getPackageArchiveInfo(f.path, PackageManager.GET_SIGNING_CERTIFICATES) ?: return null
         val actual = instalada(ctx)
@@ -151,8 +156,8 @@ object Actualizador {
      * de verse ninguna, se instala lo que esté listo; y con la app cerrada, cada pocas horas (ActualizadorWorker).
      */
     fun init(ctx: Context) {
-        // La de pruebas («Hathor debug», otro paquete) no se actualiza nunca: ni mira el kDrive ni programa nada
-        if (BuildConfig.DEBUG) return
+        // La de pruebas («Hathor debug») y la de la tele (-Ptele) no se actualizan nunca: ni miran el kDrive ni programan nada
+        if (sinActualizar) return
         if (iniciado) return
         iniciado = true
         val app = ctx.applicationContext
@@ -195,7 +200,7 @@ object Actualizador {
 
     /** Con la app cerrada: cada 4 horas (con red) se mira y, si hay una nueva, se baja y se instala sola. */
     fun programa(ctx: Context) {
-        if (BuildConfig.DEBUG) return
+        if (sinActualizar) return
         val req = androidx.work.PeriodicWorkRequestBuilder<ActualizadorWorker>(4, java.util.concurrent.TimeUnit.HOURS)
             .setConstraints(androidx.work.Constraints.Builder().setRequiredNetworkType(androidx.work.NetworkType.CONNECTED).build())
             .build()
@@ -204,7 +209,7 @@ object Actualizador {
 
     /** Se llama nada más abrir la app y luego cada minuto mientras está abierta (siempre en segundo plano). */
     fun comprueba(ctx: Context, manual: Boolean = false, forzar: Boolean = false) {
-        if (BuildConfig.DEBUG) { if (manual) anota(ctx, "versión de pruebas: no se actualiza"); return }
+        if (sinActualizar) { if (manual) anota(ctx, "esta versión no se actualiza sola"); return }
         if (!activo(ctx) && !forzar) { if (manual) anota(ctx, "apagada (interruptor de arriba)"); return }
         if (!KDrive.on(ctx)) { anota(ctx, "kDrive sin conectar (Ajustes → Avanzado)"); return }
         if (!hayInternet(ctx)) { anota(ctx, "sin internet"); return }
@@ -218,7 +223,7 @@ object Actualizador {
      * Es bloqueante (red): llamar fuera del hilo principal. Devuelve lo que ha pasado, para enseñarlo.
      */
     fun actualizarAhora(ctx: Context): String {
-        if (BuildConfig.DEBUG) return "Es la versión de pruebas: no se actualiza"
+        if (sinActualizar) return "Esta versión no se actualiza sola"
         if (!KDrive.on(ctx)) return "kDrive sin conectar"
         if (!hayInternet(ctx)) return "Sin internet"
         // (si justo hay otra comprobación en marcha, se espera a que acabe)
@@ -267,7 +272,7 @@ object Actualizador {
 
     /** Al salir de la app (y en segundo plano): si se puede instalar sin preguntar, se instala ahora (no interrumpe nada). */
     fun alSalir(ctx: Context) {
-        if (BuildConfig.DEBUG) return
+        if (sinActualizar) return
         val n = nueva?.takeIf { it.silenciosa } ?: return
         if (seVe()) return
         val espera = esperaParaInstalar(ctx)
@@ -302,7 +307,7 @@ object Actualizador {
     fun quitaAviso(ctx: Context) { runCatching { ctx.getSystemService(NotificationManager::class.java).cancel(AVISO_REABRIR) } }
 
     fun instala(ctx: Context, n: Nueva) {
-        if (BuildConfig.DEBUG) return
+        if (sinActualizar) return
         marcaReabrir(ctx, seVe())
         val pi = ctx.packageManager.packageInstaller
         val p = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
@@ -350,7 +355,7 @@ class ActualizadorReabrir : BroadcastReceiver() {
 class ActualizadorWorker(ctx: Context, p: androidx.work.WorkerParameters) : androidx.work.CoroutineWorker(ctx, p) {
     override suspend fun doWork(): Result {
         val c = applicationContext
-        if (BuildConfig.DEBUG || !Actualizador.activo(c) || !KDrive.on(c)) return Result.success()
+        if (sinActualizar || !Actualizador.activo(c) || !KDrive.on(c)) return Result.success()
         // (si ya está bajada y lista, no hace falta volver a mirar)
         if (Actualizador.nueva == null) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { Actualizador.comprueba(c) } }
         // (si justo la estás usando, espera a que salgas)

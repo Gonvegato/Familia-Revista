@@ -368,6 +368,16 @@ object Biblioteca {
         }
     }
 
+    /**
+     * El episodio que pone «Reproducir» en una serie, sin que tengas que elegirlo: el que toca ([siguiente]) si la tienes; si no la tienes
+     * o ya la has visto entera, el primero estrenado (empezar o volver a verla). Null solo si no hay ningún episodio estrenado.
+     */
+    fun queToca(t: Titulo?, m: Meta, ahora: Long = System.currentTimeMillis()): Video? {
+        t?.let { siguiente(it, m, ahora) }?.let { return it }
+        val eps = m.videos.filter { it.temporada > 0 }.sortedWith(compareBy({ it.temporada }, { it.episodio }))
+        return eps.firstOrNull { it.estrenado(ahora) }
+    }
+
     /** El episodio que toca: el que dejaste a medias o el siguiente al último visto (de los estrenados). */
     fun siguiente(t: Titulo, m: Meta, ahora: Long = System.currentTimeMillis()): Video? {
         val eps = m.videos.filter { it.temporada > 0 }.sortedWith(compareBy({ it.temporada }, { it.episodio }))

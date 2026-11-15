@@ -5,19 +5,25 @@ plugins {
     id("io.github.takahirom.roborazzi")
 }
 
+// La versión para la tele de casa (la Xiaomi Mi Box, Android 8 y sistema de 32 bits): solo con -Ptele. No va al kDrive ni se actualiza
+// sola; la de siempre (sin -Ptele) es la de antes: Android 10 o más y solo 64 bits, sin pesar más.
+val tele = providers.gradleProperty("tele").isPresent
+
 android {
     namespace = "com.gonzalo.mostaza"
     compileSdk = 36
     defaultConfig {
         // Películas y series de la familia: otro paquete, otra app, la misma cuenta y la misma revista
         applicationId = "com.gonzalo.mostaza"
-        minSdk = 28
+        minSdk = if (tele) 26 else 29
         targetSdk = 35
-        versionCode = 33
-        versionName = "0.9.1"
-        // 64 bits (móviles y tabletas) y 32 bits (teles como la Xiaomi Mi Box, con Android 9 y sistema de 32 bits): el motor de torrents,
-        // FFmpeg y VLC traen su biblioteca nativa para las dos
-        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+        versionCode = 35
+        versionName = "0.9.3"
+        // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura.
+        // La de la tele lleva también la de 32 bits (el motor de torrents, FFmpeg y VLC traen las dos)
+        ndk { abiFilters += if (tele) listOf("arm64-v8a", "armeabi-v7a") else listOf("arm64-v8a") }
+        buildConfigField("boolean", "TELE", tele.toString())
+        if (tele) versionNameSuffix = "-tele"
         manifestPlaceholders["etiqueta"] = "Hathor"
     }
     // (las bibliotecas nativas, comprimidas en el APK: la del motor ocupa unos 6 MB en vez de 16)

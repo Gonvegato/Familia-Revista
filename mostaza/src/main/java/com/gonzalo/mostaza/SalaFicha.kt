@@ -86,14 +86,14 @@ private fun FichaSalaDe(b: MetaBreve, est: EstadoSala, ctl: ControlSala) {
         }
     }
 
-    val siguiente = if (serie && m != null && t != null) Biblioteca.siguiente(t, m) else null
+    val siguiente = if (serie && m != null) Biblioteca.queToca(t, m) else null
     val prog = if (!serie) Biblioteca.progreso(t?.idStremio ?: b.id) else siguiente?.let { Biblioteca.progreso(it.id) }
     val seguir = prog != null && !prog.visto && prog.pos > 60_000L
     val textoBoton = when {
         buscando -> "Buscando fuentes…"
         serie && siguiente != null -> (if (seguir) "Seguir · " else "Ver · ") + "T${siguiente.temporada}·E${siguiente.episodio}"
         serie && m == null -> "Leyendo la ficha…"
-        serie -> "Elige un episodio"
+        serie -> "Aún sin episodios"
         seguir -> "Seguir viendo"
         else -> "Reproducir"
     }

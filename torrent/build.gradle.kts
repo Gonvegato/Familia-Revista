@@ -12,7 +12,7 @@ android {
     namespace = "com.gonzalo.torrent"
     compileSdk = 35
     defaultConfig {
-        minSdk = 28
+        minSdk = 26
         // libtorrent4j llama a Java desde C++ (SWIG): R8 no puede quitar ni renombrar nada suyo en la app
         consumerProguardFiles("consumer-rules.pro")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

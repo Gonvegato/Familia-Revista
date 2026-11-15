@@ -37,7 +37,14 @@ object Acceso {
 
     /** ¿Lleva este paquete la firma de la familia? */
     fun esDeLaFamilia(ctx: Context, paquete: String): Boolean =
-        paquete in LaFamilia.APPS && runCatching { ctx.packageManager.hasSigningCertificate(paquete, CERTIFICADO, PackageManager.CERT_INPUT_SHA256) }.getOrDefault(false)
+        paquete in LaFamilia.APPS && runCatching {
+            if (android.os.Build.VERSION.SDK_INT >= 28) ctx.packageManager.hasSigningCertificate(paquete, CERTIFICADO, PackageManager.CERT_INPUT_SHA256)
+            else {
+                // Android 8 (la tele de casa): la firma a la antigua, comparada por su SHA-256
+                @Suppress("DEPRECATION") val firmas = ctx.packageManager.getPackageInfo(paquete, PackageManager.GET_SIGNATURES).signatures.orEmpty()
+                firmas.any { java.security.MessageDigest.getInstance("SHA-256").digest(it.toByteArray()).contentEquals(CERTIFICADO) }
+            }
+        }.getOrDefault(false)
 
     /**
      * Sin sesión aquí: se pregunta a las hermanas instaladas si alguna tiene la cuenta, y se entra con ella. Bloquea (red).

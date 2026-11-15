@@ -151,14 +151,14 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
         }
     }
 
-    val siguiente = if (serie && m != null && t != null) Biblioteca.siguiente(t, m) else if (serie && m != null) m.videos.filter { it.temporada > 0 }.minWithOrNull(compareBy({ it.temporada }, { it.episodio })) else null
+    val siguiente = if (serie && m != null) Biblioteca.queToca(t, m) else null
     val prog = if (!serie) Biblioteca.progreso(t?.idStremio ?: b.id) else siguiente?.let { Biblioteca.progreso(it.id) }
     val seguir = prog != null && !prog.visto && prog.pos > 60_000L
     val volver = t?.estado == Estado.VISTO
     val textoBoton = when {
         buscando -> "Buscando fuentes…"
         serie && siguiente != null -> (if (seguir || (t?.estado == Estado.VIENDO && Biblioteca.ultimo(t.ref) != null)) "Seguir viendo" else if (volver) "Volver a ver" else "Ver") + " · T${siguiente.temporada} · E${siguiente.episodio}"
-        serie -> if (m == null) "Ver" else "Elige un episodio"
+        serie -> if (m == null) "Ver" else "Aún sin episodios"
         seguir -> "Seguir viendo"
         volver -> "Volver a ver"
         else -> "Ver"
