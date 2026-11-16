@@ -71,16 +71,15 @@ fun NombreConPunto(nombre: String, tam: TextUnit, color: Color = Charcoal, modif
 }
 
 /**
- * Al pasar el ratón, la fila (o la tarjeta) se levanta un poco y el puntero es la mano; al pulsar, se hunde con el muelle (lo del móvil)
+ * Al pasar el ratón, el puntero es la mano (nada más: ni se levanta ni sale recuadro). Al pulsar, hace lo suyo.
  * y hace [alPulsar].
  */
+@Suppress("UNUSED_PARAMETER")
 fun Modifier.levanta(enabled: Boolean = true, hundido: Float = 0.975f, alto: Dp = 3.dp, alPulsar: () -> Unit): Modifier = composed {
-    val h = remember { MutableInteractionSource() }
-    val encima by h.collectIsHoveredAsState()
-    val alza by animateFloatAsState(if (encima && enabled) 1f else 0f, spring(dampingRatio = 0.8f, stiffness = 500f), label = "alza")
-    this.hoverable(h).pointerHoverIcon(if (enabled) PointerIcon.Hand else PointerIcon.Default)
-        .graphicsLayer { translationY = -alto.toPx() * alza; shadowElevation = 10.dp.toPx() * alza }
-        .pulsable(enabled = enabled, hundido = hundido, onClick = alPulsar)
+    // Al pasar el ratón, solo la mano: sin levantarse, sin sombra (sobre un texto sin fondo se veía como un recuadro) y sin encogerse al
+    // pulsar ([hundido] y [alto] quedan por compatibilidad)
+    this.pointerHoverIcon(if (enabled) PointerIcon.Hand else PointerIcon.Default)
+        .pulsable(enabled = enabled, hundido = 1f, onClick = alPulsar)
 }
 
 /** Un enlace de la cabecera de tinta: «BUSCAR», «+ AÑADIR»… (con su atajo en gris al lado, si lo tiene). */

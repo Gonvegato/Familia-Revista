@@ -303,7 +303,20 @@ fun TemaFamilia(content: @Composable () -> Unit) {
     ) {
         MaterialTheme(colorScheme = appColors(), typography = AppTypography) {
             // El texto sin color propio sale con la tinta del tema (si no, negro: se veía mal sobre un fondo oscuro)
-            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Charcoal, content = content)
+            // Sin recuadros al pasar el ratón ni al pulsar (el gris de Compose y la onda de Material): en las seis apps, de una vez
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material3.LocalContentColor provides Charcoal,
+                androidx.compose.foundation.LocalIndication provides SinMarca,
+                androidx.compose.material3.LocalRippleConfiguration provides null,
+                content = content)
         }
     }
+}
+
+/** Lo que se pulsa no pinta nada encima (ni al pasar el ratón, ni al pulsar, ni con el foco del teclado). */
+object SinMarca : androidx.compose.foundation.IndicationNodeFactory {
+    override fun create(interactionSource: androidx.compose.foundation.interaction.InteractionSource): androidx.compose.ui.node.DelegatableNode =
+        object : androidx.compose.ui.Modifier.Node() {}
+    override fun equals(other: Any?) = other === this
+    override fun hashCode() = 7
 }
