@@ -25,6 +25,17 @@ type LibroKobo struct {
 	Terminado     time.Time // LastTimeFinishedReading
 
 	Kid string // el libro de la cuenta al que corresponde (lo pone buscaKid; vacío: el de su clave)
+
+	// Solo en los kepub que copias tú: por dónde vas tal como lo apunta el Kobo (ChapterIDBookmarked: «capítulo.xhtml#kobo.12.3:40»)
+	// y la huella de KOReader del archivo (Seshat salta ahí si tiene ese mismo archivo)
+	Marca       string
+	HuellaKepub string
+}
+
+// esKepub: un libro que copiaste al Kobo en kepub (el EPUB de Kobo). Los de la tienda no (su ContentID no es un archivo).
+func esKepub(id string) bool {
+	l := strings.ToLower(id)
+	return strings.HasPrefix(l, "file:///mnt/onboard/") && strings.HasSuffix(l, ".kepub.epub")
 }
 
 // leeKobo lee los libros de la base de datos del Kobo. No la toca: la copia (con sus archivos -wal y -shm, donde puede estar lo
@@ -83,8 +94,8 @@ func leeKobo(ruta string) ([]LibroKobo, error) {
 	case cols["booktitle"]:
 		titulo = "BookTitle"
 	}
-	q := fmt.Sprintf(`SELECT ContentID, %s, %s, %s, %s, %s, %s, %s FROM content WHERE ContentType = 6`,
-		titulo, col("Attribution"), col("___PercentRead"), col("ReadStatus"), col("DateLastRead"), col("TimeSpentReading"), col("LastTimeFinishedReading"))
+	q := fmt.Sprintf(`SELECT ContentID, %s, %s, %s, %s, %s, %s, %s, %s FROM content WHERE ContentType = 6`,
+		titulo, col("Attribution"), col("___PercentRead"), col("ReadStatus"), col("DateLastRead"), col("TimeSpentReading"), col("LastTimeFinishedReading"), col("ChapterIDBookmarked"))
 	filas, err = db.Query(q)
 	if err != nil {
 		return nil, fmt.Errorf("no se pudieron leer los libros del Kobo: %w", err)
@@ -93,13 +104,16 @@ func leeKobo(ruta string) ([]LibroKobo, error) {
 	var libros []LibroKobo
 	for filas.Next() {
 		var id string
-		var t, a, ul, fin sql.NullString
+		var t, a, ul, fin, marca sql.NullString
 		var pct, est, seg sql.NullFloat64
-		if err := filas.Scan(&id, &t, &a, &pct, &est, &ul, &seg, &fin); err != nil {
+		if err := filas.Scan(&id, &t, &a, &pct, &est, &ul, &seg, &fin, &marca); err != nil {
 			continue
 		}
 		l := LibroKobo{ID: id, Titulo: strings.TrimSpace(t.String), Autor: strings.TrimSpace(a.String), Porcentaje: pct.Float64,
 			Estado: int(est.Float64), UltimaLectura: fecha(ul.String), Segundos: int64(seg.Float64), Terminado: fecha(fin.String)}
+		if esKepub(id) {
+			l.Marca = strings.TrimSpace(marca.String)
+		}
 		// Solo lo que has abierto alguna vez (lo demás no tiene nada que contar) y con título (sin él no se sabe qué libro es)
 		if l.Titulo == "" || (l.Estado == 0 && l.Porcentaje <= 0 && l.Segundos <= 0) {
 			continue

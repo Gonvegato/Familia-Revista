@@ -1989,7 +1989,46 @@ window.atrioIrXPointer = async (xp, fraction, quien) => {
         return true
     } catch (e) { console.warn('Lector: ir a la posición de KOReader', e); return false }
 }
-window.__xp = { xpDe, xpRango, xpLargo, xpADom }
+/** El sitio de una marca de frase del Kobo («kobo.12.3» o «kobo.12.3:40», letras en unidades UTF-16 dentro de la frase) en [doc]. */
+function koboRango(doc, frag) {
+    const m = /^(kobo\.\d+\.\d+)(?::(\d+))?$/.exec(frag || '')
+    const el = m && doc.getElementById(m[1])
+    if (!el) return null
+    let falta = +(m[2] || 0), nodo = null, off = 0
+    const w = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_CDATA_SECTION)
+    for (let t = w.nextNode(); t; t = w.nextNode()) { nodo = t; if (falta <= t.data.length) { off = falta; break } falta -= t.data.length; off = t.data.length }
+    const r = doc.createRange()
+    if (nodo) r.setStart(nodo, off); else r.setStart(el, 0)
+    r.collapse(true)
+    return r
+}
+/**
+ * Ir a donde ibas en el Kobo en un kepub, tal como lo apunta el Kobo: «capítulo.xhtml#kobo.12.3:40» (el capítulo desde la raíz del
+ * libro, la frase —el Kobo marca cada una— y, en el firmware 6, cuántas letras dentro de ella, en unidades UTF-16). Sin frase, el
+ * principio del capítulo. Con «Volver a donde estabas» por si acaso. Devuelve si ha ido.
+ */
+window.atrioIrKobo = async (marca, quien) => {
+    try {
+        const [cap, frag = ''] = (marca || '').split('#')
+        const secs = view?.book?.sections || []
+        const limpia = x => decodeURIComponent(String(x || '')).replace(/^\/+/, '')
+        let index = secs.findIndex(x => limpia(x.id) === limpia(cap))
+        if (index < 0) index = secs.findIndex(x => limpia(x.id).endsWith('/' + limpia(cap)) || limpia(cap).endsWith('/' + limpia(x.id)))
+        if (index < 0) return false
+        let destino = index
+        if (frag) {
+            const r = koboRango(await secs[index].createDocument(), frag)
+            if (r) destino = view.getCFI(index, r)
+        }
+        saltoDesde()
+        await view.goTo(destino)
+        await new Promise(z => setTimeout(z, 400))
+        xpLlegada = window.atrioXPointer()?.xp ?? null
+        aviso(quien ? `Sigues donde lo dejaste en ${quien}` : 'Sigues donde lo dejaste en el Kobo')
+        return true
+    } catch (e) { console.warn('Lector: ir a la posición del Kobo', e); return false }
+}
+window.__xp = { xpDe, xpRango, xpLargo, xpADom, koboRango }
 
 // ---------------------------------------------------------------- Botones
 $('#b-cerrar').onclick = () => { window.atrioPausa(true); A.close() }

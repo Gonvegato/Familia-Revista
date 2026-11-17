@@ -27,6 +27,11 @@ object Kobo {
         val titulo: String, val autor: String, val porcentaje: Double, val estado: Int, val ul: Long, val segundos: Long, val terminado: Long,
         /** El libro de la cuenta al que corresponde (lo pone [buscaKid]; vacío: el de su clave). */
         val kid: String = "",
+        /** Solo en los kepub que copias tú: por dónde vas como lo apunta el Kobo («capítulo.xhtml#kobo.12.3:40») y la huella del archivo. */
+        val marca: String = "",
+        val huellaKepub: String = "",
+        /** ContentID del Kobo (en los que copias tú, «file:///mnt/onboard/…»). */
+        val contentId: String = "",
     )
 
     /** Unos campos de una cosa de la cuenta, todos con la misma hora. */
@@ -89,10 +94,15 @@ object Kobo {
                 if (ul > 0) pon("ul", ul, ul)
                 pon("fr", fr, hora)
                 if (fin > 0 && l.estado == 2) pon("fin", listOf(fin), fin)
+                if (l.marca.isNotEmpty() && l.huellaKepub.isNotEmpty() && ul > 0) { pon("kc", l.marca, ul); pon("kh", l.huellaKepub, ul) }
             } else if (ul > 0) {
                 if (ul > libro.campos["ul"].num().toLong()) pon("ul", ul, ul)
                 if (abs(fr - libro.campos["fr"].num()) > 0.00005) pon("fr", fr, ul)
                 if (estado.isNotEmpty() && estado != libro.texto("estado")) pon("estado", estado, if (l.estado == 2 && fin > 0) fin else ul)
+                // En un kepub: por dónde vas tal como lo apunta el Kobo y de qué archivo (SesKobo salta ahí si tiene ese mismo archivo)
+                if (l.marca.isNotEmpty() && l.huellaKepub.isNotEmpty() && (l.marca != libro.texto("kc") || l.huellaKepub != libro.texto("kh"))) {
+                    pon("kc", l.marca, ul); pon("kh", l.huellaKepub, ul)
+                }
                 if (fin > 0 && l.estado == 2) {
                     val lista = libro.lista("fin")
                     if (lista.none { abs(it.num() - fin) < 36 * 3600 * 1000.0 }) pon("fin", lista + fin, fin)
@@ -123,6 +133,9 @@ object Kobo {
         }
         return Plan(cambios, resumen.sorted())
     }
+
+    /** Un libro que copiaste al Kobo en kepub (los de la tienda no: su ContentID no es un archivo). */
+    fun esKepub(contentId: String) = contentId.lowercase().let { it.startsWith("file:///mnt/onboard/") && it.endsWith(".kepub.epub") }
 
     private fun cuanto(l: Libro) = if (l.estado == 2) "terminado" else "${l.porcentaje.roundToLong()} %"
 

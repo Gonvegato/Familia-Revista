@@ -83,7 +83,8 @@ fun compartidos(l: Libro) = listOf(l.titulo, l.autor, l.favorito, l.estado, l.po
 
 /** El título de un libro a partir del nombre de su archivo: «El nombre de la rosa - Umberto Eco.epub» → («El nombre de la rosa», «Umberto Eco»). */
 fun tituloYAutorDeArchivo(nombre: String): Pair<String, String> {
-    val base = nombre.substringBeforeLast('.', nombre).replace('_', ' ').replace(Regex("\\s+"), " ").trim()
+    // («Libro - Autor.kepub.epub», el EPUB de Kobo, también: sin el «.kepub»)
+    val base = nombre.substringBeforeLast('.', nombre).let { if (it.endsWith(".kepub", ignoreCase = true)) it.dropLast(6) else it }.replace('_', ' ').replace(Regex("\\s+"), " ").trim()
     val partes = base.split(" - ").map { it.trim() }.filter { it.isNotEmpty() }
     return if (partes.size >= 2) partes[0] to partes[1] else base to ""
 }

@@ -44,7 +44,8 @@ class KoboTest {
         for (c in cs) {
             @Suppress("UNCHECKED_CAST")
             val libros = (c["libros"] as List<Map<String, Any?>>).map {
-                Kobo.Libro(it["titulo"] as String, it["autor"] as String, it["porcentaje"].n(), it["estado"].n().toInt(), it["ul"].n().toLong(), it["segundos"].n().toLong(), it["terminado"].n().toLong())
+                Kobo.Libro(it["titulo"] as String, it["autor"] as String, it["porcentaje"].n(), it["estado"].n().toInt(), it["ul"].n().toLong(), it["segundos"].n().toLong(), it["terminado"].n().toLong(),
+                    marca = (it["marca"] as? String).orEmpty(), huellaKepub = (it["huella"] as? String).orEmpty())
             }
             val p = Kobo.planea(libros, nodos(c["cuentaLibros"]), nodos(c["cuentaTiempo"]), c["ahora"].n().toLong(), ZoneId.of(c["zona"] as String), c["disp"] as String)
             val tengo = plano(p)

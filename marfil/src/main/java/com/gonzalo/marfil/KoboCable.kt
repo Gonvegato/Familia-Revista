@@ -64,7 +64,7 @@ object KoboCable {
                 else -> "NULL"
             }
             val q = "SELECT ContentID, $titulo, ${col("Attribution")}, ${col("___PercentRead")}, ${col("ReadStatus")}, ${col("DateLastRead")}, " +
-                "${col("TimeSpentReading")}, ${col("LastTimeFinishedReading")} FROM content WHERE ContentType = 6"
+                "${col("TimeSpentReading")}, ${col("LastTimeFinishedReading")}, ${col("ChapterIDBookmarked")} FROM content WHERE ContentType = 6"
             val r = ArrayList<Kobo.Libro>()
             db.rawQuery(q, null).use { c ->
                 while (c.moveToNext()) {
@@ -73,7 +73,9 @@ object KoboCable {
                     val est = if (c.isNull(4)) 0 else c.getInt(4)
                     val seg = if (c.isNull(6)) 0L else c.getLong(6)
                     if (t.isEmpty() || (est == 0 && pct <= 0 && seg <= 0)) continue
-                    r += Kobo.Libro(t, c.getString(2)?.trim().orEmpty(), pct.coerceIn(0.0, 100.0), est, Kobo.fecha(c.getString(5)), seg, Kobo.fecha(c.getString(7)))
+                    val id = c.getString(0).orEmpty()
+                    r += Kobo.Libro(t, c.getString(2)?.trim().orEmpty(), pct.coerceIn(0.0, 100.0), est, Kobo.fecha(c.getString(5)), seg, Kobo.fecha(c.getString(7)),
+                        marca = if (Kobo.esKepub(id)) c.getString(8)?.trim().orEmpty() else "", contentId = id)
                 }
             }
             return r
@@ -83,7 +85,7 @@ object KoboCable {
     /** Lee el Kobo y sube a la cuenta lo que sepa de más tarde. */
     fun lee(ctx: Context, arbol: Uri): Lectura {
         if (!LaFamilia.familia.sesion.dentro) throw Error("Entra en tu cuenta (Ajustes → Cuenta) antes de leer el Kobo.")
-        val kobo = libros(ctx, arbol)
+        val kobo = libros(ctx, arbol).let { ls -> conHuellasKepub(ctx, raiz(ctx, arbol), ls) }
         // Con los libros de la cuenta al día (si no, un libro que aún no ha bajado a este móvil se tomaría por nuevo)
         val inf = LaFamilia.sincronizaYa()
         if (!LaFamilia.coleccion("libros").completa && !inf.ok) throw Error("Sin conexión con la cuenta: hace falta para saber qué libros tienes ya.")
@@ -91,6 +93,18 @@ object KoboCable {
         for (c in p.cambios) LaFamilia.coleccion(c.coleccion).pon(c.ref, c.campos, c.hora)
         apunta(ctx, "cable")
         return Lectura(kobo.size, p.resumen)
+    }
+
+    /** La huella de cada kepub copiado al Kobo (para que SesKobo sepa que es el mismo archivo que tiene); sin archivo, sin marca. */
+    private fun conHuellasKepub(ctx: Context, r: DocumentFile, libros: List<Kobo.Libro>): List<Kobo.Libro> {
+        val listados = HashMap<String, Map<String, DocumentFile>>()
+        return libros.map { l ->
+            if (l.marca.isEmpty()) return@map l
+            var f: DocumentFile? = r
+            for (p in l.contentId.removePrefix("file:///mnt/onboard/").split('/')) f = f?.let { d -> listados.getOrPut(d.uri.toString()) { d.listFiles().associateBy { it.name.orEmpty() } }[p] }
+            val h = f?.takeIf { it.isFile }?.let { d -> runCatching { ctx.contentResolver.openInputStream(d.uri)?.use { KoSync.huellaDe(it) } }.getOrNull() }
+            if (h == null) l.copy(marca = "") else l.copy(huellaKepub = h)
+        }
     }
 
     /** Lo último que llegó del Kobo por aquí: (hora, «cable»), o null. (Lo que manda el Kobo por Wi-Fi se ve en los libros.) */

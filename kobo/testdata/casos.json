@@ -354,6 +354,161 @@
   }
  },
  {
+  "nombre": "kepub: por dónde vas, nuevo",
+  "ahora": 1794819600000,
+  "zona": "Europe/Madrid",
+  "disp": "kobo",
+  "libros": [
+   {
+    "titulo": "Amanecer rojo",
+    "autor": "Pierce Brown",
+    "porcentaje": 43,
+    "estado": 1,
+    "ul": 1794785400000,
+    "segundos": 3600,
+    "terminado": 0,
+    "marca": "OEBPS/c4.xhtml#kobo.17.1:204",
+    "huella": "4cb7844f18a4df4f0a441fbcebf2661b"
+   }
+  ],
+  "cuentaLibros": null,
+  "cuentaTiempo": null,
+  "cambios": {
+   "familia/libros/6955e596a64e0c22d3c8/a": "Pierce Brown",
+   "familia/libros/6955e596a64e0c22d3c8/an": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/clave": "libro:amanecer rojo:pierce brown",
+   "familia/libros/6955e596a64e0c22d3c8/estado": "en_curso",
+   "familia/libros/6955e596a64e0c22d3c8/fr": 0.43,
+   "familia/libros/6955e596a64e0c22d3c8/kc": "OEBPS/c4.xhtml#kobo.17.1:204",
+   "familia/libros/6955e596a64e0c22d3c8/kh": "4cb7844f18a4df4f0a441fbcebf2661b",
+   "familia/libros/6955e596a64e0c22d3c8/m/a": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/an": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/clave": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/estado": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/fr": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/kc": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/kh": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/t": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/ul": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/t": "Amanecer rojo",
+   "familia/libros/6955e596a64e0c22d3c8/ul": 1794785400000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/a": "Pierce Brown",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/fuente": "kobo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/a": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/fuente": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/ref": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/t": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/total": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/ref": "6955e596a64e0c22d3c8",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/t": "Amanecer rojo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/total": 3600000
+  }
+ },
+ {
+  "nombre": "kepub: por dónde vas, cambia",
+  "ahora": 1794819600000,
+  "zona": "Europe/Madrid",
+  "disp": "kobo",
+  "libros": [
+   {
+    "titulo": "Amanecer rojo",
+    "autor": "Pierce Brown",
+    "porcentaje": 43,
+    "estado": 1,
+    "ul": 1794785400000,
+    "segundos": 3600,
+    "terminado": 0,
+    "marca": "OEBPS/c4.xhtml#kobo.17.1:204",
+    "huella": "4cb7844f18a4df4f0a441fbcebf2661b"
+   }
+  ],
+  "cuentaLibros": {
+   "6955e596a64e0c22d3c8": {
+    "estado": "en_curso",
+    "fr": 0.43,
+    "kc": "OEBPS/c1.xhtml#kobo.3.1",
+    "kh": "4cb7844f18a4df4f0a441fbcebf2661b",
+    "m": {
+     "estado": 1794785400000,
+     "fr": 1794785400000,
+     "kc": 1794785391000,
+     "kh": 1794785391000,
+     "ul": 1794785391000
+    },
+    "t": "Amanecer rojo",
+    "ul": 1794785391000
+   }
+  },
+  "cuentaTiempo": null,
+  "cambios": {
+   "familia/libros/6955e596a64e0c22d3c8/kc": "OEBPS/c4.xhtml#kobo.17.1:204",
+   "familia/libros/6955e596a64e0c22d3c8/kh": "4cb7844f18a4df4f0a441fbcebf2661b",
+   "familia/libros/6955e596a64e0c22d3c8/m/kc": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/kh": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/ul": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/ul": 1794785400000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/a": "",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/fuente": "kobo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/a": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/fuente": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/ref": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/t": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/total": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/ref": "6955e596a64e0c22d3c8",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/t": "Amanecer rojo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/total": 3600000
+  }
+ },
+ {
+  "nombre": "kepub: igual que en la cuenta",
+  "ahora": 1794819600000,
+  "zona": "Europe/Madrid",
+  "disp": "kobo",
+  "libros": [
+   {
+    "titulo": "Amanecer rojo",
+    "autor": "Pierce Brown",
+    "porcentaje": 43,
+    "estado": 1,
+    "ul": 1794785400000,
+    "segundos": 3600,
+    "terminado": 0,
+    "marca": "OEBPS/c4.xhtml#kobo.17.1:204",
+    "huella": "4cb7844f18a4df4f0a441fbcebf2661b"
+   }
+  ],
+  "cuentaLibros": {
+   "6955e596a64e0c22d3c8": {
+    "estado": "en_curso",
+    "fr": 0.43,
+    "kc": "OEBPS/c4.xhtml#kobo.17.1:204",
+    "kh": "4cb7844f18a4df4f0a441fbcebf2661b",
+    "m": {
+     "estado": 1794785400000,
+     "fr": 1794785400000,
+     "kc": 1794785400000,
+     "kh": 1794785400000,
+     "ul": 1794785400000
+    },
+    "t": "Amanecer rojo",
+    "ul": 1794785400000
+   }
+  },
+  "cuentaTiempo": null,
+  "cambios": {
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/a": "",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/fuente": "kobo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/a": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/fuente": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/ref": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/t": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/total": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/ref": "6955e596a64e0c22d3c8",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/t": "Amanecer rojo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/total": 3600000
+  }
+ },
+ {
   "nombre": "autor escrito al revés",
   "ahora": 1794819600000,
   "zona": "Europe/Madrid",

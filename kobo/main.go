@@ -93,6 +93,29 @@ func envia(soloMirar bool) error {
 	if b, err := os.ReadFile(*fEnviado); err == nil {
 		_ = json.Unmarshal(b, &enviado)
 	}
+	// La huella de cada kepub copiado (para que Seshat sepa que es el mismo archivo); se guarda (no se relee si no cambia)
+	raizKobo := filepath.Dir(filepath.Dir(*fBD))
+	cacheHuellas := map[string]string{}
+	if b, err := os.ReadFile(filepath.Join(dirSeshat, "huellas.json")); err == nil {
+		_ = json.Unmarshal(b, &cacheHuellas)
+	}
+	for i := range libros {
+		if libros[i].Marca == "" {
+			continue
+		}
+		ruta := rutaDeContenido(libros[i].ID, raizKobo)
+		st, err := os.Stat(ruta)
+		if err != nil {
+			libros[i].Marca = ""
+			continue
+		}
+		k := fmt.Sprintf("%s|%d|%d", ruta, st.Size(), st.ModTime().Unix())
+		h := cacheHuellas[k]
+		if h == "" {
+			h, _ = huellaKOReader(ruta)
+		}
+		libros[i].HuellaKepub = h
+	}
 	var cambiados []LibroKobo
 	huellas := map[string]string{}
 	for _, l := range libros {
@@ -166,7 +189,7 @@ func envia(soloMirar bool) error {
 }
 
 func huella(l LibroKobo) string {
-	h := sha1.Sum([]byte(fmt.Sprintf("%s|%s|%.2f|%d|%d|%d|%d", l.Titulo, l.Autor, l.Porcentaje, l.Estado, ms(l.UltimaLectura), l.Segundos, ms(l.Terminado))))
+	h := sha1.Sum([]byte(fmt.Sprintf("%s|%s|%.2f|%d|%d|%d|%d|%s|%s", l.Titulo, l.Autor, l.Porcentaje, l.Estado, ms(l.UltimaLectura), l.Segundos, ms(l.Terminado), l.Marca, l.HuellaKepub)))
 	return hex.EncodeToString(h[:8])
 }
 

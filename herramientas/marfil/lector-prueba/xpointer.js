@@ -20,7 +20,7 @@ function lua(nombre) {
   const b = await chromium.launch()
   let fallos = 0, bien = 0
   const ok = (c, msg) => { if (c) bien++; else { fallos++; console.log('FALLA ' + msg) } }
-  for (const nombre of ['book-p', 'book-q', 'book-a']) {
+  for (const nombre of ['book-p', 'book-q', 'book-a', 'book-p.kepub', 'book-q.kepub']) {
     epub = fs.readFileSync(path.join(casos, nombre + '.epub'))
     const { subs, ultima } = lua(nombre)
     const pg = await (await b.newContext({ viewport: { width: 393, height: 851 }, hasTouch: true, isMobile: true })).newPage()
@@ -44,6 +44,28 @@ function lua(nombre) {
       ok(!r.error && r.texto === s.text, `${nombre} ${s.pos0}: «${r.texto}» (quiero «${s.text}») ${r.error || ''}`)
       ok(r.vuelta0 === s.pos0, `${nombre} ida y vuelta: ${r.vuelta0} (quiero ${s.pos0})`)
       ok(r.vuelta1 === s.pos1, `${nombre} ida y vuelta: ${r.vuelta1} (quiero ${s.pos1})`)
+    }
+    // 1c. kepub: la marca del Kobo («kobo.N.M:letras») de cada subrayado cae en su palabra, e ir a ella abre el libro ahí
+    if (nombre.includes('kepub')) for (const s of subs) {
+      const r = await pg.evaluate(async ({ pos0, pos1 }) => {
+        const i = +/DocFragment\[(\d+)\]/.exec(pos0)[1] - 1
+        const doc = await window.__view.book.sections[i].createDocument()
+        const a = window.__xp.xpRango(doc, pos0), z = window.__xp.xpRango(doc, pos1)
+        const span = a.startContainer.parentElement.closest('span[id^="kobo."]')
+        if (!span) return { error: 'sin frase del Kobo' }
+        // Las letras desde el principio de la frase hasta el sitio (como las cuenta el Kobo: unidades UTF-16)
+        let off = 0
+        const w = doc.createTreeWalker(span, NodeFilter.SHOW_TEXT)
+        for (let t = w.nextNode(); t; t = w.nextNode()) { if (t === a.startContainer) { off += a.startOffset; break } off += t.data.length }
+        const marca = span.id + ':' + off
+        const k = window.__xp.koboRango(doc, marca)
+        const rg = doc.createRange(); rg.setStart(k.startContainer, k.startOffset); rg.setEnd(z.startContainer, z.startOffset)
+        const capitulo = window.__view.book.sections[i].id
+        const fue = await window.atrioIrKobo(capitulo + '#' + marca, 'el Kobo')
+        await new Promise(r => setTimeout(r, 500))
+        return { marca, texto: rg.toString(), fue, idx: window.__view.lastLocation?.section?.current, llegada: window.atrioXPointer()?.llegada }
+      }, s)
+      ok(!r.error && r.texto === s.text && r.fue && r.llegada === true, `${nombre} marca del Kobo ${r.marca}: «${r.texto}» (quiero «${s.text}») ${JSON.stringify(r)}`)
     }
     // 1b. Lo que añade el lector (los botones de capítulo) no cuenta: un punto dentro de ellos es el primer texto del libro que sigue
     if (subs.length) {

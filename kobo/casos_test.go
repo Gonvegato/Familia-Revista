@@ -22,6 +22,8 @@ type libroCaso struct {
 	Ul         int64   `json:"ul"`
 	Segundos   int64   `json:"segundos"`
 	Terminado  int64   `json:"terminado"`
+	Marca      string  `json:"marca,omitempty"`
+	Huella     string  `json:"huella,omitempty"`
 }
 
 type caso struct {
@@ -47,7 +49,7 @@ func resuelve(c caso) map[string]any {
 	var libros []LibroKobo
 	remotos := map[string]Remoto{}
 	for _, l := range c.Libros {
-		lk := LibroKobo{Titulo: l.Titulo, Autor: l.Autor, Porcentaje: l.Porcentaje, Estado: l.Estado, UltimaLectura: aTiempo(l.Ul), Segundos: l.Segundos, Terminado: aTiempo(l.Terminado)}
+		lk := LibroKobo{Titulo: l.Titulo, Autor: l.Autor, Porcentaje: l.Porcentaje, Estado: l.Estado, UltimaLectura: aTiempo(l.Ul), Segundos: l.Segundos, Terminado: aTiempo(l.Terminado), Marca: l.Marca, HuellaKepub: l.Huella}
 		lk.Kid = buscaKid(lk, c.Cuenta)
 		libros = append(libros, lk)
 		remotos[lk.Kid] = Remoto{Libro: c.Cuenta[lk.Kid], Tiempo: c.Tiempo[lk.Kid+"~"+c.Disp]}
@@ -73,6 +75,8 @@ func casosBase() []caso {
 	rojo := libroCaso{Titulo: "Amanecer rojo", Autor: "Pierce Brown", Porcentaje: 43, Estado: 1, Ul: ul, Segundos: 3600}
 	fin := rojo
 	fin.Estado, fin.Porcentaje, fin.Terminado = 2, 100, ul
+	kepub := rojo
+	kepub.Marca, kepub.Huella = "OEBPS/c4.xhtml#kobo.17.1:204", "4cb7844f18a4df4f0a441fbcebf2661b"
 	alReves := rojo
 	alReves.Autor, alReves.Titulo = "Brown, Pierce", "AMANECER ROJO"
 	m := func(kv ...any) map[string]any {
@@ -98,6 +102,11 @@ func casosBase() []caso {
 		{Nombre: "tiempo que crece", Libros: []libroCaso{rojo},
 			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul), "fr": 0.43, "m": m("ul", ul, "fr", ul, "estado", ul)}},
 			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(1800000), "d2026-11-16": float64(600000), "t": "Amanecer rojo", "a": "Pierce Brown", "m": m("total", ahora+50)}}},
+		{Nombre: "kepub: por dónde vas, nuevo", Libros: []libroCaso{kepub}},
+		{Nombre: "kepub: por dónde vas, cambia", Libros: []libroCaso{kepub},
+			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul - 9000), "fr": 0.43, "kc": "OEBPS/c1.xhtml#kobo.3.1", "kh": "4cb7844f18a4df4f0a441fbcebf2661b", "m": m("ul", ul-9000, "fr", ul, "estado", ul, "kc", ul-9000, "kh", ul-9000)}}},
+		{Nombre: "kepub: igual que en la cuenta", Libros: []libroCaso{kepub},
+			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul), "fr": 0.43, "kc": kepub.Marca, "kh": kepub.Huella, "m": m("ul", ul, "fr", ul, "estado", ul, "kc", ul, "kh", ul)}}},
 		{Nombre: "autor escrito al revés", Libros: []libroCaso{alReves},
 			Cuenta: map[string]Nodo{"otroref": {"t": "Amanecer rojo", "a": "Pierce Brown", "estado": "pendiente", "m": m("estado", 10)}}},
 	}

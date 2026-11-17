@@ -386,23 +386,46 @@ class LectorActivity : ComponentActivity() {
     // ---- SesKobo: la posición en el servidor KOSync (la del Kobo con NickelInkSync)
     @Volatile private var kosyncMirado = false
     @Volatile private var documento: String? = null
+    /** La próxima posición es la llegada a donde ibas en el Kobo: no es «un salto largo» (no se pregunta «¿vas por aquí de verdad?»). */
+    @Volatile private var llegadaDeOtro = false
 
-    /** Al abrir el libro: si en el Kobo (u otro) vas por otro sitio, más reciente que lo leído aquí, se salta allí (con «Volver»). */
+    /**
+     * Al abrir el libro: si en el Kobo (u otro) vas por otro sitio, más reciente que lo leído aquí, se salta allí (con «Volver»). Dos
+     * fuentes: la posición de KOSync (EPUB normal, con NickelInkSync en el Kobo) y, en un kepub, la marca que manda el propio Kobo
+     * (`kc`, solo si `kh` dice que es este mismo archivo). Gana la más reciente.
+     */
     private fun posicionDeOtros() {
         val u = uri ?: return
-        if (!KoSync.activo(this)) return
         val leidoAqui = EstadoLectura.estado(this, id).optLong("read", 0L)
+        val nodo = runCatching { com.gonzalo.familia.LaFamilia.coleccion("libros").nodo(id) }.getOrNull()
+        val conKosync = KoSync.activo(this)
+        if (!conKosync && nodo?.texto("kc").isNullOrBlank()) return
         kotlin.concurrent.thread(name = "kosync") {
-            val h = KoSync.huella(applicationContext, u) ?: return@thread
+            val app = applicationContext
+            val h = KoSync.huella(app, u) ?: return@thread
             documento = h
-            val p = runCatching { KoSync.baja(applicationContext, h) }.getOrNull() ?: return@thread
-            val (subido, miXp) = KoSync.ultimaSubida(applicationContext, h)
-            if (p.idDispositivo == KoSync.idDispositivo(applicationContext) || p.hora <= maxOf(subido, leidoAqui) || p.xp == miXp) return@thread
-            val quien = if (p.dispositivo.contains("kobo", true) || p.dispositivo.isBlank()) "el Kobo" else p.dispositivo
+            val (subido, miXp) = KoSync.ultimaSubida(app, h)
+            val desde = maxOf(subido, leidoAqui)
+            // 1. KOSync
+            val p = if (conKosync) runCatching { KoSync.baja(app, h) }.getOrNull()
+                ?.takeIf { it.idDispositivo != KoSync.idDispositivo(app) && it.hora > desde && it.xp != miXp } else null
+            // 2. La marca del Kobo en un kepub (la misma solo una vez)
+            val prefs = app.getSharedPreferences("kosync", MODE_PRIVATE)
+            val kc = nodo?.texto("kc").orEmpty(); val horaKc = nodo?.m?.get("kc") ?: 0L
+            val marca = kc.takeIf { it.isNotBlank() && nodo?.texto("kh") == h && horaKc > desde && prefs.getLong("kc_$h", 0L) < horaKc }
+            if (p == null && marca == null) return@thread
             runOnUiThread {
-                // Ir a donde ibas en el Kobo no es «un salto largo» (no se pregunta «¿vas por aquí de verdad?»)
-                ancla = p.fraccion; preguntado = false
-                if (::web.isInitialized) web.evaluateJavascript("window.atrioIrXPointer && atrioIrXPointer(${JSONObject.quote(p.xp)}, ${p.fraccion}, ${JSONObject.quote(quien)})", null)
+                if (!::web.isInitialized) return@runOnUiThread
+                if (marca != null && (p == null || horaKc >= p.hora)) {
+                    prefs.edit().putLong("kc_$h", horaKc).apply()
+                    llegadaDeOtro = true; preguntado = false
+                    web.evaluateJavascript("window.atrioIrKobo && atrioIrKobo(${JSONObject.quote(marca)}, 'el Kobo')", null)
+                } else if (p != null) {
+                    val quien = if (p.dispositivo.contains("kobo", true) || p.dispositivo.isBlank()) "el Kobo" else p.dispositivo
+                    // Ir a donde ibas en el Kobo no es «un salto largo» (no se pregunta «¿vas por aquí de verdad?»)
+                    llegadaDeOtro = true; preguntado = false
+                    web.evaluateJavascript("window.atrioIrXPointer && atrioIrXPointer(${JSONObject.quote(p.xp)}, ${p.fraccion}, ${JSONObject.quote(quien)})", null)
+                }
             }
         }
     }
@@ -542,7 +565,8 @@ class LectorActivity : ComponentActivity() {
             val antes = ancla ?: o.optDouble("fraction", fraction).also { ancla = it }
             o.put("cfi", cfi).put("fraction", fraction).put("label", label).put("read", System.currentTimeMillis())
             // Un salto largo (del 98 % al 2 %, o al revés: la barra, el índice…): no cuenta como «lo más lejos» hasta que digas que vas por ahí
-            val salto = Salto.hay(antes, fraction)
+            val salto = !llegadaDeOtro && Salto.hay(antes, fraction)
+            llegadaDeOtro = false
             // (mientras estás en un salto sin confirmar, lo leído de la ficha no se mueve)
             if (salto) o.put("enSalto", true) else o.remove("enSalto")
             EstadoLectura.poner(this@LectorActivity, id, o)

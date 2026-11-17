@@ -46,6 +46,22 @@ class KoboCableTest {
         assertEquals(2, l[1].estado); assertEquals(Kobo.fecha("2026-11-10T08:00:00Z"), l[1].terminado)
     }
 
+    /** En un kepub copiado al Kobo se lee también por dónde vas (ChapterIDBookmarked); en un EPUB o un libro de la tienda, no. */
+    @Test fun laMarcaDeLosKepub() {
+        val f = File(tmp.root, "KoboReader-kepub.sqlite")
+        SQLiteDatabase.openOrCreateDatabase(f, null).use { db ->
+            db.execSQL("CREATE TABLE content (ContentID TEXT, ContentType TEXT, Title TEXT, Attribution TEXT, ___PercentRead INTEGER, ReadStatus INTEGER, DateLastRead TEXT, ChapterIDBookmarked TEXT)")
+            db.execSQL("INSERT INTO content VALUES ('file:///mnt/onboard/Libros/Rojo.kepub.epub','6','Amanecer rojo','Pierce Brown',43,1,'2026-11-15T21:10:05Z','OEBPS/c4.xhtml#kobo.17.1:204')")
+            db.execSQL("INSERT INTO content VALUES ('file:///mnt/onboard/Libros/Dune.epub','6','Dune','Frank Herbert',10,1,'2026-11-15T21:10:05Z','OEBPS/c1.xhtml#point(/1/4/2/1:0)')")
+            db.execSQL("INSERT INTO content VALUES ('0a1b2c3d-tienda','6','De la tienda','Alguien',5,1,'2026-11-15T21:10:05Z','text/part0004.html#kobo.2.1')")
+        }
+        val l = KoboCable.leeBase(f).associateBy { it.titulo }
+        assertEquals("OEBPS/c4.xhtml#kobo.17.1:204", l["Amanecer rojo"]!!.marca)
+        assertEquals("file:///mnt/onboard/Libros/Rojo.kepub.epub", l["Amanecer rojo"]!!.contentId)
+        assertEquals("", l["Dune"]!!.marca)
+        assertEquals("", l["De la tienda"]!!.marca)
+    }
+
     @Test fun sinLaColumnaDelTiempoTambien() {
         val l = KoboCable.leeBase(base(false))
         assertEquals(3, l.size)

@@ -124,6 +124,10 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 			if fin > 0 && l.Estado == 2 {
 				pon("fin", []any{fin}, fin)
 			}
+			if l.Marca != "" && l.HuellaKepub != "" && ul > 0 {
+				pon("kc", l.Marca, ul)
+				pon("kh", l.HuellaKepub, ul)
+			}
 		} else if ul > 0 {
 			if ul > int64(numero(r.Libro["ul"])) {
 				pon("ul", ul, ul)
@@ -137,6 +141,11 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 					h = fin
 				}
 				pon("estado", estado, h)
+			}
+			// En un kepub: por dónde vas tal como lo apunta el Kobo y de qué archivo (Seshat salta ahí si tiene ese mismo archivo)
+			if l.Marca != "" && l.HuellaKepub != "" && (l.Marca != texto(r.Libro["kc"]) || l.HuellaKepub != texto(r.Libro["kh"])) {
+				pon("kc", l.Marca, ul)
+				pon("kh", l.HuellaKepub, ul)
 			}
 			if fin > 0 && l.Estado == 2 {
 				lista, _ := r.Libro["fin"].([]any)
