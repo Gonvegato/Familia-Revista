@@ -31,7 +31,10 @@ object KoboCable {
         ?: throw Error("Esa carpeta no es la memoria de un Kobo: elige la que se llama KOBOeReader (donde está la carpeta .kobo).")
 
     /** Lee los libros del Kobo (copia su base de datos al móvil; en el Kobo no se toca nada). */
-    fun libros(ctx: Context, arbol: Uri): List<Kobo.Libro> {
+    fun libros(ctx: Context, arbol: Uri): List<Kobo.Libro> = conBase(ctx, arbol) { leeBase(it) }
+
+    /** Con una copia de la base de datos del Kobo en el móvil (se borra al acabar). */
+    private fun <T> conBase(ctx: Context, arbol: Uri, f: (File) -> T): T {
         val dk = kobo(raiz(ctx, arbol))
         val bd = hijo(dk, "KoboReader.sqlite") ?: throw Error("No está la base de datos del Kobo (.kobo/KoboReader.sqlite).")
         val dir = File(ctx.cacheDir, "kobo").apply { deleteRecursively(); mkdirs() }
@@ -41,7 +44,7 @@ object KoboCable {
             // (dentro del try: si se suelta el cable a mitad, la copia a medias no se queda en el móvil)
             copiar(bd, copia)
             for (ext in listOf("-wal", "-shm")) hijo(dk, "KoboReader.sqlite$ext")?.let { runCatching { copiar(it, File(dir, "KoboReader.sqlite$ext")) } }
-            return leeBase(copia)
+            return f(copia)
         } finally {
             dir.deleteRecursively()
         }
@@ -83,11 +86,40 @@ object KoboCable {
         }
     }
 
+    /**
+     * Los subrayados y las notas de una copia de KoboReader.sqlite (tabla `Bookmark`; los quitados, `Hidden`, no). Sin la tabla (otro
+     * aparato), ninguno.
+     */
+    fun leeSubrayados(archivo: File): List<Kobo.Subrayado> {
+        val db = SQLiteDatabase.openDatabase(archivo.path, null, SQLiteDatabase.OPEN_READWRITE)
+        db.use {
+            val cols = HashSet<String>()
+            db.rawQuery("PRAGMA table_info(Bookmark)", null).use { c -> while (c.moveToNext()) cols += c.getString(1).lowercase() }
+            if ("bookmarkid" !in cols || "volumeid" !in cols) return emptyList()
+            fun col(n: String) = if (n.lowercase() in cols) n else "NULL"
+            val q = "SELECT BookmarkID, VolumeID, ${col("ContentID")}, ${col("StartContainerPath")}, ${col("StartOffset")}, ${col("EndContainerPath")}, " +
+                "${col("EndOffset")}, ${col("Text")}, ${col("Annotation")}, ${col("DateCreated")}, ${col("DateModified")}, ${col("Type")}, ${col("Hidden")} FROM Bookmark"
+            val r = ArrayList<Kobo.Subrayado>()
+            db.rawQuery(q, null).use { c ->
+                while (c.moveToNext()) {
+                    val tipo = c.getString(11)?.lowercase().orEmpty()
+                    if (tipo.isNotEmpty() && tipo != "highlight" && tipo != "note") continue   // (los marcadores de página, «dogear», no)
+                    if (c.getString(12)?.lowercase() == "true") continue
+                    r += Kobo.Subrayado(c.getString(0).orEmpty(), c.getString(1).orEmpty(), c.getString(2).orEmpty(), c.getString(3).orEmpty(),
+                        if (c.isNull(4)) 0 else c.getInt(4), c.getString(5).orEmpty(), if (c.isNull(6)) 0 else c.getInt(6),
+                        c.getString(7).orEmpty(), c.getString(8).orEmpty(), Kobo.fecha(c.getString(9)), Kobo.fecha(c.getString(10)))
+                }
+            }
+            return r
+        }
+    }
+
     /** Lee el Kobo y sube a la cuenta lo que sepa de más tarde. */
     fun lee(ctx: Context, arbol: Uri): Lectura {
         if (!LaFamilia.familia.sesion.dentro) throw Error("Entra en tu cuenta (Ajustes → Cuenta) antes de leer el Kobo.")
         val r = raiz(ctx, arbol)
-        val kobo = libros(ctx, arbol).let { ls -> conHuellasKepub(ctx, r, ls) }
+        val (leidos, subs) = conBase(ctx, arbol) { leeBase(it) to runCatching { leeSubrayados(it) }.getOrDefault(emptyList()) }
+        val kobo = conHuellasKepub(ctx, r, leidos)
         // Si el programa del Kobo ya ha empezado a llevar el tiempo (día a día), el tiempo es cosa suya: si lo subieran los dos, contaría
         // dos veces
         val delPrograma = hijo(r, ".adds")?.let { hijo(it, "seshat") }?.let { hijo(it, "enviado.json") } != null
@@ -97,8 +129,13 @@ object KoboCable {
         val p = Kobo.planea(kobo, LaFamilia.coleccion("libros").todos(), LaFamilia.coleccion("tiempo").todos(), System.currentTimeMillis(), ZoneId.systemDefault(),
             conTiempo = !delPrograma)
         for (c in p.cambios) LaFamilia.coleccion(c.coleccion).pon(c.ref, c.campos, c.hora)
+        // Los subrayados y las notas del Kobo (Seshat los pone en su sitio al abrir cada libro)
+        val marcas = LaFamilia.coleccion("marcas")
+        val ps = Kobo.planeaSubrayados(subs, kobo, LaFamilia.coleccion("libros").todos(), yaEstan = { marcas.nodo(it) != null })
+        for (c in ps) marcas.pon(c.ref, c.campos, c.hora)
         apunta(ctx, "cable")
-        return Lectura(kobo.size, p.resumen)
+        val extra = if (ps.isEmpty()) emptyList() else listOf(if (ps.size == 1) "1 subrayado del Kobo guardado en tu cuenta" else "${ps.size} subrayados del Kobo guardados en tu cuenta")
+        return Lectura(kobo.size, p.resumen + extra)
     }
 
     /** La huella de cada kepub copiado al Kobo (para que SesKobo sepa que es el mismo archivo que tiene); sin archivo, sin marca. */

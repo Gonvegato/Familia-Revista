@@ -855,6 +855,8 @@ function onLoad({ detail: { doc, index } }) {
     }, true)
 
     if (!isPDF || reflow) botonesDeCapitulo(doc, index)
+    // (los subrayados que llegaron del Kobo, a su sitio: una vez, con el libro ya abierto)
+    if (!koboSubMirado) setTimeout(() => subrayadosDelKobo().catch(e => console.warn('Lector: subrayados del Kobo', e)), 300)
 
     // Los subrayados de este capítulo (o página). En PDF la página se dibuja después: se repinta cuando aparece.
     paint(index)
@@ -2025,7 +2027,126 @@ window.atrioIrKobo = async (marca, quien) => {
         return true
     } catch (e) { console.warn('Lector: ir a la posición del Kobo', e); return false }
 }
-window.__xp = { xpDe, xpRango, xpLargo, xpADom, koboRango }
+/**
+ * Un punto del Kobo dentro del capítulo [doc]: en un kepub, la frase («span#kobo\\.12\\.3») y las letras dentro (unidades UTF-16); en un
+ * EPUB, el punto de Adobe («…#point(/1/4/10/1:14)»), contado como el Kobo 4.x: cada elemento es uno y cada tramo seguido de texto (con
+ * los comentarios) es otro, y las letras van en bytes UTF-8. Lo que añade el lector no cuenta.
+ */
+function koboPunto(doc, ruta, off) {
+    if (/span#kobo/.test(ruta || '')) return koboRango(doc, ruta.replace(/^.*span#/, '').replace(/\\/g, '') + ':' + (off || 0))
+    const m = /point\(([^)]*)\)/.exec(ruta || '')
+    if (!m) return null
+    const [p, b] = m[1].split(':')
+    const pasos = p.split('/').filter(Boolean).map(Number).slice(1)   // (el primero es <html>)
+    let bytes = +(b || 0), el = doc.documentElement
+    const grupos = e => {
+        const g = []; let enTexto = false
+        for (const h of e.childNodes) {
+            if (h.nodeType === 1 && xpInyectado(h)) continue
+            if (h.nodeType === 3 || h.nodeType === 4 || h.nodeType === 8) { if (enTexto) g[g.length - 1].push(h); else { g.push([h]); enTexto = true } }
+            else if (h.nodeType === 1) { g.push([h]); enTexto = false }
+        }
+        return g
+    }
+    const r = doc.createRange()
+    for (let i = 0; i < pasos.length; i++) {
+        const g = grupos(el)[pasos[i] - 1]
+        if (!g) return null
+        const ultimo = i === pasos.length - 1
+        if (g.length === 1 && g[0].nodeType === 1) {
+            if (!ultimo) { el = g[0]; continue }
+            const t = xpPrimerTexto(g[0], false); if (!t) return null
+            r.setStart(t, 0); r.collapse(true); return r
+        }
+        if (!ultimo) return null
+        const textos = g.filter(xpEsTexto)
+        const enc = new TextEncoder()
+        for (let j = 0; j < textos.length; j++) {
+            const t = textos[j], largo = enc.encode(t.data).length
+            if (bytes < largo || j === textos.length - 1) {
+                let u = 0, n = 0
+                for (const c of t.data) { const l = enc.encode(c).length; if (n + l > bytes) break; n += l; u += c.length }
+                r.setStart(t, Math.min(u, t.data.length)); r.collapse(true); return r
+            }
+            bytes -= largo
+        }
+        return null
+    }
+    return null
+}
+const xpNorm = s => (s || '').replace(/\s+/g, ' ').trim()
+/** Busca [texto] en el capítulo [doc] (los espacios, juntos como uno; sin lo que añade el lector). Devuelve el Range o null. */
+function buscaTexto(doc, texto) {
+    const q = xpNorm(texto)
+    if (!q) return null
+    const nodos = [], pos = []
+    let s = '', esp = false
+    const w = doc.createTreeWalker(doc.body || doc.documentElement, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_CDATA_SECTION)
+    for (let t = w.nextNode(); t; t = w.nextNode()) {
+        if (xpDentroDeInyectado(t)) continue
+        for (let i = 0; i < t.data.length; i++) {
+            const c = t.data[i], e = /\s/.test(c)
+            if (e && esp) continue
+            s += e ? ' ' : c; pos.push([t, i]); esp = e
+        }
+    }
+    const k = s.indexOf(q)
+    if (k < 0) return null
+    const [a, ia] = pos[k], [z, iz] = pos[k + q.length - 1]
+    const r = doc.createRange(); r.setStart(a, ia); r.setEnd(z, iz + 1)
+    return r
+}
+/** El sitio de un subrayado del Kobo ([k]: dónde empieza y acaba, como lo apunta el Kobo) en [doc]; si no cuadra con su texto, se busca el texto. */
+function koboSubrayado(doc, k, texto) {
+    try {
+        const a = koboPunto(doc, k.ini, k.ioff), z = koboPunto(doc, k.fin, k.foff)
+        if (a && z) {
+            const r = doc.createRange(); r.setStart(a.startContainer, a.startOffset); r.setEnd(z.startContainer, z.startOffset)
+            const t = xpNorm(r.toString()), q = xpNorm(texto)
+            if (!q || (t && (t === q || t.includes(q) || q.includes(t)) && Math.abs(t.length - q.length) <= 3)) return r
+        }
+    } catch (e) { console.warn('Lector: subrayado del Kobo', e) }
+    return buscaTexto(doc, texto)
+}
+/**
+ * Los subrayados que llegan del Kobo (SesKobo los lee por cable): llegan con la posición del Kobo («kobo:…» en lugar de la de Seshat).
+ * Al abrir el libro se sitúan en su sitio (en el capítulo tal como se pinta, con lo que añade el lector, como cuando subrayas aquí) y
+ * pasan a ser subrayados normales. Los que no se encuentran se quedan en la lista con su texto.
+ */
+let koboSubMirado = false
+async function subrayadosDelKobo() {
+    if (koboSubMirado || isPDF) return
+    koboSubMirado = true
+    const pend = notesAll.filter(n => n?.kobo && String(n.value || '').startsWith('kobo:'))
+    if (!pend.length) return
+    const secs = view?.book?.sections || []
+    const limpia = x => decodeURIComponent(String(x || '')).replace(/^\/+/, '')
+    const titulos = await titulosDeCapitulos().catch(() => new Map())
+    const cache = new Map()
+    let hechos = 0
+    for (const n of pend) {
+        const cap = limpia(n.kobo.cap)
+        let i = secs.findIndex(x => limpia(x.id) === cap)
+        if (i < 0) i = secs.findIndex(x => limpia(x.id).endsWith('/' + cap) || cap.endsWith('/' + limpia(x.id)))
+        if (i < 0) continue
+        try {
+            if (!cache.has(i)) { const d = await secs[i].createDocument(); botonesDeCapitulo(d, i); cache.set(i, d) }
+            const r = koboSubrayado(cache.get(i), n.kobo, n.text)
+            if (!r) continue
+            n.value = view.getCFI(i, r); n.index = i
+            if (!n.text) n.text = textOf(r)
+            if (!n.label) n.label = titulos.get(i) || ''
+            hechos++
+        } catch (e) { console.warn('Lector: subrayado del Kobo', e) }
+    }
+    if (!hechos) return
+    notes = notesAll.filter(delModo)
+    saveNotes()
+    for (const d of docs.keys()) { rangeCache.delete(docs.get(d)); paint(d) }
+    aviso(hechos === 1 ? 'Un subrayado del Kobo, en su sitio' : `${hechos} subrayados del Kobo, en su sitio`)
+}
+window.__xp = { xpDe, xpRango, xpLargo, xpADom, koboRango, koboPunto, koboSubrayado, buscaTexto }
+window.__subrayadosDelKobo = subrayadosDelKobo
 
 // ---------------------------------------------------------------- Botones
 $('#b-cerrar').onclick = () => { window.atrioPausa(true); A.close() }

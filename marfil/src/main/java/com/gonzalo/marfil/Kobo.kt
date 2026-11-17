@@ -58,6 +58,48 @@ object Kobo {
         return m.values.toList()
     }
 
+    /**
+     * Un subrayado o una nota del Kobo (tabla `Bookmark` de KoboReader.sqlite): de qué libro ([volumen], su ContentID), en qué capítulo
+     * ([contenido]) y dónde, tal como lo apunta el Kobo: en un kepub, la frase («span#kobo\\.12\\.3») y las letras dentro; en un EPUB, el
+     * punto de Adobe («capítulo.xhtml#point(/1/4/10/1:14)»).
+     */
+    data class Subrayado(
+        val id: String, val volumen: String, val contenido: String, val ini: String, val ioff: Int, val fin: String, val foff: Int,
+        val texto: String, val nota: String, val creado: Long, val cambiado: Long,
+    )
+
+    /** El capítulo de un subrayado desde lo que apunta el Kobo (kepub: «…kepub.epub!OEBPS!text/c.xhtml»; EPUB: «…epub#(1)OEBPS/text/c.xhtml»). */
+    fun capituloDe(s: Subrayado): String {
+        val c = s.contenido
+        if (c.contains('!')) return c.split('!').drop(1).joinToString("/")
+        Regex("""#\(\d+\)(.+)$""").find(c)?.let { return it.groupValues[1] }
+        return s.ini.substringBefore('#').ifBlank { s.fin.substringBefore('#') }
+    }
+
+    /**
+     * Los subrayados del Kobo que faltan en la cuenta, como los guarda Seshat (`marcas/<kid>~<id>`, tipo «notes»). Llegan con la posición
+     * del Kobo («kobo:…» y `kobo`): el lector de Seshat los pone en su sitio al abrir el libro (lector.js, subrayadosDelKobo) y desde ahí
+     * son subrayados normales. Los que ya estuvieron en la cuenta (aunque luego se quitaran o se pusieran en su sitio) no vuelven.
+     */
+    fun planeaSubrayados(subs: List<Subrayado>, kobo: List<Libro>, libros: Map<String, Nodo>, yaEstan: (String) -> Boolean): List<Cambio> {
+        val porVolumen = kobo.filter { it.contentId.isNotBlank() }.associateBy { it.contentId }
+        val out = ArrayList<Cambio>()
+        for (s in subs) {
+            val l = porVolumen[s.volumen] ?: continue
+            if (s.texto.isBlank() && s.nota.isBlank()) continue
+            val kid = buscaKid(l, libros)
+            val valor = "kobo:" + s.id
+            val creado = if (s.creado > 0) s.creado else s.cambiado
+            // (el mismo id que le daría Seshat: el de su valor y su hora de creación, MezclaLectura.clave)
+            val id = kid + "~" + java.security.MessageDigest.getInstance("SHA-1").digest("$valor|$creado".toByteArray()).joinToString("") { "%02x".format(it) }.take(16)
+            if (yaEstan(id)) continue
+            val n = linkedMapOf<String, Any?>("value" to valor, "color" to "subrayado", "text" to s.texto.trim(), "note" to s.nota.trim(), "created" to creado,
+                "kobo" to mapOf("cap" to capituloDe(s), "ini" to s.ini, "ioff" to s.ioff, "fin" to s.fin, "foff" to s.foff))
+            out += Cambio("marcas", id, mapOf("ref" to kid, "tipo" to "notes", "n" to n, "b" to 0L), maxOf(creado, s.cambiado, 1L))
+        }
+        return out
+    }
+
     /** Unos campos de una cosa de la cuenta, todos con la misma hora. */
     data class Cambio(val coleccion: String, val ref: String, val campos: Map<String, Any?>, val hora: Long)
 
