@@ -24,3 +24,6 @@ __pycache__/
 marfil/src/kobo/assets/kobo/seshat-kobo
 marfil/src/kobo/assets/kobo/nickelinksync
 marfil/src/kobo/assets/kobo/Kobo.tgz
+kobo/diagnostico/libseshat.so
+kobo/diagnostico/Kobo.tgz
+kobo/diagnostico/Seshat-arranque.zip

@@ -1,0 +1,14 @@
+Seshat en el Kobo sin NickelMenu (firmware 5 y 6)
+
+Con el Kobo conectado al ordenador (en el Mac, Comando+Mayúsculas+punto para ver las carpetas ocultas):
+
+1. Copia «arranque.sh» dentro de la carpeta  .adds/seshat  del Kobo.
+2. Copia «Kobo.tgz» dentro de la carpeta  .kobo  del Kobo. Tiene que llamarse exactamente Kobo.tgz
+   (si el ordenador lo ha convertido en Kobo.tar o en una carpeta, no vale).
+3. Expulsa el Kobo y desconéctalo. Se actualizará y se reiniciará solo.
+
+Desde entonces, cada vez que se enciende:
+ - deja en marcha el envío automático a Seshat (manda solo cada vez que hay Wi-Fi), si el Kobo está preparado desde SesKobo;
+ - a los 2 minutos escribe  .adds/seshat/diagnostico.txt  con lo que ha visto (para saber por qué NickelMenu no aparece).
+
+Para quitarlo: borra  .adds/seshat/arranque.sh  (la pieza que queda en el Kobo, sin ese archivo, no hace nada).
