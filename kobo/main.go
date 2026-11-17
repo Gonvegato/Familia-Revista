@@ -5,7 +5,8 @@
 //	seshat-kobo envia     manda lo que haya cambiado (lo de «Enviar a Seshat» del menú)
 //	seshat-kobo espera    espera a que haya internet (hasta 3 minutos) y manda (lo que se lanza al conectar el Wi-Fi)
 //	seshat-kobo prueba    dice qué mandaría, sin mandar nada
-//	seshat-kobo vigila    se queda esperando: cada vez que el Kobo tiene internet (y cada media hora mientras lo tenga), manda
+//	seshat-kobo vigila    se queda en marcha: apunta lo leído cada día y, cada vez que hay internet (y cada media hora), manda
+//	seshat-kobo vincula   solo vincula los kepub con su EPUB (lo que deja SesKobo)
 //
 // Opciones: -cuenta <archivo> (por defecto /mnt/onboard/.adds/seshat/cuenta.json), -bd <KoboReader.sqlite>, -registro <archivo>.
 package main
@@ -13,7 +14,6 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -22,22 +22,23 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
+	"sort"
 	"strings"
+	"syscall"
 	"time"
 	_ "time/tzdata" // (el Kobo no trae las zonas horarias)
 
 	_ "seshat-kobo/raices"
 )
 
-const version = "1.0.0"
+const version = "1.1.0"
 
 var (
 	dirSeshat = "/mnt/onboard/.adds/seshat"
 	fCuenta   = flag.String("cuenta", filepath.Join(dirSeshat, "cuenta.json"), "la cuenta (la deja Seshat al preparar el Kobo)")
 	fBD       = flag.String("bd", "/mnt/onboard/.kobo/KoboReader.sqlite", "la base de datos del Kobo")
 	fRegistro = flag.String("registro", filepath.Join(dirSeshat, "registro.txt"), "dónde se apunta lo que pasa")
-	fEnviado  = flag.String("enviado", filepath.Join(dirSeshat, "enviado.json"), "lo ya enviado (para no repetir)")
+	fEnviado  = flag.String("enviado", filepath.Join(dirSeshat, "enviado.json"), "lo ya enviado y el tiempo leído por días (el estado)")
 )
 
 func main() {
@@ -52,13 +53,12 @@ func main() {
 	case "envia":
 		err = conCerrojo(func() error { return envia(false) })
 	case "espera":
-		err = conCerrojo(func() error {
-			if !esperaRed(3 * time.Minute) {
-				log.Print("sin internet en 3 minutos: no se manda nada")
-				return nil
-			}
-			return envia(false)
-		})
+		// (la espera, fuera del cerrojo: mientras tanto el vigilante puede mandar)
+		if !esperaRed(3 * time.Minute) {
+			log.Print("sin internet en 3 minutos: no se manda nada")
+			break
+		}
+		err = conCerrojo(func() error { return envia(false) })
 	case "vigila":
 		vigila()
 	case "prueba":
@@ -72,7 +72,11 @@ func main() {
 	case "version":
 		fmt.Println(version)
 	default:
-		err = fmt.Errorf("no sé qué es «%s» (envia, espera, prueba)", orden)
+		err = fmt.Errorf("no sé qué es «%s» (envia, espera, prueba, vigila)", orden)
+	}
+	if errors.Is(err, errOcupado) {
+		log.Print("ya se está enviando")
+		err = nil
 	}
 	if err != nil {
 		log.Print("ERROR: ", err)
@@ -80,14 +84,39 @@ func main() {
 	}
 }
 
-func envia(soloMirar bool) error {
-	libros, err := leeKobo(*fBD)
+// libros lee el Kobo y junta los que son el mismo libro (la muestra de la tienda y el comprado, el EPUB y el kepub): uno solo por
+// clave, el leído más tarde, con el tiempo de todos.
+func libros() ([]LibroKobo, error) {
+	ls, err := leeKobo(*fBD)
+	if err != nil {
+		return nil, err
+	}
+	return agrupa(ls, func(l LibroKobo) string { return kid(claveDe(l.Titulo, l.Autor)) }), nil
+}
+
+// apunta pone al día lo leído por días (sin internet: lo hace el vigilante cada vez que el Kobo apunta algo).
+func apunta() error {
+	ls, err := libros()
 	if err != nil {
 		return err
 	}
+	zona := time.UTC
+	if c, err := cargaCuenta(*fCuenta); err == nil {
+		zona = c.zona()
+	}
+	e := cargaEstado(*fEnviado)
+	e.registra(ls, zona, time.Now())
+	return e.guarda(*fEnviado)
+}
+
+func envia(soloMirar bool) error {
+	ls, err := libros()
+	if err != nil {
+		return err
+	}
+	raiz := filepath.Dir(filepath.Dir(*fBD))
 	// El índice de NickelInkSync (la posición de cada libro), si está instalado; antes, los kepub que SesKobo ha vinculado con su EPUB
 	if !soloMirar {
-		raiz := filepath.Dir(filepath.Dir(*fBD))
 		if n, err := vinculaKepubs(raiz); err != nil {
 			log.Print("vincular kepub: ", err)
 		} else if n > 0 {
@@ -99,78 +128,62 @@ func envia(soloMirar bool) error {
 			log.Printf("posiciones: %d libros del Kobo en el índice de NickelInkSync", n)
 		}
 	}
-	// Lo que ya se envió tal cual no se vuelve a mirar en la cuenta (menos tráfico y más rápido)
-	enviado := map[string]string{}
-	if b, err := os.ReadFile(*fEnviado); err == nil {
-		_ = json.Unmarshal(b, &enviado)
-	}
-	// La huella de cada kepub copiado (para que Seshat sepa que es el mismo archivo); se guarda (no se relee si no cambia)
-	raizKobo := filepath.Dir(filepath.Dir(*fBD))
-	cacheHuellas := map[string]string{}
-	if b, err := os.ReadFile(filepath.Join(dirSeshat, "huellas.json")); err == nil {
-		_ = json.Unmarshal(b, &cacheHuellas)
-	}
-	for i := range libros {
-		if libros[i].Marca == "" {
-			continue
-		}
-		ruta := rutaDeContenido(libros[i].ID, raizKobo)
-		st, err := os.Stat(ruta)
-		if err != nil {
-			libros[i].Marca = ""
-			continue
-		}
-		k := fmt.Sprintf("%s|%d|%d", ruta, st.Size(), st.ModTime().Unix())
-		h := cacheHuellas[k]
-		if h == "" {
-			h, _ = huellaKOReader(ruta)
-		}
-		libros[i].HuellaKepub = h
-	}
-	var cambiados []LibroKobo
-	huellas := map[string]string{}
-	for _, l := range libros {
-		k := kid(claveDe(l.Titulo, l.Autor))
-		h := huella(l)
-		huellas[k] = h
-		if soloMirar || enviado[k] != h {
-			cambiados = append(cambiados, l)
-		}
-	}
-	if len(cambiados) == 0 {
-		log.Printf("nada nuevo (%d libros en el Kobo)", len(libros))
-		return nil
-	}
 	c, err := cargaCuenta(*fCuenta)
 	if err != nil {
 		return err
 	}
+	e := cargaEstado(*fEnviado)
+	e.deCuenta(c.Uid, c.BaseDatos)
+	e.registra(ls, c.zona(), time.Now())
+	huellasKepub(ls, raiz)
+
+	// Lo que ya se envió tal cual no se vuelve a mirar en la cuenta (menos tráfico y más rápido)
+	var cambiados []LibroKobo
+	huellas := map[string]string{}
+	for _, l := range ls {
+		k := kid(claveDe(l.Titulo, l.Autor))
+		h := huella(l)
+		huellas[k] = h
+		if soloMirar || e.Huellas[k] != h {
+			cambiados = append(cambiados, l)
+		}
+	}
+	if len(cambiados) == 0 {
+		log.Printf("nada nuevo (%d libros en el Kobo)", len(ls))
+		return guardaSiNoMira(e, soloMirar)
+	}
 	if err := c.entra(); err != nil {
+		_ = guardaSiNoMira(e, soloMirar) // (lo leído por días se queda apuntado aunque no se pueda mandar)
 		return err
 	}
 	// Todos los libros de la cuenta de una vez (para encontrar el que es aunque el Kobo escriba el autor de otra manera)
 	todos := map[string]Nodo{}
-	if n, err := c.lee("/users/" + c.Uid + "/familia/libros"); err != nil {
+	n, err := c.lee("/users/" + c.Uid + "/familia/libros")
+	if err != nil {
+		_ = guardaSiNoMira(e, soloMirar)
 		return err
-	} else {
-		for ref, v := range n {
-			if m, ok := v.(map[string]any); ok {
-				todos[ref] = Nodo(m)
-			}
+	}
+	for ref, v := range n {
+		if m, ok := v.(map[string]any); ok {
+			todos[ref] = Nodo(m)
 		}
 	}
 	remotos := map[string]Remoto{}
 	for i := range cambiados {
 		k := buscaKid(cambiados[i], todos)
 		cambiados[i].Kid = k
-		lib := todos[k]
+		if _, ya := remotos[k]; ya {
+			continue
+		}
 		tie, err := c.lee("/users/" + c.Uid + "/familia/tiempo/" + k + "~" + c.Dispositivo)
 		if err != nil {
+			_ = guardaSiNoMira(e, soloMirar)
 			return err
 		}
-		remotos[k] = Remoto{Libro: lib, Tiempo: tie}
+		remotos[k] = Remoto{Libro: todos[k], Tiempo: tie}
 	}
-	p := planea(cambiados, remotos, time.Now(), c.zona(), c.Dispositivo)
+	// La hora de la cuenta (por si el reloj del Kobo va adelantado: nada puede quedar apuntado en el futuro)
+	p := planea(cambiados, remotos, c.ahora(), c.zona(), c.Dispositivo)
 	if soloMirar {
 		for _, r := range p.Resumen {
 			log.Print("mandaría: ", r)
@@ -180,6 +193,7 @@ func envia(soloMirar bool) error {
 	}
 	if len(p.Cambios) > 0 {
 		if err := c.sube(p.Cambios); err != nil {
+			_ = e.guarda(*fEnviado)
 			return err
 		}
 	}
@@ -189,49 +203,101 @@ func envia(soloMirar bool) error {
 	if len(p.Resumen) == 0 {
 		log.Print("la cuenta ya tenía lo del Kobo (o algo más nuevo)")
 	}
+	// Lo leído por días de estos libros ya está en la cuenta (o lo estaba: planea solo lo suma si el total ha crecido)
+	e.subidos(cambiados)
 	for _, l := range cambiados {
 		k := kid(claveDe(l.Titulo, l.Autor))
-		enviado[k] = huellas[k]
+		e.Huellas[k] = huellas[k]
 	}
-	if b, err := json.Marshal(enviado); err == nil {
-		_ = os.WriteFile(*fEnviado, b, 0o644)
+	return e.guarda(*fEnviado)
+}
+
+func guardaSiNoMira(e *estadoLocal, soloMirar bool) error {
+	if soloMirar {
+		return nil
 	}
-	return nil
+	return e.guarda(*fEnviado)
+}
+
+// huellasKepub: la huella de cada kepub copiado (para que Seshat sepa que es el mismo archivo); se guarda en huellas.json (no se relee
+// un archivo que no ha cambiado).
+func huellasKepub(ls []LibroKobo, raiz string) {
+	cache := map[string]string{}
+	f := filepath.Join(dirSeshat, "huellas.json")
+	leeJSON(f, &cache)
+	for i := range ls {
+		if ls[i].Marca == "" {
+			continue
+		}
+		ruta := rutaDeContenido(ls[i].ID, raiz)
+		st, err := os.Stat(ruta)
+		if err != nil {
+			ls[i].Marca = ""
+			continue
+		}
+		k := fmt.Sprintf("%s|%d|%d", ruta, st.Size(), st.ModTime().Unix())
+		h := cache[k]
+		if h == "" {
+			h, _ = huellaKOReader(ruta)
+		}
+		ls[i].HuellaKepub = h
+	}
 }
 
 func huella(l LibroKobo) string {
-	h := sha1.Sum([]byte(fmt.Sprintf("%s|%s|%.2f|%d|%d|%d|%d|%s|%s", l.Titulo, l.Autor, l.Porcentaje, l.Estado, ms(l.UltimaLectura), l.Segundos, ms(l.Terminado), l.Marca, l.HuellaKepub)))
+	dias := make([]string, 0, len(l.Dias))
+	for d, v := range l.Dias {
+		dias = append(dias, fmt.Sprintf("%s=%d", d, v))
+	}
+	sort.Strings(dias)
+	h := sha1.Sum([]byte(fmt.Sprintf("%s|%s|%.2f|%d|%d|%d|%d|%s|%s|%d|%s", l.Titulo, l.Autor, l.Porcentaje, l.Estado, ms(l.UltimaLectura), l.Segundos,
+		ms(l.Terminado), l.Marca, l.HuellaKepub, l.Total, strings.Join(dias, ","))))
 	return hex.EncodeToString(h[:8])
 }
 
-// vigila se queda en marcha (hasta que se apague el Kobo; dormido no gasta nada porque no corre): cada minuto mira si hay
-// conexión y, cuando la hay (al encender el Wi-Fi y luego cada media hora), manda lo que haya cambiado. Si ya hay otro vigilando, sale.
+// vigila se queda en marcha (hasta que se apague el Kobo; dormido no gasta nada porque no corre): cada minuto mira si el Kobo ha
+// apuntado algo (y entonces apunta lo leído por días, haya o no internet) y si hay conexión (y entonces, al encender el Wi-Fi y luego
+// cada media hora, manda lo que haya cambiado). Uno solo a la vez. Si el programa se actualiza, pasa a la versión nueva.
 func vigila() {
-	pid := filepath.Join(os.TempDir(), "seshat-kobo.pid")
-	if b, err := os.ReadFile(pid); err == nil {
-		if n, _ := strconv.Atoi(strings.TrimSpace(string(b))); n > 0 && n != os.Getpid() {
-			if cmd, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", n)); err == nil && strings.Contains(string(cmd), "seshat-kobo") {
-				return
-			}
-		}
+	soltar, err := cerrojo("seshat-kobo.vigila")
+	if err != nil {
+		return // (ya hay otro vigilando)
 	}
-	_ = os.WriteFile(pid, []byte(strconv.Itoa(os.Getpid())), 0o644)
-	log.Print("vigilando: mandará solo cada vez que haya Wi-Fi")
+	defer soltar()
+	yo, _ := os.Executable()
+	inicio, _ := os.Stat(yo)
+	log.Print("vigilando: apunta lo leído cada día y manda cada vez que hay Wi-Fi")
 	antes := false
 	var ultimo time.Time
-	var huellaBD string
+	var apuntada, enviada string
 	for {
+		// ¿Programa nuevo? Se pasa a él (el cerrojo se suelta solo al cambiar de programa)
+		if st, err := os.Stat(yo); err == nil && inicio != nil && (st.Size() != inicio.Size() || !st.ModTime().Equal(inicio.ModTime())) {
+			log.Print("programa nuevo: el vigilante pasa a él")
+			soltar()
+			_ = syscall.Exec(yo, os.Args, os.Environ())
+			return
+		}
+		h := huellaArchivos(*fBD)
+		if h != "" && h != apuntada {
+			if err := conCerrojo(apunta); err == nil {
+				apuntada = h
+			}
+		}
 		ahora := hayRuta()
-		if ahora && (!antes || time.Since(ultimo) > 30*time.Minute) {
-			if h := huellaArchivos(*fBD); h != "" && h == huellaBD {
+		if ahora && h != "" && (!antes || time.Since(ultimo) > 30*time.Minute) {
+			if h == enviada {
 				ultimo = time.Now() // la base de datos del Kobo no ha cambiado: nada que mirar
-			} else if h != "" {
+			} else {
 				time.Sleep(10 * time.Second) // (la conexión recién hecha tarda un poco en servir)
-				if err := conCerrojo(func() error { return envia(false) }); err != nil {
+				switch err := conCerrojo(func() error { return envia(false) }); {
+				case err == nil:
+					ultimo, enviada = time.Now(), h
+				case errors.Is(err, errOcupado):
+					ahora = false // lo está mandando otro (el menú): se mira otra vez en un minuto, por si falla
+				default:
 					log.Print("ERROR: ", err, " (se reintenta en un minuto)")
-					ahora = false // así se vuelve a intentar
-				} else {
-					ultimo, huellaBD = time.Now(), h
+					ahora = false
 				}
 			}
 		}
@@ -282,28 +348,9 @@ func esperaRed(max time.Duration) bool {
 	return false
 }
 
-// conCerrojo: una sola vez a la vez (el Wi-Fi y el menú pueden pedirlo juntos). Un cerrojo de hace más de 10 minutos se da por perdido.
-func conCerrojo(f func() error) error {
-	cerrojo := filepath.Join(os.TempDir(), "seshat-kobo.cerrojo")
-	if st, err := os.Stat(cerrojo); err == nil && time.Since(st.ModTime()) > 10*time.Minute {
-		_ = os.Remove(cerrojo)
-	}
-	g, err := os.OpenFile(cerrojo, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
-	if err != nil {
-		if errors.Is(err, os.ErrExist) {
-			log.Print("ya se está enviando")
-			return nil
-		}
-		return err
-	}
-	g.Close()
-	defer os.Remove(cerrojo)
-	return f()
-}
-
 // abreRegistro apunta en [archivo] (y en la pantalla, si se lanza a mano). El archivo se abre y se cierra en cada línea: así no queda
 // nada abierto en la memoria del Kobo (si no, al enchufarlo por USB no podría prestarla). Si pasa de 64 KB, se empieza de nuevo
-// guardando el anterior.
+// guardando el anterior. Con la memoria desmontada (enchufado por USB), no se apunta nada.
 func abreRegistro(archivo string) {
 	log.SetFlags(0)
 	log.SetOutput(io.MultiWriter(os.Stderr, registro(archivo)))
@@ -313,6 +360,9 @@ type registro string
 
 func (r registro) Write(p []byte) (int, error) {
 	archivo := string(r)
+	if !montado(archivo) {
+		return len(p), nil
+	}
 	if st, err := os.Stat(archivo); err == nil && st.Size() > 64*1024 {
 		_ = os.Rename(archivo, archivo+".1")
 	}

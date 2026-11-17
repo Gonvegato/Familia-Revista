@@ -22,3 +22,14 @@ func TestClaveYKidComoSeshat(t *testing.T) {
 		}
 	}
 }
+
+// La sigma final griega, como Java/Kotlin (lo de la derecha lo ha dado `toLowerCase(Locale.ROOT)` de Java).
+func TestMinusculasComoJava(t *testing.T) {
+	casos := map[string]string{"ΟΔΥΣΣΕΑΣ": "οδυσσεας", "ΣΑΣ": "σας", "Σ": "σ", "ΑΣ ΒΑΣ.": "ας βας.", "ΟΔΥΣΣΕΑΣ-2": "οδυσσεας-2",
+		"Α'Σ": "α'ς", "ΑΣ'Β": "ασ'β", "ΑΣ1": "ας1", "ΑΣ\u0301Β": "ασ\u0301β", "ὈΔΥΣΣΕΎΣ": "ὀδυσσεύς", "ΑΣ.Β": "ασ.β", "Χ Σ Χ": "χ σ χ"}
+	for de, quiero := range casos {
+		if g := minusculas(de); g != quiero {
+			t.Errorf("%q: %q, quiero %q", de, g, quiero)
+		}
+	}
+}

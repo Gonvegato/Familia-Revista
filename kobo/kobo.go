@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -30,6 +29,51 @@ type LibroKobo struct {
 	// y la huella de KOReader del archivo (Seshat salta ahí si tiene ese mismo archivo)
 	Marca       string
 	HuellaKepub string
+
+	// El tiempo leído tal como lo lleva este programa (estado.go): el total en ms (aunque el Kobo vuelva a cero) y lo leído por días
+	// que aún no está en la cuenta. Sin ellos (por cable), el total es Segundos y lo nuevo va al día de la última lectura.
+	Total int64
+	Dias  map[string]int64
+}
+
+// agrupa junta los libros del Kobo que son el mismo para la cuenta ([clave]): la muestra de la tienda y el comprado, el EPUB y el
+// kepub. Queda uno: el leído más tarde (por dónde vas, si está terminado), con el tiempo de todos sumado y la fecha de terminado más
+// reciente. Mantiene el orden.
+func agrupa(libros []LibroKobo, clave func(LibroKobo) string) []LibroKobo {
+	var orden []string
+	m := map[string]LibroKobo{}
+	for _, l := range libros {
+		k := clave(l)
+		a, ya := m[k]
+		if !ya {
+			m[k] = l
+			orden = append(orden, k)
+			continue
+		}
+		seg, tot, fin := a.Segundos+l.Segundos, a.Total+l.Total, a.Terminado
+		if l.Terminado.After(fin) {
+			fin = l.Terminado
+		}
+		var dias map[string]int64
+		if len(a.Dias)+len(l.Dias) > 0 {
+			dias = map[string]int64{}
+			for _, x := range []map[string]int64{a.Dias, l.Dias} {
+				for d, v := range x {
+					dias[d] += v
+				}
+			}
+		}
+		if l.UltimaLectura.After(a.UltimaLectura) {
+			a = l
+		}
+		a.Segundos, a.Total, a.Dias, a.Terminado = seg, tot, dias, fin
+		m[k] = a
+	}
+	r := make([]LibroKobo, 0, len(orden))
+	for _, k := range orden {
+		r = append(r, m[k])
+	}
+	return r
 }
 
 // esKepub: un libro que copiaste al Kobo en kepub (el EPUB de Kobo). Los de la tienda no (su ContentID no es un archivo).
@@ -47,14 +91,9 @@ func leeKobo(ruta string) ([]LibroKobo, error) {
 		return nil, err
 	}
 	defer os.RemoveAll(tmp)
-	copia := filepath.Join(tmp, "KoboReader.sqlite")
-	if err := copiaArchivo(ruta, copia); err != nil {
+	copia, err := copiaBD(ruta, tmp)
+	if err != nil {
 		return nil, fmt.Errorf("no se pudo copiar la base de datos del Kobo: %w", err)
-	}
-	for _, ext := range []string{"-wal", "-shm"} {
-		if _, err := os.Stat(ruta + ext); err == nil {
-			_ = copiaArchivo(ruta+ext, copia+ext)
-		}
 	}
 	db, err := sql.Open("sqlite", "file:"+copia)
 	if err != nil {

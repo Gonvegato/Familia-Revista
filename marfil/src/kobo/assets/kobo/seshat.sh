@@ -5,8 +5,11 @@
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 D=/mnt/onboard/.adds/seshat
 B=/tmp/seshat-kobo
-if [ ! -x "$B" ] || [ "$D/seshat-kobo" -nt "$B" ]; then
-	cp "$D/seshat-kobo" "$B.nuevo" && chmod 755 "$B.nuevo" && mv "$B.nuevo" "$B" || exit 1
+# (se compara el contenido, no la fecha: la que pone el móvil al copiarlo en la memoria del Kobo no es fiable; cada copia a un nombre
+# propio, para que dos pulsaciones seguidas no se pisen; el vigilante que ya corre se pasa solo al programa nuevo)
+if [ ! -x "$B" ] || ! cmp -s "$D/seshat-kobo" "$B"; then
+	T="$B.$$"
+	cp "$D/seshat-kobo" "$T" && chmod 755 "$T" && mv -f "$T" "$B" || { rm -f "$T"; exit 1; }
 fi
 cd /
 case "$1" in

@@ -47,9 +47,14 @@ func vinculaKepubs(raiz string) (int, error) {
 	if err := json.Unmarshal(b, &lista); err != nil {
 		return 0, fmt.Errorf("vinculos.json está mal: %w", err)
 	}
-	cli := filepath.Join(raiz, ".adds", "NickelInkSync", "nickelinksync")
-	if _, err := os.Stat(cli); err != nil {
+	cliKobo := filepath.Join(raiz, ".adds", "NickelInkSync", "nickelinksync")
+	if _, err := os.Stat(cliKobo); err != nil {
 		return 0, fmt.Errorf("falta NickelInkSync (prepara el Kobo desde SesKobo)")
+	}
+	// (desde una copia en /tmp: el programa corriendo desde la memoria del Kobo no la deja prestar por USB)
+	cli := filepath.Join(os.TempDir(), "nickelinksync-seshat")
+	if err := copiaEjecutable(cliKobo, cli); err != nil {
+		cli = cliKobo
 	}
 	originales := filepath.Join(dirS, "originales")
 	datos := filepath.Join(dirS, "nis")
@@ -74,6 +79,13 @@ func vinculaKepubs(raiz string) (int, error) {
 			fallos = append(fallos, v.Titulo+": falta su EPUB")
 			continue
 		}
+		// El kepub es el mismo archivo que el EPUB (alguien lo renombró): ya va solo por su huella, sin vincular
+		if hk, err := huellaKOReader(rutaDeContenido(v.Kepub, raiz)); err == nil {
+			if he, err := huellaKOReader(epub); err == nil && hk == he {
+				hechos[k] = true
+				continue
+			}
+		}
 		out, err := ejecuta(cli, entorno, "map", "add", "--device", raiz, "--content-id", v.Kepub, "--epub", epub)
 		if err != nil {
 			fallos = append(fallos, fmt.Sprintf("%s: %v %s", v.Titulo, err, out))
@@ -85,7 +97,30 @@ func vinculaKepubs(raiz string) (int, error) {
 		// Las tablas de traducción de lo emparejado (y el índice: lo completa luego actualizaIndiceNIS con los EPUB del Kobo). Acaba con
 		// error si algún libro de la base de datos del Kobo ya no tiene archivo, aunque lo nuestro esté bien: lo que cuenta es que
 		// esté la tabla de cada kepub
+		// (prepare rehace el índice solo con la carpeta de originales, que el Kobo no lee como EPUB: lo que hubiera se pone de vuelta)
+		fIndice := filepath.Join(raiz, ".adds", "NickelInkSync", "library.json")
+		var antes indice
+		leeJSON(fIndice, &antes)
 		out, err := ejecuta(cli, entorno, "device", "prepare", "--device", raiz, "--library", originales)
+		if len(antes.Books) > 0 {
+			var ahora indice
+			leeJSON(fIndice, &ahora)
+			visto := map[string]bool{}
+			for _, l := range ahora.Books {
+				visto[l.Hash] = true
+			}
+			for _, l := range antes.Books {
+				if !visto[l.Hash] {
+					ahora.Books = append(ahora.Books, l)
+				}
+			}
+			if ahora.Format == 0 {
+				ahora.Format, ahora.Created = 1, antes.Created
+			}
+			if b, e := json.MarshalIndent(ahora, "", "  "); e == nil {
+				_ = escribeSeguro(fIndice, b, 0o644)
+			}
+		}
 		for _, v := range nuevos {
 			h, e := huellaKOReader(rutaDeContenido(v.Kepub, raiz))
 			if _, e2 := os.Stat(filepath.Join(raiz, ".adds", "NickelInkSync", "tables", h+".json")); e != nil || e2 != nil {
@@ -95,9 +130,9 @@ func vinculaKepubs(raiz string) (int, error) {
 			hechos[v.Kepub+"|"+v.Original] = true
 			n++
 		}
-		if b, err := json.Marshal(hechos); err == nil {
-			_ = os.WriteFile(fHechos, b, 0o644)
-		}
+	}
+	if b, err := json.Marshal(hechos); err == nil {
+		_ = escribeSeguro(fHechos, b, 0o644)
 	}
 	if len(fallos) > 0 {
 		return n, fmt.Errorf("sin vincular: %s", strings.Join(fallos, "; "))

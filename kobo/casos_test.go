@@ -15,15 +15,17 @@ import (
 var actualiza = flag.Bool("actualiza", false, "rehace testdata/casos.json")
 
 type libroCaso struct {
-	Titulo     string  `json:"titulo"`
-	Autor      string  `json:"autor"`
-	Porcentaje float64 `json:"porcentaje"`
-	Estado     int     `json:"estado"`
-	Ul         int64   `json:"ul"`
-	Segundos   int64   `json:"segundos"`
-	Terminado  int64   `json:"terminado"`
-	Marca      string  `json:"marca,omitempty"`
-	Huella     string  `json:"huella,omitempty"`
+	Titulo     string           `json:"titulo"`
+	Autor      string           `json:"autor"`
+	Porcentaje float64          `json:"porcentaje"`
+	Estado     int              `json:"estado"`
+	Ul         int64            `json:"ul"`
+	Segundos   int64            `json:"segundos"`
+	Terminado  int64            `json:"terminado"`
+	Marca      string           `json:"marca,omitempty"`
+	Huella     string           `json:"huella,omitempty"`
+	Total      int64            `json:"total,omitempty"`
+	Dias       map[string]int64 `json:"dias,omitempty"`
 }
 
 type caso struct {
@@ -49,7 +51,7 @@ func resuelve(c caso) map[string]any {
 	var libros []LibroKobo
 	remotos := map[string]Remoto{}
 	for _, l := range c.Libros {
-		lk := LibroKobo{Titulo: l.Titulo, Autor: l.Autor, Porcentaje: l.Porcentaje, Estado: l.Estado, UltimaLectura: aTiempo(l.Ul), Segundos: l.Segundos, Terminado: aTiempo(l.Terminado), Marca: l.Marca, HuellaKepub: l.Huella}
+		lk := LibroKobo{Titulo: l.Titulo, Autor: l.Autor, Porcentaje: l.Porcentaje, Estado: l.Estado, UltimaLectura: aTiempo(l.Ul), Segundos: l.Segundos, Terminado: aTiempo(l.Terminado), Marca: l.Marca, HuellaKepub: l.Huella, Total: l.Total, Dias: l.Dias}
 		lk.Kid = buscaKid(lk, c.Cuenta)
 		libros = append(libros, lk)
 		remotos[lk.Kid] = Remoto{Libro: c.Cuenta[lk.Kid], Tiempo: c.Tiempo[lk.Kid+"~"+c.Disp]}
@@ -77,6 +79,12 @@ func casosBase() []caso {
 	fin.Estado, fin.Porcentaje, fin.Terminado = 2, 100, ul
 	kepub := rojo
 	kepub.Marca, kepub.Huella = "OEBPS/c4.xhtml#kobo.17.1:204", "4cb7844f18a4df4f0a441fbcebf2661b"
+	muestra := rojo
+	muestra.Porcentaje, muestra.Ul, muestra.Segundos = 100, ul-5*86400000, 600 // (la muestra: leída antes y entera)
+	adelantado := rojo
+	adelantado.Titulo, adelantado.Ul = "Libro del futuro", ahora+3*86400000
+	conDias := rojo
+	conDias.Total, conDias.Segundos, conDias.Dias = 3600000, 3600, map[string]int64{"2026-11-14": 600000, "2026-11-15": 1200000}
 	alReves := rojo
 	alReves.Autor, alReves.Titulo = "Brown, Pierce", "AMANECER ROJO"
 	m := func(kv ...any) map[string]any {
@@ -107,6 +115,13 @@ func casosBase() []caso {
 			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul - 9000), "fr": 0.43, "kc": "OEBPS/c1.xhtml#kobo.3.1", "kh": "4cb7844f18a4df4f0a441fbcebf2661b", "m": m("ul", ul-9000, "fr", ul, "estado", ul, "kc", ul-9000, "kh", ul-9000)}}},
 		{Nombre: "kepub: igual que en la cuenta", Libros: []libroCaso{kepub},
 			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul), "fr": 0.43, "kc": kepub.Marca, "kh": kepub.Huella, "m": m("ul", ul, "fr", ul, "estado", ul, "kc", ul, "kh", ul)}}},
+		{Nombre: "el mismo libro dos veces (muestra y comprado)", Libros: []libroCaso{muestra, rojo},
+			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(1000000), "m": m("total", ahora-50)}},
+			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "pendiente", "ul": float64(ul - 99999999), "fr": 0.01, "m": m("ul", ul-99999999, "fr", ul-99999999, "estado", ul-99999999)}}},
+		{Nombre: "reloj del Kobo adelantado", Libros: []libroCaso{adelantado}},
+		{Nombre: "días apuntados en el Kobo", Libros: []libroCaso{conDias},
+			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul), "fr": 0.43, "m": m("ul", ul, "fr", ul, "estado", ul)}},
+			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(1800000), "d2026-11-14": float64(600000), "m": m("total", ahora-50)}}},
 		{Nombre: "autor escrito al revés", Libros: []libroCaso{alReves},
 			Cuenta: map[string]Nodo{"otroref": {"t": "Amanecer rojo", "a": "Pierce Brown", "estado": "pendiente", "m": m("estado", 10)}}},
 	}

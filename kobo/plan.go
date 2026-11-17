@@ -74,6 +74,13 @@ func maxHora(n Nodo) int64 {
 func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona *time.Location, disp string) Plan {
 	p := Plan{Cambios: map[string]any{}}
 	ahoraMs := ms(ahora)
+	// Dos libros del Kobo que son el mismo de la cuenta, uno solo (si no, el segundo pisaría al primero y el tiempo contaría dos veces)
+	libros = agrupa(libros, func(l LibroKobo) string {
+		if l.Kid != "" {
+			return l.Kid
+		}
+		return kid(claveDe(l.Titulo, l.Autor))
+	})
 	sv := map[string]any{".sv": "timestamp"}
 	hayLibros, hayTiempo := false, false
 	for _, l := range libros {
@@ -85,8 +92,9 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 		if r.Libro != nil && numero(r.Libro["b"]) > 0 {
 			continue // borrado en Seshat: no se resucita
 		}
-		ul := ms(l.UltimaLectura)
-		fin := ms(l.Terminado)
+		// (nunca en el futuro: con el reloj del Kobo adelantado, la cuenta no aceptaría cambios de Seshat hasta esa hora)
+		ul := min(ms(l.UltimaLectura), ahoraMs)
+		fin := min(ms(l.Terminado), ahoraMs)
 		fr := math.Round(l.Porcentaje*100) / 10000 // 0..1 con cuatro decimales, como Seshat
 		estado := ""
 		switch l.Estado {
@@ -171,7 +179,10 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 
 		// El tiempo leído en el Kobo: su total y, lo que ha crecido desde la última vez, en el día de la última lectura. La primera vez
 		// solo el total (el Kobo no sabe en qué días se leyó lo de antes: ponerlo todo en un día haría un pico falso)
-		total := l.Segundos * 1000
+		total := l.Total
+		if total == 0 {
+			total = l.Segundos * 1000
+		}
 		ref := k + "~" + disp
 		viejo := int64(numero(r.Tiempo["total"]))
 		tiempoCambia := false
@@ -185,10 +196,16 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 				t, a = texto(r.Libro["t"]), texto(r.Libro["a"]) // (como se llama en Seshat)
 			}
 			tc := map[string]any{"ref": k, "fuente": disp, "total": total, "t": t, "a": a}
-			if r.Tiempo != nil {
+			if len(l.Dias) > 0 {
+				// Lo apuntado día a día en el Kobo (estado.go)
+				for dia, v := range l.Dias {
+					d := "d" + dia
+					tc[d] = int64(numero(r.Tiempo[d])) + v
+				}
+			} else if r.Tiempo != nil {
 				dia := ahora
-				if !l.UltimaLectura.IsZero() {
-					dia = l.UltimaLectura
+				if ul > 0 {
+					dia = time.UnixMilli(ul)
 				}
 				d := "d" + dia.In(zona).Format("2006-01-02")
 				tc[d] = int64(numero(r.Tiempo[d])) + (total - viejo)
@@ -204,7 +221,7 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 			hayTiempo, tiempoCambia = true, true
 		}
 		if len(campos) > 0 || tiempoCambia {
-			p.Resumen = append(p.Resumen, fmt.Sprintf("%s: %s · %s", l.Titulo, cuanto(l), duracion(l.Segundos)))
+			p.Resumen = append(p.Resumen, fmt.Sprintf("%s: %s · %s", l.Titulo, cuanto(l), duracion(total/1000)))
 		}
 	}
 	if hayLibros {

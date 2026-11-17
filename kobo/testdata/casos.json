@@ -509,6 +509,174 @@
   }
  },
  {
+  "nombre": "el mismo libro dos veces (muestra y comprado)",
+  "ahora": 1794819600000,
+  "zona": "Europe/Madrid",
+  "disp": "kobo",
+  "libros": [
+   {
+    "titulo": "Amanecer rojo",
+    "autor": "Pierce Brown",
+    "porcentaje": 100,
+    "estado": 1,
+    "ul": 1794353400000,
+    "segundos": 600,
+    "terminado": 0
+   },
+   {
+    "titulo": "Amanecer rojo",
+    "autor": "Pierce Brown",
+    "porcentaje": 43,
+    "estado": 1,
+    "ul": 1794785400000,
+    "segundos": 3600,
+    "terminado": 0
+   }
+  ],
+  "cuentaLibros": {
+   "6955e596a64e0c22d3c8": {
+    "estado": "pendiente",
+    "fr": 0.01,
+    "m": {
+     "estado": 1794685400001,
+     "fr": 1794685400001,
+     "ul": 1794685400001
+    },
+    "t": "Amanecer rojo",
+    "ul": 1794685400001
+   }
+  },
+  "cuentaTiempo": {
+   "6955e596a64e0c22d3c8~kobo": {
+    "fuente": "kobo",
+    "m": {
+     "total": 1794819599950
+    },
+    "ref": "6955e596a64e0c22d3c8",
+    "total": 1000000
+   }
+  },
+  "cambios": {
+   "familia/libros/6955e596a64e0c22d3c8/estado": "en_curso",
+   "familia/libros/6955e596a64e0c22d3c8/fr": 0.43,
+   "familia/libros/6955e596a64e0c22d3c8/m/estado": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/fr": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/m/ul": 1794785400000,
+   "familia/libros/6955e596a64e0c22d3c8/ul": 1794785400000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/a": "",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/d2026-11-16": 3200000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/a": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/d2026-11-16": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/t": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/total": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/t": "Amanecer rojo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/total": 4200000
+  }
+ },
+ {
+  "nombre": "reloj del Kobo adelantado",
+  "ahora": 1794819600000,
+  "zona": "Europe/Madrid",
+  "disp": "kobo",
+  "libros": [
+   {
+    "titulo": "Libro del futuro",
+    "autor": "Pierce Brown",
+    "porcentaje": 43,
+    "estado": 1,
+    "ul": 1795078800000,
+    "segundos": 3600,
+    "terminado": 0
+   }
+  ],
+  "cuentaLibros": null,
+  "cuentaTiempo": null,
+  "cambios": {
+   "familia/libros/88c85ab629bcdb3ea35b/a": "Pierce Brown",
+   "familia/libros/88c85ab629bcdb3ea35b/an": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/clave": "libro:libro del futuro:pierce brown",
+   "familia/libros/88c85ab629bcdb3ea35b/estado": "en_curso",
+   "familia/libros/88c85ab629bcdb3ea35b/fr": 0.43,
+   "familia/libros/88c85ab629bcdb3ea35b/m/a": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/m/an": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/m/clave": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/m/estado": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/m/fr": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/m/t": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/m/ul": 1794819600000,
+   "familia/libros/88c85ab629bcdb3ea35b/t": "Libro del futuro",
+   "familia/libros/88c85ab629bcdb3ea35b/ul": 1794819600000,
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/a": "Pierce Brown",
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/fuente": "kobo",
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/m/a": 1794819600000,
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/m/fuente": 1794819600000,
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/m/ref": 1794819600000,
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/m/t": 1794819600000,
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/m/total": 1794819600000,
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/ref": "88c85ab629bcdb3ea35b",
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/t": "Libro del futuro",
+   "familia/tiempo/88c85ab629bcdb3ea35b~kobo/total": 3600000
+  }
+ },
+ {
+  "nombre": "días apuntados en el Kobo",
+  "ahora": 1794819600000,
+  "zona": "Europe/Madrid",
+  "disp": "kobo",
+  "libros": [
+   {
+    "titulo": "Amanecer rojo",
+    "autor": "Pierce Brown",
+    "porcentaje": 43,
+    "estado": 1,
+    "ul": 1794785400000,
+    "segundos": 3600,
+    "terminado": 0,
+    "total": 3600000,
+    "dias": {
+     "2026-11-14": 600000,
+     "2026-11-15": 1200000
+    }
+   }
+  ],
+  "cuentaLibros": {
+   "6955e596a64e0c22d3c8": {
+    "estado": "en_curso",
+    "fr": 0.43,
+    "m": {
+     "estado": 1794785400000,
+     "fr": 1794785400000,
+     "ul": 1794785400000
+    },
+    "t": "Amanecer rojo",
+    "ul": 1794785400000
+   }
+  },
+  "cuentaTiempo": {
+   "6955e596a64e0c22d3c8~kobo": {
+    "d2026-11-14": 600000,
+    "fuente": "kobo",
+    "m": {
+     "total": 1794819599950
+    },
+    "ref": "6955e596a64e0c22d3c8",
+    "total": 1800000
+   }
+  },
+  "cambios": {
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/a": "",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/d2026-11-14": 1200000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/d2026-11-15": 1200000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/a": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/d2026-11-14": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/d2026-11-15": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/t": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/m/total": 1794819600000,
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/t": "Amanecer rojo",
+   "familia/tiempo/6955e596a64e0c22d3c8~kobo/total": 3600000
+  }
+ },
+ {
   "nombre": "autor escrito al revés",
   "ahora": 1794819600000,
   "zona": "Europe/Madrid",

@@ -83,14 +83,9 @@ func actualizaIndiceNIS(rutaBD, raiz, cache string) (cambiado bool, n int, err e
 		return false, 0, err
 	}
 	defer os.RemoveAll(tmp)
-	copia := filepath.Join(tmp, "KoboReader.sqlite")
-	if err := copiaArchivo(rutaBD, copia); err != nil {
+	copia, err := copiaBD(rutaBD, tmp)
+	if err != nil {
 		return false, 0, err
-	}
-	for _, ext := range []string{"-wal", "-shm"} {
-		if _, err := os.Stat(rutaBD + ext); err == nil {
-			_ = copiaArchivo(rutaBD+ext, copia+ext)
-		}
 	}
 	db, err := sql.Open("sqlite", "file:"+copia)
 	if err != nil {
@@ -146,8 +141,9 @@ func actualizaIndiceNIS(rutaBD, raiz, cache string) (cambiado bool, n int, err e
 		}
 		libros = append(libros, l)
 	}
-	if b, err := json.Marshal(nuevas); err == nil {
-		_ = os.WriteFile(cache, b, 0o644)
+	// (solo si ha cambiado: escribir en la memoria del Kobo cada vez, para nada, la gasta)
+	if b, err := json.Marshal(nuevas); err == nil && !mismoMapa(viejas, nuevas) {
+		_ = escribeSeguro(cache, b, 0o644)
 	}
 	n = len(libros)
 
@@ -155,8 +151,11 @@ func actualizaIndiceNIS(rutaBD, raiz, cache string) (cambiado bool, n int, err e
 	destino := filepath.Join(dir, "library.json")
 	var actual indice
 	if b, err := os.ReadFile(destino); err == nil {
-		if json.Unmarshal(b, &actual) != nil || actual.Format > 1 {
-			return false, n, fmt.Errorf("library.json de NickelInkSync es de otra versión: no se toca")
+		switch err := json.Unmarshal(b, &actual); {
+		case err != nil:
+			actual = indice{} // roto (un corte a mitad de escribirlo): se rehace con lo del Kobo
+		case actual.Format > 1:
+			return false, n, fmt.Errorf("library.json de NickelInkSync es de una versión más nueva: no se toca")
 		}
 	}
 	for _, l := range actual.Books {
@@ -173,11 +172,19 @@ func actualizaIndiceNIS(rutaBD, raiz, cache string) (cambiado bool, n int, err e
 		libros = []libroIndice{}
 	}
 	b, _ := json.MarshalIndent(indice{Format: 1, Created: time.Now().UTC().Format("2006-01-02T15:04:05Z"), Books: libros}, "", "  ")
-	t := destino + ".nuevo"
-	if err := os.WriteFile(t, b, 0o644); err != nil {
-		return false, 0, err
+	return true, n, escribeSeguro(destino, b, 0o644)
+}
+
+func mismoMapa(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
 	}
-	return true, n, os.Rename(t, destino)
+	for k, v := range a {
+		if b[k] != v {
+			return false
+		}
+	}
+	return true
 }
 
 func mismosLibros(a, b []libroIndice) bool {

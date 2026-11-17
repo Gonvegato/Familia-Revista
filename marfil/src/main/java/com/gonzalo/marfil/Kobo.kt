@@ -32,7 +32,26 @@ object Kobo {
         val huellaKepub: String = "",
         /** ContentID del Kobo (en los que copias tú, «file:///mnt/onboard/…»). */
         val contentId: String = "",
+        /** El tiempo leído como lo lleva el programa del Kobo (total en ms y lo leído por días aún sin subir). Por cable, sin ellos. */
+        val total: Long = 0,
+        val dias: Map<String, Long> = emptyMap(),
     )
+
+    /**
+     * Junta los libros del Kobo que son el mismo para la cuenta (la muestra y el comprado, el EPUB y el kepub): queda el leído más tarde,
+     * con el tiempo de todos sumado y la fecha de terminado más reciente. Como `agrupa` de kobo/kobo.go.
+     */
+    fun agrupa(libros: List<Libro>, clave: (Libro) -> String): List<Libro> {
+        val m = LinkedHashMap<String, Libro>()
+        for (l in libros) {
+            val k = clave(l)
+            val a = m[k] ?: run { m[k] = l; null } ?: continue
+            val dias = HashMap<String, Long>().apply { for (x in listOf(a.dias, l.dias)) for ((d, v) in x) merge(d, v, Long::plus) }
+            val base = if (l.ul > a.ul) l else a
+            m[k] = base.copy(segundos = a.segundos + l.segundos, total = a.total + l.total, dias = dias, terminado = maxOf(a.terminado, l.terminado))
+        }
+        return m.values.toList()
+    }
 
     /** Unos campos de una cosa de la cuenta, todos con la misma hora. */
     data class Cambio(val coleccion: String, val ref: String, val campos: Map<String, Any?>, val hora: Long)
@@ -70,12 +89,14 @@ object Kobo {
     fun planea(kobo: List<Libro>, libros: Map<String, Nodo>, tiempos: Map<String, Nodo>, ahora: Long, zona: ZoneId, disp: String = DISPOSITIVO): Plan {
         val cambios = ArrayList<Cambio>()
         val resumen = ArrayList<String>()
-        for (l0 in kobo) {
-            val k = l0.kid.ifBlank { buscaKid(l0, libros) }
-            val l = l0.copy(kid = k)
+        // Dos libros del Kobo que son el mismo de la cuenta, uno solo (si no, el segundo pisaría al primero y el tiempo contaría dos veces)
+        val juntos = agrupa(kobo.map { it.copy(kid = it.kid.ifBlank { buscaKid(it, libros) }) }) { it.kid }
+        for (l in juntos) {
+            val k = l.kid
             val libro = libros[k]
             if (libro != null && libro.borrado) continue // borrado en Seshat: no se resucita
-            val ul = l.ul; val fin = l.terminado
+            // (nunca en el futuro: con el reloj del Kobo adelantado, la cuenta no aceptaría cambios de Seshat hasta esa hora)
+            val ul = minOf(l.ul, ahora); val fin = minOf(l.terminado, ahora)
             var fr = (l.porcentaje * 100).roundToLong() / 10000.0
             var estado = ""
             when (l.estado) {
@@ -111,7 +132,7 @@ object Kobo {
             campos.entries.groupBy { it.value.second }.forEach { (hora, cs) -> cambios += Cambio("libros", k, cs.associate { it.key to it.value.first }, hora) }
 
             // El tiempo leído en el Kobo: su total y lo que ha crecido, en el día de la última lectura. La primera vez, solo el total.
-            val total = l.segundos * 1000
+            val total = if (l.total > 0) l.total else l.segundos * 1000
             val ref = "$k~$disp"
             val tn = tiempos[ref]
             val viejo = tn?.campos?.get("total").num().toLong()
@@ -120,7 +141,10 @@ object Kobo {
                 val hora = maxOf(ahora, (tn?.m?.values?.maxOrNull() ?: 0L) + 1)
                 val (t, a) = if (libro != null && libro.texto("t").isNotEmpty()) libro.texto("t") to libro.texto("a") else l.titulo to l.autor
                 val tc = linkedMapOf<String, Any?>("ref" to k, "fuente" to disp, "total" to total, "t" to t, "a" to a)
-                if (tn != null) {
+                if (l.dias.isNotEmpty()) {
+                    // Lo apuntado día a día en el Kobo
+                    for ((dia, v) in l.dias) { val d = "d$dia"; tc[d] = tn?.campos?.get(d).num().toLong() + v }
+                } else if (tn != null) {
                     val dia = Instant.ofEpochMilli(if (ul > 0) ul else ahora).atZone(zona).toLocalDate()
                     val d = "d$dia"
                     tc[d] = tn.campos[d].num().toLong() + (total - viejo)
@@ -129,7 +153,7 @@ object Kobo {
                 cambios += Cambio("tiempo", ref, sube, hora)
                 tiempoCambia = true
             }
-            if (campos.isNotEmpty() || tiempoCambia) resumen += "${l.titulo}: ${cuanto(l)} · ${tiempoDe(l.segundos * 1000)}"
+            if (campos.isNotEmpty() || tiempoCambia) resumen += "${l.titulo}: ${cuanto(l)} · ${tiempoDe(total)}"
         }
         return Plan(cambios, resumen.sorted())
     }

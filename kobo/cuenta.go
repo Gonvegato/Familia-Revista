@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +29,37 @@ type Cuenta struct {
 	archivo string
 	pase    string
 	cliente *http.Client
+	desfase time.Duration // la hora de la cuenta menos la del Kobo (de la cabecera Date de sus respuestas)
+}
+
+// ahora: la hora de verdad (la de la cuenta), por si el reloj del Kobo va mal.
+func (c *Cuenta) ahora() time.Time { return time.Now().Add(c.desfase) }
+
+func (c *Cuenta) apuntaHora(r *http.Response) {
+	if t, err := http.ParseTime(r.Header.Get("Date")); err == nil {
+		if d := time.Until(t); d > time.Minute || d < -time.Minute {
+			c.desfase = d
+		} else {
+			c.desfase = 0
+		}
+	}
+}
+
+// sinPase: un error de red sin la dirección (lleva el pase de la cuenta: no puede acabar en el registro, que se ve por USB y en la
+// pantalla del Kobo).
+func sinPase(err error, que string) error {
+	var ue *url.Error
+	if errors.As(err, &ue) {
+		err = ue.Err
+	}
+	return fmt.Errorf("sin conexión con la cuenta (%s): %v", que, err)
+}
+
+// leeJSON lee [archivo] en [v] (si no está o está roto, lo deja como estaba).
+func leeJSON(archivo string, v any) {
+	if b, err := os.ReadFile(archivo); err == nil {
+		_ = json.Unmarshal(b, v)
+	}
 }
 
 func cargaCuenta(archivo string) (*Cuenta, error) {
@@ -62,9 +95,10 @@ func (c *Cuenta) entra() error {
 	f := url.Values{"grant_type": {"refresh_token"}, "refresh_token": {c.Refresco}}
 	r, err := c.cliente.PostForm(strings.TrimRight(c.BaseToken, "/")+"/v1/token?key="+url.QueryEscape(c.ClaveWeb), f)
 	if err != nil {
-		return fmt.Errorf("sin conexión con la cuenta: %w", err)
+		return sinPase(err, "pase")
 	}
 	defer r.Body.Close()
+	c.apuntaHora(r)
 	var m map[string]any
 	_ = json.NewDecoder(r.Body).Decode(&m)
 	if r.StatusCode != 200 {
@@ -76,8 +110,11 @@ func (c *Cuenta) entra() error {
 	}
 	if nuevo := texto(m["refresh_token"]); nuevo != "" && nuevo != c.Refresco {
 		c.Refresco = nuevo
+		// (sin dejarlo a medias: si no, el Kobo se quedaría sin cuenta)
 		if b, err := json.MarshalIndent(c, "", "  "); err == nil {
-			_ = os.WriteFile(c.archivo, b, 0o600)
+			if err := escribeSeguro(c.archivo, b, 0o600); err != nil {
+				log.Print("no se pudo guardar el pase nuevo (sigue valiendo el de antes): ", err)
+			}
 		}
 	}
 	if c.pase == "" {
@@ -97,9 +134,10 @@ func (c *Cuenta) url(ruta string) string {
 func (c *Cuenta) lee(ruta string) (Nodo, error) {
 	r, err := c.cliente.Get(c.url(ruta))
 	if err != nil {
-		return nil, err
+		return nil, sinPase(err, "leer")
 	}
 	defer r.Body.Close()
+	c.apuntaHora(r)
 	b, _ := io.ReadAll(r.Body)
 	if r.StatusCode != 200 {
 		return nil, fmt.Errorf("leer %s: %d %s", ruta, r.StatusCode, strings.TrimSpace(string(b)))
@@ -117,7 +155,7 @@ func (c *Cuenta) sube(cambios map[string]any) error {
 	q.Header.Set("Content-Type", "application/json")
 	r, err := c.cliente.Do(q)
 	if err != nil {
-		return err
+		return sinPase(err, "subir")
 	}
 	defer r.Body.Close()
 	if r.StatusCode != 200 {
