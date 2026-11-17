@@ -31,7 +31,7 @@ import (
 	_ "seshat-kobo/raices"
 )
 
-const version = "1.2.0"
+const version = "1.2.1"
 
 var (
 	dirSeshat = "/mnt/onboard/.adds/seshat"
@@ -282,7 +282,7 @@ func vigila() {
 	inicio, _ := os.Stat(yo)
 	log.Print("vigilando: apunta lo leído cada día y manda cada vez que hay Wi-Fi")
 	antes := false
-	var ultimo, reintento time.Time
+	var ultimo, reintento, apuntadaEn time.Time
 	var apuntada, enviada string
 	fallos := 0
 	for {
@@ -293,10 +293,12 @@ func vigila() {
 			_ = syscall.Exec(yo, os.Args, os.Environ())
 			return
 		}
+		// Lo leído por días: como mucho cada 10 minutos (copiar la base de datos cada minuto mientras se lee frena el Kobo; lo nuevo va
+		// igual al día de su última lectura)
 		h := huellaArchivos(*fBD)
-		if h != "" && h != apuntada {
+		if h != "" && h != apuntada && time.Since(apuntadaEn) > 10*time.Minute {
 			if err := conCerrojo(apunta); err == nil {
-				apuntada = h
+				apuntada, apuntadaEn = h, time.Now()
 			}
 		}
 		ahora := hayRuta()

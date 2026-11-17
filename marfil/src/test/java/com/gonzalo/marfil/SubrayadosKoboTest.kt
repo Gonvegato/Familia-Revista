@@ -58,4 +58,13 @@ class SubrayadosKoboTest {
         assertEquals("OEBPS/text/probe.xhtml", Kobo.capituloDe(s("file:///mnt/onboard/Books/book-p.epub#(1)OEBPS/text/probe.xhtml")))
         assertEquals("OPS/c.html", Kobo.capituloDe(s("raro", "OPS/c.html#point(/1/4/2:0)")))
     }
+
+    @Test fun paqueteSegunLaVersion() {
+        // (el .kobo/version de verdad del Clara BW, con la 6.0 y con la 4.46)
+        val v6 = KoboCable.versionKobo("P365632001152,4.9.77,6.0.279225,4.9.77,4.9.77,00000000-0000-0000-0000-000000000395")
+        assertEquals(listOf(6, 0, 279225), v6); assertEquals("Kobo.tgz", KoboCable.paqueteDe(v6))
+        val v4 = KoboCable.versionKobo("P365632001152,4.9.77,4.46.23852,4.9.77,4.9.77,00000000-0000-0000-0000-000000000395")
+        assertEquals(listOf(4, 46, 23852), v4); assertEquals("KoboRoot.tgz", KoboCable.paqueteDe(v4))
+        assertEquals("KoboRoot.tgz", KoboCable.paqueteDe(KoboCable.versionKobo(null)))
+    }
 }

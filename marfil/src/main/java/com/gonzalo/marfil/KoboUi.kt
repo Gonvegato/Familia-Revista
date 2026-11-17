@@ -76,7 +76,7 @@ fun SeccionKobo() {
                         listOfNotNull(
                             "Kobo preparado.",
                             if (p.plugins) "Desconéctalo: se reiniciará para instalar NickelMenu y NickelInkSync." else null,
-                            "Luego pulsa «Enviar a Seshat» en el menú «Más» del Kobo una vez.",
+                            "Luego, en el Kobo, abre el botón NickelMenu de la barra de abajo y pulsa «Enviar a Seshat» una vez.",
                             if (KoSync.activo(ctx)) "Posición de ${p.conPosicion} ${if (p.conPosicion == 1) "libro" else "libros"} entre el Kobo y SesKobo." else "Sin usuario de posiciones: solo libros, porcentaje y tiempo.",
                         ).joinToString(" ")
                     }
@@ -160,7 +160,7 @@ fun SeccionKobo() {
                         Text("SesKobo copiará al Kobo:", fontFamily = Body, fontSize = 14.sp)
                         for (l in listOf(
                             "NickelMenu y NickelInkSync (para el firmware 6; no oficiales). El Kobo se reinicia al desconectarlo para instalarlos.",
-                            "«Enviar a Seshat» y «Seshat · último envío» en el menú «Más».",
+                            "«Enviar a Seshat» y «Seshat · último envío» en el botón NickelMenu (abajo, en la pantalla de inicio). Y el envío automático arranca solo al encender el Kobo.",
                             "Tu acceso a la cuenta, para que el Kobo pueda mandar. Queda guardado sin cifrar en el Kobo.",
                             "Si tienes usuario de posiciones: el usuario y su clave (el MD5 de la contraseña) para NickelInkSync.",
                         )) Text("• $l", fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))

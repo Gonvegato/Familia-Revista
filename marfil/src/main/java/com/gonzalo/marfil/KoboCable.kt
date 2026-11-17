@@ -199,6 +199,16 @@ object KoboCable {
 
     private fun asset(ctx: Context, nombre: String) = ctx.assets.open("kobo/$nombre").use { it.readBytes() }
 
+    /**
+     * La versión del software del Kobo (la tercera de `.kobo/version`: «…,4.9.77,4.46.23852,…» → [4, 46, 23852]); vacía si no se sabe.
+     * Hasta la 4.x los complementos se instalan con `KoboRoot.tgz` (Qt 5); desde la 5, con `Kobo.tgz` (Qt 6).
+     */
+    fun versionKobo(texto: String?): List<Int> =
+        texto?.trim()?.split(',')?.getOrNull(2)?.trim()?.split('.')?.mapNotNull { it.trim().toIntOrNull() }.orEmpty()
+
+    /** El paquete de complementos para esa versión: `KoboRoot.tgz` (firmware 4.x) o `Kobo.tgz` (5 y 6). Sin versión, el de la 4.x (la normal). */
+    fun paqueteDe(version: List<Int>): String = if ((version.firstOrNull() ?: 4) >= 5) "Kobo.tgz" else "KoboRoot.tgz"
+
     /** Lo que ha hecho [prepara]: si pone los plugins (el Kobo se reinicia al desconectarlo) y cuántos libros van con posición. */
     data class Preparado(val plugins: Boolean, val conPosicion: Int)
 
@@ -220,7 +230,8 @@ object KoboCable {
         )
         val adds = carpeta(r, ".adds")
         val ds = carpeta(adds, "seshat")
-        for (n in listOf("seshat-kobo", "seshat.sh", "LICENSE-NickelMenu", "LICENSE-NickelInkSync")) escribe(ctx, ds, n, asset(ctx, n))
+        // (arranque.sh: lo lanza la pieza de Seshat al encender el Kobo; deja en marcha el envío automático aunque NickelMenu no funcione)
+        for (n in listOf("seshat-kobo", "seshat.sh", "arranque.sh", "LICENSE-NickelMenu", "LICENSE-NickelInkSync")) escribe(ctx, ds, n, asset(ctx, n))
         escribe(ctx, ds, "cuenta.json", Json.escribe(cuenta).toByteArray())
         val nm = carpeta(adds, "nm")
         hijo(nm, "uninstall")?.delete() // (si alguna vez se desinstaló NickelMenu, si no, no volvería)
@@ -239,7 +250,12 @@ object KoboCable {
             escribe(ctx, dn, "library.json", indiceNis(libros + librosDeIndice(antes)).toByteArray())
             if (hijo(dn, "NickelInkSync.log") == null) plugins = true // (el plugin apunta ahí en cuanto arranca)
         }
-        if (plugins) escribe(ctx, dk, "Kobo.tgz", asset(ctx, "Kobo.tgz"))
+        // El paquete de complementos que toca a su versión (el otro, si quedó de antes, fuera: el Kobo no lo usaría, o instalaría lo que no es)
+        val version = versionKobo(hijo(dk, "version")?.let { f -> runCatching { ctx.contentResolver.openInputStream(f.uri)!!.use { it.readBytes().decodeToString() } }.getOrNull() })
+        val paquete = paqueteDe(version)
+        for (otro in listOf("Kobo.tgz", "KoboRoot.tgz")) if (otro != paquete) hijo(dk, otro)?.delete()
+        if (hijo(dk, paquete) != null) plugins = true
+        if (plugins) escribe(ctx, dk, paquete, asset(ctx, paquete))
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("preparado", true).apply()
         return Preparado(plugins, conPosicion)
     }
@@ -395,7 +411,7 @@ object KoboCable {
         val r = raiz(ctx, arbol)
         val dk = kobo(r)
         // Si aún no se ha desenchufado desde que se preparó, el instalador sigue ahí: fuera (si no, instalaría los plugins igual)
-        hijo(dk, "Kobo.tgz")?.delete()
+        hijo(dk, "Kobo.tgz")?.delete(); hijo(dk, "KoboRoot.tgz")?.delete()
         hijo(r, ".adds")?.let { a ->
             hijo(a, "seshat")?.delete() // (con los originales de los vinculados)
             hijo(a, "nm")?.let { hijo(it, "seshat")?.delete() }
