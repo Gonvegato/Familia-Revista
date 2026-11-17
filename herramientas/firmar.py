@@ -45,7 +45,10 @@ def main(app):
     if app == "marfil":
         badging = subprocess.run([f"{BT}/aapt2", "dump", "badging", sin], capture_output=True, text=True).stdout
         if "name='com.gonzalo.marfil.seskobo'" in badging:
-            salida = os.path.join(dir_, f"SesKobo-{version(app)}-kobo.apk")
+            # (con su versión entera, la revisión de SesKobo incluida: «0.22.6-kobo.2»)
+            import re
+            m = re.search(r"versionName='([^']+)'", badging)
+            salida = os.path.join(dir_, f"SesKobo-{m.group(1) if m else version(app) + '-kobo'}.apk")
     f = lambda n: os.path.join(RAIZ, "firma", n)
     # Las contraseñas van por el entorno (env:), nunca en la línea de órdenes (se verían en la lista de procesos)
     entorno = dict(os.environ, PASE_FAMILIA=p["familia"])

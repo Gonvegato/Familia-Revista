@@ -177,41 +177,69 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 			p.Cambios[fmt.Sprintf("familia/libros/%s/u", k)] = sv
 		}
 
-		// El tiempo leído en el Kobo: su total y, lo que ha crecido desde la última vez, en el día de la última lectura. La primera vez
-		// solo el total (el Kobo no sabe en qué días se leyó lo de antes: ponerlo todo en un día haría un pico falso)
+		// El tiempo leído en el Kobo
 		total := l.Total
-		if total == 0 {
+		if total == 0 && !l.PorDias {
 			total = l.Segundos * 1000
 		}
 		ref := k + "~" + disp
 		viejo := int64(numero(r.Tiempo["total"]))
+		dias := map[string]int64{}
+		diaUl := func() string {
+			dia := ahora
+			if ul > 0 {
+				dia = time.UnixMilli(ul)
+			}
+			return dia.In(zona).Format("2006-01-02")
+		}
+		if l.PorDias {
+			// Lo que apunta día a día el programa del Kobo: `k<día>` dice cuánto de `d<día>` es suyo, y se pone al día solo su parte. Así,
+			// aunque algo se mande dos veces (la respuesta se pierde por el camino), la cuenta acaba igual: nunca se suma dos veces
+			explicado := int64(0)
+			for dia, v := range l.Dias {
+				if kd := int64(numero(r.Tiempo["k"+dia])); v > kd {
+					dias[dia] = v - kd
+					explicado += v - kd
+				}
+			}
+			// Lo que el total ha crecido sin estar en ningún día (leído antes de que el programa lo apuntara por días): al de la última
+			// lectura. La primera vez, solo el total (no se sabe en qué días se leyó)
+			if r.Tiempo != nil && total-viejo > explicado {
+				dias[diaUl()] += total - viejo - explicado
+			}
+		} else if total > viejo && r.Tiempo != nil {
+			// Por cable: lo que ha crecido, en el día de la última lectura (la primera vez, solo el total)
+			dias[diaUl()] += total - viejo
+		}
 		tiempoCambia := false
-		if total > viejo {
+		if total > viejo || len(dias) > 0 {
 			hora := ahoraMs
 			if h := maxHora(r.Tiempo) + 1; h > hora {
 				hora = h
 			}
 			t, a := l.Titulo, l.Autor
 			if r.Libro != nil && texto(r.Libro["t"]) != "" {
-				t, a = texto(r.Libro["t"]), texto(r.Libro["a"]) // (como se llama en Seshat)
+				t = texto(r.Libro["t"]) // (como se llama en Seshat)
+				if x := texto(r.Libro["a"]); x != "" {
+					a = x
+				}
 			}
-			tc := map[string]any{"ref": k, "fuente": disp, "total": total, "t": t, "a": a}
-			if len(l.Dias) > 0 {
-				// Lo apuntado día a día en el Kobo (estado.go)
+			tc := map[string]any{"ref": k, "fuente": disp, "t": t, "a": a}
+			if total > viejo {
+				tc["total"] = total
+			}
+			for dia, v := range dias {
+				tc["d"+dia] = int64(numero(r.Tiempo["d"+dia])) + v
+			}
+			if l.PorDias {
 				for dia, v := range l.Dias {
-					d := "d" + dia
-					tc[d] = int64(numero(r.Tiempo[d])) + v
+					if v > int64(numero(r.Tiempo["k"+dia])) {
+						tc["k"+dia] = v
+					}
 				}
-			} else if r.Tiempo != nil {
-				dia := ahora
-				if ul > 0 {
-					dia = time.UnixMilli(ul)
-				}
-				d := "d" + dia.In(zona).Format("2006-01-02")
-				tc[d] = int64(numero(r.Tiempo[d])) + (total - viejo)
 			}
 			for c, v := range tc {
-				if r.Tiempo != nil && c != "total" && !(len(c) > 1 && c[0] == 'd') && fmt.Sprint(r.Tiempo[c]) == fmt.Sprint(v) {
+				if r.Tiempo != nil && (c == "ref" || c == "fuente" || c == "t" || c == "a") && fmt.Sprint(r.Tiempo[c]) == fmt.Sprint(v) {
 					continue // (lo que no cambia no se vuelve a subir)
 				}
 				p.Cambios[fmt.Sprintf("familia/tiempo/%s/%s", ref, c)] = v
@@ -219,6 +247,9 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 			}
 			p.Cambios[fmt.Sprintf("familia/tiempo/%s/u", ref)] = sv
 			hayTiempo, tiempoCambia = true, true
+		}
+		if total < viejo {
+			total = viejo // (para el registro)
 		}
 		if len(campos) > 0 || tiempoCambia {
 			p.Resumen = append(p.Resumen, fmt.Sprintf("%s: %s · %s", l.Titulo, cuanto(l), duracion(total/1000)))

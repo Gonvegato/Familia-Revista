@@ -138,13 +138,18 @@ func (c *Cuenta) lee(ruta string) (Nodo, error) {
 	}
 	defer r.Body.Close()
 	c.apuntaHora(r)
-	b, _ := io.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if r.StatusCode != 200 {
 		return nil, fmt.Errorf("leer %s: %d %s", ruta, r.StatusCode, strings.TrimSpace(string(b)))
 	}
+	// Una respuesta cortada (el Wi-Fi se va a mitad, se acaba el tiempo) es un error, no «no existe»: si no, se subiría como si la
+	// cuenta estuviera vacía (el tiempo de un día pisado, un libro repetido). «null» sí es que no existe (da nil sin error)
+	if err != nil {
+		return nil, sinPase(err, "leer")
+	}
 	var n Nodo
 	if err := json.Unmarshal(b, &n); err != nil {
-		return nil, nil // («null»: no existe)
+		return nil, fmt.Errorf("leer %s: respuesta incompleta o rara (%d bytes)", ruta, len(b))
 	}
 	return n, nil
 }

@@ -86,11 +86,16 @@ object KoboCable {
     /** Lee el Kobo y sube a la cuenta lo que sepa de más tarde. */
     fun lee(ctx: Context, arbol: Uri): Lectura {
         if (!LaFamilia.familia.sesion.dentro) throw Error("Entra en tu cuenta (Ajustes → Cuenta) antes de leer el Kobo.")
-        val kobo = libros(ctx, arbol).let { ls -> conHuellasKepub(ctx, raiz(ctx, arbol), ls) }
+        val r = raiz(ctx, arbol)
+        val kobo = libros(ctx, arbol).let { ls -> conHuellasKepub(ctx, r, ls) }
+        // Si el programa del Kobo ya ha empezado a llevar el tiempo (día a día), el tiempo es cosa suya: si lo subieran los dos, contaría
+        // dos veces
+        val delPrograma = hijo(r, ".adds")?.let { hijo(it, "seshat") }?.let { hijo(it, "enviado.json") } != null
         // Con los libros de la cuenta al día (si no, un libro que aún no ha bajado a este móvil se tomaría por nuevo)
         val inf = LaFamilia.sincronizaYa()
         if (!LaFamilia.coleccion("libros").completa && !inf.ok) throw Error("Sin conexión con la cuenta: hace falta para saber qué libros tienes ya.")
-        val p = Kobo.planea(kobo, LaFamilia.coleccion("libros").todos(), LaFamilia.coleccion("tiempo").todos(), System.currentTimeMillis(), ZoneId.systemDefault())
+        val p = Kobo.planea(kobo, LaFamilia.coleccion("libros").todos(), LaFamilia.coleccion("tiempo").todos(), System.currentTimeMillis(), ZoneId.systemDefault(),
+            conTiempo = !delPrograma)
         for (c in p.cambios) LaFamilia.coleccion(c.coleccion).pon(c.ref, c.campos, c.hora)
         apunta(ctx, "cable")
         return Lectura(kobo.size, p.resumen)
@@ -124,12 +129,19 @@ object KoboCable {
         hijo(d, nombre)?.takeIf { it.isDirectory } ?: d.createDirectory(nombre) ?: throw Error("No se pudo crear la carpeta $nombre en el Kobo.")
 
     private fun escribe(ctx: Context, dir: DocumentFile, nombre: String, datos: ByteArray) {
-        // Encima del que ya hay (truncándolo); si no está, se crea. Borrar y crear puede dejar «nombre (1)» si el borrado falla.
-        val f = hijo(dir, nombre)?.takeIf { it.isFile } ?: dir.createFile("application/octet-stream", nombre)?.also {
+        // Primero aparte («nombre.parte») y luego en su sitio: si se suelta el cable a mitad, queda el de antes entero (no uno cortado que
+        // el Kobo intentaría ejecutar o leer)
+        val tmp = "$nombre.parte"
+        hijo(dir, tmp)?.delete()
+        val p = dir.createFile("application/octet-stream", tmp)?.also {
             // (algunos selectores añaden una extensión al crear el archivo: se le devuelve su nombre)
-            if (it.name != nombre) it.renameTo(nombre)
+            if (it.name != tmp) it.renameTo(tmp)
         } ?: throw Error("No se pudo escribir $nombre en el Kobo.")
-        ctx.contentResolver.openOutputStream(f.uri, "wt")!!.use { it.write(datos) }
+        ctx.contentResolver.openOutputStream(p.uri, "wt")!!.use { it.write(datos) }
+        // (si el de antes no se deja borrar, el nuevo acabaría como «nombre (1)»: mejor parar)
+        val viejo = hijo(dir, nombre)
+        if (viejo != null && !viejo.delete()) { p.delete(); throw Error("No se pudo cambiar $nombre en el Kobo.") }
+        if (!p.renameTo(nombre)) throw Error("No se pudo escribir $nombre en el Kobo.")
     }
 
     /**

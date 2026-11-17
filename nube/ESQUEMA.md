@@ -117,7 +117,9 @@ Lo leído, jugado o visto en un dispositivo (o fuente): `ref`, `fuente`, `total`
 dispositivo escribe solo los suyos: para saber lo de un día se **suman** los de todos. Mostaza añade `t` (el título) y `veces` (las
 sesiones; Mostaza del ordenador escribe como dispositivo `mostaza-linux-…` o `mostaza-mac-…`), y apunta el tiempo de una serie en el título (no en cada episodio); solo el tiempo de verdad reproduciendo (sin pausas ni
 saltos), y solo de lo que está en tu biblioteca (ver `titulos`). Lo que Azabache tenía apuntado de una película o serie (sin días) pasó a
-`tiempo/<ref>~azabache` (`fuente` = `azabache`).
+`tiempo/<ref>~azabache` (`fuente` = `azabache`). El programa del Kobo (SesKobo, dispositivo `kobo`) añade junto a cada día `k2026-11-05` =
+cuánto de ese `d…` ha puesto él (lo lleva día a día en el Kobo y pone al día solo su parte: mandarlo dos veces no lo suma dos veces); quien
+lee los días no lo usa.
 
 ### `titulos/<ref>` (Mostaza)
 

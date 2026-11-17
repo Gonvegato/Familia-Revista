@@ -32,15 +32,28 @@ func normaliza(s string) string {
 	return b.String()
 }
 
-// minusculas es `lowercase()` de Kotlin/Java (Locale.ROOT): como strings.ToLower, pero la Σ griega al final de una palabra es «ς»
-// (la regla de la sigma final de Unicode, que Go no aplica): «ΟΔΥΣΣΕΑΣ» → «οδυσσεας». Final: con una letra antes y ninguna después
-// (saltando lo que no cuenta: apóstrofos, puntos, acentos sueltos…).
+// minusculas es `lowercase()` de Kotlin tal como lo hace Android (String.toLowerCase → CaseMapper de libcore): como strings.ToLower,
+// pero una Σ griega al final de una palabra es «ς» (la regla de la sigma final, que Go no aplica): «ΟΔΥΣΣΕΑΣ» → «οδυσσεας». Android
+// solo mira la letra de justo antes (con caso) y la de justo después (sin caso); si el texto tiene «İ» o algo fuera del plano básico
+// (emojis…), se lo pasa a ICU, que aplica la regla entera de Unicode (saltando apóstrofos, acentos sueltos…).
 func minusculas(s string) string {
 	rs := []rune(s)
+	completa := false
+	for _, r := range rs {
+		if r == 'İ' || r > 0xFFFF {
+			completa = true
+		}
+	}
 	var b strings.Builder
 	for i, r := range rs {
 		if r == 'Σ' {
-			if letraAntes(rs, i) && !letraDespues(rs, i) {
+			final := false
+			if completa {
+				final = letraAntes(rs, i) && !letraDespues(rs, i)
+			} else {
+				final = i > 0 && conCaso(rs[i-1]) && (i+1 == len(rs) || !conCaso(rs[i+1]))
+			}
+			if final {
 				b.WriteRune('ς')
 			} else {
 				b.WriteRune('σ')
@@ -52,6 +65,7 @@ func minusculas(s string) string {
 	return b.String()
 }
 
+// (u_islower, u_isupper, u_istitle de ICU, que es lo que usa Android: las categorías Ll, Lu y Lt)
 func conCaso(r rune) bool { return unicode.IsUpper(r) || unicode.IsLower(r) || unicode.IsTitle(r) }
 
 // (Case_Ignorable de Unicode: marcas, formatos, modificadores y los signos que pueden ir dentro de una palabra)

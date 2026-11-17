@@ -63,9 +63,12 @@ function lua(nombre) {
         const capitulo = window.__view.book.sections[i].id
         const fue = await window.atrioIrKobo(capitulo + '#' + marca, 'el Kobo')
         await new Promise(r => setTimeout(r, 500))
-        return { marca, texto: rg.toString(), fue, idx: window.__view.lastLocation?.section?.current, llegada: window.atrioXPointer()?.llegada }
+        // ¿La página que se ve contiene la frase? (no basta con que «vaya»: tiene que caer ahí, no al principio del capítulo)
+        const v = window.__view.lastLocation, dest = window.__xp.koboRango(v.range.startContainer.ownerDocument, marca)
+        const dentro = !!dest && v.range.comparePoint(dest.startContainer, dest.startOffset) === 0
+        return { marca, texto: rg.toString(), fue, dentro, idx: window.__view.lastLocation?.section?.current, llegada: window.atrioXPointer()?.llegada }
       }, s)
-      ok(!r.error && r.texto === s.text && r.fue && r.llegada === true, `${nombre} marca del Kobo ${r.marca}: «${r.texto}» (quiero «${s.text}») ${JSON.stringify(r)}`)
+      ok(!r.error && r.texto === s.text && r.fue && r.dentro && r.llegada === true, `${nombre} marca del Kobo ${r.marca}: «${r.texto}» (quiero «${s.text}») ${JSON.stringify(r)}`)
     }
     // 1b. Lo que añade el lector (los botones de capítulo) no cuenta: un punto dentro de ellos es el primer texto del libro que sigue
     if (subs.length) {
@@ -79,6 +82,16 @@ function lua(nombre) {
         return { sin, con, dentro }
       }, subs[0].pos0)
       ok(r.sin && r.con === r.sin && r.dentro === r.sin, `${nombre} botones de capítulo: ${JSON.stringify(r)}`)
+    }
+    // 1d. Ir a cada subrayado (posiciones en mitad del capítulo, como la de alguien que deja de leer): la página que se abre lo contiene
+    for (const s of subs) {
+      const r = await pg.evaluate(async xp => {
+        const fue = await window.atrioIrXPointer(xp, 0.5, 'el Kobo')
+        await new Promise(z => setTimeout(z, 600))
+        const v = window.__view.lastLocation, dest = window.__xp.xpRango(v.range.startContainer.ownerDocument, xp)
+        return { fue, dentro: !!dest && v.range.comparePoint(dest.startContainer, dest.startOffset) === 0, pagina: window.atrioXPointer()?.xp }
+      }, s.pos0)
+      ok(r.fue && r.dentro, `${nombre} ir a ${s.pos0}: ${JSON.stringify(r)}`)
     }
     // 2. Ir a la última posición de KOReader (como si llegara del Kobo): la página que se abre la contiene
     if (ultima) {
@@ -97,6 +110,34 @@ function lua(nombre) {
       ok(r.xpAhora && r.xpAhora.includes(`DocFragment[${i + 1}]`), `${nombre} posición de la página: ${r.xpAhora}`)
       ok(r.llegada === true, `${nombre} sin moverse de donde le trajo el Kobo, no se le devuelve: ${r.llegada}`)
       console.log(`${nombre}: última de KOReader ${ultima} → página que empieza en ${r.xpAhora}`)
+    }
+    await pg.context().close()
+  }
+  // 3. Capítulos largos (herramientas/casos/largo): saltar a una posición en mitad del capítulo abre su página, no la primera del capítulo
+  const largo = path.resolve(__dirname, '../../casos/largo')
+  for (const [nombre, saltos] of [
+    ['largo.epub', [['xp', '/body[1]/DocFragment[3]/body[1]/div[1]/p[250]/text()[1].10', 'C2-P250'], ['xp', '/body[1]/DocFragment[2]/body[1]/div[1]/p[150]/text()[1].0', 'C1-P150']]],
+    ['largo.kepub.epub', [['kobo', 'OEBPS/text/c2.xhtml#kobo.250.1:10', 'C2-P250'], ['kobo', 'OEBPS/text/c1.xhtml#kobo.150.1', 'C1-P150'],
+      ['xp', '/body[1]/DocFragment[3]/body[1]/div[1]/div[1]/p[250]/span[1]/text()[1].10', 'C2-P250']]]]) {
+    epub = fs.readFileSync(path.join(largo, nombre))
+    const pg = await (await b.newContext({ viewport: { width: 393, height: 851 }, hasTouch: true, isMobile: true })).newPage()
+    await pg.addInitScript(() => {
+      const st = { title: 'T', file: 't.epub', location: null, fraction: 0, goto: null, settings: { theme: 'papel' }, annotations: [], bookmarks: [], stats: null, device: 'a' }
+      window.Atrio = new Proxy({ state: () => JSON.stringify(st), brilloActual: () => 0.5 }, { get: (t, k) => k in t ? t[k] : (() => undefined) })
+    })
+    await pg.goto('http://localhost:' + port + '/lector/index.html')
+    await pg.waitForFunction(() => window.__view && window.__docs && window.__docs.length, null, { timeout: 30000 })
+    await pg.waitForTimeout(800)
+    for (const [tipo, donde, texto] of saltos) {
+      const r = await pg.evaluate(async ([tipo, donde, texto]) => {
+        const fue = tipo === 'xp' ? await window.atrioIrXPointer(donde, 0.1, 'el Kobo') : await window.atrioIrKobo(donde, 'el Kobo')
+        await new Promise(z => setTimeout(z, 700))
+        const v = window.__view.lastLocation, doc = v.range.startContainer.ownerDocument
+        const p = [...doc.querySelectorAll('p')].find(x => x.textContent.startsWith(texto + ' '))
+        const dentro = !!p && v.range.intersectsNode(p)
+        return { fue, dentro, pagina: window.atrioXPointer()?.xp, llegada: window.atrioXPointer()?.llegada }
+      }, [tipo, donde, texto])
+      ok(r.fue && r.dentro && r.llegada === true, `${nombre} saltar a ${donde} (${texto}): ${JSON.stringify(r)}`)
     }
     await pg.context().close()
   }

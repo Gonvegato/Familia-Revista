@@ -23,10 +23,13 @@ func TestClaveYKidComoSeshat(t *testing.T) {
 	}
 }
 
-// La sigma final griega, como Java/Kotlin (lo de la derecha lo ha dado `toLowerCase(Locale.ROOT)` de Java).
-func TestMinusculasComoJava(t *testing.T) {
+// La sigma final griega como Android (CaseMapper.isFinalSigma de libcore: solo la letra de antes y la de después; con «İ» o algo fuera
+// del plano básico, ICU con la regla entera, que salta apóstrofos y acentos sueltos).
+func TestMinusculasComoAndroid(t *testing.T) {
 	casos := map[string]string{"ΟΔΥΣΣΕΑΣ": "οδυσσεας", "ΣΑΣ": "σας", "Σ": "σ", "ΑΣ ΒΑΣ.": "ας βας.", "ΟΔΥΣΣΕΑΣ-2": "οδυσσεας-2",
-		"Α'Σ": "α'ς", "ΑΣ'Β": "ασ'β", "ΑΣ1": "ας1", "ΑΣ\u0301Β": "ασ\u0301β", "ὈΔΥΣΣΕΎΣ": "ὀδυσσεύς", "ΑΣ.Β": "ασ.β", "Χ Σ Χ": "χ σ χ"}
+		"Α'Σ": "α'σ", "ΑΣ'Β": "ας'β", "ΑΣ1": "ας1", "ΑΣ\u0301Β": "ας\u0301β", "ὈΔΥΣΣΕΎΣ": "ὀδυσσεύς", "ΑΣ.Β": "ας.β", "Χ Σ Χ": "χ σ χ",
+		// (con un emoji: la regla entera)
+		"Α'Σ 📖": "α'ς 📖", "ΑΣ'Β 📖": "ασ'β 📖"}
 	for de, quiero := range casos {
 		if g := minusculas(de); g != quiero {
 			t.Errorf("%q: %q, quiero %q", de, g, quiero)

@@ -13,23 +13,26 @@ import (
 
 // ---- Lo que el programa recuerda en el Kobo (.adds/seshat/enviado.json)
 
-// contador: el tiempo leído de un libro tal como lo lleva este programa. El Kobo apunta el total en segundos (TimeSpentReading), pero
-// puede volver a cero (el libro se borra y se vuelve a copiar, el Kobo se restaura): entonces lo que llevaba se guarda en [Base] y
-// no se pierde. [Dias]: lo leído cada día que aún no ha llegado a la cuenta (se apunta aunque no haya Wi-Fi, en el día en que se lee).
+// contador: el tiempo leído de una entrada de la base de datos del Kobo (un archivo o un libro de la tienda: su ContentID) tal como lo
+// lleva este programa. El Kobo apunta el total en segundos (TimeSpentReading), pero puede volver a cero (el libro se borra y se vuelve a
+// copiar, el Kobo se restaura): entonces lo que llevaba se guarda en [Base] y no se pierde. [Dias]: lo leído cada día que ha visto este
+// programa (todo, no solo lo que falta por subir: en la cuenta se pone al día, nunca se suma dos veces). [K]: el libro (su kid) al que
+// pertenece; si la entrada desaparece (se borra la muestra y queda el comprado), su tiempo sigue contando en su libro.
 type contador struct {
+	K    string           `json:"k"`
 	S    int64            `json:"s"`
 	Base int64            `json:"base"`
 	Dias map[string]int64 `json:"dias,omitempty"`
 }
 
 type estadoLocal struct {
-	Uid        string               `json:"uid"`
-	BaseDatos  string               `json:"baseDatos"`
-	Huellas    map[string]string    `json:"huellas"`
-	Contadores map[string]*contador `json:"contadores"`
+	Uid       string               `json:"uid"`
+	BaseDatos string               `json:"baseDatos"`
+	Huellas   map[string]string    `json:"huellas"`
+	Entradas  map[string]*contador `json:"entradas"` // por ContentID
 }
 
-// cargaEstado lee el estado; si no está, está roto o es del formato de antes (un mapa de huellas), empieza de cero.
+// cargaEstado lee el estado; si no está o está roto, empieza de cero (lo de formatos anteriores que no entiende, también).
 func cargaEstado(ruta string) *estadoLocal {
 	e := &estadoLocal{}
 	if b, err := os.ReadFile(ruta); err == nil {
@@ -40,8 +43,8 @@ func cargaEstado(ruta string) *estadoLocal {
 	if e.Huellas == nil {
 		e.Huellas = map[string]string{}
 	}
-	if e.Contadores == nil {
-		e.Contadores = map[string]*contador{}
+	if e.Entradas == nil {
+		e.Entradas = map[string]*contador{}
 	}
 	return e
 }
@@ -61,48 +64,65 @@ func (e *estadoLocal) guarda(ruta string) error {
 	return escribeSeguro(ruta, b, 0o644)
 }
 
-// registra pone al día los contadores con lo que dice el Kobo y deja en cada libro su total (en ms) y lo leído por días que falta por
-// subir. Lo nuevo desde la última vez va al día de la última lectura (si este programa está vigilando, eso es el día en que se lee).
-func (e *estadoLocal) registra(libros []LibroKobo, zona *time.Location, ahora time.Time) {
-	for i := range libros {
-		l := &libros[i]
-		k := kid(claveDe(l.Titulo, l.Autor))
-		c := e.Contadores[k]
-		if c == nil {
-			// La primera vez no se sabe en qué días se leyó lo de antes: solo el total
-			c = &contador{S: l.Segundos}
-			e.Contadores[k] = c
-		} else {
-			delta := l.Segundos - c.S
-			if l.Segundos < c.S {
-				c.Base += c.S * 1000 // el Kobo ha vuelto a cero: lo de antes se queda
-				delta = l.Segundos
-			}
-			if delta > 0 {
-				dia := ahora
-				if !l.UltimaLectura.IsZero() && !l.UltimaLectura.After(ahora) {
-					dia = l.UltimaLectura
-				}
-				if c.Dias == nil {
-					c.Dias = map[string]int64{}
-				}
-				c.Dias[dia.In(zona).Format("2006-01-02")] += delta * 1000
-			}
-			c.S = l.Segundos
+// Días que se recuerdan (los de antes ya están en la cuenta; el archivo no crece sin fin)
+const diasQueSeRecuerdan = 400
+
+// registra pone al día los contadores con lo que dice el Kobo de cada entrada (sin juntar: [entradas] tal como salen de la base de
+// datos). Lo nuevo desde la última vez va al día de su última lectura (si este programa está vigilando, eso es el día en que se lee).
+func (e *estadoLocal) registra(entradas []LibroKobo, zona *time.Location, ahora time.Time) {
+	for _, l := range entradas {
+		if l.ID == "" {
+			continue
 		}
-		l.Total = c.Base + l.Segundos*1000
-		l.Dias = map[string]int64{}
-		for d, v := range c.Dias {
-			l.Dias[d] = v
+		c := e.Entradas[l.ID]
+		if c == nil {
+			// La primera vez no se sabe en qué días se leyó lo de antes: solo cuenta para el total
+			e.Entradas[l.ID] = &contador{K: kid(claveDe(l.Titulo, l.Autor)), S: l.Segundos}
+			continue
+		}
+		c.K = kid(claveDe(l.Titulo, l.Autor))
+		delta := l.Segundos - c.S
+		if l.Segundos < c.S {
+			c.Base += c.S * 1000 // el Kobo ha vuelto a cero: lo de antes se queda
+			delta = l.Segundos
+		}
+		if delta > 0 {
+			dia := ahora
+			if !l.UltimaLectura.IsZero() && !l.UltimaLectura.After(ahora) {
+				dia = l.UltimaLectura
+			}
+			if c.Dias == nil {
+				c.Dias = map[string]int64{}
+			}
+			c.Dias[dia.In(zona).Format("2006-01-02")] += delta * 1000
+		}
+		c.S = l.Segundos
+	}
+	limite := ahora.In(zona).AddDate(0, 0, -diasQueSeRecuerdan).Format("2006-01-02")
+	for _, c := range e.Entradas {
+		for d := range c.Dias {
+			if d < limite {
+				delete(c.Dias, d)
+			}
 		}
 	}
 }
 
-// subidos: lo leído por días de estos libros ya está en la cuenta.
-func (e *estadoLocal) subidos(libros []LibroKobo) {
-	for _, l := range libros {
-		if c := e.Contadores[kid(claveDe(l.Titulo, l.Autor))]; c != nil {
-			c.Dias = nil
+// tiempos pone en cada libro (ya juntados: uno por kid de su clave) su tiempo según este programa: el total en ms y lo leído cada día,
+// sumando todas sus entradas, también las que ya no están en el Kobo.
+func (e *estadoLocal) tiempos(libros []LibroKobo) {
+	for i := range libros {
+		l := &libros[i]
+		k := kid(claveDe(l.Titulo, l.Autor))
+		l.PorDias, l.Total, l.Dias = true, 0, map[string]int64{}
+		for _, c := range e.Entradas {
+			if c.K != k {
+				continue
+			}
+			l.Total += c.Base + c.S*1000
+			for d, v := range c.Dias {
+				l.Dias[d] += v
+			}
 		}
 	}
 }

@@ -32,7 +32,11 @@ object Kobo {
         val huellaKepub: String = "",
         /** ContentID del Kobo (en los que copias tú, «file:///mnt/onboard/…»). */
         val contentId: String = "",
-        /** El tiempo leído como lo lleva el programa del Kobo (total en ms y lo leído por días aún sin subir). Por cable, sin ellos. */
+        /**
+         * El tiempo leído como lo lleva el programa del Kobo ([porDias]): el total en ms y todo lo leído cada día que ha visto. Por cable,
+         * sin ellos (el total es [segundos] y lo nuevo va al día de la última lectura).
+         */
+        val porDias: Boolean = false,
         val total: Long = 0,
         val dias: Map<String, Long> = emptyMap(),
     )
@@ -48,7 +52,8 @@ object Kobo {
             val a = m[k] ?: run { m[k] = l; null } ?: continue
             val dias = HashMap<String, Long>().apply { for (x in listOf(a.dias, l.dias)) for ((d, v) in x) merge(d, v, Long::plus) }
             val base = if (l.ul > a.ul) l else a
-            m[k] = base.copy(segundos = a.segundos + l.segundos, total = a.total + l.total, dias = dias, terminado = maxOf(a.terminado, l.terminado))
+            m[k] = base.copy(segundos = a.segundos + l.segundos, total = a.total + l.total, dias = dias, terminado = maxOf(a.terminado, l.terminado),
+                porDias = a.porDias || l.porDias)
         }
         return m.values.toList()
     }
@@ -86,7 +91,8 @@ object Kobo {
     /**
      * Qué subir (pura: no habla con nadie). [libros] y [tiempos]: lo que hay en la cuenta (`libros/<kid>` y `tiempo/<kid>~<disp>`).
      */
-    fun planea(kobo: List<Libro>, libros: Map<String, Nodo>, tiempos: Map<String, Nodo>, ahora: Long, zona: ZoneId, disp: String = DISPOSITIVO): Plan {
+    fun planea(kobo: List<Libro>, libros: Map<String, Nodo>, tiempos: Map<String, Nodo>, ahora: Long, zona: ZoneId, disp: String = DISPOSITIVO,
+               conTiempo: Boolean = true): Plan {
         val cambios = ArrayList<Cambio>()
         val resumen = ArrayList<String>()
         // Dos libros del Kobo que son el mismo de la cuenta, uno solo (si no, el segundo pisaría al primero y el tiempo contaría dos veces)
@@ -131,32 +137,42 @@ object Kobo {
             }
             campos.entries.groupBy { it.value.second }.forEach { (hora, cs) -> cambios += Cambio("libros", k, cs.associate { it.key to it.value.first }, hora) }
 
-            // El tiempo leído en el Kobo: su total y lo que ha crecido, en el día de la última lectura. La primera vez, solo el total.
-            val total = if (l.total > 0) l.total else l.segundos * 1000
+            // El tiempo leído en el Kobo (como `planea` de kobo/plan.go). Sin [conTiempo] (por cable, con el programa del Kobo puesto: lo
+            // lleva él, día a día), nada
+            var total = if (l.total > 0 || l.porDias) l.total else l.segundos * 1000
             val ref = "$k~$disp"
             val tn = tiempos[ref]
             val viejo = tn?.campos?.get("total").num().toLong()
+            val dias = HashMap<String, Long>()
+            val diaUl = { Instant.ofEpochMilli(if (ul > 0) ul else ahora).atZone(zona).toLocalDate().toString() }
+            if (l.porDias) {
+                // Lo que apunta día a día el programa del Kobo: `k<día>` dice cuánto de `d<día>` es suyo, y se pone al día solo su parte
+                var explicado = 0L
+                for ((dia, v) in l.dias) { val kd = tn?.campos?.get("k$dia").num().toLong(); if (v > kd) { dias[dia] = v - kd; explicado += v - kd } }
+                // Lo que el total ha crecido sin estar en ningún día: al de la última lectura (la primera vez, solo el total)
+                if (tn != null && total - viejo > explicado) dias.merge(diaUl(), total - viejo - explicado, Long::plus)
+            } else if (total > viejo && tn != null) dias.merge(diaUl(), total - viejo, Long::plus)
             var tiempoCambia = false
-            if (total > viejo) {
+            if (conTiempo && (total > viejo || dias.isNotEmpty())) {
                 val hora = maxOf(ahora, (tn?.m?.values?.maxOrNull() ?: 0L) + 1)
-                val (t, a) = if (libro != null && libro.texto("t").isNotEmpty()) libro.texto("t") to libro.texto("a") else l.titulo to l.autor
-                val tc = linkedMapOf<String, Any?>("ref" to k, "fuente" to disp, "total" to total, "t" to t, "a" to a)
-                if (l.dias.isNotEmpty()) {
-                    // Lo apuntado día a día en el Kobo
-                    for ((dia, v) in l.dias) { val d = "d$dia"; tc[d] = tn?.campos?.get(d).num().toLong() + v }
-                } else if (tn != null) {
-                    val dia = Instant.ofEpochMilli(if (ul > 0) ul else ahora).atZone(zona).toLocalDate()
-                    val d = "d$dia"
-                    tc[d] = tn.campos[d].num().toLong() + (total - viejo)
-                }
-                val sube = tc.filter { (c, v) -> tn == null || c == "total" || (c.length > 1 && c[0] == 'd') || tn.campos[c]?.toString() != v.toString() }
+                val t = libro?.texto("t")?.takeIf { it.isNotEmpty() } ?: l.titulo
+                val a = libro?.texto("a")?.takeIf { it.isNotEmpty() && libro.texto("t").isNotEmpty() } ?: l.autor
+                val tc = linkedMapOf<String, Any?>("ref" to k, "fuente" to disp, "t" to t, "a" to a)
+                if (total > viejo) tc["total"] = total
+                for ((dia, v) in dias) tc["d$dia"] = tn?.campos?.get("d$dia").num().toLong() + v
+                if (l.porDias) for ((dia, v) in l.dias) if (v > tn?.campos?.get("k$dia").num().toLong()) tc["k$dia"] = v
+                val sube = tc.filter { (c, v) -> tn == null || c !in setOf("ref", "fuente", "t", "a") || tn.campos[c]?.toString() != v.toString() }
                 cambios += Cambio("tiempo", ref, sube, hora)
                 tiempoCambia = true
             }
+            if (total < viejo) total = viejo
             if (campos.isNotEmpty() || tiempoCambia) resumen += "${l.titulo}: ${cuanto(l)} · ${tiempoDe(total)}"
         }
         return Plan(cambios, resumen.sorted())
     }
+
+    private val CON_ZONA_SIN_DOS_PUNTOS = java.time.format.DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+        .optionalStart().appendFraction(java.time.temporal.ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd().appendOffset("+HHMM", "+0000").toFormatter()
 
     /** Un libro que copiaste al Kobo en kepub (los de la tienda no: su ContentID no es un archivo). */
     fun esKepub(contentId: String) = contentId.lowercase().let { it.startsWith("file:///mnt/onboard/") && it.endsWith(".kepub.epub") }
@@ -168,7 +184,7 @@ object Kobo {
         val t = s?.trim()?.replace(' ', 'T').orEmpty()
         if (t.isEmpty()) return 0L
         return runCatching { OffsetDateTime.parse(t, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toInstant().toEpochMilli() }
-            .recoverCatching { OffsetDateTime.parse(t, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss[.SSS]xx")).toInstant().toEpochMilli() } // («+0000», como Go)
+            .recoverCatching { OffsetDateTime.parse(t, CON_ZONA_SIN_DOS_PUNTOS).toInstant().toEpochMilli() } // («+0000», como Go)
             .recoverCatching { LocalDateTime.parse(t, DateTimeFormatter.ISO_LOCAL_DATE_TIME).toInstant(ZoneOffset.UTC).toEpochMilli() }
             .recoverCatching { LocalDate.parse(t).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() }
             .getOrDefault(0L)

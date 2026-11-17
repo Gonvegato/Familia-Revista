@@ -30,10 +30,11 @@ type LibroKobo struct {
 	Marca       string
 	HuellaKepub string
 
-	// El tiempo leído tal como lo lleva este programa (estado.go): el total en ms (aunque el Kobo vuelva a cero) y lo leído por días
-	// que aún no está en la cuenta. Sin ellos (por cable), el total es Segundos y lo nuevo va al día de la última lectura.
-	Total int64
-	Dias  map[string]int64
+	// El tiempo leído tal como lo lleva este programa (estado.go, [PorDias]): el total en ms (aunque el Kobo vuelva a cero) y todo lo
+	// leído cada día que ha visto. Sin ellos (por cable), el total es Segundos y lo nuevo va al día de la última lectura.
+	PorDias bool
+	Total   int64
+	Dias    map[string]int64
 }
 
 // agrupa junta los libros del Kobo que son el mismo para la cuenta ([clave]): la muestra de la tienda y el comprado, el EPUB y el
@@ -66,7 +67,8 @@ func agrupa(libros []LibroKobo, clave func(LibroKobo) string) []LibroKobo {
 		if l.UltimaLectura.After(a.UltimaLectura) {
 			a = l
 		}
-		a.Segundos, a.Total, a.Dias, a.Terminado = seg, tot, dias, fin
+		pd := a.PorDias || l.PorDias
+		a.Segundos, a.Total, a.Dias, a.Terminado, a.PorDias = seg, tot, dias, fin, pd
 		m[k] = a
 	}
 	r := make([]LibroKobo, 0, len(orden))

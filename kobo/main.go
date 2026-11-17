@@ -31,7 +31,7 @@ import (
 	_ "seshat-kobo/raices"
 )
 
-const version = "1.1.0"
+const version = "1.2.0"
 
 var (
 	dirSeshat = "/mnt/onboard/.adds/seshat"
@@ -62,13 +62,16 @@ func main() {
 	case "vigila":
 		vigila()
 	case "prueba":
-		err = envia(true)
+		err = conCerrojo(func() error { return envia(true) })
 	case "vincula":
 		// (solo los kepub vinculados con su EPUB, sin mandar nada: para probarlo)
-		var n int
-		if n, err = vinculaKepubs(filepath.Dir(filepath.Dir(*fBD))); err == nil {
-			log.Printf("%d kepub vinculados", n)
-		}
+		err = conCerrojo(func() error {
+			n, err := vinculaKepubs(filepath.Dir(filepath.Dir(*fBD)))
+			if err == nil {
+				log.Printf("%d kepub vinculados", n)
+			}
+			return err
+		})
 	case "version":
 		fmt.Println(version)
 	default:
@@ -84,19 +87,19 @@ func main() {
 	}
 }
 
-// libros lee el Kobo y junta los que son el mismo libro (la muestra de la tienda y el comprado, el EPUB y el kepub): uno solo por
-// clave, el leído más tarde, con el tiempo de todos.
-func libros() ([]LibroKobo, error) {
-	ls, err := leeKobo(*fBD)
+// libros lee el Kobo: cada entrada tal cual (un archivo o un libro de la tienda) y juntas las que son el mismo libro (la muestra de la
+// tienda y el comprado, el EPUB y el kepub): uno solo por clave, el leído más tarde.
+func libros() (entradas, juntos []LibroKobo, err error) {
+	entradas, err = leeKobo(*fBD)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return agrupa(ls, func(l LibroKobo) string { return kid(claveDe(l.Titulo, l.Autor)) }), nil
+	return entradas, agrupa(entradas, func(l LibroKobo) string { return kid(claveDe(l.Titulo, l.Autor)) }), nil
 }
 
 // apunta pone al día lo leído por días (sin internet: lo hace el vigilante cada vez que el Kobo apunta algo).
 func apunta() error {
-	ls, err := libros()
+	ent, _, err := libros()
 	if err != nil {
 		return err
 	}
@@ -105,12 +108,16 @@ func apunta() error {
 		zona = c.zona()
 	}
 	e := cargaEstado(*fEnviado)
-	e.registra(ls, zona, time.Now())
+	e.registra(ent, zona, time.Now())
 	return e.guarda(*fEnviado)
 }
 
 func envia(soloMirar bool) error {
-	ls, err := libros()
+	c, err := cargaCuenta(*fCuenta)
+	if err != nil {
+		return err
+	}
+	ent, ls, err := libros()
 	if err != nil {
 		return err
 	}
@@ -128,27 +135,23 @@ func envia(soloMirar bool) error {
 			log.Printf("posiciones: %d libros del Kobo en el índice de NickelInkSync", n)
 		}
 	}
-	c, err := cargaCuenta(*fCuenta)
-	if err != nil {
-		return err
-	}
 	e := cargaEstado(*fEnviado)
 	e.deCuenta(c.Uid, c.BaseDatos)
-	e.registra(ls, c.zona(), time.Now())
+	e.registra(ent, c.zona(), time.Now())
+	e.tiempos(ls)
 	huellasKepub(ls, raiz)
 
 	// Lo que ya se envió tal cual no se vuelve a mirar en la cuenta (menos tráfico y más rápido)
-	var cambiados []LibroKobo
 	huellas := map[string]string{}
+	hay := false
 	for _, l := range ls {
 		k := kid(claveDe(l.Titulo, l.Autor))
-		h := huella(l)
-		huellas[k] = h
-		if soloMirar || e.Huellas[k] != h {
-			cambiados = append(cambiados, l)
+		huellas[k] = huella(l)
+		if soloMirar || e.Huellas[k] != huellas[k] {
+			hay = true
 		}
 	}
-	if len(cambiados) == 0 {
+	if !hay {
 		log.Printf("nada nuevo (%d libros en el Kobo)", len(ls))
 		return guardaSiNoMira(e, soloMirar)
 	}
@@ -168,22 +171,35 @@ func envia(soloMirar bool) error {
 			todos[ref] = Nodo(m)
 		}
 	}
+	// Qué libro de la cuenta es cada uno. Van todos los del Kobo que son un libro de la cuenta en el que algo ha cambiado (aunque ellos
+	// no hayan cambiado: dos del Kobo pueden ser el mismo de la cuenta —«Brown, Pierce» y «Pierce Brown»— y su tiempo se suma)
+	cambia := map[string]bool{}
+	for i := range ls {
+		ls[i].Kid = buscaKid(ls[i], todos)
+		k := kid(claveDe(ls[i].Titulo, ls[i].Autor))
+		if soloMirar || e.Huellas[k] != huellas[k] {
+			cambia[ls[i].Kid] = true
+		}
+	}
+	var plan []LibroKobo
 	remotos := map[string]Remoto{}
-	for i := range cambiados {
-		k := buscaKid(cambiados[i], todos)
-		cambiados[i].Kid = k
-		if _, ya := remotos[k]; ya {
+	for _, l := range ls {
+		if !cambia[l.Kid] {
 			continue
 		}
-		tie, err := c.lee("/users/" + c.Uid + "/familia/tiempo/" + k + "~" + c.Dispositivo)
+		plan = append(plan, l)
+		if _, ya := remotos[l.Kid]; ya {
+			continue
+		}
+		tie, err := c.lee("/users/" + c.Uid + "/familia/tiempo/" + l.Kid + "~" + c.Dispositivo)
 		if err != nil {
 			_ = guardaSiNoMira(e, soloMirar)
 			return err
 		}
-		remotos[k] = Remoto{Libro: todos[k], Tiempo: tie}
+		remotos[l.Kid] = Remoto{Libro: todos[l.Kid], Tiempo: tie}
 	}
 	// La hora de la cuenta (por si el reloj del Kobo va adelantado: nada puede quedar apuntado en el futuro)
-	p := planea(cambiados, remotos, c.ahora(), c.zona(), c.Dispositivo)
+	p := planea(plan, remotos, c.ahora(), c.zona(), c.Dispositivo)
 	if soloMirar {
 		for _, r := range p.Resumen {
 			log.Print("mandaría: ", r)
@@ -203,9 +219,7 @@ func envia(soloMirar bool) error {
 	if len(p.Resumen) == 0 {
 		log.Print("la cuenta ya tenía lo del Kobo (o algo más nuevo)")
 	}
-	// Lo leído por días de estos libros ya está en la cuenta (o lo estaba: planea solo lo suma si el total ha crecido)
-	e.subidos(cambiados)
-	for _, l := range cambiados {
+	for _, l := range plan {
 		k := kid(claveDe(l.Titulo, l.Autor))
 		e.Huellas[k] = huellas[k]
 	}
@@ -268,8 +282,9 @@ func vigila() {
 	inicio, _ := os.Stat(yo)
 	log.Print("vigilando: apunta lo leído cada día y manda cada vez que hay Wi-Fi")
 	antes := false
-	var ultimo time.Time
+	var ultimo, reintento time.Time
 	var apuntada, enviada string
+	fallos := 0
 	for {
 		// ¿Programa nuevo? Se pasa a él (el cerrojo se suelta solo al cambiar de programa)
 		if st, err := os.Stat(yo); err == nil && inicio != nil && (st.Size() != inicio.Size() || !st.ModTime().Equal(inicio.ModTime())) {
@@ -285,18 +300,23 @@ func vigila() {
 			}
 		}
 		ahora := hayRuta()
-		if ahora && h != "" && (!antes || time.Since(ultimo) > 30*time.Minute) {
+		if ahora && h != "" && (!antes || time.Since(ultimo) > 30*time.Minute) && !time.Now().Before(reintento) {
 			if h == enviada {
 				ultimo = time.Now() // la base de datos del Kobo no ha cambiado: nada que mirar
 			} else {
 				time.Sleep(10 * time.Second) // (la conexión recién hecha tarda un poco en servir)
 				switch err := conCerrojo(func() error { return envia(false) }); {
 				case err == nil:
-					ultimo, enviada = time.Now(), h
+					ultimo, enviada, fallos = time.Now(), h, 0
 				case errors.Is(err, errOcupado):
 					ahora = false // lo está mandando otro (el menú): se mira otra vez en un minuto, por si falla
 				default:
-					log.Print("ERROR: ", err, " (se reintenta en un minuto)")
+					// Cada vez se espera más (1, 2, 4… hasta 30 minutos): si el fallo no se arregla solo (la cuenta ya no deja entrar), no se
+					// gasta batería ni memoria del Kobo intentándolo cada minuto
+					fallos++
+					espera := min(time.Duration(1<<min(fallos-1, 5))*time.Minute, 30*time.Minute)
+					reintento = time.Now().Add(espera)
+					log.Printf("ERROR: %v (se reintenta en %d min)", err, int(espera.Minutes()))
 					ahora = false
 				}
 			}

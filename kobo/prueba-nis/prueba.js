@@ -114,6 +114,15 @@ const textoMarca = (pg, marca) => pg.evaluate(async marca => {
   if (llega) {
     const tK = await textoMarca(pgK, marcaKobo), tE = await textoXp(pgE, llega.progress)
     ok(tK && tE && (tK.startsWith(tE.slice(0, 25)) || tE.startsWith(tK.slice(0, 25))) || (tK && tE && tK.includes(tE.slice(0, 20))), `del Kobo a SesKobo, mismo texto: Kobo «${tK}» → SesKobo «${tE}»`)
+    // Y el lector de SesKobo, al saltar ahí (como al abrir el libro), abre la página que tiene ese sitio
+    const salto = await pgE.evaluate(async xp => {
+      const fue = await window.atrioIrXPointer(xp, 0.5, 'el Kobo')
+      await new Promise(z => setTimeout(z, 800))
+      const v = window.__view.lastLocation, dest = window.__xp.xpRango(v.range.startContainer.ownerDocument, xp)
+      return { fue, dentro: !!dest && v.range.comparePoint(dest.startContainer, dest.startOffset) === 0, pagina: window.atrioXPointer()?.xp }
+    }, llega.progress)
+    ok(salto.fue && salto.dentro, `SesKobo salta a la página de la posición del Kobo: ${JSON.stringify(salto)}`)
+    await pgE.evaluate(() => window.__view.goTo(0)); await new Promise(z => setTimeout(z, 500))
   }
 
   // 3. SesKobo sube una posición en el EPUB (la del principio de una página más adelante, calculada por el lector de verdad)

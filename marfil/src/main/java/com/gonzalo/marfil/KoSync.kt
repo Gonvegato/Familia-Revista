@@ -124,10 +124,13 @@ object KoSync {
      */
     fun huella(ctx: Context, uri: Uri): String? {
         val tam = runCatching { ctx.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } }.getOrNull() ?: -1L
-        val k = "h_" + md5("$uri|$tam")
-        prefs(ctx).getString(k, null)?.let { return it }
+        // (con la hora del archivo: otro libro en el mismo sitio y del mismo tamaño no se toma por el de antes)
+        val hora = runCatching { if (uri.scheme == "file") java.io.File(uri.path!!).lastModified() else androidx.documentfile.provider.DocumentFile.fromSingleUri(ctx, uri)?.lastModified() }
+            .getOrNull() ?: 0L
+        val k = "h_" + md5("$uri|$tam|$hora")
+        if (tam >= 0) prefs(ctx).getString(k, null)?.let { return it }
         val h = runCatching { ctx.contentResolver.openInputStream(uri)?.use { huellaDe(it) } }.getOrNull() ?: return null
-        prefs(ctx).edit().putString(k, h).apply()
+        if (tam >= 0) prefs(ctx).edit().putString(k, h).apply()
         return h
     }
 

@@ -24,6 +24,7 @@ type libroCaso struct {
 	Terminado  int64            `json:"terminado"`
 	Marca      string           `json:"marca,omitempty"`
 	Huella     string           `json:"huella,omitempty"`
+	PorDias    bool             `json:"porDias,omitempty"`
 	Total      int64            `json:"total,omitempty"`
 	Dias       map[string]int64 `json:"dias,omitempty"`
 }
@@ -51,7 +52,7 @@ func resuelve(c caso) map[string]any {
 	var libros []LibroKobo
 	remotos := map[string]Remoto{}
 	for _, l := range c.Libros {
-		lk := LibroKobo{Titulo: l.Titulo, Autor: l.Autor, Porcentaje: l.Porcentaje, Estado: l.Estado, UltimaLectura: aTiempo(l.Ul), Segundos: l.Segundos, Terminado: aTiempo(l.Terminado), Marca: l.Marca, HuellaKepub: l.Huella, Total: l.Total, Dias: l.Dias}
+		lk := LibroKobo{Titulo: l.Titulo, Autor: l.Autor, Porcentaje: l.Porcentaje, Estado: l.Estado, UltimaLectura: aTiempo(l.Ul), Segundos: l.Segundos, Terminado: aTiempo(l.Terminado), Marca: l.Marca, HuellaKepub: l.Huella, PorDias: l.PorDias, Total: l.Total, Dias: l.Dias}
 		lk.Kid = buscaKid(lk, c.Cuenta)
 		libros = append(libros, lk)
 		remotos[lk.Kid] = Remoto{Libro: c.Cuenta[lk.Kid], Tiempo: c.Tiempo[lk.Kid+"~"+c.Disp]}
@@ -84,7 +85,9 @@ func casosBase() []caso {
 	adelantado := rojo
 	adelantado.Titulo, adelantado.Ul = "Libro del futuro", ahora+3*86400000
 	conDias := rojo
-	conDias.Total, conDias.Segundos, conDias.Dias = 3600000, 3600, map[string]int64{"2026-11-14": 600000, "2026-11-15": 1200000}
+	conDias.PorDias, conDias.Total, conDias.Segundos, conDias.Dias = true, 3600000, 3600, map[string]int64{"2026-11-14": 600000, "2026-11-15": 1200000}
+	deAntes := rojo
+	deAntes.PorDias, deAntes.Total, deAntes.Segundos, deAntes.Dias = true, 3900000, 3900, map[string]int64{"2026-11-15": 300000}
 	alReves := rojo
 	alReves.Autor, alReves.Titulo = "Brown, Pierce", "AMANECER ROJO"
 	m := func(kv ...any) map[string]any {
@@ -119,9 +122,16 @@ func casosBase() []caso {
 			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(1000000), "m": m("total", ahora-50)}},
 			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "pendiente", "ul": float64(ul - 99999999), "fr": 0.01, "m": m("ul", ul-99999999, "fr", ul-99999999, "estado", ul-99999999)}}},
 		{Nombre: "reloj del Kobo adelantado", Libros: []libroCaso{adelantado}},
+		// (el 14 ya estaba: su `k` dice que esos 10 min son del Kobo; el 15, nuevo; 10 min del total sin día, al de la última lectura)
 		{Nombre: "días apuntados en el Kobo", Libros: []libroCaso{conDias},
 			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul), "fr": 0.43, "m": m("ul", ul, "fr", ul, "estado", ul)}},
-			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(1800000), "d2026-11-14": float64(600000), "m": m("total", ahora-50)}}},
+			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(1800000), "d2026-11-14": float64(900000), "k2026-11-14": float64(600000), "t": "Amanecer rojo", "a": "Pierce Brown", "m": m("total", ahora-50)}}},
+		{Nombre: "días del Kobo ya en la cuenta (se manda dos veces)", Libros: []libroCaso{conDias},
+			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul), "fr": 0.43, "m": m("ul", ul, "fr", ul, "estado", ul)}},
+			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(3600000), "d2026-11-14": float64(900000), "k2026-11-14": float64(600000), "d2026-11-16": float64(1200000), "k2026-11-15": float64(1200000), "d2026-11-15": float64(1200000), "t": "Amanecer rojo", "a": "Pierce Brown", "m": m("total", ahora-50)}}},
+		{Nombre: "lo leído antes de apuntar por días", Libros: []libroCaso{deAntes},
+			Cuenta: map[string]Nodo{k: {"t": "Amanecer rojo", "estado": "en_curso", "ul": float64(ul), "fr": 0.43, "m": m("ul", ul, "fr", ul, "estado", ul)}},
+			Tiempo: map[string]Nodo{k + "~kobo": {"ref": k, "fuente": "kobo", "total": float64(1800000), "d2026-11-10": float64(1800000), "t": "Amanecer rojo", "a": "Pierce Brown", "m": m("total", ahora-50)}}},
 		{Nombre: "autor escrito al revés", Libros: []libroCaso{alReves},
 			Cuenta: map[string]Nodo{"otroref": {"t": "Amanecer rojo", "a": "Pierce Brown", "estado": "pendiente", "m": m("estado", 10)}}},
 	}

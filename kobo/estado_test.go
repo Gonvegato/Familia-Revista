@@ -10,44 +10,49 @@ import (
 	"time"
 )
 
-// El tiempo leído como lo lleva el programa: lo nuevo, en su día; si el Kobo vuelve a cero, no se pierde; lo ya subido, fuera.
+// El tiempo leído como lo lleva el programa: por entrada del Kobo, lo nuevo en su día (todo lo de cada día, no solo lo pendiente); si
+// el Kobo vuelve a cero, no se pierde; si una entrada desaparece, su tiempo sigue contando en su libro.
 func TestRegistraContadores(t *testing.T) {
 	madrid, _ := time.LoadLocation("Europe/Madrid")
 	e := cargaEstado(filepath.Join(t.TempDir(), "no-esta.json"))
-	l := LibroKobo{Titulo: "Amanecer rojo", Autor: "Pierce Brown", Segundos: 3600, UltimaLectura: time.Date(2026, 11, 14, 20, 0, 0, 0, time.UTC)}
+	l := LibroKobo{ID: "rojo", Titulo: "Amanecer rojo", Autor: "Pierce Brown", Segundos: 3600, UltimaLectura: time.Date(2026, 11, 14, 20, 0, 0, 0, time.UTC)}
 	ahora := time.Date(2026, 11, 16, 9, 0, 0, 0, time.UTC)
-	ls := []LibroKobo{l}
-	e.registra(ls, madrid, ahora)
-	if ls[0].Total != 3600000 || len(ls[0].Dias) != 0 {
-		t.Fatalf("la primera vez, solo el total: %+v", ls[0])
+	tiempo := func(es ...LibroKobo) LibroKobo {
+		e.registra(es, madrid, ahora)
+		g := agrupa(es, func(l LibroKobo) string { return kid(claveDe(l.Titulo, l.Autor)) })
+		e.tiempos(g)
+		return g[0]
+	}
+	if x := tiempo(l); x.Total != 3600000 || len(x.Dias) != 0 || !x.PorDias {
+		t.Fatalf("la primera vez, solo el total: %+v", x)
 	}
 	// Lee 10 min el 15
 	l.Segundos, l.UltimaLectura = 4200, time.Date(2026, 11, 15, 21, 0, 0, 0, time.UTC)
-	ls = []LibroKobo{l}
-	e.registra(ls, madrid, ahora)
-	if ls[0].Total != 4200000 || ls[0].Dias["2026-11-15"] != 600000 {
-		t.Fatalf("%+v", ls[0])
+	if x := tiempo(l); x.Total != 4200000 || x.Dias["2026-11-15"] != 600000 {
+		t.Fatalf("%+v", x)
 	}
 	// El Kobo vuelve a cero (el libro se borró y se volvió a copiar) y lee 2 min más el 16 (00:30 en Madrid)
 	l.Segundos, l.UltimaLectura = 120, time.Date(2026, 11, 15, 23, 30, 0, 0, time.UTC)
-	ls = []LibroKobo{l}
-	e.registra(ls, madrid, ahora)
-	if ls[0].Total != 4200000+120000 || ls[0].Dias["2026-11-16"] != 120000 || ls[0].Dias["2026-11-15"] != 600000 {
-		t.Fatalf("tras volver a cero: %+v", ls[0])
-	}
-	// Subido: los días pendientes, fuera; el total sigue
-	e.subidos(ls)
-	ls = []LibroKobo{l}
-	e.registra(ls, madrid, ahora)
-	if ls[0].Total != 4320000 || len(ls[0].Dias) != 0 {
-		t.Fatalf("tras subir: %+v", ls[0])
+	if x := tiempo(l); x.Total != 4320000 || x.Dias["2026-11-16"] != 120000 || x.Dias["2026-11-15"] != 600000 {
+		t.Fatalf("tras volver a cero: %+v", x)
 	}
 	// Una lectura con la hora del Kobo en el futuro va al día de hoy
 	l.Segundos, l.UltimaLectura = 180, ahora.Add(72*time.Hour)
-	ls = []LibroKobo{l}
-	e.registra(ls, madrid, ahora)
-	if ls[0].Dias["2026-11-16"] != 60000 {
-		t.Fatalf("futuro: %+v", ls[0].Dias)
+	if x := tiempo(l); x.Dias["2026-11-16"] != 180000 {
+		t.Fatalf("futuro: %+v", x.Dias)
+	}
+	// Aparece la muestra (otra entrada del mismo libro) con tiempo de antes: solo suma al total; se lee en ella, cuenta en su día; se
+	// borra: su tiempo sigue en el libro
+	m := LibroKobo{ID: "muestra", Titulo: "Amanecer rojo", Autor: "Pierce Brown", Segundos: 600, UltimaLectura: l.UltimaLectura}
+	if x := tiempo(l, m); x.Total != 4380000+600000 || x.Dias["2026-11-16"] != 180000 {
+		t.Fatalf("con la muestra: %+v", x)
+	}
+	m.Segundos = 660
+	if x := tiempo(l, m); x.Total != 4380000+660000 || x.Dias["2026-11-16"] != 240000 {
+		t.Fatalf("leyendo la muestra: %+v", x)
+	}
+	if x := tiempo(l); x.Total != 4380000+660000 || x.Dias["2026-11-16"] != 240000 {
+		t.Fatalf("sin la muestra: %+v", x)
 	}
 	// Se guarda y se vuelve a leer igual; con otra cuenta, lo enviado se olvida (los contadores no)
 	f := filepath.Join(t.TempDir(), "enviado.json")
@@ -58,17 +63,23 @@ func TestRegistraContadores(t *testing.T) {
 	}
 	e2 := cargaEstado(f)
 	e2.deCuenta("u1", "https://a")
-	if e2.Huellas["x"] != "h" || e2.Contadores[kid(claveDe(l.Titulo, l.Autor))].S != 180 {
+	if e2.Huellas["x"] != "h" || e2.Entradas["rojo"].S != 180 || e2.Entradas["muestra"].S != 660 {
 		t.Fatalf("%+v", e2)
 	}
 	e2.deCuenta("u2", "https://a")
-	if len(e2.Huellas) != 0 || e2.Contadores[kid(claveDe(l.Titulo, l.Autor))] == nil {
+	if len(e2.Huellas) != 0 || e2.Entradas["rojo"] == nil {
 		t.Fatalf("otra cuenta: %+v", e2)
 	}
-	// El formato de antes (un mapa de huellas) se toma por vacío
+	// Un formato que no entiende se toma por vacío
 	os.WriteFile(f, []byte(`{"abc":"123"}`), 0o644)
-	if e3 := cargaEstado(f); len(e3.Huellas) != 0 {
+	if e3 := cargaEstado(f); len(e3.Huellas) != 0 || len(e3.Entradas) != 0 {
 		t.Fatalf("formato viejo: %+v", e3)
+	}
+	// Los días de hace mucho se olvidan (ya están en la cuenta)
+	e.Entradas["rojo"].Dias["2024-01-01"] = 5
+	e.registra(nil, madrid, ahora)
+	if _, ok := e.Entradas["rojo"].Dias["2024-01-01"]; ok {
+		t.Fatal("no se olvida")
 	}
 }
 

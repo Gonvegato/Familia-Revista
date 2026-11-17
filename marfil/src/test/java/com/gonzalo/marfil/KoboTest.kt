@@ -40,13 +40,13 @@ class KoboTest {
 
     @Test fun mismosCambiosQueElProgramaDelKobo() {
         val cs = casos()
-        assert(cs.size >= 14)
+        assert(cs.size >= 16)
         for (c in cs) {
             @Suppress("UNCHECKED_CAST")
             val libros = (c["libros"] as List<Map<String, Any?>>).map {
                 Kobo.Libro(it["titulo"] as String, it["autor"] as String, it["porcentaje"].n(), it["estado"].n().toInt(), it["ul"].n().toLong(), it["segundos"].n().toLong(), it["terminado"].n().toLong(),
                     marca = (it["marca"] as? String).orEmpty(), huellaKepub = (it["huella"] as? String).orEmpty(),
-                    total = (it["total"] as? Number)?.toLong() ?: 0L,
+                    porDias = it["porDias"] == true, total = (it["total"] as? Number)?.toLong() ?: 0L,
                     dias = (it["dias"] as? Map<String, Any?>).orEmpty().mapValues { (_, v) -> (v as Number).toLong() })
             }
             val p = Kobo.planea(libros, nodos(c["cuentaLibros"]), nodos(c["cuentaTiempo"]), c["ahora"].n().toLong(), ZoneId.of(c["zona"] as String), c["disp"] as String)

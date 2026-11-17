@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -53,8 +54,9 @@ fun SeccionKobo() {
     var mensaje by remember { mutableStateOf<String?>(null) }
     var lista by remember { mutableStateOf<List<String>>(emptyList()) }
     var preparado by remember { mutableStateOf(KoboCable.preparado(ctx)) }
-    var pregunta by remember { mutableStateOf<String?>(null) }   // «preparar» o «quitar»
-    var accion by remember { mutableStateOf("leer") }
+    // (se guardan si la pantalla se rehace —al girar el móvil— mientras eliges la carpeta del Kobo: si no, lo que confirmaste se haría como «leer»)
+    var pregunta by rememberSaveable { mutableStateOf<String?>(null) }   // «preparar» o «quitar»
+    var accion by rememberSaveable { mutableStateOf("leer") }
     // Vincular kepub con EPUB: el Kobo elegido y las parejas encontradas (mientras se ve la pantalla de vincular)
     var arbolVincular by remember { mutableStateOf<Uri?>(null) }
     var parejas by remember { mutableStateOf<List<KoboCable.Pareja>?>(null) }

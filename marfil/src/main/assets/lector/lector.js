@@ -1976,12 +1976,13 @@ window.atrioIrXPointer = async (xp, fraction, quien) => {
     try {
         const m = /DocFragment\[(\d+)\]/.exec(xp || ''), index = m ? +m[1] - 1 : -1
         const sec = view?.book?.sections?.[index]
-        let destino = null
-        if (sec) { const doc = await sec.createDocument(); const r = xpRango(doc, xp); if (r) destino = view.getCFI(index, r) }
-        if (!destino && fraction > 0) destino = { fraction }
-        if (!destino) return false
+        // (el sitio se busca en la página tal como se pinta, con lo que añade el lector: un CFI hecho sobre el capítulo sin eso apunta
+        // a otro sitio —los botones de capítulo corren la cuenta— y el lector acabaría al principio del capítulo)
+        const hay = sec ? !!xpRango(await sec.createDocument(), xp) : false
+        if (!hay && !(fraction > 0)) return false
         saltoDesde()
-        if (typeof destino === 'string') await view.goTo(destino); else await view.goToFraction(fraction)
+        if (hay) await view.renderer.goTo({ index, anchor: doc => xpRango(doc, xp) ?? 0 })
+        else await view.goToFraction(fraction)
         // La página a la que llega (si no te mueves de ahí, no se le devuelve al Kobo)
         await new Promise(z => setTimeout(z, 400))
         xpLlegada = window.atrioXPointer()?.xp ?? null
@@ -2015,13 +2016,9 @@ window.atrioIrKobo = async (marca, quien) => {
         let index = secs.findIndex(x => limpia(x.id) === limpia(cap))
         if (index < 0) index = secs.findIndex(x => limpia(x.id).endsWith('/' + limpia(cap)) || limpia(cap).endsWith('/' + limpia(x.id)))
         if (index < 0) return false
-        let destino = index
-        if (frag) {
-            const r = koboRango(await secs[index].createDocument(), frag)
-            if (r) destino = view.getCFI(index, r)
-        }
         saltoDesde()
-        await view.goTo(destino)
+        // (en la página tal como se pinta: ver atrioIrXPointer)
+        await view.renderer.goTo({ index, anchor: doc => (frag && koboRango(doc, frag)) || 0 })
         await new Promise(z => setTimeout(z, 400))
         xpLlegada = window.atrioXPointer()?.xp ?? null
         aviso(quien ? `Sigues donde lo dejaste en ${quien}` : 'Sigues donde lo dejaste en el Kobo')

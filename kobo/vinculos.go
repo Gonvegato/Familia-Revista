@@ -66,6 +66,7 @@ func vinculaKepubs(raiz string) (int, error) {
 	if b, err := os.ReadFile(fHechos); err == nil {
 		_ = json.Unmarshal(b, &hechos)
 	}
+	antes := len(hechos)
 	n := 0
 	var fallos []string
 	var nuevos []vinculo
@@ -131,8 +132,11 @@ func vinculaKepubs(raiz string) (int, error) {
 			n++
 		}
 	}
-	if b, err := json.Marshal(hechos); err == nil {
-		_ = escribeSeguro(fHechos, b, 0o644)
+	// (solo si hay algo nuevo: escribir en la memoria del Kobo cada vez, para nada, la gasta)
+	if len(hechos) != antes {
+		if b, err := json.Marshal(hechos); err == nil {
+			_ = escribeSeguro(fHechos, b, 0o644)
+		}
 	}
 	if len(fallos) > 0 {
 		return n, fmt.Errorf("sin vincular: %s", strings.Join(fallos, "; "))
