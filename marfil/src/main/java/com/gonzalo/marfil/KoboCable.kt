@@ -82,7 +82,11 @@ object KoboCable {
 
     /** Lee el Kobo y sube a la cuenta lo que sepa de más tarde. */
     fun lee(ctx: Context, arbol: Uri): Lectura {
+        if (!LaFamilia.familia.sesion.dentro) throw Error("Entra en tu cuenta (Ajustes → Cuenta) antes de leer el Kobo.")
         val kobo = libros(ctx, arbol)
+        // Con los libros de la cuenta al día (si no, un libro que aún no ha bajado a este móvil se tomaría por nuevo)
+        val inf = LaFamilia.sincronizaYa()
+        if (!LaFamilia.coleccion("libros").completa && !inf.ok) throw Error("Sin conexión con la cuenta: hace falta para saber qué libros tienes ya.")
         val p = Kobo.planea(kobo, LaFamilia.coleccion("libros").todos(), LaFamilia.coleccion("tiempo").todos(), System.currentTimeMillis(), ZoneId.systemDefault())
         for (c in p.cambios) LaFamilia.coleccion(c.coleccion).pon(c.ref, c.campos, c.hora)
         apunta(ctx, "cable")
@@ -105,10 +109,11 @@ object KoboCable {
         hijo(d, nombre)?.takeIf { it.isDirectory } ?: d.createDirectory(nombre) ?: throw Error("No se pudo crear la carpeta $nombre en el Kobo.")
 
     private fun escribe(ctx: Context, dir: DocumentFile, nombre: String, datos: ByteArray) {
-        hijo(dir, nombre)?.delete()
-        val f = dir.createFile("application/octet-stream", nombre) ?: throw Error("No se pudo escribir $nombre en el Kobo.")
-        // (algunos selectores añaden una extensión al crear el archivo: se le devuelve su nombre)
-        if (f.name != nombre) f.renameTo(nombre)
+        // Encima del que ya hay (truncándolo); si no está, se crea. Borrar y crear puede dejar «nombre (1)» si el borrado falla.
+        val f = hijo(dir, nombre)?.takeIf { it.isFile } ?: dir.createFile("application/octet-stream", nombre)?.also {
+            // (algunos selectores añaden una extensión al crear el archivo: se le devuelve su nombre)
+            if (it.name != nombre) it.renameTo(nombre)
+        } ?: throw Error("No se pudo escribir $nombre en el Kobo.")
         ctx.contentResolver.openOutputStream(f.uri, "wt")!!.use { it.write(datos) }
     }
 
@@ -149,7 +154,9 @@ object KoboCable {
             escribe(ctx, dn, "config.ini", configNis(servidor, usuario, clave).toByteArray())
             val libros = epubsDelKobo(ctx, r, dk)
             conPosicion = libros.size
-            escribe(ctx, dn, "library.json", indiceNis(libros).toByteArray())
+            // Lo que ya hubiera en el índice (si lo preparó NickelInkSync desde un ordenador) se queda
+            val antes = hijo(dn, "library.json")?.let { f -> runCatching { ctx.contentResolver.openInputStream(f.uri)!!.use { it.readBytes().decodeToString() } }.getOrNull() }
+            escribe(ctx, dn, "library.json", indiceNis(libros + librosDeIndice(antes)).toByteArray())
             if (hijo(dn, "NickelInkSync.log") == null) plugins = true // (el plugin apunta ahí en cuanto arranca)
         }
         if (plugins) escribe(ctx, dk, "Kobo.tgz", asset(ctx, "Kobo.tgz"))
@@ -181,6 +188,12 @@ object KoboCable {
         },
     ))
 
+    /** Los libros de un `library.json` de NickelInkSync (vacío si no hay o no se entiende). */
+    fun librosDeIndice(texto: String?): List<LibroNis> = runCatching {
+        val a = org.json.JSONObject(texto!!).getJSONArray("books")
+        (0 until a.length()).map { i -> a.getJSONObject(i).let { o -> LibroNis(o.getString("hash"), o.optString("title"), o.optJSONArray("authors")?.optString(0).orEmpty()) } }
+    }.getOrDefault(emptyList())
+
     /** Los EPUB copiados al Kobo (no los kepub: su archivo no es el de Seshat), con su huella. Los saca de la base de datos del Kobo. */
     private fun epubsDelKobo(ctx: Context, r: DocumentFile, dk: DocumentFile): List<LibroNis> {
         val bd = hijo(dk, "KoboReader.sqlite") ?: return emptyList()
@@ -196,11 +209,12 @@ object KoboCable {
                     while (c.moveToNext()) filas += Triple(c.getString(0), c.getString(1), c.getString(2))
                 }
             }
+            val listados = HashMap<String, Map<String, DocumentFile>>()
             return filas.mapNotNull { (id, t, a) ->
                 val ruta = id.removePrefix("file:///mnt/onboard/")
                 if (!ruta.lowercase().endsWith(".epub") || ruta.lowercase().endsWith(".kepub.epub")) return@mapNotNull null
                 var f: DocumentFile? = r
-                for (p in ruta.split('/')) f = f?.let { hijo(it, p) }
+                for (p in ruta.split('/')) f = f?.let { d -> listados.getOrPut(d.uri.toString()) { d.listFiles().associateBy { it.name.orEmpty() } }[p] }
                 val h = f?.takeIf { it.isFile }?.let { d -> runCatching { ctx.contentResolver.openInputStream(d.uri)?.use { KoSync.huellaDe(it) } }.getOrNull() }
                 h?.let { LibroNis(it, t.trim(), a.trim()) }
             }

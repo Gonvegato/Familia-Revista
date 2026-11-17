@@ -81,6 +81,9 @@ class KoboCableTest {
         assertEquals(2, b.length())
         assertEquals("aa", b.getJSONObject(0).getString("hash")); assertEquals("Ana", b.getJSONObject(0).getJSONArray("authors").getString(0))
         assertTrue(!b.getJSONObject(1).has("authors"))
+        // Lo que ya había en el índice se lee de vuelta (para no perderlo al preparar otra vez)
+        assertEquals(listOf("aa", "bb"), KoboCable.librosDeIndice(KoboCable.indiceNis(listOf(KoboCable.LibroNis("bb", "Dos", ""), KoboCable.LibroNis("aa", "Uno", "Ana")))).map { it.huella })
+        assertTrue(KoboCable.librosDeIndice("basura").isEmpty())
         assertTrue(Regex("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ").matches(ix.getString("created")))
     }
 }

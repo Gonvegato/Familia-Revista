@@ -45,6 +45,19 @@ function lua(nombre) {
       ok(r.vuelta0 === s.pos0, `${nombre} ida y vuelta: ${r.vuelta0} (quiero ${s.pos0})`)
       ok(r.vuelta1 === s.pos1, `${nombre} ida y vuelta: ${r.vuelta1} (quiero ${s.pos1})`)
     }
+    // 1b. Lo que añade el lector (los botones de capítulo) no cuenta: un punto dentro de ellos es el primer texto del libro que sigue
+    if (subs.length) {
+      const r = await pg.evaluate(async pos0 => {
+        const i = +/DocFragment\[(\d+)\]/.exec(pos0)[1] - 1
+        const doc = await window.__view.book.sections[i].createDocument()
+        const sin = window.__xp.xpDe(i, doc.body, 0)
+        const cap = doc.createElement('div'); cap.className = 'atrio-cap ant'; cap.innerHTML = '<button><span class="arriba">← Capítulo anterior</span></button>'
+        doc.body.prepend(cap)
+        const con = window.__xp.xpDe(i, doc.body, 0), dentro = window.__xp.xpDe(i, cap.querySelector('span').firstChild, 3)
+        return { sin, con, dentro }
+      }, subs[0].pos0)
+      ok(r.sin && r.con === r.sin && r.dentro === r.sin, `${nombre} botones de capítulo: ${JSON.stringify(r)}`)
+    }
     // 2. Ir a la última posición de KOReader (como si llegara del Kobo): la página que se abre la contiene
     if (ultima) {
       const r = await pg.evaluate(async xp => {
@@ -54,11 +67,13 @@ function lua(nombre) {
         // ¿La página que se ve contiene el sitio? (su texto, desde el principio de la página, llega hasta él)
         const r = v.range, doc = r.startContainer.ownerDocument, dest = window.__xp.xpRango(doc, xp)
         const dentro = !!dest && r.comparePoint(dest.startContainer, dest.startOffset) === 0
-        return { fue, idx: v?.section?.current ?? v?.index, dentro, xpAhora: window.atrioXPointer()?.xp }
+        const ahora = window.atrioXPointer()
+        return { fue, idx: v?.section?.current ?? v?.index, dentro, xpAhora: ahora?.xp, llegada: ahora?.llegada }
       }, ultima)
       const i = +/DocFragment\[(\d+)\]/.exec(ultima)[1] - 1
       ok(r.fue && r.idx === i && r.dentro, `${nombre} ir a ${ultima}: ${JSON.stringify(r)}`)
       ok(r.xpAhora && r.xpAhora.includes(`DocFragment[${i + 1}]`), `${nombre} posición de la página: ${r.xpAhora}`)
+      ok(r.llegada === true, `${nombre} sin moverse de donde le trajo el Kobo, no se le devuelve: ${r.llegada}`)
       console.log(`${nombre}: última de KOReader ${ultima} → página que empieza en ${r.xpAhora}`)
     }
     await pg.context().close()

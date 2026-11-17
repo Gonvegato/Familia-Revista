@@ -200,7 +200,8 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
+    if (BuildConfig.SESKOBO) Text("SesKobo no se actualiza sola: las versiones nuevas llegan aparte. El kDrive sigue sirviendo para los archivos de tus libros.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(vertical = 6.dp))
+    else Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     // Android 13 o más: sin el permiso de avisos, «tienes una versión nueva» y «se ha actualizado, toca para abrirla» no se ven nunca
@@ -227,6 +228,7 @@ private fun SeccionActualizaciones() {
         val vers = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
         Text("Versión instalada: $vers" + if (estado.isNotBlank()) " · última comprobación: $estado" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
         // Actualizar ya: mira, baja y instala sin esperar a que cierres la app (para cuando lo automático falla)
+        if (!BuildConfig.SESKOBO) {
         MagLink(if (ocupado) "Actualizando…" else "Actualizar ahora", "Busca la última versión en tu kDrive y la instala ahora", accent = true) {
             if (!ocupado) { ocupado = true; aviso = null; ambito.launch { aviso = withContext(Dispatchers.IO) { Actualizador.actualizarAhora(ctx) }; ocupado = false } }
         }
@@ -239,6 +241,7 @@ private fun SeccionActualizaciones() {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
+        }
         Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }

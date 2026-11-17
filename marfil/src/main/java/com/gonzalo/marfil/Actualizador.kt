@@ -215,6 +215,7 @@ object Actualizador {
      * Es bloqueante (red): llamar fuera del hilo principal. Devuelve lo que ha pasado, para enseñarlo.
      */
     fun actualizarAhora(ctx: Context): String {
+        if (BuildConfig.SESKOBO) return "SesKobo no se actualiza desde el kDrive"
         if (!KDrive.on(ctx)) return "kDrive sin conectar"
         if (!hayInternet(ctx)) return "Sin internet"
         // (si justo hay otra comprobación en marcha, se espera a que acabe)

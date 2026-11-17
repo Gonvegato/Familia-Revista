@@ -144,4 +144,18 @@ func TestIndiceNIS(t *testing.T) {
 	if c, _, _ := actualizaIndiceNIS(bd, raiz, cache); c {
 		t.Errorf("no debería reescribirlo")
 	}
+	// Lo que puso otro (NickelInkSync desde el ordenador) se queda
+	ix.Books = append(ix.Books, libroIndice{Hash: "00000000000000000000000000000000", Title: "Original del ordenador"})
+	b, _ = json.Marshal(ix)
+	os.WriteFile(filepath.Join(raiz, ".adds", "NickelInkSync", "library.json"), b, 0o644)
+	os.WriteFile(filepath.Join(raiz, "libros", "rojo.epub"), []byte("epub de prueba rojo, otra edición"), 0o644)
+	if c, _, err := actualizaIndiceNIS(bd, raiz, cache); !c || err != nil {
+		t.Fatalf("debería añadir la edición nueva: %v %v", c, err)
+	}
+	b, _ = os.ReadFile(filepath.Join(raiz, ".adds", "NickelInkSync", "library.json"))
+	var ix2 indice
+	json.Unmarshal(b, &ix2)
+	if len(ix2.Books) != 3 {
+		t.Errorf("deberían quedar los 3 (el del ordenador, la edición vieja y la nueva): %s", b)
+	}
 }

@@ -146,17 +146,28 @@ func actualizaIndiceNIS(rutaBD, raiz, cache string) (cambiado bool, n int, err e
 		}
 		libros = append(libros, l)
 	}
-	sort.Slice(libros, func(i, j int) bool { return libros[i].Hash < libros[j].Hash })
 	if b, err := json.Marshal(nuevas); err == nil {
 		_ = os.WriteFile(cache, b, 0o644)
 	}
+	n = len(libros)
 
+	// Lo que ya hubiera en el índice se queda (si lo preparó el ordenador con NickelInkSync, sus originales siguen ahí): solo se añade
 	destino := filepath.Join(dir, "library.json")
+	var actual indice
 	if b, err := os.ReadFile(destino); err == nil {
-		var actual indice
-		if json.Unmarshal(b, &actual) == nil && actual.Format == 1 && mismosLibros(actual.Books, libros) {
-			return false, len(libros), nil
+		if json.Unmarshal(b, &actual) != nil || actual.Format > 1 {
+			return false, n, fmt.Errorf("library.json de NickelInkSync es de otra versión: no se toca")
 		}
+	}
+	for _, l := range actual.Books {
+		if !vistos[l.Hash] {
+			vistos[l.Hash] = true
+			libros = append(libros, l)
+		}
+	}
+	sort.Slice(libros, func(i, j int) bool { return libros[i].Hash < libros[j].Hash })
+	if actual.Format == 1 && mismosLibros(actual.Books, libros) {
+		return false, n, nil
 	}
 	if libros == nil {
 		libros = []libroIndice{}
@@ -166,7 +177,7 @@ func actualizaIndiceNIS(rutaBD, raiz, cache string) (cambiado bool, n int, err e
 	if err := os.WriteFile(t, b, 0o644); err != nil {
 		return false, 0, err
 	}
-	return true, len(libros), os.Rename(t, destino)
+	return true, n, os.Rename(t, destino)
 }
 
 func mismosLibros(a, b []libroIndice) bool {

@@ -400,6 +400,8 @@ class LectorActivity : ComponentActivity() {
             if (p.idDispositivo == KoSync.idDispositivo(applicationContext) || p.hora <= maxOf(subido, leidoAqui) || p.xp == miXp) return@thread
             val quien = if (p.dispositivo.contains("kobo", true) || p.dispositivo.isBlank()) "el Kobo" else p.dispositivo
             runOnUiThread {
+                // Ir a donde ibas en el Kobo no es «un salto largo» (no se pregunta «¿vas por aquí de verdad?»)
+                ancla = p.fraccion; preguntado = false
                 if (::web.isInitialized) web.evaluateJavascript("window.atrioIrXPointer && atrioIrXPointer(${JSONObject.quote(p.xp)}, ${p.fraccion}, ${JSONObject.quote(quien)})", null)
             }
         }
@@ -413,7 +415,8 @@ class LectorActivity : ComponentActivity() {
             val txt = runCatching { org.json.JSONArray("[$r]").optString(0) }.getOrNull() ?: return@evaluateJavascript
             val o = runCatching { JSONObject(txt) }.getOrNull() ?: return@evaluateJavascript
             val xp = o.optString("xp"); val fr = o.optDouble("fraction", 0.0)
-            if (xp.isBlank() || xp == KoSync.ultimaSubida(this, h).second) return@evaluateJavascript
+            // (sin moverte de donde te trajo el Kobo no hay nada que contarle: le devolverías su propia posición)
+            if (xp.isBlank() || o.optBoolean("llegada") || xp == KoSync.ultimaSubida(this, h).second) return@evaluateJavascript
             val app = applicationContext
             kotlin.concurrent.thread(name = "kosync") { runCatching { KoSync.sube(app, h, xp, fr) } }
         }
