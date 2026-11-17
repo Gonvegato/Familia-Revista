@@ -21,3 +21,4 @@ firebase-debug.log
 # Las copias de trabajo de los asistentes (git worktree)
 .claude/
 __pycache__/
+marfil/src/main/assets/kobo/seshat-kobo
