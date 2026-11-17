@@ -65,10 +65,12 @@ object Hermanas {
     private fun enPantalla(f: () -> Unit) { if (Looper.myLooper() == Looper.getMainLooper()) f() else Handler(Looper.getMainLooper()).post(f) }
 
     /** ¿Está instalada esa hermana en este móvil? */
-    fun instalada(c: Context, paquete: String) = runCatching { c.packageManager.getLaunchIntentForPackage(paquete) != null }.getOrDefault(false)
+    /** Para abrir [paquete]: con Seshat, la que haya en el móvil (la normal o SesKobo, que hace de Seshat). */
+    fun lanzador(c: Context, paquete: String): Intent? = runCatching { c.packageManager.getLaunchIntentForPackage(com.gonzalo.familia.LaFamilia.instalada(c, paquete)) }.getOrNull()
+    fun instalada(c: Context, paquete: String) = lanzador(c, paquete) != null
     /** Abre esa hermana (si está). */
     fun abrir(c: Context, paquete: String, destino: String = ""): Boolean {
-        val i = c.packageManager.getLaunchIntentForPackage(paquete) ?: return false
+        val i = lanzador(c, paquete) ?: return false
         if (destino.isNotBlank()) i.putExtra("go", destino)
         c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
     }
@@ -86,7 +88,7 @@ object Hermanas {
     }
     /** Abre Marfil en sus «Escritos» (Marfil 0.12.0 o más nueva), donde los capítulos de Cobalto se leen con su lector. */
     fun leerEnMarfil(c: Context, obra: String = ""): Boolean {
-        val i = c.packageManager.getLaunchIntentForPackage(PAQ_MARFIL) ?: return false
+        val i = lanzador(c, PAQ_MARFIL) ?: return false
         i.putExtra("go", "escritos"); if (obra.isNotBlank()) i.putExtra("obra", obra)
         c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
     }
@@ -413,7 +415,7 @@ object Hermanas {
     }
     /** «Leer»: Marfil, en la ficha de ese libro si es suyo (Marfil 0.12.2 entiende «clave»). */
     fun leerEnMarfil(c: Context, id: Long): Boolean {
-        val i = c.packageManager.getLaunchIntentForPackage(PAQ_MARFIL) ?: return false
+        val i = lanzador(c, PAQ_MARFIL) ?: return false
         enHermana(c, "marfil", id)?.let { i.putExtra("clave", it) }
         c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
     }

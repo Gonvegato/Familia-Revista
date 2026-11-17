@@ -26,8 +26,24 @@ import java.io.File
  *  - [cambios] cambia cada vez que cambia algo de la cuenta: leerlo en una pantalla de Compose la repinta sola.
  */
 object LaFamilia {
+    /**
+     * Seshat tiene dos versiones que hacen lo mismo para la cuenta: la normal y SesKobo (la misma, con lo del Kobo), cada una con su
+     * paquete. En un móvil se instala una de las dos; las hermanas abren la que haya.
+     */
+    const val SESHAT = "com.gonzalo.marfil"
+    const val SESKOBO = "com.gonzalo.marfil.seskobo"
+    val SESHATS = listOf(SESHAT, SESKOBO)
+
     /** Las apps de la familia (sus paquetes). */
-    val APPS = listOf("com.gonzalo.hiedra", "com.gonzalo.marfil", "com.gonzalo.cobalto", "com.gonzalo.gamerate", "com.gonzalo.mostaza", "com.gonzalo.cobre", "com.gonzalo.ammit")
+    val APPS = listOf("com.gonzalo.hiedra", SESHAT, SESKOBO, "com.gonzalo.cobalto", "com.gonzalo.gamerate", "com.gonzalo.mostaza", "com.gonzalo.cobre", "com.gonzalo.ammit")
+
+    /**
+     * El paquete de la app que hace de [paquete] en este móvil: para Seshat, la que esté instalada (la normal o SesKobo; si estuvieran
+     * las dos, la normal). Para las demás, ella misma.
+     */
+    fun instalada(ctx: Context, paquete: String): String =
+        if (paquete !in SESHATS) paquete
+        else SESHATS.firstOrNull { p -> runCatching { ctx.packageManager.getLaunchIntentForPackage(p) != null }.getOrDefault(false) } ?: paquete
 
     @Volatile private var f: Familia? = null
     private lateinit var appCtx: Context

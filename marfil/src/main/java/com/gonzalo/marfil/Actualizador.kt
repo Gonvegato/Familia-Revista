@@ -89,9 +89,19 @@ object Actualizador {
     fun activo(ctx: Context) = prefs(ctx).getBoolean("on", true)
     fun ponActivo(ctx: Context, v: Boolean) = prefs(ctx).edit().putBoolean("on", v).apply()
 
-    /** «Marfil-0.8.0.apk» → [0, 8, 0]. */
-    fun versionDe(nombre: String): List<Int>? =
-        Regex("""^(?:Seshat|Marfil)-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
+    /** El nombre de la app en lo que se enseña (SesKobo es Seshat con lo del Kobo, y se actualiza aparte). */
+    val NOMBRE = if (BuildConfig.SESKOBO) "SesKobo" else "Seshat"
+
+    /**
+     * «Seshat-0.8.0.apk» → [0, 8, 0]. SesKobo solo mira las suyas («SesKobo-0.22.6-kobo.3.apk» → [0, 22, 6, 3]) y Seshat solo las
+     * suyas: nunca se toma una por la otra (y aunque pasara, Android no instala un paquete encima de otro: [valida] lo descarta antes).
+     */
+    fun versionDe(nombre: String, sesKobo: Boolean = BuildConfig.SESKOBO): List<Int>? =
+        if (sesKobo) Regex("""^SesKobo-(\d+(?:\.\d+)*-kobo(?:\.\d+)?)\.apk$""").find(nombre)?.groupValues?.get(1)?.let { numeros(it) }
+        else Regex("""^(?:Seshat|Marfil)-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
+
+    /** Los números de una versión («0.22.6-kobo.3» → [0, 22, 6, 3]). */
+    fun numeros(v: String): List<Int> = Regex("""\d+""").findAll(v).mapNotNull { it.value.toIntOrNull() }.toList()
 
     /** ¿[a] es más nueva que [b]? («6.67» > «6.9» > «6.10» como números, no como texto). */
     fun mayor(a: List<Int>, b: List<Int>): Boolean {
@@ -100,8 +110,8 @@ object Actualizador {
     }
 
     /** La más nueva de los archivos de la carpeta. */
-    fun ultima(archivos: List<Pair<String, Long>>): Triple<String, Long, List<Int>>? =
-        archivos.mapNotNull { (n, id) -> versionDe(n)?.let { Triple(n, id, it) } }.fold(null as Triple<String, Long, List<Int>>?) { m, x -> if (m == null || mayor(x.third, m.third)) x else m }
+    fun ultima(archivos: List<Pair<String, Long>>, sesKobo: Boolean = BuildConfig.SESKOBO): Triple<String, Long, List<Int>>? =
+        archivos.mapNotNull { (n, id) -> versionDe(n, sesKobo)?.let { Triple(n, id, it) } }.fold(null as Triple<String, Long, List<Int>>?) { m, x -> if (m == null || mayor(x.third, m.third)) x else m }
 
     /** Hay internet de verdad (wifi o datos móviles). */
     private fun hayInternet(ctx: Context): Boolean {
@@ -151,7 +161,7 @@ object Actualizador {
      * de verse ninguna, se instala lo que esté listo; y con la app cerrada, cada pocas horas (ActualizadorWorker).
      */
     fun init(ctx: Context) {
-        if (iniciado || BuildConfig.SESKOBO) return
+        if (iniciado) return
         iniciado = true
         val app = ctx.applicationContext
         runCatching { programa(app) }
@@ -201,7 +211,6 @@ object Actualizador {
 
     /** Se llama nada más abrir la app y luego cada minuto mientras está abierta (siempre en segundo plano). */
     fun comprueba(ctx: Context, manual: Boolean = false, forzar: Boolean = false) {
-        if (BuildConfig.SESKOBO) { if (manual) anota(ctx, "SesKobo no se actualiza sola: las versiones nuevas llegan aparte"); return }
         if (!activo(ctx) && !forzar) { if (manual) anota(ctx, "apagada (interruptor de arriba)"); return }
         if (!KDrive.on(ctx)) { anota(ctx, "kDrive sin conectar (Ajustes → Avanzado)"); return }
         if (!hayInternet(ctx)) { anota(ctx, "sin internet"); return }
@@ -215,7 +224,6 @@ object Actualizador {
      * Es bloqueante (red): llamar fuera del hilo principal. Devuelve lo que ha pasado, para enseñarlo.
      */
     fun actualizarAhora(ctx: Context): String {
-        if (BuildConfig.SESKOBO) return "SesKobo no se actualiza desde el kDrive"
         if (!KDrive.on(ctx)) return "kDrive sin conectar"
         if (!hayInternet(ctx)) return "Sin internet"
         // (si justo hay otra comprobación en marcha, se espera a que acabe)
@@ -226,15 +234,15 @@ object Actualizador {
         if (!ctx.packageManager.canRequestPackageInstalls()) {
             faltaPermiso = true
             runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            return "Permite a Seshat instalar apps y vuelve a pulsar «Actualizar ahora»"
+            return "Permite a $NOMBRE instalar apps y vuelve a pulsar «Actualizar ahora»"
         }
         return try { instala(ctx, n); "Instalando la ${n.nombre.removeSuffix(".apk")}…" } catch (e: Throwable) { "No se pudo instalar: ${e.message ?: e.javaClass.simpleName}" }
     }
 
     private fun compruebaYa(ctx: Context) {
         val lista = KDrive.versiones(ctx)
-        val ult = ultima(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu kDrive" else "en «versiones» no hay ningún Seshat-<versión>.apk"); return }
-        val actual = instalada(ctx).versionName?.split('.')?.mapNotNull { it.toIntOrNull() } ?: return
+        val ult = ultima(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu kDrive" else "en «versiones» no hay ningún $NOMBRE-<versión>.apk"); return }
+        val actual = instalada(ctx).versionName?.let { numeros(it) } ?: return
         val dir = File(ctx.cacheDir, "actualizaciones").apply { mkdirs() }
         dir.listFiles()?.filter { it.name != ult.first }?.forEach { it.delete() }
         if (!mayor(ult.third, actual)) { dir.listFiles()?.forEach { it.delete() }; anota(ctx, "al día (la última de tu kDrive es la ${ult.third.joinToString(".")})"); return }
@@ -286,10 +294,10 @@ object Actualizador {
         // Con el permiso «Mostrar sobre otras apps», Android deja abrirla directamente; sin él (o si el móvil lo bloquea), queda el aviso
         if (puedeReabrirSola(ctx)) runCatching { ctx.startActivity(abrir) }
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel("reabrir", "Seshat actualizada", NotificationManager.IMPORTANCE_HIGH))
+        nm.createNotificationChannel(NotificationChannel("reabrir", "$NOMBRE actualizada", NotificationManager.IMPORTANCE_HIGH))
         val pi = PendingIntent.getActivity(ctx, 2006, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         nm.notify(AVISO_REABRIR, Notification.Builder(ctx, "reabrir").setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Seshat se ha actualizado").setContentText("Toca para abrirla").setContentIntent(pi).setAutoCancel(true).build())
+            .setContentTitle("$NOMBRE se ha actualizado").setContentText("Toca para abrirla").setContentIntent(pi).setAutoCancel(true).build())
     }
 
     const val AVISO_REABRIR = 2006
@@ -327,10 +335,10 @@ class ActualizadorReceiver : BroadcastReceiver() {
         conf.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (Actualizador.seVe()) { runCatching { ctx.startActivity(conf) }; return }
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel("actualizar", "Actualizaciones de Seshat", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel("actualizar", "Actualizaciones de ${Actualizador.NOMBRE}", NotificationManager.IMPORTANCE_DEFAULT))
         val pi = PendingIntent.getActivity(ctx, 2005, conf, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         nm.notify(2005, Notification.Builder(ctx, "actualizar").setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Seshat tiene una versión nueva").setContentText("Toca para actualizar").setContentIntent(pi).setAutoCancel(true).build())
+            .setContentTitle("${Actualizador.NOMBRE} tiene una versión nueva").setContentText("Toca para actualizar").setContentIntent(pi).setAutoCancel(true).build())
     }
 }
 

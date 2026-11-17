@@ -200,15 +200,15 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    if (BuildConfig.SESKOBO) Text("SesKobo no se actualiza sola: las versiones nuevas llegan aparte. El kDrive sigue sirviendo para los archivos de tus libros.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(vertical = 6.dp))
-    else Fila("Actualizar sola", "Mira la carpeta «versiones» de tu kDrive (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
+    Fila("Actualizar sola", if (BuildConfig.SESKOBO) "Mira la carpeta «versiones» de tu kDrive (solo las de SesKobo: SesKobo-<versión>.apk) y se instala sin preguntar cuando no la usas."
+        else "Mira la carpeta «versiones» de tu kDrive (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     // Android 13 o más: sin el permiso de avisos, «tienes una versión nueva» y «se ha actualizado, toca para abrirla» no se ven nunca
     if (android.os.Build.VERSION.SDK_INT >= 33) {
         var avisos by remember { mutableStateOf(ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
         val pedirAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { avisos = it }
-        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir Seshat al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir $NOMBRE_APP al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (!conectado) {
         Text("El token de kDrive es de tu cuenta: se pone una vez en Jonsu (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps. Si no lo has puesto aún, puedes pegarlo aquí: en cuanto funcione, pasa a tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
@@ -228,7 +228,6 @@ private fun SeccionActualizaciones() {
         val vers = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
         Text("Versión instalada: $vers" + if (estado.isNotBlank()) " · última comprobación: $estado" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
         // Actualizar ya: mira, baja y instala sin esperar a que cierres la app (para cuando lo automático falla)
-        if (!BuildConfig.SESKOBO) {
         MagLink(if (ocupado) "Actualizando…" else "Actualizar ahora", "Busca la última versión en tu kDrive y la instala ahora", accent = true) {
             if (!ocupado) { ocupado = true; aviso = null; ambito.launch { aviso = withContext(Dispatchers.IO) { Actualizador.actualizarAhora(ctx) }; ocupado = false } }
         }
@@ -237,15 +236,17 @@ private fun SeccionActualizaciones() {
             if (!ocupado) { ocupado = true; ambito.launch { withContext(Dispatchers.IO) { Actualizador.comprueba(ctx, manual = true) }; ocupado = false } }
         }
         Filete(1.dp, Line)
-        MagLink(if (sobre) "Tras actualizar, Seshat se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
+        MagLink(if (sobre) "Tras actualizar, $NOMBRE_APP se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
-        }
         Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
+
+/** El nombre de esta app (SesKobo es Seshat con lo del Kobo). */
+private val NOMBRE_APP = if (BuildConfig.SESKOBO) "SesKobo" else "Seshat"
 
 /** Si hay una versión nueva ya bajada que Android no deja instalar en silencio, se pregunta (o se lleva al ajuste de «instalar apps»). */
 @Composable
@@ -256,8 +257,8 @@ fun AvisoActualizacion() {
     if (luego) return
     AlertDialog(
         onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Seshat tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Seshat instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
+        title = { Text("$NOMBRE_APP tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a $NOMBRE_APP instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }

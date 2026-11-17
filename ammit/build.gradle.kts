@@ -13,8 +13,8 @@ android {
         applicationId = "com.gonzalo.ammit"
         minSdk = 29
         targetSdk = 35
-        versionCode = 16
-        versionName = "0.9.1"
+        versionCode = 17
+        versionName = "0.9.2"
     }
     buildTypes {
         getByName("release") {

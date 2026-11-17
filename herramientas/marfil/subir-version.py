@@ -47,8 +47,9 @@ def carpeta_privada(d):
 
 def subir(ruta):
     nombre = os.path.basename(ruta)
-    if not re.fullmatch(r"(?:Seshat|Marfil)-\d+(\.\d+)*\.apk", nombre):
-        raise SystemExit("El archivo debe llamarse Seshat-<versión>.apk")
+    # (SesKobo, la Seshat con lo del Kobo, va a la misma carpeta con su nombre: Seshat no la mira, y SesKobo solo mira las suyas)
+    if not re.fullmatch(r"(?:Seshat|Marfil)-\d+(\.\d+)*\.apk|SesKobo-\d+(\.\d+)*-kobo(\.\d+)?\.apk", nombre):
+        raise SystemExit("El archivo debe llamarse Seshat-<versión>.apk o SesKobo-<versión>-kobo.<revisión>.apk")
     datos = open(ruta, "rb").read()
     d = kdrive()
     home = carpeta_privada(d)

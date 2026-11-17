@@ -6,6 +6,8 @@
     <queries>
         <package android:name="com.gonzalo.hiedra" />
         <package android:name="com.gonzalo.marfil" />
+        <!-- SesKobo: Seshat con lo del Kobo (hace de Seshat) -->
+        <package android:name="com.gonzalo.marfil.seskobo" />
         <package android:name="com.gonzalo.cobalto" />
         <package android:name="com.gonzalo.gamerate" />
         <package android:name="com.gonzalo.mostaza" />

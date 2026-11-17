@@ -162,7 +162,7 @@ object LecturaAviso {
         val u = ultimo(ctx)
         val nombre = u?.let { (id, _) -> st.loadPlays(BOOKS.id).find { it.id == id }?.name ?: st.load(BOOKS.id).find { it.id == id }?.name }
         // Tocar el aviso abre Marfil en la ficha de ese libro (si está en el móvil); si no, Azabache
-        val intent = ctx.packageManager.getLaunchIntentForPackage(Hermanas.PAQ_MARFIL)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val intent = Hermanas.lanzador(ctx, Hermanas.PAQ_MARFIL)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             ?.also { i -> u?.first?.let { id -> Hermanas.enHermana(ctx, "marfil", id)?.let { i.putExtra("clave", it) } } }
             ?: Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val pi = PendingIntent.getActivity(ctx, 2003, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)

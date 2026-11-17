@@ -117,7 +117,7 @@ fun PantCandado(a: CandadoActivity?, fijo: Candado.Progreso? = null) {
             androidx.compose.foundation.layout.Spacer(Modifier.height(26.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Boton("ESCRIBIR EN THOT", acento = true) { abrirApp(ctx, "com.gonzalo.cobalto"); a?.finish() }
-                Boton("LEER EN SESHAT", acento = true) { abrirApp(ctx, "com.gonzalo.marfil"); a?.finish() }
+                Boton("LEER EN SESHAT", acento = true) { abrirApp(ctx, com.gonzalo.familia.LaFamilia.instalada(ctx, "com.gonzalo.marfil")); a?.finish() }
                 Boton("AHORA NO") { a?.finish() }
             }
         }

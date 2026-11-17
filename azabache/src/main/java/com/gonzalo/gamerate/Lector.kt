@@ -1008,7 +1008,7 @@ object AtajoLectura {
         val u = LecturaAviso.ultimo(ctx)
         val st = Store(ctx)
         val nombre = u?.let { (id, _) -> st.loadPlays(BOOKS.id).find { it.id == id }?.name ?: st.load(BOOKS.id).find { it.id == id }?.name }
-        val marfil = ctx.packageManager.getLaunchIntentForPackage(Hermanas.PAQ_MARFIL)
+        val marfil = Hermanas.lanzador(ctx, Hermanas.PAQ_MARFIL)
         if (u == null || nombre == null || marfil == null) { sm.removeDynamicShortcuts(listOf(ID)); return@runCatching }
         val intent = marfil.also { i -> Hermanas.enHermana(ctx, "marfil", u.first)?.let { i.putExtra("clave", it) } }
         val corto = if (nombre.length > 22) nombre.take(21).trimEnd() + "…" else nombre

@@ -24,11 +24,13 @@ data class DeLaFamilia(val paquete: String, val nombre: String, val acento: Long
 object Ammit {
     const val PROPIO = "com.gonzalo.ammit"
 
-    /** La familia: las seis que pasan el juicio. */
+    /** La familia: las que pasan el juicio. */
     val FAMILIA = listOf(
         DeLaFamilia("com.gonzalo.gamerate", "Jonsu", 0xFF8E5A78),
         DeLaFamilia("com.gonzalo.hiedra", "Bastet", 0xFF7A8A3A),
         DeLaFamilia("com.gonzalo.marfil", "Seshat", 0xFFB0791E),
+        // (SesKobo: es Seshat, con lo del Kobo; en un móvil está una u otra)
+        DeLaFamilia("com.gonzalo.marfil.seskobo", "Seshat", 0xFFB0791E),
         DeLaFamilia("com.gonzalo.cobalto", "Thot", 0xFF5A7896),
         DeLaFamilia("com.gonzalo.mostaza", "Hathor", 0xFFB56576),
         DeLaFamilia("com.gonzalo.cobre", "Nut", 0xFF5D1414),

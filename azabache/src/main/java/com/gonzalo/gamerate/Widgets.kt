@@ -607,7 +607,7 @@ object Widgets {
 
     /** Abre Marfil (el lector es suyo); si no está, la ficha del libro aquí. */
     fun leer(ctx: Context, id: Long, nombre: String, goto: String? = null): PendingIntent {
-        val i = ctx.packageManager.getLaunchIntentForPackage(Hermanas.PAQ_MARFIL)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)?.also { m -> if (id != 0L) Hermanas.enHermana(ctx, "marfil", id)?.let { m.putExtra("clave", it) } }
+        val i = Hermanas.lanzador(ctx, Hermanas.PAQ_MARFIL)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)?.also { m -> if (id != 0L) Hermanas.enHermana(ctx, "marfil", id)?.let { m.putExtra("clave", it) } }
             ?: Intent(ctx, MainActivity::class.java).setAction(Intent.ACTION_VIEW).setData(Uri.parse("atrio://ficha/$id")).putExtra("play_id", id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         return PendingIntent.getActivity(ctx, 0, i, PI)
     }
