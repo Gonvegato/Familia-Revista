@@ -97,6 +97,9 @@ const getVisibleRange = (doc, start, end, mapRect) => {
         const name = node.localName?.toLowerCase()
         // ignore all scripts, styles, and their children
         if (name === 'script' || name === 'style') return FILTER_REJECT
+        // (Seshat) los botones de capítulo que pone el lector (.atrio-cap) no son del libro: aunque estén ocultos, su caja vacía
+        // en 0 hacía que «lo que se ve» empezara en el de arriba y acabara en el de abajo, y al volver a abrir se iba una página más
+        if (node.nodeType === 1 && node.classList?.contains('atrio-cap')) return FILTER_REJECT
         if (node.nodeType === 1) {
             const { left, right } = mapRect(node.getBoundingClientRect())
             // no need to check child nodes if it's completely out of view
