@@ -9,7 +9,10 @@ C
 clang --target=armv7a-linux-gnueabihf -mfloat-abi=hard -fPIC -O2 -nostdlib -shared -fuse-ld=lld -Wl,-soname,libc.so.6 -o /tmp/libc.so.6 /tmp/libc-stub.c
 clang --target=armv7a-linux-gnueabihf -mfloat-abi=hard -fPIC -O2 -nostdlib -shared -fuse-ld=lld -Wl,-z,now -Wl,-soname,libseshat.so -o libseshat.so libseshat.c /tmp/libc.so.6
 llvm-strip libseshat.so
-T=$(mktemp -d); mkdir -p "$T/imageformats"; cp libseshat.so "$T/imageformats/"; chmod 755 "$T/imageformats/libseshat.so"
-tar czf Kobo.tgz --owner=root --group=root -C "$T" imageformats/libseshat.so
+# (cada Kobo.tgz deja en imageformats solo lo que trae: van los tres juntos, NickelMenu y NickelInkSync tal como los pone SesKobo)
+T=$(mktemp -d); mkdir -p "$T/imageformats"; cp libseshat.so "$T/imageformats/"
+tar xzf ../../marfil/src/kobo/assets/kobo/Kobo.tgz -C "$T"
+chmod 755 "$T"/imageformats/*.so
+tar czf Kobo.tgz --owner=root --group=root -C "$T" imageformats/libseshat.so imageformats/libnm.so imageformats/libnickelinksync.so
 rm -rf "$T" Seshat-arranque.zip; zip -q -X Seshat-arranque.zip Kobo.tgz arranque.sh LEEME.txt
 echo "Listo: Kobo.tgz y Seshat-arranque.zip"

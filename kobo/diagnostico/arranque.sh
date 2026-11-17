@@ -9,8 +9,10 @@ D=/mnt/onboard/.adds/seshat
 mkdir /tmp/seshat-arranque 2>/dev/null || exit 0
 
 # 1. El vigilante (si el Kobo está preparado desde SesKobo; él mismo se asegura de que solo haya uno)
+VIG="no: falta algo de .adds/seshat (seshat.sh, seshat-kobo o cuenta.json)"
 if [ -f "$D/seshat.sh" ] && [ -f "$D/seshat-kobo" ] && [ -f "$D/cuenta.json" ]; then
-	/bin/sh "$D/seshat.sh" vigila </dev/null >/dev/null 2>&1 &
+	/bin/sh "$D/seshat.sh" vigila </dev/null >"/tmp/seshat-arranque/vigila.txt" 2>&1 &
+	VIG="lanzado (pid $!)"
 fi
 
 # 2. El diagnóstico
@@ -23,8 +25,15 @@ F="$D/diagnostico.txt"
 	echo "-- a prueba de fallos"; ls -la /usr/local/Kobo/*.failsafe /usr/local/Kobo/imageformats/*.failsafe 2>&1
 	echo "-- cargados en la interfaz del Kobo"
 	for p in $(pidof nickel 2>/dev/null); do echo "nickel $p:"; grep -E "imageformats|libnm|nickelinksync|seshat" /proc/$p/maps 2>&1 | awk '{print $6}' | sort -u; done
-	echo "-- .adds";              ls -la /mnt/onboard/.adds /mnt/onboard/.adds/nm 2>&1
-	echo "-- procesos de Seshat"; ps 2>/dev/null | grep -i seshat | grep -v grep
+	echo "-- ¿le falta algo a cada complemento? (lo que diga «not found» es lo que el Kobo no tiene)"
+	LDSO=$(ls /lib/ld-linux*.so* 2>/dev/null | head -n 1)
+	for f in /usr/local/Kobo/imageformats/*.so; do echo "[$f]"; "$LDSO" --list "$f" 2>&1 | grep -iE "not found|error|version" || echo "  (no le falta nada)"; done
+	echo "-- Qt del Kobo";         ls -la /usr/lib/libQt6Core.so* /usr/lib/libQt6Widgets.so* /usr/lib/libQt6Gui.so* 2>&1
+	echo "-- glibc del Kobo";      "$LDSO" --version 2>&1 | head -n 1
+	echo "-- .adds";              ls -la /mnt/onboard/.adds /mnt/onboard/.adds/nm /mnt/onboard/.adds/seshat 2>&1
+	echo "-- vigilante: $VIG";     cat /tmp/seshat-arranque/vigila.txt 2>&1
+	echo "-- registro de Seshat (lo último)"; tail -n 15 "$D/registro.txt" 2>&1
+	echo "-- procesos";           ps 2>&1 | grep -iE "seshat|nickel" | grep -v grep
 	echo "-- registro del sistema (lo último)"
 	if command -v logread >/dev/null 2>&1; then logread 2>&1 | tail -n 400; else echo "(no hay logread)"; fi
 	echo "-- registro del núcleo (lo último)"; dmesg 2>&1 | tail -n 80
