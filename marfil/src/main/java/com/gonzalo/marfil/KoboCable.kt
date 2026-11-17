@@ -237,12 +237,97 @@ object KoboCable {
         }
     }
 
+    // ---- Vincular kepub con EPUB: el kepub del Kobo con el EPUB del mismo libro en SesKobo, para llevar la posición entre los dos
+
+    /** Un kepub del Kobo y el libro de SesKobo que parece ser el mismo ([libro] null: ninguno con EPUB). [seguro]: sale marcado. */
+    data class Pareja(val kepub: String, val archivoKobo: String, val tituloKobo: String, val autorKobo: String, val libro: Libro?, val seguro: Boolean)
+
+    /** Un libro de SesKobo con su EPUB (no un kepub ni otro formato): lo que se puede vincular. */
+    private fun conEpub(l: Libro) = l.uri.isNotBlank() && !l.esEscrito &&
+        l.archivo.ifBlank { Uri.decode(l.uri) }.lowercase().let { it.endsWith(".epub") && !it.endsWith(".kepub.epub") }
+
+    /**
+     * Las parejas posibles entre los [kepubs] del Kobo (ContentID, título, autor) y [libros] de SesKobo: mismo título; si sale más de
+     * uno, o los autores no coinciden, la pareja queda sin marcar (puede no ser el mismo). Pura (así se prueba).
+     */
+    fun parejas(kepubs: List<Triple<String, String, String>>, libros: List<Libro>): List<Pareja> = kepubs.map { (id, t, a) ->
+        val nt = norm(t)
+        val mismos = libros.filter { conEpub(it) && norm(it.titulo) == nt }
+        val pa = palabras(a)
+        val conAutor = mismos.filter { pa.isEmpty() || palabras(it.autor).isEmpty() || palabras(it.autor) == pa }
+        val l = conAutor.singleOrNull() ?: mismos.firstOrNull()
+        Pareja(id, id.substringAfterLast('/'), t, a, l, seguro = l != null && conAutor.size == 1 && mismos.size == 1)
+    }
+
+    private fun palabras(s: String) = norm(s).split(' ').filter { it.isNotEmpty() }.sorted().joinToString(" ")
+
+    /** Los vínculos ya hechos en el Kobo (`.adds/seshat/vinculos.json`): ContentID del kepub → archivo del original. */
+    private fun vinculos(ctx: Context, ds: DocumentFile?): LinkedHashMap<String, org.json.JSONObject> {
+        val r = LinkedHashMap<String, org.json.JSONObject>()
+        val f = ds?.let { hijo(it, "vinculos.json") } ?: return r
+        runCatching {
+            val a = org.json.JSONObject(ctx.contentResolver.openInputStream(f.uri)!!.use { it.readBytes().decodeToString() }).getJSONArray("vinculos")
+            for (i in 0 until a.length()) a.getJSONObject(i).let { r[it.getString("kepub")] = it }
+        }
+        return r
+    }
+
+    /** Los kepub del Kobo aún sin vincular, con el libro de SesKobo que parece el mismo. */
+    fun buscaParejas(ctx: Context, arbol: Uri): List<Pareja> {
+        if (!KoSync.activo(ctx)) throw Error("Pon antes tu usuario de posiciones (más abajo, en «Posición en el Kobo») y prepara el Kobo.")
+        val r = raiz(ctx, arbol)
+        val dk = kobo(r)
+        if (hijo(r, ".adds")?.let { hijo(it, "NickelInkSync") }?.let { hijo(it, "nickelinksync") } == null) throw Error("Prepara antes el Kobo para Wi-Fi (con tu usuario de posiciones): hace falta NickelInkSync.")
+        val ya = vinculos(ctx, hijo(r, ".adds")?.let { hijo(it, "seshat") })
+        val bd = hijo(dk, "KoboReader.sqlite") ?: throw Error("No está la base de datos del Kobo (.kobo/KoboReader.sqlite).")
+        val dir = File(ctx.cacheDir, "kobo-vincular").apply { deleteRecursively(); mkdirs() }
+        val kepubs = ArrayList<Triple<String, String, String>>()
+        try {
+            val copia = File(dir, "KoboReader.sqlite")
+            ctx.contentResolver.openInputStream(bd.uri)!!.use { i -> copia.outputStream().use { i.copyTo(it) } }
+            for (ext in listOf("-wal", "-shm")) hijo(dk, "KoboReader.sqlite$ext")?.let { f -> runCatching { ctx.contentResolver.openInputStream(f.uri)!!.use { i -> File(dir, "KoboReader.sqlite$ext").outputStream().use { i.copyTo(it) } } } }
+            SQLiteDatabase.openDatabase(copia.path, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
+                db.rawQuery("SELECT ContentID, COALESCE(Title, ''), COALESCE(Attribution, '') FROM content WHERE ContentType = 6", null).use { c ->
+                    while (c.moveToNext()) { val id = c.getString(0); if (Kobo.esKepub(id) && id !in ya) kepubs += Triple(id, c.getString(1).trim(), c.getString(2).trim()) }
+                }
+            }
+        } finally { dir.deleteRecursively() }
+        return parejas(kepubs, Biblioteca.propios()).sortedBy { it.tituloKobo.lowercase() }
+    }
+
+    /**
+     * Vincula [elegidas]: copia el EPUB de cada una al Kobo (`.adds/seshat/originales/<huella>.orig`: con esa extensión el Kobo no lo
+     * toma por un libro) y lo apunta en `vinculos.json`. El Kobo termina solo (empareja y prepara) la próxima vez que mande con Wi-Fi.
+     */
+    fun vincula(ctx: Context, arbol: Uri, elegidas: List<Pareja>): Int {
+        val r = raiz(ctx, arbol)
+        kobo(r)
+        val ds = carpeta(carpeta(r, ".adds"), "seshat")
+        val orig = carpeta(ds, "originales")
+        val lista = vinculos(ctx, ds)
+        var n = 0
+        for (p in elegidas) {
+            val l = p.libro ?: continue
+            val u = Uri.parse(l.uri)
+            val h = KoSync.huella(ctx, u) ?: throw Error("No se puede leer el EPUB de «${l.titulo}».")
+            val nombre = "$h.orig"
+            if (hijo(orig, nombre) == null) escribe(ctx, orig, nombre, ctx.contentResolver.openInputStream(u)!!.use { it.readBytes() })
+            lista[p.kepub] = org.json.JSONObject().put("kepub", p.kepub).put("original", nombre).put("titulo", l.titulo)
+            n++
+        }
+        escribe(ctx, ds, "vinculos.json", org.json.JSONObject().put("vinculos", org.json.JSONArray(lista.values.toList())).toString(1).toByteArray())
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("vinculados", lista.size).apply()
+        return n
+    }
+
+    fun vinculados(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt("vinculados", 0)
+
     /** Quita del Kobo lo de Seshat (el programa, la cuenta, sus entradas del menú y NickelInkSync). NickelMenu se queda. */
     fun quita(ctx: Context, arbol: Uri) {
         val r = raiz(ctx, arbol)
         kobo(r)
         hijo(r, ".adds")?.let { a ->
-            hijo(a, "seshat")?.delete()
+            hijo(a, "seshat")?.delete() // (con los originales de los vinculados)
             hijo(a, "nm")?.let { hijo(it, "seshat")?.delete() }
             // NickelInkSync: fuera su configuración y su programa, y el aviso de desinstalarse (lo hace al reiniciar el Kobo)
             hijo(a, "NickelInkSync")?.let { d ->
@@ -250,6 +335,6 @@ object KoboCable {
                 if (hijo(d, "uninstall") == null) d.createFile("application/octet-stream", "uninstall")?.let { f -> if (f.name != "uninstall") f.renameTo("uninstall") }
             }
         }
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("preparado", false).apply()
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("preparado", false).putInt("vinculados", 0).apply()
     }
 }

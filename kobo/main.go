@@ -63,6 +63,12 @@ func main() {
 		vigila()
 	case "prueba":
 		err = envia(true)
+	case "vincula":
+		// (solo los kepub vinculados con su EPUB, sin mandar nada: para probarlo)
+		var n int
+		if n, err = vinculaKepubs(filepath.Dir(filepath.Dir(*fBD))); err == nil {
+			log.Printf("%d kepub vinculados", n)
+		}
 	case "version":
 		fmt.Println(version)
 	default:
@@ -79,9 +85,14 @@ func envia(soloMirar bool) error {
 	if err != nil {
 		return err
 	}
-	// El índice de NickelInkSync (la posición de cada libro), si está instalado
+	// El índice de NickelInkSync (la posición de cada libro), si está instalado; antes, los kepub que SesKobo ha vinculado con su EPUB
 	if !soloMirar {
 		raiz := filepath.Dir(filepath.Dir(*fBD))
+		if n, err := vinculaKepubs(raiz); err != nil {
+			log.Print("vincular kepub: ", err)
+		} else if n > 0 {
+			log.Printf("posiciones: %d kepub vinculados con su EPUB", n)
+		}
 		if c, n, err := actualizaIndiceNIS(*fBD, raiz, filepath.Join(dirSeshat, "huellas.json")); err != nil {
 			log.Print("índice de NickelInkSync: ", err)
 		} else if c {

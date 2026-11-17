@@ -4,7 +4,18 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,6 +55,10 @@ fun SeccionKobo() {
     var preparado by remember { mutableStateOf(KoboCable.preparado(ctx)) }
     var pregunta by remember { mutableStateOf<String?>(null) }   // «preparar» o «quitar»
     var accion by remember { mutableStateOf("leer") }
+    // Vincular kepub con EPUB: el Kobo elegido y las parejas encontradas (mientras se ve la pantalla de vincular)
+    var arbolVincular by remember { mutableStateOf<Uri?>(null) }
+    var parejas by remember { mutableStateOf<List<KoboCable.Pareja>?>(null) }
+    var vinculados by remember { mutableStateOf(KoboCable.vinculados(ctx)) }
 
     fun recuerda(u: Uri) = runCatching { ctx.contentResolver.takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
     val elegir = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { u ->
@@ -64,7 +79,8 @@ fun SeccionKobo() {
                                 if (KoSync.activo(ctx)) "Posición de ${p.conPosicion} ${if (p.conPosicion == 1) "libro" else "libros"} entre el Kobo y SesKobo." else "Sin usuario de posiciones: solo libros, porcentaje y tiempo.",
                             ).joinToString(" ")
                         }
-                        "quitar" -> { KoboCable.quita(ctx, u); preparado = false; "Quitado del Kobo. NickelMenu se queda; NickelInkSync se desinstala al reiniciar el Kobo." }
+                        "quitar" -> { KoboCable.quita(ctx, u); preparado = false; vinculados = 0; "Quitado del Kobo. NickelMenu se queda; NickelInkSync se desinstala al reiniciar el Kobo." }
+                        "vincular" -> { parejas = KoboCable.buscaParejas(ctx, u); arbolVincular = u; null }
                         else -> {
                             val r = KoboCable.lee(ctx, u)
                             lista = r.resumen
@@ -90,8 +106,13 @@ fun SeccionKobo() {
     }
     if (preparado) {
         Filete(1.dp, Line)
+        MagLink(if (ocupado && accion == "vincular") "Buscando en el Kobo…" else "Vincular kepub con EPUB", "Para seguir en el Kobo lo que lees aquí, y al revés, con kepub en el Kobo") {
+            if (!ocupado) { accion = "vincular"; elegir.launch(null) }
+        }
+        Filete(1.dp, Line)
         MagLink("Quitar del Kobo", "Borra del Kobo el programa, tu acceso y NickelInkSync") { if (!ocupado) pregunta = "quitar" }
     }
+    if (vinculados > 0 && mensaje == null) Text("$vinculados ${if (vinculados == 1) "libro vinculado" else "libros vinculados"}.", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 8.dp))
     val ultima = KoboCable.ultima(ctx)
     val texto = mensaje ?: ultima?.let { (t, como) -> "Última vez: " + java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(t)) + if (como == "cable") ", por cable." else "." }
     texto?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 8.dp)) }
@@ -107,6 +128,18 @@ fun SeccionKobo() {
     Spacer(Modifier.height(14.dp))
     Antetitulo("Posición en el Kobo", Modifier.padding(bottom = 4.dp))
     SeccionKoSync()
+
+    parejas?.let { ps ->
+        val arbol = arbolVincular
+        PantVincular(ps, alCerrar = { parejas = null; arbolVincular = null }) { elegidas ->
+            if (arbol == null) return@PantVincular null
+            try {
+                val n = withContext(Dispatchers.IO) { KoboCable.vincula(ctx, arbol, elegidas) }
+                vinculados = KoboCable.vinculados(ctx)
+                "$n ${if (n == 1) "libro vinculado" else "libros vinculados"}."
+            } catch (e: KoboCable.Error) { e.message } catch (e: Exception) { "No se pudo: ${e.message ?: e.javaClass.simpleName}" }
+        }
+    }
 
     pregunta?.let { p ->
         AlertDialog(onDismissRequest = { pregunta = null },
@@ -169,4 +202,66 @@ private fun SeccionKoSync() {
         MagLink("Salir", "Deja de llevar la posición entre el Kobo y SesKobo") { KoSync.sal(ctx); dentro = false; aviso = null }
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp)) }
+}
+
+/**
+ * «Vincular»: las parejas kepub del Kobo ↔ EPUB de SesKobo que se han encontrado, para marcar las que quieras vincular (las dudosas
+ * salen sin marcar), y el resultado. [vincular] hace el trabajo y devuelve el mensaje (o null si no ha podido empezar).
+ */
+@Composable
+fun PantVincular(parejas: List<KoboCable.Pareja>, alCerrar: () -> Unit, vincular: suspend (List<KoboCable.Pareja>) -> String?) {
+    val ambito = rememberCoroutineScope()
+    val conLibro = parejas.filter { it.libro != null }
+    val sinLibro = parejas.filter { it.libro == null }
+    var marcadas by remember { mutableStateOf(conLibro.filter { it.seguro }.map { it.kepub }.toSet()) }
+    var hecho by remember { mutableStateOf<String?>(null) }
+    var ocupado by remember { mutableStateOf(false) }
+    androidx.compose.ui.window.Dialog(onDismissRequest = alCerrar, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+        Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
+            Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
+                EnlaceRevista("← Ajustes", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alCerrar() }
+                NombreConPunto("Vincular", 44.sp, Paper, Modifier.padding(top = 2.dp))
+            }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp)) {
+                val fin = hecho
+                if (fin != null) {
+                    Text(fin, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 23.sp)
+                    Text("Desconecta el Kobo y pulsa «Enviar a Seshat» con Wi-Fi: el Kobo termina de prepararlos él solo.", color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 10.dp))
+                    Text("A partir de ahí: lee el EPUB en SesKobo y el kepub en el Kobo. Al abrir uno, sigue donde dejaste el otro (al principio del párrafo).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
+                    Text("SesKobo ha copiado el EPUB de cada uno a una carpeta oculta del Kobo, con un nombre que el Kobo no toma por libro: no te saldrá repetido.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
+                    MagLink("Volver a Ajustes") { alCerrar() }
+                    return@Column
+                }
+                if (conLibro.isEmpty()) {
+                    Text(if (parejas.isEmpty()) "No hay kepub sin vincular en el Kobo." else "Ningún kepub del Kobo tiene su EPUB en SesKobo.", color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp)
+                } else {
+                    Text("Estos kepub del Kobo tienen su EPUB en SesKobo. Marca los que quieras vincular. Los que ya lo están no salen.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 4.dp))
+                    for (p in conLibro) {
+                        val on = p.kepub in marcadas
+                        Row(Modifier.fillMaxWidth().clickable { marcadas = if (on) marcadas - p.kepub else marcadas + p.kepub }.padding(vertical = 11.dp)) {
+                            Box(Modifier.padding(top = 2.dp).size(18.dp).border(2.dp, if (on) Acento else Charcoal).background(if (on) Acento else androidx.compose.ui.graphics.Color.Transparent), contentAlignment = Alignment.Center) {
+                                if (on) Text("✓", color = Paper, fontSize = 12.sp, fontWeight = FontWeight.Black)
+                            }
+                            Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                                Text(p.tituloKobo.ifBlank { p.archivoKobo }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 18.sp)
+                                Text("Kobo: ${p.archivoKobo}", color = Muted, fontFamily = Body, fontSize = 11.5.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 3.dp))
+                                Text("SesKobo: ${p.libro!!.titulo}" + p.libro.autor.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(), color = Muted, fontFamily = Body, fontSize = 11.5.sp, lineHeight = 16.sp)
+                                if (!p.seguro) Text("PUEDE NO SER EL MISMO: COMPRUÉBALO", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.5.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 3.dp))
+                            }
+                        }
+                        Filete(1.dp, Line)
+                    }
+                    val n = marcadas.size
+                    Box(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 4.dp).background(if (n > 0) Acento else Muted).clickable(enabled = n > 0 && !ocupado) {
+                        ocupado = true
+                        ambito.launch { hecho = vincular(conLibro.filter { it.kepub in marcadas }); ocupado = false }
+                    }.padding(horizontal = 16.dp, vertical = 13.dp)) {
+                        Text(if (ocupado) "VINCULANDO…" else "VINCULAR $n ${if (n == 1) "LIBRO" else "LIBROS"}  →", color = Paper, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.sp)
+                    }
+                }
+                if (sinLibro.isNotEmpty()) Text("Sin EPUB en SesKobo: " + sinLibro.joinToString(", ") { "«${it.tituloKobo.ifBlank { it.archivoKobo }}»" } + ". Añádelos a SesKobo y vuelve aquí.",
+                    color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 12.dp))
+            }
+        }
+    }
 }

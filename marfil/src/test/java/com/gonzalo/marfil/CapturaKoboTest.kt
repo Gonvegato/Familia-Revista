@@ -35,4 +35,19 @@ class CapturaKoboTest {
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("build/capturas/seskobo-ajustes-kobo.png")
     }
+
+    @Test fun vincular() {
+        assumeTrue(BuildConfig.SESKOBO && System.getProperty("roborazzi.test.record") == "true")
+        Skin.aColoresDeSerie()
+        val l = { id: String, t: String, a: String -> Libro(id, t, a, uri = "content://x/$id", archivo = "$t.epub") }
+        val ps = listOf(
+            KoboCable.Pareja("file:///mnt/onboard/Libros/Amanecer rojo - Pierce Brown.kepub.epub", "Amanecer rojo - Pierce Brown.kepub.epub", "Amanecer rojo", "Pierce Brown", l("1", "Amanecer rojo", "Pierce Brown"), true),
+            KoboCable.Pareja("file:///mnt/onboard/Libros/La sombra del viento.kepub.epub", "La sombra del viento.kepub.epub", "La sombra del viento", "Carlos Ruiz Zafón", l("2", "La sombra del viento", "Carlos Ruiz Zafón"), true),
+            KoboCable.Pareja("file:///mnt/onboard/Libros/Poemas.kepub.epub", "Poemas.kepub.epub", "Poemas", "", l("3", "Poemas", "Gloria Fuertes"), false),
+            KoboCable.Pareja("file:///mnt/onboard/Libros/El problema de los tres cuerpos.kepub.epub", "El problema de los tres cuerpos.kepub.epub", "El problema de los tres cuerpos", "Liu Cixin", null, false),
+        )
+        rule.setContent { MarfilTheme { PantVincular(ps, alCerrar = {}) { null } } }
+        rule.waitForIdle()
+        rule.onAllNodes(androidx.compose.ui.test.isRoot())[1].captureRoboImage("build/capturas/seskobo-vincular.png")
+    }
 }

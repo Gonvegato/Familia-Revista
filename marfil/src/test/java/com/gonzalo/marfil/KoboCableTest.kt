@@ -62,6 +62,32 @@ class KoboCableTest {
         assertEquals("", l["De la tienda"]!!.marca)
     }
 
+    /** Vincular: cada kepub con el libro de SesKobo del mismo título (y autor); las dudas, sin marcar; sin EPUB, sin pareja. */
+    @Test fun parejasKepubEpub() {
+        val libros = listOf(
+            Libro("1", "Amanecer rojo", "Pierce Brown", uri = "content://x/1", archivo = "Amanecer rojo.epub"),
+            Libro("2", "Poemas", "Gloria Fuertes", uri = "content://x/2", archivo = "Poemas.epub"),
+            Libro("3", "Poemas", "Otro", uri = "content://x/3", archivo = "Poemas (2).epub"),
+            Libro("4", "Dune", "Frank Herbert", uri = "content://x/4", archivo = "Dune.pdf"),
+            Libro("5", "La sombra del viento", "", uri = "content://x/5", archivo = "sombra.epub"),
+            Libro("6", "Sin archivo", "Nadie"),
+        )
+        val p = KoboCable.parejas(listOf(
+            Triple("file:///mnt/onboard/a/Rojo.kepub.epub", "AMANECER ROJO", "Brown, Pierce"),
+            Triple("file:///mnt/onboard/a/Poemas.kepub.epub", "Poemas", "Gloria Fuertes"),
+            Triple("file:///mnt/onboard/a/P2.kepub.epub", "Poemas", ""),
+            Triple("file:///mnt/onboard/a/Dune.kepub.epub", "Dune", "Frank Herbert"),
+            Triple("file:///mnt/onboard/a/Sombra.kepub.epub", "La sombra del viento", "Carlos Ruiz Zafón"),
+            Triple("file:///mnt/onboard/a/Nada.kepub.epub", "Sin archivo", "Nadie"),
+        ), libros).associateBy { it.archivoKobo }
+        assertEquals("1", p["Rojo.kepub.epub"]!!.libro!!.id); assertTrue(p["Rojo.kepub.epub"]!!.seguro)
+        assertEquals("2", p["Poemas.kepub.epub"]!!.libro!!.id); assertTrue("hay dos «Poemas»: duda", !p["Poemas.kepub.epub"]!!.seguro)
+        assertTrue(!p["P2.kepub.epub"]!!.seguro)
+        assertEquals("un PDF no se vincula", null, p["Dune.kepub.epub"]!!.libro)
+        assertEquals("5", p["Sombra.kepub.epub"]!!.libro!!.id); assertTrue("sin autor en SesKobo: vale", p["Sombra.kepub.epub"]!!.seguro)
+        assertEquals("sin archivo en SesKobo, nada", null, p["Nada.kepub.epub"]!!.libro)
+    }
+
     @Test fun sinLaColumnaDelTiempoTambien() {
         val l = KoboCable.leeBase(base(false))
         assertEquals(3, l.size)
