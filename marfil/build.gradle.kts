@@ -10,7 +10,7 @@ val firmaProps = Properties().apply { rootProject.file("firma/claves.properties"
 fun clave(n: String): String = firmaProps.getProperty("$n.pass").orEmpty()
 // SesKobo (-Pseskobo): una Seshat aparte, que convive con la normal, con lo del Kobo (leerlo por cable, prepararlo para Wi-Fi, la
 // posición por KOSync). No se actualiza sola desde el kDrive. La normal no cambia ni pesa más (lo del Kobo va solo en esta).
-val sesKobo = providers.gradleProperty("seskobo").isPresent
+val sesKobo = providers.gradleProperty("seskobo").orNull.let { it != null && it != "false" }
 
 android {
     namespace = "com.gonzalo.marfil"

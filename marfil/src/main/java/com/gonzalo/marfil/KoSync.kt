@@ -67,6 +67,9 @@ object KoSync {
      */
     fun entra(ctx: Context, servidor: String, usuario: String, contrasena: String): Boolean {
         val s = servidor.trim().trimEnd('/').ifBlank { SERVIDOR }
+        // (Android no deja hablar con un servidor sin cifrar: http:// no funcionaría y parecería que no hay conexión)
+        val local = Regex("^http://(127\\.0\\.0\\.1|localhost)(:\\d+)?$").matches(s) // (solo en las pruebas)
+        if (!(s.startsWith("https://") || local) || runCatching { URL(s) }.isFailure) throw Error("El servidor tiene que ser una dirección https:// (como ${SERVIDOR}).")
         val u = usuario.trim()
         if (u.isBlank() || contrasena.isBlank()) throw Error("Escribe un usuario y una contraseña.")
         val k = md5(contrasena)

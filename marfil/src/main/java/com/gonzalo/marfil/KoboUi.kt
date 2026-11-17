@@ -60,37 +60,44 @@ fun SeccionKobo() {
     var parejas by remember { mutableStateOf<List<KoboCable.Pareja>?>(null) }
     var vinculados by remember { mutableStateOf(KoboCable.vinculados(ctx)) }
 
-    fun recuerda(u: Uri) = runCatching { ctx.contentResolver.takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
+    // (Sin permiso persistente: el Kobo se elige cada vez y solo se usa mientras dura la operación)
     val elegir = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { u ->
         if (u == null || ocupado) return@rememberLauncherForActivityResult
-        recuerda(u)
         ocupado = true; mensaje = null; lista = emptyList()
         ambito.launch {
+            // El trabajo, en segundo plano; lo que cambia en la pantalla, aquí (en el hilo principal)
             mensaje = try {
-                withContext(Dispatchers.IO) {
-                    when (accion) {
-                        "preparar" -> {
-                            val p = KoboCable.prepara(ctx, u)
-                            preparado = true
-                            listOfNotNull(
-                                "Kobo preparado.",
-                                if (p.plugins) "Desconéctalo: se reiniciará para instalar NickelMenu y NickelInkSync." else null,
-                                "Luego pulsa «Enviar a Seshat» en el menú «Más» del Kobo una vez.",
-                                if (KoSync.activo(ctx)) "Posición de ${p.conPosicion} ${if (p.conPosicion == 1) "libro" else "libros"} entre el Kobo y SesKobo." else "Sin usuario de posiciones: solo libros, porcentaje y tiempo.",
-                            ).joinToString(" ")
-                        }
-                        "quitar" -> { KoboCable.quita(ctx, u); preparado = false; vinculados = 0; "Quitado del Kobo. NickelMenu se queda; NickelInkSync se desinstala al reiniciar el Kobo." }
-                        "vincular" -> { parejas = KoboCable.buscaParejas(ctx, u); arbolVincular = u; null }
-                        else -> {
-                            val r = KoboCable.lee(ctx, u)
-                            lista = r.resumen
-                            if (r.resumen.isEmpty()) "El Kobo no tiene nada nuevo (${r.libros} ${if (r.libros == 1) "libro" else "libros"} abiertos)."
-                            else "Del Kobo: ${r.resumen.size} ${if (r.resumen.size == 1) "libro" else "libros"} al día."
-                        }
+                when (accion) {
+                    "preparar" -> {
+                        val p = withContext(Dispatchers.IO) { KoboCable.prepara(ctx, u) }
+                        preparado = true
+                        listOfNotNull(
+                            "Kobo preparado.",
+                            if (p.plugins) "Desconéctalo: se reiniciará para instalar NickelMenu y NickelInkSync." else null,
+                            "Luego pulsa «Enviar a Seshat» en el menú «Más» del Kobo una vez.",
+                            if (KoSync.activo(ctx)) "Posición de ${p.conPosicion} ${if (p.conPosicion == 1) "libro" else "libros"} entre el Kobo y SesKobo." else "Sin usuario de posiciones: solo libros, porcentaje y tiempo.",
+                        ).joinToString(" ")
+                    }
+                    "quitar" -> {
+                        withContext(Dispatchers.IO) { KoboCable.quita(ctx, u) }
+                        preparado = false; vinculados = 0
+                        "Quitado del Kobo. NickelMenu se queda; NickelInkSync se desinstala al reiniciar el Kobo."
+                    }
+                    "vincular" -> {
+                        val ps = withContext(Dispatchers.IO) { KoboCable.buscaParejas(ctx, u) }
+                        arbolVincular = u; parejas = ps
+                        null
+                    }
+                    else -> {
+                        val r = withContext(Dispatchers.IO) { KoboCable.lee(ctx, u) }
+                        lista = r.resumen
+                        if (r.resumen.isEmpty()) "El Kobo no tiene nada nuevo (${r.libros} ${if (r.libros == 1) "libro" else "libros"} abiertos)."
+                        else "Del Kobo: ${r.resumen.size} ${if (r.resumen.size == 1) "libro" else "libros"} al día."
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e
             } catch (e: KoboCable.Error) { e.message } catch (e: Exception) { "No se pudo: ${e.message ?: e.javaClass.simpleName}" }
-            ocupado = false
+            finally { ocupado = false }
         }
     }
 
@@ -135,9 +142,10 @@ fun SeccionKobo() {
             if (arbol == null) return@PantVincular null
             try {
                 val n = withContext(Dispatchers.IO) { KoboCable.vincula(ctx, arbol, elegidas) }
-                vinculados = KoboCable.vinculados(ctx)
                 "$n ${if (n == 1) "libro vinculado" else "libros vinculados"}."
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e
             } catch (e: KoboCable.Error) { e.message } catch (e: Exception) { "No se pudo: ${e.message ?: e.javaClass.simpleName}" }
+            finally { vinculados = KoboCable.vinculados(ctx) }
         }
     }
 

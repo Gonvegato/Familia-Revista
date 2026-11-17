@@ -386,8 +386,12 @@ class LectorActivity : ComponentActivity() {
     // ---- SesKobo: la posición en el servidor KOSync (la del Kobo con NickelInkSync)
     @Volatile private var kosyncMirado = false
     @Volatile private var documento: String? = null
-    /** La próxima posición es la llegada a donde ibas en el Kobo: no es «un salto largo» (no se pregunta «¿vas por aquí de verdad?»). */
-    @Volatile private var llegadaDeOtro = false
+    /**
+     * Hasta cuándo la próxima posición es la llegada a donde ibas en el Kobo: no es «un salto largo» (no se pregunta «¿vas por aquí de
+     * verdad?»). Caduca sola a los pocos segundos (si el salto no llega a hacerse, no se queda puesta para el siguiente salto de verdad).
+     */
+    @Volatile private var llegadaHasta = 0L
+    private fun esperaLlegada() { llegadaHasta = System.currentTimeMillis() + 5000 }
 
     /**
      * Al abrir el libro: si en el Kobo (u otro) vas por otro sitio, más reciente que lo leído aquí, se salta allí (con «Volver»). Dos
@@ -396,6 +400,8 @@ class LectorActivity : ComponentActivity() {
      */
     private fun posicionDeOtros() {
         val u = uri ?: return
+        // Abierto en un sitio concreto (un subrayado, un marcador, «lee esta obra»): ahí se queda
+        if (!intent.getStringExtra("goto").isNullOrBlank()) { kotlin.concurrent.thread(name = "kosync") { documento = KoSync.huella(applicationContext, u) }; return }
         val leidoAqui = EstadoLectura.estado(this, id).optLong("read", 0L)
         val nodo = runCatching { com.gonzalo.familia.LaFamilia.coleccion("libros").nodo(id) }.getOrNull()
         val conKosync = KoSync.activo(this)
@@ -416,14 +422,16 @@ class LectorActivity : ComponentActivity() {
             if (p == null && marca == null) return@thread
             runOnUiThread {
                 if (!::web.isInitialized) return@runOnUiThread
+                // Si mientras se preguntaba al servidor ya has pasado página aquí, lo de aquí es lo más reciente: no se salta
+                if (EstadoLectura.estado(this, id).optLong("read", 0L) > desde) return@runOnUiThread
                 if (marca != null && (p == null || horaKc >= p.hora)) {
                     prefs.edit().putLong("kc_$h", horaKc).apply()
-                    llegadaDeOtro = true; preguntado = false
+                    esperaLlegada(); preguntado = false
                     web.evaluateJavascript("window.atrioIrKobo && atrioIrKobo(${JSONObject.quote(marca)}, 'el Kobo')", null)
                 } else if (p != null) {
                     val quien = if (p.dispositivo.contains("kobo", true) || p.dispositivo.isBlank()) "el Kobo" else p.dispositivo
                     // Ir a donde ibas en el Kobo no es «un salto largo» (no se pregunta «¿vas por aquí de verdad?»)
-                    llegadaDeOtro = true; preguntado = false
+                    esperaLlegada(); preguntado = false
                     web.evaluateJavascript("window.atrioIrXPointer && atrioIrXPointer(${JSONObject.quote(p.xp)}, ${p.fraccion}, ${JSONObject.quote(quien)})", null)
                 }
             }
@@ -432,16 +440,20 @@ class LectorActivity : ComponentActivity() {
 
     /** Al dejar de leer: la posición de esta página al servidor (si ha cambiado), para seguir en el Kobo. */
     private fun subePosicion() {
-        val h = documento ?: return
+        val u = uri ?: return
         if (!::web.isInitialized || !KoSync.activo(this)) return
         web.evaluateJavascript("JSON.stringify(window.atrioXPointer ? atrioXPointer() : null)") { r ->
             val txt = runCatching { org.json.JSONArray("[$r]").optString(0) }.getOrNull() ?: return@evaluateJavascript
             val o = runCatching { JSONObject(txt) }.getOrNull() ?: return@evaluateJavascript
             val xp = o.optString("xp"); val fr = o.optDouble("fraction", 0.0)
             // (sin moverte de donde te trajo el Kobo no hay nada que contarle: le devolverías su propia posición)
-            if (xp.isBlank() || o.optBoolean("llegada") || xp == KoSync.ultimaSubida(this, h).second) return@evaluateJavascript
+            if (xp.isBlank() || o.optBoolean("llegada")) return@evaluateJavascript
             val app = applicationContext
-            kotlin.concurrent.thread(name = "kosync") { runCatching { KoSync.sube(app, h, xp, fr) } }
+            kotlin.concurrent.thread(name = "kosync") {
+                // (la huella, si aún no estaba: saliste antes de que se calculara)
+                val h = documento ?: KoSync.huella(app, u)?.also { documento = it } ?: return@thread
+                if (xp != KoSync.ultimaSubida(app, h).second) runCatching { KoSync.sube(app, h, xp, fr) }
+            }
         }
     }
 
@@ -559,14 +571,16 @@ class LectorActivity : ComponentActivity() {
         fun saveProgress(cfi: String, fraction: Double, label: String) {
             runOnUiThread { mostrarLibro() }
             if (BuildConfig.SESKOBO && !kosyncMirado) { kosyncMirado = true; posicionDeOtros() }
+            // (la llegada a donde ibas en el Kobo se consume aquí, antes de nada: así no se queda puesta)
+            val llegada = System.currentTimeMillis() < llegadaHasta
+            if (llegada) llegadaHasta = 0L
             val o = EstadoLectura.estado(this@LectorActivity, id)
             // Al abrir el libro el lector «llega» a la posición guardada y avisa igualmente: eso no es leer
             if (o.has("cfi") && kotlin.math.abs(o.optDouble("fraction", -1.0) - fraction) < 0.0005) return
             val antes = ancla ?: o.optDouble("fraction", fraction).also { ancla = it }
             o.put("cfi", cfi).put("fraction", fraction).put("label", label).put("read", System.currentTimeMillis())
             // Un salto largo (del 98 % al 2 %, o al revés: la barra, el índice…): no cuenta como «lo más lejos» hasta que digas que vas por ahí
-            val salto = !llegadaDeOtro && Salto.hay(antes, fraction)
-            llegadaDeOtro = false
+            val salto = !llegada && Salto.hay(antes, fraction)
             // (mientras estás en un salto sin confirmar, lo leído de la ficha no se mueve)
             if (salto) o.put("enSalto", true) else o.remove("enSalto")
             EstadoLectura.poner(this@LectorActivity, id, o)

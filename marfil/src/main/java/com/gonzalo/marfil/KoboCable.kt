@@ -37,9 +37,10 @@ object KoboCable {
         val dir = File(ctx.cacheDir, "kobo").apply { deleteRecursively(); mkdirs() }
         val copia = File(dir, "KoboReader.sqlite")
         fun copiar(de: DocumentFile, a: File) { ctx.contentResolver.openInputStream(de.uri)!!.use { i -> a.outputStream().use { i.copyTo(it) } } }
-        copiar(bd, copia)
-        for (ext in listOf("-wal", "-shm")) hijo(dk, "KoboReader.sqlite$ext")?.let { runCatching { copiar(it, File(dir, "KoboReader.sqlite$ext")) } }
         try {
+            // (dentro del try: si se suelta el cable a mitad, la copia a medias no se queda en el móvil)
+            copiar(bd, copia)
+            for (ext in listOf("-wal", "-shm")) hijo(dk, "KoboReader.sqlite$ext")?.let { runCatching { copiar(it, File(dir, "KoboReader.sqlite$ext")) } }
             return leeBase(copia)
         } finally {
             dir.deleteRecursively()
@@ -130,6 +131,22 @@ object KoboCable {
         } ?: throw Error("No se pudo escribir $nombre en el Kobo.")
         ctx.contentResolver.openOutputStream(f.uri, "wt")!!.use { it.write(datos) }
     }
+
+    /**
+     * Copia [de] al Kobo como [nombre] sin cargarlo entero en memoria (un EPUB con ilustraciones puede pesar cientos de MB): primero a
+     * «[nombre].parte» y, al acabar, se renombra. Así un archivo a medias (el cable se suelta) nunca pasa por bueno.
+     */
+    private fun copiaAlKobo(ctx: Context, dir: DocumentFile, nombre: String, de: Uri) {
+        val temporal = "$nombre.parte"
+        hijo(dir, temporal)?.delete()
+        val f = dir.createFile("application/octet-stream", temporal)?.also { if (it.name != temporal) it.renameTo(temporal) }
+            ?: throw Error("No se pudo escribir $nombre en el Kobo.")
+        ctx.contentResolver.openInputStream(de)!!.use { i -> ctx.contentResolver.openOutputStream(f.uri, "wt")!!.use { o -> i.copyTo(o, 256 * 1024) } }
+        hijo(dir, nombre)?.delete()
+        if (!f.renameTo(nombre)) throw Error("No se pudo terminar de copiar $nombre al Kobo.")
+    }
+
+    private fun tamano(ctx: Context, u: Uri): Long = runCatching { ctx.contentResolver.openFileDescriptor(u, "r")?.use { it.statSize } }.getOrNull() ?: -1L
 
     private fun asset(ctx: Context, nombre: String) = ctx.assets.open("kobo/$nombre").use { it.readBytes() }
 
@@ -311,7 +328,9 @@ object KoboCable {
             val u = Uri.parse(l.uri)
             val h = KoSync.huella(ctx, u) ?: throw Error("No se puede leer el EPUB de «${l.titulo}».")
             val nombre = "$h.orig"
-            if (hijo(orig, nombre) == null) escribe(ctx, orig, nombre, ctx.contentResolver.openInputStream(u)!!.use { it.readBytes() })
+            // (si ya está y entero, no se vuelve a copiar)
+            val ya = hijo(orig, nombre)
+            if (ya == null || ya.length() != tamano(ctx, u)) copiaAlKobo(ctx, orig, nombre, u)
             lista[p.kepub] = org.json.JSONObject().put("kepub", p.kepub).put("original", nombre).put("titulo", l.titulo)
             n++
         }
@@ -325,7 +344,9 @@ object KoboCable {
     /** Quita del Kobo lo de Seshat (el programa, la cuenta, sus entradas del menú y NickelInkSync). NickelMenu se queda. */
     fun quita(ctx: Context, arbol: Uri) {
         val r = raiz(ctx, arbol)
-        kobo(r)
+        val dk = kobo(r)
+        // Si aún no se ha desenchufado desde que se preparó, el instalador sigue ahí: fuera (si no, instalaría los plugins igual)
+        hijo(dk, "Kobo.tgz")?.delete()
         hijo(r, ".adds")?.let { a ->
             hijo(a, "seshat")?.delete() // (con los originales de los vinculados)
             hijo(a, "nm")?.let { hijo(it, "seshat")?.delete() }

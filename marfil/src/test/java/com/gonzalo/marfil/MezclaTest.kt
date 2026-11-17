@@ -73,7 +73,9 @@ class MezclaTest {
         assertEquals("El nombre de la rosa" to "Umberto Eco", tituloYAutorDeArchivo("El nombre de la rosa - Umberto Eco.epub"))
         assertEquals("Dune" to "", tituloYAutorDeArchivo("Dune.epub")); assertEquals("Mi libro viejo" to "", tituloYAutorDeArchivo("Mi_libro_viejo.pdf"))
         // El EPUB de Kobo (kepub): sin el «.kepub» en el autor ni en el título
-        assertEquals("Amanecer rojo" to "Pierce Brown", tituloYAutorDeArchivo("Amanecer rojo - Pierce Brown.kepub.epub"))
-        assertEquals("Dune" to "", tituloYAutorDeArchivo("Dune.KEPUB.EPUB"))
+        if (BuildConfig.SESKOBO) {
+            assertEquals("Amanecer rojo" to "Pierce Brown", tituloYAutorDeArchivo("Amanecer rojo - Pierce Brown.kepub.epub"))
+            assertEquals("Dune" to "", tituloYAutorDeArchivo("Dune.KEPUB.EPUB"))
+        } else assertEquals("Dune.kepub" to "", tituloYAutorDeArchivo("Dune.kepub.epub")) // (Seshat, como siempre)
     }
 }

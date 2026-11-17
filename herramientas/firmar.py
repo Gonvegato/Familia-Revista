@@ -40,6 +40,12 @@ def main(app):
     alineado = os.path.join(dir_, f"{app}-alineado.apk")
     subprocess.run([f"{BT}/zipalign", "-f", "-p", "4", sin, alineado], check=True)
     salida = os.path.join(dir_, f"{NOMBRE[app]}-{version(app)}.apk")
+    # SesKobo (marfil con -Pseskobo) sale por el mismo sitio: con su nombre, para que no se tome por Seshat (si se subiera a
+    # «versiones», la Seshat normal lo rechazaría por ser otro paquete y se quedaría sin actualizar)
+    if app == "marfil":
+        badging = subprocess.run([f"{BT}/aapt2", "dump", "badging", sin], capture_output=True, text=True).stdout
+        if "name='com.gonzalo.marfil.seskobo'" in badging:
+            salida = os.path.join(dir_, f"SesKobo-{version(app)}-kobo.apk")
     f = lambda n: os.path.join(RAIZ, "firma", n)
     # Las contraseñas van por el entorno (env:), nunca en la línea de órdenes (se verían en la lista de procesos)
     entorno = dict(os.environ, PASE_FAMILIA=p["familia"])

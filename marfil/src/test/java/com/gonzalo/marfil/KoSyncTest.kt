@@ -83,6 +83,8 @@ class KoSyncTest {
             }
         }
         val url = "http://127.0.0.1:${srv!!.puerto}"
+        // Un servidor sin cifrar (o sin http) no vale: Android no lo dejaría y parecería que no hay conexión
+        for (malo in listOf("http://kosync.eu", "kosync.eu", "ftp://x")) assertTrue(malo, runCatching { KoSync.entra(ctx, malo, "ana", "secreto") }.exceptionOrNull()?.message?.contains("https://") == true)
         // La primera vez el usuario no existe: se crea (con el MD5 de la contraseña, nunca la contraseña)
         assertTrue(KoSync.entra(ctx, url, "ana", "secreto"))
         assertEquals(KoSync.md5("secreto"), usuarios["ana"])

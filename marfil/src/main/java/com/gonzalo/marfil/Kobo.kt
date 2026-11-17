@@ -62,7 +62,7 @@ object Kobo {
 
     private fun horaDe(n: Nodo?, campo: String): Long = n?.m?.get(campo) ?: 0L
 
-    private fun Any?.num(): Double = when (this) { is Number -> toDouble(); is String -> toDoubleOrNull() ?: 0.0; else -> 0.0 }
+    private fun Any?.num(): Double = when (this) { is Number -> toDouble(); else -> 0.0 } // (como Go: un texto no es un número)
 
     /**
      * Qué subir (pura: no habla con nadie). [libros] y [tiempos]: lo que hay en la cuenta (`libros/<kid>` y `tiempo/<kid>~<disp>`).
@@ -144,6 +144,7 @@ object Kobo {
         val t = s?.trim()?.replace(' ', 'T').orEmpty()
         if (t.isEmpty()) return 0L
         return runCatching { OffsetDateTime.parse(t, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toInstant().toEpochMilli() }
+            .recoverCatching { OffsetDateTime.parse(t, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss[.SSS]xx")).toInstant().toEpochMilli() } // («+0000», como Go)
             .recoverCatching { LocalDateTime.parse(t, DateTimeFormatter.ISO_LOCAL_DATE_TIME).toInstant(ZoneOffset.UTC).toEpochMilli() }
             .recoverCatching { LocalDate.parse(t).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() }
             .getOrDefault(0L)
