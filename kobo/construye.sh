@@ -14,6 +14,8 @@ cp paquete/seshat.sh paquete/nm-seshat paquete/LICENSE-NickelMenu paquete/LICENS
 # Un solo instalador con los dos plugins (el Kobo lo descomprime en /usr/local/Kobo: imageformats/libnm.so y libnickelinksync.so)
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 tar xzf paquete/NickelMenu-Kobo.tgz -C "$T"; tar xzf paquete/NickelInkSync-Kobo.tgz -C "$T"
+# Los avisos de NickelInkSync en la pantalla del Kobo, en español (vienen en alemán)
+python3 paquete/traduce_nis.py "$T/imageformats/libnickelinksync.so"
 tar czf "$DEST/Kobo.tgz" --owner=root --group=root --mode="u=rwX,go=rX" -C "$T" imageformats/libnm.so imageformats/libnickelinksync.so
 rm -f "$DEST/NickelMenu-Kobo.tgz"
 grep -o 'const version = "[^"]*"' main.go | cut -d'"' -f2 > "$DEST/version"

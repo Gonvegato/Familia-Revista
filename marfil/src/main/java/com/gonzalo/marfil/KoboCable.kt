@@ -186,8 +186,8 @@ object KoboCable {
         |key = $clave
         |# Gana la posición más reciente (el plugin aún no sabe preguntar)
         |confirm = never
-        |# Solo avisos si algo va mal (los mensajes del plugin salen en alemán)
-        |notify = errors
+        |# Avisos en la pantalla al abrir y dejar un libro (SesKobo los ha traducido al español)
+        |notify = all
         |position = paragraph
         |""".trimMargin()
 

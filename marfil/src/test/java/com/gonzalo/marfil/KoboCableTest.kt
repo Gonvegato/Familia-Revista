@@ -111,11 +111,16 @@ class KoboCableTest {
         // El instalador lleva los dos plugins
         val tgz = ctx.assets.open("kobo/Kobo.tgz").use { java.util.zip.GZIPInputStream(it).readBytes() }.decodeToString(throwOnInvalidSequence = false)
         assertTrue(tgz.contains("imageformats/libnm.so")); assertTrue(tgz.contains("imageformats/libnickelinksync.so"))
+        // Los avisos de NickelInkSync, en español (kobo/paquete/traduce_nis.py)
+        val bytes = ctx.assets.open("kobo/Kobo.tgz").use { java.util.zip.GZIPInputStream(it).readBytes() }
+        val utf16 = { t: String -> t.toByteArray(Charsets.UTF_16LE) }
+        fun tiene(t: String) = bytes.toList().windowed(utf16(t).size).any { it.toByteArray().contentEquals(utf16(t)) }
+        assertTrue(tiene("Sigues donde ibas")); assertTrue(!tiene("Fortschritt übernommen"))
     }
 
     @Test fun archivosDeNickelInkSync() {
         val ini = KoboCable.configNis("https://kosync.eu", "ana", "5ebe2294ecd0e0f08eab7690d2a6ee69")
-        for (l in listOf("server = https://kosync.eu", "user = ana", "key = 5ebe2294ecd0e0f08eab7690d2a6ee69", "confirm = never", "notify = errors")) assertTrue(l, ini.lines().contains(l))
+        for (l in listOf("server = https://kosync.eu", "user = ana", "key = 5ebe2294ecd0e0f08eab7690d2a6ee69", "confirm = never", "notify = all")) assertTrue(l, ini.lines().contains(l))
         assertTrue("sin la contraseña", !ini.contains("password"))
         val ix = org.json.JSONObject(KoboCable.indiceNis(listOf(KoboCable.LibroNis("bb", "Dos", ""), KoboCable.LibroNis("aa", "Uno", "Ana"), KoboCable.LibroNis("aa", "Uno", "Ana"))))
         assertEquals(1, ix.getInt("format"))
