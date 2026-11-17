@@ -1185,7 +1185,44 @@ function textOf(r) {
     }
     return parts.join(' ').replace(/\s+/g, ' ').trim()
 }
+/**
+ * Los signos pegados a la primera y a la última palabra van con el subrayado: «¿Me hago… arbustos?» y no «Me hago… arbustos».
+ * A cada lado se añade lo que no es letra, cifra ni espacio (¿ ¡ « “ — ( delante; ? ! . , ; : … » ” ) detrás), aunque esté en otro
+ * trozo de texto (una cursiva), sin pasar de un espacio ni salir del párrafo.
+ */
+const SIGNO = /[^\p{L}\p{N}\p{M}\s]/u
+function conPuntuacion(r) {
+    const doc = r.startContainer.ownerDocument
+    const bloque = n => (n.nodeType === 3 ? n.parentElement : n)?.closest?.('p,li,dd,dt,blockquote,h1,h2,h3,h4,h5,h6,td,th,figcaption,div')
+    const textos = raiz => { const w = doc.createTreeWalker(raiz, NodeFilter.SHOW_TEXT); const l = []; let n; while ((n = w.nextNode())) l.push(n); return l }
+    // Detrás: desde el final, mientras haya signos
+    if (r.endContainer.nodeType === 3) {
+        const b = bloque(r.endContainer); const l = textos(b || doc.body)
+        let i = l.indexOf(r.endContainer), off = r.endOffset, fin = null
+        while (i >= 0 && i < l.length) {
+            const t = l[i].textContent
+            while (off < t.length && SIGNO.test(t[off])) { off++; fin = [l[i], off] }
+            if (off < t.length) break
+            i++; off = 0
+        }
+        if (fin) r.setEnd(fin[0], fin[1])
+    }
+    // Delante: desde el principio hacia atrás
+    if (r.startContainer.nodeType === 3) {
+        const b = bloque(r.startContainer); const l = textos(b || doc.body)
+        let i = l.indexOf(r.startContainer), off = r.startOffset, ini = null
+        while (i >= 0) {
+            const t = l[i].textContent
+            while (off > 0 && SIGNO.test(t[off - 1])) { off--; ini = [l[i], off] }
+            if (off > 0) break
+            i--; if (i >= 0) off = l[i].textContent.length
+        }
+        if (ini) r.setStart(ini[0], ini[1])
+    }
+    return r
+}
 function addNote(doc, index, r) {
+    conPuntuacion(r)
     const text = textOf(r)
     if (!text) return null
     const value = view.getCFI(index, r)
