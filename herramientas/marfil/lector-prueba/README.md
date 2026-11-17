@@ -17,3 +17,5 @@ Abren el lector de `app/src/main/assets/lector` (con un `window.Atrio` de mentir
 Uso: `python3 crear_epub.py` genera `/tmp/lt/t.epub` (tres capítulos con índice), copia `t.html` a `/tmp/lt/` y `node botones.js` / `node toques.js` (hace falta `playwright`).
 
 - `reabrir.js` (Seshat 0.22.6): al principio de un capítulo (con títulos, secciones, márgenes y saltos de página, en tres tamaños de móvil y dos de letra), se guarda la posición como la app y se vuelve a abrir con ella: tiene que salir la misma página.
+- `xpointer.js` (SesKobo): la posición de KOReader (KOSync, NickelInkSync en el Kobo) en el lector: con libros y subrayados hechos en
+  KOReader de verdad (`herramientas/casos/kosync`), cada posición cae en su palabra, va y vuelve igual, y la última posición abre su página.

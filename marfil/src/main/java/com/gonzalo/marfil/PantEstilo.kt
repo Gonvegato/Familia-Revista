@@ -76,6 +76,13 @@ fun PantEstilo(alVolver: () -> Unit) {
                 val retos = remember { (listOf(0, 6, 12, 20, 24, 30, 40, 52) + Ajustes.metaAnual(ctx)).distinct().sorted() }
                 MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Libros al año") { i -> reto = retos[i]; Ajustes.ponMetaAnual(ctx, reto) }
                 Text("Tu reto del año sale en la portada y en el widget de la semana. Los dos objetivos viajan con tu cuenta a tus otros Seshat y a Jonsu, que los enseña tal cual.", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+                if (BuildConfig.SESKOBO) {
+                    Spacer(Modifier.height(14.dp))
+                    Filete(2.dp)
+                    Spacer(Modifier.height(12.dp))
+                    Antetitulo("Kobo", Modifier.padding(bottom = 4.dp))
+                    SeccionKobo()
+                }
                 Spacer(Modifier.height(14.dp))
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
@@ -109,7 +116,7 @@ fun PantEstilo(alVolver: () -> Unit) {
         Spacer(Modifier.height(26.dp))
         Filete(2.dp)
         Spacer(Modifier.height(10.dp))
-        Etiqueta("Seshat $VERSION")
+        Etiqueta(if (BuildConfig.SESKOBO) "SesKobo $VERSION" else "Seshat $VERSION")
         Text("Seshat es hermana de Jonsu, Bastet y Thot. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
         }

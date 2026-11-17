@@ -172,10 +172,10 @@ func planea(libros []LibroKobo, remotos map[string]Remoto, ahora time.Time, zona
 				hora = h
 			}
 			t, a := l.Titulo, l.Autor
-		if r.Libro != nil && texto(r.Libro["t"]) != "" {
-			t, a = texto(r.Libro["t"]), texto(r.Libro["a"]) // (como se llama en Seshat)
-		}
-		tc := map[string]any{"ref": k, "fuente": disp, "total": total, "t": t, "a": a}
+			if r.Libro != nil && texto(r.Libro["t"]) != "" {
+				t, a = texto(r.Libro["t"]), texto(r.Libro["a"]) // (como se llama en Seshat)
+			}
+			tc := map[string]any{"ref": k, "fuente": disp, "total": total, "t": t, "a": a}
 			if r.Tiempo != nil {
 				dia := ahora
 				if !l.UltimaLectura.IsZero() {

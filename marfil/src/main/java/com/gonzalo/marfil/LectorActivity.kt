@@ -380,6 +380,43 @@ class LectorActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         if (::web.isInitialized && tts?.isSpeaking != true) web.evaluateJavascript("window.atrioPausa && atrioPausa(true)", null)
+        if (BuildConfig.SESKOBO) subePosicion()
+    }
+
+    // ---- SesKobo: la posición en el servidor KOSync (la del Kobo con NickelInkSync)
+    @Volatile private var kosyncMirado = false
+    @Volatile private var documento: String? = null
+
+    /** Al abrir el libro: si en el Kobo (u otro) vas por otro sitio, más reciente que lo leído aquí, se salta allí (con «Volver»). */
+    private fun posicionDeOtros() {
+        val u = uri ?: return
+        if (!KoSync.activo(this)) return
+        val leidoAqui = EstadoLectura.estado(this, id).optLong("read", 0L)
+        kotlin.concurrent.thread(name = "kosync") {
+            val h = KoSync.huella(applicationContext, u) ?: return@thread
+            documento = h
+            val p = runCatching { KoSync.baja(applicationContext, h) }.getOrNull() ?: return@thread
+            val (subido, miXp) = KoSync.ultimaSubida(applicationContext, h)
+            if (p.idDispositivo == KoSync.idDispositivo(applicationContext) || p.hora <= maxOf(subido, leidoAqui) || p.xp == miXp) return@thread
+            val quien = if (p.dispositivo.contains("kobo", true) || p.dispositivo.isBlank()) "el Kobo" else p.dispositivo
+            runOnUiThread {
+                if (::web.isInitialized) web.evaluateJavascript("window.atrioIrXPointer && atrioIrXPointer(${JSONObject.quote(p.xp)}, ${p.fraccion}, ${JSONObject.quote(quien)})", null)
+            }
+        }
+    }
+
+    /** Al dejar de leer: la posición de esta página al servidor (si ha cambiado), para seguir en el Kobo. */
+    private fun subePosicion() {
+        val h = documento ?: return
+        if (!::web.isInitialized || !KoSync.activo(this)) return
+        web.evaluateJavascript("JSON.stringify(window.atrioXPointer ? atrioXPointer() : null)") { r ->
+            val txt = runCatching { org.json.JSONArray("[$r]").optString(0) }.getOrNull() ?: return@evaluateJavascript
+            val o = runCatching { JSONObject(txt) }.getOrNull() ?: return@evaluateJavascript
+            val xp = o.optString("xp"); val fr = o.optDouble("fraction", 0.0)
+            if (xp.isBlank() || xp == KoSync.ultimaSubida(this, h).second) return@evaluateJavascript
+            val app = applicationContext
+            kotlin.concurrent.thread(name = "kosync") { runCatching { KoSync.sube(app, h, xp, fr) } }
+        }
     }
 
     override fun onResume() {
@@ -495,6 +532,7 @@ class LectorActivity : ComponentActivity() {
         @JavascriptInterface
         fun saveProgress(cfi: String, fraction: Double, label: String) {
             runOnUiThread { mostrarLibro() }
+            if (BuildConfig.SESKOBO && !kosyncMirado) { kosyncMirado = true; posicionDeOtros() }
             val o = EstadoLectura.estado(this@LectorActivity, id)
             // Al abrir el libro el lector «llega» a la posición guardada y avisa igualmente: eso no es leer
             if (o.has("cfi") && kotlin.math.abs(o.optDouble("fraction", -1.0) - fraction) < 0.0005) return

@@ -8,17 +8,23 @@ plugins {
 }
 val firmaProps = Properties().apply { rootProject.file("firma/claves.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) } }
 fun clave(n: String): String = firmaProps.getProperty("$n.pass").orEmpty()
+// SesKobo (-Pseskobo): una Seshat aparte, que convive con la normal, con lo del Kobo (leerlo por cable, prepararlo para Wi-Fi, la
+// posición por KOSync). No se actualiza sola desde el kDrive. La normal no cambia ni pesa más (lo del Kobo va solo en esta).
+val sesKobo = providers.gradleProperty("seskobo").isPresent
 
 android {
     namespace = "com.gonzalo.marfil"
     compileSdk = 35
     defaultConfig {
         // Convive con Atrio (com.gonzalo.gamerate) y Pórtico: otro paquete, otra app, misma familia visual.
-        applicationId = "com.gonzalo.marfil"
+        applicationId = if (sesKobo) "com.gonzalo.marfil.seskobo" else "com.gonzalo.marfil"
+        manifestPlaceholders["etiqueta"] = if (sesKobo) "SesKobo" else "Seshat"
+        buildConfigField("boolean", "SESKOBO", sesKobo.toString())
         minSdk = 29
         targetSdk = 35
         versionCode = 73
         versionName = "0.22.6"
+        if (sesKobo) versionNameSuffix = "-kobo"
         // Solo los procesadores que se usan (el traductor del diccionario pesa ~16 MB por cada uno): móviles y tablets (arm64) y Waydroid en el PC (x86_64)
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
@@ -36,7 +42,8 @@ android {
             signingConfig = null
         }
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
+    if (sesKobo) sourceSets["main"].assets.srcDir("src/kobo/assets")
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     testOptions {
         unitTests {

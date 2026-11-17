@@ -1,7 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
 	"database/sql"
+	"encoding/hex"
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -77,5 +81,67 @@ func TestLeeKoboSinColumnaDeTiempo(t *testing.T) {
 	}
 	if len(libros) != 3 || libros[0].Segundos != 0 {
 		t.Fatalf("%+v", libros)
+	}
+}
+
+// La huella de KOReader: la misma que calcula NickelInkSync (y KOReader) para un archivo de tamaño conocido.
+func TestHuellaKOReader(t *testing.T) {
+	dir := t.TempDir()
+	ruta := filepath.Join(dir, "libro.epub")
+	b := make([]byte, 70000)
+	for i := range b {
+		b[i] = byte(i * 7 % 251)
+	}
+	if err := os.WriteFile(ruta, b, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	h, err := huellaKOReader(ruta)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Los trozos: 0, 1024, 4096, 16384, 65536 (el de 262144 ya no está)
+	m := md5.New()
+	for _, o := range []int{0, 1024, 4096, 16384, 65536} {
+		fin := o + 1024
+		if fin > len(b) {
+			fin = len(b)
+		}
+		m.Write(b[o:fin])
+	}
+	if quiero := hex.EncodeToString(m.Sum(nil)); h != quiero {
+		t.Errorf("%s, quiero %s", h, quiero)
+	}
+}
+
+func TestIndiceNIS(t *testing.T) {
+	raiz := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(raiz, ".adds", "NickelInkSync"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	os.MkdirAll(filepath.Join(raiz, "libros"), 0o755)
+	os.WriteFile(filepath.Join(raiz, "libros", "rojo.epub"), []byte("epub de prueba rojo"), 0o644)
+	os.WriteFile(filepath.Join(raiz, "libros", "otro.kepub.epub"), []byte("kepub"), 0o644)
+	bd := filepath.Join(t.TempDir(), "KoboReader.sqlite")
+	db, _ := sql.Open("sqlite", "file:"+bd)
+	db.Exec("CREATE TABLE content (ContentID TEXT, ContentType TEXT, Title TEXT, Attribution TEXT)")
+	db.Exec("INSERT INTO content VALUES ('file:///mnt/onboard/libros/rojo.epub','6','Amanecer rojo','Pierce Brown')")
+	db.Exec("INSERT INTO content VALUES ('file:///mnt/onboard/libros/otro.kepub.epub','6','Otro','X')")
+	db.Exec("INSERT INTO content VALUES ('file:///mnt/onboard/libros/falta.epub','6','Falta','X')")
+	db.Close()
+	cache := filepath.Join(t.TempDir(), "huellas.json")
+	c, n, err := actualizaIndiceNIS(bd, raiz, cache)
+	if err != nil || !c || n != 1 {
+		t.Fatalf("%v %v %v", c, n, err)
+	}
+	b, _ := os.ReadFile(filepath.Join(raiz, ".adds", "NickelInkSync", "library.json"))
+	var ix indice
+	json.Unmarshal(b, &ix)
+	h, _ := huellaKOReader(filepath.Join(raiz, "libros", "rojo.epub"))
+	if ix.Format != 1 || len(ix.Books) != 1 || ix.Books[0].Hash != h || ix.Books[0].Title != "Amanecer rojo" {
+		t.Errorf("%s", b)
+	}
+	// Sin cambios, no se reescribe
+	if c, _, _ := actualizaIndiceNIS(bd, raiz, cache); c {
+		t.Errorf("no debería reescribirlo")
 	}
 }

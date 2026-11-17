@@ -151,7 +151,7 @@ object Actualizador {
      * de verse ninguna, se instala lo que esté listo; y con la app cerrada, cada pocas horas (ActualizadorWorker).
      */
     fun init(ctx: Context) {
-        if (iniciado) return
+        if (iniciado || BuildConfig.SESKOBO) return
         iniciado = true
         val app = ctx.applicationContext
         runCatching { programa(app) }
@@ -201,6 +201,7 @@ object Actualizador {
 
     /** Se llama nada más abrir la app y luego cada minuto mientras está abierta (siempre en segundo plano). */
     fun comprueba(ctx: Context, manual: Boolean = false, forzar: Boolean = false) {
+        if (BuildConfig.SESKOBO) { if (manual) anota(ctx, "SesKobo no se actualiza sola: las versiones nuevas llegan aparte"); return }
         if (!activo(ctx) && !forzar) { if (manual) anota(ctx, "apagada (interruptor de arriba)"); return }
         if (!KDrive.on(ctx)) { anota(ctx, "kDrive sin conectar (Ajustes → Avanzado)"); return }
         if (!hayInternet(ctx)) { anota(ctx, "sin internet"); return }

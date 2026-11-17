@@ -1883,6 +1883,110 @@ $('#v-vel').onclick = () => {
     saveSettings(); drawVoz()
 }
 
+// ---------------------------------------------------------------- Posición de KOReader (SesKobo: el Kobo con NickelInkSync)
+// La posición como la cuenta KOReader (y KOSync, y NickelInkSync en el Kobo): «/body[1]/DocFragment[n]/body[1]/p[3]/text()[1].12».
+// n es el capítulo (orden del spine, desde 1); los elementos se cuentan por nombre entre sus hermanos y los textos entre los textos
+// (los comentarios no cuentan pero los cortan); el número final son caracteres (no unidades UTF-16) con los espacios seguidos
+// contados como uno. Lo que añade el lector a la página (los botones de capítulo, los subrayados) no cuenta.
+const XP_ESPACIO = c => c === ' ' || c === '\t' || c === '\n' || c === '\r'
+const xpInyectado = n => n.nodeType === 1 && (n.classList?.contains('atrio-cap') || /^atrio-/.test(n.id || ''))
+const xpEsTexto = n => (n.nodeType === 3 || n.nodeType === 4)
+function xpLargo(s) { let n = 0, esp = false; for (const c of s) { const e = XP_ESPACIO(c); if (!(e && esp)) n++; esp = e } return n }
+/** De un desplazamiento como lo cuenta KOReader (caracteres, espacios juntos) al de JavaScript (unidades UTF-16). */
+function xpADom(s, col) {
+    let n = 0, esp = false, u = 0
+    for (const c of s) { const e = XP_ESPACIO(c); const sig = e && esp ? n : n + 1; if (sig > col) break; n = sig; esp = e; u += c.length }
+    return u
+}
+/** El primer texto que se ve dentro de [n] (o desde [n] hacia delante), saltando lo que añade el lector. */
+function xpPrimerTexto(n, visible = true) {
+    const doc = n.ownerDocument || n
+    const w = doc.createTreeWalker(doc.body || doc.documentElement, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_CDATA_SECTION,
+        { acceptNode: x => xpInyectado(x) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT })
+    w.currentNode = n
+    let x = n
+    while (x) {
+        if (xpEsTexto(x) && (!visible || x.data.trim())) return x
+        x = w.nextNode()
+    }
+    return null
+}
+/** La posición de KOReader de un punto (nodo, desplazamiento) del capítulo [index]. */
+function xpDe(index, nodo, off) {
+    if (!nodo) return null
+    if (!xpEsTexto(nodo)) {
+        const hijo = nodo.childNodes?.[off]
+        const t = xpPrimerTexto(hijo || nodo)
+        if (!t) return null
+        nodo = t; off = 0
+    }
+    for (let p = nodo.parentNode; p; p = p.parentNode) if (xpInyectado(p)) { const t = xpPrimerTexto(p.nextSibling || p); if (!t) return null; nodo = t; off = 0; break }
+    const pasos = []
+    let el = nodo.parentNode
+    while (el && el.nodeType === 1) {
+        let n = 0
+        for (const h of el.parentNode?.children ?? [el]) { if (xpInyectado(h)) continue; if (h.localName === el.localName) n++; if (h === el) break }
+        pasos.unshift(`/${el.localName}[${n}]`)
+        if (el.localName === 'body') break
+        el = el.parentNode
+    }
+    if (!pasos.length || !pasos[0].startsWith('/body[')) return null
+    let t = 0
+    for (const h of nodo.parentNode.childNodes) { if (xpEsTexto(h)) t++; if (h === nodo) break }
+    return `/body[1]/DocFragment[${index + 1}]${pasos.join('')}/text()[${t}].${xpLargo(nodo.data.slice(0, off))}`
+}
+/** El sitio (Range) de una posición de KOReader en el documento [doc] de su capítulo; null si no está. */
+function xpRango(doc, xp) {
+    const m = /^\/body(?:\[1\])?\/DocFragment\[(\d+)\](.*)$/.exec(xp || '')
+    if (!m) return null
+    let pasos = m[2], col = 0
+    const pt = /\.(\d+)$/.exec(pasos)
+    if (pt) { col = +pt[1]; pasos = pasos.slice(0, -pt[0].length) }
+    let el = doc.documentElement, nodo = null
+    for (const paso of pasos.split('/').filter(Boolean)) {
+        const q = /^([^\[]+)(?:\[(\d+)\])?$/.exec(paso)
+        if (!q) return null
+        const nombre = q[1], i = +(q[2] || 1)
+        if (nombre === 'text()') {
+            nodo = [...el.childNodes].filter(xpEsTexto)[i - 1]
+            if (!nodo) return null
+            break
+        }
+        const sig = [...el.children].filter(h => !xpInyectado(h) && h.localName === nombre)[i - 1]
+        if (!sig) return null
+        el = sig
+    }
+    if (!nodo) { nodo = xpPrimerTexto(el); col = 0; if (!nodo) return null }
+    const r = doc.createRange()
+    r.setStart(nodo, Math.min(xpADom(nodo.data, col), nodo.data.length)); r.collapse(true)
+    return r
+}
+/** La posición de KOReader de lo que tienes delante (el principio de la página), con su porcentaje. */
+window.atrioXPointer = () => {
+    try {
+        if (!last?.range || isPDF || reflow) return null
+        const index = idxAhora()
+        const xp = xpDe(index, last.range.startContainer, last.range.startOffset)
+        return xp ? { xp, fraction: last.fraction || 0 } : null
+    } catch (e) { console.warn('Lector: posición de KOReader', e); return null }
+}
+/** Ir a una posición de KOReader (la del Kobo): con «Volver a donde estabas» por si acaso. Devuelve si ha ido. */
+window.atrioIrXPointer = async (xp, fraction, quien) => {
+    try {
+        const m = /DocFragment\[(\d+)\]/.exec(xp || ''), index = m ? +m[1] - 1 : -1
+        const sec = view?.book?.sections?.[index]
+        let destino = null
+        if (sec) { const doc = await sec.createDocument(); const r = xpRango(doc, xp); if (r) destino = view.getCFI(index, r) }
+        if (!destino && fraction > 0) destino = { fraction }
+        if (!destino) return false
+        saltoDesde()
+        if (typeof destino === 'string') await view.goTo(destino); else await view.goToFraction(fraction)
+        aviso(quien ? `Sigues donde lo dejaste en ${quien}` : 'Sigues donde lo dejaste en el Kobo')
+        return true
+    } catch (e) { console.warn('Lector: ir a la posición de KOReader', e); return false }
+}
+window.__xp = { xpDe, xpRango, xpLargo, xpADom }
+
 // ---------------------------------------------------------------- Botones
 $('#b-cerrar').onclick = () => { window.atrioPausa(true); A.close() }
 $('#b-indice').onclick = openToc

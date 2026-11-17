@@ -1,0 +1,69 @@
+// Prueba (SesKobo): la posición de KOReader (la que usan KOSync y NickelInkSync en el Kobo) en el lector de Seshat. Con libros y
+// subrayados hechos en KOReader de verdad (herramientas/casos/kosync, de NickelInkSync): cada posición tiene que caer justo en su
+// palabra, ida y vuelta tiene que dar la misma posición, e ir a la última posición de KOReader tiene que abrir esa página.
+// Uso: NODE_PATH=<carpeta de playwright> node xpointer.js
+const { chromium } = require('playwright')
+const http = require('http'), fs = require('fs'), path = require('path')
+const root = path.resolve(__dirname, '../../../marfil/src/main/assets'), casos = path.resolve(__dirname, '../../casos/kosync'), port = 8796
+let epub
+const tipos = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.ttf': 'font/ttf' }
+const srv = http.createServer((q, r) => { const p = decodeURIComponent(q.url.split('?')[0]); if (p.startsWith('/libro/')) { r.writeHead(200); r.end(epub); return }
+  fs.readFile(path.join(root, p), (e, d) => { if (e) { r.writeHead(404); r.end(); return } r.writeHead(200, { 'Content-Type': tipos[path.extname(p)] || 'application/octet-stream' }); r.end(d) }) }).listen(port)
+function lua(nombre) {
+  const t = fs.readFileSync(path.join(casos, nombre + '.metadata.epub.lua'), 'utf8')
+  const subs = [], re = /\["pos0"\] = "([^"]+)",\s*\["pos1"\] = "([^"]+)",\s*\["text"\] = "([^"]*)"/g
+  let m; while ((m = re.exec(t))) subs.push({ pos0: m[1], pos1: m[2], text: m[3] })
+  const ultima = /\["last_xpointer"\] = "([^"]+)"/.exec(t)?.[1]
+  return { subs, ultima }
+}
+;(async () => {
+  const b = await chromium.launch()
+  let fallos = 0, bien = 0
+  const ok = (c, msg) => { if (c) bien++; else { fallos++; console.log('FALLA ' + msg) } }
+  for (const nombre of ['book-p', 'book-q', 'book-a']) {
+    epub = fs.readFileSync(path.join(casos, nombre + '.epub'))
+    const { subs, ultima } = lua(nombre)
+    const pg = await (await b.newContext({ viewport: { width: 393, height: 851 }, hasTouch: true, isMobile: true })).newPage()
+    await pg.addInitScript(() => {
+      const st = { title: 'T', file: 't.epub', location: null, fraction: 0, goto: null, settings: { theme: 'papel' }, annotations: [], bookmarks: [], stats: null, device: 'a' }
+      window.Atrio = new Proxy({ state: () => JSON.stringify(st), brilloActual: () => 0.5 }, { get: (t, k) => k in t ? t[k] : (() => undefined) })
+    })
+    await pg.goto('http://localhost:' + port + '/lector/index.html')
+    await pg.waitForFunction(() => window.__view && window.__docs && window.__docs.length, null, { timeout: 30000 })
+    await pg.waitForTimeout(800)
+    // 1. Cada subrayado de KOReader: de pos0 a pos1 está su texto, y la posición va y vuelve igual
+    for (const s of subs) {
+      const r = await pg.evaluate(async ({ pos0, pos1 }) => {
+        const i = +/DocFragment\[(\d+)\]/.exec(pos0)[1] - 1
+        const doc = await window.__view.book.sections[i].createDocument()
+        const a = window.__xp.xpRango(doc, pos0), z = window.__xp.xpRango(doc, pos1)
+        if (!a || !z) return { error: 'no encontrada' }
+        const rg = doc.createRange(); rg.setStart(a.startContainer, a.startOffset); rg.setEnd(z.startContainer, z.startOffset)
+        return { texto: rg.toString(), vuelta0: window.__xp.xpDe(i, a.startContainer, a.startOffset), vuelta1: window.__xp.xpDe(i, z.startContainer, z.startOffset) }
+      }, s)
+      ok(!r.error && r.texto === s.text, `${nombre} ${s.pos0}: «${r.texto}» (quiero «${s.text}») ${r.error || ''}`)
+      ok(r.vuelta0 === s.pos0, `${nombre} ida y vuelta: ${r.vuelta0} (quiero ${s.pos0})`)
+      ok(r.vuelta1 === s.pos1, `${nombre} ida y vuelta: ${r.vuelta1} (quiero ${s.pos1})`)
+    }
+    // 2. Ir a la última posición de KOReader (como si llegara del Kobo): la página que se abre la contiene
+    if (ultima) {
+      const r = await pg.evaluate(async xp => {
+        const fue = await window.atrioIrXPointer(xp, 0.5, 'el Kobo')
+        await new Promise(z => setTimeout(z, 900))
+        const v = window.__view.lastLocation
+        // ¿La página que se ve contiene el sitio? (su texto, desde el principio de la página, llega hasta él)
+        const r = v.range, doc = r.startContainer.ownerDocument, dest = window.__xp.xpRango(doc, xp)
+        const dentro = !!dest && r.comparePoint(dest.startContainer, dest.startOffset) === 0
+        return { fue, idx: v?.section?.current ?? v?.index, dentro, xpAhora: window.atrioXPointer()?.xp }
+      }, ultima)
+      const i = +/DocFragment\[(\d+)\]/.exec(ultima)[1] - 1
+      ok(r.fue && r.idx === i && r.dentro, `${nombre} ir a ${ultima}: ${JSON.stringify(r)}`)
+      ok(r.xpAhora && r.xpAhora.includes(`DocFragment[${i + 1}]`), `${nombre} posición de la página: ${r.xpAhora}`)
+      console.log(`${nombre}: última de KOReader ${ultima} → página que empieza en ${r.xpAhora}`)
+    }
+    await pg.context().close()
+  }
+  await b.close(); srv.close()
+  console.log(`${bien} bien, ${fallos} fallos`)
+  process.exit(fallos ? 1 : 0)
+})().catch(e => { console.log('ERR', e.stack); process.exit(1) })

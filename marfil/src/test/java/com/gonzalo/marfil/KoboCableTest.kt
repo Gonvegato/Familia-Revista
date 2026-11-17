@@ -52,14 +52,35 @@ class KoboCableTest {
         assertTrue(l.all { it.segundos == 0L })
     }
 
-    @Test fun losArchivosParaElKoboVanEnLaApp() {
+    @Test fun losArchivosParaElKoboVanSoloEnSesKobo() {
         val ctx = org.robolectric.RuntimeEnvironment.getApplication()
-        for (n in listOf("seshat-kobo", "seshat.sh", "nm-seshat", "NickelMenu-Kobo.tgz", "LICENSE-NickelMenu")) {
+        if (!BuildConfig.SESKOBO) {
+            // La Seshat normal no lleva nada del Kobo (ni pesa más)
+            assertTrue(runCatching { ctx.assets.open("kobo/seshat-kobo").close() }.isFailure)
+            return
+        }
+        for (n in listOf("seshat-kobo", "seshat.sh", "nm-seshat", "Kobo.tgz", "LICENSE-NickelMenu", "LICENSE-NickelInkSync", "nickelinksync")) {
             val b = ctx.assets.open("kobo/$n").use { it.readBytes() }
             assertTrue("falta kobo/$n (kobo/construye.sh)", b.isNotEmpty())
         }
         // El programa es para el Kobo: ARM de 32 bits
         val elf = ctx.assets.open("kobo/seshat-kobo").use { it.readNBytes(20) }
         assertEquals(0x7f, elf[0].toInt()); assertEquals('E'.code, elf[1].toInt()); assertEquals(1, elf[4].toInt()); assertEquals(40, elf[18].toInt())
+        // El instalador lleva los dos plugins
+        val tgz = ctx.assets.open("kobo/Kobo.tgz").use { java.util.zip.GZIPInputStream(it).readBytes() }.decodeToString(throwOnInvalidSequence = false)
+        assertTrue(tgz.contains("imageformats/libnm.so")); assertTrue(tgz.contains("imageformats/libnickelinksync.so"))
+    }
+
+    @Test fun archivosDeNickelInkSync() {
+        val ini = KoboCable.configNis("https://kosync.eu", "ana", "5ebe2294ecd0e0f08eab7690d2a6ee69")
+        for (l in listOf("server = https://kosync.eu", "user = ana", "key = 5ebe2294ecd0e0f08eab7690d2a6ee69", "confirm = never", "notify = errors")) assertTrue(l, ini.lines().contains(l))
+        assertTrue("sin la contraseña", !ini.contains("password"))
+        val ix = org.json.JSONObject(KoboCable.indiceNis(listOf(KoboCable.LibroNis("bb", "Dos", ""), KoboCable.LibroNis("aa", "Uno", "Ana"), KoboCable.LibroNis("aa", "Uno", "Ana"))))
+        assertEquals(1, ix.getInt("format"))
+        val b = ix.getJSONArray("books")
+        assertEquals(2, b.length())
+        assertEquals("aa", b.getJSONObject(0).getString("hash")); assertEquals("Ana", b.getJSONObject(0).getJSONArray("authors").getString(0))
+        assertTrue(!b.getJSONObject(1).has("authors"))
+        assertTrue(Regex("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ").matches(ix.getString("created")))
     }
 }

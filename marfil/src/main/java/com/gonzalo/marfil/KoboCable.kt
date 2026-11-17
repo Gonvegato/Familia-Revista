@@ -114,12 +114,16 @@ object KoboCable {
 
     private fun asset(ctx: Context, nombre: String) = ctx.assets.open("kobo/$nombre").use { it.readBytes() }
 
+    /** Lo que ha hecho [prepara]: si pone los plugins (el Kobo se reinicia al desconectarlo) y cuántos libros van con posición. */
+    data class Preparado(val plugins: Boolean, val conPosicion: Int)
+
     /**
      * Deja el Kobo listo para mandar solo por Wi-Fi: el programa (`.adds/seshat`), con qué cuenta hablar (`cuenta.json`: el pase que se
-     * renueva, nunca la contraseña), las entradas del menú (`.adds/nm/seshat`) y, si el Kobo aún no lo tiene, NickelMenu (`.kobo/Kobo.tgz`,
-     * que el Kobo instala al desconectarlo). Devuelve si ha puesto NickelMenu.
+     * renueva, nunca la contraseña), las entradas del menú (`.adds/nm/seshat`) y, si hay usuario de posiciones (KOSync), NickelInkSync
+     * (`.adds/NickelInkSync`: su programa, su configuración y el índice de los libros del Kobo). Si al Kobo le falta alguno de los dos
+     * plugins (NickelMenu, NickelInkSync), `.kobo/Kobo.tgz` con los dos: el Kobo los instala al desconectarlo.
      */
-    fun prepara(ctx: Context, arbol: Uri): Boolean {
+    fun prepara(ctx: Context, arbol: Uri): Preparado {
         val r = raiz(ctx, arbol)
         val dk = kobo(r)
         val ses = LaFamilia.familia.sesion.comparte()
@@ -131,25 +135,92 @@ object KoboCable {
         )
         val adds = carpeta(r, ".adds")
         val ds = carpeta(adds, "seshat")
-        for (n in listOf("seshat-kobo", "seshat.sh", "LICENSE-NickelMenu")) escribe(ctx, ds, n, asset(ctx, n))
+        for (n in listOf("seshat-kobo", "seshat.sh", "LICENSE-NickelMenu", "LICENSE-NickelInkSync")) escribe(ctx, ds, n, asset(ctx, n))
         escribe(ctx, ds, "cuenta.json", Json.escribe(cuenta).toByteArray())
         val nm = carpeta(adds, "nm")
         hijo(nm, "uninstall")?.delete() // (si alguna vez se desinstaló NickelMenu, si no, no volvería)
         escribe(ctx, nm, "seshat", asset(ctx, "nm-seshat"))
-        // NickelMenu crea su carpeta doc al arrancar la primera vez: si está, ya lo tiene
-        val ponerNm = hijo(nm, "doc") == null
-        if (ponerNm) escribe(ctx, dk, "Kobo.tgz", asset(ctx, "NickelMenu-Kobo.tgz"))
+        var plugins = hijo(nm, "doc") == null // (NickelMenu crea su carpeta doc al arrancar la primera vez)
+        var conPosicion = 0
+        KoSync.datosParaElKobo(ctx)?.let { (servidor, usuario, clave) ->
+            val dn = carpeta(adds, "NickelInkSync")
+            hijo(dn, "uninstall")?.delete()
+            escribe(ctx, dn, "nickelinksync", asset(ctx, "nickelinksync"))
+            escribe(ctx, dn, "config.ini", configNis(servidor, usuario, clave).toByteArray())
+            val libros = epubsDelKobo(ctx, r, dk)
+            conPosicion = libros.size
+            escribe(ctx, dn, "library.json", indiceNis(libros).toByteArray())
+            if (hijo(dn, "NickelInkSync.log") == null) plugins = true // (el plugin apunta ahí en cuanto arranca)
+        }
+        if (plugins) escribe(ctx, dk, "Kobo.tgz", asset(ctx, "Kobo.tgz"))
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("preparado", true).apply()
-        return ponerNm
+        return Preparado(plugins, conPosicion)
     }
 
-    /** Quita del Kobo lo de Seshat (el programa, la cuenta y sus entradas del menú). NickelMenu se queda. */
+    /** La configuración de NickelInkSync: el servidor y el usuario de SesKobo; la contraseña, solo su MD5 (lo que pide KOSync). */
+    fun configNis(servidor: String, usuario: String, clave: String) = """
+        |# Lo pone SesKobo al preparar el Kobo: la posición de cada libro en el servidor KOSync, la misma que ve SesKobo.
+        |server = $servidor
+        |user = $usuario
+        |key = $clave
+        |# Gana la posición más reciente (el plugin aún no sabe preguntar)
+        |confirm = never
+        |# Solo avisos si algo va mal (los mensajes del plugin salen en alemán)
+        |notify = errors
+        |position = paragraph
+        |""".trimMargin()
+
+    /** Un libro del Kobo para el índice de NickelInkSync: su huella de KOReader, título y autor. */
+    data class LibroNis(val huella: String, val titulo: String, val autor: String)
+
+    /** `library.json` de NickelInkSync (formato 1): los libros cuya posición se sincroniza. */
+    fun indiceNis(libros: List<LibroNis>): String = Json.escribe(linkedMapOf(
+        "format" to 1L, "created" to java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+        "books" to libros.distinctBy { it.huella }.sortedBy { it.huella }.map { l ->
+            linkedMapOf<String, Any?>("hash" to l.huella, "title" to l.titulo).apply { if (l.autor.isNotBlank()) put("authors", listOf(l.autor)) }
+        },
+    ))
+
+    /** Los EPUB copiados al Kobo (no los kepub: su archivo no es el de Seshat), con su huella. Los saca de la base de datos del Kobo. */
+    private fun epubsDelKobo(ctx: Context, r: DocumentFile, dk: DocumentFile): List<LibroNis> {
+        val bd = hijo(dk, "KoboReader.sqlite") ?: return emptyList()
+        val dir = File(ctx.cacheDir, "kobo-nis").apply { deleteRecursively(); mkdirs() }
+        val copia = File(dir, "KoboReader.sqlite")
+        fun copiar(de: DocumentFile, a: File) { ctx.contentResolver.openInputStream(de.uri)!!.use { i -> a.outputStream().use { i.copyTo(it) } } }
+        try {
+            copiar(bd, copia)
+            for (ext in listOf("-wal", "-shm")) hijo(dk, "KoboReader.sqlite$ext")?.let { runCatching { copiar(it, File(dir, "KoboReader.sqlite$ext")) } }
+            val filas = ArrayList<Triple<String, String, String>>()
+            SQLiteDatabase.openDatabase(copia.path, null, SQLiteDatabase.OPEN_READWRITE).use { db ->
+                db.rawQuery("SELECT ContentID, COALESCE(Title, ''), COALESCE(Attribution, '') FROM content WHERE ContentType = 6 AND ContentID LIKE 'file:///mnt/onboard/%'", null).use { c ->
+                    while (c.moveToNext()) filas += Triple(c.getString(0), c.getString(1), c.getString(2))
+                }
+            }
+            return filas.mapNotNull { (id, t, a) ->
+                val ruta = id.removePrefix("file:///mnt/onboard/")
+                if (!ruta.lowercase().endsWith(".epub") || ruta.lowercase().endsWith(".kepub.epub")) return@mapNotNull null
+                var f: DocumentFile? = r
+                for (p in ruta.split('/')) f = f?.let { hijo(it, p) }
+                val h = f?.takeIf { it.isFile }?.let { d -> runCatching { ctx.contentResolver.openInputStream(d.uri)?.use { KoSync.huellaDe(it) } }.getOrNull() }
+                h?.let { LibroNis(it, t.trim(), a.trim()) }
+            }
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    /** Quita del Kobo lo de Seshat (el programa, la cuenta, sus entradas del menú y NickelInkSync). NickelMenu se queda. */
     fun quita(ctx: Context, arbol: Uri) {
         val r = raiz(ctx, arbol)
         kobo(r)
         hijo(r, ".adds")?.let { a ->
             hijo(a, "seshat")?.delete()
             hijo(a, "nm")?.let { hijo(it, "seshat")?.delete() }
+            // NickelInkSync: fuera su configuración y su programa, y el aviso de desinstalarse (lo hace al reiniciar el Kobo)
+            hijo(a, "NickelInkSync")?.let { d ->
+                for (n in listOf("config.ini", "library.json", "nickelinksync")) hijo(d, n)?.delete()
+                if (hijo(d, "uninstall") == null) d.createFile("application/octet-stream", "uninstall")?.let { f -> if (f.name != "uninstall") f.renameTo("uninstall") }
+            }
         }
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("preparado", false).apply()
     }

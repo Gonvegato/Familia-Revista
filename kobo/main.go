@@ -79,6 +79,15 @@ func envia(soloMirar bool) error {
 	if err != nil {
 		return err
 	}
+	// El índice de NickelInkSync (la posición de cada libro), si está instalado
+	if !soloMirar {
+		raiz := filepath.Dir(filepath.Dir(*fBD))
+		if c, n, err := actualizaIndiceNIS(*fBD, raiz, filepath.Join(dirSeshat, "huellas.json")); err != nil {
+			log.Print("índice de NickelInkSync: ", err)
+		} else if c {
+			log.Printf("posiciones: %d libros del Kobo en el índice de NickelInkSync", n)
+		}
+	}
 	// Lo que ya se envió tal cual no se vuelve a mirar en la cuenta (menos tráfico y más rápido)
 	enviado := map[string]string{}
 	if b, err := os.ReadFile(*fEnviado); err == nil {
