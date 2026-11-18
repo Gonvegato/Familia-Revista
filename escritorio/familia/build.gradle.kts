@@ -8,9 +8,12 @@ plugins {
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+// Mau, el gato de la familia: lo que se ve (Compose) es el mismo código en el móvil y en el ordenador
+kotlin { sourceSets["main"].kotlin.srcDir("../../mau/compose") }
 
 dependencies {
     api(project(":nucleo"))
+    api(project(":mau"))
     api(compose.desktop.currentOs)
     api(compose.material3)
     api(compose.materialIconsExtended)
@@ -21,5 +24,7 @@ dependencies {
 tasks.test {
     systemProperty("familia.emulador", System.getProperty("familia.emulador") ?: "http://127.0.0.1")
     systemProperty("familia.reglas", rootProject.file("nube/reglas.json").absolutePath)
+    // Las capturas de Mau (MauCapturasTest): -Dcapturas=<carpeta>
+    System.getProperty("capturas")?.let { systemProperty("capturas", it) }
     testLogging { events("failed"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }

@@ -99,11 +99,12 @@ object HermanasPc {
 
     fun esta(app: String): Boolean = donde(app) != null
 
-    /** Abre [app] (o la trae al frente si ya estaba abierta). false si no está instalada aquí. */
-    fun abre(app: String): Boolean {
+    /** Abre [app] (o la trae al frente si ya estaba abierta), pasándole [args]. false si no está instalada aquí. */
+    fun abre(app: String, args: List<String> = emptyList()): Boolean {
         val d = donde(app) ?: return false
         return runCatching {
-            val orden = if (Sitio.sistema == Sitio.Sistema.MAC) listOf("open", d.absolutePath) else listOf(d.absolutePath)
+            val orden = if (Sitio.sistema == Sitio.Sistema.MAC) listOf("open", d.absolutePath) + (if (args.isEmpty()) emptyList() else listOf("--args") + args)
+                        else listOf(d.absolutePath) + args
             ProcessBuilder(orden).redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.DISCARD).start(); true
         }.getOrDefault(false)
     }

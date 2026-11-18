@@ -10,6 +10,8 @@ android {
     defaultConfig { minSdk = 26 }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     buildFeatures { compose = true }
+    // Mau, el gato de la familia: lo que se ve (Compose) es el mismo código en el móvil y en el ordenador
+    sourceSets { getByName("main") { java.srcDir("../mau/compose") } }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -23,6 +25,7 @@ android {
 }
 dependencies {
     api(project(":nucleo"))
+    api(project(":mau"))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.runtime:runtime")
     // La pantalla para elegir el estilo de un widget al ponerlo (EstiloWidgetActivity)

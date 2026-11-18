@@ -11,6 +11,8 @@ rootProject.name = "Familia"
 // (con -PsoloEscritorio, sin las de Android: para compilar las de escritorio en un Mac o en Linux sin el SDK de Android)
 val soloEscritorio = providers.gradleProperty("soloEscritorio").isPresent
 include(":nucleo")
+// Mau, el gato que acompaña en todas (sus dibujos, cómo se mueve y lo que piensa: Kotlin puro)
+include(":mau")
 // Lo de Cobre que no es pantalla (listas M3U, Xtream Codes, la guía XMLTV): Kotlin puro, para el móvil y el ordenador
 include(":iptv")
 if (!soloEscritorio) {

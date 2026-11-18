@@ -15,6 +15,7 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,6 +51,7 @@ fun appDeLaFamilia(
     // Una sola copia de cada app: si ya estaba abierta, sale al frente aquella y esta no abre nada
     if (!Instancia.unica(Sitio.de(app), args.toList())) return
     Actualizador.recogeNombreViejo(app)
+    MauPc.miraSiLlega(args.toList())
     ventanaDeLaFamilia(app, titulo, icono, alIniciar, alCerrar, alPedirOtraVez, contenido)
 }
 
@@ -57,7 +59,7 @@ private fun ventanaDeLaFamilia(
     app: String, titulo: String, icono: Painter?, alIniciar: () -> Unit, alCerrar: () -> Unit,
     alPedirOtraVez: (List<String>) -> Unit, contenido: @Composable () -> Unit
 ) = application {
-    remember { LaFamilia.inicia(app); Apariencia.inicia(app); runCatching { alIniciar() }; true }
+    remember { LaFamilia.inicia(app); Apariencia.inicia(app); MauPc.inicia(app); runCatching { alIniciar() }; true }
     val guardada = remember { leeVentana(app) }
     val estado = rememberWindowState(
         placement = if (guardada["max"] == true) WindowPlacement.Maximized else WindowPlacement.Floating,
@@ -86,6 +88,8 @@ private fun ventanaDeLaFamilia(
         title = titulo, state = estado, icon = icono,
         // Pantalla completa: F11 (y en el Mac también ⌃⌘F, el de siempre allí); Esc no sale, que lo usan las apps
         onPreviewKeyEvent = { k ->
+            // (teclear cuenta como «haces algo»: Mau no se duerme)
+            com.gonzalo.mau.ui.Mau.toque()
             val mac = Sitio.sistema == Sitio.Sistema.MAC
             if (k.type == androidx.compose.ui.input.key.KeyEventType.KeyDown && (k.key == androidx.compose.ui.input.key.Key.F11 ||
                     (mac && k.isCtrlPressed && k.isMetaPressed && k.key == androidx.compose.ui.input.key.Key.F))) {
@@ -135,7 +139,7 @@ private fun ventanaDeLaFamilia(
                 java.awt.EventQueue.invokeLater {
                     if (window.extendedState and java.awt.Frame.ICONIFIED != 0) window.extendedState = window.extendedState and java.awt.Frame.ICONIFIED.inv()
                     window.isVisible = true; window.toFront(); window.requestFocus()
-                    runCatching { alPedirOtraVez(pedido) }
+                    runCatching { alPedirOtraVez(MauPc.miraSiLlega(pedido)) }
                 }
             }
             LaFamilia.alVerse()
@@ -149,8 +153,20 @@ private fun ventanaDeLaFamilia(
         CompositionLocalProvider(androidx.compose.ui.platform.LocalLocalization provides MenuEnEspanol) { TemaFamilia {
             TextoAireado {
                 Column(Modifier.fillMaxSize().background(Paper)) {
-                    Box(Modifier.weight(1f).fillMaxWidth()) {
-                        if (!LaFamilia.dentro) PantallaEntrar(titulo) else contenido()
+                    Box(Modifier.weight(1f).fillMaxWidth().pointerInput(Unit) {
+                        // Cada clic o rueda cuenta como «haces algo» para Mau (sin quitárselo a la app)
+                        awaitPointerEventScope {
+                            while (true) {
+                                val e = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                                if (e.type == androidx.compose.ui.input.pointer.PointerEventType.Press || e.type == androidx.compose.ui.input.pointer.PointerEventType.Scroll) com.gonzalo.mau.ui.Mau.toque()
+                            }
+                        }
+                    }) {
+                        if (!LaFamilia.dentro) PantallaEntrar(titulo) else {
+                            contenido()
+                            // Mau, encima de todo
+                            com.gonzalo.mau.ui.MauCapa(MauPc.VENTANA)
+                        }
                     }
                     Actualizador.preparada?.let { p -> BandaVersionNueva(titulo, p.version) { cierra(reiniciar = true) } }
                 }
