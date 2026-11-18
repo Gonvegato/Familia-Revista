@@ -318,7 +318,8 @@ private fun FiguraViva(
     val reloj = remember { mutableLongStateOf(0L) }
     var desde by remember { mutableStateOf(pose to System.currentTimeMillis()) }
     if (desde.first != pose) desde = pose to (System.currentTimeMillis() - if (pose == Pose.ESCONDIDO && !asomar) 1_000 else 0)
-    LaunchedEffect(anima) { if (anima) while (true) withFrameMillis { reloj.longValue = it } }
+    // (a 30 cuadros por segundo basta para un gato y gasta la mitad de batería)
+    LaunchedEffect(anima) { if (anima) while (true) withFrameMillis { if (it - reloj.longValue >= 32) reloj.longValue = it } }
     Canvas(modifier.clipToBounds()) {
         reloj.longValue
         val t = System.currentTimeMillis() - desde.second
