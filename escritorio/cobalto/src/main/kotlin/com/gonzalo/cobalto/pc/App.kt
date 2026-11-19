@@ -40,6 +40,8 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
         pantalla = it }) { m -> scope.launch { snack.showSnackbar(m, withDismissAction = true) } } }
     // Los sprints siguen aunque cambies de pantalla
     VigilaSprint(e)
+    // Mau anima a escribir: la meta del día, «hoy aún no has escrito» y los sprints con él
+    MauEnThotPc(e)
     // La columna: la portada, tus obras por menú (como en el móvil) y lo demás
     val grupos = EstadoObra.values().map { it to e.obrasDe(it) }.filter { it.second.isNotEmpty() }
     val obras = grupos.flatMap { it.second }

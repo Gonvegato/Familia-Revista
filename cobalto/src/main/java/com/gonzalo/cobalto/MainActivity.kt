@@ -10,6 +10,8 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.gonzalo.familia.MauMovil
+import com.gonzalo.mau.Lugar
 
 class MainActivity : ComponentActivity() {
     /** Lo que pide abrir un widget (se consume al abrirlo). */
@@ -23,6 +25,8 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent); pedida = peticionDe(intent)
+        // Si la abrió una hermana desde el menú de Mau, Mau llega con ella
+        MauMovil.miraSiLlega(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +48,10 @@ class MainActivity : ComponentActivity() {
                 CobaltoApp(pedida) { pedida = null }
             }
         }
+        // Mau, el gato de la suite: encima de todo (en el editor, escribiendo; el pie del editor le deja su hueco, huecoMau)
+        MauMovil.pon(this, "cobalto", Lugar.CASA)
+        // Y en su menú, el sprint con él
+        MauEscribir.pon()
     }
 
     /** Al volver a la app: colores de Atrio al día y la cuenta en directo. */

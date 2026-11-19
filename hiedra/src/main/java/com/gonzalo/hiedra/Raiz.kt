@@ -112,7 +112,8 @@ fun HiedraApp(fichaPedida: String? = null, jugarPedido: Boolean = false, alAbrir
             Ficha(id, alCerrar = { fichaId = null }, alJugar = ::jugar, alVincular = { abrirAnadir(null, it.id) }, alIrA = { fichaId = it }, alAbrirSaga = { sagaId = it.id })
         }
         AnimatedVisibility(captura != null, enter = fadeIn(), exit = fadeOut()) {
-            captura?.let { s -> VisorCaptura(s, alCerrar = { captura = null }, alBorrar = { Suite.deleteLocal(s); captura = null }) }
+            // (una captura a pantalla completa: Mau taparía sus botones de abajo)
+            captura?.let { s -> com.gonzalo.familia.MauFuera(); VisorCaptura(s, alCerrar = { captura = null }, alBorrar = { Suite.deleteLocal(s); captura = null }) }
         }
         CapaAvisos(Charcoal, Paper, Acento, Body)
     }

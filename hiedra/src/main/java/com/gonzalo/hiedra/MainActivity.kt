@@ -8,6 +8,10 @@ import androidx.activity.SystemBarStyle
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.gonzalo.familia.MauMovil
+import com.gonzalo.mau.Frases
+import com.gonzalo.mau.Lugar
+import com.gonzalo.mau.ui.Mau
 
 class MainActivity : ComponentActivity() {
     /** La ficha que pide abrir un widget (se consume al abrirla). */
@@ -20,6 +24,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent); fichaPedida = intent.getStringExtra("ficha"); jugarPedido = intent.getBooleanExtra("jugar", false); irPedido = intent.getStringExtra("go")
+        MauMovil.miraSiLlega(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +45,20 @@ class MainActivity : ComponentActivity() {
                 }
                 HiedraApp(fichaPedida, jugarPedido, { fichaPedida = null; jugarPedido = false }, irPedido) { irPedido = null }
             }
+        }
+        // Mau, con su ovillo (no en el jugador ni en los juegos web: ahí estorbaría)
+        MauMovil.pon(this, "hiedra", Lugar.JUGANDO)
+    }
+
+    /**
+     * Ya delante (después de [onStart], que cierra la sesión): si vienes de jugar un rato, Mau lo comenta. Aquí y no antes: su bocadillo
+     * dura unos segundos contados desde que lo dice, y con otra app delante no se vería.
+     */
+    override fun onResume() {
+        super.onResume()
+        Sesion.paraMau(this)?.let { j ->
+            Mau.toque()   // (volver de jugar es hacer algo: si se había dormido, se despierta)
+            Mau.di(Frases.hasJugado(j.minutos, j.titulo), importante = true)
         }
     }
 

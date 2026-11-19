@@ -85,6 +85,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gonzalo.familia.MauLugar
+import com.gonzalo.mau.Lugar
+import com.gonzalo.mau.ui.Mau
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -123,6 +126,11 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
     var menu by remember { mutableStateOf(false) }
     var hojaPagina by remember { mutableStateOf(false) }
     var atajos by remember { mutableStateOf(false) }
+    // Mau escribe contigo: con su pluma, el sprint en su menú y, si te atascas, una idea
+    var escrito by remember { mutableLongStateOf(0L) }
+    MauLugar(Lugar.ESCRIBIENDO)
+    MauEnElEditor(e, pid, escrito, appDelante())
+    val hueco = huecoMau()
 
     var tf by remember(eid) { mutableStateOf(TextFieldValue(escena.s("texto"), TextRange(escena.s("texto").length))) }
     val historial = remember(eid) { HistorialTexto(tf) }
@@ -192,6 +200,8 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
     // Lo que llega del teclado: si es un solo carácter, la tipografía automática (— « » …), que se deshace aparte
     fun teclea(v: TextFieldValue) {
         val antes = tf
+        // (el teclado del móvil no pasa por la ventana: cada cambio del texto cuenta para Mau como «haces algo»)
+        if (v.text != antes.text) { Mau.toque(); escrito = System.currentTimeMillis() }
         val c = v.selection.start
         if (pagina.tipografia && v.selection.collapsed && c >= 1 && v.text.length == antes.text.length + 1 && v.composition.let { it == null || it.end <= c - 3 } &&
             v.text.regionMatches(0, antes.text, 0, c - 1) && v.text.regionMatches(c, antes.text, c - 1, v.text.length - c)) {
@@ -468,12 +478,12 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
                 // La ficha del nombre donde está el cursor: su vista previa, y «Leer» la ficha
                 if (!foco) PreviaFicha(e, fichaAqui?.takeIf { it.id != previaCerrada }, onLeer = { lectura.ver = it.id }, onCerrar = { previaCerrada = it.id })
                 if (!foco) {
-                    CuentasEditor(cuentas, discreto = false, Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
-                    if (SprintEscribir.activo(pid)) Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    CuentasEditor(cuentas, discreto = false, Modifier.padding(hueco).padding(horizontal = 20.dp, vertical = 4.dp))
+                    if (SprintEscribir.activo(pid)) Row(Modifier.fillMaxWidth().padding(hueco).padding(horizontal = 20.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                         TiraSprint(e) { SprintEscribir.termina(e, ya = true) }
                     }
                     BarraFormato(
-                        tableta = tableta, maquina = pagina.maquina,
+                        tableta = tableta, maquina = pagina.maquina, hueco = hueco,
                         puedeDeshacer = historial.puedeDeshacer, puedeRehacer = historial.puedeRehacer,
                         onDeshacer = { historial.deshace()?.let { tf = it } }, onRehacer = { historial.rehace()?.let { tf = it } },
                         onNegrita = { cambia(EdicionTexto.envuelve(tf, "**")) }, onCursiva = { cambia(EdicionTexto.envuelve(tf, "*")) },
@@ -484,7 +494,7 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
                         onSprint = { if (SprintEscribir.activo()) SprintEscribir.termina(e, ya = true) else sprint = true }, onFoco = { foco = true }
                     )
                 } else if (pagina.cuentasFoco) {
-                    CuentasEditor(cuentas, discreto = true, Modifier.padding(horizontal = 28.dp, vertical = 10.dp).widthIn(max = pagina.anchoMax).align(Alignment.CenterHorizontally))
+                    CuentasEditor(cuentas, discreto = true, Modifier.padding(hueco).padding(horizontal = 28.dp, vertical = 10.dp).widthIn(max = pagina.anchoMax).align(Alignment.CenterHorizontally))
                 }
             }
             if (ancha && panel && !foco) Column(Modifier.width(360.dp).fillMaxHeight().background(Crudo).statusBarsPadding().navigationBarsPadding()) {
@@ -597,7 +607,7 @@ private fun FinDeEscena(anterior: Doc?, siguiente: Doc?, onIr: (String) -> Unit,
 
 @Composable
 private fun BarraFormato(
-    tableta: Boolean, maquina: Boolean,
+    tableta: Boolean, maquina: Boolean, hueco: PaddingValues,
     puedeDeshacer: Boolean, puedeRehacer: Boolean, onDeshacer: () -> Unit, onRehacer: () -> Unit,
     onNegrita: () -> Unit, onCursiva: () -> Unit, onTitulo: () -> Unit, onCita: () -> Unit,
     onSalto: () -> Unit, onComillas: () -> Unit, onRaya: () -> Unit, onBuscar: () -> Unit, onSinonimos: () -> Unit,
@@ -612,7 +622,8 @@ private fun BarraFormato(
             Text(t, color = Charcoal, fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = Display, modifier = Modifier.clearAndSetSemantics { })
         }
     @Composable fun Raya() = Box(Modifier.padding(horizontal = 4.dp).width(1.dp).height(24.dp).background(Line))
-    Row(Modifier.fillMaxWidth().background(Crudo).padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    // (el hueco de Mau, por dentro del fondo: Mau se sienta en la barra sin tapar sus botones)
+    Row(Modifier.fillMaxWidth().background(Crudo).padding(hueco).padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
             Tecla(Icons.AutoMirrored.Rounded.Undo, "Deshacer", puedeDeshacer, f = onDeshacer)
             Tecla(Icons.AutoMirrored.Rounded.Redo, "Rehacer", puedeRehacer, f = onRehacer)

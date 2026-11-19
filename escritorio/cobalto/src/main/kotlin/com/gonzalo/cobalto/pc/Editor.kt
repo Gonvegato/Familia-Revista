@@ -163,6 +163,8 @@ fun EditorEscena(esc: Doc, obra: Doc, nav: Nav, abre: AbreDoc, abrirEscena: (Str
     var v by remember(eid) { mutableStateOf(TextFieldValue(esc.s("texto"), TextRange(esc.s("texto").length))) }
     val historial = remember(eid) { HistorialTexto(v) }
     var escribiendo by remember(eid) { mutableStateOf(0L) }
+    // Mau escribe contigo (escribiendo: cuándo escribiste aquí por última vez, para lo del atasco)
+    MauEnElEditorPc(e, pid, escribiendo)
     val inicio = remember(eid) { Escritos.palabras(esc.s("texto")) }
     var aviso by remember { mutableStateOf("") }
     LaunchedEffect(aviso) { if (aviso.isNotEmpty()) { delay(2600); aviso = "" } }

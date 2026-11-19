@@ -80,6 +80,13 @@ object Mau {
         cerebroInt = c
     }
 
+    /** Lo que mide Mau de ancho ahora (según su tamaño y si es el ordenador), en dp. */
+    val anchoDp: Float get() {
+        val c = cerebroInt ?: return 0f
+        val pc = casaInt?.ordenador == true
+        return when (c.tamano) { 0 -> if (pc) 80f else 64f; 2 -> if (pc) 132f else 108f; else -> if (pc) 104f else 84f }
+    }
+
     val acento: Color get() = APPS_SUITE.firstOrNull { it.app == casaInt?.app }?.acento ?: Color(0xFFC68B00)
 
     fun ahora() = System.currentTimeMillis()

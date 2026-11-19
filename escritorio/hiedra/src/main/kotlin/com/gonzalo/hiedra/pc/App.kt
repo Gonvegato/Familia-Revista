@@ -80,6 +80,9 @@ fun AppHiedra(inicial: Pantalla = Pantalla.Portada, sala: Boolean = false) {
     // `Hiedra --sala` con Hiedra ya abierta: a la sala
     LaunchedEffect(Unit) { snapshotFlow { SalaPedida.veces }.collect { if (it > 0) enSala = true } }
     if (enSala) { PantallaSala(estSala) { enSala = false }; return }
+    // Mau, con su ovillo (en la sala no sale: ver PantallaSala); al volver de jugar un rato, lo comenta
+    com.gonzalo.familia.pc.MauLugar(com.gonzalo.mau.Lugar.JUGANDO)
+    MauDiceLoJugado()
     var pantalla by remember { mutableStateOf(inicial) }
     var antesDeAjustes by remember { mutableStateOf<Pantalla>(Pantalla.Portada) }
     val snack = remember { SnackbarHostState() }

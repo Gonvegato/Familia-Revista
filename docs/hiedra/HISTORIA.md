@@ -7,6 +7,14 @@ que **convive con Carmesí** en el mismo móvil hasta que lo tengas todo aquí. 
 (la que nació como Pórtico): hace lo mismo y lo que Carmesí no podía, con **un modelo de datos nuevo** (`docs/MODELO.md`) y una importación
 de una sola vez.
 
+## 0.9.2 — Mau
+
+- Mau, el gato de la suite, acompaña en Bastet con su ovillo (en la portada, las secciones, la ficha y Ajustes). No sale en el jugador
+  interno, en los juegos web ni en una captura a pantalla completa.
+- Al volver de jugar un rato (5 minutos o más) lo comenta: «Chrono Trigger: 45 minutos jugando. ¿Ganaste?». Vale también si la sesión
+  la cerró el trabajo de fondo con Bastet detrás: lo dice al volver.
+- En el ordenador (Bastet 1.3.3), igual en la ventana; en la sala (la tele y el mando) no sale.
+
 ## 0.9.0 — movimiento como Seshat
 
 - La ficha de un juego nace de la fila (o de la portada) que tocas y vuelve a ella al cerrarla; con el gesto de atrás de Android 14+ se ve

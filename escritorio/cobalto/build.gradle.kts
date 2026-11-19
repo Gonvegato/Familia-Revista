@@ -10,7 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.3.2"
+val version = "1.4.0"
 val android = rootProject.file("cobalto/src")
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -23,12 +23,14 @@ val compartido = tasks.register<Sync>("compartidoDeAndroid") {
             // El árbol (medidas y «Ordenar»), la guía de la novela, los sinónimos y los sprints (en la cuenta), sin sus pantallas
             "EscribirArbol.kt", "EscribirGuia.kt", "EscribirSinonimos.kt", "EscribirSprint.kt",
             // Las copias de seguridad en el dispositivo (y sacar una obra de una)
-            "EscribirCopias.kt")
+            "EscribirCopias.kt",
+            // Mau en Thot (la meta, el atasco y el sprint con él)
+            "MauEscribir.kt")
     }
     into(layout.buildDirectory.dir("compartido/main/com/gonzalo/cobalto"))
 }
 val pruebasCompartidas = tasks.register<Sync>("pruebasDeAndroid") {
-    from(File(android, "test/java/com/gonzalo/cobalto")) { include("EscribirMezclaTest.kt", "EscribirEstructuraTest.kt", "EscribirArbolGuiaTest.kt", "EscribirSprintTest.kt", "EscribirCopiasTest.kt") }
+    from(File(android, "test/java/com/gonzalo/cobalto")) { include("EscribirMezclaTest.kt", "EscribirEstructuraTest.kt", "EscribirArbolGuiaTest.kt", "EscribirSprintTest.kt", "EscribirCopiasTest.kt", "MauEscribirTest.kt") }
     into(layout.buildDirectory.dir("compartido/test/com/gonzalo/cobalto"))
 }
 // El diccionario de sinónimos (RLA-ES, LGPL 2.1, sin cambios): el mismo archivo que lleva el móvil en sus assets

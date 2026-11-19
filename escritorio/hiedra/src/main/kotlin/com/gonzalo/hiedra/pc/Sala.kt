@@ -153,6 +153,8 @@ private fun SwingUtilitiesLater(que: () -> Unit) = javax.swing.SwingUtilities.in
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PantallaSala(est: EstadoSala, foco: FocoSala = remember { FocoSala() }, alSalir: () -> Unit) {
+    // En la sala (la tele, a 3 metros y con el mando) Mau no sale: estorbaría y no se le puede tocar
+    com.gonzalo.familia.pc.MauFuera()
     val tinta = TintaSala(if (AjustesSala.oscura) Skin.tonosPara(true) else Skin.tones)
     val bib = rememberBiblioteca()
     val scope = rememberCoroutineScope()

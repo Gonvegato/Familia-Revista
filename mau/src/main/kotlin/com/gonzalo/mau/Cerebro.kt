@@ -227,6 +227,9 @@ class Cerebro(
         return true
     }
 
+    /** ¿Ya se usó hoy [clave] ([primeraVezHoy])? Sin gastarla. */
+    fun yaHoy(clave: String, ahora: Long): Boolean = guardado.lee("dia.$clave") == LocalDate.ofInstant(Instant.ofEpochMilli(ahora), zona).toString()
+
     /** Una de [frases] al azar (no la misma que la última vez que se eligió de esa lista). */
     fun elige(frases: List<String>): String {
         if (frases.size <= 1) return frases.firstOrNull().orEmpty()

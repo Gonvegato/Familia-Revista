@@ -232,7 +232,7 @@ object Sesion {
         val exacto = Uso.tiempoDelante(c, paq, desde, ahora)
         val ms = exacto?.ms ?: aOjo(desde, ahora)
         val fin = exacto?.fin ?: ahora
-        if (ms >= 20_000) Biblioteca.por(id)?.let { Biblioteca.poner(it.copy(propias = it.propias.copy(ms = it.propias.ms + ms, dias = conDias(it, fin, ms)))) }
+        if (ms >= 20_000) Biblioteca.por(id)?.let { Biblioteca.poner(it.copy(propias = it.propias.copy(ms = it.propias.ms + ms, dias = conDias(it, fin, ms)))); apuntarParaMau(c, it, ms, fin) }
         // Volver de jugar: si el guardado de este móvil ha cambiado, se sube a la nube
         Biblioteca.por(id)?.takeIf { NubeP.activo(c, it) }?.let { j ->
             val app = c.applicationContext
@@ -240,5 +240,52 @@ object Sesion {
         }
     }
 
-    fun sumar(j: Juego, ms: Long) { if (ms >= 5_000) Biblioteca.por(j.id)?.let { Biblioteca.poner(it.copy(propias = it.propias.copy(ms = it.propias.ms + ms, dias = conDias(it, System.currentTimeMillis(), ms)))) } }
+    fun sumar(j: Juego, ms: Long) {
+        if (ms < 5_000) return
+        val ahora = System.currentTimeMillis()
+        Biblioteca.por(j.id)?.let { Biblioteca.poner(it.copy(propias = it.propias.copy(ms = it.propias.ms + ms, dias = conDias(it, ahora, ms)))); apuntarParaMau(null, it, ms, ahora) }
+    }
+
+    // ---- Lo que Mau comenta al volver de jugar ----
+
+    /** Lo jugado que Mau aún no ha comentado: el juego, cuánto y cuándo acabó. */
+    class Jugado(val id: String, val titulo: String, val ms: Long, val fin: Long) {
+        val minutos: Int get() = (ms / 60_000L).toInt()
+    }
+    /** Desde cuántos minutos jugados lo comenta Mau. */
+    const val MINUTOS_MAU = 5
+    /** Lo que acabó hace más de esto ya no se comenta (vuelves a Bastet mucho después). */
+    const val CADUCA_MAU = 3L * 3_600_000L
+    /** (En memoria: lo del jugador interno y los juegos web, que se cuentan a trozos dentro de Bastet; lo de [cerrar] también se guarda.) */
+    @Volatile private var jugado: Jugado? = null
+    private fun pm(c: Context) = c.getSharedPreferences("hiedra_mau", Context.MODE_PRIVATE)
+    private fun leerParaMau(c: Context): Jugado? {
+        val p = pm(c); val id = p.getString("id", null) ?: return null
+        return Jugado(id, p.getString("titulo", "") ?: "", p.getLong("ms", 0L), p.getLong("fin", 0L))
+    }
+
+    /** Suma un trozo de partida a lo anterior si es del mismo juego y de hace poco (el jugador interno cuenta a trozos: cada pausa, uno). */
+    fun juntar(antes: Jugado?, id: String, titulo: String, ms: Long, fin: Long): Jugado =
+        if (antes != null && antes.id == id && fin - antes.fin <= CADUCA_MAU) Jugado(id, titulo, antes.ms + ms, fin) else Jugado(id, titulo, ms, fin)
+
+    /** ¿Lo dice Mau? Si fueron [MINUTOS_MAU] o más y no hace mucho de ello. */
+    fun decirlo(j: Jugado, ahora: Long): Boolean = j.minutos >= MINUTOS_MAU && ahora - j.fin <= CADUCA_MAU
+
+    /**
+     * Apunta lo jugado para que Mau lo diga al volver a Bastet. Con [c] también se guarda: la sesión la puede cerrar [SesionWorker] con
+     * Bastet detrás (y Android puede cerrar la app antes de que vuelvas).
+     */
+    private fun apuntarParaMau(c: Context?, j: Juego, ms: Long, fin: Long) {
+        val n = juntar(jugado ?: c?.let { leerParaMau(it) }, j.id, j.titulo, ms, fin)
+        jugado = n
+        c?.let { pm(it).edit().putString("id", n.id).putString("titulo", n.titulo).putLong("ms", n.ms).putLong("fin", n.fin).apply() }
+    }
+
+    /** Al volver a Bastet (ya delante): lo jugado que Mau debe comentar, y se olvida. null si no hay, si fue poco o si fue hace mucho. */
+    fun paraMau(c: Context, ahora: Long = System.currentTimeMillis()): Jugado? {
+        val j = jugado ?: leerParaMau(c)
+        jugado = null
+        if (pm(c).contains("id")) pm(c).edit().clear().apply()
+        return j?.takeIf { decirlo(it, ahora) }
+    }
 }

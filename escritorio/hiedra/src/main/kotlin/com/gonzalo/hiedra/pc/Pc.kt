@@ -179,6 +179,8 @@ object Pc {
         if (!partidas.remove(p)) return
         ultimaTerminadaParaPruebas = ms
         if (p.cuenta && p.juego.isNotBlank()) runCatching { Juegos.sumaPartida(p.juego, ms.coerceIn(0L, 12 * 3600_000L)) }
+        // Mau lo comenta cuando Bastet vuelva a estar delante (si fue un rato)
+        MauHiedra.alTerminar(p, ms.coerceIn(0L, 12 * 3600_000L))
         cambio()
         // (si nunca se vio abierto —en el Mac no se ve cuándo Steam abre un juego—, no se toca la ventana)
         if (p.deHiedra && p.enMarcha) alTerminar.forEach { f -> enPantalla { runCatching { f(p) } } }

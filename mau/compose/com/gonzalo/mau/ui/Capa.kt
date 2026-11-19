@@ -168,7 +168,7 @@ fun MauCapa(
 
     atras(menu || ajustes) { if (ajustes) ajustes = false else menu = false }
 
-    val anchoMau = when (c.tamano) { 0 -> if (casa.ordenador) 80.dp else 64.dp; 2 -> if (casa.ordenador) 132.dp else 108.dp; else -> if (casa.ordenador) 104.dp else 84.dp }
+    val anchoMau = Mau.anchoDp.dp
     val altoMau = anchoMau * 1.1f
     val altoOrejas = anchoMau * 0.4f
 

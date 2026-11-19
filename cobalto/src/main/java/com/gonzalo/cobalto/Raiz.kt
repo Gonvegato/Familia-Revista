@@ -70,6 +70,8 @@ fun CobaltoApp(pedida: Peticion? = null, alAbrirPedido: () -> Unit = {}) {
     }
 
     AvisoActualizacion()
+    // Mau anima a escribir: la meta del día, «hoy aún no has escrito» y los sprints (aquí, para que siga fuera del editor)
+    MauEnThotMovil(e)
     BackHandler(enabled = obraId == null && fichaId == null && !pareja && ajustes == null && pagina != 0) { pagina = 0 }
     BackHandler(enabled = obraId == null && fichaId == null && pareja) { pareja = false }
     BackHandler(enabled = obraId == null && ajustes != null) { ajustes = null }

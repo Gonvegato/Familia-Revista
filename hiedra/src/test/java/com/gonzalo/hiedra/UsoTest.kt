@@ -71,4 +71,23 @@ class UsoTest {
         val r = Sesion.repartir(fin, 120 * M, z)
         assertEquals(60 * M, r["1970-01-01"]); assertEquals(60 * M, r["1970-01-02"])
     }
+
+    // ---- Mau al volver de jugar
+
+    @Test fun mauJuntaLosTrozosDelMismoJuego() {
+        // El jugador interno cuenta a trozos (cada pausa, uno): 3 + 4 min del mismo juego son 7; otro juego empieza de cero
+        val a = Sesion.juntar(null, "j1", "Zelda", 3 * M, 10 * M)
+        val b = Sesion.juntar(a, "j1", "Zelda", 4 * M, 20 * M)
+        assertEquals(7, b.minutos); assertEquals(20 * M, b.fin)
+        assertEquals(2, Sesion.juntar(b, "j2", "Mario", 2 * M, 30 * M).minutos)
+        // (lo de hace horas no se junta)
+        assertEquals(4, Sesion.juntar(a, "j1", "Zelda", 4 * M, 10 * M + Sesion.CADUCA_MAU + 1).minutos)
+    }
+
+    @Test fun mauSoloLoDiceSiFueUnRatoYHacePoco() {
+        val j = Sesion.Jugado("j1", "Zelda", 5 * M, 0)
+        assertTrue(Sesion.decirlo(j, 60 * M))
+        assertFalse(Sesion.decirlo(Sesion.Jugado("j1", "Zelda", 5 * M - 1, 0), 60 * M))   // 4 min y pico: no
+        assertFalse(Sesion.decirlo(j, Sesion.CADUCA_MAU + 1))   // vuelves a Bastet horas después: ya no
+    }
 }
