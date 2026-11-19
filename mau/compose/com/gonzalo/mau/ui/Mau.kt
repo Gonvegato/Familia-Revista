@@ -108,6 +108,23 @@ object Mau {
         version++
     }
 
+    private val margenes = HashMap<Any, ArrayList<Pair<Any, Float>>>()
+
+    /** Lo que ocupan abajo las pantallas de [clave] que se ven ahora (en dp; el mayor), para que Mau no lo tape. */
+    fun margenDe(clave: Any): Float = synchronized(pilas) { margenes[clave]?.maxOfOrNull { it.second } ?: 0f }
+
+    /** Una pantalla ocupa [dp] abajo (una banda de reproductor, una barra) mientras se ve. Se quita con [quitaMargen]. */
+    fun ponMargen(clave: Any, dp: Float): Any {
+        val f = Any()
+        synchronized(pilas) { margenes.getOrPut(clave) { ArrayList() } += f to dp }
+        version++
+        return f
+    }
+    fun quitaMargen(clave: Any, ficha: Any) {
+        synchronized(pilas) { margenes[clave]?.removeAll { it.first === ficha }; if (margenes[clave]?.isEmpty() == true) margenes.remove(clave) }
+        version++
+    }
+
     private val fueras = HashMap<Any, Int>()
 
     /** ¿Hay alguna pantalla de [clave] que pide que Mau no salga (un juego, la sala de la tele)? */
@@ -118,7 +135,7 @@ object Mau {
     fun vuelveA(clave: Any) { synchronized(pilas) { val n = (fueras[clave] ?: 0) - 1; if (n <= 0) fueras.remove(clave) else fueras[clave] = n }; version++ }
 
     /** La ventana o actividad [clave] se ha cerrado. */
-    fun olvida(clave: Any) { synchronized(pilas) { pilas.remove(clave); bases.remove(clave); fueras.remove(clave) }; version++ }
+    fun olvida(clave: Any) { synchronized(pilas) { pilas.remove(clave); bases.remove(clave); fueras.remove(clave); margenes.remove(clave) }; version++ }
 
     private fun enPrincipal(f: (Cerebro) -> Unit) { val c = cerebroInt ?: return; casa.enPrincipal { f(c) } }
 

@@ -8,6 +8,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.gonzalo.familia.MauMovil
+import com.gonzalo.mau.Lugar
 
 class MainActivity : ComponentActivity() {
     /** Lo que pide un widget (una página de la app). */
@@ -32,6 +34,10 @@ class MainActivity : ComponentActivity() {
                 CobreApp(pedido = pedido)
             }
         }
+        // Mau, el gato de la suite, en casa (Nut no tiene barra abajo: nada que dejarle libre). En la tele (Android TV, con mando) no sale:
+        // no se le puede tocar, y su capa, que va encima de todo, es una vista que coge el foco: la cruceta se perdería en ella (lo mismo que
+        // MauFuera() en todas las pantallas, pero sin la capa)
+        if (!esTele(this)) MauMovil.pon(this, "cobre", Lugar.CASA)
         // Como una tele: si lo eliges, al abrir Cobre se pone el último canal que viste
         if (savedInstanceState == null && AjustesDirecto.alAbrir(this)) kotlin.concurrent.thread { runCatching { ponUltimo(this) } }
     }
@@ -39,6 +45,8 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         atiende(intent)
+        // (si la abrió una hermana desde el menú de Mau, Mau llega con ella; lo de los widgets no se toca)
+        MauMovil.miraSiLlega(intent)
     }
 
     /** Lo de los widgets: poner un canal de un grupo del fútbol ([Widgets.ACCION_CANAL]) o abrir una página ([Widgets.EXTRA_DESTINO]). */

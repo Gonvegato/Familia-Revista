@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -31,6 +32,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gonzalo.familia.pc.LaFamilia
+import com.gonzalo.familia.pc.MauLugar
+import com.gonzalo.mau.Lugar
 import com.gonzalo.familia.pc.Sitio
 import com.gonzalo.familia.pc.revista.*
 import com.gonzalo.iptv.Lista
@@ -183,8 +186,15 @@ fun BandaReproductor() {
     val e = Reproductor.estado
     val aviso = e.aviso
     if (!e.activo && aviso == null) return
+    // Mientras mpv tiene algo puesto (un canal, una película, un episodio), Mau lo mira contigo: de espaldas, sin hablar ni dormirse. El vídeo
+    // va en la ventana de mpv (también a pantalla completa), donde Mau no sale: no hay que esconderlo en ningún sitio
+    if (e.activo) MauLugar(Lugar.VIENDO)
     var eligiendo by remember { mutableStateOf(0) }   // 0 nada, 1 audio, 2 subtítulos
-    Column(Modifier.fillMaxWidth().background(Sand)) {
+    // Mau se sienta encima de la banda, sin taparla (los enlaces «Canales», «Cerrar»…)
+    var altoBanda by remember { mutableStateOf(0.dp) }
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
+    com.gonzalo.familia.pc.MauMargenAbajo(altoBanda)
+    Column(Modifier.fillMaxWidth().background(Sand).onSizeChanged { altoBanda = with(densidad) { it.height.toDp() } }) {
         Filete(2.dp)
         Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             if (e.activo && e.directo) {

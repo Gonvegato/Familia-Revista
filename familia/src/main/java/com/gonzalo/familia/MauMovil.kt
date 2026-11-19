@@ -122,8 +122,11 @@ object MauMovil {
                     actividad.lifecycle.addObserver(o)
                     onDispose { actividad.lifecycle.removeObserver(o) }
                 }
-                MauCapa(actividad, activa = activa, margenAbajo = margenAbajo, atras = { on, f -> BackHandler(on, f) })
+                MauCapa(actividad, activa = activa, margenFijo = margenAbajo, atras = { on, f -> BackHandler(on, f) })
             }
+            // Mau no coge nunca el foco (el mando de la tele, el teclado): se le toca con el dedo, y lo demás sigue igual
+            descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            isFocusable = false
         }
         actividad.addContentView(cv, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         vista = WeakReference(cv)
@@ -173,5 +176,15 @@ fun MauFuera() {
     DisposableEffect(a) {
         Mau.sal(a)
         onDispose { Mau.vuelveA(a) }
+    }
+}
+
+/** Mientras esta pantalla se ve, ocupa [alto] abajo (una banda, unos controles): Mau se sienta encima, sin taparlo. */
+@Composable
+fun MauMargenAbajo(alto: Dp) {
+    val a = LocalContext.current.actividad() ?: return
+    DisposableEffect(a, alto) {
+        val f = Mau.ponMargen(a, alto.value)
+        onDispose { Mau.quitaMargen(a, f) }
     }
 }

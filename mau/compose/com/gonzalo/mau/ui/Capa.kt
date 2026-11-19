@@ -86,14 +86,15 @@ private val SUBIR = CubicBezierEasing(.2f, .9f, .25f, 1.08f)
  *  - Escondido: solo las orejas, en el borde que quieras (se arrastran); tocarlas lo trae de vuelta.
  *
  * [activa]: si esta ventana es la que se ve (en Android, la actividad de delante): solo la activa hace pasar el tiempo de Mau.
- * [margenAbajo]: lo que ocupa abajo la app (una barra de pestañas), para no taparlo. [atras]: el gesto de atrás de Android (cierra
+ * [margenFijo]: lo que ocupa abajo la app siempre (una barra de pestañas), para no taparlo; las pantallas piden más con
+ * [Mau.ponMargen] (MauMargenAbajo). [atras]: el gesto de atrás de Android (cierra
  * el menú); en el ordenador, nada (cierra Esc o pulsar fuera).
  */
 @Composable
 fun MauCapa(
     clave: Any,
     activa: Boolean = true,
-    margenAbajo: Dp = 0.dp,
+    margenFijo: Dp = 0.dp,
     atras: @Composable (activo: Boolean, alVolver: () -> Unit) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -105,6 +106,8 @@ fun MauCapa(
     val acento = Mau.acento
     // (una pantalla de esta ventana pide que no salga: un juego a pantalla completa, la sala de la tele)
     if (Mau.fueraDe(clave)) return
+    // Lo que ocupa abajo la app: lo fijo de la ventana o lo que pida ahora una pantalla (la banda del reproductor)
+    val margenAbajo = maxOf(margenFijo, Mau.margenDe(clave).dp)
     val scope = rememberCoroutineScope()
 
     var menu by remember { mutableStateOf(false) }

@@ -176,12 +176,19 @@ class ReproductorActivity : ComponentActivity() {
         if (!esTele(this)) { segundoPlano = AjustesReproductor.segundoPlano(this); estado.segundoPlano = segundoPlano }
         ReproduccionService.alParar = { principal.post { finish() } }
         setContent { CobreTheme { Pantalla() } }
+        // Mau mira contigo, de espaldas (viendo no habla ni se duerme). En la tele no sale (sin dedos no se le toca y su capa cogería el foco
+        // del mando). No hay imagen en imagen (PiP) en Nut: no hay que esconderlo en ella
+        if (!esTele(this)) com.gonzalo.familia.MauMovil.pon(this, "cobre", com.gonzalo.mau.Lugar.VIENDO)
         abre()
     }
 
     @SuppressLint("ClickableViewAccessibility")
     @Composable
     private fun Pantalla() {
+        // Con los controles, la lista de canales o un aviso delante, Mau se va (taparía «Canales», «Audio», la guía o la lista): solo
+        // sale con el vídeo limpio
+        if (estado.visibles || estado.aviso != null || estado.lista != null || estado.eleccion != null || estado.confirmaOtro || estado.siguiente != null)
+            com.gonzalo.familia.MauFuera()
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             val forzado = when (estado.aspecto) { AjustesReproductor.Aspecto.ANCHO -> 16f / 9f; AjustesReproductor.Aspecto.ESTRECHO -> 4f / 3f; else -> null }
             AndroidView({ c ->

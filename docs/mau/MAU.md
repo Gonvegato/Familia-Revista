@@ -37,6 +37,7 @@ override fun onNewIntent(i: Intent) { super.onNewIntent(i); MauMovil.miraSiLlega
 
 - Las pantallas dicen dónde está Mau con `MauLugar(Lugar.ESCRIBIENDO)`. En el móvil es `com.gonzalo.familia.MauLugar`; en el ordenador, `com.gonzalo.familia.pc.MauLugar`.
 - `MauFuera()` hace que no salga en una pantalla: un juego o la sala de la tele.
+- `MauMargenAbajo(alto)` (en `familia` y en `familia.pc`): esa pantalla ocupa tanto abajo (una banda de reproductor) y Mau se sienta encima, sin taparla.
 - Para hablarle:
   - `Mau.di(texto)`: lo dice por su cuenta, si toca.
   - `Mau.celebra(texto)`: salta y lo dice.

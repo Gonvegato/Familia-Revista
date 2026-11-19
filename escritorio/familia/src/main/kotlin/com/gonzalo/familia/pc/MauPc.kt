@@ -2,6 +2,7 @@ package com.gonzalo.familia.pc
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.unit.Dp
 import com.gonzalo.mau.Guardado
 import com.gonzalo.mau.Lugar
 import com.gonzalo.mau.ui.Mau
@@ -66,5 +67,14 @@ fun MauFuera() {
     DisposableEffect(Unit) {
         Mau.sal(MauPc.VENTANA)
         onDispose { Mau.vuelveA(MauPc.VENTANA) }
+    }
+}
+
+/** Mientras esta pantalla se ve, ocupa [alto] abajo (la banda del reproductor): Mau se sienta encima, sin taparlo. */
+@Composable
+fun MauMargenAbajo(alto: Dp) {
+    DisposableEffect(alto) {
+        val f = Mau.ponMargen(MauPc.VENTANA, alto.value)
+        onDispose { Mau.quitaMargen(MauPc.VENTANA, f) }
     }
 }
