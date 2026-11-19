@@ -8,7 +8,7 @@ on:
     branches: [main]
     # cobalto/src y torrent/src: Cobalto y el motor de torrents de Mostaza del ordenador compilan los mismos archivos que los de Android;
     # iptv: lo de Cobre que no es pantalla (el mismo módulo en el móvil y en el ordenador)
-    paths: ['escritorio/**', 'nucleo/**', 'nube/**', 'cobalto/src/**', 'torrent/src/**', 'iptv/**', 'herramientas/escritorio/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/escritorio.yml']
+    paths: ['escritorio/**', 'nucleo/**', 'mau/**', 'nube/**', 'cobalto/src/**', 'torrent/src/**', 'iptv/**', 'herramientas/escritorio/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/escritorio.yml']
   workflow_dispatch:
 
 permissions:

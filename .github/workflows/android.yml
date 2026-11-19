@@ -6,7 +6,7 @@ name: Android (pruebas)
 on:
   push:
     branches: [main]
-    paths: ['hiedra/**', 'marfil/**', 'cobalto/**', 'azabache/**', 'mostaza/**', 'cobre/**', 'iptv/**', 'familia/**', 'nucleo/**', 'nube/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/android.yml']
+    paths: ['hiedra/**', 'marfil/**', 'cobalto/**', 'azabache/**', 'mostaza/**', 'cobre/**', 'iptv/**', 'familia/**', 'nucleo/**', 'mau/**', 'nube/**', 'build.gradle.kts', 'settings.gradle.kts', 'gradle/**', '.github/workflows/android.yml']
   workflow_dispatch:
 
 permissions:
