@@ -19,6 +19,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.gonzalo.familia.MauFuera
+import com.gonzalo.familia.MauMovil
+import com.gonzalo.mau.Lugar
 
 class MainActivity : ComponentActivity() {
     /** La ficha que pide abrir otra app o un widget («ficha» = la ref del título: Azabache la manda con «Ver en Mostaza»). */
@@ -34,7 +37,7 @@ class MainActivity : ComponentActivity() {
         addonPedido = i?.data?.takeIf { it.scheme.equals("stremio", true) }?.toString()
     }
 
-    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); lee(intent) }
+    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); lee(intent); MauMovil.miraSiLlega(intent) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -57,8 +60,9 @@ class MainActivity : ComponentActivity() {
                 val sala = Sala.activa(this)
                 LaunchedEffect(sala) { pantallaCompleta(sala) }
                 androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier) {
-                    if (sala) SalaApp(fichaPedida, addonPedido, seccionPedida, alAtender = { fichaPedida = null; addonPedido = null; seccionPedida = null })
-                    else MostazaApp(fichaPedida, addonPedido, seccionPedida) { fichaPedida = null; addonPedido = null; seccionPedida = null }
+                    // (en la sala Mau no sale: se maneja con el dedo, no con el mando)
+                    if (sala) { MauFuera(); SalaApp(fichaPedida, addonPedido, seccionPedida, alAtender = { fichaPedida = null; addonPedido = null; seccionPedida = null }) }
+                    else { MostazaApp(fichaPedida, addonPedido, seccionPedida) { fichaPedida = null; addonPedido = null; seccionPedida = null }; MauTrasVer() }
                     // Solo en la de pruebas: ver la de la tele en el móvil (en horizontal, como una tele) y volver
                     if (BuildConfig.DEBUG && android.os.Build.FINGERPRINT != "robolectric") BotonTele(sala) { Sala.ponEnTablet(this@MainActivity, !Sala.enTablet) }
                 }
@@ -67,6 +71,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        // Mau, el gato de la familia (abajo: Hathor no tiene barra de pestañas que no deba tapar)
+        MauMovil.pon(this, "mostaza", Lugar.CASA)
     }
 
     /** La sala va a pantalla completa (en una tablet, sin las barras del sistema; en la tele no las hay); fuera de ella, como siempre. */

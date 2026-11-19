@@ -29,7 +29,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gonzalo.familia.pc.MauLugar
 import com.gonzalo.familia.pc.revista.*
+import com.gonzalo.mau.Lugar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -55,11 +57,48 @@ object Lectura {
     /** Cada [paso] ms que pasan leyendo (lo llama el lector). */
     @Synchronized fun tic(id: String, paso: Long) {
         val ventana = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow != null
+        // (3 minutos sin tocar nada cortan el rato seguido leyendo; mirar otra ventana solo lo para)
+        if (System.currentTimeMillis() - ultimaActividad > 180_000L) racha = 0
         if (!ventana || System.currentTimeMillis() - ultimaActividad > 180_000L) return
         acumulado += paso
+        racha += paso
+        mau.racha((racha / 60_000L).toInt())?.let { MauLector.llevas(it) }
         if (acumulado >= 60_000L) vacia(id)
     }
-    @Synchronized fun vacia(id: String) { val a = acumulado; acumulado = 0; if (a > 0) runCatching { Libros.sumaTiempo(id, a) } }
+    @Synchronized fun vacia(id: String) { val a = acumulado; acumulado = 0; if (a > 0) { runCatching { Libros.sumaTiempo(id, a) }; runCatching { miraObjetivo() } } }
+
+    // ---- Mau: lo que le cuenta el lector (las páginas que quedan del capítulo, el rato seguido leyendo, el objetivo del día, la hora)
+    /** Lo que Mau ya ha dicho de este libro abierto. */
+    @Volatile var mau = MauLectura()
+        private set
+    private var racha = 0L
+    /** Si el objetivo de hoy ya estaba cumplido la última vez que se miró (null: sin objetivo o sin mirar). */
+    private var objetivoCumplido: Boolean? = null
+    @Volatile private var tardeMirada = ""
+
+    /** Se abre un libro: Mau empieza de cero con él (y lo que ya estaba cumplido del objetivo de hoy no se celebra otra vez). */
+    @Synchronized fun empieza() {
+        mau = MauLectura(); racha = 0; objetivoCumplido = null
+        runCatching { miraObjetivo() }
+    }
+
+    /** ¿Has llegado hoy a tu objetivo de lectura (todos tus dispositivos)? Al pasarlo, Mau lo celebra. */
+    private fun miraObjetivo() {
+        val meta = Libros.objetivo().first
+        if (meta <= 0) { objetivoCumplido = null; return }
+        val cumplido = Libros.minutosHoy() >= meta
+        val antes = objetivoCumplido
+        objetivoCumplido = cumplido
+        if (antes == false && cumplido) MauLector.objetivo()
+    }
+
+    /** Has pasado página: si es tarde (de 00:00 a 05:59), Mau te lo dice una vez por noche. */
+    fun miraTarde() {
+        val ahora = java.time.LocalDateTime.now()
+        if (!MauLectura.deNoche(ahora.hour) || tardeMirada == ahora.toLocalDate().toString()) return
+        tardeMirada = ahora.toLocalDate().toString()
+        MauLector.tarde()
+    }
     fun alCerrar() { guardaYa(); libro?.let { vacia(it) } }
 }
 
@@ -76,7 +115,9 @@ fun PantLector(id: String, volver: Pantalla, nav: Nav, ir: String = "", panel: P
             r.onSuccess { archivo = it }.onFailure { error = it.message ?: "No se ha podido bajar de tu kDrive." }
         } else if (archivo == null) error = "Este libro no está en este ordenador ni en tu kDrive."
     }
-    DisposableEffect(id) { Lectura.libro = id; Lectura.actividad(); onDispose { Lectura.guardaYa(); Lectura.vacia(id); Lectura.libro = null } }
+    // Mau, leyendo contigo
+    MauLugar(Lugar.LEYENDO)
+    DisposableEffect(id) { Lectura.libro = id; Lectura.actividad(); Lectura.empieza(); onDispose { Lectura.guardaYa(); Lectura.vacia(id); Lectura.libro = null } }
     LaunchedEffect(id) { while (true) { delay(15_000); Lectura.tic(id, 15_000) } }
     val f = archivo
     Box(Modifier.fillMaxSize().background(Paper)) {
@@ -126,6 +167,7 @@ private fun LectorPaginas(l: Libro, f: File, volver: Pantalla, nav: Nav) {
         snapshotFlow { estado.firstVisibleItemIndex }.distinctUntilChanged().collectLatest { i ->
             if (primera) { primera = false; return@collectLatest }
             Lectura.actividad()
+            Lectura.miraTarde()
             Lectura.apunta { Libros.leido(l.id, PosicionPaginas.cfi(i), if (doc.total <= 1) 1.0 else i.toDouble() / (doc.total - 1), "Página ${i + 1}") }
             delay(4_000)
             withContext(Dispatchers.IO) { Lectura.guardaYa() }

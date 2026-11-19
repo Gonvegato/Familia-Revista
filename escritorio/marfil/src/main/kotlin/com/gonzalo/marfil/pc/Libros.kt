@@ -82,6 +82,8 @@ object Libros {
         val ahora = System.currentTimeMillis()
         if (e == Estado.LEIDO && l.estado != Estado.LEIDO && (l.terminados.lastOrNull() ?: 0L) < ahora - 12L * 3600_000L) c["fin"] = l.n.lista("fin").map { Fechas.ms(it.comoLong()) }.filter { it > 0 } + ahora
         cambia(l.id, c)
+        // Y Mau lo celebra (solo si se apunta la fecha: marcarlo otra vez al poco no lo celebra dos veces)
+        if ("fin" in c) MauLector.libroAcabado(l.titulo)
     }
 
     /** Añade un libro (o, si ya está, lo enlaza a este archivo). Devuelve su id. */

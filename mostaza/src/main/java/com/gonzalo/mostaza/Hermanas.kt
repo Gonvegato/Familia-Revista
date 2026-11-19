@@ -18,10 +18,11 @@ object Hermanas {
         c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
     }
 
-    /** Azabache, en la ficha de ese título (Azabache 1.6.3 entiende «go» = «titulo:<ref>»). */
-    fun abreEnAzabache(c: Context, ref: String): Boolean {
+    /** Azabache, en la ficha de ese título (Azabache 1.6.3 entiende «go» = «titulo:<ref>»). [conMau]: Mau se va con ella (desde su bocadillo). */
+    fun abreEnAzabache(c: Context, ref: String, conMau: Boolean = false): Boolean {
         val i = c.packageManager.getLaunchIntentForPackage(AZABACHE) ?: return false
         i.putExtra("go", "titulo:$ref")
+        if (conMau) i.putExtra(com.gonzalo.familia.MauMovil.EXTRA_LLEGA, true)
         c.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true
     }
 }

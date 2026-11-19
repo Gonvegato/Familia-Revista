@@ -22,6 +22,8 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent); fichaPedida = fichaDe(intent); irPedido = irDe(intent)
         seguirLeyendoPedido(intent)
+        // Si la ha abierto una hermana desde el menú de Mau, Mau llega con ella
+        com.gonzalo.familia.MauMovil.miraSiLlega(intent)
     }
 
     private fun fichaDe(i: android.content.Intent?) = fichaPedidaDe(i)
@@ -56,10 +58,13 @@ class MainActivity : ComponentActivity() {
                         navigationBarStyle = if (oscuro) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
                     )
                 }
-                if (lectorDelante) androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize().background(Paper))
+                // (mientras solo se tapa la portada para abrir el lector, Mau no sale: ya sale en el libro)
+                if (lectorDelante) { com.gonzalo.familia.MauFuera(); androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize().background(Paper)) }
                 else MarfilApp(fichaPedida, { fichaPedida = null }, irPedido) { irPedido = null }
             }
         }
+        // Mau, el gato de la familia, encima de todo (sin barra de pestañas abajo: no hace falta margen)
+        com.gonzalo.familia.MauMovil.pon(this, "marfil", com.gonzalo.mau.Lugar.CASA)
     }
 
     /** Al volver a la app: colores de Atrio al día y la cuenta en directo. */

@@ -163,6 +163,9 @@ private fun VistaLector(st: EstadoLector, volver: Pantalla, nav: Nav) {
             if (flujo == "paginated" && pg < 0) return@collectLatest
             if (primera) { primera = false; antes = st.fraccion to System.currentTimeMillis(); return@collectLatest }
             Lectura.actividad()
+            // Para Mau: las páginas que quedan para acabar el capítulo (en páginas; deslizando no se cuentan) y si es tarde
+            if (flujo == "paginated") st.paginados[x.seccion]?.let { p -> Lectura.mau.pagina(x.seccion, (p.total - pg - st.porVista).coerceAtLeast(0))?.let { MauLector.quedan(it) } }
+            Lectura.miraTarde()
             val fr = st.fraccion
             // Tu ritmo (bytes por minuto, como lo mide el móvil): al pasar una página normal, sin pararte demasiado
             antes?.let { (f0, t0) ->

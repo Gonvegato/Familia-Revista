@@ -418,6 +418,15 @@ let activo = ahora(), enPausa = false
 // lector, la corta. Es lo que decide si un día cuenta como leído (mínimo 5 minutos seguidos).
 const HUECO = 3 * 60000
 let racha = 0
+// Para Mau (el gato de la app): los minutos leyendo seguidos, solo cuando cambian (no en cada toque); él dice algo a la media hora,
+// a la hora y a las dos horas
+let rachaMau = -1
+function mauRacha() {
+    const m = Math.floor(racha / 60000)
+    if (m === rachaMau) return
+    rachaMau = m
+    try { A.mauRacha && A.mauRacha(m) } catch (e) { }
+}
 function sumar(now) {
     if (enPausa) return
     const hueco = now - activo > HUECO
@@ -430,6 +439,7 @@ function sumar(now) {
     mio.days[d] = (mio.days[d] || 0) + add
     // (tras un hueco, ese rato dudoso cuenta como leído pero no como racha: la racha vuelve a empezar de cero)
     racha = hueco ? 0 : racha + add
+    mauRacha()
     const mejor = (mio.best ||= {})
     if (racha > (mejor[d] || 0)) mejor[d] = racha
     recontar()
@@ -459,8 +469,8 @@ function despierta() {
     if (on) despiertaT = setTimeout(() => { despiertaOn = false; try { A.keepScreenOn(false) } catch (e) { } }, DESPIERTA)
 }
 window.atrioPausa = on => {
-    if (on) { sumar(ahora()); enPausa = true; racha = 0; try { A.saveStats(JSON.stringify(stats)) } catch (e) { } }
-    else if (enPausa) { enPausa = false; activo = ahora(); racha = 0 }
+    if (on) { sumar(ahora()); enPausa = true; racha = 0; mauRacha(); try { A.saveStats(JSON.stringify(stats)) } catch (e) { } }
+    else if (enPausa) { enPausa = false; activo = ahora(); racha = 0; mauRacha() }
 }
 document.addEventListener('visibilitychange', () => window.atrioPausa(document.hidden))
 window.addEventListener('pagehide', () => window.atrioPausa(true))
@@ -555,6 +565,8 @@ function onRelocate({ detail }) {
     pasoVuelta()
     pasoBusqueda()
     drawStatus(detail)
+    // Para Mau: el capítulo y las páginas que quedan para acabarlo, las mismas de la línea de abajo (en un PDF no se sabe: -1)
+    try { const pm = isPDF ? null : paginas(detail); A.mauPagina && A.mauPagina(idxAhora() ?? -1, pm ? pm.cap : -1) } catch (e) { }
     $('#b-marca-cinta')?.classList.toggle('oculta', !currentMark())
     $('#p-barra').value = detail.fraction ?? 0
     $('#p-barra').style.setProperty('--leido', detail.fraction ?? 0)
@@ -618,6 +630,23 @@ function pintaVuelta() {
 }
 /** Ir a un sitio del libro desde un panel: con la vuelta preparada. */
 function irA(target) { saltoDesde(); closePanel(); return view.goTo(target) }
+
+// ---------------------------------------------------------------- Mau
+// Mau (el gato de la app) se sienta abajo: mientras hay algo abierto ahí (el menú, un panel, una nota al pie, la barra de un
+// subrayado o de la voz…), no sale, para no taparlo. Se le avisa solo cuando cambia.
+const MAU_OCULTA = ['#abajo', '#sel', '#palabra', '#pend', '#imagen', '#voz'], MAU_ON = ['#pie', '#panel']
+let mauTapado = null
+function miraMau() {
+    const t = MAU_OCULTA.some(q => { const el = $(q); return el && !el.classList.contains('oculta') }) ||
+        MAU_ON.some(q => $(q)?.classList.contains('on'))
+    if (t === mauTapado) return
+    mauTapado = t
+    try { A.mauTapado && A.mauTapado(t) } catch (e) { }
+}
+{
+    const obs = new MutationObserver(miraMau)
+    for (const q of [...MAU_OCULTA, ...MAU_ON]) { const el = $(q); if (el) obs.observe(el, { attributes: true, attributeFilter: ['class'] }) }
+}
 
 // ---------------------------------------------------------------- Toques
 // La app avisa cuando sabe cuánto ocupan las barras del móvil

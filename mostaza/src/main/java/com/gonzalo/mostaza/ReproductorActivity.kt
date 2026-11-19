@@ -12,6 +12,10 @@ import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.gonzalo.familia.MauFuera
+import com.gonzalo.familia.MauMargenAbajo
+import com.gonzalo.familia.MauMovil
+import com.gonzalo.mau.Lugar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -240,6 +244,8 @@ class ReproductorActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply { hide(WindowInsetsCompat.Type.systemBars()); systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE }
         setContent { MostazaTheme { PantallaReproductor() } }
+        // Mau, de espaldas, mirando contigo (no habla ni se duerme). Abajo; con los controles a la vista, encima de su barra (ver PantallaReproductor)
+        MauMovil.pon(this, "mostaza", Lugar.VIENDO)
         abre(e)
     }
 
@@ -264,6 +270,12 @@ class ReproductorActivity : ComponentActivity() {
             }, Modifier.fillMaxSize(), update = { it.player = player })
             // Atrás (el del mando a distancia también): primero cierra lo que esté abierto encima (audio, subtítulos, fuente); si no, sale
             androidx.activity.compose.BackHandler(enabled = estado.eleccion != null) { estado.eleccion = null }
+            // Mau no sale con el mando (en la tele o la sala de una tablet: se maneja con el dedo) ni cuando taparía lo que se abre a la
+            // derecha (audio, subtítulos, fuente; el episodio siguiente)
+            if (tele || estado.eleccion != null || estado.siguiente != null) MauFuera()
+            // Con la barra de abajo a la vista (la del tiempo, audio, subtítulos…), Mau se sube encima: no tapa sus botones ni el tiempo que
+            // falta. Escondidos los controles, vuelve a sentarse abajo del todo
+            else if (estado.visibles || estado.aviso != null) MauMargenAbajo(MARGEN_MAU)
             ControlesReproductor(estado, alTocar = { tocado() }, alPlay = { alternar() }, alSaltar = { s -> salta(s) }, alIr = { p -> vlc?.ve(p) ?: player?.seekTo(p); visionado?.sesion?.salto() },
                 alVolver = { finish() }, alAudio = { eligeAudio() }, alSubs = { eligeSubs() }, alFuente = { eligeFuente() }, alOtro = { conOtro() }, alDecodificador = { otroDecodificador() },
                 alSiguiente = { siguienteYa() }, alCancelarSiguiente = { estado.cuentaAtras = -1; estado.siguiente = null }, alCorte = { siguienteFuente() }, alNoCambiar = { seguirConEsta() },
@@ -1040,3 +1052,9 @@ fun tiempo(ms: Long): String {
     val s = ms / 1000; val h = s / 3600; val m = (s % 3600) / 60; val x = s % 60
     return if (h > 0) "%d:%02d:%02d".format(h, m, x) else "%d:%02d".format(m, x)
 }
+
+/**
+ * Lo que ocupa abajo la barra del reproductor en el móvil (la del tiempo, más la fila de Audio, Subtítulos, Fuente…: unos 130 dp): con los
+ * controles a la vista, Mau se sienta encima, sin tapar sus botones (en la tele no sale: se maneja con el dedo).
+ */
+val MARGEN_MAU = 140.dp

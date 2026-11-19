@@ -23,6 +23,7 @@ import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -153,10 +154,47 @@ class LectorActivity : ComponentActivity() {
         window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(bg0))
         marco = android.widget.FrameLayout(this).also { it.setBackgroundColor(bg0) }
         setContentView(marco)
+        // Mau, leyendo contigo: abajo, encima de la línea de estado del lector (que va sobre el hueco de la barra de Android, aunque
+        // esté oculta, más 10 px y su letra), para no tapar lo que queda del capítulo ni el porcentaje
+        com.gonzalo.familia.MauMovil.pon(this, "marfil", com.gonzalo.mau.Lugar.LEYENDO, margenAbajo = (abajoDelSistema() + 30f).dp)
         bars(false)
         window.decorView.viewTreeObserver.registerFrameCommitCallback { montar() }
         // (por si ese fotograma tarda: no se espera más de medio segundo)
         handler.postDelayed({ montar() }, 500)
+    }
+
+    /** Lo que ocupa abajo la barra de Android aunque esté oculta (en dp), como `--safe-bottom` del lector; sin saberlo, la de tres botones. */
+    private fun abajoDelSistema(): Float {
+        if (android.os.Build.VERSION.SDK_INT < 30) return 48f
+        val t = android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout()
+        return runCatching { windowManager.currentWindowMetrics.windowInsets.getInsetsIgnoringVisibility(t).bottom / resources.displayMetrics.density }.getOrDefault(48f)
+    }
+
+    // ---- Mau: lo que le cuenta el lector (las páginas que quedan del capítulo, el rato seguido leyendo, el objetivo del día, la hora)
+    private val mau = MauLectura()
+    /** El día de la última vez que se miró si es tarde (para no preguntarlo en cada página). */
+    @Volatile private var tardeMirada = ""
+    /** Lo leído hoy en los demás libros (se mira una vez al día: mientras lees aquí, solo cambia este) y de qué día es. */
+    @Volatile private var otrosHoy = 0L
+    @Volatile private var otrosDia = ""
+    /** Si el objetivo de hoy ya estaba cumplido la última vez que se miró (null: aún no se ha mirado: lo de antes de abrir no avisa). */
+    @Volatile private var objetivoCumplido: Boolean? = null
+    /** Si Mau se ha apartado porque hay algo abierto abajo (el menú, un panel). */
+    private var mauFuera = false
+
+    /** ¿Has llegado hoy a tu objetivo de lectura (todos tus libros, como la portada), con [o] el estado de este libro? Al pasarlo, Mau lo celebra. */
+    private fun miraObjetivo(o: JSONObject) {
+        val meta = runCatching { Ajustes.metaLectura(this) }.getOrDefault(0)
+        if (meta <= 0) { objetivoCumplido = null; return }
+        val hoy = java.time.LocalDate.now().toString()
+        if (otrosDia != hoy) {
+            otrosHoy = Biblioteca.libros.toList().filter { it.id != id }.sumOf { EstadoLectura.estado(this, it.id).optJSONObject("stats")?.optJSONObject("days")?.optLong(hoy) ?: 0L }
+            otrosDia = hoy; objetivoCumplido = null
+        }
+        val cumplido = otrosHoy + (o.optJSONObject("stats")?.optJSONObject("days")?.optLong(hoy) ?: 0L) >= meta * 60_000L
+        val antes = objetivoCumplido
+        objetivoCumplido = cumplido
+        if (antes == false && cumplido) MauLector.objetivo()
     }
 
     private var bg0 = AColor.BLACK
@@ -557,6 +595,8 @@ class LectorActivity : ComponentActivity() {
             val o = EstadoLectura.estado(this@LectorActivity, id)
             // Donde se abre el libro es el sitio de referencia para saber si luego das un salto largo
             ancla = empiezaEn(o).second; preguntado = false
+            // (cómo va el objetivo de hoy al abrir: si ya estaba cumplido, Mau no lo celebra otra vez)
+            runCatching { miraObjetivo(o) }
             val name = o.optString("name").ifBlank { "libro" }
             return JSONObject()
                 .put("title", Biblioteca.por(id)?.titulo.orEmpty())
@@ -650,6 +690,30 @@ class LectorActivity : ComponentActivity() {
             // Mezclado con lo guardado: si mientras leías llegó el tiempo de otro dispositivo, no se pierde
             it.put("stats", ReadStats.merge(it.optJSONObject("stats"), JSONObject(json), Cuenta.dispositivo, Cuenta.dispositivo))
             EstadoLectura.pasaALeyendo(this@LectorActivity, id, it)
+            runCatching { miraObjetivo(it) }
+        }
+
+        /**
+         * En cada página: el capítulo [cap] y las páginas que quedan para acabarlo [quedan] (las de la línea de abajo; -1 si no se sabe,
+         * como en un PDF). Mau avisa cuando quedan 3 o menos (una vez por capítulo) y, si es tarde, que es hora de dormir.
+         */
+        @JavascriptInterface
+        fun mauPagina(cap: Int, quedan: Int) {
+            if (cap >= 0 && quedan >= 0) mau.pagina(cap, quedan)?.let { MauLector.quedan(it) }
+            val ahora = java.time.LocalDateTime.now()
+            if (MauLectura.deNoche(ahora.hour) && tardeMirada != ahora.toLocalDate().toString()) { tardeMirada = ahora.toLocalDate().toString(); MauLector.tarde() }
+        }
+
+        /** Los minutos que llevas leyendo seguidos (el lector avisa cuando cambian). A la media hora, la hora y las dos horas, Mau lo dice. */
+        @JavascriptInterface
+        fun mauRacha(min: Int) { mau.racha(min)?.let { MauLector.llevas(it) } }
+
+        /** Hay algo abierto abajo (el menú, un panel, una nota al pie…): mientras, Mau no sale, para no taparlo. */
+        @JavascriptInterface
+        fun mauTapado(si: Boolean) = runOnUiThread {
+            if (si == mauFuera || isDestroyed) return@runOnUiThread
+            mauFuera = si
+            if (si) com.gonzalo.mau.ui.Mau.sal(this@LectorActivity) else com.gonzalo.mau.ui.Mau.vuelveA(this@LectorActivity)
         }
 
         /** Lee una frase en voz alta; al acabar contesta en window.atrioSpoken(id, error). */

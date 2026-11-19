@@ -284,6 +284,8 @@ object Biblioteca {
         val ahora = System.currentTimeMillis()
         val l = (if (previo != null && previo.estado != Estado.LEIDO && l0.estado == Estado.LEIDO && (l0.terminado == 0L || l0.terminado < ahora - REPETIDA_MS)) l0.copy(terminados = l0.terminados + ahora) else l0)
             .copy(id = id, anadido = l0.anadido.takeIf { it > 0 } ?: previo?.anadido?.takeIf { it > 0 } ?: ahora)
+        // Y Mau lo celebra (solo si se apunta la fecha: deshacer «Movido a Leídos» y volver a marcarlo no lo celebra dos veces)
+        if (l.terminados.size > l0.terminados.size) MauLector.libroAcabado(l.titulo)
         val archivoNuevo = l.uri.isNotBlank() && uris[id] != l.uri
         if (archivoNuevo) { uris[id] = l.uri; guardaLocal() }
         val cc = col ?: return

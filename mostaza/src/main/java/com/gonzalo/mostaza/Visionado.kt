@@ -121,6 +121,8 @@ class Visionado(
         val visto = dur > 0 && pos >= dur * Biblioteca.VISTO
         if (meta != null && meta.esSerie && video != null) Biblioteca.recalculaSerie(t, meta, ahora(), trasVer = promovido)
         else if (visto && t.estado != Estado.VISTO) Biblioteca.cambiaEstado(t.ref, Estado.VISTO, ahora())
+        // Acabado (la peli o el episodio, visto): al volver a la app, Mau pregunta qué tal
+        if (visto) MauHathor.visto(t.ref, ahora())
     }
 }
 

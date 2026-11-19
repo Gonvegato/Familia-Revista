@@ -19,14 +19,19 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gonzalo.familia.pc.LaFamilia
+import com.gonzalo.familia.pc.MauLugar
+import com.gonzalo.familia.pc.MauMargenAbajo
 import com.gonzalo.familia.pc.Sitio
 import com.gonzalo.familia.pc.revista.*
+import com.gonzalo.mau.Lugar
 import kotlinx.coroutines.launch
 
 /** Dónde estás en Mostaza. */
@@ -129,6 +134,8 @@ fun AppMostaza(inicial: Pantalla = Pantalla.Portada) {
         }
         BandaReproductor(nav)
     }
+    // Al acabar de ver algo (y cerrar mpv), Mau pregunta qué tal
+    MauTrasVer()
 }
 
 /**
@@ -140,8 +147,14 @@ fun BandaReproductor(nav: Nav) {
     val e = Reproductor.estado
     val aviso = e.aviso
     if (!e.activo && aviso == null) return
+    // Mientras mpv tiene algo puesto, Mau lo mira contigo (de espaldas: no habla ni se duerme)
+    if (e.activo) MauLugar(Lugar.VIENDO)
+    // Y se sienta encima de la banda, sin tapar sus botones (lo que mida, con lo de elegir audio o subtítulos abierto o no)
+    val densidad = LocalDensity.current
+    var alto by remember { mutableStateOf(0.dp) }
+    MauMargenAbajo(alto)
     var eligiendo by remember { mutableStateOf(0) }   // 0 nada, 1 audio, 2 subtítulos, 3 fuente
-    Column(Modifier.fillMaxWidth().background(Sand)) {
+    Column(Modifier.fillMaxWidth().background(Sand).onSizeChanged { alto = with(densidad) { it.height.toDp() } }) {
         Filete(2.dp)
         Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
