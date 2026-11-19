@@ -148,7 +148,7 @@ private fun RevistaHome(m: ShellModel) {
             Column {
                 PortadaFamilia(all, m.kinds.filter { it.isBook }.flatMap { k -> m.entries(k).mapNotNull { it.game } },
                     m.kinds.filter { it.isGame }.flatMap { k -> m.entries(k).mapNotNull { it.game } },
-                    m.kinds.filter { it.isMovie || it.isTv }.flatMap { k -> m.entries(k).mapNotNull { it.game } }) { m.open(it) }
+                    m.kinds.filter { it.isMovie || it.isTv }.flatMap { k -> m.entries(k).mapNotNull { it.game } }, tuyos = !m.readOnly) { m.open(it) }
             }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {

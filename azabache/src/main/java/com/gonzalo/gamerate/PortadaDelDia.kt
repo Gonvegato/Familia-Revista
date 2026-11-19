@@ -365,10 +365,11 @@ fun SemanaFamilia(semana: List<DiaSemana>, racha: Int, hoy: Long, modifier: Modi
 
 /**
  * La cabeza de la portada de Jonsu: la portada del día, los retos de todas y la semana. [entradas]: todo lo tuyo (para la portada y el fondo de
- * lo destacado y para abrirlo aquí); [libros], [juegos], [cine]: lo de cada categoría (para contar los terminados del año).
+ * lo destacado y para abrirlo aquí); [libros], [juegos], [cine]: lo de cada categoría (para contar los terminados del año). [tuyos]: es lo tuyo
+ * (no lo de tu pareja): Mau celebra los retos que se cumplen.
  */
 @Composable
-fun PortadaFamilia(entradas: List<ShellEntry>, libros: List<Game>, juegos: List<Game>, cine: List<Game>, abrir: (ShellEntry) -> Unit) {
+fun PortadaFamilia(entradas: List<ShellEntry>, libros: List<Game>, juegos: List<Game>, cine: List<Game>, tuyos: Boolean = true, abrir: (ShellEntry) -> Unit) {
     val hoy = LocalDate.now()
     val hoyD = hoy.toEpochDay()
     val porLibro = remember(entradas) { entradas.filter { it.kind.isBook }.associateBy { it.id } }
@@ -378,7 +379,10 @@ fun PortadaFamilia(entradas: List<ShellEntry>, libros: List<Game>, juegos: List<
     CartelDelDia(p, hoyD, ficha, ficha?.let { f -> { abrir(f) } })
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
         val palabrasHoy = datos.dias[hoyD].orEmpty().sumOf { it.palabras }
-        RetosDeTodas(retosDeTodas(datos.metas, terminadosEnAno(libros, hoy.year), terminadosEnAno(juegos, hoy.year), terminadosEnAno(cine, hoy.year), palabrasHoy, hoy))
+        val retos = retosDeTodas(datos.metas, terminadosEnAno(libros, hoy.year), terminadosEnAno(juegos, hoy.year), terminadosEnAno(cine, hoy.year), palabrasHoy, hoy)
+        RetosDeTodas(retos)
+        // Mau celebra los retos que se acaban de cumplir (cada uno, una vez)
+        if (tuyos) LaunchedEffect(retos.joinToString { "${it.hechos}/${it.meta}" }, hoyD) { MauJonsu.miraRetos(retos, hoy) }
         SemanaFamilia(semanaApilada(datos.dias, hoyD), diasSeguidosFamilia(datos.dias, hoyD), hoyD)
     }
 }

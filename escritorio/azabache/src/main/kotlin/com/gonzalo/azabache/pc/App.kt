@@ -50,6 +50,8 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
     // Tu pareja (si la tienes): se mira en la cuenta una vez, sin parar la ventana
     var pareja by remember { mutableStateOf(Cuenta.uidParejaSabido()) }
     LaunchedEffect(LaFamilia.dentro) { if (LaFamilia.dentro) pareja = withContext(Dispatchers.IO) { runCatching { Cuenta.uidPareja() }.getOrDefault("") } }
+    // Mau (lo pone la ventana): una vez al día, al abrir, saluda con lo de ayer
+    LaunchedEffect(Unit) { MauJonsu.saluda() }
     // La columna de la izquierda: la portada, tus categorías, y lo demás
     val destinos = buildList<Pair<Entrada, Pantalla>> {
         add(Entrada("Portada", grupo = "Jonsu") to Pantalla.Inicio)

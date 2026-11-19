@@ -7,6 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.gonzalo.familia.MauMovil
+import com.gonzalo.mau.Lugar
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
@@ -211,6 +213,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        // Mau, el gato de la suite: en su propia capa, encima de todo (también de la foto del cambio de tema, que va dentro de la
+        // pantalla de arriba). Si viene de otra hermana, primero dice que ha llegado; luego, una vez al día, saluda con lo de ayer.
+        val llega = intent?.getBooleanExtra(MauMovil.EXTRA_LLEGA, false) == true
+        MauMovil.pon(this, "azabache", Lugar.CASA)
+        MauJonsu.saluda(this, llega)
     }
 
     /** Foto de lo que se ve ahora mismo (null si no se puede). */
@@ -249,6 +256,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        MauMovil.miraSiLlega(intent)
         read(intent)
     }
 }
