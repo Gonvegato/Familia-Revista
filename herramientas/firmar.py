@@ -16,7 +16,21 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # La clave de antes de cada app (None: nació ya con la de la familia, no hay linaje)
 VIEJA = {"hiedra": "hiedra", "marfil": "marfil", "cobalto": "cobalto", "azabache": "valorin", "mostaza": None, "cobre": None, "ptah": None, "shai": None, "ammit": None}
 NOMBRE = {"hiedra": "Bastet", "marfil": "Seshat", "cobalto": "Thot", "azabache": "Jonsu", "mostaza": "Hathor", "cobre": "Nut", "ptah": "Widgets", "shai": "FcFeed", "ammit": "Ammit"}
-BT = "/opt/android-sdk/build-tools/35.0.0"
+def _build_tools():
+    for base in (os.environ.get("ANDROID_HOME"), os.environ.get("ANDROID_SDK_ROOT"), "/opt/android-sdk", "/usr/local/lib/android/sdk"):
+        if not base:
+            continue
+        p = os.path.join(base, "build-tools", "35.0.0")
+        if os.path.isdir(p):
+            return p
+        bt_dir = os.path.join(base, "build-tools")
+        if os.path.isdir(bt_dir):
+            vers = sorted([d for d in os.listdir(bt_dir) if os.path.isdir(os.path.join(bt_dir, d))], reverse=True)
+            if vers:
+                return os.path.join(bt_dir, vers[0])
+    return "/opt/android-sdk/build-tools/35.0.0"
+
+BT = _build_tools()
 
 def pases():
     p = {}

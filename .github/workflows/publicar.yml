@@ -1,0 +1,222 @@
+# Compila, firma con tus claves (secreto FIRMA_B64) y sube automáticamente los APK de Android y los .dmg de Mac
+# directamente a tu Google Drive («Familia/versiones», con su .sha256).
+#
+# Se dispara:
+#  - Solo al cambiar la versión en algún build.gradle.kts de main (sube únicamente las apps cuya versión cambió).
+#  - A mano desde la pestaña Actions → «Publicar en Google Drive» → Run workflow (puedes elegir todas o una sola app).
+#
+# Secretos necesarios en Settings → Secrets and variables → Actions:
+#  - FIRMA_B64            (base64 de un .tar.gz o .zip con los archivos de firma/)
+#  - GDRIVE_CLIENT_ID
+#  - GDRIVE_CLIENT_SECRET
+#  - GDRIVE_REFRESH_TOKEN
+#  - GDRIVE_CARPETA       (opcional; vacío = «Familia»)
+name: Publicar en Google Drive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'azabache/build.gradle.kts'
+      - 'hiedra/build.gradle.kts'
+      - 'marfil/build.gradle.kts'
+      - 'cobalto/build.gradle.kts'
+      - 'mostaza/build.gradle.kts'
+      - 'cobre/build.gradle.kts'
+      - 'escritorio/*/build.gradle.kts'
+  workflow_dispatch:
+    inputs:
+      objetivo:
+        description: 'Qué publicar (todo, android, escritorio, o una app: azabache, hiedra, marfil, seskobo, cobalto, mostaza, cobre)'
+        required: true
+        default: 'todo'
+        type: choice
+        options:
+          - todo
+          - android
+          - escritorio
+          - azabache
+          - hiedra
+          - marfil
+          - seskobo
+          - cobalto
+          - mostaza
+          - cobre
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publicar-gdrive
+  cancel-in-progress: false
+
+jobs:
+  detectar:
+    runs-on: ubuntu-24.04
+    outputs:
+      android: ${{ steps.plan.outputs.android }}
+      escritorio: ${{ steps.plan.outputs.escritorio }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: plan
+        run: |
+          OBJ="${{ github.event.inputs.objetivo }}"
+          ANDROID=""
+          ESCRITORIO=""
+          if [ -n "$OBJ" ]; then
+            case "$OBJ" in
+              todo)       ANDROID="azabache hiedra marfil seskobo cobalto mostaza cobre"; ESCRITORIO="si" ;;
+              android)    ANDROID="azabache hiedra marfil seskobo cobalto mostaza cobre" ;;
+              escritorio) ESCRITORIO="si" ;;
+              *)          ANDROID="$OBJ" ;;
+            esac
+          else
+            CAMBIOS=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)
+            for app in azabache hiedra marfil cobalto mostaza cobre; do
+              if echo "$CAMBIOS" | grep -qx "$app/build.gradle.kts"; then
+                ANDROID="$ANDROID $app"
+                [ "$app" = "marfil" ] && ANDROID="$ANDROID seskobo"
+              fi
+            done
+            if echo "$CAMBIOS" | grep -q '^escritorio/.*/build\.gradle\.kts$'; then
+              ESCRITORIO="si"
+            fi
+          fi
+          ANDROID="$(echo "$ANDROID" | xargs)"
+          echo "android=$ANDROID" >> "$GITHUB_OUTPUT"
+          echo "escritorio=$ESCRITORIO" >> "$GITHUB_OUTPUT"
+          echo "Plan → Android=[$ANDROID] Escritorio=[$ESCRITORIO]"
+
+  android:
+    needs: detectar
+    if: needs.detectar.outputs.android != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Comprobar secretos
+        id: check
+        env:
+          FIRMA_B64: ${{ secrets.FIRMA_B64 }}
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$FIRMA_B64" ] || [ -z "$GDRIVE_CLIENT_ID" ] || [ -z "$GDRIVE_CLIENT_SECRET" ] || [ -z "$GDRIVE_REFRESH_TOKEN" ]; then
+            echo "Faltan secretos en Settings → Secrets → Actions (FIRMA_B64, GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, GDRIVE_REFRESH_TOKEN). Se omite la publicación."
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.listo == 'si'
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.check.outputs.listo == 'si'
+      - name: Preparar claves de firma (en memoria temporal del runner)
+        if: steps.check.outputs.listo == 'si'
+        env:
+          FIRMA_B64: ${{ secrets.FIRMA_B64 }}
+        run: |
+          set -e
+          mkdir -p firma
+          printf '%s' "$FIRMA_B64" | tr -d '\r\n ' | base64 -d > /tmp/firma.bin
+          if file /tmp/firma.bin | grep -qi zip; then
+            unzip -qo /tmp/firma.bin -d /tmp/firma_ext
+          else
+            mkdir -p /tmp/firma_ext
+            tar -xzf /tmp/firma.bin -C /tmp/firma_ext
+          fi
+          find /tmp/firma_ext -maxdepth 3 -type f \( -name '*.keystore' -o -name '*.lineage' -o -name 'claves.properties' \) -exec cp {} firma/ \;
+          rm -rf /tmp/firma.bin /tmp/firma_ext
+          test -f firma/familia.keystore && test -f firma/claves.properties || { echo "Faltan familia.keystore o claves.properties dentro de FIRMA_B64"; exit 1; }
+      - name: Compilar, firmar y subir APKs a Google Drive
+        if: steps.check.outputs.listo == 'si'
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+          GDRIVE_CARPETA: ${{ secrets.GDRIVE_CARPETA }}
+        run: |
+          set -e
+          mkdir -p dist-android
+          for app in ${{ needs.detectar.outputs.android }}; do
+            echo "=== $app ==="
+            if [ "$app" = "seskobo" ]; then
+              ./gradlew :marfil:assembleRelease -Pseskobo --console=plain
+              APK=$(python3 herramientas/firmar.py marfil | head -n 1)
+            elif [ "$app" = "azabache" ]; then
+              ./gradlew :azabache:assembleRelease -Pabis=arm64-v8a --console=plain
+              APK=$(python3 herramientas/firmar.py azabache | head -n 1)
+            else
+              ./gradlew ":$app:assembleRelease" --console=plain
+              APK=$(python3 herramientas/firmar.py "$app" | head -n 1)
+            fi
+            cp "$APK" dist-android/
+            python3 herramientas/gdrive/subir-version.py "$APK"
+          done
+          ls -la dist-android
+      - name: Limpiar claves de firma
+        if: always()
+        run: rm -f firma/*.keystore firma/*.lineage firma/claves.properties
+      - if: steps.check.outputs.listo == 'si'
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks-firmados
+          path: dist-android/*.apk
+          retention-days: 14
+
+  escritorio:
+    needs: detectar
+    if: needs.detectar.outputs.escritorio == 'si'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Comprobar secretos de Google Drive
+        id: check
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$GDRIVE_CLIENT_ID" ] || [ -z "$GDRIVE_CLIENT_SECRET" ] || [ -z "$GDRIVE_REFRESH_TOKEN" ]; then
+            echo "Faltan secretos de Google Drive en Settings → Secrets → Actions. Se omite la subida."
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.listo == 'si'
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.check.outputs.listo == 'si'
+      - name: Compilar .dmg de Mac y subir a Google Drive
+        if: steps.check.outputs.listo == 'si'
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+          GDRIVE_CARPETA: ${{ secrets.GDRIVE_CARPETA }}
+        run: |
+          set -e
+          ./gradlew -PsoloEscritorio packageDmg --console=plain
+          mkdir -p dist-mac
+          nombre() { case "$1" in hiedra) echo Bastet ;; marfil) echo Seshat ;; cobalto) echo Thot ;; azabache) echo Jonsu ;; mostaza) echo Hathor ;; cobre) echo Nut ;; *) echo "$(echo ${1:0:1} | tr '[:lower:]' '[:upper:]')${1:1}" ;; esac; }
+          for d in escritorio/*/; do
+            a=$(basename "$d"); [ "$a" = familia ] && continue
+            [ -d "$d/build/compose/binaries/main/dmg" ] || continue
+            v=$(grep -m1 '^val version' "$d/build.gradle.kts" | cut -d'"' -f2)
+            A="$(nombre "$a")"
+            cp "$d"/build/compose/binaries/main/dmg/*.dmg "dist-mac/$A-$v-mac.dmg"
+          done
+          ls -la dist-mac
+          python3 herramientas/gdrive/subir-version.py dist-mac/*.dmg
+      - if: steps.check.outputs.listo == 'si'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmg-mac-publicados
+          path: dist-mac/*.dmg
+          retention-days: 14
