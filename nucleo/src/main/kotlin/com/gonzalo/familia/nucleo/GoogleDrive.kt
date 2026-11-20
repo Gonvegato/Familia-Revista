@@ -671,5 +671,114 @@ class GoogleDrive(
 
         fun esEnlaceGoogleDrive(enlace: String): Boolean =
             enlace.contains("drive.google.com/", ignoreCase = true) && extraeIdEnlace(enlace) != null
+
+        /**
+         * Autorización OAuth2 sin terminal ni scripts (vale igual en Android y en escritorio):
+         * abre un servidor local efímero en `127.0.0.1:<puerto>`, lanza el navegador con [abrirUrl],
+         * espera la redirección de Google con el código y lo canjea por un `refresh_token`.
+         *
+         * Bloqueante (red y espera de usuario): llamar fuera del hilo principal.
+         */
+        fun autorizarEnNavegador(
+            clientId: String,
+            clientSecret: String,
+            abrirUrl: (String) -> Unit,
+            timeoutMs: Int = 180_000,
+            authUrlBase: String = "https://accounts.google.com/o/oauth2/v2/auth",
+            tokenUrl: String = "https://oauth2.googleapis.com/token",
+        ): String {
+            val cid = clientId.trim()
+            val csec = clientSecret.trim()
+            if (cid.isBlank() || csec.isBlank()) throw Fallo("Pega tu Client ID y tu Client Secret antes de continuar")
+            val estado = java.util.UUID.randomUUID().toString().replace("-", "")
+            val srv = java.net.ServerSocket(0, 5, java.net.InetAddress.getByName("127.0.0.1"))
+            srv.soTimeout = timeoutMs
+            val redirectUri = "http://127.0.0.1:${srv.localPort}"
+            val authUrl = authUrlBase +
+                "?client_id=${enc(cid)}" +
+                "&redirect_uri=${enc(redirectUri)}" +
+                "&response_type=code" +
+                "&scope=${enc("https://www.googleapis.com/auth/drive")}" +
+                "&access_type=offline" +
+                "&prompt=consent" +
+                "&state=${enc(estado)}"
+            val codigo = try {
+                abrirUrl(authUrl)
+                esperaCodigoOAuth(srv, estado, timeoutMs)
+            } finally {
+                runCatching { srv.close() }
+            }
+            return canjeaCodigoPorRefresh(cid, csec, codigo, redirectUri, tokenUrl)
+        }
+
+        private fun esperaCodigoOAuth(srv: java.net.ServerSocket, estadoEsperado: String, timeoutMs: Int): String {
+            val limite = System.currentTimeMillis() + timeoutMs
+            while (System.currentTimeMillis() < limite) {
+                val restante = (limite - System.currentTimeMillis()).coerceAtLeast(500L).toInt()
+                srv.soTimeout = restante
+                val sock = try {
+                    srv.accept()
+                } catch (_: java.net.SocketTimeoutException) {
+                    throw Fallo("Tiempo agotado esperando la autorización de Google. Vuelve a intentarlo.")
+                }
+                sock.use { s ->
+                    s.soTimeout = 5_000
+                    val primera = s.getInputStream().bufferedReader(Charsets.UTF_8).readLine().orEmpty()
+                    val target = primera.split(' ').getOrNull(1).orEmpty()
+                    if (target.startsWith("/favicon.ico")) {
+                        val r = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+                        s.getOutputStream().write(r.toByteArray(Charsets.UTF_8))
+                        return@use
+                    }
+                    val query = target.substringAfter('?', "")
+                    val params = query.split('&').filter { '=' in it }.associate {
+                        java.net.URLDecoder.decode(it.substringBefore('='), "UTF-8") to
+                            java.net.URLDecoder.decode(it.substringAfter('='), "UTF-8")
+                    }
+                    val err = params["error"]
+                    val st = params["state"]
+                    val code = params["code"]
+                    val html = if (err == null && st == estadoEsperado && !code.isNullOrBlank()) {
+                        "<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
+                            "<body style='font-family:sans-serif;padding:2rem;text-align:center'>" +
+                            "<h2>¡Listo!</h2><p>Google Drive conectado. Ya puedes cerrar esta pestaña y volver a Jonsu.</p></body>"
+                    } else {
+                        "<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
+                            "<body style='font-family:sans-serif;padding:2rem;text-align:center'>" +
+                            "<h2>No se pudo conectar</h2><p>${err ?: "Respuesta no válida"}. Puedes volver a Jonsu e intentarlo otra vez.</p></body>"
+                    }
+                    val bytes = html.toByteArray(Charsets.UTF_8)
+                    val hdr = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${bytes.size}\r\nConnection: close\r\n\r\n"
+                    s.getOutputStream().apply { write(hdr.toByteArray(Charsets.UTF_8)); write(bytes); flush() }
+                    if (!err.isNullOrBlank()) throw Fallo("Google canceló el acceso ($err)")
+                    if (st != estadoEsperado) throw Fallo("El estado de seguridad de Google no coincide")
+                    if (!code.isNullOrBlank()) return code
+                }
+            }
+            throw Fallo("Tiempo agotado esperando la autorización de Google.")
+        }
+
+        private fun canjeaCodigoPorRefresh(cid: String, csec: String, codigo: String, redirectUri: String, tokenUrl: String): String {
+            val cuerpo = "code=${enc(codigo)}&client_id=${enc(cid)}&client_secret=${enc(csec)}&redirect_uri=${enc(redirectUri)}&grant_type=authorization_code"
+            val c = (java.net.URL(tokenUrl).openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                doOutput = true
+                connectTimeout = 20_000
+                readTimeout = 30_000
+                setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            }
+            try {
+                c.outputStream.use { it.write(cuerpo.toByteArray(Charsets.UTF_8)) }
+                val code = c.responseCode
+                val txt = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
+                if (code !in 200..299) throw Fallo("Google no aceptó el código ($code): ${txt.take(200)}")
+                val m = runCatching { Json.lee(txt) }.getOrNull().comoMapa()
+                val refresh = m["refresh_token"].comoTexto()
+                if (refresh.isBlank()) throw Fallo("Google no devolvió refresh_token. Revoca «Familia» en myaccount.google.com/permissions y vuelve a intentarlo.")
+                return refresh
+            } finally {
+                c.disconnect()
+            }
+        }
     }
 }

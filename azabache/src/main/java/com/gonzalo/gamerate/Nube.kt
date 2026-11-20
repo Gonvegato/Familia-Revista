@@ -594,6 +594,9 @@ fun NubeSettings(say: (String) -> Unit) {
     var shots by remember { mutableStateOf(KDrive.shots(ctx)) }
     var mostrarKDrive by remember { mutableStateOf(kdOn && !gdOn) }
 
+    var autorizando by remember { mutableStateOf(false) }
+    var mostrarManual by remember { mutableStateOf(false) }
+
     Text("Google Drive", fontWeight = FontWeight.Bold, fontSize = 15.sp)
     if (!gdOn) {
         Text(
@@ -601,18 +604,39 @@ fun NubeSettings(say: (String) -> Unit) {
             color = UiSoft, fontSize = 13.sp
         )
         Plegado(
-            "Crea un cliente OAuth «Desktop app» en Google Cloud Console (con Google Drive API activada y «Publish app» en la pantalla de consentimiento) " +
-                "y saca el Refresh Token una sola vez con herramientas/gdrive/autorizar.py. Las claves van a /claves (solo las lee tu sesión) y las comparten todas las apps."
+            "Solo tienes que pegar tu ID de cliente y tu Secreto de cliente (de Google Cloud → Aplicación de escritorio) y pulsar «Iniciar sesión con Google». " +
+                "Se abrirá el navegador, aceptas el permiso y Jonsu guarda todo solo para las 6 apps (en el móvil y en el ordenador)."
         )
-        CampoRevista("Client ID", gdCid, "…apps.googleusercontent.com", ascii = true) { gdCid = it }
-        CampoRevista("Client Secret", gdCsec, "secreto OAuth", secreto = true, ascii = true) { gdCsec = it }
-        CampoRevista("Refresh Token", gdRtok, "token de autorizar.py", secreto = true, ascii = true) { gdRtok = it }
-        CampoRevista("Carpeta raíz (opcional)", gdDir, "ID o URL (vacío: «Familia»)", ascii = true) { gdDir = it }
-        MagLink("Conectar Google Drive", "Comprueba las credenciales y busca/crea la carpeta", accent = true) {
-            if (gdCid.isBlank() || gdCsec.isBlank() || gdRtok.isBlank()) { say("Falta Client ID, Client Secret o Refresh Token"); return@MagLink }
-            com.gonzalo.familia.NubeFamilia.saveGDrive(ctx, gdCid, gdCsec, gdRtok, gdDir)
+        CampoRevista("ID de cliente", gdCid, "…apps.googleusercontent.com", ascii = true) { gdCid = it }
+        CampoRevista("Secreto de cliente", gdCsec, "GOCSPX-…", secreto = true, ascii = true) { gdCsec = it }
+        CampoRevista("Carpeta raíz (opcional)", gdDir, "vacío: «Familia»", ascii = true) { gdDir = it }
+        MagLink(
+            if (autorizando) "Esperando a Google en el navegador…" else "Iniciar sesión con Google",
+            "Abre el navegador y conecta Google Drive automáticamente (sin terminal)",
+            accent = true
+        ) {
+            if (autorizando) return@MagLink
+            if (gdCid.isBlank() || gdCsec.isBlank()) { say("Pega antes tu ID de cliente y tu Secreto de cliente"); return@MagLink }
+            autorizando = true
             scope.launch {
                 try {
+                    val rtok = withContext(Dispatchers.IO) {
+                        com.gonzalo.familia.nucleo.GoogleDrive.autorizarEnNavegador(
+                            clientId = gdCid,
+                            clientSecret = gdCsec,
+                            abrirUrl = { url ->
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    runCatching {
+                                        ctx.startActivity(
+                                            android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url))
+                                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
+                    com.gonzalo.familia.NubeFamilia.saveGDrive(ctx, gdCid, gdCsec, rtok, gdDir)
                     say(com.gonzalo.familia.NubeFamilia.testGDrive(ctx))
                     com.gonzalo.familia.NubeFamilia.confirmaGDrive(ctx)
                     gdOn = true
@@ -620,6 +644,29 @@ fun NubeSettings(say: (String) -> Unit) {
                 } catch (e: Exception) {
                     com.gonzalo.familia.NubeFamilia.descartaGDrive(ctx)
                     say(e.message ?: "No se pudo conectar con Google Drive")
+                } finally {
+                    autorizando = false
+                }
+            }
+        }
+        MagLink(if (mostrarManual) "Ocultar Refresh Token manual" else "Ya tengo un Refresh Token") {
+            mostrarManual = !mostrarManual
+        }
+        if (mostrarManual) {
+            CampoRevista("Refresh Token", gdRtok, "token OAuth", secreto = true, ascii = true) { gdRtok = it }
+            MagLink("Conectar con Refresh Token", "Comprueba las credenciales y busca/crea la carpeta") {
+                if (gdCid.isBlank() || gdCsec.isBlank() || gdRtok.isBlank()) { say("Falta Client ID, Client Secret o Refresh Token"); return@MagLink }
+                com.gonzalo.familia.NubeFamilia.saveGDrive(ctx, gdCid, gdCsec, gdRtok, gdDir)
+                scope.launch {
+                    try {
+                        say(com.gonzalo.familia.NubeFamilia.testGDrive(ctx))
+                        com.gonzalo.familia.NubeFamilia.confirmaGDrive(ctx)
+                        gdOn = true
+                        NubeSync.enqueue(ctx)
+                    } catch (e: Exception) {
+                        com.gonzalo.familia.NubeFamilia.descartaGDrive(ctx)
+                        say(e.message ?: "No se pudo conectar con Google Drive")
+                    }
                 }
             }
         }
@@ -633,6 +680,19 @@ fun NubeSettings(say: (String) -> Unit) {
         }
         MagLink(if (NubeSync.running) "Sincronizando…" else "Sincronizar ahora", accent = !NubeSync.running) {
             if (!NubeSync.running) { NubeSync.enqueue(ctx, verify = true); say("Sincronizando con tu nube en segundo plano") }
+        }
+        if (kdOn) {
+            Spacer(Modifier.height(6.dp))
+            MagLink(
+                if (MigradorGDrive.enMarcha) "Migrando de kDrive a Google Drive…" else "Migrar todo de kDrive a Google Drive",
+                "Copia tus fotos, libros, ROMs, partidas, películas y versiones sin borrar nada en kDrive y los enlaza en tu cuenta",
+                accent = !MigradorGDrive.enMarcha
+            ) {
+                if (!MigradorGDrive.enMarcha) MigradorGDrive.iniciar(ctx)
+            }
+            if (MigradorGDrive.progreso.isNotBlank()) Text(MigradorGDrive.progreso, color = UiSoft, fontSize = 12.sp)
+            if (MigradorGDrive.resumen.isNotBlank()) Text(MigradorGDrive.resumen, color = UiSoft, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            MigradorGDrive.error?.let { Text("Error al migrar: $it", color = androidx.compose.material3.MaterialTheme.colorScheme.error, fontSize = 12.sp) }
         }
         MagLink("Desconectar Google Drive", "Lo subido sigue en tu Google Drive") {
             com.gonzalo.familia.NubeFamilia.forgetGDrive(ctx); gdOn = false; gdCsec = ""; gdRtok = ""

@@ -82,6 +82,14 @@ class GoogleDriveTest {
 
     private fun handleToken(ex: HttpExchange) {
         val body = ex.requestBody.readBytes().toString(Charsets.UTF_8)
+        if (body.contains("grant_type=authorization_code")) {
+            if (!body.contains("code=codigo-ok")) {
+                respond(ex, 400, """{"error":"invalid_grant"}""")
+                return
+            }
+            respond(ex, 200, """{"access_token":"tok-auth","refresh_token":"rtok-nuevo","expires_in":3600}""")
+            return
+        }
         if (!body.contains("refresh_token=rtok-1")) {
             respond(ex, 400, """{"error":"invalid_grant","error_description":"revoked"}""")
             return
@@ -318,5 +326,25 @@ class GoogleDriveTest {
         assertEquals("9ZyX_01", GoogleDrive.extraeIdEnlace("https://drive.google.com/file/d/9ZyX_01/view?usp=sharing"))
         assertNull(GoogleDrive.extraeIdEnlace("https://kdrive.infomaniak.com/app/share/123/abc"))
         assertFalse(GoogleDrive.esEnlaceGoogleDrive("https://kdrive.infomaniak.com/app/share/123/abc"))
+        assertTrue(GoogleDrive.esEnlaceGoogleDrive("https://drive.google.com/file/d/9ZyX_01/view"))
+    }
+
+    @Test
+    fun autorizarEnNavegadorObtieneRefreshToken() {
+        val refresh = GoogleDrive.autorizarEnNavegador(
+            clientId = "cid-test",
+            clientSecret = "csec-test",
+            abrirUrl = { authUrl ->
+                val redirect = Regex("""redirect_uri=([^&]+)""").find(authUrl)!!.groupValues[1].let { java.net.URLDecoder.decode(it, "UTF-8") }
+                val state = Regex("""state=([^&]+)""").find(authUrl)!!.groupValues[1].let { java.net.URLDecoder.decode(it, "UTF-8") }
+                Thread {
+                    runCatching { java.net.URL("$redirect/favicon.ico").openStream().close() }
+                    java.net.URL("$redirect/?code=codigo-ok&state=$state").openStream().use { it.readBytes() }
+                }.start()
+            },
+            timeoutMs = 10_000,
+            tokenUrl = "$baseUrl/token",
+        )
+        assertEquals("rtok-nuevo", refresh)
     }
 }

@@ -86,7 +86,30 @@ fun AjustesServicios(nav: Nav) {
     }
     Spacer(Modifier.height(12.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonAcento("Probar Google Drive") { scope.launch { prueba = withContext(Dispatchers.IO) { runCatching { com.gonzalo.familia.pc.Nube.gdrive().prueba() }.getOrElse { it.message ?: "No responde." } } } }
+        BotonAcento("Iniciar sesión con Google") {
+            scope.launch {
+                val cid = LaFamilia.clave(com.gonzalo.familia.nucleo.GoogleDrive.CLAVE_CLIENT_ID)
+                val csec = LaFamilia.clave(com.gonzalo.familia.nucleo.GoogleDrive.CLAVE_CLIENT_SECRET)
+                if (cid.isBlank() || csec.isBlank()) {
+                    prueba = "Guarda primero tu Google Drive (Client ID) y (Client Secret) arriba."
+                    return@launch
+                }
+                prueba = "Abriendo el navegador para iniciar sesión en Google…"
+                prueba = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val rtok = com.gonzalo.familia.nucleo.GoogleDrive.autorizarEnNavegador(
+                            clientId = cid,
+                            clientSecret = csec,
+                            abrirUrl = { url -> runCatching { java.awt.Desktop.getDesktop().browse(java.net.URI(url)) } },
+                        )
+                        LaFamilia.familia.ponClave(com.gonzalo.familia.nucleo.GoogleDrive.CLAVE_REFRESH_TOKEN, rtok)
+                        LaFamilia.sincronizaYa()
+                        com.gonzalo.familia.pc.Nube.gdrive().prueba()
+                    }.getOrElse { it.message ?: "No se pudo conectar con Google Drive." }
+                }
+            }
+        }
+        BotonSuave("Probar Google Drive") { scope.launch { prueba = withContext(Dispatchers.IO) { runCatching { com.gonzalo.familia.pc.Nube.gdrive().prueba() }.getOrElse { it.message ?: "No responde." } } } }
         BotonSuave("Probar el kDrive") { scope.launch { prueba = withContext(Dispatchers.IO) { runCatching { KDrive().prueba() }.getOrElse { it.message ?: "No responde." } } } }
     }
     if (prueba.isNotBlank()) Cuerpo(prueba, tam = 13)
