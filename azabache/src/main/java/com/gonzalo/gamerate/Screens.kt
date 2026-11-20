@@ -367,7 +367,7 @@ fun SettingsScreen(
             2 -> {
                 SeccionAjustes("Cuenta y pareja", primera = true)
                 couple()
-                if (nube != null) { SeccionAjustes("Tu nube (kDrive)"); nube() }
+                if (nube != null) { SeccionAjustes("Tu nube"); nube() }
                 SeccionAjustes("Google Drive")
                 if (driveName == null) {
                     Text("Vincula un archivo de tu Google Drive y cada cambio se guardará ahí solo. Al pulsar «Vincular», en el selector abre el menú de la izquierda, elige Drive y guarda el archivo.",

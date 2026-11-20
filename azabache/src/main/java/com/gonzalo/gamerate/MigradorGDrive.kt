@@ -107,7 +107,7 @@ object MigradorGDrive {
                 if (item.name.isBlank() || item.name.startsWith(".")) continue
                 val subRuta = if (rutaRel.isBlank()) item.name else "$rutaRel/${item.name}"
                 if (item.dir) {
-                    val subGd = carpetasGd[item.name]?.id ?: gd.creaCarpeta(item.name, gdDirId)
+                    val subGd = carpetasGd[item.name]?.id ?: gd.creaCarpeta(padreId = gdDirId, nombre = item.name)
                     migraCarpeta(item.id, subRuta, subGd)
                 } else {
                     val ya = porNombreGd[item.name]
