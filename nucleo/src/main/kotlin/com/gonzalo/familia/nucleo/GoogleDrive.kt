@@ -686,6 +686,7 @@ class GoogleDrive(
             timeoutMs: Int = 180_000,
             authUrlBase: String = "https://accounts.google.com/o/oauth2/v2/auth",
             tokenUrl: String = "https://oauth2.googleapis.com/token",
+            esperarPrimerPlano: () -> Unit = {},
         ): String {
             val cid = clientId.trim()
             val csec = clientSecret.trim()
@@ -708,6 +709,9 @@ class GoogleDrive(
             } finally {
                 runCatching { srv.close() }
             }
+            // En Android (ColorOS/Xiaomi/Samsung) la red en segundo plano se corta mientras el navegador está delante:
+            // esperar a que la app vuelva a primer plano antes de llamar a oauth2.googleapis.com.
+            esperarPrimerPlano()
             return canjeaCodigoPorRefresh(cid, csec, codigo, redirectUri, tokenUrl)
         }
 
@@ -760,25 +764,34 @@ class GoogleDrive(
 
         private fun canjeaCodigoPorRefresh(cid: String, csec: String, codigo: String, redirectUri: String, tokenUrl: String): String {
             val cuerpo = "code=${enc(codigo)}&client_id=${enc(cid)}&client_secret=${enc(csec)}&redirect_uri=${enc(redirectUri)}&grant_type=authorization_code"
-            val c = (java.net.URL(tokenUrl).openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                doOutput = true
-                connectTimeout = 20_000
-                readTimeout = 30_000
-                setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            var ultimoError: IOException? = null
+            for (intento in 1..6) {
+                val c = (java.net.URL(tokenUrl).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    doOutput = true
+                    connectTimeout = 20_000
+                    readTimeout = 30_000
+                    setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                }
+                try {
+                    c.outputStream.use { it.write(cuerpo.toByteArray(Charsets.UTF_8)) }
+                    val code = c.responseCode
+                    val txt = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    if (code !in 200..299) throw Fallo("Google no aceptó el código ($code): ${txt.take(200)}")
+                    val m = runCatching { Json.lee(txt) }.getOrNull().comoMapa()
+                    val refresh = m["refresh_token"].comoTexto()
+                    if (refresh.isBlank()) throw Fallo("Google no devolvió refresh_token. Revoca «Familia» en myaccount.google.com/permissions y vuelve a intentarlo.")
+                    return refresh
+                } catch (e: Fallo) {
+                    throw e
+                } catch (e: IOException) {
+                    ultimoError = e
+                    if (intento < 6) runCatching { Thread.sleep(1_000L * intento) }
+                } finally {
+                    c.disconnect()
+                }
             }
-            try {
-                c.outputStream.use { it.write(cuerpo.toByteArray(Charsets.UTF_8)) }
-                val code = c.responseCode
-                val txt = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
-                if (code !in 200..299) throw Fallo("Google no aceptó el código ($code): ${txt.take(200)}")
-                val m = runCatching { Json.lee(txt) }.getOrNull().comoMapa()
-                val refresh = m["refresh_token"].comoTexto()
-                if (refresh.isBlank()) throw Fallo("Google no devolvió refresh_token. Revoca «Familia» en myaccount.google.com/permissions y vuelve a intentarlo.")
-                return refresh
-            } finally {
-                c.disconnect()
-            }
+            throw ultimoError ?: Fallo("Sin conexión al conectar con Google")
         }
     }
 }

@@ -53,39 +53,48 @@ object MigradorGDrive {
         tmp.renameTo(archivoMapa(ctx))
     }
 
-    /** Lanza la migración en segundo plano (si ya está en marcha, no duplica). */
+    /** Lanza la migración como trabajo en primer plano (WorkManager) para que Android/ColorOS no corte la red al apagar pantalla. */
     fun iniciar(ctx: Context) {
-        if (!ejecutando.compareAndSet(false, true)) return
+        if (enMarcha) return
         val app = ctx.applicationContext
         enMarcha = true; error = null; resumen = ""; progreso = "Preparando migración…"
-        kotlin.concurrent.thread(name = "migrar-gdrive") {
-            try {
-                val r = ejecutar(app)
-                resumen = r
-                progreso = ""
-            } catch (e: Throwable) {
-                error = e.message ?: e.javaClass.simpleName
-                progreso = ""
-            } finally {
-                enMarcha = false
-                ejecutando.set(false)
-            }
+        val req = androidx.work.OneTimeWorkRequestBuilder<MigradorGDriveWorker>()
+            .setConstraints(androidx.work.Constraints.Builder().setRequiredNetworkType(androidx.work.NetworkType.CONNECTED).build())
+            .build()
+        androidx.work.WorkManager.getInstance(app).enqueueUniqueWork("migrar-gdrive", androidx.work.ExistingWorkPolicy.KEEP, req)
+    }
+
+    internal fun ejecutaConAviso(ctx: Context, avisar: (String) -> Unit) {
+        if (!ejecutando.compareAndSet(false, true)) return
+        enMarcha = true; error = null; resumen = ""; progreso = "Preparando migración…"
+        try {
+            val r = ejecutar(ctx.applicationContext, avisar)
+            resumen = r
+            progreso = ""
+        } catch (e: Throwable) {
+            error = e.message ?: e.javaClass.simpleName
+            progreso = ""
+        } finally {
+            enMarcha = false
+            ejecutando.set(false)
         }
     }
 
     /** Ejecución síncrona (bloqueante; también usable en pruebas). */
-    internal fun ejecutar(ctx: Context): String {
+    internal fun ejecutar(ctx: Context, avisar: (String) -> Unit = {}): String {
         if (!NubeFamilia.gdriveOn(ctx)) throw NubeFamilia.Fail("Conecta primero tu Google Drive arriba")
         if (!NubeFamilia.kdriveOn(ctx)) throw NubeFamilia.Fail("No hay ningún kDrive conectado para migrar")
 
         val gd = NubeFamilia.gdrive(ctx)
-        val raizGd = gd.carpetaRaiz()
+        gd.carpetaRaiz()
         val homeKd = NubeFamilia.homeKDrive(ctx)
         val mapa = leeMapa(ctx)
 
         var copiados = 0
         var saltados = 0
         var errores = 0
+
+        fun paso(texto: String) { progreso = texto; avisar(texto) }
 
         val hijosHome = NubeFamilia.childrenKDrive(ctx, homeKd).filter { it.dir }.associateBy { it.name }
 
@@ -106,34 +115,41 @@ object MigradorGDrive {
                         mapa[item.id] = ya.id
                         guardaMapa(ctx, mapa)
                         saltados++
-                        progreso = "Ya en Google Drive ($saltados): ${item.name}"
+                        paso("Ya en Google Drive ($saltados): ${item.name}")
                         continue
                     }
-                    progreso = "Copiando (${copiados + 1}): $subRuta…"
+                    paso("Copiando (${copiados + 1}): $subRuta…")
                     val tmp = File(ctx.cacheDir, "mig-${item.id}.tmp")
-                    try {
-                        NubeFamilia.downloadKDrive(ctx, item.id, tmp)
-                        val gdId = gd.sube(rutaRel, item.name, tmp.length()) { tmp.inputStream() }
-                        mapa[item.id] = gdId
-                        guardaMapa(ctx, mapa)
-                        copiados++
-                    } catch (_: Throwable) {
-                        errores++
-                    } finally {
-                        tmp.delete()
+                    var ok = false
+                    for (intento in 1..3) {
+                        try {
+                            tmp.delete()
+                            NubeFamilia.downloadKDrive(ctx, item.id, tmp)
+                            val gdId = gd.sube(rutaRel, item.name, tmp.length()) { tmp.inputStream() }
+                            mapa[item.id] = gdId
+                            guardaMapa(ctx, mapa)
+                            copiados++
+                            ok = true
+                            break
+                        } catch (_: Throwable) {
+                            if (intento < 3) runCatching { Thread.sleep(2_000L * intento) }
+                        } finally {
+                            tmp.delete()
+                        }
                     }
+                    if (!ok) errores++
                 }
             }
         }
 
         for (carpeta in CARPETAS) {
             val dir = hijosHome[carpeta] ?: continue
-            progreso = "Revisando «$carpeta»…"
+            paso("Revisando «$carpeta»…")
             val gdDir = gd.aseguraCarpeta(carpeta)
             migraCarpeta(dir.id, carpeta, gdDir)
         }
 
-        progreso = "Enlazando archivos en tu cuenta…"
+        paso("Enlazando archivos en tu cuenta…")
         val enlazados = enlazarEnCuenta(ctx, mapa)
 
         val parteErr = if (errores > 0) " · $errores con error (puedes volver a pulsar para reintentar)" else ""
@@ -214,5 +230,47 @@ object MigradorGDrive {
 
         runCatching { LaFamilia.familia.programa(0) }
         return total
+    }
+}
+
+class MigradorGDriveWorker(ctx: Context, p: androidx.work.WorkerParameters) : androidx.work.CoroutineWorker(ctx, p) {
+    private suspend fun aviso(text: String) {
+        val nm = applicationContext.getSystemService(android.app.NotificationManager::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel("nube") == null)
+            nm.createNotificationChannel(android.app.NotificationChannel("nube", "Subidas a tu nube", android.app.NotificationManager.IMPORTANCE_LOW))
+        val n = androidx.core.app.NotificationCompat.Builder(applicationContext, "nube")
+            .setSmallIcon(android.R.drawable.stat_sys_upload)
+            .setContentTitle("Migrando a Google Drive")
+            .setContentText(text)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .build()
+        val info = if (android.os.Build.VERSION.SDK_INT >= 29)
+            androidx.work.ForegroundInfo(4712, n, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        else androidx.work.ForegroundInfo(4712, n)
+        setForeground(info)
+    }
+
+    override suspend fun doWork(): Result {
+        var fg = true
+        runCatching { aviso("Preparando migración…") }.onFailure { fg = false }
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            MigradorGDrive.ejecutaConAviso(applicationContext) { texto ->
+                if (fg) runCatching {
+                    val nm = applicationContext.getSystemService(android.app.NotificationManager::class.java)
+                    val n = androidx.core.app.NotificationCompat.Builder(applicationContext, "nube")
+                        .setSmallIcon(android.R.drawable.stat_sys_upload)
+                        .setContentTitle("Migrando a Google Drive")
+                        .setContentText(texto)
+                        .setOngoing(true)
+                        .setOnlyAlertOnce(true)
+                        .setSilent(true)
+                        .build()
+                    nm.notify(4712, n)
+                }.onFailure { fg = false }
+            }
+        }
+        return Result.success()
     }
 }

@@ -634,6 +634,14 @@ fun NubeSettings(say: (String) -> Unit) {
                                     }
                                 }
                             },
+                            esperarPrimerPlano = {
+                                // Android/ColorOS corta DNS y red mientras el navegador sigue delante: esperamos a que el usuario vuelva a Jonsu
+                                val fin = System.currentTimeMillis() + 90_000L
+                                while (!Actualizador.seVe() && System.currentTimeMillis() < fin) {
+                                    runCatching { Thread.sleep(150) }
+                                }
+                                runCatching { Thread.sleep(500) }
+                            },
                         )
                     }
                     com.gonzalo.familia.NubeFamilia.saveGDrive(ctx, gdCid, gdCsec, rtok, gdDir)
