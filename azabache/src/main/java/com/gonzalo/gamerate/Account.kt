@@ -77,7 +77,7 @@ object Account {
         ".write": "auth != null && auth.uid === ${'$'}uid"
       }
     },
-    "couples": { ".read": true, ".write": true }
+    "couples": { ".read": "auth != null", ".write": false }
   }
 }
 """.trim()

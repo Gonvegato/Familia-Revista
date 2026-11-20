@@ -80,7 +80,7 @@ class ActualizadorTest {
         assertEquals(b.toList(), dest.readBytes().toList())
         // Un token malo se dice claro
         KDrive.save(ctx, "malo", "777")
-        try { KDrive.reach(ctx); fail() } catch (e: KDrive.Fail) { assertTrue(e.message!!, e.message!!.contains("token")) }
+        try { KDrive.reach(ctx); fail() } catch (e: com.gonzalo.familia.NubeFamilia.Fail) { assertTrue(e.message!!, e.message!!.contains("token")) }
         KDrive.forget(ctx); assertFalse(KDrive.on(ctx))
     }
 

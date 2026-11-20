@@ -44,14 +44,17 @@ interface Llavero {
 /** Ejecuta una orden del sistema y devuelve (código, salida). [entrada] va por la entrada estándar (no se ve en la lista de procesos). */
 internal fun orden(cmd: List<String>, entrada: String? = null, espera: Long = 15): Pair<Int, String> = runCatching {
     val p = ProcessBuilder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start()
-    p.outputStream.use { o -> if (entrada != null) o.write(entrada.toByteArray(Charsets.UTF_8)) }
-    val salida = p.inputStream.bufferedReader().use { it.readText() }
-    if (!p.waitFor(espera, TimeUnit.SECONDS)) { p.destroyForcibly(); -1 to "" } else p.exitValue() to salida
+    val salida = java.util.concurrent.atomic.AtomicReference("")
+    val lector = Thread { salida.set(runCatching { p.inputStream.bufferedReader().use { it.readText() } }.getOrDefault("")) }.apply { isDaemon = true; start() }
+    if (entrada != null) runCatching { p.outputStream.use { o -> o.write(entrada.toByteArray(Charsets.UTF_8)) } } else runCatching { p.outputStream.close() }
+    if (!p.waitFor(espera, TimeUnit.SECONDS)) { p.destroyForcibly(); lector.join(500); -1 to "" }
+    else { lector.join(2_000); p.exitValue() to salida.get() }
 }.getOrDefault(-1 to "")
 
 /** El Llavero del Mac (orden `security`). */
 class LlaveroMac(private val servicio: String = Llavero.SERVICIO) : Llavero {
     override val nombre = "el Llavero del Mac"
+    private fun comillas(s: String) = "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "").replace("\r", "") + "\""
 
     fun funciona(): Boolean = File("/usr/bin/security").canExecute() &&
         guarda("prueba", "ok") && lee("prueba") == "ok" && run { borra("prueba"); true }
@@ -63,7 +66,7 @@ class LlaveroMac(private val servicio: String = Llavero.SERVICIO) : Llavero {
 
     override fun guarda(nombre: String, valor: String): Boolean {
         // Por la entrada estándar (modo interactivo de `security`): el valor no aparece en la lista de procesos
-        val (c, _) = orden(listOf("/usr/bin/security", "-i"), "add-generic-password -U -s $servicio -a $nombre -l $servicio -w ${Llavero.codifica(valor)}\n")
+        val (c, _) = orden(listOf("/usr/bin/security", "-i"), "add-generic-password -U -s ${comillas(servicio)} -a ${comillas(nombre)} -l ${comillas(servicio)} -w ${comillas(Llavero.codifica(valor))}\n")
         return c == 0 && lee(nombre) == valor
     }
 
@@ -102,11 +105,13 @@ class LlaveroArchivo(private val archivo: File) : Llavero {
 
     private fun escribe(m: Map<String, String>) = synchronized(cerrojo) {
         archivo.parentFile?.mkdirs()
-        val tmp = File(archivo.parentFile, archivo.name + ".tmp")
-        tmp.writeText("")
-        runCatching { Files.setPosixFilePermissions(tmp.toPath(), setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE)) }
-        tmp.writeText(com.gonzalo.familia.nucleo.Json.escribe(m))
-        if (!tmp.renameTo(archivo)) { archivo.delete(); tmp.renameTo(archivo) }
+        val tmp = File(archivo.parentFile, "${archivo.name}.${ProcessHandle.current().pid()}.${Thread.currentThread().id}.${System.nanoTime()}.tmp")
+        try {
+            tmp.writeText("")
+            runCatching { Files.setPosixFilePermissions(tmp.toPath(), setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE)) }
+            tmp.writeText(com.gonzalo.familia.nucleo.Json.escribe(m))
+            if (!tmp.renameTo(archivo)) { archivo.delete(); tmp.renameTo(archivo) }
+        } finally { tmp.delete() }
     }
 
     override fun lee(nombre: String): String? = todo()[nombre]?.let { Llavero.decodifica(it) }

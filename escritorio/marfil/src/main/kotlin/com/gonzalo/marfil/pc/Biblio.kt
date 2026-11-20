@@ -96,11 +96,11 @@ fun PantFicha(id: String, nav: Nav, alCerrar: () -> Unit) {
                 if (l.estado != Estado.PENDIENTE) Box(Modifier.padding(top = 18.dp).fillMaxWidth().height(8.dp).background(Line)) { Box(Modifier.fillMaxWidth(if (l.estado == Estado.LEIDO) 1f else l.fraccion).fillMaxHeight().background(Acento)) }
                 Spacer(Modifier.height(20.dp))
                 BotonC(if (l.fraccion > 0 && l.estado != Estado.LEIDO) "Seguir leyendo" else "Leer", fondo = Charcoal, letra = Paper) { leer() }
-                Text(when { aqui != null -> "El archivo está en este ordenador" + if (l.nube != null) " y en tu kDrive." else "."; l.nube != null -> "Está en tu kDrive: se baja al abrirlo."; else -> "El archivo no está aquí ni en tu kDrive." },
+                Text(when { aqui != null -> "El archivo está en este ordenador" + if (l.nube != null) " y en tu nube." else "."; l.nube != null -> "Está en tu nube: se baja al abrirlo."; else -> "El archivo no está aquí ni en tu nube." },
                     color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    if (aqui != null && l.nube == null && KDrive().activo) EnlaceRevista(if (trabajo.isNotBlank()) trabajo else "Subir a tu kDrive", modifier = Modifier.padding(top = 6.dp)) {
-                        trabajo = "Subiendo…"; scope.launch { val r = withContext(Dispatchers.IO) { runCatching { NubeLibros.sube(l, aqui) } }; trabajo = ""; nav.aviso(r.fold({ "En tu kDrive" }, { it.message ?: "No se ha podido" })) }
+                    if (aqui != null && l.nube == null && com.gonzalo.familia.pc.Nube.activo) EnlaceRevista(if (trabajo.isNotBlank()) trabajo else "Subir a tu nube", modifier = Modifier.padding(top = 6.dp)) {
+                        trabajo = "Subiendo…"; scope.launch { val r = withContext(Dispatchers.IO) { runCatching { NubeLibros.sube(l, aqui) } }; trabajo = ""; nav.aviso(r.fold({ "Subido a ${com.gonzalo.familia.pc.Nube.nombre}" }, { it.message ?: "No se ha podido" })) }
                     }
                     if (aqui == null && l.nube != null) EnlaceRevista(if (trabajo.isNotBlank()) trabajo else "Bajar a este ordenador", modifier = Modifier.padding(top = 6.dp)) {
                         trabajo = "Bajando…"; scope.launch { val r = withContext(Dispatchers.IO) { runCatching { NubeLibros.baja(l) } }; trabajo = ""; nav.aviso(r.fold({ "Ya está aquí" }, { it.message ?: "No se ha podido" })) }
@@ -213,7 +213,7 @@ fun anadeArchivo(f: File): String {
     val id = Libros.anade(titulo, autor, "${titulo.take(80)}.$ext", paginas)
     Libros.guardaCopia(id, f)
     portada?.let { b -> if (Libros.por(id)?.portada.isNullOrBlank()) Portadas.guardar(b)?.let { h -> Libros.cambia(id, mapOf("portada" to h)) } }
-    Thread({ runCatching { Libros.por(id)?.let { l -> if (l.nube == null && NubeLibros.kdrive.activo) Libros.archivo(id)?.let { NubeLibros.sube(l, it) } } } }, "marfil-sube").apply { isDaemon = true; start() }
+    Thread({ runCatching { Libros.por(id)?.let { l -> if (l.nube == null && NubeLibros.activo) Libros.archivo(id)?.let { NubeLibros.sube(l, it) } } } }, "marfil-sube").apply { isDaemon = true; start() }
     return id
 }
 
@@ -233,12 +233,12 @@ fun PantAjustes(nav: Nav, alCerrar: () -> Unit) {
                 Antetitulo("Tus libros en este ordenador")
                 Spacer(Modifier.height(6.dp))
                 MagFact("Carpeta", Libros.carpeta().absolutePath)
-                MagFact("Tu kDrive", if (KDrive().activo) "conectado (las claves son de la cuenta)" else "sin poner (en Jonsu: Ajustes → Servicios)")
+                MagFact("Tu nube", if (com.gonzalo.familia.pc.Nube.activo) "${com.gonzalo.familia.pc.Nube.nombre} conectado (las claves son de la cuenta)" else "sin poner (en Jonsu: Ajustes → Servicios)")
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     BotonSuave("Abrir la carpeta") { com.gonzalo.familia.pc.Sitio.abre(Libros.carpeta().absolutePath) }
                     val scope = rememberCoroutineScope()
-                    BotonSuave("Subir lo que falte a tu kDrive") { scope.launch { val n = withContext(Dispatchers.IO) { NubeLibros.subePendientes() }; nav.aviso(if (n == 0) "No faltaba nada" else "Subidos: $n") } }
+                    BotonSuave("Subir lo que falte a tu nube") { scope.launch { val n = withContext(Dispatchers.IO) { NubeLibros.subePendientes() }; nav.aviso(if (n == 0) "No faltaba nada" else "Subidos: $n") } }
                 }
             }
             2 -> {

@@ -233,9 +233,9 @@ fun PaginaPortada(alAbrir: (Titulo) -> Unit, alAbrirBreve: (MetaBreve) -> Unit, 
             }
         }
 
-        // ---- Lo de siempre: tu kDrive y el catálogo (TMDB o tus addons)
+        // ---- Lo de siempre: tu nube y el catálogo (TMDB o tus addons)
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            if (d.enKDrive.isNotEmpty()) FilaPosters("En tu kDrive", d.enKDrive, alAbrirBreve, sub = { tipoNombre(it.tipo) + if (it.ano.isNotBlank()) " · ${it.ano}" else "" })
+            if (d.enKDrive.isNotEmpty()) FilaPosters("En tu nube", d.enKDrive, alAbrirBreve, sub = { tipoNombre(it.tipo) + if (it.ano.isNotBlank()) " · ${it.ano}" else "" })
             if (d.conTmdb) when (val f = d.filasTmdb) {
                 null -> Nota("Mirando el catálogo…", Modifier.padding(top = 26.dp))
                 else -> {

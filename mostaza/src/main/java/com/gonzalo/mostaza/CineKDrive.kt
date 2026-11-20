@@ -79,20 +79,24 @@ object NombresCine {
     }
 }
 
-/** Un archivo de vídeo de tu kDrive, ya sabido qué es: [videoId] es el de Stremio (`tt…` o `tt…:T:E`). */
-data class ArchivoCine(val fileId: Long, val nombre: String, val tamano: Long, val videoId: String, val tipo: String, val subtitulos: List<Pair<Long, String>> = emptyList())
+/** Un archivo de vídeo de tu nube (Google Drive o kDrive), ya sabido qué es: [videoId] es el de Stremio (`tt…` o `tt…:T:E`). */
+data class ArchivoCine(
+    val fileId: String,
+    val nombre: String,
+    val tamano: Long,
+    val videoId: String,
+    val tipo: String,
+    val subtitulos: List<Pair<String, String>> = emptyList(),
+    val deGoogleDrive: Boolean = false,
+)
 
 /**
- * Tus películas y series en tu kDrive («Mi carpeta/Mostaza/Películas» y «…/Series»): Mostaza las mira (cada poco, y al abrir una ficha),
- * averigua qué es cada una por su nombre (con TMDB si tienes la clave; si no, con tus addons) y las da como una fuente más, «Tu kDrive»,
- * que se pone antes que las de tus addons: es lo tuyo. Se ven desde kDrive tal cual (sin bajarlas enteras: a trozos, mientras ves).
- *
- * Tu token de kDrive solo va a kDrive: el reproductor lo manda solo a ese servidor (no a los de los subtítulos) y «Abrir con otro
- * reproductor» no se ofrece con estas fuentes (le darías tu token a otra app). Lo que se sabe de cada nombre se guarda en este
- * dispositivo (se puede volver a averiguar); tus archivos siguen siendo la verdad.
+ * Tus películas y series en tu nube (Google Drive, o kDrive como respaldo: «Mostaza/Películas» y «…/Series»): Mostaza las mira (cada poco,
+ * y al abrir una ficha), averigua qué es cada una por su nombre (con TMDB si tienes la clave; si no, con tus addons) y las da como la
+ * primera fuente. Se ven directamente por streaming (`Range`) sin bajarlas enteras.
  */
 object CineKDrive {
-    const val ADDON = "Tu kDrive"
+    const val ADDON = "Tu nube"
     const val CARPETA = "Mostaza"
     const val PELICULAS = "Películas"
     const val SERIES = "Series"
@@ -108,7 +112,7 @@ object CineKDrive {
 
     fun disponible(c: Context) = KDrive.on(c)
 
-    /** Lo que hay (mirando el kDrive si hace más de 10 minutos o si se pide [ya]). */
+    /** Lo que hay (mirando tu nube si hace más de 10 minutos o si se pide [ya]). */
     suspend fun indice(c: Context, ya: Boolean = false): List<ArchivoCine> = withContext(Dispatchers.IO) {
         if (!disponible(c)) return@withContext emptyList()
         mutex.withLock {
@@ -119,40 +123,61 @@ object CineKDrive {
         }
     }
 
-    private data class Visto(val id: Long, val nombre: String, val tamano: Long, val ruta: List<String>)
+    private data class Visto(val id: String, val nombre: String, val tamano: Long, val ruta: List<String>, val deGoogleDrive: Boolean)
 
-    private fun recorre(c: Context, dir: Long, ruta: List<String>, out: MutableList<Visto>, hondo: Int) {
+    private fun recorreKDrive(c: Context, dir: Long, ruta: List<String>, out: MutableList<Visto>, hondo: Int) {
         if (hondo > 4 || out.size > 5000) return
         for (x in KDrive.children(c, dir)) {
-            if (x.dir) recorre(c, x.id, ruta + x.name, out, hondo + 1)
-            else if (NombresCine.esVideo(x.name) || NombresCine.esSub(x.name)) out += Visto(x.id, x.name, x.size, ruta)
+            if (x.dir) recorreKDrive(c, x.id, ruta + x.name, out, hondo + 1)
+            else if (NombresCine.esVideo(x.name) || NombresCine.esSub(x.name)) out += Visto(x.id.toString(), x.name, x.size, ruta, false)
+        }
+    }
+
+    private fun recorreGDrive(g: com.gonzalo.familia.nucleo.GoogleDrive, dir: String, ruta: List<String>, out: MutableList<Visto>, hondo: Int) {
+        if (hondo > 4 || out.size > 5000) return
+        for (x in g.dentro(dir)) {
+            if (x.carpeta) recorreGDrive(g, x.id, ruta + x.nombre, out, hondo + 1)
+            else if (NombresCine.esVideo(x.nombre) || NombresCine.esSub(x.nombre)) out += Visto(x.id, x.nombre, x.tamano, ruta, true)
         }
     }
 
     private suspend fun mira(c: Context): List<ArchivoCine> {
-        val raiz = KDrive.carpeta(c, CARPETA) ?: return emptyList()
-        val dentro = KDrive.children(c, raiz)
         val pelis = ArrayList<Visto>(); val series = ArrayList<Visto>()
-        dentro.firstOrNull { it.dir && NombresCine.normal(it.name) == "peliculas" }?.let { recorre(c, it.id, emptyList(), pelis, 0) }
-        dentro.firstOrNull { it.dir && NombresCine.normal(it.name) == "series" }?.let { recorre(c, it.id, emptyList(), series, 0) }
+        if (KDrive.gdriveOn(c)) {
+            val g = com.gonzalo.familia.NubeFamilia.gdrive(c)
+            val raiz = g.carpeta(CARPETA)
+            if (raiz != null) {
+                val dentro = g.dentro(raiz)
+                dentro.firstOrNull { it.carpeta && NombresCine.normal(it.nombre) == "peliculas" }?.let { recorreGDrive(g, it.id, emptyList(), pelis, 0) }
+                dentro.firstOrNull { it.carpeta && NombresCine.normal(it.nombre) == "series" }?.let { recorreGDrive(g, it.id, emptyList(), series, 0) }
+            }
+        }
+        if (pelis.isEmpty() && series.isEmpty() && KDrive.kdriveOn(c)) {
+            val raiz = KDrive.carpeta(c, CARPETA)
+            if (raiz != null) {
+                val dentro = KDrive.children(c, raiz)
+                dentro.firstOrNull { it.dir && NombresCine.normal(it.name) == "peliculas" }?.let { recorreKDrive(c, it.id, emptyList(), pelis, 0) }
+                dentro.firstOrNull { it.dir && NombresCine.normal(it.name) == "series" }?.let { recorreKDrive(c, it.id, emptyList(), series, 0) }
+            }
+        }
         val out = ArrayList<ArchivoCine>()
         for (v in pelis.filter { NombresCine.esVideo(it.nombre) }) {
             // En su carpeta («Dune (2024)/dune.mkv»): manda el nombre de la carpeta si el del archivo no dice el año
             val delArchivo = NombresCine.pelicula(v.nombre)
             val p = if (delArchivo.ano.isBlank() && delArchivo.imdb.isBlank() && v.ruta.isNotEmpty()) NombresCine.pelicula(v.ruta.last()) else delArchivo
             val id = averigua(c, p, tv = false) ?: continue
-            out += ArchivoCine(v.id, v.nombre, v.tamano, id, "movie", subsDe(v, pelis))
+            out += ArchivoCine(v.id, v.nombre, v.tamano, id, "movie", subsDe(v, pelis), v.deGoogleDrive)
         }
         for (v in series.filter { NombresCine.esVideo(it.nombre) }) {
             val e = NombresCine.episodio(v.ruta, v.nombre) ?: continue
             val id = averigua(c, e.serie, tv = true) ?: continue
-            out += ArchivoCine(v.id, v.nombre, v.tamano, "$id:${e.temporada}:${e.episodio}", "series", subsDe(v, series))
+            out += ArchivoCine(v.id, v.nombre, v.tamano, "$id:${e.temporada}:${e.episodio}", "series", subsDe(v, series), v.deGoogleDrive)
         }
         return out
     }
 
     /** Los subtítulos de al lado con el mismo nombre («peli.srt», «peli.es.srt»). */
-    private fun subsDe(v: Visto, todos: List<Visto>): List<Pair<Long, String>> {
+    private fun subsDe(v: Visto, todos: List<Visto>): List<Pair<String, String>> {
         val base = v.nombre.substringBeforeLast('.').lowercase()
         return todos.filter { it.ruta == v.ruta && NombresCine.esSub(it.nombre) && it.nombre.lowercase().startsWith(base) }.map { s ->
             val medio = s.nombre.substringBeforeLast('.').drop(base.length).trim('.', '_', ' ', '-').lowercase()
@@ -190,20 +215,25 @@ object CineKDrive {
         return NombresCine.elige(p, l.map { Triple(it.id, it.nombre, it.ano.take(4)) })
     }
 
-    /** Las fuentes «Tu kDrive» de un vídeo. */
+    /** Las fuentes de tu nube (Google Drive o kDrive) de un vídeo. */
     suspend fun fuentes(c: Context, videoId: String): List<Candidata> {
         if (!disponible(c)) return emptyList()
         val l = indice(c).filter { it.videoId == videoId }
-        val cab = KDrive.cabeceras(c)
         return l.mapIndexed { i, a ->
+            val cab = if (a.deGoogleDrive) runCatching { com.gonzalo.familia.NubeFamilia.gdrive(c).cabeceras() }.getOrDefault(emptyMap()) else KDrive.cabeceras(c)
+            val url = if (a.deGoogleDrive) com.gonzalo.familia.NubeFamilia.gdrive(c).urlDescarga(a.fileId) else KDrive.direccion(c, a.fileId.toLong())
+            val origen = if (a.deGoogleDrive) "Tu Google Drive" else "Tu kDrive"
             val f = Fuente(
-                nombre = "$ADDON\n${a.nombre}", descripcion = a.nombre, url = KDrive.direccion(c, a.fileId), cabeceras = cab, tamano = a.tamano, archivo = a.nombre,
-                subtitulos = a.subtitulos.map { (id, idioma) -> Subtitulo("kdrive-$id", KDrive.direccion(c, id), idioma, "Tu kDrive") }, privada = true,
+                nombre = "$origen\n${a.nombre}", descripcion = a.nombre, url = url, cabeceras = cab, tamano = a.tamano, archivo = a.nombre,
+                subtitulos = a.subtitulos.map { (id, idioma) ->
+                    val subUrl = if (a.deGoogleDrive) com.gonzalo.familia.NubeFamilia.gdrive(c).urlDescarga(id) else KDrive.direccion(c, id.toLong())
+                    Subtitulo("nube-$id", subUrl, idioma, origen)
+                }, privada = true,
             )
             Candidata(f, ADDON, -1, i)
         }
     }
 
-    /** Lo que tienes en tu kDrive, una vez cada título (para la fila de la portada): id de Stremio del título y su tipo. */
+    /** Lo que tienes en tu nube, una vez cada título (para la fila de la portada): id de Stremio del título y su tipo. */
     fun titulos(): List<Pair<String, String>> = indice.map { it.videoId.substringBefore(':') to it.tipo }.distinct()
 }

@@ -93,7 +93,7 @@ class ActualizadorTest {
     /** «Actualizar ahora» funciona aunque lo automático esté apagado, y dice claro por qué no puede si falta algo. */
     @Test fun actualizarAhora() {
         KDrive.forget(ctx)
-        assertEquals("kDrive sin conectar", Actualizador.actualizarAhora(ctx))
+        assertEquals("Nube sin conectar", Actualizador.actualizarAhora(ctx))
         KDrive.save(ctx, "tok", "777")
         Actualizador.ponActivo(ctx, false)
         val m = Actualizador.actualizarAhora(ctx)

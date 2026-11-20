@@ -75,7 +75,12 @@ class Familia(
             if (p is Pendiente.Campos && ultimo is Pendiente.Campos && ultimo.coleccion == p.coleccion && ultimo.ref == p.ref && ultimo.id !in enVuelo && p.m >= ultimo.m) {
                 cola[cola.size - 1] = Pendiente.Campos(p.coleccion, p.ref, ultimo.campos + p.campos, p.m, ultimo.id)
             } else {
-                cola += when (p) { is Pendiente.Campos -> p.con(siguienteId++); is Pendiente.Directa -> p.con(siguienteId++) }
+                cola += when (p) {
+                    is Pendiente.Campos -> p.con(siguienteId++)
+                    is Pendiente.Directa -> p.con(siguienteId++)
+                    is Pendiente.Imagen -> p.con(siguienteId++)
+                    is Pendiente.Clave -> p.con(siguienteId++)
+                }
             }
         }
         guardaCola()
@@ -166,6 +171,9 @@ class Familia(
                     val u = uDe(r.cuerpo)
                     if (u > 0) reloj.ajusta(u)
                     lote.forEach { p -> if (p is Pendiente.Campos) colecciones[p.coleccion]?.confirma(p, u) }
+                    if (lote.size == 1 && lote.first() is Pendiente.Clave) {
+                        runCatching { red.pedir("PUT", sesion.url("/users/${sesion.uid}/familia_sello/$CLAVES", conPase = true), Json.escribe(mapOf(".sv" to "timestamp"))) }
+                    }
                     quita(lote)
                     subidos += lote.size
                     lote.filterIsInstance<Pendiente.Campos>().map { it.coleccion }.toSet().forEach { colecciones[it]?.let { c -> c.invalida(emptySet()); c.guarda() } }
@@ -182,7 +190,7 @@ class Familia(
                         continue
                     }
                     val p = lote.first()
-                    if (p is Pendiente.Directa && p.ruta.startsWith("/claves/")) { aparcadas += p.id; rechazados++; continue }
+                    if (p is Pendiente.Clave || (p is Pendiente.Directa && p.ruta.startsWith("/claves/"))) { aparcadas += p.id; rechazados++; continue }
                     if (p is Pendiente.Campos && p.campos.size > 1 && r.codigo == 403) {
                         // Algún campo es más viejo que el del servidor: se separa para que el resto sí suba
                         synchronized(cerrojoCola) {
@@ -206,10 +214,10 @@ class Familia(
         return Triple(subidos, rechazados, refrescar)
     }
 
-    /** Hasta 100 cambios de campos seguidos en un solo envío (o una escritura directa sola, o uno suelto si su lote falló). */
+    /** Hasta 100 cambios de campos seguidos en un solo envío (o una escritura directa/imagen/clave sola, o uno suelto si su lote falló). */
     private fun siguienteLote(): List<Pendiente> {
         val primero = cola.firstOrNull { it.id !in aparcadas } ?: return emptyList()
-        if (primero is Pendiente.Directa || primero.id in sueltos || primero.tamano() > 200_000) return listOf(primero)
+        if (primero !is Pendiente.Campos || primero.id in sueltos || primero.tamano() > 200_000) return listOf(primero)
         val lote = ArrayList<Pendiente>()
         var tam = 0
         for (p in cola) {
@@ -225,6 +233,8 @@ class Familia(
     private fun Pendiente.tamano(): Int = when (this) {
         is Pendiente.Campos -> campos.values.sumOf { Json.escribe(it).length } + 64
         is Pendiente.Directa -> Json.escribe(cuerpo).length
+        is Pendiente.Imagen -> 128
+        is Pendiente.Clave -> Json.escribe(valor).length + 64
     }
 
     /**
@@ -246,8 +256,17 @@ class Familia(
 
     private fun envia(lote: List<Pendiente>): Red.Respuesta {
         val p = lote.first()
-        if (p is Pendiente.Directa) {
-            return red.pedir(p.metodo, sesion.url(p.ruta, conPase = true), Json.escribe(p.cuerpo))
+        when (p) {
+            is Pendiente.Directa -> return red.pedir(p.metodo, sesion.url(p.ruta, conPase = true), Json.escribe(p.cuerpo))
+            is Pendiente.Imagen -> {
+                val bytes = disco.lee("img/${p.hash}") ?: return Red.Respuesta(200, "{}")
+                val cuerpo = mapOf("d" to Base64.getEncoder().encodeToString(bytes), "t" to p.tipo, "s" to bytes.size)
+                return red.pedir("PUT", sesion.url("/users/${sesion.uid}/familia_img/${p.hash}", conPase = true), Json.escribe(cuerpo))
+            }
+            is Pendiente.Clave -> {
+                return red.pedir("PATCH", sesion.url("/claves/${sesion.uid}", conPase = true), Json.escribe(mapOf(p.nombre to (p.valor ?: ""))))
+            }
+            is Pendiente.Campos -> {}
         }
         val cuerpo = LinkedHashMap<String, Any?>()
         val ahoraServidor = mapOf(".sv" to "timestamp")
@@ -331,8 +350,11 @@ class Familia(
     }
 
     private fun getJson(ruta: String): Any? {
-        val r = red.pedir("GET", sesion.url(ruta, conPase = true))
-        if (r.codigo == 401) { sesion.paseCaducado(); val r2 = red.pedir("GET", sesion.url(ruta, conPase = true)); if (r2.ok) return Json.lee(r2.cuerpo) }
+        var r = red.pedir("GET", sesion.url(ruta, conPase = true))
+        if (r.codigo == 401) {
+            sesion.paseCaducado()
+            r = red.pedir("GET", sesion.url(ruta, conPase = true))
+        }
         if (!r.ok) throw Red.SinRed("La cuenta respondió ${r.codigo} en $ruta")
         return runCatching { Json.lee(r.cuerpo) }.getOrNull()
     }
@@ -390,6 +412,7 @@ class Familia(
     @Synchronized
     fun deja() {
         escuchando = false
+        red.cortaEscucha()
         hiloEscucha?.interrupt()
         hiloEscucha = null
     }
@@ -405,7 +428,7 @@ class Familia(
         fun guarda(bytes: ByteArray, tipo: String = "image/webp"): String {
             val h = hash(bytes)
             if (!disco.existe("img/$h")) disco.escribe("img/$h", bytes)
-            encola(Pendiente.Directa("PUT", "/users/${sesion.uid}/familia_img/$h", mapOf("d" to Base64.getEncoder().encodeToString(bytes), "t" to tipo, "s" to bytes.size)))
+            encola(Pendiente.Imagen(h, tipo))
             return h
         }
 
@@ -437,7 +460,7 @@ class Familia(
     @Volatile private var clavesCache: Map<String, Any?> = seguro.leeTexto(CLAVES_ARCHIVO)?.let { runCatching { Json.lee(it) }.getOrNull() }.comoMapa()
 
     /**
-     * Las claves de los servicios (kDrive, SteamGridDB, Steam, IGDB, RAWG…), una vez para toda la familia: se ponen en
+     * Las claves de los servicios (Google Drive, kDrive, SteamGridDB, Steam, IGDB, RAWG…), una vez para toda la familia: se ponen en
      * Azabache y las demás apps las tienen solas. Viven en `/claves/<uid>`, que solo puede leer tu sesión (ni tu pareja).
      */
     fun claves(): Map<String, Any?> = clavesCache
@@ -446,10 +469,10 @@ class Familia(
 
     fun ponClave(nombre: String, valor: Any?) {
         require(Coleccion.refValida(nombre))
-        clavesCache = clavesCache + (nombre to (valor ?: ""))
+        val limpio = valor ?: ""
+        clavesCache = clavesCache + (nombre to limpio)
         seguroDisco.escribeTexto(CLAVES_ARCHIVO, Json.escribe(clavesCache))
-        encola(Pendiente.Directa("PATCH", "/claves/${sesion.uid}", mapOf(nombre to (valor ?: ""))))
-        encola(Pendiente.Directa("PUT", "/users/${sesion.uid}/familia_sello/$CLAVES", mapOf(".sv" to "timestamp")))
+        encola(Pendiente.Clave(nombre, limpio))
     }
 
     private fun bajaClaves(sello: Long) {
@@ -457,7 +480,17 @@ class Familia(
         if (!r.ok) return
         val m = runCatching { Json.lee(r.cuerpo) }.getOrNull().comoMapa()
         // Lo que aún no se ha subido de aquí manda sobre lo bajado
-        val pendientes = synchronized(cerrojoCola) { cola.filterIsInstance<Pendiente.Directa>().filter { it.ruta == "/claves/${sesion.uid}" }.flatMap { it.cuerpo.comoMapa().entries }.associate { it.key to it.value } }
+        val pendientes = synchronized(cerrojoCola) {
+            val res = LinkedHashMap<String, Any?>()
+            cola.forEach { p ->
+                when (p) {
+                    is Pendiente.Clave -> res[p.nombre] = p.valor ?: ""
+                    is Pendiente.Directa -> if (p.ruta == "/claves/${sesion.uid}") p.cuerpo.comoMapa().forEach { (k, v) -> res[k] = v }
+                    else -> {}
+                }
+            }
+            res
+        }
         clavesCache = m + pendientes
         seguroDisco.escribeTexto(CLAVES_ARCHIVO, Json.escribe(clavesCache))
         clavesVistas = sello
@@ -468,15 +501,20 @@ class Familia(
 
     /** Al entrar o salir de la cuenta: se olvida todo lo de la sesión anterior (otra cuenta no debe ver nada de esta). */
     fun olvidaTodo() {
-        synchronized(cerrojoCola) { cola.clear() }
-        disco.borra(COLA)
-        // Las mismas colecciones, vacías (quien las escucha sigue oyéndolas); las de tu pareja se olvidan
-        colecciones.values.forEach { it.vacia() }
-        ajenas.values.forEach { disco.borra(it.archivo) }
-        ajenas.clear()
-        guardaAbiertas()
-        clavesCache = emptyMap(); clavesVistas = 0L
-        seguroDisco.borra(CLAVES_ARCHIVO)
+        synchronized(this) { programada?.cancel(false) }
+        synchronized(cerrojoSincro) {
+            synchronized(cerrojoCola) { cola.clear() }
+            aparcadas.clear()
+            sueltos.clear()
+            disco.borra(COLA)
+            // Las mismas colecciones, vacías (quien las escucha sigue oyéndolas); las de tu pareja se olvidan
+            colecciones.values.forEach { it.vacia() }
+            ajenas.values.forEach { disco.borra(it.archivo) }
+            ajenas.clear()
+            guardaAbiertas()
+            clavesCache = emptyMap(); clavesVistas = 0L
+            seguroDisco.borra(CLAVES_ARCHIVO)
+        }
     }
 
     companion object {

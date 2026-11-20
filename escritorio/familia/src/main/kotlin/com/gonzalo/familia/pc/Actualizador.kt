@@ -19,7 +19,18 @@ import java.util.concurrent.TimeUnit
  *  - Con el .deb (instalada en /opt, del sistema) no se puede sola: se baja a Descargas y se abre el instalador, como antes.
  */
 object Actualizador {
-    class Nueva(val version: String, val archivo: KDrive.Archivo)
+    class Nueva(
+        val version: String,
+        val nombreArchivo: String,
+        val tamano: Long,
+        val archivoId: String,
+        val deGoogleDrive: Boolean,
+        val sha256Id: String = "",
+        val archivo: KDrive.Archivo = KDrive.Archivo(nombreArchivo, archivoId.toLongOrNull() ?: 0L, false, "", tamano),
+    ) {
+        constructor(version: String, archivo: KDrive.Archivo) : this(version, archivo.nombre, archivo.tamano, archivo.id.toString(), false, "", archivo)
+    }
+
     /** Una versión nueva ya bajada (y descomprimida en Linux), lista para ponerse. */
     class Preparada(val version: String, val archivo: File, val carpeta: File?)
 
@@ -55,13 +66,25 @@ object Actualizador {
         return Regex("^(?:$nombre)-(\\d+(?:\\.\\d+)*)-$fin$")
     }
 
-    /** La versión más nueva que hay en tu kDrive para esta app y este sistema, si es más nueva que la de ahora. Bloquea (red). */
-    fun busca(app: String, kdrive: KDrive = KDrive()): Nueva? {
-        if (!kdrive.activo) return null
+    /** La versión más nueva que hay en Google Drive (o kDrive como respaldo) para esta app y este sistema. Bloquea (red). */
+    fun busca(app: String, kdrive: KDrive? = null, gdrive: com.gonzalo.familia.nucleo.GoogleDrive? = null): Nueva? {
         val p = patron(app)
-        return kdrive.versiones().mapNotNull { a -> p.find(a.nombre)?.groupValues?.get(1)?.let { Nueva(it, a) } }
-            .filter { mayor(it.version, version) }.maxWithOrNull { a, b -> if (mayor(a.version, b.version)) 1 else if (mayor(b.version, a.version)) -1 else 0 }
+        val archivos: List<Nube.Archivo> = when {
+            gdrive != null -> if (!gdrive.activo) emptyList() else gdrive.versiones().map { Nube.Archivo(it.id, it.nombre, it.carpeta, it.tamano, true) }
+            kdrive != null -> if (!kdrive.activo) emptyList() else kdrive.versiones().map { Nube.Archivo(it.id.toString(), it.nombre, it.carpeta, it.tamano, false) }
+            else -> Nube.versiones()
+        }
+        val porNombre = archivos.associateBy { it.nombre }
+        return archivos.mapNotNull { a ->
+            p.find(a.nombre)?.groupValues?.get(1)?.let { v ->
+                val shaId = porNombre["${a.nombre}.sha256"]?.id.orEmpty()
+                Nueva(v, a.nombre, a.tamano, a.id, a.deGoogleDrive, shaId)
+            }
+        }.filter { mayor(it.version, version) }.maxWithOrNull { a, b -> if (mayor(a.version, b.version)) 1 else if (mayor(b.version, a.version)) -1 else 0 }
     }
+
+    /** Compatibilidad con llamadas existentes que pasan solo `kdrive`. */
+    fun busca(app: String, kdrive: KDrive): Nueva? = busca(app, kdrive, null)
 
     // ---------------------------------------------------------------- sola del todo
 
@@ -74,27 +97,66 @@ object Actualizador {
 
     private fun carpetaDe(app: String) = File(Sitio.de(app), "actualizacion")
 
+    private fun descarga(n: Nueva, destino: File, kdrive: KDrive?, gdrive: com.gonzalo.familia.nucleo.GoogleDrive?, progreso: (Long, Long) -> Unit = { _, _ -> }) {
+        if (n.deGoogleDrive) {
+            (gdrive ?: Nube.gdrive()).baja(n.archivoId, destino, progreso)
+        } else {
+            (kdrive ?: Nube.kdrive()).baja(n.archivoId.toLong(), destino, progreso)
+        }
+    }
+
+    /** Si la carpeta `versiones` trae `<archivo>.sha256`, comprueba que el archivo bajado coincide exactamente. */
+    fun verificaSha256(archivo: File, esperadoTexto: String): Boolean {
+        val esperado = esperadoTexto.trim().split(Regex("\\s+")).firstOrNull()?.lowercase().orEmpty()
+        if (esperado.length != 64 || !esperado.all { it in '0'..'9' || it in 'a'..'f' }) return false
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        archivo.inputStream().use { inp ->
+            val buf = ByteArray(64 * 1024)
+            while (true) { val k = inp.read(buf); if (k < 0) break; md.update(buf, 0, k) }
+        }
+        val real = md.digest().joinToString("") { "%02x".format(it) }
+        return real == esperado
+    }
+
+    private fun compruebaIntegridad(n: Nueva, archivo: File, dir: File, kdrive: KDrive?, gdrive: com.gonzalo.familia.nucleo.GoogleDrive?) {
+        if (n.sha256Id.isBlank()) return
+        val shaFile = File(dir, "${n.nombreArchivo}.sha256")
+        try {
+            if (n.deGoogleDrive) (gdrive ?: Nube.gdrive()).baja(n.sha256Id, shaFile)
+            else (kdrive ?: Nube.kdrive()).baja(n.sha256Id.toLong(), shaFile)
+            if (!verificaSha256(archivo, shaFile.readText())) {
+                archivo.delete()
+                error("el archivo bajado no coincide con su huella SHA-256")
+            }
+        } finally {
+            shaFile.delete()
+        }
+    }
+
     /**
      * Mira si hay versión nueva y, si se puede poner sola, la baja y la deja preparada (sin tocar la de ahora). Bloquea (red): llámalo
      * fuera de la pantalla. Devuelve la preparada, o null si no hay nada nuevo o no se puede sola.
      */
-    fun automatico(app: String, kdrive: KDrive = KDrive()): Preparada? {
+    fun automatico(app: String, kdrive: KDrive? = null, gdrive: com.gonzalo.familia.nucleo.GoogleDrive? = null): Preparada? {
         preparada?.let { return it }
         if (!sePoneSola()) return null
-        val n = runCatching { busca(app, kdrive) }.getOrElse { estado = "No he podido mirar si hay versión nueva: ${it.message}"; return null } ?: return null
+        val n = runCatching { busca(app, kdrive, gdrive) }.getOrElse { estado = "No he podido mirar si hay versión nueva: ${it.message}"; return null } ?: return null
         val dir = carpetaDe(app).also { it.mkdirs() }
         // (lo de versiones anteriores ya no sirve)
         dir.listFiles()?.filter { !it.name.contains(n.version) }?.forEach { it.deleteRecursively() }
-        val archivo = File(dir, n.archivo.nombre)
-        if (!archivo.isFile || (n.archivo.tamano > 0 && archivo.length() != n.archivo.tamano)) {
+        val archivo = File(dir, n.nombreArchivo)
+        if (!archivo.isFile || (n.tamano > 0 && archivo.length() != n.tamano)) {
             estado = "Bajando la ${n.version}…"
-            val tmp = File(dir, n.archivo.nombre + ".parcial")
-            kdrive.baja(n.archivo.id, tmp)
+            val tmp = File(dir, n.nombreArchivo + ".parcial")
+            descarga(n, tmp, kdrive, gdrive)
+            compruebaIntegridad(n, tmp, dir, kdrive, gdrive)
             if (!tmp.renameTo(archivo)) { tmp.copyTo(archivo, overwrite = true); tmp.delete() }
         }
         val carpeta = if (Sitio.sistema == Sitio.Sistema.MAC) null else descomprime(archivo, File(dir, "v${n.version}"))
         return Preparada(n.version, archivo, carpeta).also { preparada = it; estado = "La ${n.version} está lista: se pone sola al cerrar." }
     }
+
+    fun automatico(app: String, kdrive: KDrive): Preparada? = automatico(app, kdrive, null)
 
     /** Descomprime el .tar.gz de Linux en [destino] (vacía antes). Devuelve la carpeta. */
     fun descomprime(targz: File, destino: File): File {
@@ -180,20 +242,25 @@ object Actualizador {
     }
 
     /** Sin sola: la baja a Descargas y la abre con el sistema (el instalador del .deb, o el .dmg en el Mac). Bloquea (red). */
-    fun instala(n: Nueva, kdrive: KDrive = KDrive(), progreso: (Long, Long) -> Unit = { _, _ -> }): File {
+    fun instala(n: Nueva, kdrive: KDrive? = null, gdrive: com.gonzalo.familia.nucleo.GoogleDrive? = null, progreso: (Long, Long) -> Unit = { _, _ -> }): File {
         val casa = File(System.getProperty("user.home"))
         val descargas = listOf("Descargas", "Downloads").map { File(casa, it) }.firstOrNull { it.isDirectory } ?: casa
-        val destino = File(descargas, n.archivo.nombre)
-        kdrive.baja(n.archivo.id, destino, progreso)
+        val destino = File(descargas, n.nombreArchivo)
+        descarga(n, destino, kdrive, gdrive, progreso)
+        compruebaIntegridad(n, destino, descargas, kdrive, gdrive)
         Sitio.abre(destino.absolutePath)
         return destino
     }
 
+    fun instala(n: Nueva, kdrive: KDrive, progreso: (Long, Long) -> Unit = { _, _ -> }): File = instala(n, kdrive, null, progreso)
+
     private fun corre(orden: List<String>, para: String, entorno: Map<String, String> = emptyMap()) {
         val p = ProcessBuilder(orden).redirectErrorStream(true).also { it.environment().putAll(entorno) }.start()
-        val salida = p.inputStream.bufferedReader().readText()
-        if (!p.waitFor(5, TimeUnit.MINUTES)) { p.destroyForcibly(); error("no he podido $para (tarda demasiado)") }
-        if (p.exitValue() != 0) error("no he podido $para: ${salida.trim().take(300)}")
+        val salida = java.util.concurrent.atomic.AtomicReference("")
+        val lector = Thread { salida.set(runCatching { p.inputStream.bufferedReader().use { it.readText() } }.getOrDefault("")) }.apply { isDaemon = true; start() }
+        if (!p.waitFor(5, TimeUnit.MINUTES)) { p.destroyForcibly(); lector.join(500); error("no he podido $para (tarda demasiado)") }
+        lector.join(2_000)
+        if (p.exitValue() != 0) error("no he podido $para: ${salida.get().trim().take(300)}")
     }
 
     /** (Para las pruebas.) */

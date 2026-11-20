@@ -47,7 +47,7 @@
         android:banner="@drawable/banner_mostaza"
         android:theme="@style/Mostaza"
         android:usesCleartextTraffic="true"
-        android:allowBackup="true">
+        android:allowBackup="false">
         <activity android:name=".MainActivity" android:enableOnBackInvokedCallback="true" android:exported="true" android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|uiMode|density">

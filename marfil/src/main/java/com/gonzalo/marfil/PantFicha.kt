@@ -251,12 +251,12 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
                     Icon(Icons.Rounded.MoreVert, "Opciones del archivo", tint = Charcoal, modifier = Modifier.size(54.dp).clickable { menuArchivo = true }.padding(14.dp))
                     DropdownMenu(menuArchivo, { menuArchivo = false }) {
                         DropdownMenuItem({ Text("Cambiar de archivo") }, { menuArchivo = false; elegirArchivo.launch(arrayOf("*/*")) }, leadingIcon = { Icon(Icons.Rounded.SwapHoriz, null) })
-                        if (enNube != null) DropdownMenuItem({ Text("Quitar del móvil (sigue en tu kDrive)") }, { menuArchivo = false; quitarArchivo = true }, leadingIcon = { Icon(Icons.Rounded.CloudDone, null) })
+                        if (enNube != null) DropdownMenuItem({ Text("Quitar del móvil (sigue en tu nube)") }, { menuArchivo = false; quitarArchivo = true }, leadingIcon = { Icon(Icons.Rounded.CloudDone, null) })
                         else {
                             DropdownMenuItem({ Text("Quitar el archivo") }, { menuArchivo = false; quitarArchivo = true }, leadingIcon = { Icon(Icons.Rounded.LinkOff, null) })
-                            if (KDrive.on(ctx)) DropdownMenuItem({ Text("Subir a tu kDrive ahora") }, {
-                                menuArchivo = false; trabajando = "Subiendo a tu kDrive…"
-                                ambito.launch { val n = withContext(Dispatchers.IO) { runCatching { NubeLibros.subirPendientes(ctx, aMano = true) } }; trabajando = null; dice(n.fold({ if (it > 0) "Subido a tu kDrive." else "No he podido subirlo." }, { e -> e.message ?: "No he podido subirlo." })) }
+                            if (KDrive.on(ctx)) DropdownMenuItem({ Text("Subir a tu nube ahora") }, {
+                                menuArchivo = false; trabajando = "Subiendo a tu nube…"
+                                ambito.launch { val n = withContext(Dispatchers.IO) { runCatching { NubeLibros.subirPendientes(ctx, aMano = true) } }; trabajando = null; dice(n.fold({ if (it > 0) "Subido a tu nube." else "No he podido subirlo." }, { e -> e.message ?: "No he podido subirlo." })) }
                             }, leadingIcon = { Icon(Icons.Rounded.CloudDownload, null) })
                         }
                     }
@@ -266,7 +266,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
                 Spacer(Modifier.height(8.dp))
                 BotonC("O elegir otro archivo", fondo = Paper, letra = Charcoal, modifier = Modifier.drawBehind { drawRect(Charcoal, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) }) { elegirArchivo.launch(arrayOf("*/*")) }
             }
-            if (l.enOtroDispositivo) Text(if (KDrive.on(ctx)) "No está en este dispositivo. Bájalo de tu kDrive o elige su EPUB o PDF (se guarda también en tu kDrive)." else "No está en este dispositivo: elige su EPUB o PDF del móvil (no se sube a ningún sitio).",
+            if (l.enOtroDispositivo) Text(if (KDrive.on(ctx)) "No está en este dispositivo. Bájalo de tu nube o elige su EPUB o PDF (se guarda también en tu nube)." else "No está en este dispositivo: elige su EPUB o PDF del móvil (no se sube a ningún sitio).",
                 color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 8.dp))
             trabajando?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 8.dp)) }
 
@@ -397,7 +397,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
             if (l.paginas > 0) MagFact("Páginas", "${l.paginas}")
             MagFact("Archivo", if (l.enOtroDispositivo) "no está en este dispositivo" else l.archivo)
             if (ficheroLocal != null) MagFact("Tamaño", tamanoLegible(ficheroLocal.length()))
-            MagFact("En tu kDrive", when { enNube != null -> "sí"; KDrive.on(ctx) -> "todavía no"; else -> "kDrive sin conectar" })
+            MagFact("En tu nube", when { enNube != null -> "sí"; KDrive.on(ctx) -> "todavía no"; else -> "sin conectar" })
             if (l.anadido > 0) MagFact("Añadido", fecha(l.anadido))
         }
         Spacer(Modifier.height(30.dp))

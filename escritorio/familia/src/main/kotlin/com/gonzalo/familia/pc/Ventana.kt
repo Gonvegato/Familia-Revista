@@ -312,7 +312,7 @@ fun AjustesVersion(app: String, nombre: String) {
         Spacer(Modifier.height(12.dp))
         val lista = Actualizador.preparada
         if (sola) {
-            Cuerpo("Se actualiza sola: al abrirla y cada 6 horas mira tu kDrive («Mi carpeta/versiones»); si hay una versión nueva, la baja y se pone sola al cerrar la app (o al pulsar «Reiniciar ahora» en la banda de abajo).", tam = 14)
+            Cuerpo("Se actualiza sola: al abrirla y cada 6 horas mira tu nube (Google Drive o kDrive, carpeta «versiones»); si hay una versión nueva, la baja y se pone sola al cerrar la app (o al pulsar «Reiniciar ahora» en la banda de abajo).", tam = 14)
             Spacer(Modifier.height(10.dp))
             if (lista != null) Cuerpo("La $nombre ${lista.version} ya está bajada: se pone al cerrar.", tam = 14)
             else BotonSuave(if (trabajando) "Buscando…" else "Buscar ahora") {
@@ -321,7 +321,7 @@ fun AjustesVersion(app: String, nombre: String) {
                     trabajando = false
                     aviso = r.fold({ when {
                         it != null -> "La ${it.version} está lista: se pone sola al cerrar."
-                        !KDrive().activo -> "Pon tu kDrive en Jonsu (Ajustes → Servicios) para que se actualice sola."
+                        !Nube.activo -> "Pon tu Google Drive en Jonsu (Ajustes → Servicios) para que se actualice sola."
                         else -> Actualizador.estado.ifBlank { "Tienes la última." }
                     } }, { it.message ?: "No se ha podido mirar." })
                 } }
@@ -329,7 +329,7 @@ fun AjustesVersion(app: String, nombre: String) {
         } else {
             val n = nueva
             if (n != null) {
-                Cuerpo("Hay una versión nueva en tu kDrive: la ${n.version}.", tam = 14)
+                Cuerpo("Hay una versión nueva en tu nube: la ${n.version}.", tam = 14)
                 Spacer(Modifier.height(8.dp))
                 BotonAcento(if (trabajando) "Bajando…" else "Bajar e instalar la ${n.version}") {
                     if (!trabajando) { trabajando = true; scope.launch {
@@ -344,7 +344,7 @@ fun AjustesVersion(app: String, nombre: String) {
                         val r = withContext(Dispatchers.IO) { runCatching { Actualizador.busca(app) } }
                         trabajando = false
                         nueva = r.getOrNull()
-                        aviso = r.fold({ if (it == null) (if (KDrive().activo) "Tienes la última." else "Pon tu kDrive en Jonsu (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
+                        aviso = r.fold({ if (it == null) (if (Nube.activo) "Tienes la última." else "Pon tu Google Drive en Jonsu (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
                     } }
                 }
             }

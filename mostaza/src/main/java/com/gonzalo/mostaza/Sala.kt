@@ -401,7 +401,7 @@ private fun InicioSala(est: EstadoSala, ctl: ControlSala) {
             imagen = { b -> d.viendo.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster }))
         if (d.pendientes.isNotEmpty()) add(FilaSala("pendientes", "Pendientes", d.pendientes.take(30).map { it.breve() },
             sub = { b -> tipoNombre(b.tipo) + if (b.ano.isNotBlank()) " · ${b.ano}" else "" }, imagen = { b -> d.pendientes.firstOrNull { it.idStremio == b.id }?.imagen ?: b.poster }))
-        if (d.enKDrive.isNotEmpty()) add(FilaSala("kdrive", "En tu kDrive", d.enKDrive, sub = { tipoNombre(it.tipo) + if (it.ano.isNotBlank()) " · ${it.ano}" else "" }))
+        if (d.enKDrive.isNotEmpty()) add(FilaSala("kdrive", "En tu nube", d.enKDrive, sub = { tipoNombre(it.tipo) + if (it.ano.isNotBlank()) " · ${it.ano}" else "" }))
         if (d.conTmdb) d.filasTmdb.orEmpty().forEach { f -> add(FilaSala("tmdb:" + f.clave, f.titulo, f.cosas.take(30))) }
         else d.filas.orEmpty().forEach { f -> add(FilaSala("cat:" + f.clave, f.titulo, f.cosas.take(30))) }
     }

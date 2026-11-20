@@ -158,7 +158,7 @@ fun AjustesCapturasStreaming(nav: Nav) {
     var capturando by remember { mutableStateOf(false) }
     val carpeta = remember { Capturas.carpeta() }
     val metodos = remember { Captura.metodos(Captura.Entorno.deAqui()) }
-    val kdrive = remember(LaFamilia.cambios) { KDrive().activo }
+    val nubeActiva = remember(LaFamilia.cambios) { com.gonzalo.familia.pc.Nube.activo }
     val steam = remember { runCatching { SteamLink.info() }.getOrNull() }
     Column {
         Antetitulo("Capturas")
@@ -167,7 +167,7 @@ fun AjustesCapturasStreaming(nav: Nav) {
             (if (Sitio.sistema == Sitio.Sistema.MAC) " La primera vez, el Mac pide permiso de «Grabación de pantalla» para Bastet (Ajustes del Sistema → Privacidad y seguridad)." else ""), tam = 14)
         Fila("Capturas desde el móvil", "Tu Bastet del móvil puede pedir una captura de esta pantalla") { Interruptor(AjustesTuPc.capturasDesdeMovil) { AjustesTuPc.ponCapturasDesdeMovil(it) } }
         Fila("Las de aquí, también al móvil", "Las que haces en este ordenador llegan también a tu Bastet del móvil") { Interruptor(AjustesTuPc.capturasAlMovil) { AjustesTuPc.ponCapturasAlMovil(it) } }
-        if (kdrive) Fila("Una copia en tu kDrive", "En «Mi carpeta/Hiedra/Capturas», por juego") { Interruptor(AjustesTuPc.capturasAKDrive) { AjustesTuPc.ponCapturasAKDrive(it) } }
+        if (nubeActiva) Fila("Una copia en tu ${com.gonzalo.familia.pc.Nube.nombre}", "En «Hiedra/Capturas», por juego") { Interruptor(AjustesTuPc.capturasAKDrive) { AjustesTuPc.ponCapturasAKDrive(it) } }
         MagFact("Se captura con", metodos.joinToString(", ") { it.nombre }.ifBlank { "nada: falta Spectacle, grim o gnome-screenshot" })
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {

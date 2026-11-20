@@ -38,7 +38,7 @@ object NubeP {
         fun escribir(): OutputStream
     }
 
-    class Ficha(val n: String, val id: Long, val h: String, val s: Long, val dev: String, val t: Long)
+    class Ficha(val n: String, val id: Long, val h: String, val s: Long, val dev: String, val t: Long, val gd: String = "")
 
     val EXT_GUARDADO = setOf("srm", "sav", "dsv", "eep", "fla", "mpk", "mcr", "sra")
 
@@ -65,7 +65,7 @@ object NubeP {
         prefs(c).edit().putString("carpetas", JSONObject(carpetas as Map<*, *>).toString()).apply()
     }
 
-    /** ¿Se sincronizan los guardados de este juego? (ROM, con carpeta elegida, cuenta y kDrive conectados) */
+    /** ¿Se sincronizan los guardados de este juego? (ROM, con carpeta elegida, cuenta y nube conectadas) */
     fun activo(c: Context, j: Juego) = j.rom != null && Archivos.tiene(j.rom!!.clave) && carpetas[j.sistema] != null && Cuenta.vinculada && KDrive.on(c)
 
     fun carpetaReal(c: Context, uri: String): Carpeta? = DocumentFile.fromTreeUri(c, Uri.parse(uri))?.let { DocCarpeta(c, it) }
@@ -94,11 +94,12 @@ object NubeP {
     }
 
     private fun deJson(o: JSONObject): Map<String, Ficha> = o.keys().asSequence().associateWith { k ->
-        o.getJSONObject(k).let { Ficha(it.optString("n"), it.optLong("id"), it.optString("h"), it.optLong("s"), it.optString("dev"), it.optLong("t")) }
+        o.getJSONObject(k).let { Ficha(it.optString("n"), it.optLong("id"), it.optString("h"), it.optLong("s"), it.optString("dev"), it.optLong("t"), it.optString("gd")) }
     }
 
-    private fun escribe(tipo: String, kid: String, fk: String, n: String, id: Long, h: String, s: Long) {
+    private fun escribe(tipo: String, kid: String, fk: String, n: String, id: Long, h: String, s: Long, gd: String = "") {
         val o = JSONObject().put("n", n).put("id", id).put("h", h).put("s", s).put("dev", Cuenta.dispositivo).put("t", JSONObject().put(".sv", "timestamp"))
+        if (gd.isNotBlank()) o.put("gd", gd)
         Cuenta.db("PUT", "${Cuenta.raiz}/nube/$tipo/$kid/f/$fk", o.toString(), "print=silent")
     }
 
@@ -130,7 +131,7 @@ object NubeP {
             if (loc != null && ult.isBlank() && loc.modificado > f.t) continue // nunca sincronizado y el de aquí es más reciente: se sube al volver
             val tmp = File(c.cacheDir, "guardado-$kid-$k.tmp")
             try {
-                KDrive.download(c, f.id, tmp)
+                KDrive.bajaDual(c, f.gd, f.id, tmp)
                 if (hashDe(tmp.inputStream()) != f.h) throw IOException("el guardado ha llegado incompleto")
                 if (loc != null) copiar(c, kid, loc)
                 val dest = loc ?: car.crear(f.n) ?: continue
@@ -156,8 +157,8 @@ object NubeP {
             if (h == ultimo(c, kid, k)) continue
             if (idx[k]?.h == h) { anota(c, kid, k, h); continue }
             try {
-                val id = KDrive.upload(c, "Hiedra/Guardados/${j.sistema}/$kid", loc.nombre, loc.tamano) { loc.leer() }
-                escribe("saves", kid, k, loc.nombre, id, h, loc.tamano)
+                val sub = KDrive.subeDual(c, "Hiedra/Guardados/${j.sistema}/$kid", loc.nombre, loc.tamano) { loc.leer() }
+                escribe("saves", kid, k, loc.nombre, sub.kdId, h, loc.tamano, sub.gdId)
                 anota(c, kid, k, h); n++
             } catch (e: Exception) { return n }
         }
@@ -170,15 +171,15 @@ object NubeP {
 
     fun subirRom(c: Context, j: Juego, a: Arch, progreso: (Long) -> Unit = {}) {
         val h = hash(a)
-        val id = KDrive.upload(c, "Hiedra/ROMs/${j.sistema}", a.nombre, a.tamano, progreso) { a.leer() }
-        escribe("roms", kid(j), "rom", a.nombre, id, h, a.tamano)
+        val sub = KDrive.subeDual(c, "Hiedra/ROMs/${j.sistema}", a.nombre, a.tamano, progreso) { a.leer() }
+        escribe("roms", kid(j), "rom", a.nombre, sub.kdId, h, a.tamano, sub.gdId)
     }
 
     /** Baja la ROM a [destino] (se comprueba que llega entera). Devuelve el archivo creado. */
     fun bajarRom(c: Context, j: Juego, f: Ficha, destino: Carpeta): Arch {
         val tmp = temporalRom(c, j)
         try {
-            KDrive.download(c, f.id, tmp)
+            KDrive.bajaDual(c, f.gd, f.id, tmp)
             if (tmp.length() != f.s || hashDe(tmp.inputStream()) != f.h) throw IOException("la ROM ha llegado incompleta")
             val a = destino.crear(f.n) ?: throw IOException("no se pudo crear el archivo en esa carpeta")
             a.escribir().use { o -> tmp.inputStream().use { it.copyTo(o) } }
@@ -190,7 +191,7 @@ object NubeP {
     fun temporalRom(c: Context, j: Juego) = File(c.cacheDir, "rom-${kid(j)}.tmp")
 
     /**
-     * Dónde se dejan en este móvil las ROMs que bajas de tu kDrive: la primera carpeta de ROMs que Hiedra recorre (Sistemas →
+     * Dónde se dejan en este móvil las ROMs que bajas de tu nube: la primera carpeta de ROMs que Hiedra recorre (Sistemas →
      * Carpetas de ROMs) en la que se pueda escribir. Dentro, en la subcarpeta del sistema («gba», «snes»…), como las ordena ES-DE.
      */
     fun carpetaBajadas(c: Context): DocumentFile? = Biblioteca.carpetas.toList().firstNotNullOfOrNull { f ->
@@ -198,7 +199,7 @@ object NubeP {
     }
 
     /**
-     * Baja la ROM de [j] de tu kDrive a la carpeta de bajadas (en la subcarpeta de su sistema) y la apunta en este móvil, como si la
+     * Baja la ROM de [j] de tu nube a la carpeta de bajadas (en la subcarpeta de su sistema) y la apunta en este móvil, como si la
      * hubieras añadido aquí: así la abre cualquier emulador. Si ya estaba allí entera, no se baja otra vez. Bloqueante (red).
      */
     fun bajarRomAqui(c: Context, j: Juego, f: Ficha, raiz: DocumentFile): Arch {
@@ -216,7 +217,7 @@ object NubeP {
     fun bajarRomAArchivo(c: Context, j: Juego, f: Ficha, dest: File) {
         val tmp = temporalRom(c, j)
         try {
-            KDrive.download(c, f.id, tmp)
+            KDrive.bajaDual(c, f.gd, f.id, tmp)
             if (tmp.length() != f.s || hashDe(tmp.inputStream()) != f.h) throw IOException("la ROM ha llegado incompleta")
             dest.parentFile?.mkdirs()
             if (!tmp.renameTo(dest)) { tmp.copyTo(dest, overwrite = true) }

@@ -134,7 +134,16 @@ object Migracion {
         KDrive.migraALaCuenta(c)
         runCatching {
             Cuenta.db("GET", "${Cuenta.raiz}/nube", null)?.let { JSONObject(it) }?.let { o ->
-                for (k in o.keys()) NubeLibros.deJson(o.optJSONObject(k))?.let { x -> if (libros.nodo(k)?.mapa("nube")?.isEmpty() != false) libros.pon(k, mapOf("nube" to mapOf("f" to x.f, "n" to x.n, "s" to x.s)), 1L) }
+                for (k in o.keys()) NubeLibros.deJson(o.optJSONObject(k))?.let { x ->
+                    if (libros.nodo(k)?.mapa("nube")?.isEmpty() != false) {
+                        val m = LinkedHashMap<String, Any>().apply {
+                            if (x.f > 0) put("f", x.f)
+                            if (x.gd.isNotBlank()) put("gd", x.gd)
+                            put("n", x.n); put("s", x.s)
+                        }
+                        libros.pon(k, mapOf("nube" to m), 1L)
+                    }
+                }
             }
         }
 

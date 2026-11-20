@@ -39,7 +39,8 @@ guardan ya reducidas (unos 600×900, la proporción 2:3 de las cajas de SteamGri
 
 | Clave | Para qué |
 |---|---|
-| `kdrive_token`, `kdrive_id` | Tu kDrive: los archivos grandes (libros, ROMs, partidas) y las versiones de las apps |
+| `gdrive_client_id`, `gdrive_client_secret`, `gdrive_refresh_token`, `gdrive_carpeta` | Tu Google Drive (principal): libros, ROMs, partidas, estados, películas/series privadas, fotos/capturas y actualizaciones (`versiones/`). `gdrive_carpeta` es la carpeta raíz en Drive (por defecto `Familia`). |
+| `kdrive_token`, `kdrive_id` | Tu kDrive (respaldo durante la transición a Google Drive): sigue leyendo archivos antiguos que aún no tienen `gd` y sirve de respaldo si Google Drive no está configurado. |
 | `steamgriddb` | Portadas de juegos |
 | `steam_key`, `steam_id` | Horas y biblioteca de Steam |
 | `igdb_id`, `igdb_secreto` | Datos de juegos |
@@ -94,7 +95,7 @@ siempre de Marfil): el mismo libro en cualquier dispositivo tiene el mismo `kid`
 | `portada`, `pu` | La portada (hash de `familia_img`) y, si salió de internet, su dirección |
 | `fondo`, `fu` | El fondo (hash de `familia_img`, hasta 1600×1000; `-` = quitado a propósito) y de dónde salió. Lo ponen Seshat y Jonsu; Jonsu lo enseña antes que el suyo |
 | `archivo` | Nombre del archivo (con extensión) |
-| `nube` | Dónde está el archivo en tu kDrive: `{f: id, n: nombre, s: tamaño}` |
+| `nube` | Dónde está el archivo en tu nube: `{gd: idGoogleDrive, f: idKDrive, n: nombre, s: tamaño}` (`gd` es principal; `f` se conserva por compatibilidad) |
 
 ### `lectura/<kid>` (Marfil)
 

@@ -16,8 +16,8 @@ enum class Estado(val nombre: String, val cuenta: String) {
     companion object { fun de(s: String) = entries.firstOrNull { it.cuenta == s } ?: PENDIENTE }
 }
 
-/** Dónde está el archivo de un libro en tu kDrive (campo `nube`): su id, su nombre y su tamaño. */
-class EnNube(val f: Long, val n: String, val s: Long)
+/** Dónde está el archivo de un libro en tu nube (campo `nube`): id en Google Drive (`gd`) o kDrive (`f`), nombre y tamaño. */
+class EnNube(val f: Long, val n: String, val s: Long, val gd: String = "")
 
 /** Un libro de la cuenta (`libros/<kid>`), tal como lo ve Marfil (los mismos campos que en el móvil). */
 class Libro(val n: Nodo, val minutos: Long) {
@@ -35,7 +35,11 @@ class Libro(val n: Nodo, val minutos: Long) {
     val portadaUrl: String get() = n.texto("pu")
     val archivo: String get() = n.texto("archivo")
     val formato: String get() = archivo.substringAfterLast('.', "").lowercase()
-    val nube: EnNube? get() = n.mapa("nube").let { m -> m["f"].comoLong().takeIf { it > 0 }?.let { EnNube(it, (m["n"] as? String).orEmpty(), m["s"].comoLong()) } }
+    val nube: EnNube? get() = n.mapa("nube").let { m ->
+        val gd = (m["gd"] as? String).orEmpty()
+        val f = m["f"].comoLong()
+        if (gd.isNotBlank() || f > 0) EnNube(f, (m["n"] as? String).orEmpty(), m["s"].comoLong(), gd) else null
+    }
     /** Cuándo lo terminaste (la última vez; como Marfil: si no tiene fecha, desde que pasó a terminado). */
     val terminados: List<Long> get() {
         val fin = n.lista("fin").map { Fechas.ms(it.comoLong()) }.filter { it > 0 }

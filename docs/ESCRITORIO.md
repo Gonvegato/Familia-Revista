@@ -22,16 +22,16 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
 - **Entrar una vez**: entras en cualquiera de las seis y las demás de ese ordenador entran solas. La contraseña no se guarda: queda
   la sesión, en el llavero del sistema (el Llavero del Mac; en Linux, el Secret Service —GNOME Keyring, KWallet— si hay `secret-tool`, y si
   no, un archivo que solo lee tu usuario).
-- **Se actualizan solas**: al abrirse y cada 6 horas, cada app mira tu kDrive («Mi carpeta/versiones»: `<App>-<versión>-mac.dmg` /
-  `-linux.tar.gz`); si hay una versión nueva, la baja sin molestar, avisa con una banda abajo («lista: se pone sola al cerrar ·
+- **Se actualizan solas**: al abrirse y cada 6 horas, cada app mira tu nube (Google Drive `Familia/versiones`, con respaldo en kDrive `Mi carpeta/versiones`: `<App>-<versión>-mac.dmg` /
+  `-linux.tar.gz`); si hay una versión nueva, la baja sin molestar, comprueba su SHA-256 si existe `<archivo>.sha256`, avisa con una banda abajo («lista: se pone sola al cerrar ·
   Reiniciar ahora») y se pone sola al cerrar la app. En el Mac el .dmg se monta sin enseñarlo y la app nueva se copia encima, sin la marca de
   cuarentena (es la misma app que ya abriste: no vuelve a pedir «Abrir igualmente»); en Linux la pone su `instalar.sh`.
-  Hace falta tu kDrive puesto en Jonsu (Ajustes → Servicios). Los actualizadores de Android solo cogen `<App>-<versión>.apk`: no se
+  Hace falta tu nube puesta en Jonsu (Ajustes → Servicios). Los actualizadores de Android solo cogen `<App>-<versión>.apk`: no se
   confunden.
 
 Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas en Linux contra el emulador de Firebase, los `.deb` y
-`.tar.gz` en Linux y los `.dmg` en un Mac de GitHub (Apple Silicon). Los artefactos de cada ejecución son los paquetes; se suben a tu
-kDrive con `herramientas/escritorio/subir-escritorio.py`.
+`.tar.gz` en Linux y los `.dmg` en un Mac de GitHub (Apple Silicon). Los artefactos de cada ejecución son los paquetes; se suben a Google Drive
+(junto con su `.sha256`) con `herramientas/gdrive/subir-version.py` (o a kDrive con `herramientas/escritorio/subir-escritorio.py`).
 
 ## Qué hace cada una
 

@@ -314,4 +314,13 @@ class EscritorioTest {
             antes.forEach { (k, v) -> if (v == null) System.clearProperty(k) else System.setProperty(k, v) }
         }
     }
+
+    @Test fun verificaSha256AceptaCorrectoYRechazaAlterado() {
+        val f = File(tmp.root, "Bastet-1.0.0-linux.tar.gz").apply { writeBytes("paquete-familia-ok".toByteArray()) }
+        val shaReal = java.security.MessageDigest.getInstance("SHA-256").digest(f.readBytes()).joinToString("") { "%02x".format(it) }
+        assertTrue(Actualizador.verificaSha256(f, "$shaReal  Bastet-1.0.0-linux.tar.gz\n"))
+        assertTrue(Actualizador.verificaSha256(f, shaReal.uppercase()))
+        assertFalse(Actualizador.verificaSha256(f, "0".repeat(64)))
+        assertFalse(Actualizador.verificaSha256(f, "no-es-un-hash"))
+    }
 }

@@ -24,8 +24,12 @@ class ClaveServicio(val nombre: String, val titulo: String, val para: String, va
 
 /** Las claves de la cuenta (`/claves/<uid>`): se ponen aquí una vez y las tienen todas las apps, en el móvil y en el ordenador. */
 val CLAVES = listOf(
-    ClaveServicio("kdrive_token", "kDrive: token", "Los libros, las ROMs y las versiones de las apps, en tu kDrive (se crea en manager.infomaniak.com → Desarrollador → Tokens de API)."),
-    ClaveServicio("kdrive_id", "kDrive: número", "El número de tu kDrive (sale en su dirección: kdrive.infomaniak.com/app/drive/<número>).", secreta = false),
+    ClaveServicio("gdrive_client_id", "Google Drive: Client ID", "Tu nube principal (libros, ROMs, guardados, fotos, películas y actualizaciones). Crea un cliente OAuth «Desktop app» en Google Cloud Console.", secreta = false),
+    ClaveServicio("gdrive_client_secret", "Google Drive: Client Secret", "El secreto de ese cliente OAuth."),
+    ClaveServicio("gdrive_refresh_token", "Google Drive: Refresh Token", "Se obtiene una vez con herramientas/gdrive/autorizar.py (en Google Cloud, pulsa «Publish app» para que no caduque cada 7 días)."),
+    ClaveServicio("gdrive_carpeta", "Google Drive: carpeta raíz (opcional)", "ID o dirección de tu carpeta raíz en Google Drive (vacío: usa o crea «Familia» en Mi unidad).", secreta = false),
+    ClaveServicio("kdrive_token", "kDrive: token (respaldo)", "Solo si aún tienes archivos antiguos en kDrive mientras pasas a Google Drive."),
+    ClaveServicio("kdrive_id", "kDrive: número (respaldo)", "El número de tu kDrive antiguo.", secreta = false),
     ClaveServicio("steamgriddb", "SteamGridDB", "Portadas de juegos (steamgriddb.com → Preferencias → API)."),
     ClaveServicio("steam_key", "Steam: clave", "Las horas y la biblioteca de Steam (steamcommunity.com/dev/apikey)."),
     ClaveServicio("steam_id", "Steam: tu id", "Tu id de Steam (17 cifras).", secreta = false),
@@ -61,7 +65,7 @@ fun AjustesServicios(nav: Nav) {
     var prueba by remember { mutableStateOf("") }
     Antetitulo("Las claves de la cuenta")
     Spacer(Modifier.height(6.dp))
-    Cuerpo("Se ponen una vez y las usan todas: Bastet, Seshat, Thot y Jonsu, en el móvil y en el ordenador. Solo las puede leer tu sesión (ni tu pareja).", tam = 14)
+    Cuerpo("Se ponen una vez y las usan todas: Bastet, Seshat, Thot, Hathor, Nut y Jonsu, en el móvil y en el ordenador. Solo las puede leer tu sesión (ni tu pareja).", tam = 14)
     Spacer(Modifier.height(14.dp))
     CLAVES.forEach { c ->
         var v by remember(c.nombre, LaFamilia.cambios) { mutableStateOf(LaFamilia.clave(c.nombre)) }
@@ -81,7 +85,10 @@ fun AjustesServicios(nav: Nav) {
         }
     }
     Spacer(Modifier.height(12.dp))
-    BotonSuave("Probar el kDrive") { scope.launch { prueba = withContext(Dispatchers.IO) { runCatching { KDrive().prueba() }.getOrElse { it.message ?: "No responde." } } } }
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        BotonAcento("Probar Google Drive") { scope.launch { prueba = withContext(Dispatchers.IO) { runCatching { com.gonzalo.familia.pc.Nube.gdrive().prueba() }.getOrElse { it.message ?: "No responde." } } } }
+        BotonSuave("Probar el kDrive") { scope.launch { prueba = withContext(Dispatchers.IO) { runCatching { KDrive().prueba() }.getOrElse { it.message ?: "No responde." } } } }
+    }
     if (prueba.isNotBlank()) Cuerpo(prueba, tam = 13)
 }
 

@@ -22,10 +22,19 @@ interface Red {
      * (nombre, datos). Devuelve cuando el flujo termina; lanza [SinRed] si no se puede abrir.
      */
     fun escuchar(url: String, seguir: () -> Boolean, alEvento: (String, String) -> Unit)
+
+    /** Cierra de golpe el flujo de [escuchar] si está abierto (Thread.interrupt no desbloquea HttpURLConnection.readLine). */
+    fun cortaEscucha() {}
 }
 
 /** La red de Java (HttpURLConnection): vale en Android y en el PC. */
 class RedJava(private val espera: Int = 20_000) : Red {
+    private val escuchaActiva = java.util.concurrent.atomic.AtomicReference<HttpURLConnection?>(null)
+
+    override fun cortaEscucha() {
+        runCatching { escuchaActiva.getAndSet(null)?.disconnect() }
+    }
+
     override fun pedir(metodo: String, url: String, cuerpo: String?, tipo: String, cabeceras: Map<String, String>): Red.Respuesta {
         val c = try { URL(url).openConnection() as HttpURLConnection } catch (e: Exception) { throw Red.SinRed("Dirección no válida", e) }
         try {
@@ -53,6 +62,7 @@ class RedJava(private val espera: Int = 20_000) : Red {
 
     override fun escuchar(url: String, seguir: () -> Boolean, alEvento: (String, String) -> Unit) {
         val c = try { URL(url).openConnection() as HttpURLConnection } catch (e: Exception) { throw Red.SinRed("Dirección no válida", e) }
+        escuchaActiva.set(c)
         try {
             c.connectTimeout = espera
             // Firebase manda un «keep-alive» cada 30 s: si en 75 s no llega nada, la conexión está muerta
@@ -77,6 +87,7 @@ class RedJava(private val espera: Int = 20_000) : Red {
                 }
             }
         } finally {
+            escuchaActiva.compareAndSet(c, null)
             c.disconnect()
         }
     }

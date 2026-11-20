@@ -14,32 +14,39 @@ import java.util.concurrent.TimeUnit
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** Dónde está el archivo de un libro en tu kDrive: su id, su nombre y su tamaño. */
-class NubeLibro(val f: Long, val n: String, val s: Long)
+/** Dónde está el archivo de un libro en tu nube: su id en Google Drive (`gd`) o kDrive (`f`), nombre y tamaño. */
+class NubeLibro(val f: Long, val n: String, val s: Long, val gd: String = "")
 
 /**
- * Los archivos de los libros por tu kDrive. Cada libro que añades se sube solo, en cuanto hay conexión (como en Atrio), a
- * «Mi carpeta/Marfil/Libros/<título>/»; en el libro de la cuenta queda dónde está (campo `nube`: id de kDrive, nombre y tamaño; nunca
- * rutas de tu móvil) y así tus otros dispositivos lo bajan al abrirlo o, con «Tener todos mis libros aquí», solos con Wi-Fi. Los libros
- * que vienen de Atrio apuntan a su archivo de «Atrio/Libros/…»: no se duplican.
+ * Los archivos de los libros en tu nube (Google Drive, con respaldo en kDrive durante la transición). Cada libro que añades se sube solo,
+ * en cuanto hay conexión, a «Marfil/Libros/<título>/»; en el libro de la cuenta queda dónde está (campo `nube`: `gd` o `f`, nombre y tamaño;
+ * nunca rutas de tu móvil) y así tus otros dispositivos lo bajan al abrirlo o, con «Tener todos mis libros aquí», solos con Wi-Fi.
  */
 object NubeLibros {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + com.gonzalo.familia.Fallos.paraCorrutinas("nube de libros"))
     private val subiendo = AtomicBoolean(false)
-    /** «Tener aquí todos los libros de tu kDrive» es tuyo y viaja con la cuenta (`ajustes/marfil_nube`); los fallos de cada libro, de aquí. */
+    /** «Tener aquí todos los libros de tu nube» es tuyo y viaja con la cuenta (`ajustes/marfil_nube`); los fallos de cada libro, de aquí. */
     val GRUPO: EspejoCuenta.Grupo = EspejoCuenta.Grupo("marfil_nube", "marfil_nube", { k -> if (k == "auto_bajar") EspejoCuenta.Tipo.SI_NO else null },
         alLlegar = { c -> if (autoBajar(c)) runCatching { programar(c) } })
     private fun prefs(c: Context) = EspejoCuenta.prefs(c, GRUPO)
 
-    fun deJson(o: JSONObject?): NubeLibro? = o?.let { if (it.optLong("f") > 0) NubeLibro(it.optLong("f"), it.optString("n"), it.optLong("s")) else null }
-    fun aJson(x: NubeLibro): JSONObject = JSONObject().put("f", x.f).put("n", x.n).put("s", x.s).put("u", System.currentTimeMillis())
+    fun deJson(o: JSONObject?): NubeLibro? = o?.let {
+        val gd = it.optString("gd")
+        val f = it.optLong("f")
+        if (gd.isNotBlank() || f > 0) NubeLibro(f, it.optString("n"), it.optLong("s"), gd) else null
+    }
+    fun aJson(x: NubeLibro): JSONObject = JSONObject().apply {
+        if (x.f > 0) put("f", x.f)
+        if (x.gd.isNotBlank()) put("gd", x.gd)
+        put("n", x.n).put("s", x.s).put("u", System.currentTimeMillis())
+    }
 
-    /** Dónde está cada libro en tu kDrive (kid → archivo): va en el propio libro de la cuenta (campo `nube`). */
+    /** Dónde está cada libro en tu nube (kid → archivo): va en el propio libro de la cuenta (campo `nube`). */
     fun indice(c: Context): Map<String, NubeLibro> = Biblioteca.propios().mapNotNull { l -> Biblioteca.nube(l.id)?.let { l.id to it } }.toMap()
 
     fun de(c: Context, l: Libro): NubeLibro? = Biblioteca.nube(l.id)
 
-    /** Apunta en el libro dónde está su archivo en tu kDrive (lo ven tus otros dispositivos). */
+    /** Apunta en el libro dónde está su archivo en tu nube (lo ven tus otros dispositivos). */
     fun registrar(c: Context, l: Libro, x: NubeLibro) = Biblioteca.ponerNube(l.id, x)
 
     /** (El índice llega con los libros de la cuenta: no hay nada aparte que bajar.) */
@@ -56,14 +63,14 @@ object NubeLibros {
     /** El archivo de un libro en este dispositivo, si está (y no está vacío). */
     private fun archivo(l: Libro): File? = runCatching { File(android.net.Uri.parse(l.uri).path ?: return@runCatching null) }.getOrNull()?.takeIf { it.exists() && it.length() > 0 }
 
-    /** Los libros que tienen aquí su archivo y aún no están en tu kDrive. */
+    /** Los libros que tienen aquí su archivo y aún no están en tu nube. */
     fun porSubir(c: Context, aMano: Boolean = false): List<Libro> =
         Biblioteca.propios().filter { l -> l.uri.isNotBlank() && de(c, l) == null && (aMano || !falloReciente(c, "s", l.id)) && archivo(l) != null }
 
-    /** Los libros que están en tu kDrive y no aquí. */
+    /** Los libros que están en tu nube y no aquí. */
     fun porBajar(c: Context): List<Libro> = Biblioteca.propios().filter { l -> l.enOtroDispositivo && de(c, l) != null && !falloReciente(c, "b", l.id) }
 
-    /** Sube los libros que están aquí y aún no están en tu kDrive, con la conexión que haya (como en Atrio). Devuelve cuántos ha subido. */
+    /** Sube los libros que están aquí y aún no están en tu nube, con la conexión que haya. Devuelve cuántos ha subido. */
     fun subirPendientes(c: Context, aMano: Boolean = false, aviso: (String) -> Unit = {}): Int {
         if (!KDrive.on(c) || !Cuenta.vinculada) return 0
         if (!subiendo.compareAndSet(false, true)) return 0
@@ -76,8 +83,8 @@ object NubeLibros {
                 val nombre = "${seguro(l.titulo)}.$ext"
                 try {
                     aviso("Subiendo $nombre…")
-                    val id = KDrive.upload(c, "Marfil/Libros/${seguro(l.titulo)}", nombre, f.length()) { f.inputStream() }
-                    registrar(c, l, NubeLibro(id, nombre, f.length()))
+                    val sub = KDrive.subeDual(c, "Marfil/Libros/${seguro(l.titulo)}", nombre, f.length()) { f.inputStream() }
+                    registrar(c, l, NubeLibro(sub.kdId, nombre, f.length(), sub.gdId))
                     quitaFallo(c, "s", l.id)
                     n++
                 } catch (e: Exception) { apuntaFallo(c, "s", l.id); aviso("No he podido subir ${l.titulo}: ${e.message}") }
@@ -87,12 +94,12 @@ object NubeLibros {
     }
 
     // ------------------------------------------------------------------ ajustes
-    /** Tener en este dispositivo todos los libros de tu kDrive (se bajan solos con Wi-Fi). Por defecto, sí. */
+    /** Tener en este dispositivo todos los libros de tu nube (se bajan solos con Wi-Fi). Por defecto, sí. */
     fun autoBajar(c: Context) = prefs(c).getBoolean("auto_bajar", true)
     fun ponAutoBajar(c: Context, v: Boolean) { prefs(c).edit().putBoolean("auto_bajar", v).apply(); if (v) programar(c) }
 
     // ------------------------------------------------------------------ todo junto, en segundo plano
-    /** Baja los libros que están en tu kDrive y no tienes aquí (con Wi-Fi). Para si queda poco sitio. */
+    /** Baja los libros que están en tu nube y no tienes aquí (con Wi-Fi). Para si queda poco sitio. */
     fun bajarTodos(c: Context, aviso: (String) -> Unit = {}): Int {
         if (!KDrive.on(c)) return 0
         var n = 0
@@ -103,7 +110,7 @@ object NubeLibros {
         return n
     }
 
-    /** Todo lo de kDrive que toca hacer ahora: subir los libros que faltan y (si lo has dejado activo) bajar los de tus otros dispositivos. Bloqueante (red). */
+    /** Todo lo de la nube que toca hacer ahora: subir los libros que faltan y (si lo has dejado activo) bajar los de tus otros dispositivos. Bloqueante (red). */
     fun todo(c: Context) {
         runCatching { subirPendientes(c) }
         if (autoBajar(c)) runCatching { bajarTodos(c) }
@@ -136,25 +143,25 @@ object NubeLibros {
     /** En segundo plano, sin molestar (lo llama la sincronización). */
     fun subirEnSegundoPlano(c: Context) = siHaceFalta(c)
 
-    /** Baja el archivo de un libro de tu kDrive y lo deja aquí. Bloqueante (red). Devuelve el libro ya con su archivo, o lanza el error. */
+    /** Baja el archivo de un libro de tu nube y lo deja aquí. Bloqueante (red). Devuelve el libro ya con su archivo, o lanza el error. */
     fun bajar(c: Context, l: Libro): Libro {
-        val x = de(c, l) ?: throw KDrive.Fail("Ese libro no está en tu kDrive todavía.")
+        val x = de(c, l) ?: throw com.gonzalo.familia.NubeFamilia.Fail("Ese libro no está en tu nube todavía.")
         val ext = x.n.substringAfterLast('.', "epub").lowercase().take(5)
         val dest = File(Metadatos.dirLibros(c), "${l.id}.$ext")
-        KDrive.download(c, x.f, dest)
+        KDrive.bajaDual(c, x.gd, x.f, dest)
         val ahora = Biblioteca.por(l.id) ?: l
         val conArchivo = ahora.copy(uri = android.net.Uri.fromFile(dest).toString(), archivo = x.n)
         return conArchivo.also { Biblioteca.poner(it) }
     }
 
-    /** Lo que pasa al abrir un libro «en otro dispositivo»: si está en tu kDrive, se baja y se abre; si no, se dice por qué. */
+    /** Lo que pasa al abrir un libro «en otro dispositivo»: si está en tu nube, se baja y se abre; si no, se dice por qué. */
     fun abrirBajando(c: Context, l: Libro, goto: String?) {
         val hilo = Handler(Looper.getMainLooper())
         fun dice(t: String) = hilo.post { Toast.makeText(c, t, Toast.LENGTH_LONG).show() }
-        if (!KDrive.on(c)) { dice("Este libro está en otro dispositivo. Conecta tu kDrive (Ajustes → Avanzado) para bajarlo."); return }
+        if (!KDrive.on(c)) { dice("Este libro está en otro dispositivo. Conecta tu Google Drive (en Jonsu → Ajustes) para bajarlo."); return }
         scope.launch {
             runCatching { leerIndice(c) }
-            if (de(c, l) == null) { dice("Este libro aún no está en tu kDrive: se sube solo desde el dispositivo donde lo añadiste, en cuanto tiene conexión."); return@launch }
+            if (de(c, l) == null) { dice("Este libro aún no está en tu nube: se sube solo desde el dispositivo donde lo añadiste, en cuanto tiene conexión."); return@launch }
             dice("Bajando «${l.titulo}»…")
             try { val n = bajar(c, l); hilo.post { LectorActivity.abrir(c, n.id, goto) } }
             catch (e: Exception) { dice("No he podido bajarlo: ${e.message}") }

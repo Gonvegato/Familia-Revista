@@ -209,7 +209,7 @@ object Actualizador {
     /** Se llama nada más abrir la app y luego cada minuto mientras está abierta (siempre en segundo plano). */
     fun comprueba(ctx: Context, manual: Boolean = false, forzar: Boolean = false) {
         if (!activo(ctx) && !forzar) { if (manual) anota(ctx, "apagada (interruptor de arriba)"); return }
-        if (!KDrive.on(ctx)) { anota(ctx, "kDrive sin conectar (Ajustes → Avanzado → Tu nube)"); return }
+        if (!KDrive.on(ctx)) { anota(ctx, "nube sin conectar (Ajustes → Avanzado → Tu nube)"); return }
         if (!hayInternet(ctx)) { anota(ctx, "sin internet"); return }
         if (!ocupado.compareAndSet(false, true)) return
         try { compruebaYa(ctx) } catch (e: Throwable) { anota(ctx, "error: ${e.message ?: e.javaClass.simpleName}") } finally { ocupado.set(false) }
@@ -221,7 +221,7 @@ object Actualizador {
      * Es bloqueante (red): llamar fuera del hilo principal. Devuelve lo que ha pasado, para enseñarlo.
      */
     fun actualizarAhora(ctx: Context): String {
-        if (!KDrive.on(ctx)) return "kDrive sin conectar"
+        if (!KDrive.on(ctx)) return "Nube sin conectar"
         if (!hayInternet(ctx)) return "Sin internet"
         // (si justo hay otra comprobación en marcha, se espera a que acabe)
         var esperas = 0
@@ -237,28 +237,32 @@ object Actualizador {
     }
 
     private fun compruebaYa(ctx: Context) {
-        val lista = deLaSerieNueva(KDrive.versiones(ctx))
-        val ult = ultima(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu kDrive" else "en «versiones» no hay ningún Jonsu-<versión>.apk"); return }
+        val lista = KDrive.versionesDual(ctx).filter { (versionDe(it.nombre)?.firstOrNull() ?: 0) < SERIE_ANTIGUA }
+        val ult = com.gonzalo.familia.ActualizadorComun.ultimaDual(lista, ::versionDe) ?: run {
+            anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en ${KDrive.nombreNube(ctx)}" else "en «versiones» no hay ningún Jonsu-<versión>.apk")
+            return
+        }
+        val nombreUlt = ult.first.nombre
         val actual = instalada(ctx).versionName?.split('.')?.mapNotNull { it.toIntOrNull() } ?: return
         val dir = File(ctx.cacheDir, "actualizaciones").apply { mkdirs() }
-        dir.listFiles()?.filter { it.name != ult.first }?.forEach { it.delete() }
-        if (!mayor(ult.third, actual)) { dir.listFiles()?.forEach { it.delete() }; anota(ctx, "al día (la última de tu kDrive es la ${ult.third.joinToString(".")})"); return }
-        if (nueva?.nombre == ult.first) return      // ya está descargada y lista
-        val f = File(dir, ult.first)
+        dir.listFiles()?.filter { it.name != nombreUlt }?.forEach { it.delete() }
+        if (!mayor(ult.second, actual)) { dir.listFiles()?.forEach { it.delete() }; anota(ctx, "al día (la última en ${KDrive.nombreNube(ctx)} es la ${ult.second.joinToString(".")})"); return }
+        if (nueva?.nombre == nombreUlt) return      // ya está descargada y lista
+        val f = File(dir, nombreUlt)
         var code = if (f.exists()) valida(ctx, f) else null
         if (code == null) {
             f.delete()
-            KDrive.download(ctx, ult.second, f)
+            KDrive.bajaVersion(ctx, ult.first, f)
             code = valida(ctx, f)
-            if (code == null) { f.delete(); anota(ctx, "bajada la ${ult.first}, pero Android no la da por válida (otra firma o archivo roto)"); return }
+            if (code == null) { f.delete(); anota(ctx, "bajada la $nombreUlt, pero Android no la da por válida (otra firma o archivo roto)"); return }
         }
-        if (nueva?.nombre == ult.first) return
+        if (nueva?.nombre == nombreUlt) return
         if (!ctx.packageManager.canRequestPackageInstalls()) faltaPermiso = true
         val silenciosa = puedeSilenciosa(ctx)
-        nueva = Nueva(ult.first, code, f, silenciosa)
+        nueva = Nueva(nombreUlt, code, f, silenciosa)
         // Si mientras se bajaba dejaste la app, se instala en cuanto pase un momento
         if (silenciosa && !seVe()) programaAlSalir(ctx)
-        anota(ctx, "lista la ${ult.third.joinToString(".")}" + if (silenciosa) " (se instala al salir de la app)" else " (te pregunto para instalarla)")
+        anota(ctx, "lista la ${ult.second.joinToString(".")}" + if (silenciosa) " (se instala al salir de la app)" else " (te pregunto para instalarla)")
     }
 
     /** La instalación no salió bien (la silenciosa, sobre todo): se anota y se pasa a preguntar con el aviso de siempre. */

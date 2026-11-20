@@ -126,7 +126,7 @@ fun MauCapa(
         while (true) {
             c.tick(Mau.ahora(), Mau.lugarDe(clave))
             segundo = Mau.ahora() / 1000
-            delay(250)
+            delay(if (c.escondido && c.sprintHasta == null) 1_000L else 250L)
         }
     }
 
@@ -321,8 +321,19 @@ private fun FiguraViva(
     val reloj = remember { mutableLongStateOf(0L) }
     var desde by remember { mutableStateOf(pose to System.currentTimeMillis()) }
     if (desde.first != pose) desde = pose to (System.currentTimeMillis() - if (pose == Pose.ESCONDIDO && !asomar) 1_000 else 0)
-    // (a 30 cuadros por segundo basta para un gato y gasta la mitad de batería)
-    LaunchedEffect(anima) { if (anima) while (true) withFrameMillis { if (it - reloj.longValue >= 32) reloj.longValue = it } }
+    // (a 30 cuadros por segundo activo; dormido o escondido ya asomado baja la cadencia para ahorrar batería)
+    LaunchedEffect(anima, pose, asomar) {
+        if (!anima) return@LaunchedEffect
+        while (true) {
+            val paso = when {
+                pose == Pose.DURMIENDO -> 90L
+                pose == Pose.ESCONDIDO && (System.currentTimeMillis() - desde.second) > 500L -> 110L
+                else -> 32L
+            }
+            delay(paso)
+            withFrameMillis { reloj.longValue = it }
+        }
+    }
     Canvas(modifier.clipToBounds()) {
         reloj.longValue
         val t = System.currentTimeMillis() - desde.second

@@ -37,14 +37,14 @@ object Estados {
     /** Lo que se sabe de un estado guardado (aquí o en la nube). */
     data class Meta(
         val hueco: String, val nucleo: String, val version: String, val t: Long,
-        val dev: String, val dn: String, val hash: String, val tam: Long, val id: Long = 0L,
+        val dev: String, val dn: String, val hash: String, val tam: Long, val id: Long = 0L, val gd: String = "",
     ) {
         fun aJson(): JSONObject = JSONObject().put("hueco", hueco).put("nucleo", nucleo).put("version", version).put("t", t)
-            .put("dev", dev).put("dn", dn).put("h", hash).put("s", tam).put("id", id)
+            .put("dev", dev).put("dn", dn).put("h", hash).put("s", tam).put("id", id).apply { if (gd.isNotBlank()) put("gd", gd) }
         companion object {
             fun deJson(o: JSONObject, hueco: String = o.optString("hueco")): Meta? {
                 if (o.optString("h").isBlank()) return null
-                return Meta(hueco, o.optString("nucleo"), o.optString("version"), o.optLong("t"), o.optString("dev"), o.optString("dn"), o.optString("h"), o.optLong("s"), o.optLong("id"))
+                return Meta(hueco, o.optString("nucleo"), o.optString("version"), o.optLong("t"), o.optString("dev"), o.optString("dn"), o.optString("h"), o.optLong("s"), o.optLong("id"), o.optString("gd"))
             }
         }
     }
@@ -116,9 +116,10 @@ object Estados {
         if (subido(c, kid, hueco, m.hash)) return true
         if (!Cuenta.vinculada || !KDrive.on(c)) return false
         val f = archivo(c, kid, hueco)
-        val id = KDrive.upload(c, "Hiedra/Estados/$sistema/$kid", "$hueco.state", f.length()) { f.inputStream() }
-        val o = JSONObject().put("n", "$hueco.state").put("id", id).put("h", m.hash).put("s", m.tam).put("dev", Cuenta.dispositivo)
+        val sub = KDrive.subeDual(c, "Hiedra/Estados/$sistema/$kid", "$hueco.state", f.length()) { f.inputStream() }
+        val o = JSONObject().put("n", "$hueco.state").put("h", m.hash).put("s", m.tam).put("dev", Cuenta.dispositivo)
             .put("dn", m.dn).put("nucleo", m.nucleo).put("version", m.version).put("t", JSONObject().put(".sv", "timestamp"))
+            .apply { if (sub.gdId.isNotBlank()) put("gd", sub.gdId); if (sub.kdId > 0) put("id", sub.kdId) }
         Cuenta.db("PUT", "${Cuenta.raiz}/nube/states/$kid/f/$hueco", o.toString(), "print=silent")
         anotaSubido(c, kid, hueco, m.hash)
         return true
@@ -128,7 +129,7 @@ object Estados {
     fun bajar(c: Context, kid: String, nube: Meta): ByteArray {
         val tmp = File(c.cacheDir, "estado-$kid-${nube.hueco}.tmp")
         try {
-            KDrive.download(c, nube.id, tmp)
+            KDrive.bajaDual(c, nube.gd, nube.id, tmp)
             val b = tmp.readBytes()
             if (sha(b) != nube.hash) throw IOException("el estado guardado ha llegado incompleto")
             archivo(c, kid, nube.hueco).takeIf { it.exists() }?.copyTo(File(dir(c, kid), "${nube.hueco}.state.anterior"), overwrite = true)

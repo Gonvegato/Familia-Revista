@@ -214,11 +214,10 @@ object Capturas {
         LaFamilia.db("PATCH", "${base()}/suite/shots/$id", Json.escribe(mapOf("done" to true)), "print=silent")
     }
 
-    /** La copia en tu kDrive: «Mi carpeta/Hiedra/Capturas/<juego>/<nombre>». */
+    /** La copia en tu nube (Google Drive o kDrive): «Hiedra/Capturas/<juego>/<nombre>». */
     private fun aKDrive(bytes: ByteArray, nombre: String, juego: String?) {
-        val k = KDrive()
-        if (!k.activo) return
-        k.sube("Hiedra/Capturas/${seguro(juego)}", nombre, bytes.size.toLong()) { bytes.inputStream() }
+        if (!com.gonzalo.familia.pc.Nube.activo) return
+        com.gonzalo.familia.pc.Nube.sube("Hiedra/Capturas/${seguro(juego)}", nombre, bytes.size.toLong()) { bytes.inputStream() }
     }
 
     /**

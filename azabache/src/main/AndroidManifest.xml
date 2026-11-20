@@ -30,6 +30,7 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Ronron"
+        android:allowBackup="false"
         android:networkSecurityConfig="@xml/network">
         <!-- El escáner de códigos de Google Play services se descarga con la app (no al usarlo por primera vez) -->
         <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />

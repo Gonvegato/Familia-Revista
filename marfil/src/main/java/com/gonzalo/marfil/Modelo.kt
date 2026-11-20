@@ -321,7 +321,12 @@ object Biblioteca {
 
     /** Dónde está el libro en tu kDrive (para bajarlo en tus otros dispositivos). */
     fun ponerNube(id: String, nube: NubeLibro) {
-        col?.cambia(id, mapOf("nube" to mapOf("f" to nube.f, "n" to nube.n, "s" to nube.s)))
+        val m = LinkedHashMap<String, Any>().apply {
+            if (nube.f > 0) put("f", nube.f)
+            if (nube.gd.isNotBlank()) put("gd", nube.gd)
+            put("n", nube.n); put("s", nube.s)
+        }
+        col?.cambia(id, mapOf("nube" to m))
     }
 
     fun nube(id: String): NubeLibro? = col?.nodo(id)?.mapa("nube")?.let { m -> NubeLibros.deJson(JSONObject(m)) }

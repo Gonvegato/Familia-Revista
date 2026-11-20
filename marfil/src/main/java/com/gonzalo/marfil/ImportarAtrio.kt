@@ -62,7 +62,7 @@ object ImportarAtrio {
             val fin = com.gonzalo.familia.nucleo.Fechas.ms(g?.optLong("end") ?: 0L)
             val fr = (st?.let { maxOf(it.optDouble("fraction", 0.0), it.optDouble("bestFrac", 0.0)) } ?: 0.0).toFloat().coerceIn(0f, 1f)
             val portada = (g?.optString("cover").orEmpty().ifBlank { p?.optString("cover").orEmpty() }).takeIf { it.startsWith("http") }.orEmpty()
-            val nube = nubes["libro:$id"]?.let { NubeLibro(it.optLong("f"), it.optString("n"), it.optLong("s")) }?.takeIf { it.f > 0 }
+            val nube = nubes["libro:$id"]?.let { NubeLibro(it.optLong("f"), it.optString("n"), it.optLong("s"), it.optString("gd")) }?.takeIf { it.gd.isNotBlank() || it.f > 0 }
             val pags = maxOf(g?.optInt("pages") ?: 0, p?.optInt("pages") ?: 0)
             val libro = Libro(
                 id = "atrio$id", terminados = if (g != null && fin > 0) listOf(fin) else emptyList(), paginas = pags, paginasOrigen = if (pags > 0) "atrio" else "", titulo = titulo, autor = autor, portada = portada, archivo = nube?.n.orEmpty(),
@@ -70,10 +70,10 @@ object ImportarAtrio {
                 anadido = if (inicio > 0) inicio else maxOf(g?.optLong("updated") ?: 0L, p?.optLong("updated") ?: 0L).takeIf { it > 0 } ?: ahora,
                 ultima = maxOf(fin, st?.optLong("read") ?: 0L), fraccion = if (estado == Estado.LEIDO) 1f else fr
             )
-            // Si su portada era una foto tuya (una dirección «file:…/foto_123.jpg» de Atrio), dónde está esa foto en tu kDrive
+            // Si su portada era una foto tuya (una dirección «file:…/foto_123.jpg» de Atrio), dónde está esa foto en tu nube
             val cover = g?.optString("cover").orEmpty().ifBlank { p?.optString("cover").orEmpty() }
             val foto = cover.takeIf { it.startsWith("file:") }?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
-                ?.let { nubes["foto:$it"] }?.let { NubeLibro(it.optLong("f"), it.optString("n"), it.optLong("s")) }?.takeIf { it.f > 0 }
+                ?.let { nubes["foto:$it"] }?.let { NubeLibro(it.optLong("f"), it.optString("n"), it.optLong("s"), it.optString("gd")) }?.takeIf { it.gd.isNotBlank() || it.f > 0 }
             Candidato(id, libro, st, nube, abandonado = pst == 2, foto = foto)
         }.sortedBy { it.libro.titulo.lowercase() }
     }
@@ -147,10 +147,10 @@ object ImportarAtrio {
                 val unido = MezclaLectura.mezclar(local, JSONObject(atrio.toString()).apply { remove("uri"); remove("name") }, Cuenta.dispositivo)
                 if (!MezclaLectura.igual(unido, local)) { EstadoLectura.poner(ctx, libro.id, unido); LecturaNube.sube(ctx, libro.id, unido) }
             }
-            // La foto de portada de Atrio (en tu kDrive): se baja una vez y pasa a ser la portada del libro en la cuenta
+            // La foto de portada de Atrio (en tu nube): se baja una vez y pasa a ser la portada del libro en la cuenta
             if (c.foto != null && libro.portada.isBlank() && KDrive.on(ctx)) runCatching {
                 val tmp = java.io.File(ctx.cacheDir, "atrio-${libro.id}.jpg")
-                KDrive.download(ctx, c.foto.f, tmp)
+                KDrive.bajaDual(ctx, c.foto.gd, c.foto.f, tmp)
                 Portadas.poner(ctx, libro, tmp.readBytes())
                 tmp.delete()
                 fotos++

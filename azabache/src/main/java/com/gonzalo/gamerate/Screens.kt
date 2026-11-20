@@ -427,9 +427,9 @@ fun SettingsScreen(
             else -> {
                 com.gonzalo.familia.UltimoFallo("Jonsu", Charcoal, Muted, Body) { SeccionAjustes("Último fallo", primera = true) }
                 SeccionAjustes("Actualizaciones", primera = com.gonzalo.familia.Fallos.ultimo(androidx.compose.ui.platform.LocalContext.current).isBlank())
-                if (!KDrive.on(androidx.compose.ui.platform.LocalContext.current)) Text("Jonsu se actualiza sola desde la carpeta «versiones» de tu kDrive: conéctalo en Ajustes → Cuenta → Tu nube.",
+                if (!KDrive.on(androidx.compose.ui.platform.LocalContext.current)) Text("Jonsu se actualiza sola desde la carpeta «versiones» de tu nube: conéctala en Ajustes → Cuenta → Tu nube.",
                     color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
-        // Actualizarse sola desde la carpeta «versiones» de tu kDrive
+        // Actualizarse sola desde la carpeta «versiones» de tu nube
         run {
             val actx = androidx.compose.ui.platform.LocalContext.current
             if (KDrive.on(actx)) {
@@ -437,7 +437,7 @@ fun SettingsScreen(
                 Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("Actualizarse sola", fontWeight = FontWeight.Medium)
-                        Text("Busca versiones nuevas en «versiones» de tu kDrive (con wifi o datos: al abrir, cada minuto mientras la usas y, cerrada, cada pocas horas) y se instala sola cuando no la estás usando", color = Muted, fontSize = 12.sp)
+                        Text("Busca versiones nuevas en «versiones» de ${KDrive.nombreNube(actx)} (con wifi o datos: al abrir, cada minuto mientras la usas y, cerrada, cada pocas horas) y se instala sola cuando no la estás usando", color = Muted, fontSize = 12.sp)
                     }
                     Interruptor(auto) { auto = it; Actualizador.ponActivo(actx, it) }
                 }

@@ -230,28 +230,28 @@ object Actualizador {
     }
 
     private fun compruebaYa(ctx: Context) {
-        val lista = KDrive.versiones(ctx)
-        val ult = ultima(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu kDrive" else "en «versiones» no hay ningún Nut-<versión>.apk"); return }
+        val lista = KDrive.versionesDual(ctx)
+        val ult = com.gonzalo.familia.ActualizadorComun.ultimaDual(lista) { versionDe(it) }
+            ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu nube" else "en «versiones» no hay ningún Nut-<versión>.apk"); return }
         val actual = instalada(ctx).versionName?.split('.')?.mapNotNull { it.toIntOrNull() } ?: return
         val dir = File(ctx.cacheDir, "actualizaciones").apply { mkdirs() }
-        dir.listFiles()?.filter { it.name != ult.first }?.forEach { it.delete() }
-        if (!mayor(ult.third, actual)) { dir.listFiles()?.forEach { it.delete() }; anota(ctx, "al día (la última de tu kDrive es la ${ult.third.joinToString(".")})"); return }
-        if (nueva?.nombre == ult.first) return      // ya está descargada y lista
-        val f = File(dir, ult.first)
+        dir.listFiles()?.filter { it.name != ult.first.nombre }?.forEach { it.delete() }
+        if (!mayor(ult.second, actual)) { dir.listFiles()?.forEach { it.delete() }; anota(ctx, "al día (la última de tu nube es la ${ult.second.joinToString(".")})"); return }
+        if (nueva?.nombre == ult.first.nombre) return      // ya está descargada y lista
+        val f = File(dir, ult.first.nombre)
         var code = if (f.exists()) valida(ctx, f) else null
         if (code == null) {
             f.delete()
-            KDrive.download(ctx, ult.second, f)
+            KDrive.bajaVersion(ctx, ult.first, f)
             code = valida(ctx, f)
-            if (code == null) { f.delete(); anota(ctx, "bajada la ${ult.first}, pero Android no la da por válida (otra firma o archivo roto)"); return }
+            if (code == null) { f.delete(); anota(ctx, "bajada la ${ult.first.nombre}, pero Android no la da por válida (otra firma o archivo roto)"); return }
         }
-        if (nueva?.nombre == ult.first) return
+        if (nueva?.nombre == ult.first.nombre) return
         if (!ctx.packageManager.canRequestPackageInstalls()) faltaPermiso = true
         val silenciosa = puedeSilenciosa(ctx)
-        nueva = Nueva(ult.first, code, f, silenciosa)
-        // Si mientras se bajaba dejaste la app, se instala en cuanto pase un momento
+        nueva = Nueva(ult.first.nombre, code, f, silenciosa)
         if (silenciosa && !seVe()) programaAlSalir(ctx)
-        anota(ctx, "lista la ${ult.third.joinToString(".")}" + if (silenciosa) " (se instala al salir de la app)" else " (te pregunto para instalarla)")
+        anota(ctx, "lista la ${ult.second.joinToString(".")}" + if (silenciosa) " (se instala al salir de la app)" else " (te pregunto para instalarla)")
     }
 
     /** La instalación no salió bien (la silenciosa, sobre todo): se anota y se pasa a preguntar con el aviso de siempre. */

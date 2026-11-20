@@ -201,20 +201,34 @@ sealed class Pendiente {
         fun con(id: Long) = Campos(coleccion, ref, campos, m, id)
     }
 
-    /** Una escritura directa en una ruta de la cuenta (las imágenes, las claves): PUT o PATCH tal cual. */
+    /** Una escritura directa en una ruta de la cuenta (retrocompatible con colas antiguas): PUT o PATCH tal cual. */
     class Directa(val metodo: String, val ruta: String, val cuerpo: Any?, override val id: Long = 0) : Pendiente() {
         fun con(id: Long) = Directa(metodo, ruta, cuerpo, id)
+    }
+
+    /** Una imagen ya guardada en disco (`img/<hash>`): no mete el Base64 entero en `pendiente.json` ni fija el uid antes de subir. */
+    class Imagen(val hash: String, val tipo: String, override val id: Long = 0) : Pendiente() {
+        fun con(id: Long) = Imagen(hash, tipo, id)
+    }
+
+    /** Una clave de servicio en `/claves/<uid>`: fija el uid al subir y solo actualiza `familia_sello/claves` si el PATCH se acepta. */
+    class Clave(val nombre: String, val valor: Any?, override val id: Long = 0) : Pendiente() {
+        fun con(id: Long) = Clave(nombre, valor, id)
     }
 
     fun aMapa(): Map<String, Any?> = when (this) {
         is Campos -> mapOf("t" to "c", "id" to id, "col" to coleccion, "ref" to ref, "campos" to campos, "m" to m)
         is Directa -> mapOf("t" to "d", "id" to id, "metodo" to metodo, "ruta" to ruta, "cuerpo" to cuerpo)
+        is Imagen -> mapOf("t" to "i", "id" to id, "h" to hash, "tipo" to tipo)
+        is Clave -> mapOf("t" to "k", "id" to id, "n" to nombre, "v" to valor)
     }
 
     companion object {
         fun deMapa(m: Map<String, Any?>): Pendiente? = when (m["t"]) {
             "c" -> Campos(m["col"].comoTexto(), m["ref"].comoTexto(), m["campos"].comoMapa(), m["m"].comoLong(), m["id"].comoLong())
             "d" -> Directa(m["metodo"].comoTexto(), m["ruta"].comoTexto(), m["cuerpo"], m["id"].comoLong())
+            "i" -> Imagen(m["h"].comoTexto(), m["tipo"].comoTexto().ifBlank { "image/webp" }, m["id"].comoLong())
+            "k" -> Clave(m["n"].comoTexto(), m["v"], m["id"].comoLong())
             else -> null
         }
     }

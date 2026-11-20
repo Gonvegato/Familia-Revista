@@ -53,11 +53,13 @@ import java.net.URLEncoder
  * saben qué bajar y tu pareja puede abrirlo con su enlace.
  */
 
-/** Algo tuyo en la nube. [k]: qué es («libro:123», «foto:foto_1.jpg», «shot:abc»); [f]: su id en kDrive; [l]: su enlace. */
+/** Algo tuyo en la nube. [k]: qué es («libro:123», «foto:foto_1.jpg», «shot:abc»); [f]: su id en kDrive (antiguo); [gd]: su id en Google Drive; [l]: su enlace. */
 data class NubeFile(
     val k: String, val f: Long, val n: String, val s: Long, val l: String = "",
     /** Datos de una captura (juego, id de SteamGridDB, fecha, tamaño): para listarla sin bajarla. */
-    val m: JSONObject? = null, val updated: Long = System.currentTimeMillis()
+    val m: JSONObject? = null, val updated: Long = System.currentTimeMillis(),
+    /** ID del archivo en Google Drive (vacío en archivos antiguos que solo estaban en kDrive). */
+    val gd: String = "",
 ) {
     /** Id estable a partir de la clave (las listas de la cuenta se mezclan por id). */
     val id: Long get() = nubeId(k)
@@ -71,255 +73,125 @@ fun nubeId(k: String): Long {
 }
 
 fun nubeToJson(x: NubeFile): JSONObject = JSONObject().put("id", x.id).put("k", x.k).put("f", x.f).put("n", x.n).put("s", x.s)
-    .put("updated", x.updated).apply { if (x.l.isNotBlank()) put("l", x.l); if (x.m != null) put("m", x.m) }
+    .put("updated", x.updated).apply {
+        if (x.gd.isNotBlank()) put("gd", x.gd)
+        if (x.l.isNotBlank()) put("l", x.l)
+        if (x.m != null) put("m", x.m)
+    }
 
 fun nubeFromJson(o: JSONObject): NubeFile? {
     val k = o.optString("k").ifBlank { return null }
-    return NubeFile(k, o.optLong("f"), o.optString("n"), o.optLong("s"), o.optString("l", ""), o.optJSONObject("m"), o.optLong("updated"))
+    return NubeFile(k, o.optLong("f"), o.optString("n"), o.optLong("s"), o.optString("l", ""), o.optJSONObject("m"), o.optLong("updated"), o.optString("gd", ""))
 }
 
-/** La API de kDrive (la misma que usa el servidor MCP oficial de Infomaniak). */
+/** Tu nube en Jonsu: delega en [com.gonzalo.familia.NubeFamilia] (Google Drive principal, kDrive como respaldo durante la transición). */
 object KDrive {
-    /** Se cambia en las pruebas por un kDrive simulado. */
-    var api = "https://api.infomaniak.com"
+    var api: String
+        get() = com.gonzalo.familia.NubeFamilia.api
+        set(v) { com.gonzalo.familia.NubeFamilia.api = v }
 
-    class Fail(msg: String) : IOException(msg)
+    var share: String
+        get() = com.gonzalo.familia.NubeFamilia.share
+        set(v) { com.gonzalo.familia.NubeFamilia.share = v }
 
     private fun prefs(ctx: Context) = EspejoCuenta.prefs(ctx, AjustesEnLaCuenta.NUBE)
-    /**
-     * El token y el número de tu kDrive son de la cuenta (`/claves`, se ponen una vez en Azabache y los usan todas las apps).
-     * Si este móvil tenía uno guardado de antes y la cuenta aún no, se sube una vez ([migraALaCuenta]).
-     */
-    private fun clave(n: String) = runCatching { com.gonzalo.familia.LaFamilia.familia.clave(n) }.getOrDefault("")
-    /** Lo que acabas de pegar, mientras se comprueba: hasta que [confirma] no pasa a la cuenta (un token malo nunca pisa el bueno). */
-    private fun probando(ctx: Context) = prefs(ctx).getBoolean("probando", false)
-    fun token(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("token", "").orEmpty() else clave("kdrive_token").ifBlank { prefs(ctx).getString("token", "").orEmpty() }
-    fun drive(ctx: Context) = if (probando(ctx)) prefs(ctx).getString("drive", "").orEmpty() else clave("kdrive_id").ifBlank { prefs(ctx).getString("drive", "").orEmpty() }
-    fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
 
-    fun save(ctx: Context, token: String, drive: String) {
-        // El id del kDrive puede venir con la dirección entera («…/app/drive/123456/…»)
-        val d = Regex("""drive/(\d+)""").find(drive)?.groupValues?.get(1) ?: drive.filter { it.isDigit() }
-        // Primero solo aquí: se comprueba ([test]) y, si vale, [confirma] lo pasa a la cuenta
-        prefs(ctx).edit().putString("token", token.trim()).putString("drive", d).putBoolean("probando", true).remove("dirs").remove("home").remove("versDir").apply()
-    }
+    fun gdriveOn(ctx: Context) = com.gonzalo.familia.NubeFamilia.gdriveOn(ctx)
+    fun kdriveOn(ctx: Context) = com.gonzalo.familia.NubeFamilia.kdriveOn(ctx)
+    fun token(ctx: Context) = com.gonzalo.familia.NubeFamilia.token(ctx)
+    fun drive(ctx: Context) = com.gonzalo.familia.NubeFamilia.drive(ctx)
+    fun on(ctx: Context) = com.gonzalo.familia.NubeFamilia.on(ctx)
+    fun nombreNube(ctx: Context) = com.gonzalo.familia.NubeFamilia.nombreNube(ctx)
 
-    /** El token pegado funciona: pasa a la cuenta y lo tienen todas las apps. */
-    fun confirma(ctx: Context) {
-        val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
-        prefs(ctx).edit().remove("probando").apply()
-        if (t.isNotBlank() && d.isNotBlank()) runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
-    }
-
-    /** El token pegado no vale: se olvida aquí y la cuenta se queda como estaba. */
-    fun descarta(ctx: Context) { prefs(ctx).edit().remove("probando").remove("token").remove("drive").remove("dirs").remove("home").remove("versDir").apply() }
-
+    fun save(ctx: Context, token: String, drive: String) = com.gonzalo.familia.NubeFamilia.save(ctx, token, drive)
+    fun confirma(ctx: Context) = com.gonzalo.familia.NubeFamilia.confirma(ctx)
+    fun descarta(ctx: Context) = com.gonzalo.familia.NubeFamilia.descarta(ctx)
     fun forget(ctx: Context) {
-        prefs(ctx).edit().clear().apply()
-        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", ""); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", "") }
+        prefs(ctx).edit().remove("shots").apply()
+        com.gonzalo.familia.NubeFamilia.forget(ctx)
     }
-
-    /** El token de antes, guardado solo en este móvil, pasa a la cuenta (si la cuenta aún no tiene uno). */
-    fun migraALaCuenta(ctx: Context) {
-        val t = prefs(ctx).getString("token", "").orEmpty(); val d = prefs(ctx).getString("drive", "").orEmpty()
-        if (probando(ctx) || t.isBlank() || d.isBlank() || clave("kdrive_token").isNotBlank()) return
-        runCatching { com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_token", t); com.gonzalo.familia.LaFamilia.familia.ponClave("kdrive_id", d) }
-    }
+    fun migraALaCuenta(ctx: Context) = com.gonzalo.familia.NubeFamilia.migraALaCuenta(ctx)
 
     /** Subir también las capturas que lleguen del PC (las sube el PC; esto vale si no lo hace). */
     fun shots(ctx: Context) = prefs(ctx).getBoolean("shots", true)
     fun setShots(ctx: Context, v: Boolean) = prefs(ctx).edit().putBoolean("shots", v).apply()
     var lastMsg: String = ""
 
-
-    private fun call(ctx: Context, method: String, path: String, body: String? = null): JSONObject {
-        val c = URL(api + path).openConnection() as HttpURLConnection
-        c.requestMethod = method
-        c.connectTimeout = 20000; c.readTimeout = 60000
-        c.setRequestProperty("Authorization", "Bearer ${token(ctx)}")
-        if (body != null) {
-            c.doOutput = true
-            c.setRequestProperty("Content-Type", "application/json")
-            c.outputStream.use { it.write(body.toByteArray()) }
-        }
-        return answer(c)
-    }
-
-    /** {"result":"success","data":…} o {"result":"error","error":{"description":…}} */
-    private fun answer(c: HttpURLConnection): JSONObject {
-        val code = c.responseCode
-        val txt = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
-        val o = runCatching { JSONObject(txt) }.getOrNull()
-        if (code !in 200..299 || o?.optString("result") == "error") {
-            val why = o?.optJSONObject("error")?.let { it.optString("description").ifBlank { it.optString("code") } }
-            throw Fail(when (code) {
-                401 -> "kDrive no acepta el token (revísalo o crea otro)"
-                403 -> "El token no tiene permiso para este kDrive"
-                404 -> "No encuentro ese kDrive (revisa su número)"
-                else -> "kDrive: ${why ?: "error $code"}"
-            })
-        }
-        return o ?: JSONObject()
-    }
-
-    /** Comprueba el token y el kDrive: busca tu carpeta privada («Mi carpeta»), que es donde va «Atrio». */
     suspend fun test(ctx: Context): String = withContext(Dispatchers.IO) {
-        prefs(ctx).edit().remove("home").apply()
-        home(ctx)
+        com.gonzalo.familia.NubeFamilia.testKDrive(ctx)
         "Conectado: Jonsu guardará todo en «Mi carpeta/Atrio» de tu kDrive (la misma carpeta que Atrio del PC)"
     }
 
-    private class Item(val name: String, val id: Long, val dir: Boolean, val visibility: String)
+    fun home(ctx: Context): Long = com.gonzalo.familia.NubeFamilia.homeKDrive(ctx)
+    fun upload(ctx: Context, path: String, name: String, size: Long, onProgress: (Long) -> Unit = {}, input: () -> InputStream): Long =
+        com.gonzalo.familia.NubeFamilia.uploadKDrive(ctx, path, name, size, onProgress, input)
+    fun subeDual(ctx: Context, path: String, name: String, size: Long, onProgress: (Long) -> Unit = {}, input: () -> InputStream) =
+        com.gonzalo.familia.NubeFamilia.subeDual(ctx, path, name, size, onProgress, input)
 
-    /** Lo que hay dentro de una carpeta. */
-    private fun children(ctx: Context, dir: Long): List<Item> {
-        val out = mutableListOf<Item>()
-        var cursor = ""
-        do {
-            val q = if (cursor.isNotEmpty()) "?cursor=${URLEncoder.encode(cursor, "UTF-8")}" else ""
-            val o = call(ctx, "GET", "/3/drive/${drive(ctx)}/files/$dir/files$q")
-            val a = o.optJSONArray("data") ?: JSONArray()
-            for (i in 0 until a.length()) a.optJSONObject(i)?.let { out += Item(it.optString("name"), it.optLong("id"), it.optString("type") == "dir", it.optString("visibility")) }
-            cursor = if (o.optBoolean("has_more")) o.optString("cursor") else ""
-        } while (cursor.isNotEmpty() && out.size < 5000)
-        return out
+    /** Una carpeta o un archivo de tu nube, para el explorador ([path]: dónde está, en las búsquedas). */
+    class Entry(val id: Long, val name: String, val dir: Boolean, val image: Boolean, val path: String = "", val gdId: String = "", val thumbUrl: String = "") {
+        val esGoogleDrive: Boolean get() = gdId.isNotBlank()
+        val claveUi: String get() = if (esGoogleDrive) "gd:$gdId" else "kd:$id"
     }
-
-    /**
-     * Tu carpeta privada («Mi carpeta»): en la raíz del kDrive no se puede escribir. La app oficial de kDrive la
-     * reconoce por su visibilidad «is_private_space»; es la única carpeta así.
-     */
-    fun home(ctx: Context): Long {
-        prefs(ctx).getLong("home", 0L).takeIf { it > 0 }?.let { return it }
-        val root = children(ctx, 1)
-        val h = root.firstOrNull { it.dir && it.visibility == "is_private_space" }
-            ?: throw Fail("No encuentro tu carpeta privada en el kDrive (hay: ${root.joinToString { it.name }.ifBlank { "nada" }})")
-        prefs(ctx).edit().putLong("home", h.id).apply()
-        return h.id
-    }
-
-    /** Archivos de más de 5 MB: a trozos (como la app oficial). */
-    private const val CHUNKED = 5L * 1024 * 1024
-    private const val PARALLEL = 4
-
-    /**
-     * Sube un archivo a «Mi carpeta/[path]/[name]» (kDrive crea las carpetas que falten). Si ya hay uno con ese
-     * nombre, queda como versión nueva del mismo (nada de «libro (1).epub»). Devuelve su id.
-     */
-    fun upload(ctx: Context, path: String, name: String, size: Long, onProgress: (Long) -> Unit = {}, input: () -> InputStream): Long {
-        val d = drive(ctx)
-        val home = home(ctx)
-        val enc = { v: String -> URLEncoder.encode(v, "UTF-8").replace("+", "%20") }
-        if (size <= CHUNKED) {
-            val q = "directory_id=$home&directory_path=${enc(path)}&file_name=${enc(name)}&total_size=$size&conflict=version"
-            val c = URL("$api/3/drive/$d/upload?$q").openConnection() as HttpURLConnection
-            c.requestMethod = "POST"
-            c.connectTimeout = 20000; c.readTimeout = 300000
-            c.doOutput = true
-            c.setFixedLengthStreamingMode(size)
-            c.setRequestProperty("Authorization", "Bearer ${token(ctx)}")
-            c.setRequestProperty("Content-Type", "application/octet-stream")
-            c.outputStream.use { out -> input().use { it.copyTo(out) } }
-            return answer(c).optJSONObject("data")?.optLong("id")?.takeIf { it > 0 }.also { onProgress(size) } ?: throw Fail("kDrive no ha devuelto el archivo subido")
-        }
-        // Trozos de al menos 1 MB, unos 200 por archivo (los mismos números que la app oficial)
-        val chunk = maxOf(1L * 1024 * 1024, (size + 199) / 200)
-        val total = ((size + chunk - 1) / chunk).toInt()
-        val start = call(ctx, "POST", "/3/drive/$d/upload/session/start", JSONObject()
-            .put("conflict", "version").put("directory_id", home).put("directory_path", path).put("file_name", name)
-            .put("last_modified_at", System.currentTimeMillis() / 1000).put("total_chunks", total).put("total_size", size).toString())
-            .optJSONObject("data") ?: throw Fail("kDrive no ha abierto la subida")
-        val tok = start.optString("token").ifBlank { throw Fail("kDrive no ha abierto la subida") }
-        val host = start.optString("upload_url").ifBlank { api }.trimEnd('/')
-        // Cuatro trozos a la vez (como la app oficial): se aprovecha mucho mejor la subida que de uno en uno
-        val pool = java.util.concurrent.Executors.newFixedThreadPool(PARALLEL)
-        val slots = java.util.concurrent.Semaphore(PARALLEL)
-        val sent = java.util.concurrent.atomic.AtomicLong(0)
-        val failed = java.util.concurrent.atomic.AtomicReference<Throwable?>(null)
-        try {
-            input().use { inp ->
-                for (n in 1..total) {
-                    val len = if (n == total) (size - chunk * (total - 1)).toInt() else chunk.toInt()
-                    slots.acquire()
-                    failed.get()?.let { throw it }
-                    val buf = ByteArray(len)
-                    var r = 0
-                    while (r < len) { val k = inp.read(buf, r, len - r); if (k < 0) throw Fail("El archivo se ha acabado antes de tiempo"); r += k }
-                    pool.execute {
-                        try {
-                            var tries = 0
-                            while (true) {
-                                try {
-                                    val c = URL("$host/3/drive/$d/upload/session/$tok/chunk?chunk_number=$n&chunk_size=$len").openConnection() as HttpURLConnection
-                                    c.requestMethod = "POST"
-                                    c.connectTimeout = 20000; c.readTimeout = 300000
-                                    c.doOutput = true
-                                    c.setFixedLengthStreamingMode(len)
-                                    c.setRequestProperty("Authorization", "Bearer ${token(ctx)}")
-                                    c.setRequestProperty("Content-Type", "application/octet-stream")
-                                    c.outputStream.use { it.write(buf) }
-                                    answer(c)
-                                    break
-                                } catch (e: IOException) {
-                                    // Un corte de red en un trozo: se reintenta ese trozo (no todo el archivo)
-                                    if (e is Fail || ++tries >= 3) throw e
-                                    Thread.sleep(1500L * tries)
-                                }
-                            }
-                            onProgress(sent.addAndGet(len.toLong()))
-                        } catch (e: Throwable) { failed.compareAndSet(null, e) } finally { slots.release() }
-                    }
-                }
-            }
-            slots.acquire(PARALLEL) // espera a que acaben todos
-            failed.get()?.let { throw it }
-        } finally { pool.shutdownNow() }
-        val fin = call(ctx, "POST", "/3/drive/$d/upload/session/$tok/finish").optJSONObject("data")
-        return fin?.optJSONObject("file")?.optLong("id")?.takeIf { it > 0 } ?: throw Fail("kDrive no ha cerrado la subida")
-    }
-
-    /** Una carpeta o un archivo de tu kDrive, para el explorador ([path]: dónde está, en las búsquedas). */
-    class Entry(val id: Long, val name: String, val dir: Boolean, val image: Boolean, val path: String = "")
 
     private val IMG = Regex("""(?i)\.(jpe?g|png|webp|gif|heic|heif|avif|bmp)$""")
 
-    /** Lo que hay en una carpeta de tu kDrive: primero las carpetas y luego las imágenes (lo demás no sirve aquí). */
+    /** Lo que hay en una carpeta de tu kDrive: primero las carpetas y luego las imágenes. */
     fun list(ctx: Context, dir: Long): List<Entry> {
-        val out = mutableListOf<Entry>()
-        var cursor = ""
-        do {
-            val q = if (cursor.isNotEmpty()) "?cursor=${URLEncoder.encode(cursor, "UTF-8")}" else ""
-            val o = call(ctx, "GET", "/3/drive/${drive(ctx)}/files/$dir/files$q")
-            val a = o.optJSONArray("data") ?: JSONArray()
-            for (i in 0 until a.length()) a.optJSONObject(i)?.let {
-                val dirx = it.optString("type") == "dir"
-                val img = !dirx && (it.optString("extension_type") == "image" || IMG.containsMatchIn(it.optString("name")))
-                if (dirx || img) out += Entry(it.optLong("id"), it.optString("name"), dirx, img)
-            }
-            cursor = if (o.optBoolean("has_more")) o.optString("cursor") else ""
-        } while (cursor.isNotEmpty() && out.size < 5000)
+        val out = com.gonzalo.familia.NubeFamilia.childrenKDrive(ctx, dir).mapNotNull {
+            val img = !it.dir && IMG.containsMatchIn(it.name)
+            if (it.dir || img) Entry(it.id, it.name, it.dir, img) else null
+        }
         return out.sortedWith(compareByDescending<Entry> { it.dir }.thenBy { it.name.lowercase() })
     }
 
-    /** Dónde empieza el explorador: «Mi carpeta/Atrio» si ya existe; si no, «Mi carpeta». */
+    /** Lo que hay en una carpeta de Google Drive: primero las carpetas y luego las imágenes. */
+    fun listGDrive(ctx: Context, dirId: String): List<Entry> {
+        val g = com.gonzalo.familia.NubeFamilia.gdrive(ctx)
+        val out = g.dentro(dirId).mapNotNull {
+            val img = !it.carpeta && (it.mime.startsWith("image/") || IMG.containsMatchIn(it.nombre))
+            if (it.carpeta || img) Entry(0L, it.nombre, it.carpeta, img, "", it.id, it.miniatura.ifBlank { g.urlDescarga(it.id) }) else null
+        }
+        return out.sortedWith(compareByDescending<Entry> { it.dir }.thenBy { it.name.lowercase() })
+    }
+
+    /** Dónde empieza el explorador en kDrive: «Mi carpeta/Atrio» si ya existe; si no, «Mi carpeta». */
     fun start(ctx: Context): Long {
         val h = home(ctx)
         return list(ctx, h).firstOrNull { it.dir && it.name == "Atrio" }?.id ?: h
     }
 
-    /**
-     * Busca por nombre en todo tu kDrive (como la app oficial: /3/drive/<id>/files/search). [tipo]: "image" o "dir".
-     * Devuelve como mucho [max], con su carpeta (la ruta empieza por «Mi carpeta» o por el espacio común).
-     */
+    /** Dónde empieza el explorador en Google Drive: «Atrio» dentro de la raíz si ya existe; si no, la raíz. */
+    fun startGDrive(ctx: Context): Pair<String, String> {
+        val g = com.gonzalo.familia.NubeFamilia.gdrive(ctx)
+        val atrio = g.carpeta("Atrio")
+        return if (atrio != null) atrio to "Atrio" else g.carpetaRaiz() to "Google Drive"
+    }
+
+    /** Busca por nombre en kDrive (o en Google Drive si está activo y [soloKDrive] es false). */
     fun busca(ctx: Context, texto: String, tipo: String = "image", max: Int = 300): List<Entry> {
         val q = texto.trim()
         if (q.isEmpty()) return emptyList()
+        if (gdriveOn(ctx)) {
+            val g = com.gonzalo.familia.NubeFamilia.gdrive(ctx)
+            return g.busca(q, tipo, max).mapNotNull {
+                val img = !it.carpeta && (it.mime.startsWith("image/") || IMG.containsMatchIn(it.nombre))
+                if (it.carpeta || img) Entry(0L, it.nombre, it.carpeta, img, "Google Drive", it.id, it.miniatura.ifBlank { g.urlDescarga(it.id) }) else null
+            }
+        }
         val enc = { v: String -> URLEncoder.encode(v, "UTF-8").replace("+", "%20") }
         val out = mutableListOf<Entry>()
         var cursor = ""
         do {
             val c = if (cursor.isNotEmpty()) "&cursor=${enc(cursor)}" else ""
-            val o = call(ctx, "GET", "/3/drive/${drive(ctx)}/files/search?query=${enc(q)}&types[]=$tipo&with=path$c")
+            val conn = URL("$api/3/drive/${drive(ctx)}/files/search?query=${enc(q)}&types[]=$tipo&with=path$c").openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"; conn.connectTimeout = 20000; conn.readTimeout = 60000
+            conn.setRequestProperty("Authorization", "Bearer ${token(ctx)}")
+            val code = conn.responseCode
+            val txt = (if (code in 200..299) conn.inputStream else conn.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
+            conn.disconnect()
+            if (code !in 200..299) throw com.gonzalo.familia.NubeFamilia.Fail("kDrive: error $code")
+            val o = runCatching { JSONObject(txt) }.getOrNull() ?: JSONObject()
             val a = o.optJSONArray("data") ?: JSONArray()
             for (i in 0 until a.length()) a.optJSONObject(i)?.let {
                 val dirx = it.optString("type") == "dir"
@@ -336,150 +208,37 @@ object KDrive {
         if (ps.firstOrNull() == "Private") (listOf("Mi carpeta") + ps.drop(1)).joinToString("/") else ps.joinToString("/")
     }
 
-    /** La carpeta de una ficha («Mi carpeta/Atrio/<Categoría>/<Ficha>») si ya existe en tu nube, o null. */
+    /** La carpeta de una ficha en kDrive («Mi carpeta/Atrio/<Categoría>/<Ficha>») si ya existe, o null. */
     fun carpetaDeFicha(ctx: Context, nombre: String): Pair<Long, String>? {
         val n = NubeSync.safe(cleanTitle(nombre))
         if (nombre.isBlank()) return null
         return runCatching { busca(ctx, n, tipo = "dir", max = 60) }.getOrDefault(emptyList())
-            .firstOrNull { it.dir && it.name == n && it.path.startsWith("Mi carpeta/Atrio/") }?.let { it.id to "${it.path}/${it.name}" }
+            .firstOrNull { !it.esGoogleDrive && it.dir && it.name == n && it.path.startsWith("Mi carpeta/Atrio/") }?.let { it.id to "${it.path}/${it.name}" }
     }
 
-    /** La miniatura de una imagen (la misma dirección que usa la app oficial). */
+    /** La carpeta de una ficha en Google Drive si ya existe, o null. */
+    fun carpetaDeFichaGDrive(ctx: Context, nombre: String): Pair<String, String>? {
+        val n = NubeSync.safe(cleanTitle(nombre))
+        if (nombre.isBlank() || !gdriveOn(ctx)) return null
+        return runCatching { com.gonzalo.familia.NubeFamilia.gdrive(ctx).busca(n, tipo = "dir", max = 40) }.getOrDefault(emptyList())
+            .firstOrNull { it.carpeta && it.nombre == n }?.let { it.id to it.nombre }
+    }
+
+    /** La miniatura de una imagen. */
     fun thumb(ctx: Context, file: Long) = "$api/2/drive/${drive(ctx)}/files/$file/thumbnail"
+    fun thumbEntry(ctx: Context, e: Entry): String = if (e.esGoogleDrive) e.thumbUrl.ifBlank { com.gonzalo.familia.NubeFamilia.gdrive(ctx).urlDescarga(e.gdId) } else thumb(ctx, e.id)
     fun auth(ctx: Context) = "Bearer ${token(ctx)}"
+    fun authEntry(ctx: Context, e: Entry): String = if (e.esGoogleDrive) runCatching { "Bearer ${com.gonzalo.familia.NubeFamilia.gdrive(ctx).paseValido()}" }.getOrDefault("") else auth(ctx)
 
-    /** La web de los enlaces públicos (se cambia en las pruebas). */
-    var share = "https://kdrive.infomaniak.com"
-
-    /**
-     * Baja un archivo desde su enlace público, sin cuenta (lo usa la app de tu pareja). El enlace es
-     * «…/app/share/<kDrive>/<uuid>»; la descarga, la misma que usa la app oficial de kDrive para los enlaces.
-     */
-    fun downloadShared(link: String, file: Long, dest: File) {
-        val m = Regex("""/app/share/(\d+)/([a-z0-9-]+)""").find(link) ?: throw Fail("Ese enlace no es de kDrive")
-        val c = URL("$share/2/app/${m.groupValues[1]}/share/${m.groupValues[2]}/files/$file/download").openConnection() as HttpURLConnection
-        c.connectTimeout = 20000; c.readTimeout = 300000
-        if (c.responseCode !in 200..299) throw Fail("El enlace ya no funciona (error ${c.responseCode})")
-        dest.parentFile?.mkdirs()
-        val tmp = File(dest.path + ".part")
-        c.inputStream.use { inp -> tmp.outputStream().use { inp.copyTo(it) } }
-        if (!tmp.renameTo(dest)) { tmp.copyTo(dest, true); tmp.delete() }
-    }
-
-    /** Un enlace para abrirlo sin entrar en tu cuenta (para tu pareja). Si falla, sin enlace. */
-    fun link(ctx: Context, file: Long): String = runCatching {
-        val d = call(ctx, "POST", "/2/drive/${drive(ctx)}/files/$file/link", JSONObject().put("right", "public").put("can_download", true).toString()).opt("data")
-        (d as? JSONObject)?.optString("url").orEmpty().ifBlank { (d as? String).orEmpty() }
-    }.getOrDefault("")
-
-    /** Los archivos de «Mi carpeta/versiones» (nombre, id): ahí se sube cada versión de la app para que se actualice sola. */
-    fun versiones(ctx: Context): List<Pair<String, Long>> {
-        // El id de la carpeta se recuerda: así cada comprobación es una sola consulta (y si ya no vale, se busca de nuevo)
-        prefs(ctx).getLong("versDir", 0L).takeIf { it > 0 }?.let { id ->
-            runCatching { return children(ctx, id).filter { !it.dir }.map { it.name to it.id } }
-            prefs(ctx).edit().remove("versDir").apply()
-        }
-        val dir = children(ctx, home(ctx)).firstOrNull { it.dir && it.name == "versiones" } ?: return emptyList()
-        prefs(ctx).edit().putLong("versDir", dir.id).apply()
-        return children(ctx, dir.id).filter { !it.dir }.map { it.name to it.id }
-    }
-
-    /**
-     * Baja un archivo a [dest] (primero a un temporal: un corte no deja un archivo a medias). Los grandes se bajan en
-     * cuatro trozos a la vez (kDrive acepta rangos) y es mucho más rápido; si no, de una vez.
-     */
-    fun download(ctx: Context, file: Long, dest: File) {
-        if (runCatching { descargaEnTrozos(ctx, file, dest) }.getOrDefault(false)) return
-        descargaSimple(ctx, file, dest)
-    }
-
-    private const val TROZOS = 4
-    private const val MINIMO_EN_TROZOS = 4L * 1024 * 1024
-
-    /** Devuelve false si no vale la pena (pequeño) o el servidor no entiende rangos: entonces se baja de una vez. */
-    private fun descargaEnTrozos(ctx: Context, file: Long, dest: File): Boolean {
-        val url = "$api/2/drive/${drive(ctx)}/files/$file/download"
-        fun abre(desde: Long, hasta: Long): HttpURLConnection {
-            val c = URL(url).openConnection() as HttpURLConnection
-            c.connectTimeout = 20000; c.readTimeout = 300000
-            c.setRequestProperty("Authorization", "Bearer ${token(ctx)}")
-            c.setRequestProperty("Range", "bytes=$desde-$hasta")
-            return c
-        }
-        // Primero un pedacito: dice cuánto pesa y si entiende rangos
-        val sonda = abre(0, 0)
-        if (sonda.responseCode != 206) { sonda.disconnect(); return false }
-        val total = sonda.getHeaderField("Content-Range")?.substringAfter('/')?.toLongOrNull() ?: run { sonda.disconnect(); return false }
-        sonda.inputStream.use { it.readBytes() }
-        if (total < MINIMO_EN_TROZOS) return false
-        dest.parentFile?.mkdirs()
-        val tmp = File(dest.path + ".part")
-        java.io.RandomAccessFile(tmp, "rw").use { it.setLength(total) }
-        val trozo = (total + TROZOS - 1) / TROZOS
-        val fallo = java.util.concurrent.atomic.AtomicReference<Throwable?>(null)
-        val hilos = (0 until TROZOS).map { i ->
-            Thread {
-                try {
-                    val a = i * trozo
-                    val b = minOf(total - 1, a + trozo - 1)
-                    if (a > b) return@Thread
-                    var intentos = 0
-                    while (true) {
-                        try {
-                            val c = abre(a, b)
-                            if (c.responseCode != 206) throw Fail("kDrive: error ${c.responseCode}")
-                            c.inputStream.use { inp ->
-                                java.io.RandomAccessFile(tmp, "rw").use { f ->
-                                    f.seek(a)
-                                    val buf = ByteArray(64 * 1024); var pos = a
-                                    while (true) { val n = inp.read(buf); if (n < 0) break; f.write(buf, 0, n); pos += n }
-                                    if (pos != b + 1) throw IOException("trozo incompleto")
-                                }
-                            }
-                            break
-                        } catch (e: IOException) {
-                            if (e is Fail || ++intentos >= 3) throw e
-                            Thread.sleep(1000L * intentos)
-                        }
-                    }
-                } catch (e: Throwable) { fallo.compareAndSet(null, e) }
-            }.also { it.start() }
-        }
-        hilos.forEach { it.join() }
-        fallo.get()?.let { tmp.delete(); throw it }
-        if (tmp.length() != total) { tmp.delete(); throw Fail("kDrive: la descarga ha quedado incompleta") }
-        if (!tmp.renameTo(dest)) { tmp.copyTo(dest, true); tmp.delete() }
-        return true
-    }
-
-    private fun descargaSimple(ctx: Context, file: Long, dest: File) {
-        val c = URL("$api/2/drive/${drive(ctx)}/files/$file/download").openConnection() as HttpURLConnection
-        c.connectTimeout = 20000; c.readTimeout = 300000
-        c.setRequestProperty("Authorization", "Bearer ${token(ctx)}")
-        if (c.responseCode !in 200..299) { answer(c); throw Fail("kDrive: error ${c.responseCode}") }
-        dest.parentFile?.mkdirs()
-        val tmp = File(dest.path + ".part")
-        c.inputStream.use { inp -> tmp.outputStream().use { inp.copyTo(it) } }
-        if (!tmp.renameTo(dest)) { tmp.copyTo(dest, true); tmp.delete() }
-    }
-
-    /**
-     * ¿Sigue ese archivo en tu kDrive, en su carpeta? (false si lo borraste, lo mandaste a la papelera o ya no está;
-     * null si no se puede saber —sin red, otro error— y entonces se da por bueno.) No se fía de cómo marque kDrive lo
-     * borrado: pregunta por el archivo, y mira si su carpeta lo lista.
-     */
-    fun exists(ctx: Context, file: Long): Boolean? = try {
-        val d = call(ctx, "GET", "/3/drive/${drive(ctx)}/files/$file").optJSONObject("data")
-        val parent = d?.optLong("parent_id", 0L) ?: 0L
-        if (d == null) null else if (parent <= 0L) true else children(ctx, parent).any { it.id == file }
-    } catch (e: Fail) {
-        if (e.message?.startsWith("No encuentro") == true || e.message?.contains("not_found", true) == true) false else null
-    } catch (e: Exception) { null }
-
-    /** ¿Responde tu kDrive con este token? (lista su raíz; falla si el número o el token no valen). */
-    fun reach(ctx: Context) { children(ctx, 1) }
-
-    fun delete(ctx: Context, file: Long) { call(ctx, "DELETE", "/2/drive/${drive(ctx)}/files/$file") }
+    fun downloadShared(link: String, file: Long, dest: File) = com.gonzalo.familia.NubeFamilia.descargaEnlace(link, file, dest)
+    fun link(ctx: Context, file: Long): String = com.gonzalo.familia.NubeFamilia.linkKDrive(ctx, file)
+    fun versiones(ctx: Context): List<Pair<String, Long>> = com.gonzalo.familia.NubeFamilia.versionesKDrive(ctx)
+    fun versionesDual(ctx: Context) = com.gonzalo.familia.NubeFamilia.versionesDual(ctx)
+    fun bajaVersion(ctx: Context, v: com.gonzalo.familia.NubeFamilia.VersionRemota, dest: File) = com.gonzalo.familia.NubeFamilia.bajaVersion(ctx, v, dest)
+    fun download(ctx: Context, file: Long, dest: File) = com.gonzalo.familia.NubeFamilia.downloadKDrive(ctx, file, dest)
+    fun exists(ctx: Context, file: Long): Boolean? = com.gonzalo.familia.NubeFamilia.existsKDrive(ctx, file)
+    fun reach(ctx: Context) = com.gonzalo.familia.NubeFamilia.reachKDrive(ctx)
+    fun delete(ctx: Context, file: Long) = com.gonzalo.familia.NubeFamilia.deleteKDrive(ctx, file)
 }
 
 /** Qué subir y qué bajar: lo hace en segundo plano ([NubeWorker]) y a mano desde Ajustes. */
@@ -529,15 +288,17 @@ object NubeSync {
 
     /**
      * Una imagen que eliges de tu nube para una portada: se baja y se usa, y se apunta ese mismo archivo de tu
-     * kDrive para ella (no se vuelve a subir otra copia). Devuelve su dirección.
+     * nube para ella (no se vuelve a subir otra copia). Devuelve su dirección.
      */
-    suspend fun usarDeLaNube(ctx: Context, file: Long, name: String): String = withContext(Dispatchers.IO) {
-        val tmp = File(ctx.cacheDir, "nube_pick_${file}_${name.replace(Regex("[^A-Za-z0-9._-]"), "_")}")
-        KDrive.download(ctx, file, tmp)
+    suspend fun usarDeLaNube(ctx: Context, file: Long, name: String, gdId: String = ""): String = withContext(Dispatchers.IO) {
+        val tag = gdId.ifBlank { file.toString() }.replace(Regex("[^A-Za-z0-9_-]"), "_")
+        val tmp = File(ctx.cacheDir, "nube_pick_${tag}_${name.replace(Regex("[^A-Za-z0-9._-]"), "_")}")
+        com.gonzalo.familia.NubeFamilia.bajaDual(ctx, gdId, file, tmp)
         val size = tmp.length()
         val u = Photos.import(ctx, Uri.fromFile(tmp))
         tmp.delete()
-        Photos.nameOf(u)?.let { n -> Store(ctx).addNube(listOf(NubeFile("foto:$n", file, name, size, KDrive.link(ctx, file)))) }
+        val enlace = com.gonzalo.familia.NubeFamilia.enlacePublico(ctx, gdId, file)
+        Photos.nameOf(u)?.let { n -> Store(ctx).addNube(listOf(NubeFile("foto:$n", file, name, size, enlace, gd = gdId))) }
         u
     }
 
@@ -595,7 +356,6 @@ object NubeSync {
 
     /** Sube lo que falte y baja lo que falte aquí. Devuelve un resumen. */
     suspend fun run(ctx: Context, verify: Boolean = false, foreground: (suspend (String, Int) -> Unit)? = null): String = withContext(Dispatchers.IO) {
-        // Sin tu kDrive en este dispositivo no se sube nada, pero lo tuyo se baja igual por sus enlaces
         val on = KDrive.on(ctx)
         val store = Store(ctx)
         if (!on && store.loadNube().none { it.l.isNotBlank() }) return@withContext "Sin nube"
@@ -603,7 +363,6 @@ object NubeSync {
         var up = 0; var down = 0; val errs = mutableListOf<String>()
         try {
             val have = store.loadNube().associateBy { it.k }
-            // El progreso de cada subida, en Ajustes y en el aviso (cada 1 %)
             fun progress(what: String, size: Long): (Long) -> Unit {
                 var last = -1
                 return { done ->
@@ -617,9 +376,7 @@ object NubeSync {
             }
             val added = mutableListOf<NubeFile>()
             if (on) {
-            // Libros: el archivo que tengas adjunto, con su enlace para tu pareja
             val titles = (store.load(1).map { it.id to it.name } + store.loadPlays(1).map { it.id to it.name }).toMap()
-            // Comprobar que lo subido sigue en tu kDrive (a mano, o cada 6 h): si lo borraste de allí, se vuelve a subir
             val np = ctx.getSharedPreferences("nube", Context.MODE_PRIVATE)
             val comprobar = verify || System.currentTimeMillis() - np.getLong("verificadoEn", 0L) > 6 * 3600_000L
             if (comprobar) np.edit().putLong("verificadoEn", System.currentTimeMillis()).apply()
@@ -627,8 +384,7 @@ object NubeSync {
                 val rec = have["libro:$id"]
                 if (rec != null) {
                     val tam = runCatching { sizeOf(ctx, Uri.parse(u)) }.getOrDefault(0L)
-                    // Otro archivo (su tamaño ha cambiado) o ya no está en tu kDrive: el apunte viejo se quita y se sube de nuevo
-                    val sobra = (tam > 0 && tam != rec.s) || (comprobar && KDrive.exists(ctx, rec.f) == false)
+                    val sobra = (tam > 0 && tam != rec.s) || (comprobar && com.gonzalo.familia.NubeFamilia.existeDual(ctx, rec.gd, rec.f) == false)
                     if (!sobra) continue
                     store.removeNube("libro:$id")
                 }
@@ -642,8 +398,9 @@ object NubeSync {
                     val name = "${safe(cleanTitle(title))}.$ext"
                     status = "Subiendo $name…"
                     foreground?.let { runCatching { it(status, 0) } }
-                    val f = KDrive.upload(ctx, folder(BOOKS, title, "Libro"), name, size, progress(name, size)) { ctx.contentResolver.openInputStream(uri) ?: throw IOException("no se puede leer") }
-                    added += NubeFile("libro:$id", f, name, size, KDrive.link(ctx, f))
+                    val sub = KDrive.subeDual(ctx, folder(BOOKS, title, "Libro"), name, size, progress(name, size)) { ctx.contentResolver.openInputStream(uri) ?: throw IOException("no se puede leer") }
+                    val link = com.gonzalo.familia.NubeFamilia.enlacePublico(ctx, sub.gdId, sub.kdId)
+                    added += NubeFile("libro:$id", sub.kdId, name, size, link, gd = sub.gdId)
                     up++
                 } catch (e: Exception) { errs += "${titles[id] ?: "un libro"}: ${e.message}" }
             }
@@ -653,8 +410,9 @@ object NubeSync {
                 val (f0, _) = Photos.best(ctx, n) ?: continue
                 try {
                     status = "Subiendo la foto ${f0.name}…"
-                    val f = KDrive.upload(ctx, where, f0.name, f0.length(), progress(f0.name, f0.length())) { f0.inputStream() }
-                    added += NubeFile("foto:$n", f, f0.name, f0.length(), KDrive.link(ctx, f))
+                    val sub = KDrive.subeDual(ctx, where, f0.name, f0.length(), progress(f0.name, f0.length())) { f0.inputStream() }
+                    val link = com.gonzalo.familia.NubeFamilia.enlacePublico(ctx, sub.gdId, sub.kdId)
+                    added += NubeFile("foto:$n", sub.kdId, f0.name, f0.length(), link, gd = sub.gdId)
                     up++
                 } catch (e: Exception) { errs += "${f0.name}: ${e.message}" }
             }
@@ -667,8 +425,9 @@ object NubeSync {
                     val g = gameName(store, s.sg, s.game)
                     val name = "${safe(cleanTitle(g))} ${java.text.SimpleDateFormat("yyyy-MM-dd HH.mm.ss", java.util.Locale.ROOT).format(java.util.Date(s.time))}.${f0.extension}"
                     status = "Subiendo la captura $name…"
-                    val f = KDrive.upload(ctx, folder(GAMES, g, "Capturas"), name, f0.length(), progress(name, f0.length())) { f0.inputStream() }
-                    added += NubeFile("shot:${s.id}", f, name, f0.length(), KDrive.link(ctx, f), shotMeta(s))
+                    val sub = KDrive.subeDual(ctx, folder(GAMES, g, "Capturas"), name, f0.length(), progress(name, f0.length())) { f0.inputStream() }
+                    val link = com.gonzalo.familia.NubeFamilia.enlacePublico(ctx, sub.gdId, sub.kdId)
+                    added += NubeFile("shot:${s.id}", sub.kdId, name, f0.length(), link, shotMeta(s), gd = sub.gdId)
                     up++
                 } catch (e: Exception) { errs += "${s.game}: ${e.message}" }
             }
@@ -686,7 +445,6 @@ object NubeSync {
         ).joinToString(" · ").ifBlank { "Todo al día" }
         status = msg
         KDrive.lastMsg = msg
-        // Lo subido queda apuntado en tu cuenta (para que tus otros dispositivos lo encuentren): sube ya
         if (up > 0) Couple.pushIfPending(store)
         msg
     }
@@ -695,14 +453,13 @@ object NubeSync {
         .put("mime", s.mime).put("pc", s.pc).put("by", s.by)
 
     /**
-     * Baja un archivo de tu nube. Primero con tu cuenta; si falla (este dispositivo conectado a otro kDrive, un
-     * token sin permiso…), por el enlace del archivo, que no depende de la cuenta. Si tampoco, el porqué de verdad.
+     * Baja un archivo de tu nube (Google Drive o kDrive). Primero con tu cuenta; si falla, por su enlace público.
      */
     fun bajar(ctx: Context, x: NubeFile, dest: File) {
-        val first = if (KDrive.on(ctx)) try { KDrive.download(ctx, x.f, dest); return } catch (e: Exception) { e } else null
+        val first = if (KDrive.on(ctx)) try { com.gonzalo.familia.NubeFamilia.bajaDual(ctx, x.gd, x.f, dest); return } catch (e: Exception) { e } else null
         var shared: Exception? = null
         if (x.l.isNotBlank()) try { KDrive.downloadShared(x.l, x.f, dest); return } catch (e: Exception) { shared = e }
-        throw KDrive.Fail(if (first != null) porQue(ctx, x, first) else "No se pudo bajar por su enlace (${shared?.message ?: "no tiene"}); conecta tu kDrive en Ajustes → Tu nube")
+        throw com.gonzalo.familia.NubeFamilia.Fail(if (first != null) porQue(ctx, x, first) else "No se pudo bajar por su enlace (${shared?.message ?: "no tiene"}); conecta tu Google Drive en Ajustes → Tu nube")
     }
 
     /** Por qué no se pudo bajar: otro kDrive en este dispositivo, el archivo ya no está, o el error tal cual. */
@@ -711,9 +468,11 @@ object NubeSync {
         val aqui = KDrive.drive(ctx)
         if (suyo != null && aqui.isNotBlank() && suyo != aqui)
             return "Este dispositivo está conectado a otro kDrive (nº $aqui) y el archivo está en el nº $suyo: cámbialo en Ajustes → Cuenta → Tu nube"
-        if (e is KDrive.Fail && e.message?.startsWith("No encuentro") == true)
+        if ((e is com.gonzalo.familia.NubeFamilia.Fail || e is com.gonzalo.familia.nucleo.GoogleDrive.Fallo) && e.message?.startsWith("No encuentro") == true) {
+            if (x.gd.isNotBlank()) return "Ese archivo ya no está en tu Google Drive (¿lo borraste o lo moviste?): vuelve a adjuntarlo desde el dispositivo donde lo tengas"
             return if (runCatching { KDrive.reach(ctx) }.isSuccess) "Ese archivo ya no está en tu kDrive (¿lo borraste o lo moviste?): vuelve a adjuntarlo desde el dispositivo donde lo tengas"
             else "No encuentro tu kDrive (nº $aqui) con este token: revísalo en Ajustes → Cuenta → Tu nube"
+        }
         return e.message ?: "error"
     }
 
@@ -722,7 +481,6 @@ object NubeSync {
         val x = Store(ctx).loadNube().find { it.k == "libro:$id" } ?: return@withContext false
         val dest = File(File(ctx.filesDir, "libros"), "$id.${x.n.substringAfterLast('.', "epub")}")
         try { bajar(ctx, x, dest) } catch (e: Exception) {
-            // Si ya no está en tu kDrive, el apunte sobra: deja de ofrecerse «Bajar de tu nube» y el libro se puede volver a subir
             if (e.message?.contains("ya no está") == true) Store(ctx).removeNube("libro:$id")
             throw e
         }
@@ -747,7 +505,7 @@ object NubeSync {
         for (x in list) {
             try {
                 status = "Bajando ${x.n}…"
-                val tmp = File(ctx.cacheDir, "nube_${x.f}")
+                val tmp = File(ctx.cacheDir, "nube_${x.gd.ifBlank { x.f.toString() }}")
                 bajar(ctx, x, tmp)
                 Suite.addFromCloud(x, tmp.readBytes())
                 tmp.delete()
@@ -762,7 +520,7 @@ object NubeSync {
         val store = Store(ctx)
         store.setShotNoCloud(shotId)
         store.loadNube().find { it.k == "shot:$shotId" }?.let { x ->
-            runCatching { KDrive.delete(ctx, x.f) }
+            com.gonzalo.familia.NubeFamilia.borraDual(ctx, x.gd, x.f)
             store.removeNube(x.k)
         }
     }
@@ -771,7 +529,7 @@ object NubeSync {
 /** En la app de tu pareja: su nube (la pone la app al ver la suya). */
 object NubeHub {
     /**
-     * Elegir una imagen de tu kDrive (lo pone la app; null sin nube): la devuelve ya como foto tuya de este móvil. El
+     * Elegir una imagen de tu nube (lo pone la app; null sin nube): la devuelve ya como foto tuya de este móvil. El
      * primer dato es el nombre de la ficha o la saga (para abrir su carpeta); puede ir vacío.
      */
     var pickFromCloud: ((String, (String) -> Unit) -> Unit)? = null
@@ -791,16 +549,13 @@ fun PartnerFileLink(itemId: Long, kind: Kind, always: Boolean = false) {
     if (copy != null) MagLink(if (NubeHub.copying == itemId) "Copiando…" else "Copiar a mi Atrio", "${x.n} · con su archivo, para leerlo aquí", accent = true) {
         if (NubeHub.copying == 0L) copy(itemId)
     }
-    MagLink("Abrir en su kDrive", "En el navegador") {
+    val donde = if (com.gonzalo.familia.nucleo.GoogleDrive.esEnlaceGoogleDrive(x.l)) "Google Drive" else "kDrive"
+    MagLink("Abrir en su $donde", "En el navegador") {
         runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(x.l))) }
     }
 }
 
 class NubeWorker(ctx: Context, p: WorkerParameters) : CoroutineWorker(ctx, p) {
-    /**
-     * Mientras sube, en primer plano con su aviso: así Android le deja pasar de los 10 minutos de un trabajo normal
-     * (un libro de 700 MB). Si Android no lo deja (la app ya estaba de fondo), sigue como trabajo normal.
-     */
     private suspend fun aviso(text: String, pct: Int) {
         val nm = applicationContext.getSystemService(android.app.NotificationManager::class.java)
         if (android.os.Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel("nube") == null)
@@ -816,59 +571,109 @@ class NubeWorker(ctx: Context, p: WorkerParameters) : CoroutineWorker(ctx, p) {
     override suspend fun doWork(): Result {
         var fg = true
         var msg = NubeSync.run(applicationContext, inputData.getBoolean("verify", false)) { t, p -> if (fg) try { aviso(t, p) } catch (e: Exception) { fg = false } }
-        // Si mientras subía pusiste otra foto, otra pasada (hasta dos más)
         repeat(2) { if (NubeSync.fotosPorSubir(applicationContext)) msg = NubeSync.run(applicationContext) { t, p -> if (fg) try { aviso(t, p) } catch (e: Exception) { fg = false } } }
-        // Lo subido, a tu cuenta enseguida (aunque la app esté cerrada): así tus otros dispositivos lo ven ya
         Couple.pushIfPending(Store(applicationContext))
         return if (msg.startsWith("falló") && runAttemptCount < 3) Result.retry() else Result.success()
     }
 }
 
-/** Ajustes → Tu nube. */
+/** Ajustes → Tu nube: Google Drive (principal) y kDrive (respaldo durante la transición). */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun NubeSettings(say: (String) -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    var on by remember { mutableStateOf(KDrive.on(ctx)) }
+    var gdOn by remember { mutableStateOf(KDrive.gdriveOn(ctx)) }
+    var gdCid by remember { mutableStateOf(com.gonzalo.familia.NubeFamilia.gdriveClientId(ctx)) }
+    var gdCsec by remember { mutableStateOf("") }
+    var gdRtok by remember { mutableStateOf("") }
+    var gdDir by remember { mutableStateOf(com.gonzalo.familia.NubeFamilia.gdriveCarpeta(ctx)) }
+    var kdOn by remember { mutableStateOf(KDrive.kdriveOn(ctx)) }
     var token by remember { mutableStateOf("") }
     var drive by remember { mutableStateOf(KDrive.drive(ctx)) }
     var shots by remember { mutableStateOf(KDrive.shots(ctx)) }
-    if (!on) {
+    var mostrarKDrive by remember { mutableStateOf(kdOn && !gdOn) }
+
+    Text("Google Drive", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+    if (!gdOn) {
         Text(
-            "Tus libros, las fotos que pones de portada y las capturas, en una carpeta «Atrio» de tu kDrive (Infomaniak), " +
-                "para tenerlos en todos tus dispositivos y que tu pareja pueda abrirlos.",
+            "Tus libros, ROMs, guardados, fotos, capturas, películas y actualizaciones de todas las apps de la familia, en tu Google Drive.",
             color = UiSoft, fontSize = 13.sp
         )
         Plegado(
-            "En el Manager de Infomaniak: Desarrollador → Tokens de API → Crear un token, con la aplicación «kDrive». " +
-                "El número de tu kDrive es el que sale en la dirección al abrirlo en el navegador, después de «/drive/». " +
-                "El token se guarda en tu cuenta, en una parte que solo tú puedes leer (tu pareja no), y lo usan también Bastet, Seshat y Thot."
+            "Crea un cliente OAuth «Desktop app» en Google Cloud Console (con Google Drive API activada y «Publish app» en la pantalla de consentimiento) " +
+                "y saca el Refresh Token una sola vez con herramientas/gdrive/autorizar.py. Las claves van a /claves (solo las lee tu sesión) y las comparten todas las apps."
         )
-        // (como en las hermanas: campos de la revista y un enlace para conectar)
-        CampoRevista("Token", token, "token de API de kDrive", secreto = true, ascii = true) { token = it }
-        CampoRevista("kDrive", drive, "número o dirección", ascii = true) { drive = it }
-        MagLink("Conectar", "Comprueba el token y busca tu carpeta", accent = true) {
-            if (token.isBlank() || drive.isBlank()) { say("Falta el token o el número de tu kDrive"); return@MagLink }
-            KDrive.save(ctx, token, drive)
+        CampoRevista("Client ID", gdCid, "…apps.googleusercontent.com", ascii = true) { gdCid = it }
+        CampoRevista("Client Secret", gdCsec, "secreto OAuth", secreto = true, ascii = true) { gdCsec = it }
+        CampoRevista("Refresh Token", gdRtok, "token de autorizar.py", secreto = true, ascii = true) { gdRtok = it }
+        CampoRevista("Carpeta raíz (opcional)", gdDir, "ID o URL (vacío: «Familia»)", ascii = true) { gdDir = it }
+        MagLink("Conectar Google Drive", "Comprueba las credenciales y busca/crea la carpeta", accent = true) {
+            if (gdCid.isBlank() || gdCsec.isBlank() || gdRtok.isBlank()) { say("Falta Client ID, Client Secret o Refresh Token"); return@MagLink }
+            com.gonzalo.familia.NubeFamilia.saveGDrive(ctx, gdCid, gdCsec, gdRtok, gdDir)
             scope.launch {
-                try { say(KDrive.test(ctx)); KDrive.confirma(ctx); on = true; NubeSync.enqueue(ctx) }
-                catch (e: Exception) { KDrive.descarta(ctx); say(e.message ?: "No se pudo conectar") }
+                try {
+                    say(com.gonzalo.familia.NubeFamilia.testGDrive(ctx))
+                    com.gonzalo.familia.NubeFamilia.confirmaGDrive(ctx)
+                    gdOn = true
+                    NubeSync.enqueue(ctx)
+                } catch (e: Exception) {
+                    com.gonzalo.familia.NubeFamilia.descartaGDrive(ctx)
+                    say(e.message ?: "No se pudo conectar con Google Drive")
+                }
             }
         }
     } else {
-        Text("Conectada a tu kDrive ${KDrive.drive(ctx)}", fontWeight = FontWeight.SemiBold)
+        Text("Conectada a tu Google Drive", fontWeight = FontWeight.SemiBold)
         val st = NubeSync.status.ifBlank { KDrive.lastMsg }
         if (st.isNotBlank()) Text(st, color = UiSoft, fontSize = 13.sp)
         androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Subir las capturas", modifier = Modifier.weight(1f))
             Interruptor(shots) { shots = it; KDrive.setShots(ctx, it) }
         }
-        Plegado("Todas, salvo las que quites de la nube al verlas. Normalmente las sube el PC al hacerlas; desde aquí se suben las que falten.")
-        // En segundo plano (con su aviso): no se corta aunque salgas de aquí o cierres la app
         MagLink(if (NubeSync.running) "Sincronizando…" else "Sincronizar ahora", accent = !NubeSync.running) {
             if (!NubeSync.running) { NubeSync.enqueue(ctx, verify = true); say("Sincronizando con tu nube en segundo plano") }
         }
-        MagLink("Desconectar", "Lo subido sigue en tu kDrive") { KDrive.forget(ctx); on = false; token = ""; say("kDrive desconectado en todas las apps (lo subido sigue en tu kDrive)") }
+        MagLink("Desconectar Google Drive", "Lo subido sigue en tu Google Drive") {
+            com.gonzalo.familia.NubeFamilia.forgetGDrive(ctx); gdOn = false; gdCsec = ""; gdRtok = ""
+            say("Google Drive desconectado en todas las apps")
+        }
+    }
+
+    Spacer(Modifier.height(14.dp))
+    MagLink(if (mostrarKDrive) "Ocultar kDrive (respaldo)" else "kDrive (respaldo de transición)", if (kdOn) "Conectado (${KDrive.drive(ctx)})" else "Sin configurar") {
+        mostrarKDrive = !mostrarKDrive
+    }
+    if (mostrarKDrive) {
+        if (!kdOn) {
+            Text("Solo necesario si aún te quedan archivos antiguos en kDrive pendientes de pasar a Google Drive.", color = UiSoft, fontSize = 13.sp)
+            CampoRevista("Token", token, "token de API de kDrive", secreto = true, ascii = true) { token = it }
+            CampoRevista("kDrive", drive, "número o dirección", ascii = true) { drive = it }
+            MagLink("Conectar kDrive", "Comprueba el token y busca tu carpeta", accent = !gdOn) {
+                if (token.isBlank() || drive.isBlank()) { say("Falta el token o el número de tu kDrive"); return@MagLink }
+                KDrive.save(ctx, token, drive)
+                scope.launch {
+                    try { say(KDrive.test(ctx)); KDrive.confirma(ctx); kdOn = true; NubeSync.enqueue(ctx) }
+                    catch (e: Exception) { KDrive.descarta(ctx); say(e.message ?: "No se pudo conectar") }
+                }
+            }
+        } else {
+            Text("kDrive de respaldo: ${KDrive.drive(ctx)}", fontWeight = FontWeight.SemiBold)
+            if (!gdOn) {
+                val st = NubeSync.status.ifBlank { KDrive.lastMsg }
+                if (st.isNotBlank()) Text(st, color = UiSoft, fontSize = 13.sp)
+                androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Subir las capturas", modifier = Modifier.weight(1f))
+                    Interruptor(shots) { shots = it; KDrive.setShots(ctx, it) }
+                }
+                MagLink(if (NubeSync.running) "Sincronizando…" else "Sincronizar ahora", accent = !NubeSync.running) {
+                    if (!NubeSync.running) { NubeSync.enqueue(ctx, verify = true); say("Sincronizando con tu nube en segundo plano") }
+                }
+            }
+            MagLink("Desconectar kDrive", "Lo subido sigue en tu kDrive") {
+                KDrive.forget(ctx); kdOn = false; token = ""
+                say("kDrive desconectado en todas las apps (lo subido sigue en tu kDrive)")
+            }
+        }
     }
 }

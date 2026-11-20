@@ -200,8 +200,8 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", if (BuildConfig.SESKOBO) "Mira la carpeta «versiones» de tu kDrive (solo las de SesKobo: SesKobo-<versión>.apk) y se instala sin preguntar cuando no la usas."
-        else "Mira la carpeta «versiones» de tu kDrive (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
+    Fila("Actualizar sola", if (BuildConfig.SESKOBO) "Mira la carpeta «versiones» de tu nube (solo las de SesKobo: SesKobo-<versión>.apk) y se instala sin preguntar cuando no la usas."
+        else "Mira la carpeta «versiones» de tu nube (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     // Android 13 o más: sin el permiso de avisos, «tienes una versión nueva» y «se ha actualizado, toca para abrirla» no se ven nunca
@@ -211,7 +211,7 @@ private fun SeccionActualizaciones() {
         if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir $NOMBRE_APP al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (!conectado) {
-        Text("El token de kDrive es de tu cuenta: se pone una vez en Jonsu (Ajustes → Avanzado → Tu nube) y lo tienen todas las apps. Si no lo has puesto aún, puedes pegarlo aquí: en cuanto funcione, pasa a tu cuenta.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Tu nube (Google Drive o kDrive) es de tu cuenta: se configura una vez en Jonsu (Ajustes → Avanzado → Tu nube) y la tienen todas las apps. Si aún usas kDrive, puedes pegar el token aquí.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Token", token, "token de kDrive", secreto = true) { token = it }
         CampoRevista("kDrive", unidad, "número o dirección") { unidad = it }
         MagLink(if (ocupado) "Comprobando…" else "Conectar", "Comprueba el token y busca tu «Mi carpeta»") {
@@ -226,9 +226,9 @@ private fun SeccionActualizaciones() {
         }
     } else {
         val vers = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
-        Text("Versión instalada: $vers" + if (estado.isNotBlank()) " · última comprobación: $estado" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+        Text("Versión instalada: $vers · nube: ${KDrive.nombreNube(ctx)}" + if (estado.isNotBlank()) " · última comprobación: $estado" else "", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
         // Actualizar ya: mira, baja y instala sin esperar a que cierres la app (para cuando lo automático falla)
-        MagLink(if (ocupado) "Actualizando…" else "Actualizar ahora", "Busca la última versión en tu kDrive y la instala ahora", accent = true) {
+        MagLink(if (ocupado) "Actualizando…" else "Actualizar ahora", "Busca la última versión en ${KDrive.nombreNube(ctx)} y la instala ahora", accent = true) {
             if (!ocupado) { ocupado = true; aviso = null; ambito.launch { aviso = withContext(Dispatchers.IO) { Actualizador.actualizarAhora(ctx) }; ocupado = false } }
         }
         Filete(1.dp, Line)
@@ -240,7 +240,7 @@ private fun SeccionActualizaciones() {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
-        Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Para cambiar o quitar la nube: Jonsu → Ajustes → Avanzado → Tu nube (vale para todas las apps de la familia).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
@@ -279,12 +279,12 @@ fun SeccionLibros() {
     val enNube = NubeLibros.indice(ctx).size
     val sinArchivo = Biblioteca.libros.count { it.enOtroDispositivo }
     Text(
-        if (!KDrive.on(ctx)) "kDrive sin conectar (Ajustes → Avanzado): los libros no se suben ni se bajan."
-        else "$enNube libros en tu kDrive" + if (sinArchivo > 0) " · $sinArchivo sin archivo en este dispositivo (se bajan al abrirlos)" else "",
+        if (!KDrive.on(ctx)) "Nube sin conectar (Jonsu → Ajustes → Avanzado → Tu nube): los libros no se suben ni se bajan."
+        else "$enNube libros en tu nube (${KDrive.nombreNube(ctx)})" + if (sinArchivo > 0) " · $sinArchivo sin archivo en este dispositivo (se bajan al abrirlos)" else "",
         color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(bottom = 4.dp)
     )
     var auto by remember { mutableStateOf(NubeLibros.autoBajar(ctx)) }
-    Fila("Tener todos mis libros aquí", "Con Wi-Fi, Seshat baja en segundo plano los libros de tu kDrive que falten en este dispositivo. Si prefieres bajarlos uno a uno al abrirlos, apágalo.", final = { Interruptor(auto) { auto = it; NubeLibros.ponAutoBajar(ctx, it) } })
+    Fila("Tener todos mis libros aquí", "Con Wi-Fi, Seshat baja en segundo plano los libros de tu nube que falten en este dispositivo. Si prefieres bajarlos uno a uno al abrirlos, apágalo.", final = { Interruptor(auto) { auto = it; NubeLibros.ponAutoBajar(ctx, it) } })
     Filete(1.dp, Line)
     MagLink(if (ocupado) "Un momento…" else "Traer mis libros de Atrio", "Solo lee tu cuenta: no cambia nada en Atrio. Trae fichas, lo leído, subrayados y dónde están los archivos") {
         if (ocupado) return@MagLink
@@ -298,14 +298,14 @@ fun SeccionLibros() {
         }
     }
     Filete(1.dp, Line)
-    MagLink(if (ocupado) "Un momento…" else "Subir mis libros a kDrive ahora", "Normalmente se suben solos en cuanto los añades") {
+    MagLink(if (ocupado) "Un momento…" else "Subir mis libros a tu nube ahora", "Normalmente se suben solos en cuanto los añades") {
         if (ocupado) return@MagLink
-        if (!KDrive.on(ctx)) { estado = "Conecta antes tu kDrive (Ajustes → Avanzado)."; return@MagLink }
+        if (!KDrive.on(ctx)) { estado = "Conecta antes tu nube en Jonsu (Ajustes → Avanzado → Tu nube)."; return@MagLink }
         ocupado = true; estado = "Subiendo…"
         ambito.launch {
             val n = withContext(Dispatchers.IO) { runCatching { NubeLibros.subirPendientes(ctx, aMano = true) { m -> estado = m } } }
             ocupado = false
-            estado = n.fold({ if (it == 0) "Todos tus libros ya están en tu kDrive." else "Subidos $it libros." }, { it.message ?: "No he podido subirlos." })
+            estado = n.fold({ if (it == 0) "Todos tus libros ya están en tu nube." else "Subidos $it libros." }, { it.message ?: "No he podido subirlos." })
         }
     }
     if (estado.isNotBlank()) Text(estado, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp))
