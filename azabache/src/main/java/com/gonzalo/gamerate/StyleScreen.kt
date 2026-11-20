@@ -42,7 +42,7 @@ import androidx.core.graphics.drawable.toBitmap
 /** Iconos de la app: alias de la actividad principal (Manifest), uno activo a la vez. */
 object AppIcon {
     val ALL = listOf(
-        "atrio" to "Jonsu", "clasico" to "Clásico", "noche" to "Noche", "neon" to "Neón", "papel" to "Papel", "arcade" to "Arcade",
+        "atrio" to "Polaris", "clasico" to "Clásico", "noche" to "Noche", "neon" to "Neón", "papel" to "Papel", "arcade" to "Arcade",
         "oro" to "Oro", "oceano" to "Océano", "sakura" to "Sakura", "fuego" to "Fuego", "bosque" to "Bosque", "oled" to "OLED"
     )
 
@@ -92,14 +92,14 @@ fun StyleScreen(themeMode: Int, onTheme: (Int) -> Unit, @Suppress("UNUSED_PARAME
         Column(Modifier.fillMaxWidth().wrapContentWidth().widthIn(max = 760.dp).padding(horizontal = 20.dp)) {
 
         // Los colores de Jonsu, de un toque: los últimos diseñados («Ciruela»), sin nada elegido a mano
-        SeccionAjustes("Colores de Jonsu", primera = true)
-        Text("Pone los colores de la familia con el acento de Jonsu (papel y negro, de día y de noche, y el ciruela) y quita lo que hayas elegido a mano aquí abajo (fondo de color, acento y «A tu manera»). El tema y el tamaño del texto se quedan.",
+        SeccionAjustes("Colores de Polaris", primera = true)
+        Text("Pone los colores de la familia con el acento de Polaris (papel y negro, de día y de noche, y el ciruela) y quita lo que hayas elegido a mano aquí abajo (fondo de color, acento y «A tu manera»). El tema y el tamaño del texto se quedan.",
             color = Muted, fontSize = 13.sp)
         var puestos by remember { mutableStateOf(false) }
         Box(Modifier.padding(top = 10.dp, bottom = 18.dp).fillMaxWidth().heightIn(min = 52.dp).background(ColGeneral).clickable {
             withReveal { Skin.fondoId = ""; Skin.accentId = "edicion"; Skin.fondoPropio = 0L; Skin.tintaPropia = 0L; Skin.acentoPropio = 0L; Skin.save(ctx) }; puestos = true
         }.padding(horizontal = 16.dp, vertical = 14.dp), contentAlignment = Alignment.CenterStart) {
-            Text(if (puestos) "PUESTOS" else "PONER LOS COLORES DE JONSU  →", color = if (ColGeneral.luminance() > 0.5f) Color(0xFF14151A) else Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 15.sp, letterSpacing = 1.sp)
+            Text(if (puestos) "PUESTOS" else "PONER LOS COLORES DE POLARIS  →", color = if (ColGeneral.luminance() > 0.5f) Color(0xFF14151A) else Color.White, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 15.sp, letterSpacing = 1.sp)
         }
 
         // Tema

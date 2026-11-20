@@ -1,6 +1,6 @@
 # Las versiones de escritorio (Linux y Mac)
 
-**Jonsu, Thot, Bastet, Seshat, Hathor y Nut para Linux y Mac**, en `escritorio/`. Son ventanas a la misma cuenta que las del móvil: todo lo
+**Polaris, Nova, Orion, Lyra, Sirius y Pulsar para Linux y Mac**, en `escritorio/`. Son ventanas a la misma cuenta que las del móvil: todo lo
 tuyo está en la cuenta (Firebase, el proyecto de siempre) y en el ordenador solo hay una caché para funcionar sin conexión y lo que es
 de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo ves al momento en las demás, en el ordenador y en el móvil.
 
@@ -13,11 +13,11 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
 - **Linux** (ordenadores x86-64, los de siempre; no ARM):
   - **CachyOS, Arch y cualquier otro**: `Azabache-1.0.1-linux.tar.gz`. Se descomprime y se ejecuta su `instalar.sh` (sin sudo):
     `tar xzf Azabache-1.0.1-linux.tar.gz && ./instalar.sh`. Queda en `~/.local/share/familia-apps/Azabache`, con su icono en el menú
-    de aplicaciones. Con `./instalar.sh --al-iniciar` se abre sola al entrar en tu sesión (Bastet, ya en la sala: el launcher del PC);
+    de aplicaciones. Con `./instalar.sh --al-iniciar` se abre sola al entrar en tu sesión (Orion, ya en la sala: el launcher del PC);
     `./instalar.sh --quitar` la desinstala (lo tuyo está en la cuenta: no se toca).
   - **Ubuntu, Debian, Mint…**: también vale el `Azabache-1.0.1-linux.deb` (`sudo apt install ./Azabache-1.0.1-linux.deb`), pero así no
     se actualiza sola (la del .deb es del sistema): mejor el .tar.gz.
-- **Hathor** y **Nut** ven las películas, las series y los canales con **mpv**, que se instala aparte: en CachyOS y Arch `sudo pacman -S mpv` (en Ubuntu o
+- **Sirius** y **Pulsar** ven las películas, las series y los canales con **mpv**, que se instala aparte: en CachyOS y Arch `sudo pacman -S mpv` (en Ubuntu o
   Debian `sudo apt install mpv`); en el Mac `brew install mpv` (con [Homebrew](https://brew.sh)). Si no está, lo dicen.
 - **Entrar una vez**: entras en cualquiera de las seis y las demás de ese ordenador entran solas. La contraseña no se guarda: queda
   la sesión, en el llavero del sistema (el Llavero del Mac; en Linux, el Secret Service —GNOME Keyring, KWallet— si hay `secret-tool`, y si
@@ -26,7 +26,7 @@ de ese ordenador (dónde está un archivo, la ventana). Lo que haces en una lo v
   `-linux.tar.gz`); si hay una versión nueva, la baja sin molestar, comprueba su SHA-256 si existe `<archivo>.sha256`, avisa con una banda abajo («lista: se pone sola al cerrar ·
   Reiniciar ahora») y se pone sola al cerrar la app. En el Mac el .dmg se monta sin enseñarlo y la app nueva se copia encima, sin la marca de
   cuarentena (es la misma app que ya abriste: no vuelve a pedir «Abrir igualmente»); en Linux la pone su `instalar.sh`.
-  Hace falta tu nube puesta en Jonsu (Ajustes → Servicios). Los actualizadores de Android solo cogen `<App>-<versión>.apk`: no se
+  Hace falta tu nube puesta en Polaris (Ajustes → Servicios). Los actualizadores de Android solo cogen `<App>-<versión>.apk`: no se
   confunden.
 
 Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas en Linux contra el emulador de Firebase, los `.deb` y
@@ -35,7 +35,7 @@ Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas e
 
 ## Qué hace cada una
 
-- **Jonsu**: tus fichas de la cuenta (los juegos y los libros son los nodos de Bastet y Seshat, sin copia; tus categorías —películas,
+- **Polaris**: tus fichas de la cuenta (los juegos y los libros son los nodos de Orion y Lyra, sin copia; tus categorías —películas,
   series…—, el diario y las sagas en `azabache/<lista>~<id>`), con la misma lógica que `Cosas.kt` y `Propias.kt` del móvil. Portada,
   colección, ficha (estado, nota y criterios, reseña, fechas, tiempo jugado o leído), añadir (SteamGridDB, Open Library, TMDB, TVmaze),
   portadas (de un archivo, una dirección o internet), diario, sagas, cifras del año y ajustes (las claves de servicios de la cuenta y tus
@@ -46,24 +46,24 @@ Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas e
   «Usar en todos los…» y «Restablecer»; se guarda sola, en las mismas maquetas de la cuenta que el móvil), las **recomendaciones** a tu
   pareja y las suyas («Lucía te recomienda», con «A mi lista»), «En portada» que va pasando como el carrusel del móvil, **«Buscar en
   todo»** y **«Tal día como hoy»**.
-  Desde la 1.2.1, **las películas y las series son las de Hathor**, como en Jonsu 1.6.3 del móvil: en cuanto Hathor ha traído lo de
-  Jonsu (la marca `azabache/a_mostaza`), «Películas» y «Series» leen sus títulos (`titulos/<ref>`, con el número de ficha de siempre,
+  Desde la 1.2.1, **las películas y las series son las de Sirius**, como en Polaris 1.6.3 del móvil: en cuanto Sirius ha traído lo de
+  Polaris (la marca `azabache/a_mostaza`), «Películas» y «Series» leen sus títulos (`titulos/<ref>`, con el número de ficha de siempre,
   `azid`: tus sagas, tu diario y tus maquetas las siguen encontrando), los minutos de `tiempo/<ref>~*` y los episodios vistos de
-  `progreso` (y, si no, los que marcaste en Jonsu); lo que valoras o cambias va a ese mismo nodo (`nota`, `crit`, `resena`, `fin`,
+  `progreso` (y, si no, los que marcaste en Polaris); lo que valoras o cambias va a ese mismo nodo (`nota`, `crit`, `resena`, `fin`,
   `estado`, `az`…, solo lo que cambias), lo que añades es un título nuevo (`tmdb:<id>`, `tvmaze:<id>` o `azabache:<id>`) y quitar una la
-  deja borrada en Hathor. Lo de antes (`azabache/items_<categoría>~<id>`) no se toca. La casilla «Progreso» se pinta también aquí (los
+  deja borrada en Sirius. Lo de antes (`azabache/items_<categoría>~<id>`) no se toca. La casilla «Progreso» se pinta también aquí (los
   episodios, o por dónde vas en una película). Las mismas reglas que el móvil, letra a letra (`MostazaTest`, con el código del móvil y el
-  contrato que deja Hathor).
-  Desde la 1.4.0, **la cara de Seshat y Nut**: la cabecera de tinta con «JONSU.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  contrato que deja Sirius).
+  Desde la 1.4.0, **la cara de Lyra y Pulsar**: la cabecera de tinta con «JONSU.» en grande, la fecha y la rueda de Ajustes, y debajo las
   secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
   nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
   sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera.
-- **Thot**: el núcleo de los escritos (formato, sincronización, mezcla a tres bandas), la estructura, el texto (Markdown ligero,
-  tipografía automática, deshacer), exportar e importar son **los mismos archivos** que compila Thot de Android (se copian de
+- **Nova**: el núcleo de los escritos (formato, sincronización, mezcla a tres bandas), la estructura, el texto (Markdown ligero,
+  tipografía automática, deshacer), exportar e importar son **los mismos archivos** que compila Nova de Android (se copian de
   `cobalto/src` al compilar; las pruebas de la mezcla y de la estructura, también). Portada (palabras de hoy, racha, últimos días, seguir
   escribiendo), la obra con su índice (partes, capítulos, escenas) y el editor, fichas, notas, papelera, exportar (Word como libro o como
   manuscrito, EPUB, Markdown, texto), copias de seguridad completas en el ordenador (cada 15 min y al cerrar; las últimas 40) y lo que se
-  publica para Jonsu y Seshat (`obras/`, `capitulos/`, `palabras/`).
+  publica para Polaris y Lyra (`obras/`, `capitulos/`, `palabras/`).
   Desde la 1.1.0, **el estudio de escritura**: las fichas y las notas se abren como una página para leer (datos, uniones, en qué escenas
   salen) y con un clic se editan (se guarda sola; «Listo» o Esc vuelve a leer). El editor tiene barra de herramientas, **modo
   concentración** (solo la página; Esc sale; con pantalla completa), modo máquina de escribir, buscar y cambiar (en la escena o en toda la
@@ -76,44 +76,44 @@ Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas e
   Desde la 1.1.1, **los sprints van en la cuenta** (también el que está en marcha: lo empiezas en el móvil y aquí se ve y se para), y
   Ajustes → Copias **saca una obra de cualquier copia como obra nueva** («… (copia)», sin tocar nada de lo que hay). Las copias de cada
   15 minutos se hacen solo si algo ha cambiado (las de al cerrar y las de a mano, siempre).
-  Desde la 1.3.0, **la cara de Seshat y Nut**: la cabecera de tinta con «THOT.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  Desde la 1.3.0, **la cara de Lyra y Pulsar**: la cabecera de tinta con «THOT.» en grande, la fecha y la rueda de Ajustes, y debajo las
   secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
   nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
   sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. El texto del manuscrito y del lector no cambia de
   letra.
-- **Seshat**: tus libros de la cuenta y leerlos por donde ibas en el móvil. EPUB (leído como XML, sin reordenar: la posición que guarda es
+- **Lyra**: tus libros de la cuenta y leerlos por donde ibas en el móvil. EPUB (leído como XML, sin reordenar: la posición que guarda es
   el mismo EPUB CFI que guarda foliate en el móvil, y la del móvil se abre aquí en el mismo párrafo), PDF (Apache PDFBox) y cómics (CBZ).
   Lo leído (`lectura/<kid>`), «Leyendo» y «Leído» con su fecha (las reglas del móvil), el tiempo de este ordenador, el reto del año, los
-  archivos por tu kDrive (`Marfil/Libros/…`: se suben al añadirlos y se bajan al abrirlos) y los capítulos terminados de Thot.
+  archivos por tu kDrive (`Marfil/Libros/…`: se suben al añadirlos y se bajan al abrirlos) y los capítulos terminados de Nova.
   Desde la 1.1.0, **el lector como el del móvil**: tus subrayados y notas de la cuenta se pintan (y se crean aquí: arrastrar o doble clic,
   y Subrayar · Nota · Copiar · Buscar · Definir, con el Wikcionario como el móvil), los marcadores, páginas de verdad (a dos páginas si
   la ventana es ancha, o seguido), el índice con el % de cada capítulo, notas, buscar (sin mirar acentos), las notas al pie como tarjeta
   y «Volver a donde estabas». Los ajustes de lectura viajan con las mismas claves que el móvil (los de cada libro y los de siempre; el
   brillo y lo del PDF, no). Las posiciones se escriben como las escribe foliate en el móvil, letra por letra (probado contra el lector
   del móvil de verdad): antes, desde el capítulo 2, el ordenador abría un párrafo antes de donde ibas en el móvil, y al revés.
-  Desde la 1.3.0, **la cara del móvil** (la de Seshat 0.22 de Android), pensada para el Mac: la cabecera de tinta con «SESHAT.» en
+  Desde la 1.3.0, **la cara del móvil** (la de Lyra 0.22 de Android), pensada para el Mac: la cabecera de tinta con «SESHAT.» en
   grotesca (en el Mac, la barra de la ventana es de su mismo color, con los tres botones encima), las pestañas Portada · Leyendo ·
   Pendientes · Leídos · Abandonados · Escritos con el bloque del acento que se desliza, y las páginas, que se pasan pulsando la pestaña,
   con ⌘1…⌘6 o con dos dedos en el trackpad; al bajar, el nombre grande se recoge. La portada va a dos lados (lo que lees ahora y lo
   demás que lees; el reto, esta semana con los minutos de cada día y lo último que subrayaste) y las listas, a dos columnas con sus
   cifras y su orden. La ficha de un libro nace de la fila que pulsas, a doble página (la portada sobre la tinta; cómo va, tu lectura,
-  tus subrayados y lo que dice Jonsu), y vuelve a ella al cerrarla con «← Volver», Esc o ⌘[. **Buscar** (⌘F) crece desde su palabra y
+  tus subrayados y lo que dice Polaris), y vuelve a ella al cerrarla con «← Volver», Esc o ⌘[. **Buscar** (⌘F) crece desde su palabra y
   busca según escribes en tus libros y en tus subrayados. Al pasar el ratón, lo que se pulsa se levanta un poco; al pulsarlo, se hunde
   con un muelle. Las piezas son las de `familia/` del móvil, copiadas en `escritorio/familia/…/pc/mov` (lo de Android —vibrar, el gesto
   de atrás— cambia por lo del ordenador) y la cara común en `…/pc/revista/CaraC.kt`, para las seis.
-- **Hathor** (desde la 1.0.0): tus películas y series de la cuenta, y verlas, como Hathor del móvil (0.2.0) y con su misma lógica, letra
+- **Sirius** (desde la 1.0.0): tus películas y series de la cuenta, y verlas, como Sirius del móvil (0.2.0) y con su misma lógica, letra
   a letra (el protocolo de los addons de Stremio, el elector de fuentes, las pistas de verdad, TMDB y las tres reglas son el mismo código,
   con las mismas pruebas): la portada (con tu clave de TMDB, la de una plataforma: destacado, «Seguir viendo», «Pendientes», tendencias,
   «Porque viste…», estrenos, lo que hay en cada plataforma…; sin ella, los catálogos de tus addons), Viendo · Pendiente · Visto ·
   Abandonado (con su orden y su filtro, que viajan), Explorar, Buscar, la ficha (a dos columnas: «Reproducir» con la mejor fuente para ti,
-  tu biblioteca, lo que dice Jonsu, el reparto, dónde verla, los episodios con lo visto, «Más como esta») y todas sus fuentes, tus
+  tu biblioteca, lo que dice Polaris, el reparto, dónde verla, los episodios con lo visto, «Más como esta») y todas sus fuentes, tus
   addons (instalar por la dirección, ordenar, configurar en el navegador, quitar) y Ajustes (Catálogo, Fuentes, Reproductor, Cuenta,
   Apariencia, Versión). Todo es de la cuenta: `titulos/<ref>`, `progreso/<vídeo>`, `tiempo/<ref>~<dispositivo>` (en el ordenador,
   `mostaza-linux-…` o `mostaza-mac-…`), `ajustes/mostaza_*`; tus addons y tu clave de TMDB, solo en `/claves` (ni tu pareja los lee).
   Lo que ves aquí lo sigues en el móvil y al revés. Con el teclado (las flechas mueven el foco, Intro pulsa, Esc vuelve, Ctrl/⌘+F busca,
-  Ctrl/⌘+1…8 las secciones) y con el mando (como en Bastet: A pulsa, B vuelve, Y busca, los gatillos de arriba cambian de sección).
-  **Se ve con mpv** (en CachyOS y Arch, `sudo pacman -S mpv`; en el Mac, `brew install mpv`; si no está, Hathor dice cómo ponerlo y
-  ofrece el reproductor del sistema, que no cuenta nada): Hathor lo abre en su ventana y habla con él por su socket (su IPC de JSON),
+  Ctrl/⌘+1…8 las secciones) y con el mando (como en Orion: A pulsa, B vuelve, Y busca, los gatillos de arriba cambian de sección).
+  **Se ve con mpv** (en CachyOS y Arch, `sudo pacman -S mpv`; en el Mac, `brew install mpv`; si no está, Sirius dice cómo ponerlo y
+  ofrece el reproductor del sistema, que no cuenta nada): Sirius lo abre en su ventana y habla con él por su socket (su IPC de JSON),
   así que cuenta lo visto de verdad (nada entra en tu biblioteca hasta 10 minutos en una sesión; visto al 90 %; el tiempo por día),
   sigue donde lo dejaste (aquí o en el móvil), mira las pistas de verdad del archivo (pone el audio en tu idioma y, si hace falta,
   subtítulos en español; si la que eligió sola no trae tu primer idioma, prueba otra), reconoce el vídeo de aviso del debrid y pasa sola a
@@ -122,14 +122,14 @@ Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas e
   cabeceras van a mpv por su socket, nunca por su línea de órdenes, y mpv no guarda nada (sin su «seguir donde lo dejé» y sin yt-dlp).
   **Torrents**, con el motor de la familia (`escritorio/torrent`: los mismos archivos que el del móvil, con libtorrent4j y su biblioteca
   de Linux x86-64 o del Mac con Apple Silicon): se ven mientras se bajan; si no se puede cargar, solo las fuentes directas o de tu debrid.
-  Desde la 1.2.0, **la cara de Seshat y Nut**: la cabecera de tinta con «HATHOR.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  Desde la 1.2.0, **la cara de Lyra y Pulsar**: la cabecera de tinta con «HATHOR.» en grande, la fecha y la rueda de Ajustes, y debajo las
   secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
   nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
   sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. Las secciones de tu biblioteca (Viendo, Pendiente,
   Visto, Abandonado) son pestañas de arriba y ya no se repiten dentro de la página.
-- **Nut** (desde la 1.0.0): la tele de la familia (IPTV) en el ordenador, como Nut del móvil (0.1.0) y con su mismo código para todo lo
+- **Pulsar** (desde la 1.0.0): la tele de la familia (IPTV) en el ordenador, como Pulsar del móvil (0.1.0) y con su mismo código para todo lo
   que no es pantalla: **el módulo `iptv/` tal cual** (las listas M3U, el cliente de Xtream Codes, la guía XMLTV a trozos, emparejar canales y
-  guía, el almacén de cada lista y lo que va a la cuenta). Nut no trae ningún canal ni ninguna lista: pones tú la tuya (Ajustes → Listas:
+  guía, el almacén de cada lista y lo que va a la cuenta). Pulsar no trae ningún canal ni ninguna lista: pones tú la tuya (Ajustes → Listas:
   un login de Xtream Codes —se comprueba antes de guardarlo, y «Comprobar» dice si la cuenta está activa y cuándo caduca—, una dirección
   M3U —si es la de un servidor de Xtream, ofrece ponerla como login— o un archivo M3U de este ordenador; a cada una, su guía XMLTV y el
   user-agent que pida tu proveedor; las contraseñas y las direcciones, tapadas, con «Ver»). **Directo** (los grupos, con tus favoritos
@@ -141,15 +141,15 @@ Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas e
   la apariencia en `ajustes/cobre`); tus listas, **solo en `/claves/<uid>/cobre_listas`** (ni tu pareja las lee). En el ordenador, los
   canales, el videoclub y la guía son caché, y lo que lleva direcciones va **cifrado** (AES, con una clave de este ordenador guardada con
   la del llavero del sistema). Las listas de archivo son del ordenador donde está el archivo (`cobre-linux-…` / `cobre-mac-…`).
-  **Se ve con mpv**, como en Hathor (la dirección —que lleva tu usuario y tu contraseña— y las cabeceras del canal van por su socket, nunca
-  por su línea de órdenes; sin yt-dlp, y mpv no guarda nada). En la ventana de mpv, Nut pone sus teclas: ↑ ↓ (y Re Pág / Av Pág, y la
+  **Se ve con mpv**, como en Sirius (la dirección —que lleva tu usuario y tu contraseña— y las cabeceras del canal van por su socket, nunca
+  por su línea de órdenes; sin yt-dlp, y mpv no guarda nada). En la ventana de mpv, Pulsar pone sus teclas: ↑ ↓ (y Re Pág / Av Pág, y la
   cruceta del mando) cambian de canal, los números van a un canal, Intro (o A) abre la lista de canales con lo que echan en cada uno, «i»
   dice qué se emite y qué viene después (sale solo al cambiar de canal). Si un canal se corta, vuelve a conectar solo (hasta seis veces,
   esperando cada vez un poco más). En las películas y los episodios, sigue donde lo dejaste (aquí o en otro dispositivo), apunta por dónde
   vas en la cuenta, visto al 90 % y el episodio siguiente en 8 segundos. Abajo, la banda del reproductor (el canal, cambiar, la lista de
-  canales, volver a conectar, audio, subtítulos, cerrar). Con el teclado y el mando como Hathor (Ctrl/⌘+1…6 las secciones; con un canal
-  puesto, Re Pág / Av Pág cambian de canal también desde la ventana de Nut).
-  Desde la 1.2.0, **el fútbol y la cara del móvil** (la de Nut 0.9 de Android): la cabecera de tinta con «NUT.», las pestañas Portada ·
+  canales, volver a conectar, audio, subtítulos, cerrar). Con el teclado y el mando como Sirius (Ctrl/⌘+1…6 las secciones; con un canal
+  puesto, Re Pág / Av Pág cambian de canal también desde la ventana de Pulsar).
+  Desde la 1.2.0, **el fútbol y la cara del móvil** (la de Pulsar 0.9 de Android): la cabecera de tinta con «NUT.», las pestañas Portada ·
   Hoy · Competiciones · Tus equipos · Directo · Guía · Películas · Series (⌘1…⌘8, o dos dedos en el trackpad) y, en el fútbol, lo mismo
   que el móvil con los mismos datos (ESPN, con su caché en `cobre_futbol/` de este ordenador) y lo que eliges en el móvil, de la cuenta
   (`ajustes/cobre_futbol`: tus equipos, tus rivales, tus grupos de canales, tus competiciones). La portada a dos lados (tu partido con
@@ -159,61 +159,61 @@ Los paquetes los hace GitHub (`.github/workflows/escritorio.yml`): las pruebas e
   cierran con Esc. Las horas, en las de este ordenador (en Irlanda, una menos que en España). Los equipos y los canales se eligen en el
   móvil (Ajustes → Fútbol) y llegan solos; aquí, «+ Seguir» y «Rival» en la página de un equipo. La tele, igual que antes, con la
   letra de las hermanas y sin el título repetido bajo cada pestaña; Buscar, Ajustes y las fichas de películas y series van encima.
-- **Bastet**: tus juegos de la cuenta (los mismos de Bastet del móvil), los de Steam instalados en el ordenador (se abren con Steam: sus
-  horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Bastet cuenta el tiempo hasta que los cierras, en
-  `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Bastet del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil
-  (el protocolo `suite/` de Atrio del PC). Su presencia dice `tiempo: true`, y Bastet del móvil (0.5.3) no vuelve a contar ese tiempo.
+- **Orion**: tus juegos de la cuenta (los mismos de Orion del móvil), los de Steam instalados en el ordenador (se abren con Steam: sus
+  horas las cuenta Steam y llegan por su API) y tus programas (los añades a mano; Orion cuenta el tiempo hasta que los cierras, en
+  `tiempo/<juego>~<dispositivo>`). Y hace de **«Tu PC»** para Orion del móvil: su biblioteca, a qué juegas y abrir un juego desde el móvil
+  (el protocolo `suite/` de Atrio del PC). Su presencia dice `tiempo: true`, y Orion del móvil (0.5.3) no vuelve a contar ese tiempo.
   Desde la 1.1.0, **el launcher del PC de jugar**: además de Steam (también el de Flatpak y sus otras bibliotecas), **Heroic** (Epic, GOG,
   Amazon y los que añades a mano, con sus portadas), **Lutris**, tus **carpetas de ROMs** (25 sistemas, con las mismas claves que en el
   móvil: una ROM es el mismo juego aquí y allí) y los **emuladores** (RetroArch con sus núcleos, Dolphin, PCSX2, DuckStation, PPSSPP,
   RPCS3, Ryujinx, Cemu, melonDS, mGBA y Flycast, normales o de Flatpak; cuál para cada sistema, en Ajustes → Emulación). Y el **modo
   sala**: a pantalla completa, para la tele y **el mando** (Xbox, PlayStation o Nintendo, con sus botones dibujados; también con teclado):
   Inicio con el juego grande arriba y filas (Seguir jugando, Favoritos, por tienda y por consola…), Biblioteca, En este PC, la página de
-  cada juego con JUGAR, buscar con teclado en pantalla, y un menú para suspender o apagar. Al abrir un juego, Bastet se aparta y vuelve
+  cada juego con JUGAR, buscar con teclado en pantalla, y un menú para suspender o apagar. Al abrir un juego, Orion se aparta y vuelve
   sola al cerrarlo. Nada entra en tu cuenta solo por estar instalado: entra al jugarlo o al añadirlo (y si lo habías quitado, vuelve el
   mismo, con lo suyo). El tiempo de Heroic, Lutris, emuladores y programas se cuenta mientras el juego está abierto; el de Steam, Steam.
   Desde la 1.1.1, como «Tu PC», **hace capturas para el móvil** (de la pantalla entera, a su tamaño: con Spectacle en KDE, grim, GNOME o
   `import` en X11; en el Mac, `screencapture`), guarda una copia en Imágenes/Hiedra/<juego> y el móvil la recibe tal cual; y **prepara
   el streaming con Steam Link** (abre Steam si no lo está y el juego que pidas). Ajustes → Este PC dice si se permite cada cosa.
-  Desde la 1.3.0, **la cara de Seshat y Nut**: la cabecera de tinta con «BASTET.» en grande, la fecha y la rueda de Ajustes, y debajo las
+  Desde la 1.3.0, **la cara de Lyra y Pulsar**: la cabecera de tinta con «BASTET.» en grande, la fecha y la rueda de Ajustes, y debajo las
   secciones en pestañas (⌘1…⌘9 en el Mac, Ctrl en Linux; la pestaña elegida es un bloque del acento que se desliza); cada página lleva su
   nombre pequeño en el acento, no repetido en grande; la letra de titulares y cifras es la grotesca de las hermanas; De noche la cabecera
   sigue siendo de tinta. En el Mac, la barra de la ventana toma el color de la cabecera. La Sala (para la tele) sigue con su cara propia.
 
 
 
-**Atrás con Esc (o ⌘[), en las seis.** Seshat y Nut cierran lo que está encima; Hathor vuelve a la pantalla anterior. Desde Thot 1.3.1,
-Bastet 1.3.1 y Jonsu 1.4.1 también: en Jonsu, de una ficha a donde estabas, de una saga a Sagas y de lo de tu pareja a Pareja; en
-Bastet, de la ficha a su lista (como B en el mando); en las tres, de Ajustes (la rueda) a donde estabas, y en Thot también de la
+**Atrás con Esc (o ⌘[), en las seis.** Lyra y Pulsar cierran lo que está encima; Sirius vuelve a la pantalla anterior. Desde Nova 1.3.1,
+Orion 1.3.1 y Polaris 1.4.1 también: en Polaris, de una ficha a donde estabas, de una saga a Sagas y de lo de tu pareja a Pareja; en
+Orion, de la ficha a su lista (como B en el mando); en las tres, de Ajustes (la rueda) a donde estabas, y en Nova también de la
 Papelera. Solo cuando nada de dentro usa el Esc: el editor, las fichas, el árbol, la concentración o el diseñador siguen con el suyo.
 
 **Los colores, como en el móvil (noviembre de 2026).** De serie, las seis usan los colores de la familia: papel #F8F0D4 y texto negro (de
-noche, al revés), y el acento de cada una: Seshat ocre #B0791E, Bastet oliva #7A8A3A, Thot azul pizarra #5A7896, Hathor rosa viejo
-#B56576, Nut vino #5D1414 y Jonsu ciruela #8E5A78. Es la paleta «familia» que el móvil guarda en la cuenta (`ajustes/<app>` → `skin`),
+noche, al revés), y el acento de cada una: Lyra ocre #B0791E, Orion oliva #7A8A3A, Nova azul pizarra #5A7896, Sirius rosa viejo
+#B56576, Pulsar vino #5D1414 y Polaris ciruela #8E5A78. Es la paleta «familia» que el móvil guarda en la cuenta (`ajustes/<app>` → `skin`),
 así que lo que elijas en Apariencia del móvil se ve igual aquí. Antes el ordenador no conocía esa paleta y se quedaba con el rojo de imprenta.
 
 ## Lo que todavía no hacen (para no engañar)
 
-- **Jonsu**: «Ver en Hathor» (ya hay Hathor para el ordenador, pero la ficha de Jonsu aún dice que no y no la abre) y, en la vista de tu pareja, sus películas y series
+- **Polaris**: «Ver en Sirius» (ya hay Sirius para el ordenador, pero la ficha de Polaris aún dice que no y no la abre) y, en la vista de tu pareja, sus películas y series
   son aún las de antes (como en el móvil). Las casillas de películas y series «Crítica» y «Dónde verla» (se colocan, pero se dibujan solo en el móvil), las
   imágenes de tus archivos en una maqueta, las reacciones de tu pareja y «Lo último de tu pareja», y los próximos episodios. («Descubrir»
-  no está a propósito: se quitó de Jonsu.)
-- **Thot**: compartir con tu pareja (la pareja ya está en la cuenta, pero en el ordenador aún no hay pantallas para ello).
-- **Seshat**: los subrayados de los PDF (el móvil los guarda sobre la capa de texto de pdf.js), leer en voz alta y traducir. Los ajustes
+  no está a propósito: se quitó de Polaris.)
+- **Nova**: compartir con tu pareja (la pareja ya está en la cuenta, pero en el ordenador aún no hay pantallas para ello).
+- **Lyra**: los subrayados de los PDF (el móvil los guarda sobre la capa de texto de pdf.js), leer en voz alta y traducir. Los ajustes
   que cambies en otro dispositivo se aplican aquí la próxima vez que abras el libro, no al momento. Otros formatos (MOBI, FB2, TXT): en
   el móvil.
-- **Bastet**: las órdenes de equipo del móvil (traer Bastet delante, volver a buscar, un aviso en pantalla, apagar) responden que todavía
+- **Orion**: las órdenes de equipo del móvil (traer Orion delante, volver a buscar, un aviso en pantalla, apagar) responden que todavía
   no. En el Mac, sin el permiso de «Grabación de pantalla», la captura sale solo con el fondo (y no hay forma de notarlo). En el Mac no se sabe con seguridad cuándo
-  se cierra un juego de Steam (Bastet no vuelve sola). Sin carpeta de instalación de Heroic o Lutris, ese juego no cuenta tiempo. Los
+  se cierra un juego de Steam (Orion no vuelve sola). Sin carpeta de instalación de Heroic o Lutris, ese juego no cuenta tiempo. Los
   emuladores de Flatpak necesitan permiso para leer tus carpetas de ROMs (Flatseal). El mando se ha probado sin un mando de verdad.
-- **Hathor**: ver los archivos de tu kDrive («Tu kDrive», que está llegando al móvil; en `Addons.fuentesExtra` está el sitio donde
+- **Sirius**: ver los archivos de tu kDrive («Tu kDrive», que está llegando al móvil; en `Addons.fuentesExtra` está el sitio donde
   entrará como una fuente más), «Abrir con otro reproductor» con lo visto (solo mpv cuenta; con IINA en el Mac no se puede saber por dónde
-  vas), los widgets, «Valorar en Jonsu» que abra su ficha (abre Jonsu), traer lo de Jonsu a Hathor (lo hace Hathor del móvil, una
+  vas), los widgets, «Valorar en Polaris» que abra su ficha (abre Polaris), traer lo de Polaris a Sirius (lo hace Sirius del móvil, una
   vez: aquí se lee lo que ya está), la conexión medida a la vez que en el móvil (aquí se mide con lo que baja mpv) y los subtítulos de un
   tamaño o color que se cambian con algo puesto (valen para lo siguiente). Los torrents en el Mac con procesador Intel y en Linux ARM.
   mpv y el mando se han probado sin pantalla ni mando de verdad (mpv sí, de verdad, con `--vo=null`), y el Mac solo lo compila GitHub.
-- **Nut**: lo ya emitido (catchup) y grabar, como en el móvil; «Abrir con otro reproductor» (aquí todo va con mpv); la sala a pantalla
-  completa para la tele (Nut es una ventana con la columna, como Hathor). Las cabeceras de un canal van a todo lo que pide mpv para ese
+- **Pulsar**: lo ya emitido (catchup) y grabar, como en el móvil; «Abrir con otro reproductor» (aquí todo va con mpv); la sala a pantalla
+  completa para la tele (Pulsar es una ventana con la columna, como Sirius). Las cabeceras de un canal van a todo lo que pide mpv para ese
   canal (en el móvil, solo a su servidor). Con un canal que no se ve, mpv no dice el código del error (401, 404…): el aviso es uno para
   todo. Probado con mpv de verdad (sin pantalla, con canales y vídeos hechos aquí) y contra la cuenta de verdad, no con un proveedor de
   IPTV de verdad ni con un mando de verdad; el Mac solo lo compila GitHub.
@@ -226,11 +226,11 @@ así que lo que elijas en Apariencia del móvil se ve igual aquí. Antes el orde
   (`Sesion.comparte()` / `adopta()` del núcleo: se comparte la sesión, nunca la contraseña), portadas con el mismo hash que en Android
   (Skia: 600×900, JPEG 85), kDrive, el actualizador, la ventana (tamaño y sitio recordados) y el aspecto de revista (las paletas, las
   formas y los componentes de Android; la apariencia de `ajustes/<app>`, la misma que la de la app en el móvil).
-- `escritorio/torrent`: el motor de torrents de Hathor (los mismos archivos que `torrent/src/main`, copiados al compilar; lo de Android
-  —la red, el disco y su constructor con un Context— aquí es del ordenador). La biblioteca nativa sale de su .jar a la carpeta de Hathor.
-- `iptv/` (fuera de `escritorio/`: es el mismo módulo del móvil): lo de Nut que no es pantalla, en Kotlin puro. Va también con
+- `escritorio/torrent`: el motor de torrents de Sirius (los mismos archivos que `torrent/src/main`, copiados al compilar; lo de Android
+  —la red, el disco y su constructor con un Context— aquí es del ordenador). La biblioteca nativa sale de su .jar a la carpeta de Sirius.
+- `iptv/` (fuera de `escritorio/`: es el mismo módulo del móvil): lo de Pulsar que no es pantalla, en Kotlin puro. Va también con
   `-PsoloEscritorio`.
-- `escritorio/json`: el `org.json` de Android (AOSP, Apache 2.0), para que el núcleo de Thot se comporte igual en los dos.
+- `escritorio/json`: el `org.json` de Android (AOSP, Apache 2.0), para que el núcleo de Nova se comporte igual en los dos.
 - Carpetas: en el Mac `~/Library/Application Support/Familia/<App>`; en Linux `~/.local/share/familia/<app>`.
 - Compilar sin el SDK de Android: `./gradlew -PsoloEscritorio test`, `… :escritorio:<app>:run`, `… packageDeb` (Linux, necesita `fakeroot`)
   o `… packageDmg` (solo en un Mac).
@@ -243,4 +243,4 @@ así que lo que elijas en Apariencia del móvil se ve igual aquí. Antes el orde
 - **Sin copias entre apps**: un juego es uno, un libro es uno. Lo compartido se cambia **añadiendo** (nunca cambiando lo que significa un
   campo), se apunta en `ESQUEMA.md` y se prueba contra el emulador. Nunca `null`.
 
-Versiones de Android a día de hoy: Bastet 0.6.2, Seshat 0.14.2, Thot 0.4.2, Jonsu 1.6.3, Hathor 0.2.0, Nut 0.1.0. De escritorio: Jonsu 1.2.1; Thot y Bastet 1.1.1; Seshat 1.1.0; Hathor 1.0.0; Nut 1.0.0 (las de escritorio empiezan en la 1.0.0 y llevan su propio número).
+Versiones de Android a día de hoy: Orion 0.6.2, Lyra 0.14.2, Nova 0.4.2, Polaris 1.6.3, Sirius 0.2.0, Pulsar 0.1.0. De escritorio: Polaris 1.2.1; Nova y Orion 1.1.1; Lyra 1.1.0; Sirius 1.0.0; Pulsar 1.0.0 (las de escritorio empiezan en la 1.0.0 y llevan su propio número).

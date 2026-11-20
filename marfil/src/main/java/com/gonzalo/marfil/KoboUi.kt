@@ -76,8 +76,8 @@ fun SeccionKobo() {
                         listOfNotNull(
                             "Kobo preparado.",
                             if (p.plugins) "Desconéctalo: se reiniciará para instalar NickelMenu y NickelInkSync." else null,
-                            "Luego, en el Kobo, abre el botón NickelMenu de la barra de abajo y pulsa «Enviar a Seshat» una vez.",
-                            if (KoSync.activo(ctx)) "Posición de ${p.conPosicion} ${if (p.conPosicion == 1) "libro" else "libros"} entre el Kobo y SesKobo." else "Sin usuario de posiciones: solo libros, porcentaje y tiempo.",
+                            "Luego, en el Kobo, abre el botón NickelMenu de la barra de abajo y pulsa «Enviar a Lyra» una vez.",
+                            if (KoSync.activo(ctx)) "Posición de ${p.conPosicion} ${if (p.conPosicion == 1) "libro" else "libros"} entre el Kobo y LyraKobo." else "Sin usuario de posiciones: solo libros, porcentaje y tiempo.",
                         ).joinToString(" ")
                     }
                     "quitar" -> {
@@ -103,7 +103,7 @@ fun SeccionKobo() {
         }
     }
 
-    Text("Lo que lees en el Kobo (libros, por dónde vas, terminados y tiempo leído) pasa a Seshat y a Jonsu. Si después lees ese libro aquí, gana lo más reciente.",
+    Text("Lo que lees en el Kobo (libros, por dónde vas, terminados y tiempo leído) pasa a Lyra y a Polaris. Si después lees ese libro aquí, gana lo más reciente.",
         color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 4.dp))
     MagLink(if (ocupado && accion == "leer") "Leyendo el Kobo…" else "Leer el Kobo por cable", "Enchufa el Kobo al móvil, pulsa «Conectar» en el Kobo y elige su memoria (KOBOeReader)") {
         if (!ocupado) { accion = "leer"; elegir.launch(null) }
@@ -157,16 +157,16 @@ fun SeccionKobo() {
             text = {
                 Column {
                     if (p == "preparar") {
-                        Text("SesKobo copiará al Kobo:", fontFamily = Body, fontSize = 14.sp)
+                        Text("LyraKobo copiará al Kobo:", fontFamily = Body, fontSize = 14.sp)
                         for (l in listOf(
                             "NickelMenu y NickelInkSync (para el firmware 6; no oficiales). El Kobo se reinicia al desconectarlo para instalarlos.",
-                            "«Enviar a Seshat» y «Seshat · último envío» en el botón NickelMenu (abajo, en la pantalla de inicio). Y el envío automático arranca solo al encender el Kobo.",
+                            "«Enviar a Lyra» y «Lyra · último envío» en el botón NickelMenu (abajo, en la pantalla de inicio). Y el envío automático arranca solo al encender el Kobo.",
                             "Tu acceso a la cuenta, para que el Kobo pueda mandar. Queda guardado sin cifrar en el Kobo.",
                             "Si tienes usuario de posiciones: el usuario y su clave (el MD5 de la contraseña) para NickelInkSync.",
                         )) Text("• $l", fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
-                        Text("Después, pulsa «Enviar a Seshat» una vez. Desde ahí manda solo cada vez que tiene Wi-Fi, hasta que se apague del todo. Es experimental: no está probado en un Kobo de verdad.",
+                        Text("Después, pulsa «Enviar a Lyra» una vez. Desde ahí manda solo cada vez que tiene Wi-Fi, hasta que se apague del todo. Es experimental: no está probado en un Kobo de verdad.",
                             fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 8.dp))
-                    } else Text("Se borra del Kobo el programa de Seshat, tu acceso a la cuenta y NickelInkSync (se desinstala al reiniciar el Kobo). NickelMenu se queda.", fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp)
+                    } else Text("Se borra del Kobo el programa de Lyra, tu acceso a la cuenta y NickelInkSync (se desinstala al reiniciar el Kobo). NickelMenu se queda.", fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp)
                 }
             },
             confirmButton = { TextButton({ accion = p; pregunta = null; elegir.launch(null) }) { Text("ELEGIR EL KOBO", color = Acento, fontWeight = FontWeight.Bold) } },
@@ -209,7 +209,7 @@ private fun SeccionKoSync() {
         Text(KoSync.usuario(ctx), color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
         Text(KoSync.servidor(ctx).removePrefix("https://"), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
         Spacer(Modifier.height(6.dp))
-        MagLink("Salir", "Deja de llevar la posición entre el Kobo y SesKobo") { KoSync.sal(ctx); dentro = false; aviso = null }
+        MagLink("Salir", "Deja de llevar la posición entre el Kobo y LyraKobo") { KoSync.sal(ctx); dentro = false; aviso = null }
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
@@ -236,16 +236,16 @@ fun PantVincular(parejas: List<KoboCable.Pareja>, alCerrar: () -> Unit, vincular
                 val fin = hecho
                 if (fin != null) {
                     Text(fin, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, lineHeight = 23.sp)
-                    Text("Desconecta el Kobo y pulsa «Enviar a Seshat» con Wi-Fi: el Kobo termina de prepararlos él solo.", color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 10.dp))
-                    Text("A partir de ahí: lee el EPUB en SesKobo y el kepub en el Kobo. Al abrir uno, sigue donde dejaste el otro (al principio del párrafo).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
-                    Text("SesKobo ha copiado el EPUB de cada uno a una carpeta oculta del Kobo, con un nombre que el Kobo no toma por libro: no te saldrá repetido.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
+                    Text("Desconecta el Kobo y pulsa «Enviar a Lyra» con Wi-Fi: el Kobo termina de prepararlos él solo.", color = Charcoal, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 10.dp))
+                    Text("A partir de ahí: lee el EPUB en LyraKobo y el kepub en el Kobo. Al abrir uno, sigue donde dejaste el otro (al principio del párrafo).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
+                    Text("LyraKobo ha copiado el EPUB de cada uno a una carpeta oculta del Kobo, con un nombre que el Kobo no toma por libro: no te saldrá repetido.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
                     MagLink("Volver a Ajustes") { alCerrar() }
                     return@Column
                 }
                 if (conLibro.isEmpty()) {
-                    Text(if (parejas.isEmpty()) "No hay kepub sin vincular en el Kobo." else "Ningún kepub del Kobo tiene su EPUB en SesKobo.", color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp)
+                    Text(if (parejas.isEmpty()) "No hay kepub sin vincular en el Kobo." else "Ningún kepub del Kobo tiene su EPUB en LyraKobo.", color = Charcoal, fontFamily = Body, fontSize = 14.sp, lineHeight = 19.sp)
                 } else {
-                    Text("Estos kepub del Kobo tienen su EPUB en SesKobo. Marca los que quieras vincular. Los que ya lo están no salen.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 4.dp))
+                    Text("Estos kepub del Kobo tienen su EPUB en LyraKobo. Marca los que quieras vincular. Los que ya lo están no salen.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 4.dp))
                     for (p in conLibro) {
                         val on = p.kepub in marcadas
                         Row(Modifier.fillMaxWidth().clickable { marcadas = if (on) marcadas - p.kepub else marcadas + p.kepub }.padding(vertical = 11.dp)) {
@@ -255,7 +255,7 @@ fun PantVincular(parejas: List<KoboCable.Pareja>, alCerrar: () -> Unit, vincular
                             Column(Modifier.weight(1f).padding(start = 10.dp)) {
                                 Text(p.tituloKobo.ifBlank { p.archivoKobo }, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 18.sp)
                                 Text("Kobo: ${p.archivoKobo}", color = Muted, fontFamily = Body, fontSize = 11.5.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 3.dp))
-                                Text("SesKobo: ${p.libro!!.titulo}" + p.libro.autor.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(), color = Muted, fontFamily = Body, fontSize = 11.5.sp, lineHeight = 16.sp)
+                                Text("LyraKobo: ${p.libro!!.titulo}" + p.libro.autor.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(), color = Muted, fontFamily = Body, fontSize = 11.5.sp, lineHeight = 16.sp)
                                 if (!p.seguro) Text("PUEDE NO SER EL MISMO: COMPRUÉBALO", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 10.5.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 3.dp))
                             }
                         }
@@ -269,7 +269,7 @@ fun PantVincular(parejas: List<KoboCable.Pareja>, alCerrar: () -> Unit, vincular
                         Text(if (ocupado) "VINCULANDO…" else "VINCULAR $n ${if (n == 1) "LIBRO" else "LIBROS"}  →", color = Paper, fontFamily = Body, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.sp)
                     }
                 }
-                if (sinLibro.isNotEmpty()) Text("Sin EPUB en SesKobo: " + sinLibro.joinToString(", ") { "«${it.tituloKobo.ifBlank { it.archivoKobo }}»" } + ". Añádelos a SesKobo y vuelve aquí.",
+                if (sinLibro.isNotEmpty()) Text("Sin EPUB en LyraKobo: " + sinLibro.joinToString(", ") { "«${it.tituloKobo.ifBlank { it.archivoKobo }}»" } + ". Añádelos a LyraKobo y vuelve aquí.",
                     color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 12.dp))
             }
         }

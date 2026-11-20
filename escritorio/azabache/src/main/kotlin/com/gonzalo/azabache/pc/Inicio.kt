@@ -170,7 +170,7 @@ fun PantInicio(nav: Nav) {
             val (objetivo, deAno) = Cuenta.objetivoLibros()
             if (objetivo > 0 && (deAno == 0 || deAno == ano)) Cifra("${delAno.count { it.first.id == BOOKS.id }} / $objetivo", "reto de lectura")
         }
-        if (ahora.isEmpty()) { Seccion("Ahora"); Vacio("Nada entre manos", "Lo que empieces en Bastet, Seshat o aquí sale en esta portada.") }
+        if (ahora.isEmpty()) { Seccion("Ahora"); Vacio("Nada entre manos", "Lo que empieces en Orion, Lyra o aquí sale en esta portada.") }
         Seccion("Lo último que has terminado")
         if (recientes.isEmpty()) Vacio("Aún nada terminado") else FilaDeTarjetas(recientes, nav, Pantalla.Inicio)
     }

@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
  * otro) o uno fijo que eliges aquí.
  */
 class ConfigWidgetActivity : EstiloWidgetActivity() {
-    override val nombreApp = "Seshat"
+    override val nombreApp = "Lyra"
     override val papelApp = 0xFFF8F0D4.toInt()
     override val tintaApp = 0xFF000000.toInt()
     override val acentoApp = 0xFFB0791E.toInt()
@@ -59,7 +59,7 @@ fun ElegirLibroWidget(alElegir: (String?) -> Unit) {
         Filete(2.dp)
         CampoRevista("Buscar", busca, "un libro fijo") { busca = it }
         LazyColumn(Modifier.fillMaxSize()) {
-            if (lista.isEmpty()) item { Text("Todavía no hay libros en Seshat.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
+            if (lista.isEmpty()) item { Text("Todavía no hay libros en Lyra.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
             items(lista, key = { it.id }) { l ->
                 Row(Modifier.fillMaxWidth().clickable { alElegir(l.id) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     PortadaLibro(l, Modifier.width(40.dp).aspectRatio(0.68f), radio = 3, conTitulo = false)

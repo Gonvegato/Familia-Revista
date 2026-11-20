@@ -199,7 +199,7 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, enPagina: Boolean
                 when (val x = filas[k]) {
                     FilaPortada.Cabeza -> Column {
                         if (!enPagina) Mancheta(Destino.Portada, alIr)
-                        if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Nut entra sola). Tus equipos, tus canales y lo que ves van con tu cuenta.", Modifier.padding(top = 14.dp))
+                        if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Polaris, y Pulsar entra sola). Tus equipos, tus canales y lo que ves van con tu cuenta.", Modifier.padding(top = 14.dp))
                         if (mios.isEmpty()) {
                             Nota("Elige tus equipos y sus partidos saldrán los primeros, con sus canales.", Modifier.padding(top = 14.dp))
                             MagLink("Seguir al FC Barcelona", "O elige otros en Ajustes → Fútbol", accent = true) { AjustesFutbol.alterna(ctx, com.gonzalo.iptv.futbol.CanalesFutbol.SUGERIDO, Competiciones.LALIGA.slug) }
@@ -228,13 +228,13 @@ fun PantDia(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit, enPagina: Boolean
             item {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     PieFuente()
-                    Text("Nut · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.padding(top = 16.dp))
+                    Text("Pulsar · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.padding(top = 16.dp))
                     Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 2.dp))
                     Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
                 }
             }
         }
-        if (!enPagina) BarraPlegada("Nut", plegada) { EnlaceRevista("Tele") { alIr(Destino.Tele) }; EnlaceRevista("Hoy", Modifier.padding(start = 14.dp), acento = true) { diaN = Hora.diaDe(System.currentTimeMillis()).toEpochDay() } }
+        if (!enPagina) BarraPlegada("Pulsar", plegada) { EnlaceRevista("Tele") { alIr(Destino.Tele) }; EnlaceRevista("Hoy", Modifier.padding(start = 14.dp), acento = true) { diaN = Hora.diaDe(System.currentTimeMillis()).toEpochDay() } }
     }
 }
 

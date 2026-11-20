@@ -134,7 +134,7 @@ fun PaginaPortada(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: 
     Column(Modifier.widthIn(max = 960.dp).fillMaxSize().verticalScroll(rememberScrollState())) {
         if (editando) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp)) { EditorInicio(juegos) { editando = false } }
         else if (juegos.isEmpty()) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 20.dp)) {
-            Text("Bastet es la puerta a todos tus juegos: los de consola (muchos los juega ella misma, y los demás con los emuladores que ya tienes), los de Android, los de navegador y los de tu PC.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp)
+            Text("Orion es la puerta a todos tus juegos: los de consola (muchos los juega ella misma, y los demás con los emuladores que ya tienes), los de Android, los de navegador y los de tu PC.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp)
             Spacer(Modifier.height(12.dp))
             BotonC("ROMs y emuladores", fondo = Acento, letra = SobreAcento) { alAnadir(TipoLanzador.ROM) }
             Spacer(Modifier.height(8.dp))
@@ -142,7 +142,7 @@ fun PaginaPortada(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: 
             Filete(1.dp, Line)
             MagLink("Juegos de navegador", "PokéRogue y otros, a pantalla completa") { alAnadir(TipoLanzador.WEB) }
             Filete(1.dp, Line)
-            MagLink("Tu PC", "Abre Atrio en el PC con tu cuenta y sus juegos aparecen aquí") { alIr(Destino.PC) }
+            MagLink("Tu PC", "Abre Polaris en el PC con tu cuenta y sus juegos aparecen aquí") { alIr(Destino.PC) }
         } else {
             // ---- El cartel: lo que juegas ahora, de protagonista; debajo, el botón a todo el ancho
             if (ahora != null) {
@@ -264,9 +264,9 @@ fun PaginaPortada(alAbrir: (Juego) -> Unit, alJugar: (Juego) -> Unit, alAnadir: 
             if (atrio != null) {
                 Spacer(Modifier.height(10.dp))
                 Filete(1.dp, Line)
-                MagLink("Abrir Jonsu", "Valora lo que acabas de jugar") { ctx.startActivity(atrio.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                MagLink("Abrir Polaris", "Valora lo que acabas de jugar") { ctx.startActivity(atrio.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
-            Text("Bastet · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
+            Text("Orion · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
             // La versión instalada, debajo (para no tener que entrar en Ajustes a mirarla)
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))

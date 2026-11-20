@@ -165,7 +165,7 @@ fun RevistaHeadline(title: String, overline: String?) {
 
 /** La cabecera de la revista (el nombre, enorme) en una sola línea. */
 @Composable
-fun Cabecera(tam: TextUnit, modifier: Modifier = Modifier, color: Color = Charcoal, texto: String = "BASTET") {
+fun Cabecera(tam: TextUnit, modifier: Modifier = Modifier, color: Color = Charcoal, texto: String = "ORION") {
     Box(modifier.fillMaxWidth()) {
         FitTitle(texto.uppercase(), tam, tam * 1.0f, color = color, letterSpacing = (-0.015).em, maxLines = 1, modifier = Modifier.fillMaxWidth(), minSize = 12f, unaLinea = true, family = Grotesca, fontWeight = FontWeight.ExtraBold)
     }

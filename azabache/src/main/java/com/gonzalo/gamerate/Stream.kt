@@ -84,7 +84,7 @@ object Stream {
      */
     suspend fun play(ctx: Context, key: String?): String? {
         if (!installed(ctx)) return FALTA
-        val pc = Suite.target() ?: return "El PC no está conectado. Enciéndelo (o abre Atrio en él) y vuelve a probar."
+        val pc = Suite.target() ?: return "El PC no está conectado. Enciéndelo (o abre Polaris en él) y vuelve a probar."
         val st = pc.st
         if (st != null && !st.on) return "${pc.name} no tiene Steam: Steam Link necesita Steam abierto en el PC."
         val r = Suite.sendRaw("stream", JSONObject().apply { if (key != null) put("key", key) }, pc.dev, 75_000)
@@ -142,7 +142,7 @@ fun PlayButtons(key: String, name: String, modifier: Modifier = Modifier, onLaun
         if (!Stream.installed(ctx)) { falta = true; return@stream }
         if (pc == null) {
             if (wol != null) waking = true
-            else toast(ctx, "El PC no está conectado: enciéndelo o abre Atrio en él.")
+            else toast(ctx, "El PC no está conectado: enciéndelo o abre Polaris en él.")
             return@stream
         }
         busySt = true
@@ -202,7 +202,7 @@ fun WakeDialog(pcName: String, h: StreamHost, onDismiss: () -> Unit) {
         confirmButton = {
             TextButton({
                 scope.launch {
-                    msg = if (Stream.wake(h)) "Señal enviada. Cuando arranque y se abra Atrio, vuelve a tocar «Streaming»." else "No se ha podido mandar la señal."
+                    msg = if (Stream.wake(h)) "Señal enviada. Cuando arranque y se abra Polaris, vuelve a tocar «Streaming»." else "No se ha podido mandar la señal."
                 }
             }) { Text("Encender") }
         },
@@ -254,10 +254,10 @@ fun StreamPanel(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(10.dp))
         StatusLine(link, if (link) "Steam Link instalado" else "Steam Link no está instalado", Icons.Rounded.Cast)
         StatusLine(h?.on == true, when {
-            h == null -> "Atrio del PC aún no ha dicho nada de Steam"
+            h == null -> "Polaris del PC aún no ha dicho nada de Steam"
             !h.on -> "El PC no tiene Steam instalado"
             h.running -> "Steam abierto en ${h.name}"
-            else -> "Steam cerrado en ${h.name} (Atrio lo abre al jugar)"
+            else -> "Steam cerrado en ${h.name} (Polaris lo abre al jugar)"
         }, Icons.Rounded.Wifi)
         Spacer(Modifier.height(4.dp))
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(18.dp)) {

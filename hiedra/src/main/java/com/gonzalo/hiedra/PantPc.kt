@@ -112,7 +112,7 @@ fun TarjetaPc(alIr: () -> Unit, alAbrir: (Juego) -> Unit, enPortada: Boolean = t
         Column(Modifier.fillMaxWidth().tocable(onClick = alIr).padding(bottom = if (enPortada) 18.dp else 0.dp)) {
             Antetitulo("Tu PC · ${conocido.name}", color = Muted, conCuadro = false)
             Text("Desconectado" + if (conocido.at > 0) " · visto ${hace(conocido.at)}" else "", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 2.dp))
-            if (!enPortada) Cuerpo("Enciende el PC y abre Atrio con tu cuenta: aparecerá aquí en directo.", tam = 12, modifier = Modifier.padding(top = 4.dp))
+            if (!enPortada) Cuerpo("Enciende el PC y abre Polaris con tu cuenta: aparecerá aquí en directo.", tam = 12, modifier = Modifier.padding(top = 4.dp))
             if (enPortada) Filete(1.dp, Line, Modifier.padding(top = 10.dp))
         }
         return
@@ -231,7 +231,7 @@ fun VisorCaptura(shot: Shot, alCerrar: () -> Unit, alBorrar: () -> Unit) {
     if (ask) AlertDialog(
         onDismissRequest = { ask = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Borrar la captura?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text("Se borra de Bastet. Si se guardó en la galería, allí se queda; y en el PC sigue en Imágenes/Atrio.", color = Muted, fontFamily = Body) },
+        text = { Text("Se borra de Orion. Si se guardó en la galería, allí se queda; y en el PC sigue en Imágenes/Polaris.", color = Muted, fontFamily = Body) },
         confirmButton = { BotonDialogo("Borrar", true) { ask = false; alBorrar() } },
         dismissButton = { BotonDialogo("Cancelar") { ask = false } }
     )
@@ -252,8 +252,8 @@ fun HojaJuegoPc(dev: String, g: PcGame, alCerrar: () -> Unit, alAbrir: (Juego) -
                 BotonesJugarPc(g.key) { alCerrar() }
                 Spacer(Modifier.height(14.dp))
                 Filete(1.dp, Line)
-                if (enHiedra != null) MagLink("Ver su ficha en Bastet", "Está en ${enHiedra.estado.nombre}") { alCerrar(); alAbrir(enHiedra) }
-                else MagLink("Añadir a Bastet", "Para llevar su estado y verlo en tus secciones") { alCerrar(); alAbrir(JuegosPc.meter(g, dev, aMano = true)) }
+                if (enHiedra != null) MagLink("Ver su ficha en Orion", "Está en ${enHiedra.estado.nombre}") { alCerrar(); alAbrir(enHiedra) }
+                else MagLink("Añadir a Orion", "Para llevar su estado y verlo en tus secciones") { alCerrar(); alAbrir(JuegosPc.meter(g, dev, aMano = true)) }
             }
         },
         confirmButton = {}, dismissButton = { BotonDialogo("Cerrar") { alCerrar() } }
@@ -281,7 +281,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
         scope.launch { val (id, m) = Suite.shoot(pc?.dev); if (id == null) Lanzar.aviso(ctx, m) else Suite.awaitLocal(id)?.let { alCaptura(it) }; capturando = false }
     }
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp)) {
-        RevistaTopBar(alVolver, "Bastet") {
+        RevistaTopBar(alVolver, "Orion") {
             if (pc != null) Row(verticalAlignment = Alignment.CenterVertically) { PuntoDirecto(); Spacer(Modifier.width(6.dp)); Text("CONECTADO", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) }
             else Text(Suite.state.uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
@@ -297,7 +297,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                 0 -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 14.dp)) {
                     if (Suite.pcs().isEmpty()) {
                         Text("Ningún PC conectado", color = Charcoal, fontFamily = Display, fontSize = 22.sp)
-                        Cuerpo("Instala Atrio en el PC y entra con esta misma cuenta (en el PC: Ajustes → Cuenta). Al abrirlo aparecerá aquí en directo: lo que juegas, su biblioteca, las capturas y el mando.", modifier = Modifier.padding(top = 6.dp))
+                        Cuerpo("Instala Polaris en el PC y entra con esta misma cuenta (en el PC: Ajustes → Cuenta). Al abrirlo aparecerá aquí en directo: lo que juegas, su biblioteca, las capturas y el mando.", modifier = Modifier.padding(top = 6.dp))
                     } else {
                         TarjetaPc(alIr = {}, alAbrir = alAbrir, enPortada = false)
                         Spacer(Modifier.height(18.dp))
@@ -331,7 +331,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                             Text("${solos.size} en Pendiente entraron solos y no los has tocado".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f))
                             EnlaceRevista("Quitarlos →", acento = true) { limpiar = true }
                         }
-                        if (lib.isEmpty()) Text(if (Suite.libs.isEmpty()) "Abre Atrio en el PC con tu cuenta para ver aquí su biblioteca." else "Nada con ese nombre.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp))
+                        if (lib.isEmpty()) Text(if (Suite.libs.isEmpty()) "Abre Polaris en el PC con tu cuenta para ver aquí su biblioteca." else "Nada con ese nombre.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp))
                         LazyVerticalGrid(GridCells.Adaptive(96.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                             items(lib, key = { it.key }) { g ->
                                 val en = Biblioteca.porClave("pc:" + g.key) != null
@@ -339,7 +339,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                                     PortadaPc(g, Modifier.fillMaxWidth().aspectRatio(PROPORCION_PORTADA))
                                     // (todas las casillas miden lo mismo: dos líneas de nombre y dos de horas, quepan o no en una)
                                     Text(g.name, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 15.sp, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                                    Text(listOfNotNull(if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (en) "en Bastet" else null).joinToString(" · ").uppercase(), color = if (en) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, minLines = 2, maxLines = 2)
+                                    Text(listOfNotNull(if (g.minutes > 0) tiempoDe(g.minutes * 60_000L) else null, if (en) "en Orion" else null).joinToString(" · ").uppercase(), color = if (en) Acento else Muted, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, minLines = 2, maxLines = 2)
                                 }
                             }
                         }
@@ -350,7 +350,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                         Text("${Suite.localShots.size} capturas en este móvil".uppercase(), color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.weight(1f))
                         if (pc != null) EnlaceRevista(if (capturando) "Capturando…" else "Capturar →", acento = true) { captura() }
                     }
-                    Cuerpo("Llegan a su resolución original (PNG, sin pérdida) y, si lo tienes activado en Ajustes, se guardan en Imágenes/Bastet.", tam = 12)
+                    Cuerpo("Llegan a su resolución original (PNG, sin pérdida) y, si lo tienes activado en Ajustes, se guardan en Imágenes/Orion.", tam = 12)
                     if (Suite.downloading.isNotEmpty()) { Spacer(Modifier.height(8.dp)); TiraCapturas(emptyList(), "Llegando") { } }
                     LazyVerticalGrid(GridCells.Adaptive(150.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)) {
                         items(Suite.localShots, key = { it.id }) { s ->
@@ -365,12 +365,12 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                 else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 14.dp)) {
                     if (pc == null) {
                         Text("Ningún PC conectado", color = Charcoal, fontFamily = Display, fontSize = 22.sp)
-                        Cuerpo("Abre Atrio en el PC y entra con tu cuenta. En cuanto esté abierto aparecerá aquí el mando.", modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
+                        Cuerpo("Abre Polaris en el PC y entra con tu cuenta. En cuanto esté abierto aparecerá aquí el mando.", modifier = Modifier.padding(top = 6.dp, bottom = 16.dp))
                         if (Stream.host() != null) { Filete(2.dp); Spacer(Modifier.height(12.dp)); PanelStreaming() }
                     } else {
-                        Antetitulo("Atrio", Modifier.padding(bottom = 4.dp))
+                        Antetitulo("Polaris", Modifier.padding(bottom = 4.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                            EnlaceRevista("Traer Atrio →") { act("focus") }
+                            EnlaceRevista("Traer Polaris →") { act("focus") }
                             EnlaceRevista(if (capturando) "Capturando…" else "Captura →") { captura() }
                             EnlaceRevista("Rebuscar la biblioteca →") { act("rescan") }
                         }
@@ -386,7 +386,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
                         Spacer(Modifier.height(16.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
                         Antetitulo("Mensaje en la pantalla", Modifier.padding(bottom = 4.dp))
                         var msg by remember { mutableStateOf("") }
-                        CampoRevista("Mensaje", msg, "sale como aviso en Atrio") { msg = it }
+                        CampoRevista("Mensaje", msg, "sale como aviso en Polaris") { msg = it }
                         EnlaceRevista("Enviar →", acento = true) { if (msg.isNotBlank()) { act("toast", JSONObject().put("text", msg)); msg = "" } }
                         Spacer(Modifier.height(16.dp)); Filete(2.dp); Spacer(Modifier.height(12.dp))
                         Antetitulo("Dispositivos de tu cuenta", Modifier.padding(bottom = 4.dp))
@@ -408,17 +408,17 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
         val solos = JuegosPc.entraronSolos()
         AlertDialog(
             onDismissRequest = { limpiar = false }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("¿Quitar ${solos.size} de Bastet?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            title = { Text("¿Quitar ${solos.size} de Orion?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
             text = {
                 Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
                     Cuerpo("Son juegos del PC que están en Pendiente tal como entraron: nadie les ha cambiado el estado, el nombre, la portada ni la nota. " +
-                        "Se quitan de Bastet y de Jonsu, en todos tus dispositivos. Siguen aquí, en la biblioteca del PC, y puedes volver a añadirlos cuando quieras. " +
+                        "Se quitan de Orion y de Polaris, en todos tus dispositivos. Siguen aquí, en la biblioteca del PC, y puedes volver a añadirlos cuando quieras. " +
                         "Lo que quites ya no vuelve solo.")
                     Spacer(Modifier.height(10.dp))
                     solos.sortedBy { Catalogo.norm(it.titulo) }.forEach { Text("· " + it.titulo, color = Charcoal, fontFamily = Body, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 }
             },
-            confirmButton = { BotonDialogo("Quitar", true) { limpiar = false; solos.forEach { Biblioteca.quitar(it.id) }; Lanzar.aviso(ctx, "Quitados de Bastet: ${solos.size}") } },
+            confirmButton = { BotonDialogo("Quitar", true) { limpiar = false; solos.forEach { Biblioteca.quitar(it.id) }; Lanzar.aviso(ctx, "Quitados de Orion: ${solos.size}") } },
             dismissButton = { BotonDialogo("Cancelar") { limpiar = false } }
         )
     }
@@ -426,7 +426,7 @@ fun PantPc(alVolver: () -> Unit, alAbrir: (Juego) -> Unit, alCaptura: (Shot) -> 
         AlertDialog(
             onDismissRequest = { confirmar = null }, containerColor = Paper, shape = esquina(4.dp),
             title = { Text(c.second, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-            text = { Text(if (pc?.game != null) "Ahora mismo se está jugando a ${pc.game.name}: guarda la partida antes." else "Atrio guarda tus horas antes de hacerlo.", color = Muted, fontFamily = Body) },
+            text = { Text(if (pc?.game != null) "Ahora mismo se está jugando a ${pc.game.name}: guarda la partida antes." else "Polaris guarda tus horas antes de hacerlo.", color = Muted, fontFamily = Body) },
             confirmButton = { BotonDialogo(c.first, true) { confirmar = null; act("power", JSONObject().put("action", c.first)) } },
             dismissButton = { BotonDialogo("Cancelar") { confirmar = null } }
         )

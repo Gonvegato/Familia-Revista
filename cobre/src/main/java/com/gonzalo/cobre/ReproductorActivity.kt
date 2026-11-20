@@ -231,7 +231,7 @@ class ReproductorActivity : ComponentActivity() {
                 estado.directo = true; estado.titulo = c.nombre; estado.numero = if (c.numero > 0) c.numero else e.indice + 1; estado.logo = c.logo; estado.subtitulo = e.plan?.grupo ?: c.grupo
                 estado.calidad = e.plan?.calidadDe(e.indice, c)?.texto
                 estado.dur = 0L; estado.ahora = null; estado.despues = null
-                if (c.conDrm) { estado.cargando = false; estado.aviso = "Este canal va cifrado con DRM (Widevine o parecido): Nut no lo puede abrir. Prueba con otro reproductor."; return }
+                if (c.conDrm) { estado.cargando = false; estado.aviso = "Este canal va cifrado con DRM (Widevine o parecido): Pulsar no lo puede abrir. Prueba con otro reproductor."; return }
                 url = Tele.url(l, c); cabeceras = Tele.cabeceras(l, c)
                 MiCuenta.ponUltimo(l.id, c)
                 refrescaGuia()
@@ -267,7 +267,7 @@ class ReproductorActivity : ComponentActivity() {
     }
 
     private fun empieza(desde: Long) {
-        val agente = cabeceras.entries.firstOrNull { it.key.equals("User-Agent", true) }?.value ?: "Cobre/$VERSION"
+        val agente = cabeceras.entries.firstOrNull { it.key.equals("User-Agent", true) }?.value ?: "Pulsar/$VERSION"
         val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent(agente).setConnectTimeoutMs(15_000).setReadTimeoutMs(20_000)
         // Las cabeceras del canal (referer, origin…) van solo a su servidor
         val host = Uri.parse(url).host.orEmpty()
@@ -294,7 +294,7 @@ class ReproductorActivity : ComponentActivity() {
         // Con datos del móvil, la calidad más baja que dé el canal (en los que dan varias: HLS y DASH)
         if (AjustesReproductor.ahorro(this) && Tele.datosMoviles(this)) tsp = tsp.setForceLowestBitrate(true)
         p.trackSelectionParameters = tsp.build()
-        val item = MediaItem.Builder().setUri(url).setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setTitle(estado.titulo).setArtist(estado.subtitulo.ifBlank { "Nut" }).build())
+        val item = MediaItem.Builder().setUri(url).setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setTitle(estado.titulo).setArtist(estado.subtitulo.ifBlank { "Pulsar" }).build())
         val ruta = Uri.parse(url).path.orEmpty().lowercase()
         when {
             comoHls || ruta.endsWith(".m3u8") || ruta.endsWith(".m3u") -> item.setMimeType(MimeTypes.APPLICATION_M3U8)
@@ -734,7 +734,7 @@ fun ControlesReproductor(
         }
         if (e.confirmaOtro) Column(Modifier.align(Alignment.Center).widthIn(max = 560.dp).padding(24.dp).background(Paper).padding(22.dp)) {
             Antetitulo("Abrir con otro reproductor", Modifier.padding(bottom = 8.dp))
-            Text("Se le pasa a esa app la dirección de lo que ves, que lleva tu usuario y tu contraseña de la lista. Hazlo solo con un reproductor de confianza (VLC, Just Player, mpv…). Lo que veas allí no cuenta en Nut.",
+            Text("Se le pasa a esa app la dirección de lo que ves, que lleva tu usuario y tu contraseña de la lista. Hazlo solo con un reproductor de confianza (VLC, Just Player, mpv…). Lo que veas allí no cuenta en Pulsar.",
                 color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp)
             Spacer(Modifier.height(10.dp))
             MagLink("Sí, abrirlo allí", accent = true) { alOtroSi() }

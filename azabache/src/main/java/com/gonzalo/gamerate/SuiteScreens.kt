@@ -128,11 +128,11 @@ fun LiveCard(
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text("${known.name} · desconectado", fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                    Text(if (known.at > 0) "Visto por última vez ${ago(known.at)}" else "Abre Atrio con tu cuenta", color = Muted, fontSize = 12.sp)
+                    Text(if (known.at > 0) "Visto por última vez ${ago(known.at)}" else "Abre Polaris con tu cuenta", color = Muted, fontSize = 12.sp)
                 }
             }
         } else {
-            SuiteIntro("Conecta tu PC", "Instala Atrio 1.0 en el PC y entra con esta misma cuenta (en el PC: Ajustes → Cuenta). Al abrirlo aparecerá aquí en directo: capturas, apuntes y el mando del PC.", onRemote)
+            SuiteIntro("Conecta tu PC", "Instala Polaris 1.0 en el PC y entra con esta misma cuenta (en el PC: Ajustes → Cuenta). Al abrirlo aparecerá aquí en directo: capturas, apuntes y el mando del PC.", onRemote)
         }
         return
     }
@@ -147,7 +147,7 @@ fun LiveCard(
             Box(Modifier.size(10.dp).background(ColMusic, CircleShape))
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Overline("Atrio · ${pc.name}")
+                Overline("Polaris · ${pc.name}")
                 Text("Conectado, sin jugar", fontFamily = Display, fontSize = 20.sp)
                 if (pc.today > 0) Text("Hoy llevas ${hoursText(pc.today)} jugando", color = Muted, fontSize = 12.sp)
             }
@@ -228,7 +228,7 @@ fun SuiteIntro(title: String, text: String, onClick: () -> Unit) {
         Icon(Icons.Rounded.Computer, null, tint = if (Skin.revista) Charcoal else LiveColor, modifier = Modifier.size(28.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Overline("Novedad · Atrio en el PC")
+            Overline("Novedad · Polaris en el PC")
             Text(title, fontFamily = Display, fontSize = 20.sp)
             Spacer(Modifier.height(4.dp))
             Text(text, color = Muted, fontSize = 13.sp)
@@ -332,7 +332,7 @@ fun ShotViewer(shot: Shot, onBack: () -> Unit, onDelete: () -> Unit, onMemo: (()
         AlertDialog(
             onDismissRequest = { ask = false },
             title = { Text("¿Borrar la captura?", fontFamily = Display) },
-            text = { Text("Se borra de Atrio. Si se guardó en la galería, allí se queda; y en el PC sigue en Imágenes/Atrio.") },
+            text = { Text("Se borra de Polaris. Si se guardó en la galería, allí se queda; y en el PC sigue en Imágenes/Polaris.") },
             confirmButton = { TextButton({ ask = false; onDelete() }) { Text("Borrar") } },
             dismissButton = { TextButton({ ask = false }) { Text("Cancelar") } },
             shape = shp(24.dp)
@@ -404,7 +404,7 @@ fun MemoDialog(title: String, canShot: Boolean, presetShot: Shot? = null, onSave
 
 /** Qué son los apuntes rápidos en cada categoría (en los libros no se juega). */
 fun memoHint(kind: Kind): String = when {
-    kind.isGame -> "Ideas sueltas mientras juegas (también desde Atrio)"
+    kind.isGame -> "Ideas sueltas mientras juegas (también desde Polaris)"
     kind.isBook -> "Ideas sueltas mientras lees"
     kind.isMovie -> "Ideas sueltas mientras la ves"
     kind.isTv -> "Ideas sueltas mientras la ves (de cada capítulo)"
@@ -504,7 +504,7 @@ fun SuiteScreen(
                     } else {
                         LiveCard(plays, { shot() }, shooting, onMemo, onOpenPlay, onRemote = { }, onGuides = { sheet = it })
                         Spacer(Modifier.height(18.dp))
-                        Text("Las capturas llegan a su resolución original (PNG, sin pérdida) y se guardan en Imágenes/Atrio y, en el PC, en Imágenes/Atrio.",
+                        Text("Las capturas llegan a su resolución original (PNG, sin pérdida) y se guardan en Imágenes/Polaris y, en el PC, en Imágenes/Polaris.",
                             color = Muted, fontSize = 13.sp)
                         Spacer(Modifier.height(18.dp))
                         ShotStrip(Suite.localShots.take(12), "Últimas capturas", onOpenShot)
@@ -532,7 +532,7 @@ fun SuiteScreen(
                         Spacer(Modifier.height(12.dp))
                         SearchPill(query, "Buscar en la biblioteca del PC") { query = it }
                         Spacer(Modifier.height(12.dp))
-                        if (lib.isEmpty()) Text(if (Suite.libs.isEmpty()) "Abre Atrio en el PC con tu cuenta para ver aquí su biblioteca." else "Nada con ese nombre.", color = Muted)
+                        if (lib.isEmpty()) Text(if (Suite.libs.isEmpty()) "Abre Polaris en el PC con tu cuenta para ver aquí su biblioteca." else "Nada con ese nombre.", color = Muted)
                         LazyVerticalGrid(GridCells.Adaptive(104.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(14.dp),
                             contentPadding = PaddingValues(bottom = 24.dp)) {
                             items(lib, key = { it.key }) { g ->
@@ -575,10 +575,10 @@ fun SuiteScreen(
                 }
                 else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
                     if (pc == null) { EmptySuite(); if (Stream.host() != null) { Spacer(Modifier.height(20.dp)); StreamPanel() } } else {
-                        Overline("Atrio")
+                        Overline("Polaris")
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                            RemoteButton(Icons.Rounded.Tv, "Traer Atrio") { act("focus") }
+                            RemoteButton(Icons.Rounded.Tv, "Traer Polaris") { act("focus") }
                             RemoteButton(Icons.Rounded.PhotoCamera, "Captura", busy = shooting) { shot() }
                             RemoteButton(Icons.Rounded.Search, "Rebuscar") { act("rescan") }
                         }
@@ -596,7 +596,7 @@ fun SuiteScreen(
                         Overline("Mensaje en la pantalla")
                         Spacer(Modifier.height(8.dp))
                         var msg by remember { mutableStateOf("") }
-                        OutlinedTextField(msg, { msg = it }, placeholder = { Text("Sale como aviso en Atrio") }, singleLine = true,
+                        OutlinedTextField(msg, { msg = it }, placeholder = { Text("Sale como aviso en Polaris") }, singleLine = true,
                             shape = shp(14.dp), modifier = Modifier.fillMaxWidth(),
                             trailingIcon = { IconButton({ if (msg.isNotBlank()) { act("toast", JSONObject().put("text", msg)); msg = "" } }) { Icon(Icons.Rounded.PlayArrow, "Enviar") } })
                         Spacer(Modifier.height(24.dp))
@@ -623,7 +623,7 @@ fun SuiteScreen(
         AlertDialog(
             onDismissRequest = { confirm = null },
             title = { Text(c.second, fontFamily = Display) },
-            text = { Text(if (pc?.game != null) "Ahora mismo se está jugando a ${pc.game.name}: guarda la partida antes." else "Atrio guarda tus horas antes de hacerlo.") },
+            text = { Text(if (pc?.game != null) "Ahora mismo se está jugando a ${pc.game.name}: guarda la partida antes." else "Polaris guarda tus horas antes de hacerlo.") },
             confirmButton = { TextButton({ confirm = null; act("power", JSONObject().put("action", c.first)) }) { Text(c.first.replaceFirstChar { it.uppercase() }) } },
             dismissButton = { TextButton({ confirm = null }) { Text("Cancelar") } },
             shape = shp(24.dp)
@@ -638,7 +638,7 @@ private fun EmptySuite() {
         Spacer(Modifier.height(12.dp))
         Text("Ningún PC conectado", fontFamily = Display, fontSize = 22.sp)
         Spacer(Modifier.height(6.dp))
-        Text("Abre Atrio en el PC y entra con tu cuenta (en el PC: Ajustes → Cuenta). En cuanto esté abierto aparecerá aquí, en directo.",
+        Text("Abre Polaris en el PC y entra con tu cuenta (en el PC: Ajustes → Cuenta). En cuanto esté abierto aparecerá aquí, en directo.",
             color = Muted, textAlign = TextAlign.Center, fontSize = 14.sp)
     }
 }
@@ -686,7 +686,7 @@ fun PcGameSheet(g: PcGame, pcOnline: Boolean, onDismiss: () -> Unit, say: (Strin
                     PlayButtons(g.key, g.name, Modifier.padding(bottom = 16.dp)) { onDismiss() }
                     Overline("Guías y webs")
                     Spacer(Modifier.height(6.dp))
-                    if (g.links.isEmpty()) Text("Aún no tiene ninguna. Añade una aquí, compártela desde el navegador (Compartir → Atrio) o guárdala en el PC desde Guías.", color = Muted, fontSize = 13.sp)
+                    if (g.links.isEmpty()) Text("Aún no tiene ninguna. Añade una aquí, compártela desde el navegador (Compartir → Polaris) o guárdala en el PC desde Guías.", color = Muted, fontSize = 13.sp)
                     g.links.forEach { (n, u) ->
                         Row(Modifier.fillMaxWidth().clip(shp(10.dp)).clickable {
                             val op = Guides.opener
@@ -739,7 +739,7 @@ fun ShareToGameDialog(url: String, title: String, onDismiss: () -> Unit, say: (S
                 Text(title.ifBlank { Uri.parse(url).host ?: url }, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(Uri.parse(url).host ?: url, color = Muted, fontSize = 12.sp)
                 Spacer(Modifier.height(12.dp))
-                if (all.isEmpty()) Text("No veo la biblioteca de ningún PC: abre Atrio en el PC con tu cuenta y vuelve a compartirla.", color = Muted, fontSize = 13.sp)
+                if (all.isEmpty()) Text("No veo la biblioteca de ningún PC: abre Polaris en el PC con tu cuenta y vuelve a compartirla.", color = Muted, fontSize = 13.sp)
                 else {
                     SearchPill(q, "¿De qué juego?") { q = it }
                     Spacer(Modifier.height(8.dp))

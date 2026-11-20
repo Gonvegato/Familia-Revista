@@ -66,7 +66,7 @@ object Mando {
     private fun bucle() {
         // Las bibliotecas nativas de LWJGL, en la carpeta de Cobre (no en /tmp, que puede no dejar ejecutar)
         runCatching { org.lwjgl.system.Configuration.SHARED_LIBRARY_EXTRACT_PATH.set(File(Local.dir, "nativas").absolutePath) }
-        SDL_SetHint(SDL_HINT_APP_NAME, "Cobre")
+        SDL_SetHint(SDL_HINT_APP_NAME, "Pulsar")
         SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1")
         SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1")
         if (!SDL_Init(SDL_INIT_GAMEPAD)) { estado = "SDL no ha arrancado"; return }

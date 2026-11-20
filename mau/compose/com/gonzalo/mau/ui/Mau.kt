@@ -39,12 +39,12 @@ class AppSuite(
 )
 
 val APPS_SUITE = listOf(
-    AppSuite("marfil", "Seshat", "LIBROS", "S", Color(0xFFF8F0D4), Color(0xFF050404), Color(0xFFC68B00), Color(0xFF050404), Color(0xFFC68B00)),
-    AppSuite("hiedra", "Bastet", "JUEGOS", "B", Color(0xFF26301E), Color(0xFFF2EEDC), Color(0xFF8C9A48), Color(0xFF141A0E), Color(0xFF8C9A48)),
-    AppSuite("cobalto", "Thot", "ESCRITOS", "T", Color(0xFF19202E), Color(0xFFF2EEDC), Color(0xFFB5B83A), Color(0xFF19202E), Color(0xFFB5B83A)),
-    AppSuite("azabache", "Jonsu", "DIARIO", "J", Color(0xFF171515), Color(0xFFF2EEDC), Color(0xFFB3362E), Color(0xFFFFFFFF), Color(0xFFB3362E)),
-    AppSuite("mostaza", "Hathor", "CINE", "H", Color(0xFF6B4A22), Color(0xFFF8F0D4), Color(0xFFE9D9C0), Color(0xFF3E2A12), Color(0xFFD98A9B)),
-    AppSuite("cobre", "Nut", "TELE", "N", Color(0xFF4A1018), Color(0xFFF8F0D4), Color(0xFFE89A5A), Color(0xFF3A0C12), Color(0xFFE89A5A))
+    AppSuite("marfil", "Lyra", "LIBROS", "L", Color(0xFFF8F0D4), Color(0xFF050404), Color(0xFFC68B00), Color(0xFF050404), Color(0xFFC68B00)),
+    AppSuite("hiedra", "Orion", "JUEGOS", "O", Color(0xFF26301E), Color(0xFFF2EEDC), Color(0xFF8C9A48), Color(0xFF141A0E), Color(0xFF8C9A48)),
+    AppSuite("cobalto", "Nova", "ESCRITOS", "N", Color(0xFF19202E), Color(0xFFF2EEDC), Color(0xFFB5B83A), Color(0xFF19202E), Color(0xFFB5B83A)),
+    AppSuite("azabache", "Polaris", "DIARIO", "P", Color(0xFF171515), Color(0xFFF2EEDC), Color(0xFFB3362E), Color(0xFFFFFFFF), Color(0xFFB3362E)),
+    AppSuite("mostaza", "Sirius", "CINE", "S", Color(0xFF6B4A22), Color(0xFFF8F0D4), Color(0xFFE9D9C0), Color(0xFF3E2A12), Color(0xFFD98A9B)),
+    AppSuite("cobre", "Pulsar", "TELE", "P", Color(0xFF4A1018), Color(0xFFF8F0D4), Color(0xFFE89A5A), Color(0xFF3A0C12), Color(0xFFE89A5A))
 )
 
 /** Una acción del menú de Mau propia de una app (p. ej. el sprint de Thot). Solo sale si [visible]. */

@@ -67,7 +67,7 @@ fun PaginaPortada(nav: Nav) {
     val (minDia, objAno, deAno) = Libros.objetivo()
     val sigue = leyendo.firstOrNull()
     PaginaC {
-        if (libros.isEmpty()) { Vacio("Tu biblioteca está vacía", "Añade un libro (EPUB, PDF o cómic) o ábrelo en Seshat del móvil: los de la cuenta salen aquí."); return@PaginaC }
+        if (libros.isEmpty()) { Vacio("Tu biblioteca está vacía", "Añade un libro (EPUB, PDF o cómic) o ábrelo en Lyra del móvil: los de la cuenta salen aquí."); return@PaginaC }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(44.dp)) {
             Column(Modifier.weight(1.45f)) {
                 if (sigue != null) {

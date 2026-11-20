@@ -123,7 +123,7 @@ fun NubePicker(nombre: String, onPick: (String) -> Unit, onDismiss: () -> Unit) 
             } else {
                 val suya = withContext(Dispatchers.IO) { KDrive.carpetaDeFicha(ctx, nombre) }
                 if (suya != null) { vista = lee(suya.first, ""); ruta = listOf(Triple(suya.first, "", suya.second.substringAfterLast('/'))) }
-                else { val s = withContext(Dispatchers.IO) { KDrive.start(ctx) }; vista = lee(s, ""); ruta = listOf(Triple(s, "", "Atrio")) }
+                else { val s = withContext(Dispatchers.IO) { KDrive.start(ctx) }; vista = lee(s, ""); ruta = listOf(Triple(s, "", "Polaris")) }
             }
         } catch (e: Exception) { msg = e.message ?: "No se pudo abrir tu nube"; vista = Vista(emptyList(), emptyList()) }
     }

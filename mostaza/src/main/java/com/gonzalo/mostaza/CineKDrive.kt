@@ -97,7 +97,8 @@ data class ArchivoCine(
  */
 object CineKDrive {
     const val ADDON = "Tu nube"
-    const val CARPETA = "Mostaza"
+    const val CARPETA = "Sirius"
+    private val CARPETAS = listOf(CARPETA, "Hathor", "Mostaza")
     const val PELICULAS = "Películas"
     const val SERIES = "Series"
 
@@ -145,7 +146,7 @@ object CineKDrive {
         val pelis = ArrayList<Visto>(); val series = ArrayList<Visto>()
         if (KDrive.gdriveOn(c)) {
             val g = com.gonzalo.familia.NubeFamilia.gdrive(c)
-            val raiz = g.carpeta(CARPETA)
+            val raiz = CARPETAS.firstNotNullOfOrNull { g.carpeta(it) }
             if (raiz != null) {
                 val dentro = g.dentro(raiz)
                 dentro.firstOrNull { it.carpeta && NombresCine.normal(it.nombre) == "peliculas" }?.let { recorreGDrive(g, it.id, emptyList(), pelis, 0) }
@@ -153,7 +154,7 @@ object CineKDrive {
             }
         }
         if (pelis.isEmpty() && series.isEmpty() && KDrive.kdriveOn(c)) {
-            val raiz = KDrive.carpeta(c, CARPETA)
+            val raiz = CARPETAS.firstNotNullOfOrNull { KDrive.carpeta(c, it) }
             if (raiz != null) {
                 val dentro = KDrive.children(c, raiz)
                 dentro.firstOrNull { it.dir && NombresCine.normal(it.name) == "peliculas" }?.let { recorreKDrive(c, it.id, emptyList(), pelis, 0) }

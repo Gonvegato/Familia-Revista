@@ -127,7 +127,7 @@ object AjustesFutbol {
 object Futbol {
     var version by mutableIntStateOf(0)
         private set
-    @Volatile var red: Red = RedJava("Nut/$VERSION")
+    @Volatile var red: Red = RedJava("Pulsar/$VERSION")
     @Volatile private var dir: File? = null
     @Volatile private var cacheProp: CacheFutbol? = null
     /** Lo que ha fallado hace poco (para no volver a pedirlo enseguida). */
@@ -369,5 +369,5 @@ object Futbol {
         return Listas.usables().flatMap { l -> runCatching { Tele.cargada(l) }.getOrNull()?.canales.orEmpty().asSequence().filter { Buscar.normal(it.nombre).contains(n) }.take(tope).map { l to it }.toList() }
     }
 
-    fun olvidaParaPruebas() { fijo = null; dir = null; cacheProp = null; fallos.clear(); red = RedJava("Nut/$VERSION") }
+    fun olvidaParaPruebas() { fijo = null; dir = null; cacheProp = null; fallos.clear(); red = RedJava("Pulsar/$VERSION") }
 }

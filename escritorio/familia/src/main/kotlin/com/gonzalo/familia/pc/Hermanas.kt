@@ -78,7 +78,7 @@ object Instancia {
  */
 object HermanasPc {
     /** Las seis, por orden: el nombre de la carpeta de datos y el que se ve. */
-    val todas = listOf("azabache" to "Jonsu", "cobalto" to "Thot", "hiedra" to "Bastet", "marfil" to "Seshat", "mostaza" to "Hathor", "cobre" to "Nut")
+    val todas = listOf("azabache" to "Polaris", "cobalto" to "Nova", "hiedra" to "Orion", "marfil" to "Lyra", "mostaza" to "Sirius", "cobre" to "Pulsar")
 
 
     /**

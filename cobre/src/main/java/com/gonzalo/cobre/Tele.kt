@@ -47,7 +47,7 @@ object Tele {
     /** El último error de cada lista (sin secretos). */
     val errores = mutableStateMapOf<String, String>()
 
-    @Volatile var red: Red = RedJava("Cobre/$VERSION")
+    @Volatile var red: Red = RedJava("Pulsar/$VERSION")
     private var appCtx: Context? = null
     @Volatile private var almacenPropio: Almacen? = null
     val almacen: Almacen get() = almacenPropio ?: error("Tele.cargar no se ha llamado")
@@ -194,5 +194,5 @@ object Tele {
     fun tipoNombre(t: TipoLista) = when (t) { TipoLista.M3U -> "Lista M3U"; TipoLista.ARCHIVO -> "Archivo M3U"; TipoLista.XTREAM -> "Xtream Codes" }
 
     /** (Para las pruebas.) */
-    fun olvidaParaPruebas() { cargadas.clear(); cortas.clear(); appCtx = null; almacenPropio = null; fijas = null; ocupada.clear(); errores.clear(); red = RedJava("Cobre/$VERSION") }
+    fun olvidaParaPruebas() { cargadas.clear(); cortas.clear(); appCtx = null; almacenPropio = null; fijas = null; ocupada.clear(); errores.clear(); red = RedJava("Pulsar/$VERSION") }
 }

@@ -160,7 +160,7 @@ private fun AppContenido(
         val v = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
         val sp = ctx.getSharedPreferences("actualizador", android.content.Context.MODE_PRIVATE)
         val antes = sp.getString("vista", "").orEmpty()
-        if (v.isNotEmpty() && v != antes) { sp.edit().putString("vista", v).apply(); if (antes.isNotEmpty()) snack.showSnackbar("Jonsu se ha actualizado a la $v", withDismissAction = true) }
+        if (v.isNotEmpty() && v != antes) { sp.edit().putString("vista", v).apply(); if (antes.isNotEmpty()) snack.showSnackbar("Polaris se ha actualizado a la $v", withDismissAction = true) }
     }
 
     // Viendo la app de tu pareja (solo lectura).
@@ -645,7 +645,7 @@ private fun AppContenido(
             try {
                 val bm = Export.renderYear(ctx, k, list, y, store.myName)
                 val uri = withContext(Dispatchers.IO) { Export.saveJpgUri(ctx, bm, "ronron-$y-${normName(k.title)}") }
-                if (uri != null) Export.share(ctx, uri, "Mi $y en Jonsu") else say("No se pudo preparar la imagen")
+                if (uri != null) Export.share(ctx, uri, "Mi $y en Polaris") else say("No se pudo preparar la imagen")
             } catch (e: Exception) { say("Error: ${e.message}") }
         }
     }
@@ -684,7 +684,7 @@ private fun AppContenido(
 
     /** La ficha en curso de un juego que se está jugando en el PC (si no la tienes, se crea en «Jugando»). */
     fun playFor(g: LiveGame): Play? {
-        if (g.sg <= 0L) { say("Atrio no sabe qué juego es en SteamGridDB: corrígelo en el PC (Opciones → Corregir juego)"); return null }
+        if (g.sg <= 0L) { say("Polaris no sabe qué juego es en SteamGridDB: corrígelo en el PC (Opciones → Corregir juego)"); return null }
         plays.find { it.id == g.sg }?.let { return it }
         games.find { it.id == g.sg }?.let { v ->
             val np = Play(v.id, v.name, v.cover, v.hero, 1, emptyList(), start = today(), creator = v.creator, platform = "PC", updated = now(), logo = v.logo)
@@ -1118,7 +1118,7 @@ private fun AppContenido(
                             .sortedByDescending { it.play.activity }
                             .let { l -> if (pv) l.filter { !Photos.isLocal(it.play.cover) } else l }
                 val m = ShellModel(
-                                name = if (pv) p!!.name else store.myName.ifBlank { "Jonsu" },
+                                name = if (pv) p!!.name else store.myName.ifBlank { "Polaris" },
                                 readOnly = pv,
                                 kinds = sectionKinds,
                                 entries = { k -> (gs(k).map { ShellEntry(k, null, it) } + ps(k).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
@@ -1155,7 +1155,7 @@ private fun AppContenido(
                                 acts = acts, onAct = { a -> withReveal { screen = Screen.PartnerItem(a.kind, a.id) } }
                             )
                 PantPaginas(
-                    nombre = if (pv) p!!.name else "Jonsu",
+                    nombre = if (pv) p!!.name else "Polaris",
                     paginas = paginasJonsu(sectionKinds, { k -> (gs(k).map { it.id } + ps(k).map { it.id }).distinct().size }, conEscritos = !pv),
                     destino = dest, alDestino = { d -> go(d) },
                     alBuscar = { buscandoTodo = true }, buscando = buscandoTodo,
@@ -1642,7 +1642,7 @@ private fun AppContenido(
             val p = partner
             val ks = if (pv && p != null) p.allKinds else myKinds
             NumeroEspecial(
-                if (pv && p != null) p.name else store.myName.ifBlank { "Jonsu" }, ks,
+                if (pv && p != null) p.name else store.myName.ifBlank { "Polaris" }, ks,
                 { k -> ((if (pv && p != null) p.games(k) else gamesOf(k)).map { ShellEntry(k, null, it) } +
                     (if (pv && p != null) p.plays(k) else playsOf(k)).map { ShellEntry(k, it, null) }).distinctBy { it.id } },
                 onOpen = { e ->
@@ -1749,8 +1749,8 @@ private fun AppContenido(
         Actualizador.nueva?.takeIf { !it.silenciosa && !luego }?.let { n ->
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = { luego = true },
-                title = { Text("Jonsu ${n.nombre.removePrefix("Jonsu-").removePrefix("Azabache-").removeSuffix(".apk")}", fontFamily = Display) },
-                text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Jonsu instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.") },
+                title = { Text("Polaris ${n.nombre.removePrefix("Polaris-").removePrefix("Jonsu-").removePrefix("Azabache-").removeSuffix(".apk")}", fontFamily = Display) },
+                text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu nube. Para instalarla, Android tiene que dejar a Polaris instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu nube, ya descargada. Android te pedirá confirmar la instalación.") },
                 confirmButton = { androidx.compose.material3.TextButton({
                     luego = true
                     if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }

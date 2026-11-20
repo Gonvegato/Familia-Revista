@@ -54,7 +54,7 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
     LaunchedEffect(Unit) { MauJonsu.saluda() }
     // La columna de la izquierda: la portada, tus categorías, y lo demás
     val destinos = buildList<Pair<Entrada, Pantalla>> {
-        add(Entrada("Portada", grupo = "Jonsu") to Pantalla.Inicio)
+        add(Entrada("Portada", grupo = "Polaris") to Pantalla.Inicio)
         kinds.forEach { k -> add(Entrada(k.title, Cuenta.fichas(k.id).size, grupo = "Colección") to Pantalla.Lista(k.id)) }
         add(Entrada("Diario", grupo = "Tu año") to Pantalla.Diario); add(Entrada("Sagas", grupo = "Tu año") to Pantalla.Sagas); add(Entrada("Cifras", grupo = "Tu año") to Pantalla.Cifras)
         if (pareja.isNotBlank()) add(Entrada("Pareja", grupo = "Más") to Pantalla.Pareja)
@@ -77,7 +77,7 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
         else -> null
     }
     Column(Modifier.fillMaxSize().atrasConEsc { atras?.let { pantalla = it; true } ?: false }) {
-        CabeceraConPestanas("Jonsu", destinos.map { it.first }, sel) { i ->
+        CabeceraConPestanas("Polaris", destinos.map { it.first }, sel) { i ->
             val d = destinos[i].second
             if (d == Pantalla.Ajustes && pantalla != Pantalla.Ajustes) antesDeAjustes = pantalla
             pantalla = d
@@ -97,7 +97,7 @@ fun AppAzabache(inicial: Pantalla = Pantalla.Inicio) {
                     Pantalla.Sagas -> PantSagas(nav)
                     is Pantalla.UnaSaga -> PantSaga(p.id, nav)
                     Pantalla.Cifras -> PantCifras(nav)
-                    Pantalla.Pareja -> if (pareja.isNotBlank()) PantPareja(pareja, nav) else Pagina { Vacio("Sin pareja", "Se pone en el Jonsu del móvil (Ajustes → Cuenta).") }
+                    Pantalla.Pareja -> if (pareja.isNotBlank()) PantPareja(pareja, nav) else Pagina { Vacio("Sin pareja", "Se pone en el Polaris del móvil (Ajustes → Cuenta).") }
                     is Pantalla.DeLaPareja -> PantDeLaPareja(p.uid, p.kind, p.id, nav)
                     Pantalla.Ajustes -> PantAjustes(nav)
                 }

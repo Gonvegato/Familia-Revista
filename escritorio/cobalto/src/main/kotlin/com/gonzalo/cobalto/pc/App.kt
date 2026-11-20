@@ -46,7 +46,7 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
     val grupos = EstadoObra.values().map { it to e.obrasDe(it) }.filter { it.second.isNotEmpty() }
     val obras = grupos.flatMap { it.second }
     val entradas = buildList {
-        add(Entrada("Portada", grupo = "Thot"))
+        add(Entrada("Portada", grupo = "Nova"))
         grupos.forEach { (est, l) -> l.forEach { o -> add(Entrada(o.s("titulo").ifBlank { "Sin título" }, grupo = est.plural)) } }
         add(Entrada("Papelera", grupo = "Más")); add(Entrada("Ajustes", grupo = "Más"))
     }
@@ -65,7 +65,7 @@ fun AppCobalto(inicial: Pantalla = Pantalla.Portada) {
     }) {
         // (en la concentración solo queda la página: ni la cabecera)
         if (!Estudio.concentracion) {
-            CabeceraConPestanas("Thot", entradas, sel) { i ->
+            CabeceraConPestanas("Nova", entradas, sel) { i ->
                 nav.ir(when {
                     i == 0 -> Pantalla.Portada
                     i <= obras.size -> Pantalla.Obra(obras[i - 1].id)

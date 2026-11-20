@@ -69,7 +69,7 @@ object Mando {
     private fun bucle() {
         // Las bibliotecas nativas de LWJGL, en la carpeta de Hiedra (no en /tmp, que puede no dejar ejecutar)
         runCatching { org.lwjgl.system.Configuration.SHARED_LIBRARY_EXTRACT_PATH.set(File(Sitio.de("hiedra"), "nativas").absolutePath) }
-        SDL_SetHint(SDL_HINT_APP_NAME, "Hiedra")
+        SDL_SetHint(SDL_HINT_APP_NAME, "Orion")
         // Que SDL no se quede con las señales del proceso (las de la JVM) y que lea los mandos aunque no tenga ventana delante
         SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1")
         SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1")

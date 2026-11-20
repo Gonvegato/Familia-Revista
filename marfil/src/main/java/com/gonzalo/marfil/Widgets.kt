@@ -459,10 +459,10 @@ object Widgets {
         val d = porDefecto(ctx)
         val dis = Skin.display; val cue = Skin.body
         val titular = tipografia(ctx, dis, 600, false, DISPLAY_FONTS)
-        val cursiva = if (dis == "Atrio") null else tipografia(ctx, dis, 500, true, DISPLAY_FONTS) ?: tipografia(ctx, dis, 400, false, DISPLAY_FONTS)
+        val cursiva = if (dis == "Polaris") null else tipografia(ctx, dis, 500, true, DISPLAY_FONTS) ?: tipografia(ctx, dis, 400, false, DISPLAY_FONTS)
         letras = Letras(
             titular = titular ?: d.titular,
-            cursiva = cursiva ?: if (dis == "Atrio" || titular == null) d.cursiva else titular,
+            cursiva = cursiva ?: if (dis == "Polaris" || titular == null) d.cursiva else titular,
             // Las etiquetas (SEGUIR →, las horas, los antetítulos) llevan siempre la negrita de la app, como en Atrio: la del tema, bajada de Google Fonts, salía más fina
             negrita = d.negrita,
             texto = tipografia(ctx, cue, 500, false, BODY_FONTS) ?: d.texto
@@ -471,7 +471,7 @@ object Widgets {
 
     /** Una letra del tema con el grueso más cercano al pedido; null = la de la app (o no se ha podido conseguir). */
     private suspend fun tipografia(ctx: Context, nombre: String, peso: Int, cursiva: Boolean, lista: List<FontChoice>): Typeface? {
-        if (nombre.isBlank() || nombre == "Atrio") return null
+        if (nombre.isBlank() || nombre == "Polaris") return null
         if (nombre == "Vitrina") return vitrina(ctx, if (peso >= 600) 700 else 500)
         val pesos = lista.firstOrNull { it.name == nombre }?.weights?.takeIf { it.isNotEmpty() } ?: intArrayOf(400, 700)
         val w = pesos.minByOrNull { kotlin.math.abs(it - peso) } ?: 400
@@ -736,7 +736,7 @@ object Widgets {
     private suspend fun leyendo(d: WDatos, id: Int, w: Float, h: Float, fijo: Libro? = null): Pagina {
         val ctx = d.ctx
         val lista = if (fijo != null) listOf(fijo) else d.leyendo.ifEmpty { d.recientes.filter { it.estado != Estado.LEIDO }.take(1) }
-        if (lista.isEmpty()) return vacio(ctx, "Sigue leyendo", "Nada que leer todavía", "Añade un libro a Seshat y lo tendrás aquí, a un toque de seguir.", w, h)
+        if (lista.isEmpty()) return vacio(ctx, "Sigue leyendo", "Nada que leer todavía", "Añade un libro a Lyra y lo tendrás aquí, a un toque de seguir.", w, h)
         val i = Math.floorMod(estado(ctx, id, "i", 0), lista.size)
         val e = lista[i]
         val compacto = w < 200f && h < 200f
@@ -829,13 +829,13 @@ object Widgets {
         val ch = h - top - pad - textos
         val imgs = items.map { imagen(ctx, it, px(ctx, ch)) }
         val zonas = listOf(
-            Zona(0f, 0f, w, top, abrirApp(ctx), "Abrir Seshat"),
+            Zona(0f, 0f, w, top, abrirApp(ctx), "Abrir Lyra"),
             Zona(pad, top, w - 2 * pad, h - top, null, "", listOf(items.map { leer(ctx, it) to "Leer ${it.titulo}" }))
         )
         return Pagina(zonas) {
             fondo()
             seccion(titulo, pad, pad, w - 2 * pad, tinta, acento)
-            pon(capa("Seshat", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa("Lyra", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             reglaCabecera(pad, pad + 14.5f, w - pad, pad + 15.2f)
             items.forEachIndexed { k, e ->
                 val gap = 5f
@@ -882,7 +882,7 @@ object Widgets {
                 velo(0f, min(96f, h * 0.42f), 0xC8000000.toInt(), 0x00000000, 0x70000000)
                 velo(h * 0.18f, h, 0x00000000, 0xF2000000.toInt(), 0x99000000.toInt())
             } else { fondo(0xFF15120F.toInt()); reborde = 0xCCFFFFFF.toInt() }
-            val mast = capa("Seshat", tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
+            val mast = capa("Lyra", tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
             pon(mast, pad, pad - 4f)
             val fw = w - 2 * pad - mast.getLineWidth(0) - 8f
             ante(if (fw < anchoAnte(fecha, 8.5f)) fecha.substringBeforeLast(' ') else fecha, w - pad - fw, pad, fw, 0xDDFFFFFF.toInt(), 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
@@ -906,7 +906,7 @@ object Widgets {
     private suspend fun siguiente(d: WDatos, id: Int, w: Float, h: Float): Pagina {
         val ctx = d.ctx
         val lista = d.pendientes.sortedBy { (it.id.hashCode().toLong() * 2654435761L) and 0xFFFFFF }
-        if (lista.isEmpty()) return vacio(ctx, "¿Y ahora qué?", "Nada pendiente", "Añade libros a Seshat y aquí te propondré cuál empezar.", w, h)
+        if (lista.isEmpty()) return vacio(ctx, "¿Y ahora qué?", "Nada pendiente", "Añade libros a Lyra y aquí te propondré cuál empezar.", w, h)
         // Una propuesta distinta cada día (y la que quieras con «Otro»)
         val i = Math.floorMod(LocalDate.now().toEpochDay() + estado(ctx, id, "i", 0), lista.size.toLong()).toInt()
         val e = lista[i]
@@ -957,11 +957,11 @@ object Widgets {
         val hoyMin = (dias[hoy.toString()] ?: 0L) / 60_000L
         val racha = rachaDeLectura(dias)
         val sem = (6 downTo 0).map { hoy.minusDays(it.toLong()) }.map { dia -> dia to (dias[dia.toString()] ?: 0L) / 60_000L }
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Lyra"))) {
             fondo()
             val pad = if (h < 90f) 12f else 16f
             seccion("Lectura", pad, pad, w - 2 * pad, tinta, acento)
-            pon(capa("Seshat", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa("Lyra", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             reglaCabecera(pad, pad + 14.5f, w - pad, pad + 15.2f)
             val top = pad + 26f
             val ancho = w - 2 * pad
@@ -1029,23 +1029,23 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Lyra"))) {
             val color = if (nombreEnColor) acentoNombre else if (noche) 0xFFF6F1E7.toInt() else tinta
             val sombra = if (noche) 0x99000000.toInt() else 0x55FFFFFF
             val pie = if (h >= 84f) 16f else 0f
             val p = tp(fTitular, 10f, color, -0.04f)
-            val ancho = p.measureText("SESHAT.")
+            val ancho = p.measureText("LYRA.")
             val cuadro = 0f
             var s = min((w - 8f) / (ancho / 10f * (1f + cuadro)), (h - pie - 4f) / 0.95f)
             s = s.coerceAtLeast(10f)
             val tpa = tp(fTitular, s, color, -0.04f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
             val fm = tpa.fontMetrics
-            val tw = tpa.measureText("SESHAT")
-            val total = tpa.measureText("SESHAT.")
+            val tw = tpa.measureText("LYRA")
+            val total = tpa.measureText("LYRA.")
             val x = (w - total) / 2
             val capH = s * 0.72f
             val base = (h - pie) / 2 + capH / 2
-            c.drawText("SESHAT", x, base, tpa)
+            c.drawText("LYRA", x, base, tpa)
             // «SESHAT.»: el punto, en el acento (la cabecera de la dirección C)
             c.drawText(".", x + tw, base, tp(fTitular, s, acento, -0.04f).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
             if (pie > 0f) {
@@ -1060,7 +1060,7 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Seshat"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Lyra"))) {
             // Dirección C: la cabecera de la portada, en un bloque de tinta con el nombre del color del papel
             // Con «papel teñido» o «todo acento», el bloque de tinta también lo lleva
             val (tinta, papel) = bloqueMarca()
@@ -1071,14 +1071,14 @@ object Widgets {
             val bajo = (if (conLinea) 22f else 0f) + (if (conEntradilla) 24f else 0f)
             val alto = h - 2 * pad - bajo
             val p = tp(fTitular, 10f, papel, -0.04f)
-            val s = min((w - 2 * pad) / (p.measureText("SESHAT.") / 10f), alto / 0.78f).coerceAtLeast(10f)
+            val s = min((w - 2 * pad) / (p.measureText("LYRA.") / 10f), alto / 0.78f).coerceAtLeast(10f)
             val tpa = tp(fTitular, s, papel, -0.04f)
             val capH = s * 0.72f
             val bloque = capH + s * 0.08f + 4f + bajo
             val base = max(pad, (h - bloque) / 2) + capH
-            val tw = tpa.measureText("SESHAT.")
-            c.drawText("SESHAT", pad, base, tpa)
-            c.drawText(".", pad + tpa.measureText("SESHAT"), base, tp(fTitular, s, acento, -0.04f))
+            val tw = tpa.measureText("LYRA.")
+            c.drawText("LYRA", pad, base, tpa)
+            c.drawText(".", pad + tpa.measureText("LYRA"), base, tp(fTitular, s, acento, -0.04f))
             var y = base + s * 0.08f + 4f
             if (conLinea) {
                 c.drawRect(pad, y, w - pad, y + 2f, lleno(papel))

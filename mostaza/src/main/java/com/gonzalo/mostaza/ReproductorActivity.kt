@@ -346,7 +346,7 @@ class ReproductorActivity : ComponentActivity() {
     private fun empieza(u: String, subs: List<Subtitulo>, desde: Long) {
         // (un torrent que empieza puede tardar en tener el trozo que se pide: el motor espera, y el reproductor tiene que esperarle)
         val espera = if (torrentAbierto.isNotBlank()) com.gonzalo.torrent.MotorTorrent.ESPERA_LECTURA_MS else 30_000
-        val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent("Mostaza/$VERSION")
+        val http = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent("Sirius/$VERSION")
             .setConnectTimeoutMs(20_000).setReadTimeoutMs(espera)
         // Las cabeceras de la fuente (las de tu debrid, o tu token de kDrive) van solo a su servidor, no a los de los subtítulos de fuera
         val host = Uri.parse(u).host.orEmpty()
@@ -409,7 +409,7 @@ class ReproductorActivity : ComponentActivity() {
         val m = MotorVlc(this, oyenteVlc)
         vlc = m
         // (la capa de VLC tiene que estar en la pantalla antes de ponerle el vídeo)
-        val arranca = { if (vlc === m) m.empieza(u, capaVlc, pos, subs.map { it.url }, "Mostaza/$VERSION") }
+        val arranca = { if (vlc === m) m.empieza(u, capaVlc, pos, subs.map { it.url }, "Sirius/$VERSION") }
         if (capaVlc.isAttachedToWindow) arranca() else capaVlc.addOnAttachStateChangeListener(object : android.view.View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: android.view.View) { capaVlc.removeOnAttachStateChangeListener(this); arranca() }
             override fun onViewDetachedFromWindow(v: android.view.View) {}

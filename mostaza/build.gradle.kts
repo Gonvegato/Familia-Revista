@@ -17,23 +17,23 @@ android {
         applicationId = "com.gonzalo.mostaza"
         minSdk = if (tele) 26 else 29
         targetSdk = 35
-        versionCode = 38
-        versionName = "0.9.6"
+        versionCode = 39
+        versionName = "0.10.0"
         // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura.
         // La de la tele lleva también la de 32 bits (el motor de torrents, FFmpeg y VLC traen las dos)
         ndk { abiFilters += if (tele) listOf("arm64-v8a", "armeabi-v7a") else listOf("arm64-v8a") }
         buildConfigField("boolean", "TELE", tele.toString())
         if (tele) versionNameSuffix = "-tele"
-        manifestPlaceholders["etiqueta"] = "Hathor"
+        manifestPlaceholders["etiqueta"] = "Sirius"
     }
     // (las bibliotecas nativas, comprimidas en el APK: la del motor ocupa unos 6 MB en vez de 16)
     packaging { jniLibs { useLegacyPackaging = true } }
     buildTypes {
-        // La de pruebas: otra app al lado de Hathor (otro paquete, «Hathor debug»), con el botón para ver la de la tele en el móvil
+        // La de pruebas: otra app al lado de Sirius (otro paquete, «Sirius debug»), con el botón para ver la de la tele en el móvil
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            manifestPlaceholders["etiqueta"] = "Hathor debug"
+            manifestPlaceholders["etiqueta"] = "Sirius debug"
         }
         getByName("release") {
             isDebuggable = false

@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 
 /** Al poner cualquier widget: primero su estilo (familia/EstiloWidgetActivity); luego, en el widget «Sigue escribiendo» en el escritorio: ¿qué obra abre? La que toque (la que estés escribiendo) o una fija que eliges aquí. */
 class ConfigWidgetActivity : EstiloWidgetActivity() {
-    override val nombreApp = "Thot"
+    override val nombreApp = "Nova"
     override val papelApp = 0xFFF8F0D4.toInt()
     override val tintaApp = 0xFF000000.toInt()
     override val acentoApp = 0xFF5A7896.toInt()
@@ -59,7 +59,7 @@ fun ElegirObraWidget(alElegir: (String?) -> Unit) {
         Filete(2.dp)
         CampoRevista("Buscar", busca, "una obra fija") { busca = it }
         LazyColumn(Modifier.fillMaxSize()) {
-            if (lista.isEmpty()) item { Text("Todavía no hay obras en Thot.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
+            if (lista.isEmpty()) item { Text("Todavía no hay obras en Nova.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
             items(lista, key = { it.id }) { o ->
                 Row(Modifier.fillMaxWidth().clickable { alElegir(o.id) }.padding(vertical = 10.dp).height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.width(8.dp).fillMaxHeight().background(colorEscrito(o.s("color"))))

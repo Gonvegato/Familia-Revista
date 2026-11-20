@@ -22,7 +22,7 @@ object Buscar {
 
     private fun get(url: String, bearer: String = ""): Any? {
         val c = URI(url).toURL().openConnection() as HttpURLConnection
-        c.setRequestProperty("User-Agent", "Azabache/1.0 (app personal; escritorio)")
+        c.setRequestProperty("User-Agent", "Polaris/1.0 (app personal; escritorio)")
         c.setRequestProperty("Accept", "application/json")
         if (bearer.isNotEmpty()) c.setRequestProperty("Authorization", "Bearer $bearer")
         c.connectTimeout = 15_000; c.readTimeout = 20_000
@@ -165,7 +165,7 @@ object Buscar {
     /** Baja una imagen de internet (para ponerla de portada). */
     fun bytes(url: String): ByteArray {
         val c = URI(url).toURL().openConnection() as HttpURLConnection
-        c.setRequestProperty("User-Agent", "Azabache/1.0 (app personal; escritorio)")
+        c.setRequestProperty("User-Agent", "Polaris/1.0 (app personal; escritorio)")
         c.connectTimeout = 15_000; c.readTimeout = 30_000
         try {
             if (c.responseCode !in 200..299) throw IllegalStateException("La imagen no se ha podido bajar (${c.responseCode}).")

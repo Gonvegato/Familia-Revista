@@ -1,13 +1,14 @@
 """Iconos de la dirección C («editorial moderna») para Android: la inicial en grotesca enorme con el punto del acento y, abajo, una franja
 del acento con lo que hace la app. Capas del icono adaptable (fondo + delante + monocromo) a 432 px.
 Uso: python3 icono-c.py <app> <carpeta drawable-nodpi> <prefijo>   (p. ej. seshat marfil/src/main/res/drawable-nodpi ic_launcher_marfil)"""
-import sys
+import os, sys
 from PIL import Image, ImageDraw, ImageFont
-F = "/home/user/familia-revista/marfil/src/main/res/font"
+RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+F = os.path.join(RAIZ, "marfil/src/main/res/font")
 PAPEL, NEGRO = "#F8F0D4", "#000000"
 # La familia (noviembre de 2026): papel y negro para todas; a cada una la distingue su acento. De noche, papel y negro al revés.
-ACENTOS = {"seshat": ("#B0791E", "LIBROS"), "bastet": ("#7A8A3A", "JUEGOS"), "thot": ("#5A7896", "ESCRITOS"),
-           "jonsu": ("#8E5A78", "DIARIO"), "hathor": ("#B56576", "CINE"), "nut": ("#5D1414", "FÚTBOL"),
+ACENTOS = {"lyra": ("#B0791E", "LIBROS"), "orion": ("#7A8A3A", "JUEGOS"), "nova": ("#5A7896", "ESCRITOS"),
+           "polaris": ("#8E5A78", "DIARIO"), "sirius": ("#B56576", "CINE"), "pulsar": ("#5D1414", "FÚTBOL"),
            # Ammit, la devoradora del juicio de Osiris: la que deja pasar solo a la familia (verde fayenza, el de los amuletos)
            "ammit": ("#2F6B63", "JUICIO")}
 NOCHE = "--noche" in sys.argv
@@ -63,7 +64,7 @@ def capas(app):
         return im
     return bg, delante(), delante(True)
 
-NOMBRES = {"seshat": "SESHAT", "bastet": "BASTET", "thot": "THOT", "jonsu": "JONSU", "hathor": "HATHOR", "nut": "NUT"}
+NOMBRES = {"lyra": "LYRA", "orion": "ORION", "nova": "NOVA", "polaris": "POLARIS", "sirius": "SIRIUS", "pulsar": "PULSAR"}
 def banner(app, w=640, h=360):
     """El cartel de la tele (Android TV): el nombre con su punto sobre el fondo y la franja del acento con lo que hace, como el icono."""
     fondo, tinta, acento, que = APPS[app]
@@ -88,10 +89,7 @@ if __name__ == "__main__" and sys.argv[1] == "banner":
 if __name__ == "__main__":
     app, carpeta, prefijo = sys.argv[1:4]
     bg, fg, mo = capas(app)
-    bg.save(f"{carpeta}/{prefijo}_bg.png"); fg.save(f"{carpeta}/{prefijo}_fg.png"); mo.save(f"{carpeta}/{prefijo}_mono.png")
-    # Una vista del icono (redondeado, como en el lanzador) para revisarlo
-    v = bg.convert("RGBA"); v.alpha_composite(fg)
-    m = int(S * 18 / 108); v = v.crop((m, m, S - m, S - m))
-    mask = Image.new("L", v.size, 0); ImageDraw.Draw(mask).rounded_rectangle((0, 0, v.size[0] - 1, v.size[1] - 1), radius=int(v.size[0] * 0.22), fill=255)
-    out = Image.new("RGBA", v.size, (0, 0, 0, 0)); out.paste(v, (0, 0), mask)
-    out.save(f"/tmp/claude-0/-home-user/7af7ca95-170e-5969-8fd3-8fda6db34e1c/scratchpad/c-seshat/icono-{app}.png"); print("ok")
+    bg.save(f"{carpeta}/{prefijo}_bg.png"); fg.save(f"{carpeta}/{prefijo}_fg.png")
+    if not NOCHE:
+        mo.save(f"{carpeta}/{prefijo}_mono.png")
+    print("ok", app, prefijo, "noche" if NOCHE else "dia")

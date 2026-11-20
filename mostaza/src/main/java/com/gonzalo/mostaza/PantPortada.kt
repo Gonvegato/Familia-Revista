@@ -147,10 +147,10 @@ fun PaginaPortada(alAbrir: (Titulo) -> Unit, alAbrirBreve: (MetaBreve) -> Unit, 
     val tablet = LocalConfiguration.current.screenWidthDp >= 700
     Box(Modifier.fillMaxSize().background(Paper), contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 960.dp).fillMaxSize().verticalScroll(rememberScrollState())) {
-        if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Hathor entra sola). Tu biblioteca, lo que ves y tus addons van con tu cuenta.",
+        if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Polaris, y Sirius entra sola). Tu biblioteca, lo que ves y tus addons van con tu cuenta.",
             Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp))
         if (titulos.isEmpty()) Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 20.dp)) {
-            Text("Hathor es tu cine: películas y series de tus addons, de tus torrents y de tu kDrive, con lo que ves apuntado. Lo que veas 10 minutos entra solo en «Viendo».",
+            Text("Sirius es tu cine: películas y series de tus addons, de tus torrents y de tu kDrive, con lo que ves apuntado. Lo que veas 10 minutos entra solo en «Viendo».",
                 color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 22.sp)
             Spacer(Modifier.height(12.dp))
             BotonC("Explorar", fondo = AcentoBloque, letra = SobreBloque) { alIr(Destino.Explorar) }
@@ -245,7 +245,7 @@ fun PaginaPortada(alAbrir: (Titulo) -> Unit, alAbrirBreve: (MetaBreve) -> Unit, 
             } else when (val f = d.filas) {
                 null -> Nota("Mirando tus catálogos…", Modifier.padding(top = 26.dp))
                 else -> {
-                    Nota("Para que Hathor tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).tocable { alIr(Destino.Ajustes) })
+                    Nota("Para que Sirius tenga su propio catálogo, como una plataforma, pon tu clave de TMDB (gratis) en Ajustes → Catálogo.", Modifier.padding(top = 22.dp).tocable { alIr(Destino.Ajustes) })
                     if (f.isEmpty()) Nota("Tus addons no dan ningún catálogo ahora mismo (sin conexión, o no tienen). Añade addons en «Addons».", Modifier.padding(top = 26.dp))
                     f.forEach { fila -> FilaPosters(fila.titulo, fila.cosas.take(30), alAbrirBreve, sub = { it.ano }) }
                 }
@@ -256,8 +256,8 @@ fun PaginaPortada(alAbrir: (Titulo) -> Unit, alAbrirBreve: (MetaBreve) -> Unit, 
                 EnlaceRevista("Explorar →", acento = true) { alIr(Destino.Explorar) }
                 EnlaceRevista("Addons →") { alIr(Destino.Addons) }
             }
-            if (Hermanas.azabache(ctx)) { Filete(1.dp, Line); MagLink("Abrir Jonsu", "Valora lo que acabas de ver") { Hermanas.abre(ctx, Hermanas.AZABACHE) } }
-            Text("Hathor · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
+            if (Hermanas.azabache(ctx)) { Filete(1.dp, Line); MagLink("Abrir Polaris", "Valora lo que acabas de ver") { Hermanas.abre(ctx, Hermanas.AZABACHE) } }
+            Text("Sirius · hecho en casa", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 12.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp))
             Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 2.dp))
             Spacer(Modifier.height(24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }

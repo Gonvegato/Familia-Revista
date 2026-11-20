@@ -328,7 +328,7 @@ object Suite {
             val v = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, "$safe ${java.text.SimpleDateFormat("yyyy-MM-dd HH.mm.ss", java.util.Locale.ROOT).format(java.util.Date(s.time))}.$ext")
                 put(MediaStore.Images.Media.MIME_TYPE, s.mime)
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Bastet/$safe")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Orion/$safe")
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
             val r = c.contentResolver
@@ -388,8 +388,8 @@ object Suite {
     /** Igual que [send], pero con toda la respuesta del PC. */
     suspend fun sendRaw(op: String, args: JSONObject = JSONObject(), dev: String? = null, timeoutMs: Long = 45_000): JSONObject = withContext(Dispatchers.IO) {
         fun fail(m: String) = JSONObject().put("ok", false).put("msg", m)
-        val to = dev ?: target()?.dev ?: return@withContext fail("No hay ningún PC con Atrio conectado.")
-        val body = JSONObject().put("op", op).put("a", args).put("t", JSONObject().put(".sv", "timestamp")).put("by", "Bastet · " + Cuenta.nombreDispositivo)
+        val to = dev ?: target()?.dev ?: return@withContext fail("No hay ningún PC con Polaris conectado.")
+        val body = JSONObject().put("op", op).put("a", args).put("t", JSONObject().put(".sv", "timestamp")).put("by", "Orion · " + Cuenta.nombreDispositivo)
         val r = try { Cuenta.db("POST", base() + "/suite/cmd/$to", body.toString()) } catch (e: Exception) { return@withContext fail(e.message ?: "sin conexión") }
         val id = try { JSONObject(r ?: "{}").optString("name") } catch (e: Exception) { "" }
         if (id.isBlank()) return@withContext fail("Firebase no ha aceptado la orden.")
@@ -401,13 +401,13 @@ object Suite {
         if (res != null) return@withContext res
         val acked = tree?.optJSONObject("cmd")?.optJSONObject(to)?.optJSONObject(id)?.optBoolean("ack") == true
         if (acked) JSONObject().put("ok", true).put("msg", "${target()?.name ?: "El PC"} ha dejado de contestar: se está apagando")
-        else fail("El PC no responde (¿Atrio está abierto y con tu cuenta?).")
+        else fail("El PC no responde (¿Polaris está abierto y con tu cuenta?).")
     }
 
     private suspend fun answer(id: String, c: JSONObject) {
         val res = when (c.optString("op")) {
-            "ping" -> JSONObject().put("ok", true).put("msg", "Bastet en ${Cuenta.nombreDispositivo}")
-            else -> JSONObject().put("ok", false).put("msg", "Bastet no atiende esa orden (${c.optString("op")}).")
+            "ping" -> JSONObject().put("ok", true).put("msg", "Orion en ${Cuenta.nombreDispositivo}")
+            else -> JSONObject().put("ok", false).put("msg", "Orion no atiende esa orden (${c.optString("op")}).")
         }
         try { Cuenta.db("PUT", base() + "/suite/cmd/${Cuenta.dispositivo}/$id/res", res.put("t", JSONObject().put(".sv", "timestamp")).toString(), "print=silent") } catch (e: Exception) { }
     }

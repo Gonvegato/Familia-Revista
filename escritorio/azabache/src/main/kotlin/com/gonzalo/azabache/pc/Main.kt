@@ -7,5 +7,5 @@ import com.gonzalo.familia.pc.appDeLaFamilia
 fun main() {
     val icono = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
         ?.let { runCatching { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }.getOrNull() }
-    appDeLaFamilia("azabache", "Jonsu", icono) { AppAzabache() }
+    appDeLaFamilia("azabache", "Polaris", icono) { AppAzabache() }
 }

@@ -266,7 +266,7 @@ fun PantPrincipal(
         // ---- La cabecera de la dirección C: un bloque de tinta (crema en Thot) con la fila pequeña y «THOT.» en grotesca enorme
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = if (tablet) 40.dp else 20.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
-                if (plegado > 0f) NombreConPunto("Thot", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
+                if (plegado > 0f) NombreConPunto("Nova", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
                 EnlaceRevista("Buscar", Modifier.onGloballyPositioned { sitioBuscar[0] = it }, color = Paper.copy(alpha = 0.75f)) {
                     if (!buscando) { com.gonzalo.familia.Vibra.clic(vista); aperturaBusca++; buscando = true }
                 }
@@ -288,7 +288,7 @@ fun PantPrincipal(
                     }
                 }
             }) {
-                NombreConPunto("Thot", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
+                NombreConPunto("Nova", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
         com.gonzalo.familia.PestanasPager(NOMBRES_PAGINAS, pager, cuentas, Paper, Charcoal, Acento, SobreAcento, Body, Grotesca) { i -> ambito.launch { pager.animateScrollToPage(i) } }

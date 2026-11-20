@@ -38,7 +38,7 @@ import java.io.File
  * y la apertura de la ficha). Las dos viajan con tu cuenta (por su contenido); qué parte se ve ([Encuadre]) es de cada dispositivo.
  */
 
-private const val NAVEGADOR = "Mozilla/5.0 (Linux; Android 14) Bastet"
+private const val NAVEGADOR = "Mozilla/5.0 (Linux; Android 14) Orion"
 
 /** El fondo, la portada como fondo y quitarlo: lo que hace la hoja «IMÁGENES.». */
 object ImagenesJuego {

@@ -78,7 +78,7 @@ object Paginas {
         fun enc(s: String) = URLEncoder.encode(s, "UTF-8")
         val url = "https://openlibrary.org/search.json?title=${enc(titulo)}" + (if (autor.isNotBlank()) "&author=${enc(autor)}" else "") + "&limit=10&fields=title,author_name,number_of_pages_median"
         val c = URL(url).openConnection() as HttpURLConnection
-        c.connectTimeout = 10000; c.readTimeout = 12000; c.setRequestProperty("User-Agent", "Marfil/1 (lector de libros personal)")
+        c.connectTimeout = 10000; c.readTimeout = 12000; c.setRequestProperty("User-Agent", "Lyra/1 (lector de libros personal)")
         if (c.responseCode !in 200..299) return null
         deOpenLibrary(c.inputStream.use { it.readBytes().decodeToString() }, titulo, autor)
     }.getOrNull()

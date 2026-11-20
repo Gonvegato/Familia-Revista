@@ -287,7 +287,7 @@ class LectorActivity : ComponentActivity() {
                 return true
             }
         }
-        web.addJavascriptInterface(Bridge(), "Atrio")
+        web.addJavascriptInterface(Bridge(), "Polaris")
         marco.addView(web, android.widget.FrameLayout.LayoutParams(-1, -1))
         // El lector necesita un WebView reciente (se actualiza solo desde Google Play)
         val wv = androidx.webkit.WebViewCompat.getCurrentWebViewPackage(this)
@@ -781,7 +781,7 @@ class LectorActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun copy(text: String) = runOnUiThread {
-            (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Atrio", text))
+            (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Polaris", text))
         }
 
         @JavascriptInterface

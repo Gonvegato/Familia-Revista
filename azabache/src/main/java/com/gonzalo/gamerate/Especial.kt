@@ -286,7 +286,7 @@ fun NumeroEspecial(name: String, kinds: List<Kind>, entries: (Kind) -> List<Shel
                 }
             }
             Spacer(Modifier.height(30.dp))
-            Text("Jonsu · número especial · $year", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Text("Polaris · número especial · $year", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
             Spacer(Modifier.height(28.dp))
         }
     }

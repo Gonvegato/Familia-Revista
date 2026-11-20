@@ -18,15 +18,15 @@ android {
     defaultConfig {
         // Convive con Atrio (com.gonzalo.gamerate) y Pórtico: otro paquete, otra app, misma familia visual.
         applicationId = if (sesKobo) "com.gonzalo.marfil.seskobo" else "com.gonzalo.marfil"
-        manifestPlaceholders["etiqueta"] = if (sesKobo) "SesKobo" else "Seshat"
+        manifestPlaceholders["etiqueta"] = if (sesKobo) "LyraKobo" else "Lyra"
         buildConfigField("boolean", "SESKOBO", sesKobo.toString())
         minSdk = 29
         targetSdk = 35
-        versionCode = 75
-        versionName = "0.22.8"
-        // (SesKobo lleva su propia revisión: código = el de Seshat × 100 + la revisión, para poder actualizarla sin tocar la normal)
-        val revisionKobo = 7
-        if (sesKobo) { versionNameSuffix = "-kobo.$revisionKobo"; versionCode = 75 * 100 + revisionKobo }
+        versionCode = 76
+        versionName = "0.23.0"
+        // (LyraKobo lleva su propia revisión: código = el de Lyra × 100 + la revisión, para poder actualizarla sin tocar la normal)
+        val revisionKobo = 1
+        if (sesKobo) { versionNameSuffix = "-kobo.$revisionKobo"; versionCode = 76 * 100 + revisionKobo }
         // Solo los procesadores que se usan (el traductor del diccionario pesa ~16 MB por cada uno): móviles y tablets (arm64) y Waydroid en el PC (x86_64)
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }

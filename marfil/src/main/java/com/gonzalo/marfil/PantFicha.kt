@@ -349,7 +349,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
                 CabezaCasilla("Páginas", "Editar" to { renombrar = true })
                 FitTitle(if (l.paginas > 0) "${l.paginas}" else "—", 40.sp, 42.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
                 Text("EN TOTAL", color = Muted, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text(when (l.paginasOrigen) { "manual" -> "las que has puesto tú"; "atrio" -> "las de Atrio"; "pdf" -> "las del PDF"; "openlibrary" -> "las de su edición (Open Library)"; "estimado" -> "calculadas por el texto"; else -> "sin dato: ponlas en Editar" },
+                Text(when (l.paginasOrigen) { "manual" -> "las que has puesto tú"; "atrio" -> "las de Polaris"; "pdf" -> "las del PDF"; "openlibrary" -> "las de su edición (Open Library)"; "estimado" -> "calculadas por el texto"; else -> "sin dato: ponlas en Editar" },
                     color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
             }
         )
@@ -362,18 +362,18 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
                 if (NotaAzabache.vieja(ctx)) withContext(Dispatchers.IO) { NotaAzabache.refrescar(ctx) }.let { nota = NotaAzabache.cargar(ctx)[l.clave] }
             }
             Column(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp)) {
-                SeccionNumerada(sig(), "En Jonsu", arriba = 0.dp)
+                SeccionNumerada(sig(), "En Polaris", arriba = 0.dp)
                 if (nota != null) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         FitTitle("${nota!!.general}", 48.sp, 50.sp, unaLinea = true, maxLines = 1, family = Grotesca, fontWeight = FontWeight.ExtraBold)
                         Text(" /100", color = Muted, fontFamily = Body, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp))
                     }
                     if (nota!!.resena.isNotBlank()) Text(nota!!.resena, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 21.sp, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Abrir en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, nota) }
+                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Abrir en Polaris →", acento = true) { NotaAzabache.abrir(ctx, nota) }
                 } else Row(verticalAlignment = Alignment.CenterVertically) {
                     // Una línea: lo que hay y qué hacer
                     Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
-                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(l.id, 0, "")) }
+                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Polaris →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(l.id, 0, "")) }
                 }
             }
             Filete(2.dp)
@@ -416,7 +416,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alLeer: (Libro) -> Unit, apertur
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = cristal })
                 // Un escrito de Cobalto se edita allí: aquí no se renombra, ni se le pone portada, ni se borra (volvería al refrescar)
                 if (cristal < 0.99f) Row(Modifier.graphicsLayer { alpha = 1f - cristal }, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Thot", color = tinta) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
+                    if (l.esEscrito) { if (Escritos.instaladoCobalto(ctx)) EnlaceRevista("Escribir en Nova", color = tinta) { Escritos.abrirCobalto(ctx, l.clave.removePrefix("escrito:")) } }
                     else {
                         EnlaceRevista("Imágenes", color = tinta) { imagenesFondo = false; portada = true }
                         EnlaceRevista("Editar", color = tinta) { renombrar = true }

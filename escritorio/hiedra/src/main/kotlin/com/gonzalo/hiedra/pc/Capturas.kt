@@ -112,7 +112,7 @@ object Capturas {
     }
 
     /** Donde van las capturas de Hiedra: `Imágenes/Hiedra`. */
-    fun carpeta(): File = File(imagenes(), "Bastet")
+    fun carpeta(): File = File(imagenes(), "Orion")
 
     // ---------------------------------------------------------------- las de este ordenador
 
@@ -175,7 +175,7 @@ object Capturas {
         // A tu kDrive, en segundo plano
         if (AjustesTuPc.capturasAKDrive && LaFamilia.iniciada && LaFamilia.dentro) Thread({ runCatching { aKDrive(img.bytes, nombre, p?.nombre) } }, "hiedra-captura-kdrive").apply { isDaemon = true; start() }
         // A la cuenta, por trozos, para que el móvil la baje tal cual (sin recomprimir)
-        if (aLaCuenta) sube(id, img, nombre, por ?: "Bastet", p)
+        if (aLaCuenta) sube(id, img, nombre, por ?: "Orion", p)
         return h
     }
 
@@ -217,7 +217,7 @@ object Capturas {
     /** La copia en tu nube (Google Drive o kDrive): «Hiedra/Capturas/<juego>/<nombre>». */
     private fun aKDrive(bytes: ByteArray, nombre: String, juego: String?) {
         if (!com.gonzalo.familia.pc.Nube.activo) return
-        com.gonzalo.familia.pc.Nube.sube("Hiedra/Capturas/${seguro(juego)}", nombre, bytes.size.toLong()) { bytes.inputStream() }
+        com.gonzalo.familia.pc.Nube.sube("Orion/Capturas/${seguro(juego)}", nombre, bytes.size.toLong()) { bytes.inputStream() }
     }
 
     /**

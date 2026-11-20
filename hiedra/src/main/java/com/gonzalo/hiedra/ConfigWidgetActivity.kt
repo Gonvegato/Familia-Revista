@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
  * a otro) o uno fijo que eliges aquí. Es lo que antes hacían los accesos directos, pero con el dibujo de la revista.
  */
 class ConfigWidgetActivity : EstiloWidgetActivity() {
-    override val nombreApp = "Bastet"
+    override val nombreApp = "Orion"
     override val papelApp = 0xFFF8F0D4.toInt()
     override val tintaApp = 0xFF000000.toInt()
     override val acentoApp = 0xFF7A8A3A.toInt()
@@ -60,7 +60,7 @@ fun ElegirJuegoWidget(alElegir: (String?) -> Unit) {
         Filete(2.dp)
         CampoRevista("Buscar", busca, "un juego fijo") { busca = it }
         LazyColumn(Modifier.fillMaxSize()) {
-            if (lista.isEmpty()) item { Text("Todavía no hay juegos en Bastet.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
+            if (lista.isEmpty()) item { Text("Todavía no hay juegos en Orion.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 17.sp, modifier = Modifier.padding(top = 20.dp)) }
             items(lista, key = { it.id }) { j ->
                 Row(Modifier.fillMaxWidth().clickable { alElegir(j.id) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.width(40.dp).aspectRatio(PROPORCION_PORTADA).clip(esquina(3.dp))) { PortadaArco(j, Modifier.matchParentSize(), titulo = false, letra = true, relleno = true, tamLetra = 18) }

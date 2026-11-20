@@ -18,7 +18,7 @@ object NubeLibros {
     fun sube(l: Libro, f: File, progreso: (Long) -> Unit = {}): EnNube {
         val ext = (l.archivo.substringAfterLast('.', "").ifBlank { f.extension }).lowercase().take(5).ifBlank { "epub" }
         val nombre = "${seguro(l.titulo)}.$ext"
-        val ruta = "Marfil/Libros/${seguro(l.titulo)}"
+        val ruta = "Lyra/Libros/${seguro(l.titulo)}"
         val g = Nube.gdrive()
         val x = if (g.activo) {
             val gdId = g.sube(ruta, nombre, f.length(), progreso) { f.inputStream() }

@@ -203,7 +203,7 @@ object Servicios {
     /** Trae las horas de Steam y las pone. Devuelve el mensaje para la interfaz. Bloqueante (red). */
     suspend fun traerHorasSteam(c: Context): String {
         val k = claves(c)
-        if (k.steamKey.isBlank() || k.steamUser.isBlank()) return "Faltan la clave y el perfil de Steam: ponlos aquí abajo, o en Atrio y sincroniza."
+        if (k.steamKey.isBlank() || k.steamUser.isBlank()) return "Faltan la clave y el perfil de Steam: ponlos aquí abajo, o en Polaris y sincroniza."
         return try {
             val n = Steam.aplicar(Steam.jugados(k.steamUser, k.steamKey)); anotaSteam(c)
             if (n == 0) "Horas de Steam al día (ningún juego ha cambiado)." else "Horas de Steam puestas en $n ${if (n == 1) "juego" else "juegos"}."
@@ -233,7 +233,7 @@ fun DialogoSgdb(j: Juego, alCerrar: () -> Unit, alElegir: (String) -> Unit) {
             Antetitulo(elegido?.name ?: "SteamGridDB", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
             if (key.isBlank()) {
                 Text("Falta la API key de SteamGridDB.", color = Charcoal, fontFamily = Display, fontSize = 20.sp, modifier = Modifier.padding(top = 10.dp))
-                Cuerpo("Se genera en tu perfil de steamgriddb.com (Preferencias → API). Ponla en Ajustes → Cuenta → Servicios; si ya la tienes en Atrio, se coge sola al vincular la cuenta.", modifier = Modifier.padding(top = 6.dp))
+                Cuerpo("Se genera en tu perfil de steamgriddb.com (Preferencias → API). Ponla en Ajustes → Cuenta → Servicios; si ya la tienes en Polaris, se coge sola al vincular la cuenta.", modifier = Modifier.padding(top = 6.dp))
                 return@Column
             }
             if (elegido == null) {
@@ -275,21 +275,21 @@ fun SeccionServicios() {
     // Al abrir Ajustes, si hay cuenta, se miran las de Atrio (por si las has cambiado allí)
     LaunchedEffect(Unit) { if (Cuenta.vinculada) { mirando = true; withContext(Dispatchers.IO) { runCatching { Servicios.refrescarDeAtrio(ctx) } }; atrio = Servicios.deAtrio(ctx); mirando = false } }
     /** Qué hay de cada clave: la tuya, la de Atrio o ninguna. */
-    fun estado(mia: String, deAtrio: String) = when { mia.isNotBlank() -> "la tuya"; deAtrio.isNotBlank() -> "la de Atrio"; else -> "ninguna" }
+    fun estado(mia: String, deAtrio: String) = when { mia.isNotBlank() -> "la tuya"; deAtrio.isNotBlank() -> "la de Polaris"; else -> "ninguna" }
     val resumen = listOf("SteamGridDB" to estado(p.sgdb, atrio.sgdb), "Steam" to estado(p.steamKey, atrio.steamKey) + (if (p.steamUser.isBlank() && atrio.steamUser.isBlank()) ", sin perfil" else ""),
         "RAWG" to estado(p.rawg, atrio.rawg), "IGDB" to estado(p.igdbId, atrio.igdbId), "kDrive" to (if (KDrive.on(ctx)) "conectado" else "sin conectar (en «Avanzado»)"))
-    Cuerpo("SteamGridDB da las portadas; Steam, tus horas; RAWG e IGDB, los datos de cada juego (fecha, estudio, géneros, lo que suele durar). Lo que pongas aquí manda; si lo dejas vacío, se usa lo que tengas en Atrio (viene con tu cuenta).", tam = 12)
+    Cuerpo("SteamGridDB da las portadas; Steam, tus horas; RAWG e IGDB, los datos de cada juego (fecha, estudio, géneros, lo que suele durar). Lo que pongas aquí manda; si lo dejas vacío, se usa lo que tengas en Polaris (viene con tu cuenta).", tam = 12)
     Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp)) { resumen.forEach { (n, v) -> MagFact(n, v) } }
-    if (mirando) Text("Mirando las de Atrio…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp)
-    else if (Cuenta.vinculada && Servicios.ultimaAtrio(ctx) == 0L) Text("Todavía no se han leído las de Atrio: sincroniza (arriba).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp)
-    CampoRevista("SteamGridDB", p.sgdb, if (atrio.sgdb.isNotBlank()) "la de Atrio" else "API key (steamgriddb.com → Preferencias → API)") { guarda(p.copia(sgdb = it)) }
-    CampoRevista("Steam", p.steamKey, if (atrio.steamKey.isNotBlank()) "la de Atrio" else "clave de Steam (steamcommunity.com/dev/apikey)", secreto = true) { guarda(p.copia(steamKey = it)) }
-    CampoRevista("Perfil", p.steamUser, if (atrio.steamUser.isNotBlank()) "el de Atrio" else "URL del perfil, nombre o SteamID64") { guarda(p.copia(steamUser = it)) }
-    CampoRevista("RAWG", p.rawg, if (atrio.rawg.isNotBlank()) "la de Atrio" else "API key (rawg.io/apidocs)") { guarda(p.copia(rawg = it)) }
-    CampoRevista("IGDB (Client ID)", p.igdbId, if (atrio.igdbId.isNotBlank()) "el de Atrio" else "Client ID de Twitch (dev.twitch.tv)") { guarda(p.copia(igdbId = it)) }
-    CampoRevista("IGDB (secreto)", p.igdbSecret, if (atrio.igdbSecret.isNotBlank()) "el de Atrio" else "secreto de esa aplicación", secreto = true) { guarda(p.copia(igdbSecret = it)) }
+    if (mirando) Text("Mirando las de Polaris…", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp)
+    else if (Cuenta.vinculada && Servicios.ultimaAtrio(ctx) == 0L) Text("Todavía no se han leído las de Polaris: sincroniza (arriba).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp)
+    CampoRevista("SteamGridDB", p.sgdb, if (atrio.sgdb.isNotBlank()) "la de Polaris" else "API key (steamgriddb.com → Preferencias → API)") { guarda(p.copia(sgdb = it)) }
+    CampoRevista("Steam", p.steamKey, if (atrio.steamKey.isNotBlank()) "la de Polaris" else "clave de Steam (steamcommunity.com/dev/apikey)", secreto = true) { guarda(p.copia(steamKey = it)) }
+    CampoRevista("Perfil", p.steamUser, if (atrio.steamUser.isNotBlank()) "el de Polaris" else "URL del perfil, nombre o SteamID64") { guarda(p.copia(steamUser = it)) }
+    CampoRevista("RAWG", p.rawg, if (atrio.rawg.isNotBlank()) "la de Polaris" else "API key (rawg.io/apidocs)") { guarda(p.copia(rawg = it)) }
+    CampoRevista("IGDB (Client ID)", p.igdbId, if (atrio.igdbId.isNotBlank()) "el de Polaris" else "Client ID de Twitch (dev.twitch.tv)") { guarda(p.copia(igdbId = it)) }
+    CampoRevista("IGDB (secreto)", p.igdbSecret, if (atrio.igdbSecret.isNotBlank()) "el de Polaris" else "secreto de esa aplicación", secreto = true) { guarda(p.copia(igdbSecret = it)) }
     Filete(1.dp, Line)
-    MagLink(if (ocupado) "Un momento…" else "Traer las horas de Steam", "Las pone en los juegos de Bastet que se llamen igual (los del PC ya las traen de Atrio). La biblioteca de Steam tiene que ser pública.") {
+    MagLink(if (ocupado) "Un momento…" else "Traer las horas de Steam", "Las pone en los juegos de Orion que se llamen igual (los del PC ya las traen de Polaris). La biblioteca de Steam tiene que ser pública.") {
         if (ocupado) return@MagLink
         ocupado = true; msg = "Hablando con Steam…"
         scope.launch { msg = withContext(Dispatchers.IO) { Servicios.traerHorasSteam(ctx) }; ocupado = false }

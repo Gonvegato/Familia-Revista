@@ -204,7 +204,7 @@ jobs:
           set -e
           ./gradlew -PsoloEscritorio packageDmg --console=plain
           mkdir -p dist-mac
-          nombre() { case "$1" in hiedra) echo Bastet ;; marfil) echo Seshat ;; cobalto) echo Thot ;; azabache) echo Jonsu ;; mostaza) echo Hathor ;; cobre) echo Nut ;; *) echo "$(echo ${1:0:1} | tr '[:lower:]' '[:upper:]')${1:1}" ;; esac; }
+          nombre() { case "$1" in hiedra) echo Orion ;; marfil) echo Lyra ;; cobalto) echo Nova ;; azabache) echo Polaris ;; mostaza) echo Sirius ;; cobre) echo Pulsar ;; *) echo "$(echo ${1:0:1} | tr '[:lower:]' '[:upper:]')${1:1}" ;; esac; }
           for d in escritorio/*/; do
             a=$(basename "$d"); [ "$a" = familia ] && continue
             [ -d "$d/build/compose/binaries/main/dmg" ] || continue

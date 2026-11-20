@@ -72,8 +72,8 @@ class CuentaMarfilTest {
             assertEquals("sin esperar al Wi-Fi", androidx.work.NetworkType.CONNECTED, w.constraints.requiredNetworkType)
             // Hay conexión: se sube
             androidx.work.testing.WorkManagerTestInitHelper.getTestDriver(ctx)!!.run { setAllConstraintsMet(w.id); setInitialDelayMet(w.id) }
-            espera("subido a tu kDrive") { kd.byPath("Marfil/Libros/Solaris/Solaris.epub") != null }
-            assertEquals("EPUB de Solaris", String(kd.byPath("Marfil/Libros/Solaris/Solaris.epub")!!.bytes))
+            espera("subido a tu kDrive") { kd.byPath("Lyra/Libros/Solaris/Solaris.epub") != null }
+            assertEquals("EPUB de Solaris", String(kd.byPath("Lyra/Libros/Solaris/Solaris.epub")!!.bytes))
             espera("apuntado en el libro de la cuenta") { Biblioteca.nube(kid) != null }
             assertTrue("no queda nada por subir", NubeLibros.porSubir(ctx).isEmpty())
             sincroniza()

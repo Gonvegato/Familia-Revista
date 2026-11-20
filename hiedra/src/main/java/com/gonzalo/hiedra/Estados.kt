@@ -116,7 +116,7 @@ object Estados {
         if (subido(c, kid, hueco, m.hash)) return true
         if (!Cuenta.vinculada || !KDrive.on(c)) return false
         val f = archivo(c, kid, hueco)
-        val sub = KDrive.subeDual(c, "Hiedra/Estados/$sistema/$kid", "$hueco.state", f.length()) { f.inputStream() }
+        val sub = KDrive.subeDual(c, "Orion/Estados/$sistema/$kid", "$hueco.state", f.length()) { f.inputStream() }
         val o = JSONObject().put("n", "$hueco.state").put("h", m.hash).put("s", m.tam).put("dev", Cuenta.dispositivo)
             .put("dn", m.dn).put("nucleo", m.nucleo).put("version", m.version).put("t", JSONObject().put(".sv", "timestamp"))
             .apply { if (sub.gdId.isNotBlank()) put("gd", sub.gdId); if (sub.kdId > 0) put("id", sub.kdId) }

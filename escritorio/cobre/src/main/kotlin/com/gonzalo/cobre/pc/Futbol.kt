@@ -89,7 +89,7 @@ object AjustesFutbol {
 object Futbol {
     var version by mutableIntStateOf(0)
         private set
-    @Volatile var red: Red = RedJava("Nut/${Actualizador.version}")
+    @Volatile var red: Red = RedJava("Pulsar/${Actualizador.version}")
     @Volatile var dirPruebas: File? = null
     @Volatile private var cacheProp: CacheFutbol? = null
     private val fallos = ConcurrentHashMap<String, Long>()
@@ -229,7 +229,7 @@ object Futbol {
      * aquí, la siguiente entrada que sí). En mpv, Re Pág / Av Pág pasan por las entradas del grupo. Devuelve un aviso si no se puede. Bloquea.
      */
     fun pon(g: GrupoCanales, i: Int = 0, quiero: Calidad = calidad()): String? {
-        if (g.canales.isEmpty()) return "«${g.nombre}» no tiene canales: elígelos en Nut del móvil (Ajustes → Fútbol)."
+        if (g.canales.isEmpty()) return "«${g.nombre}» no tiene canales: elígelos en Pulsar del móvil (Ajustes → Fútbol)."
         val resueltas = g.canales.map { e -> Calidad.entries.mapNotNull { q -> e.en(q)?.let { r -> resuelve(r)?.let { q to it } } }.toMap() }
         val n = g.canales.size
         val primera = (0 until n).map { (i + it).mod(n) }.firstOrNull { resueltas[it].isNotEmpty() } ?: return "Los canales de «${g.nombre}» no están en tus listas de este ordenador."

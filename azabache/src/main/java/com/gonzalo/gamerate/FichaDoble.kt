@@ -129,9 +129,9 @@ private fun lerpCo(a: Color, b: Color, t: Float) = androidx.compose.ui.graphics.
 
 /** El botón principal de una ficha según su categoría: jugar en Bastet, leer en Seshat, ver en Hathor (o nada). */
 fun principalDe(ctx: Context, kind: Kind, id: Long): Pair<String, () -> Unit>? = when {
-    kind.isGame && Hermanas.instalada(ctx, Hermanas.PAQ_HIEDRA) -> "Jugar en Bastet" to { Hermanas.jugarEnHiedra(ctx, id); Unit }
-    kind.isBook && Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL) -> "Leer en Seshat" to { Hermanas.leerEnMarfil(ctx, id); Unit }
-    (kind.isMovie || kind.isTv) && Hermanas.instalada(ctx, Hermanas.PAQ_MOSTAZA) -> "Ver en Hathor" to { Hermanas.verEnMostaza(ctx, CosasMostaza.refDe(ctx, kind, id)); Unit }
+    kind.isGame && Hermanas.instalada(ctx, Hermanas.PAQ_HIEDRA) -> "Jugar en Orion" to { Hermanas.jugarEnHiedra(ctx, id); Unit }
+    kind.isBook && Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL) -> "Leer en Lyra" to { Hermanas.leerEnMarfil(ctx, id); Unit }
+    (kind.isMovie || kind.isTv) && Hermanas.instalada(ctx, Hermanas.PAQ_MOSTAZA) -> "Ver en Sirius" to { Hermanas.verEnMostaza(ctx, CosasMostaza.refDe(ctx, kind, id)); Unit }
     else -> null
 }
 

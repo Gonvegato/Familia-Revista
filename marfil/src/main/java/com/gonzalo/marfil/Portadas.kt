@@ -21,7 +21,7 @@ object Portadas {
 
     private fun get(url: String, ms: Int = 12000): String? = runCatching {
         val c = URL(url).openConnection() as HttpURLConnection
-        c.connectTimeout = ms; c.readTimeout = ms; c.setRequestProperty("User-Agent", "Marfil/1 (lector de libros personal)")
+        c.connectTimeout = ms; c.readTimeout = ms; c.setRequestProperty("User-Agent", "Lyra/1 (lector de libros personal)")
         if (c.responseCode !in 200..299) return null
         c.inputStream.use { it.readBytes().decodeToString() }
     }.getOrNull()
@@ -59,7 +59,7 @@ object Portadas {
     /** Baja una imagen (como mucho 8 MB). Bloqueante (red). */
     fun descargar(url: String): ByteArray? = runCatching {
         val c = URL(url).openConnection() as HttpURLConnection
-        c.connectTimeout = 15000; c.readTimeout = 20000; c.setRequestProperty("User-Agent", "Marfil/1")
+        c.connectTimeout = 15000; c.readTimeout = 20000; c.setRequestProperty("User-Agent", "Lyra/1")
         if (c.responseCode !in 200..299) return null
         c.inputStream.use { i -> val b = i.readBytes(); b.takeIf { it.size in 1000..8_000_000 } }
     }.getOrNull()

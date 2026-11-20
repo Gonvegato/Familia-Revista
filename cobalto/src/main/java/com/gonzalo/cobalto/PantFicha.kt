@@ -65,7 +65,7 @@ private fun ColumnScope.Casilla(titulo: String, cifra: String, etiqueta: String,
 
 /** El texto del botón principal de la ficha según la obra. */
 fun textoPrincipal(e: Escritos, o: Doc): String = when {
-    estadoDe(o) == EstadoObra.TERMINADA -> "Leer en Seshat"
+    estadoDe(o) == EstadoObra.TERMINADA -> "Leer en Lyra"
     e.palabrasObra(o.id) == 0 -> "Empezar a escribir"
     else -> "Seguir escribiendo"
 }
@@ -157,7 +157,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alEstudio: (escena: String?, cap
                 BotonC("Abrir el manuscrito", fondo = Paper, letra = Charcoal, modifier = Modifier.drawBehind { drawRect(Charcoal, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) }) {
                     alEstudio(null, null, 0)
                 }
-                if (!Hermanas.hayMarfil(ctx)) Text("Seshat no está en este móvil: instálala para leer aquí tus capítulos terminados con su lector.", color = Muted, fontFamily = Body, fontSize = 12.sp,
+                if (!Hermanas.hayMarfil(ctx)) Text("Lyra no está en este móvil: instálala para leer aquí tus capítulos terminados con su lector.", color = Muted, fontFamily = Body, fontSize = 12.sp,
                     lineHeight = 16.sp, modifier = Modifier.padding(top = 8.dp))
             }
 
@@ -210,7 +210,7 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alEstudio: (escena: String?, cap
             }
             if (caps.size > vistos.size) EnlaceRevista("Ver los ${caps.size} capítulos →", acento = true) { alEstudio(null, null, 0) }
             if (terminados > 0 && Hermanas.hayMarfil(ctx) && estado != EstadoObra.TERMINADA)
-                EnlaceRevista("Leer en Seshat ($terminados ${if (terminados == 1) "capítulo terminado" else "capítulos terminados"})", acento = true) { Hermanas.leerEnMarfil(ctx, id) }
+                EnlaceRevista("Leer en Lyra ($terminados ${if (terminados == 1) "capítulo terminado" else "capítulos terminados"})", acento = true) { Hermanas.leerEnMarfil(ctx, id) }
         }
 
         // ---- 03 Fichas y notas

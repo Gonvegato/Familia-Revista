@@ -122,7 +122,7 @@ fun PantFicha(id: String, nav: Nav, alCerrar: () -> Unit) {
                 l.terminados.takeIf { it.isNotEmpty() }?.let { MagFact(if (it.size > 1) "Lo terminaste" else "Terminado", it.joinToString(", ") { t -> fechaDe(t) }) }
                 SubrayadosDeLaFicha(l, nav, volver, aqui != null || l.nube != null)
                 Spacer(Modifier.height(26.dp))
-                TituloC("En Jonsu")
+                TituloC("En Polaris")
                 Text(l.nota?.toString() ?: "Sin valorar", color = if (l.nota != null) Acento else Muted, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = if (l.nota != null) 44.sp else 22.sp)
                 l.n.texto("resena").takeIf { it.isNotBlank() }?.let { Text("«$it»", color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 18.sp, lineHeight = 26.sp) }
                 Spacer(Modifier.height(30.dp))
@@ -134,7 +134,7 @@ fun PantFicha(id: String, nav: Nav, alCerrar: () -> Unit) {
     if (borrar) Dialogo("¿Borrar «${l.titulo}»?", { borrar = false }, botones = {
         BotonSuave("Cancelar") { borrar = false }
         BotonSuave("Borrar", peligro = true) { Libros.quita(id); borrar = false; alCerrar(); nav.aviso("Borrado") }
-    }) { Cuerpo("Sale de tu biblioteca en todos tus dispositivos (y de Jonsu). El archivo de tu kDrive no se borra.", tam = 14) }
+    }) { Cuerpo("Sale de tu biblioteca en todos tus dispositivos (y de Polaris). El archivo de tu kDrive no se borra.", tam = 14) }
 }
 
 /**
@@ -191,7 +191,7 @@ fun DialogoAnadir(nav: Nav, onCerrar: () -> Unit) {
         BotonSuave("Cancelar") { onCerrar() }
         BotonAcento(trabajo.ifBlank { "Elegir el archivo…" }, modifier = Modifier.width(200.dp), alto = 44.dp) { if (trabajo.isBlank()) elige() }
     }) {
-        Cuerpo("EPUB, PDF o cómic (CBZ). El libro pasa a tu biblioteca (la de la cuenta: lo verás también en el móvil y en Jonsu) y el archivo sube a tu kDrive, a «Marfil/Libros», para leerlo en cualquier dispositivo.", tam = 14)
+        Cuerpo("EPUB, PDF o cómic (CBZ). El libro pasa a tu biblioteca (la de la cuenta: lo verás también en el móvil y en Polaris) y el archivo sube a tu kDrive, a «Lyra/Libros», para leerlo en cualquier dispositivo.", tam = 14)
     }
 }
 
@@ -203,7 +203,7 @@ fun anadeArchivo(f: File): String {
         "epub" -> Epub(f).use { e -> titulo = e.titulo; autor = e.autor; portada = runCatching { e.portada() }.getOrNull() }
         "pdf" -> Pdf(f).use { p -> titulo = p.titulo; autor = p.autor; paginas = p.total; portada = runCatching { p.primeraJpeg() }.getOrNull() }
         "cbz" -> Comic(f).use { c -> paginas = c.total }
-        else -> error("Seshat del ordenador lee EPUB, PDF y cómics (CBZ).")
+        else -> error("Lyra del ordenador lee EPUB, PDF y cómics (CBZ).")
     }
     if (titulo.isBlank()) {
         val base = f.nameWithoutExtension.replace('_', ' ').replace(Regex("\\s+"), " ").trim()
@@ -233,7 +233,7 @@ fun PantAjustes(nav: Nav, alCerrar: () -> Unit) {
                 Antetitulo("Tus libros en este ordenador")
                 Spacer(Modifier.height(6.dp))
                 MagFact("Carpeta", Libros.carpeta().absolutePath)
-                MagFact("Tu nube", if (com.gonzalo.familia.pc.Nube.activo) "${com.gonzalo.familia.pc.Nube.nombre} conectado (las claves son de la cuenta)" else "sin poner (en Jonsu: Ajustes → Servicios)")
+                MagFact("Tu nube", if (com.gonzalo.familia.pc.Nube.activo) "${com.gonzalo.familia.pc.Nube.nombre} conectado (las claves son de la cuenta)" else "sin poner (en Polaris: Ajustes → Servicios)")
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     BotonSuave("Abrir la carpeta") { com.gonzalo.familia.pc.Sitio.abre(Libros.carpeta().absolutePath) }
@@ -244,11 +244,11 @@ fun PantAjustes(nav: Nav, alCerrar: () -> Unit) {
             2 -> {
                 Antetitulo("Apariencia")
                 Spacer(Modifier.height(6.dp))
-                Cuerpo("Seshat del ordenador tiene la apariencia de tu Seshat del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
+                Cuerpo("Lyra del ordenador tiene la apariencia de tu Lyra del móvil (viaja con la cuenta). Aquí puedes elegir claro u oscuro.", tam = 14)
                 Spacer(Modifier.height(10.dp))
                 MagChoice(listOf("Como el sistema", "Claro", "Oscuro"), Modo.eleccion) { Modo.eleccion = it; Apariencia.guarda() }
             }
-            else -> AjustesVersion("marfil", "Seshat")
+            else -> AjustesVersion("marfil", "Lyra")
         }
     }
 }

@@ -177,39 +177,39 @@ class EscritorioTest {
     @Test fun enLinuxLaVersionNuevaSePoneEncimaConSuInstalar() {
         org.junit.Assume.assumeTrue("Solo en Linux", Sitio.sistema == Sitio.Sistema.LINUX)
         fun app(dir: File, A: String, que: String) { val b = File(dir, "$A/bin").also { it.mkdirs() }; File(b, A).apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "$A/lib").mkdirs(); File(dir, "$A/lib/$A.png").writeText("png") }
-        // La de ahora, instalada con el nombre de antes (Hiedra); la nueva ya se llama Bastet
-        val donde = File(tmp.root, "datos/familia-apps/Hiedra")
-        val nueva = File(tmp.root, "datos/familia-apps/Bastet")
-        app(donde.parentFile, "Hiedra", "vieja")
+        // La de ahora, instalada con el nombre de antes (Bastet); la nueva ya se llama Orion
+        val donde = File(tmp.root, "datos/familia-apps/Bastet")
+        val nueva = File(tmp.root, "datos/familia-apps/Orion")
+        app(donde.parentFile, "Bastet", "vieja")
         // El paquete nuevo: la app y su instalar.sh hecho con la plantilla, como hace herramientas/escritorio/empaqueta-linux.sh
         val paquete = File(tmp.root, "paquete").also { it.mkdirs() }
-        app(paquete, "Bastet", "nueva")
+        app(paquete, "Orion", "nueva")
         val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
-        File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Bastet").replace("__VIEJO__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
+        File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Orion").replace("__VIEJO__", "Bastet").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
             .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt").replace("__AL_INICIAR__", " --sala"))
-        val targz = File(tmp.root, "Hiedra-9.9.9-linux.tar.gz")
-        assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Bastet", "instalar.sh").start().waitFor())
+        val targz = File(tmp.root, "Orion-9.9.9-linux.tar.gz")
+        assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Orion", "instalar.sh").start().waitFor())
         val carpeta = Actualizador.descomprime(targz, File(tmp.root, "v9.9.9"))
         val entorno = mapOf("XDG_DATA_HOME" to File(tmp.root, "datos").absolutePath, "XDG_CONFIG_HOME" to File(tmp.root, "config").absolutePath)
         // Ya se abría al entrar en la sesión (con la entrada de antes): al ponerse la nueva, esa entrada también se pone al día
         val inicio = File(tmp.root, "config/autostart/familia-hiedra.desktop").apply { parentFile.mkdirs(); writeText("[Desktop Entry]\nExec=vieja\n") }
         val programa = Actualizador.ponLinux(carpeta, "hiedra", donde, entorno)
         // Va a su carpeta con el nombre nuevo; en la de antes solo queda un atajo a la nueva (por si la vieja se vuelve a abrir desde ahí)
-        assertEquals(File(nueva, "bin/Bastet"), programa)
-        assertTrue(File(nueva, "bin/Bastet").readText().contains("nueva"))
+        assertEquals(File(nueva, "bin/Orion"), programa)
+        assertTrue(File(nueva, "bin/Orion").readText().contains("nueva"))
         assertEquals(listOf("bin"), donde.list()!!.toList())
-        assertTrue(File(donde, "bin/Hiedra").readText().contains("${nueva.absolutePath}/bin/Bastet"))
-        assertFalse("sin restos", File(nueva.parentFile, "Bastet.vieja").exists() || File(nueva.parentFile, "Bastet.nueva").exists())
+        assertTrue(File(donde, "bin/Bastet").readText().contains("${nueva.absolutePath}/bin/Orion"))
+        assertFalse("sin restos", File(nueva.parentFile, "Orion.vieja").exists() || File(nueva.parentFile, "Orion.nueva").exists())
         val menu = File(tmp.root, "datos/applications/familia-hiedra.desktop").readText()
-        assertTrue(menu.contains("Name=Bastet"))
-        assertTrue(menu.contains("Exec=\"${nueva.absolutePath}/bin/Bastet\"")); assertTrue(menu.contains("Icon=${nueva.absolutePath}/lib/Bastet.png"))
+        assertTrue(menu.contains("Name=Orion"))
+        assertTrue(menu.contains("Exec=\"${nueva.absolutePath}/bin/Orion\"")); assertTrue(menu.contains("Icon=${nueva.absolutePath}/lib/Orion.png"))
         assertTrue(menu.contains("StartupWMClass=com-gonzalo-hiedra-pc-MainKt"))
         assertFalse("desde el menú, en su ventana", menu.contains("--sala"))
-        assertTrue("al entrar en la sesión, ya en la sala", inicio.readText().contains("Exec=\"${nueva.absolutePath}/bin/Bastet\" --sala"))
+        assertTrue("al entrar en la sesión, ya en la sala", inicio.readText().contains("Exec=\"${nueva.absolutePath}/bin/Orion\" --sala"))
         // Al abrirse la nueva, el atajo de antes se va
         Actualizador.recogeNombreViejo("hiedra", nueva, Sitio.Sistema.LINUX)
         assertFalse(donde.exists())
-        assertTrue(File(nueva, "bin/Bastet").exists())
+        assertTrue(File(nueva, "bin/Orion").exists())
     }
 
     /** El Mac de verdad (en GitHub): la app nueva sale de un .dmg montado sin enseñarlo y queda encima de la de ahora. */
@@ -274,19 +274,19 @@ class EscritorioTest {
             fun app(dir: File, A: String, que: String) { val b = File(dir, "$A/bin").also { it.mkdirs() }; File(b, A).apply { writeText("#!/bin/sh\necho $que\n"); setExecutable(true) }; File(dir, "$A/lib/app/resources").mkdirs(); File(dir, "$A/lib/$A.png").writeText("png") }
             val datos = File(tmp.root, "datos")
             // La instalada, con el nombre de antes; la nueva viene con el nuevo
-            val donde = File(datos, "familia-apps/Hiedra")
-            val nueva = File(datos, "familia-apps/Bastet")
-            app(donde.parentFile, "Hiedra", "1.0.0")
+            val donde = File(datos, "familia-apps/Bastet")
+            val nueva = File(datos, "familia-apps/Orion")
+            app(donde.parentFile, "Bastet", "1.0.0")
             val paquete = File(tmp.root, "paquete").also { it.mkdirs() }
-            app(paquete, "Bastet", "9.9.9")
+            app(paquete, "Orion", "9.9.9")
             val plantilla = File(System.getProperty("user.dir"), "../../herramientas/escritorio/instalar-linux.sh").readText()
-            File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Bastet").replace("__VIEJO__", "Hiedra").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
+            File(paquete, "instalar.sh").writeText(plantilla.replace("__APP__", "Orion").replace("__VIEJO__", "Bastet").replace("__ID__", "hiedra").replace("__GENERICO__", "Juegos")
                 .replace("__DESCRIPCION__", "Tus juegos").replace("__CATEGORIAS__", "Game;").replace("__WMCLASS__", "com-gonzalo-hiedra-pc-MainKt").replace("__AL_INICIAR__", " --sala"))
-            val targz = File(tmp.root, "Bastet-9.9.9-linux.tar.gz")
-            assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Bastet", "instalar.sh").start().waitFor())
+            val targz = File(tmp.root, "Orion-9.9.9-linux.tar.gz")
+            assertEquals(0, ProcessBuilder("tar", "-C", paquete.absolutePath, "-czf", targz.absolutePath, "Orion", "instalar.sh").start().waitFor())
             kd.sube("versiones", targz.name, targz.length()) { targz.inputStream() }
             // (y otras que no le tocan: la de Mac, la de Android, una más vieja)
-            listOf("Bastet-9.9.9-mac.dmg", "Bastet-9.9.9.apk", "Hiedra-0.9.0-linux.tar.gz", "Marfil-9.9.9-linux.tar.gz", "Seshat-9.9.9-linux.tar.gz").forEach { n -> kd.sube("versiones", n, 3) { "xyz".byteInputStream() } }
+            listOf("Orion-9.9.9-mac.dmg", "Orion-9.9.9.apk", "Bastet-0.9.0-linux.tar.gz", "Marfil-9.9.9-linux.tar.gz", "Lyra-9.9.9-linux.tar.gz").forEach { n -> kd.sube("versiones", n, 3) { "xyz".byteInputStream() } }
             System.setProperty("compose.application.resources.dir", File(donde, "lib/app/resources").absolutePath)
             System.setProperty("familia.version", "1.0.0")
             System.setProperty("familia.dir", File(tmp.root, "familia").absolutePath)
@@ -297,14 +297,14 @@ class EscritorioTest {
             val lista = Actualizador.automatico("hiedra", kd)
             assertNotNull(Actualizador.estado, lista)
             assertEquals("9.9.9", lista!!.version)
-            assertTrue("sin tocar la de ahora hasta cerrar", File(donde, "bin/Hiedra").readText().contains("1.0.0"))
+            assertTrue("sin tocar la de ahora hasta cerrar", File(donde, "bin/Bastet").readText().contains("1.0.0"))
             // Al cerrar
             val programa = Actualizador.ponLaPreparada("hiedra")
-            assertEquals(File(nueva, "bin/Bastet"), programa)
-            assertTrue(File(nueva, "bin/Bastet").readText().contains("9.9.9"))
-            assertTrue("la vieja se abre en la nueva", File(donde, "bin/Hiedra").readText().contains("${nueva.absolutePath}/bin/Bastet"))
+            assertEquals(File(nueva, "bin/Orion"), programa)
+            assertTrue(File(nueva, "bin/Orion").readText().contains("9.9.9"))
+            assertTrue("la vieja se abre en la nueva", File(donde, "bin/Bastet").readText().contains("${nueva.absolutePath}/bin/Orion"))
             assertNull("ya no hay nada preparado", Actualizador.preparada)
-            assertTrue(File(datos, "applications/familia-hiedra.desktop").readText().contains("Exec=\"${nueva.absolutePath}/bin/Bastet\""))
+            assertTrue(File(datos, "applications/familia-hiedra.desktop").readText().contains("Exec=\"${nueva.absolutePath}/bin/Orion\""))
             // Y ya al día: no vuelve a bajar nada
             System.setProperty("familia.version", "9.9.9")
             assertNull(Actualizador.automatico("hiedra", kd))

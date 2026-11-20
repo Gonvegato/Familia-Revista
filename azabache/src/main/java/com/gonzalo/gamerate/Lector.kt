@@ -336,7 +336,7 @@ class ReaderActivity : ComponentActivity() {
                 return true
             }
         }
-        web.addJavascriptInterface(Bridge(), "Atrio")
+        web.addJavascriptInterface(Bridge(), "Polaris")
         setContentView(web)
         // El lector necesita un WebView reciente (se actualiza solo desde Google Play)
         val wv = androidx.webkit.WebViewCompat.getCurrentWebViewPackage(this)
@@ -664,7 +664,7 @@ class ReaderActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun copy(text: String) = runOnUiThread {
-            (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Atrio", text))
+            (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Polaris", text))
         }
 
         @JavascriptInterface
@@ -821,7 +821,7 @@ fun BookFileBar(id: Long, name: String) {
                         if (subido) DropdownMenuItem({ Text("Quitar del móvil (sigue en tu nube)") }, {
                             menu = false
                             val ok = BookFiles.removeLocal(ctx, id); tick++
-                            android.widget.Toast.makeText(ctx, if (ok) "Borrado de este móvil; lo bajas de tu nube cuando quieras" else "Quitado de Atrio; Android no deja borrar tu archivo original (bórralo tú si quieres)", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(ctx, if (ok) "Borrado de este móvil; lo bajas de tu nube cuando quieras" else "Quitado de Polaris; Android no deja borrar tu archivo original (bórralo tú si quieres)", android.widget.Toast.LENGTH_LONG).show()
                         }, leadingIcon = { Icon(Icons.Rounded.CloudDone, null) })
                         else DropdownMenuItem({ Text("Quitar el archivo") }, { menu = false; BookFiles.detach(ctx, id); tick++ }, leadingIcon = { Icon(Icons.Rounded.LinkOff, null) })
                     }
@@ -880,7 +880,7 @@ fun BookNotesBox(id: Long, name: String) {
     var all by remember { mutableStateOf(false) }
     val italic = androidx.compose.ui.text.font.FontStyle.Italic
     if (notes.isEmpty()) {
-        Text("Aún no has subrayado nada. Lo que subrayes y anotes en Seshat aparecerá en esta casilla.",
+        Text("Aún no has subrayado nada. Lo que subrayes y anotes en Lyra aparecerá en esta casilla.",
             color = Muted, fontFamily = Display, fontStyle = italic, fontSize = 15.sp, lineHeight = 20.sp)
         return
     }

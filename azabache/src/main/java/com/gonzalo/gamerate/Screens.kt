@@ -384,7 +384,7 @@ fun SettingsScreen(
             }
             3 -> {
                 SeccionAjustes("Tus claves", primera = true)
-                Text("Son de tu cuenta, en una parte que solo tú puedes leer (tu pareja no). Se ponen una vez y las usan Bastet, Seshat, Thot, Hathor y Nut sin pegarlas otra vez.",
+                Text("Son de tu cuenta, en una parte que solo tú puedes leer (tu pareja no). Se ponen una vez y las usan Orion, Lyra, Nova, Sirius y Pulsar sin pegarlas otra vez.",
                     color = Muted, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
                 listOf("SteamGridDB" to key, "Steam" to steamKey, "RAWG" to rawgKey, "IGDB" to igdbId, "TMDB" to tmdbKey).forEach { (n, v) ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.Bottom) {
@@ -403,11 +403,11 @@ fun SettingsScreen(
                 CampoRevista("Clave", tk, "API Key o Read Access Token", ascii = true) { tk = it }
                 MagLink("Guardar y comprobar", accent = true) { onSaveTmdb(tk) }
                 SeccionAjustes("RAWG")
-                Text("Datos de los juegos en Bastet: fecha, estudio y géneros de los de consola.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
-                Plegado("Con una clave gratuita de rawg.io/apidocs, Bastet saca de RAWG la fecha, el estudio y los géneros de los juegos de consola; aquí se detectan mejor los estudios.")
+                Text("Datos de los juegos en Orion: fecha, estudio y géneros de los de consola.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Plegado("Con una clave gratuita de rawg.io/apidocs, Orion saca de RAWG la fecha, el estudio y los géneros de los juegos de consola; aquí se detectan mejor los estudios.")
                 CampoRevista("Clave", rk, "clave de RAWG", ascii = true) { rk = it }
                 SeccionAjustes("IGDB")
-                Text("Cuánto dura cada juego (deprisa, normal y al 100 %), en Bastet.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Text("Cuánto dura cada juego (deprisa, normal y al 100 %), en Orion.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
                 Plegado(
                     "Es gratis y va con una cuenta de Twitch (con verificación en dos pasos): en dev.twitch.tv/console registra una aplicación con cualquier nombre, " +
                         "URL de redirección «http://localhost», categoría «Application Integration» y tipo «Confidencial». Copia aquí su Client ID y un secreto nuevo. " +
@@ -417,7 +417,7 @@ fun SettingsScreen(
                 CampoRevista("Secreto", isec, "Client Secret", secreto = true, ascii = true) { isec = it }
                 MagLink("Guardar RAWG e IGDB", accent = true) { onSaveServices(rk, iid, isec) }
                 SeccionAjustes("Steam")
-                Text("Tus horas de Steam: las trae Bastet y aquí se copian en tus juegos, solo si Steam tiene más.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Text("Tus horas de Steam: las trae Orion y aquí se copian en tus juegos, solo si Steam tiene más.", color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
                 Plegado("Necesitas una clave en steamcommunity.com/dev/apikey y que los detalles de juego de tu perfil sean públicos. La clave y el perfil viajan con tu cuenta.")
                 CampoRevista("Clave", sk, "clave de Steam", ascii = true) { sk = it }
                 CampoRevista("Perfil", su, "URL, nombre o SteamID64", ascii = true) { su = it }
@@ -425,9 +425,9 @@ fun SettingsScreen(
                 if (importMsg.isNotEmpty() && "Steam" in importMsg) ImportNote(importMsg)
             }
             else -> {
-                com.gonzalo.familia.UltimoFallo("Jonsu", Charcoal, Muted, Body) { SeccionAjustes("Último fallo", primera = true) }
+                com.gonzalo.familia.UltimoFallo("Polaris", Charcoal, Muted, Body) { SeccionAjustes("Último fallo", primera = true) }
                 SeccionAjustes("Actualizaciones", primera = com.gonzalo.familia.Fallos.ultimo(androidx.compose.ui.platform.LocalContext.current).isBlank())
-                if (!KDrive.on(androidx.compose.ui.platform.LocalContext.current)) Text("Jonsu se actualiza sola desde la carpeta «versiones» de tu nube: conéctala en Ajustes → Cuenta → Tu nube.",
+                if (!KDrive.on(androidx.compose.ui.platform.LocalContext.current)) Text("Polaris se actualiza sola desde la carpeta «versiones» de tu nube: conéctala en Ajustes → Cuenta → Tu nube.",
                     color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
         // Actualizarse sola desde la carpeta «versiones» de tu nube
         run {
@@ -463,7 +463,7 @@ fun SettingsScreen(
                     val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(actx) }
                     vida.addObserver(ob); onDispose { vida.removeObserver(ob) }
                 }
-                Text(if (sobre) "Tras actualizar, Jonsu se vuelve a abrir sola" else "Tras actualizar, Jonsu se cierra y te avisa para abrirla. Para que se reabra sola hace falta el permiso «Mostrar sobre otras apps»",
+                Text(if (sobre) "Tras actualizar, Polaris se vuelve a abrir sola" else "Tras actualizar, Polaris se cierra y te avisa para abrirla. Para que se reabra sola hace falta el permiso «Mostrar sobre otras apps»",
                     color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
                 if (!sobre) MagLink("Dar permiso", accent = true) {
                     runCatching { actx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${actx.packageName}")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
@@ -484,8 +484,8 @@ fun SettingsScreen(
                 val actx = androidx.compose.ui.platform.LocalContext.current
                 val ver = remember { try { actx.packageManager.getPackageInfo(actx.packageName, 0).versionName } catch (e: Exception) { null } ?: "" }
                 Box(Modifier.padding(top = 22.dp).fillMaxWidth().height(2.dp).background(Charcoal))
-                Text("JONSU $ver", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 14.dp))
-                Text("Jonsu es hermana de Bastet, Seshat, Thot, Hathor y Nut: lo que juegas, lees, escribes y ves allí aparece aquí para valorarlo.",
+                Text("POLARIS $ver", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 14.dp))
+                Text("Polaris es hermana de Orion, Lyra, Nova, Sirius y Pulsar: lo que juegas, lees, escribes y ves allí aparece aquí para valorarlo.",
                     color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
             }
         }
@@ -871,7 +871,7 @@ private fun LocalArt(game: Game, hasHero: Boolean, hero: Boolean, onTarget: (Boo
             Text("ESTÁ EN OTRO DISPOSITIVO TUYO", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp)
             Spacer(Modifier.height(6.dp))
             val otros = Suite.phones()
-            if (otros.isEmpty()) Text("Abre Jonsu en el móvil donde elegiste esta foto y podrás descargarla aquí, en su calidad original.", color = Muted, fontSize = 13.sp)
+            if (otros.isEmpty()) Text("Abre Polaris en el móvil donde elegiste esta foto y podrás descargarla aquí, en su calidad original.", color = Muted, fontSize = 13.sp)
             otros.forEach { d ->
                 OutlinedButton({
                     if (bajando != null) return@OutlinedButton
@@ -891,7 +891,7 @@ private fun LocalArt(game: Game, hasHero: Boolean, hero: Boolean, onTarget: (Boo
         Spacer(Modifier.height(12.dp))
         Text(
             (if (hero) "Se recorta a lo ancho, como los fondos. " else "Se recorta en vertical, como las portadas. ") +
-                "La imagen se guarda en este dispositivo y no se sube a internet: tu pareja no la verá. Tus otros dispositivos (el PC, la tableta) pueden descargarla mientras tengas Jonsu abierta aquí.",
+                "La imagen se guarda en este dispositivo y no se sube a internet: tu pareja no la verá. Tus otros dispositivos (el PC, la tableta) pueden descargarla mientras tengas Polaris abierta aquí.",
             color = Muted, fontSize = 12.sp
         )
     }

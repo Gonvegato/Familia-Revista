@@ -17,7 +17,7 @@ import java.security.MessageDigest
 object KoSync {
     const val SERVIDOR = "https://kosync.eu"
     private const val PREFS = "kosync"
-    const val NOMBRE = "SesKobo"
+    const val NOMBRE = "LyraKobo"
 
     class Error(msg: String) : Exception(msg)
 

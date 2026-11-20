@@ -130,7 +130,7 @@ fun AppCobre(inicial: Pantalla = Pantalla.Directo, paginaInicial: Int? = null) {
         }
     }) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            PaginasC("Nut", paginas, listOf(null, null, null, mios.takeIf { it > 0 }, null, null, null, null), pager, alAjustes = { ir(Pantalla.Ajustes()) }, enlaces = {
+            PaginasC("Pulsar", paginas, listOf(null, null, null, mios.takeIf { it > 0 }, null, null, null, null), pager, alAjustes = { ir(Pantalla.Ajustes()) }, enlaces = {
                 EnlaceCabecera("Buscar canal", Paper.copy(alpha = 0.75f), atajo = TeclaMando + "F") { ir(Pantalla.Buscar) }
             }) { i ->
                 when (i) {

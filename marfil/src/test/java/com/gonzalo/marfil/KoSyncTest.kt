@@ -98,7 +98,7 @@ class KoSyncTest {
         // Subir y bajar
         KoSync.sube(ctx, "abc", "/body[1]/DocFragment[3]/body[1]/p[2]/text()[1].5", 0.123456)
         val g = guardado!!
-        assertEquals("abc", g.getString("document")); assertEquals(0.1235, g.getDouble("percentage"), 1e-9); assertEquals("SesKobo", g.getString("device"))
+        assertEquals("abc", g.getString("document")); assertEquals(0.1235, g.getDouble("percentage"), 1e-9); assertEquals("LyraKobo", g.getString("device"))
         assertEquals(KoSync.idDispositivo(ctx), g.getString("device_id"))
         val p = KoSync.baja(ctx, "abc")!!
         assertEquals("/body[1]/DocFragment[3]/body[1]/p[2]/text()[1].5", p.xp); assertEquals(1794900000000L, p.hora)

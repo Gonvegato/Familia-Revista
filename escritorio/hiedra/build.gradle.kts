@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.3.4"
+val version = "1.4.0"
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
@@ -38,7 +38,7 @@ compose.desktop {
         jvmArgs += listOf("-Dfamilia.version=$version", "-Dorg.lwjgl.util.NoHashChecks=true")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Deb)
-            packageName = "Bastet"
+            packageName = "Orion"
             packageVersion = version
             description = "Tus juegos, en la cuenta de la familia"
             vendor = "Gonzalo"

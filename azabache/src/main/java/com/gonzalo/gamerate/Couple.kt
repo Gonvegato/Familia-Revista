@@ -226,7 +226,7 @@ object Couple {
      */
     suspend fun compruebaFamilia(store: Store): String = withContext(Dispatchers.IO) {
         val fam = com.gonzalo.familia.LaFamilia.familia
-        if (!fam.sesion.dentro) { com.gonzalo.familia.LaFamilia.pideSesion(); return@withContext "Jonsu no ha entrado en la cuenta de la familia: lo que ves es lo de antes. Entra aquí arriba (o en Bastet o Seshat y vuelve)." }
+        if (!fam.sesion.dentro) { com.gonzalo.familia.LaFamilia.pideSesion(); return@withContext "Polaris no ha entrado en la cuenta de la familia: lo que ves es lo de antes. Entra aquí arriba (o en Orion o Lyra y vuelve)." }
         if (!store.paired) Account.adoptaSesion(store)
         val inf = com.gonzalo.familia.LaFamilia.sincronizaYa()
         runCatching { Account.mergeOwn(store) }
@@ -241,8 +241,8 @@ object Couple {
             if (fam.pendientes > 0) append("Quedan ${fam.pendientes} cambios por subir. ")
             if (Cosas.activa(store.contexto)) {
                 val j = store.load(GAMES.id).size + store.loadPlays(GAMES.id).size; val l = store.load(BOOKS.id).size + store.loadPlays(BOOKS.id).size
-                append("Jonsu lee de la cuenta (sin copia): $j juegos y $l libros, los mismos que Bastet y Seshat. ")
-            } else append("En la cuenta: ${d.juegos} juegos de Bastet y ${d.libros} libros de Seshat; aquí, $aquiJ y $aquiL. ")
+                append("Polaris lee de la cuenta (sin copia): $j juegos y $l libros, los mismos que Orion y Lyra. ")
+            } else append("En la cuenta: ${d.juegos} juegos de Orion y ${d.libros} libros de Lyra; aquí, $aquiJ y $aquiL. ")
             append(if (d.error.isBlank()) "Último reflejo: ${if (d.hora > 0) f.format(Date(d.hora)) else "nunca"}, bien." else "El último reflejo falló: ${d.error}")
         }
     }
@@ -289,7 +289,7 @@ object Couple {
             all.keys().asSequence().forEach { k ->
                 val o = all.optJSONObject(k) ?: return@forEach
                 val data = o.optString("data", "")
-                val dev = when (o.optString("device")) { "atrio" -> " · Atrio"; "android" -> " · Android"; else -> "" }
+                val dev = when (o.optString("device")) { "atrio" -> " · Polaris"; "android" -> " · Android"; else -> "" }
                 out.add(CloudNode(k, o.optString("name", "?") + dev + tag, o.optLong("updated", 0L), data, countItems(data), k == mine))
             }
         }
@@ -599,7 +599,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
                 "Tus datos en todos tus dispositivos (móvil, tableta y el PC), siempre al día. Tu pareja te encuentra por tu usuario.",
                 color = UiSoft, modifier = Modifier.padding(bottom = 10.dp)
             )
-            CampoRevista("Usuario", user, "tu usuario de Atrio", ascii = true) { user = it }
+            CampoRevista("Usuario", user, "tu usuario de Polaris", ascii = true) { user = it }
             CampoRevista("Contraseña", pass, "••••••", secreto = true) { pass = it }
             CampoRevista("Tu nombre", name, "lo verá tu pareja") { name = it }
             if (needKey) {
@@ -612,7 +612,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
             Spacer(Modifier.height(10.dp))
             run {
                 val listo = !busy && user.isNotBlank() && pass.isNotBlank()
-                MagLink(if (busy) "Entrando…" else "Entrar", "Con tu usuario y contraseña de Atrio", accent = listo) {
+                MagLink(if (busy) "Entrando…" else "Entrar", "Con tu usuario y contraseña de Polaris", accent = listo) {
                     if (!listo) return@MagLink
                     val c = creds() ?: return@MagLink
                     launchOp {
@@ -663,7 +663,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
                     err.isNotBlank() -> "La última subida falló: $err"
                     last > 0L -> "Guardado en tu cuenta el " +
                         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(last)) +
-                        " · ${store.cloudCount} fichas. Se sube solo con cada cambio, y lo que cambies en otro dispositivo (o en Atrio) llega aquí en unos segundos."
+                        " · ${store.cloudCount} fichas. Se sube solo con cada cambio, y lo que cambies en otro dispositivo (o en Polaris) llega aquí en unos segundos."
                     else -> "Todavía no se ha subido nada."
                 },
                 color = if (err.isNotBlank()) ColGeneral else UiSoft, fontSize = 13.sp
@@ -688,7 +688,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
             MagLabel("Tu pareja")
             if (store.partnerUid.isBlank()) {
                 Text(
-                    "Escribe su usuario de Atrio. Así puede ver lo tuyo; cuando ponga el tuyo (${store.accUser}), tú verás lo suyo.",
+                    "Escribe su usuario de Polaris. Así puede ver lo tuyo; cuando ponga el tuyo (${store.accUser}), tú verás lo suyo.",
                     color = UiSoft, fontSize = 13.sp, modifier = Modifier.padding(vertical = 6.dp)
                 )
                 CampoRevista("Pareja", partnerIn, "su usuario", ascii = true) { partnerIn = it }
@@ -700,7 +700,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
                         partnerIn = ""
                         val p = refreshPartner()
                         if (p != null) "Ya compartís: ves lo de ${p.name}."
-                        else "Listo. Cuando ${store.partnerUser} ponga tu usuario (${store.accUser}) en su Jonsu, veréis lo del otro."
+                        else "Listo. Cuando ${store.partnerUser} ponga tu usuario (${store.accUser}) en su Polaris, veréis lo del otro."
                     }
                 }
             } else {
@@ -710,7 +710,7 @@ fun CoupleSettings(store: Store, onPartner: (Partner?) -> Unit, onRestored: () -
                     when {
                         inf != null -> "Compartes con $who. Sus datos son de " +
                             DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(inf.updated)) + "."
-                        shares == false -> "Ya puede ver lo tuyo. Tú verás lo suyo cuando $who ponga tu usuario (${store.accUser}) en su Jonsu."
+                        shares == false -> "Ya puede ver lo tuyo. Tú verás lo suyo cuando $who ponga tu usuario (${store.accUser}) en su Polaris."
                         else -> "Compartes con $who. Aún no ha subido nada."
                     },
                     color = UiSoft, fontSize = 13.sp, modifier = Modifier.padding(vertical = 6.dp)

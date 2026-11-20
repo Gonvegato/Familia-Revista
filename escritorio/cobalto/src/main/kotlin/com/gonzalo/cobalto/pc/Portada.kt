@@ -87,7 +87,7 @@ fun PantPortada(nav: Nav) {
                 Filete(1.dp, Line)
             }
         }
-        if (e.obras().isEmpty()) Vacio("Aún no hay ninguna obra", "Empieza una con «+ Nueva obra»: estará también en Thot del móvil.")
+        if (e.obras().isEmpty()) Vacio("Aún no hay ninguna obra", "Empieza una con «+ Nueva obra»: estará también en Nova del móvil.")
     }
     if (nueva) DialogoObra(null, nav) { nueva = false }
 }

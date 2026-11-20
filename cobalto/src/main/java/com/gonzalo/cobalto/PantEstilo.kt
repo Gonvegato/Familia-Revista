@@ -51,7 +51,7 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
         // Dirección C: la cabecera en un bloque de tinta con «AJUSTES.» en grotesca y las pestañas en bloques
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
-            EnlaceRevista("← Thot", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
+            EnlaceRevista("← Nova", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
             NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp))
         }
         PestanasRevista(listOf("Apariencia", "Escritura", "Cuenta", "Avanzado"), pestana) { pestana = it }
@@ -76,22 +76,22 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
                 MagLink("Atajos de teclado", "Con un teclado físico, como el de la tableta") { atajos = true }
                 MagLink("Papelera" + if (enPapelera > 0) " · $enPapelera" else "", "Lo borrado se guarda 30 días, también lo borrado desde el PC") { papelera = true }
                 Filete(1.dp, Line)
-                Text("Thot escribe en los mismos documentos que Escribir de Atrio y de Atrio del PC: tus obras salen aquí tal cual, y lo que cambies aquí llega allí.",
+                Text("Nova escribe en los mismos documentos que Escribir de Polaris y de Polaris del PC: tus obras salen aquí tal cual, y lo que cambies aquí llega allí.",
                     color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
                 Spacer(Modifier.height(14.dp))
                 Filete(2.dp)
                 Spacer(Modifier.height(12.dp))
                 Antetitulo("Hermanas", Modifier.padding(bottom = 4.dp))
-                Text(if (Hermanas.hayMarfil(ctx)) "Seshat está en este móvil: los capítulos que das por terminados se leen allí con su lector («Leer en Seshat», en el manuscrito y en Exportar). Jonsu enseña en su Diario las palabras de cada día."
-                    else "Los capítulos que das por terminados se publican en tu cuenta: Seshat los lee con su lector y Jonsu enseña en su Diario las palabras de cada día. Seshat no está en este móvil.",
+                Text(if (Hermanas.hayMarfil(ctx)) "Lyra está en este móvil: los capítulos que das por terminados se leen allí con su lector («Leer en Lyra», en el manuscrito y en Exportar). Polaris enseña en su Diario las palabras de cada día."
+                    else "Los capítulos que das por terminados se publican en tu cuenta: Lyra los lee con su lector y Polaris enseña en su Diario las palabras de cada día. Lyra no está en este móvil.",
                     color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 6.dp))
             }
             2 -> {
-                Antetitulo("Cuenta de Atrio", Modifier.padding(bottom = 4.dp))
+                Antetitulo("Cuenta de Polaris", Modifier.padding(bottom = 4.dp))
                 SeccionCuenta()
             }
             else -> {
-                com.gonzalo.familia.UltimoFallo("Thot", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
+                com.gonzalo.familia.UltimoFallo("Nova", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
                 Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
                 SeccionActualizaciones()
                 Spacer(Modifier.height(14.dp))
@@ -109,8 +109,8 @@ fun PantEstilo(alVolver: () -> Unit, pestanaInicial: Int = 0) {
         Spacer(Modifier.height(26.dp))
         Filete(3.dp)
         Spacer(Modifier.height(10.dp))
-        Etiqueta("Thot $VERSION")
-        Text("Thot es hermana de Jonsu, Seshat y Bastet. El tesauro de sinónimos es el de RLA-ES (LGPL 2.1).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
+        Etiqueta("Nova $VERSION")
+        Text("Nova es hermana de Polaris, Lyra y Orion. El tesauro de sinónimos es el de RLA-ES (LGPL 2.1).", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
         }
     }
@@ -147,9 +147,9 @@ private fun SeccionCuenta() {
     var ocupado by remember { mutableStateOf(false) }
     var aviso by remember { mutableStateOf<String?>(null) }
     if (!Cuenta.vinculada) {
-        Text("Entra con la misma cuenta que usas en Atrio y tus obras se sincronizan con Atrio del PC y con tus otros móviles: cada cambio sube en cuanto hay red y llega al momento a los demás.",
+        Text("Entra con la misma cuenta que usas en Polaris y tus obras se sincronizan con Polaris del PC y con tus otros móviles: cada cambio sube en cuanto hay red y llega al momento a los demás.",
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
-        CampoRevista("Usuario", usuario, "tu usuario de Atrio") { usuario = it }
+        CampoRevista("Usuario", usuario, "tu usuario de Polaris") { usuario = it }
         CampoRevista("Contraseña", clave, "••••••••", secreto = true) { clave = it }
         MagLink(if (ocupado) "Entrando…" else "Vincular cuenta", "Se guarda un pase de acceso, no tu contraseña") {
             if (!ocupado) {
@@ -181,9 +181,9 @@ private fun SeccionCuenta() {
         Filete(1.dp, Line)
         // ---- Tu pareja (la misma que en Atrio): para compartirle capítulos y leer lo que te comparte
         if (Cuenta.parejaUid.isBlank()) {
-            Text("Tu pareja: pon su usuario de Atrio y podrás compartirle capítulos (los lee y anota en su Thot o en su Atrio) y leer lo que te comparta.",
+            Text("Tu pareja: pon su usuario de Polaris y podrás compartirle capítulos (los lee y anota en su Nova o en su Polaris) y leer lo que te comparta.",
                 color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 8.dp))
-            CampoRevista("Pareja", pareja, "su usuario de Atrio") { pareja = it }
+            CampoRevista("Pareja", pareja, "su usuario de Polaris") { pareja = it }
             MagLink(if (ocupado) "Buscando…" else "Enlazar con mi pareja") {
                 if (!ocupado) {
                     ocupado = true; aviso = null
@@ -198,7 +198,7 @@ private fun SeccionCuenta() {
             Etiqueta("Tu pareja", Modifier.padding(top = 8.dp))
             Text(Cuenta.parejaUsuario.ifBlank { "la de este móvil" }, color = Charcoal, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 22.sp)
             Text("Estaba guardada solo en este móvil y tu cuenta no tiene pareja, así que ahora mismo no os compartís nada. Si la pones en tu cuenta, " +
-                "podrá leer tu cuenta (como la pareja de Jonsu) y estará en todos tus dispositivos.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
+                "podrá leer tu cuenta (como la pareja de Polaris) y estará en todos tus dispositivos.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
             MagLink(if (ocupado) "Poniéndola…" else "Ponerla en mi cuenta", "Desde ahora la tendrás en todas tus apps") {
                 if (!ocupado) {
                     ocupado = true; aviso = null
@@ -247,17 +247,17 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu nube (Thot-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
+    Fila("Actualizar sola", "Mira la carpeta «versiones» de tu nube (Nova-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     // Android 13 o más: sin el permiso de avisos, «tienes una versión nueva» y «se ha actualizado, toca para abrirla» no se ven nunca
     if (android.os.Build.VERSION.SDK_INT >= 33) {
         var avisos by remember { mutableStateOf(ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
         val pedirAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { avisos = it }
-        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir Thot al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir Nova al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (!conectado) {
-        Text("Tu nube (Google Drive o kDrive) es de tu cuenta: se configura una vez en Jonsu (Ajustes → Avanzado → Tu nube) y la tienen todas las apps. Si aún usas kDrive, puedes pegar el token aquí.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Tu nube (Google Drive o kDrive) es de tu cuenta: se configura una vez en Polaris (Ajustes → Avanzado → Tu nube) y la tienen todas las apps. Si aún usas kDrive, puedes pegar el token aquí.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Token", token, "token de kDrive", secreto = true) { token = it }
         CampoRevista("kDrive", unidad, "número o dirección") { unidad = it }
         MagLink(if (ocupado) "Comprobando…" else "Conectar", "Comprueba el token y busca tu «Mi carpeta»") {
@@ -281,11 +281,11 @@ private fun SeccionActualizaciones() {
             if (!ocupado) { ocupado = true; ambito.launch { withContext(Dispatchers.IO) { Actualizador.comprueba(ctx, manual = true) }; ocupado = false } }
         }
         Filete(1.dp, Line)
-        MagLink(if (sobre) "Tras actualizar, Thot se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
+        MagLink(if (sobre) "Tras actualizar, Nova se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
-        Text("Para cambiar o quitar el token: Jonsu → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Para cambiar o quitar el token: Polaris → Ajustes → Avanzado → Tu nube (vale para las cuatro apps).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
@@ -299,8 +299,8 @@ fun AvisoActualizacion() {
     if (luego) return
     AlertDialog(
         onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(4.dp),
-        title = { Text("Thot tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Thot instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
+        title = { Text("Nova tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Nova instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }

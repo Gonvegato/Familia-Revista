@@ -110,9 +110,9 @@ object Reproductor {
         TipoFuente.TORRENT -> if (torrents) Accion.Reproductor else Accion.Aviso(Torrents.AVISO)
         TipoFuente.YOUTUBE -> Accion.Fuera("https://www.youtube.com/watch?v=" + java.net.URLEncoder.encode(f.ytId, "UTF-8"))
         TipoFuente.EXTERNA -> if (f.externalUrl.startsWith("http://") || f.externalUrl.startsWith("https://")) Accion.Fuera(f.externalUrl)
-            else Accion.Aviso("Es un enlace para la app de Stremio («${f.externalUrl.substringBefore('/').take(20)}…»): Hathor no lo puede abrir.")
-        TipoFuente.NZB -> Accion.Aviso("Todavía no: Hathor aún no sabe abrir fuentes de Usenet (NZB). Elige otra fuente.")
-        TipoFuente.ARCHIVO -> Accion.Aviso("Todavía no: Hathor aún no sabe abrir vídeos dentro de archivos comprimidos (RAR, ZIP, 7z…). Elige otra fuente.")
+            else Accion.Aviso("Es un enlace para la app de Stremio («${f.externalUrl.substringBefore('/').take(20)}…»): Sirius no lo puede abrir.")
+        TipoFuente.NZB -> Accion.Aviso("Todavía no: Sirius aún no sabe abrir fuentes de Usenet (NZB). Elige otra fuente.")
+        TipoFuente.ARCHIVO -> Accion.Aviso("Todavía no: Sirius aún no sabe abrir vídeos dentro de archivos comprimidos (RAR, ZIP, 7z…). Elige otra fuente.")
         TipoFuente.NADA -> Accion.Aviso("Esta fuente no trae nada que se pueda ver.")
     }
 
@@ -178,7 +178,7 @@ object Reproductor {
     private fun opciones() = Mpv.Opciones(
         audio = Mpv.idiomas(AjustesReproductor.audio()), subs = Mpv.idiomas(AjustesReproductor.subs()), subTam = AjustesReproductor.subTam(), subFondo = AjustesReproductor.subFondo(),
         pantallaCompleta = PantallaCompleta.si(), espera = if (torrentAbierto.isNotBlank()) com.gonzalo.torrent.MotorTorrent.ESPERA_LECTURA_MS / 1000 else 30,
-        agente = "Mostaza/${Actualizador.version}",
+        agente = "Sirius/${Actualizador.version}",
     )
 
     /** Abre mpv si no está abierto (en su ventana, vacío: lo que se ve se le da por el socket). */

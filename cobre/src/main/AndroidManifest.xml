@@ -35,7 +35,7 @@
          Sin copia de seguridad de Android: lo de esta app es tu cuenta (que ya está en la nube) y una caché con tus listas, que llevan secretos.
          Con mucha memoria (largeHeap): una lista puede tener decenas de miles de canales, y las teles traen poca. -->
     <application
-        android:label="Nut"
+        android:label="Pulsar"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:banner="@drawable/banner_cobre"

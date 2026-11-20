@@ -85,9 +85,9 @@ fun BotonVerCanal(p: Partido, nav: Nav, modifier: Modifier = Modifier) {
     LaFamilia.cambios
     val scope = rememberCoroutineScope()
     val ver = AjustesFutbol.donde(p.liga).firstOrNull { it is com.gonzalo.iptv.futbol.Donde.Ver } as? com.gonzalo.iptv.futbol.Donde.Ver
-    BotonC(if (ver != null) "Ver en ${ver.grupo.boton}" else "Elige sus canales en Nut del móvil", modifier, fondo = Acento, letra = SobreAcento) {
+    BotonC(if (ver != null) "Ver en ${ver.grupo.boton}" else "Elige sus canales en Pulsar del móvil", modifier, fondo = Acento, letra = SobreAcento) {
         if (ver != null) scope.launch { withContext(Dispatchers.IO) { Futbol.pon(ver.grupo) }?.let { nav.aviso(it) } }
-        else nav.aviso("Los canales de cada competición se eligen en Nut del móvil (Ajustes → Fútbol): llegan aquí solos.")
+        else nav.aviso("Los canales de cada competición se eligen en Pulsar del móvil (Ajustes → Fútbol): llegan aquí solos.")
     }
 }
 
@@ -145,7 +145,7 @@ fun PaginaPortadaF(nav: Nav, alFicha: (FichaF) -> Unit, alPagina: (Int) -> Unit)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(44.dp)) {
             Column(Modifier.weight(1.4f)) {
                 when {
-                    eqs.isEmpty() -> Vacio("Elige tus equipos en Nut del móvil", "Ajustes → Fútbol: tus equipos llegan aquí solos, con sus canales.")
+                    eqs.isEmpty() -> Vacio("Elige tus equipos en Pulsar del móvil", "Ajustes → Fútbol: tus equipos llegan aquí solos, con sus canales.")
                     cartel != null -> {
                         Box(Modifier.fillMaxWidth().height(IntrinsicSize.Min).filaDe("p:" + cartel.id).levanta(alto = 2.dp, hundido = 0.99f) { alFicha(FichaF.DePartido(cartel)) }) {
                             FondoDuelo(cartel.local, cartel.visitante, Modifier.matchParentSize())
@@ -306,7 +306,7 @@ fun PaginaTusEquipos(nav: Nav, alFicha: (FichaF) -> Unit) {
             Column(Modifier.weight(1f)) {
                 listOf("Tus equipos" to eqs, "Tus rivales" to rivs).forEach { (t, l) ->
                     AntetituloRaya(t, Modifier.padding(top = 6.dp))
-                    if (l.isEmpty()) Etiqueta(if (t == "Tus rivales") "Sin rivales todavía." else "Aún no sigues a ningún equipo (se eligen en Nut del móvil).", Modifier.padding(vertical = 10.dp))
+                    if (l.isEmpty()) Etiqueta(if (t == "Tus rivales") "Sin rivales todavía." else "Aún no sigues a ningún equipo (se eligen en Pulsar del móvil).", Modifier.padding(vertical = 10.dp))
                     l.forEach { (e, liga) ->
                         Row(Modifier.fillMaxWidth().filaDe("e:" + e.id).levanta(alto = 1.dp) { alFicha(FichaF.DeEquipo(e, liga)) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                             Escudo(e, 36.dp)

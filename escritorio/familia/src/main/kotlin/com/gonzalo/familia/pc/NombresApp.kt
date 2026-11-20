@@ -7,15 +7,23 @@ package com.gonzalo.familia.pc
  */
 object NombresApp {
     private val nuevos = mapOf(
-        "hiedra" to "Bastet", "marfil" to "Seshat", "cobalto" to "Thot", "azabache" to "Jonsu", "mostaza" to "Hathor", "cobre" to "Nut",
+        "hiedra" to "Orion", "marfil" to "Lyra", "cobalto" to "Nova", "azabache" to "Polaris", "mostaza" to "Sirius", "cobre" to "Pulsar",
+    )
+    private val anteriores = mapOf(
+        "hiedra" to listOf("Bastet", "Hiedra"),
+        "marfil" to listOf("Seshat", "Marfil"),
+        "cobalto" to listOf("Thot", "Cobalto"),
+        "azabache" to listOf("Jonsu", "Azabache"),
+        "mostaza" to listOf("Hathor", "Mostaza"),
+        "cobre" to listOf("Nut", "Cobre"),
     )
 
-    /** El nombre que se ve (y el de su carpeta y sus archivos): «Bastet» para hiedra. */
+    /** El nombre que se ve (y el de su carpeta y sus archivos): «Orion» para hiedra. */
     fun de(app: String): String = nuevos[app] ?: app.replaceFirstChar { it.uppercase() }
 
-    /** El de antes del cambio («Hiedra» para hiedra), con el que siguen instaladas y subidas las versiones viejas. */
-    fun viejo(app: String): String = app.replaceFirstChar { it.uppercase() }
+    /** El de antes del cambio («Bastet» para hiedra), con el que siguen instaladas y subidas las versiones viejas. */
+    fun viejo(app: String): String = anteriores[app]?.first() ?: app.replaceFirstChar { it.uppercase() }
 
-    /** Los dos, el nuevo primero (uno solo si no ha cambiado). */
-    fun ambos(app: String): List<String> = listOf(de(app), viejo(app)).distinct()
+    /** Todos los nombres (el nuevo primero y los anteriores después, para reconocer versiones y carpetas viejas). */
+    fun ambos(app: String): List<String> = (listOf(de(app)) + (anteriores[app] ?: listOf(app.replaceFirstChar { it.uppercase() }))).distinct()
 }

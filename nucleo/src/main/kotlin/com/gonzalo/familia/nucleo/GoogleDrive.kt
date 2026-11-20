@@ -745,11 +745,11 @@ class GoogleDrive(
                     val html = if (err == null && st == estadoEsperado && !code.isNullOrBlank()) {
                         "<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
                             "<body style='font-family:sans-serif;padding:2rem;text-align:center'>" +
-                            "<h2>¡Listo!</h2><p>Google Drive conectado. Ya puedes cerrar esta pestaña y volver a Jonsu.</p></body>"
+                            "<h2>¡Listo!</h2><p>Google Drive conectado. Ya puedes cerrar esta pestaña y volver a Polaris.</p></body>"
                     } else {
                         "<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" +
                             "<body style='font-family:sans-serif;padding:2rem;text-align:center'>" +
-                            "<h2>No se pudo conectar</h2><p>${err ?: "Respuesta no válida"}. Puedes volver a Jonsu e intentarlo otra vez.</p></body>"
+                            "<h2>No se pudo conectar</h2><p>${err ?: "Respuesta no válida"}. Puedes volver a Polaris e intentarlo otra vez.</p></body>"
                     }
                     val bytes = html.toByteArray(Charsets.UTF_8)
                     val hdr = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${bytes.size}\r\nConnection: close\r\n\r\n"

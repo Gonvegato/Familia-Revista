@@ -97,7 +97,8 @@ data class ArchivoCine(
  */
 object CineKDrive {
     const val ADDON = "Tu nube"
-    const val CARPETA = "Mostaza"
+    const val CARPETA = "Sirius"
+    private val CARPETAS = listOf(CARPETA, "Hathor", "Mostaza")
 
     var version by androidx.compose.runtime.mutableIntStateOf(0)
         private set
@@ -150,7 +151,7 @@ object CineKDrive {
         val pelis = ArrayList<Visto>(); val series = ArrayList<Visto>()
         val g = com.gonzalo.familia.pc.Nube.gdrive()
         if (g.activo) {
-            val raiz = g.carpeta(CARPETA)
+            val raiz = CARPETAS.firstNotNullOfOrNull { g.carpeta(it) }
             if (raiz != null) {
                 val dentro = g.dentro(raiz)
                 dentro.firstOrNull { it.carpeta && NombresCine.normal(it.nombre) == "peliculas" }?.let { recorreGDrive(g, it.id, emptyList(), pelis, 0) }
@@ -158,7 +159,8 @@ object CineKDrive {
             }
         }
         if (pelis.isEmpty() && series.isEmpty() && kdrive.activo) {
-            val raiz = kdrive.dentro(kdrive.miCarpeta()).firstOrNull { it.carpeta && it.nombre.equals(CARPETA, ignoreCase = true) }?.id
+            val raizHijos = kdrive.dentro(kdrive.miCarpeta())
+            val raiz = CARPETAS.firstNotNullOfOrNull { c -> raizHijos.firstOrNull { it.carpeta && it.nombre.equals(c, ignoreCase = true) }?.id }
             if (raiz != null) {
                 val dentro = kdrive.dentro(raiz)
                 dentro.firstOrNull { it.carpeta && NombresCine.normal(it.nombre) == "peliculas" }?.let { recorreKDrive(it.id, emptyList(), pelis, 0) }

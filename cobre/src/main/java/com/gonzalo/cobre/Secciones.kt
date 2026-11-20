@@ -149,7 +149,7 @@ fun PantPrincipal(pagina: Int, alPagina: (Int) -> Unit, alIr: (Destino) -> Unit,
     Column(Modifier.fillMaxSize().background(Paper).nestedScroll(conexion)) {
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = if (tablet) 40.dp else 20.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
-                if (plegado > 0f) NombreConPunto("Nut", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
+                if (plegado > 0f) NombreConPunto("Pulsar", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
                 EnlaceRevista("Buscar canal", Modifier.focoInicial("principal"), color = Paper.copy(alpha = 0.75f)) { alIr(Destino.Buscar) }
                 EnlaceRevista("+ Equipos", Modifier.padding(start = 14.dp), color = acentoSobreTinta()) { alIr(Destino.AjustesFutbol) }
                 Spacer(Modifier.weight(1f))
@@ -168,7 +168,7 @@ fun PantPrincipal(pagina: Int, alPagina: (Int) -> Unit, alIr: (Destino) -> Unit,
                     }
                 }
             }) {
-                NombreConPunto("Nut", if (bajita) 56.sp else if (ancho >= 700) 104.sp else 72.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
+                NombreConPunto("Pulsar", if (bajita) 56.sp else if (ancho >= 700) 104.sp else 72.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
         com.gonzalo.familia.PestanasPager(NOMBRES_PAGINAS, pager, cuentas, Paper, Charcoal, AcentoBloque, SobreBloque, Body, Grotesca,
@@ -229,7 +229,7 @@ fun PaginaPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
             else -> CartelVacio(if (todos == null) "Mirando el calendario de tus equipos…" else "Tus equipos no tienen partidos a la vista (o no hay conexión con los datos del fútbol).")
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = m).widthIn(max = 960.dp)) {
-            if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Jonsu, y Nut entra sola). Tus equipos, tus canales y lo que ves van con tu cuenta.", Modifier.padding(top = 16.dp))
+            if (!Cuenta.vinculada) Nota("Sin cuenta todavía: entra en Ajustes → Cuenta (o en Polaris, y Pulsar entra sola). Tus equipos, tus canales y lo que ves van con tu cuenta.", Modifier.padding(top = 16.dp))
             // ---- Hoy: lo que se juega
             TituloSeccion("Hoy", derecha = deHoy?.let { "${it.size} partidos →" }, alDerecha = { alIr(Destino.Hoy) })
             when {
@@ -256,7 +256,7 @@ fun PaginaPortada(alIr: (Destino) -> Unit, alFicha: (Ficha) -> Unit) {
             // ---- Esta semana (lo que has visto en Nut)
             TituloSeccion("Esta semana", derecha = "${minutosCorto(sem.totalMin)} · hoy ${minutosCorto(sem.hoyMin)}")
             SemanaTocable(sem)
-            if (sem.totalMin == 0L) Nota("Lo que veas en Nut (canales, partidos, películas) se suma aquí, día a día y en todos tus dispositivos.", Modifier.padding(top = 8.dp))
+            if (sem.totalMin == 0L) Nota("Lo que veas en Pulsar (canales, partidos, películas) se suma aquí, día a día y en todos tus dispositivos.", Modifier.padding(top = 8.dp))
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 PieFuente()
                 Text("versión $VERSION", color = Muted.copy(alpha = 0.7f), fontFamily = Body, fontSize = 10.sp, letterSpacing = 0.6.sp, modifier = Modifier.padding(top = 10.dp))

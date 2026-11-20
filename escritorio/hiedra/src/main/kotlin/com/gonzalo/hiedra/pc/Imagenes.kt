@@ -64,7 +64,7 @@ object Imagenes {
     /** Baja una imagen (null si no hay red o no está; si el servidor dice que no existe, no se vuelve a pedir en esta sesión). */
     private fun baja(url: String): ByteArray? = runCatching {
         val c = URI(url).toURL().openConnection() as HttpURLConnection
-        c.setRequestProperty("User-Agent", "Hiedra/1.1 (app personal; escritorio)")
+        c.setRequestProperty("User-Agent", "Orion/1.1 (app personal; escritorio)")
         c.connectTimeout = 12_000; c.readTimeout = 25_000
         try {
             val code = c.responseCode

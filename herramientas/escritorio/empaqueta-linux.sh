@@ -5,8 +5,8 @@
 set -euo pipefail
 d="${1%/}"; dist="$2"
 raiz="$(cd "$(dirname "$0")/../.." && pwd)"
-a="$(basename "$d")"; V="${a^}"  # V: el nombre de antes (con el que se instalaron las versiones viejas)
-case "$a" in hiedra) A=Bastet ;; marfil) A=Seshat ;; cobalto) A=Thot ;; azabache) A=Jonsu ;; mostaza) A=Hathor ;; cobre) A=Nut ;; *) A="$V" ;; esac
+a="$(basename "$d")"
+case "$a" in hiedra) A=Orion; V=Bastet ;; marfil) A=Lyra; V=Seshat ;; cobalto) A=Nova; V=Thot ;; azabache) A=Polaris; V=Jonsu ;; mostaza) A=Sirius; V=Hathor ;; cobre) A=Pulsar; V=Nut ;; *) A="${a^}"; V="${a^}" ;; esac
 inicio=""  # lo que se añade a la orden de abrir al entrar en la sesión (instalar.sh --al-iniciar)
 v="$(grep -m1 '^val version' "$d/build.gradle.kts" | cut -d'"' -f2)"
 clase="$(grep -m1 'mainClass' "$d/build.gradle.kts" | cut -d'"' -f2 | tr '.' '-')"

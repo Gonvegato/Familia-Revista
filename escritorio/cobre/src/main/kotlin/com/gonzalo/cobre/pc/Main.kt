@@ -8,7 +8,7 @@ import com.gonzalo.familia.pc.appDeLaFamilia
 fun main(args: Array<String>) {
     val icono = Thread.currentThread().contextClassLoader.getResourceAsStream("icono.png")?.use { it.readBytes() }
         ?.let { runCatching { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }.getOrNull() }
-    appDeLaFamilia("cobre", "Nut", icono, args = args,
+    appDeLaFamilia("cobre", "Pulsar", icono, args = args,
         alIniciar = {
             Mando.inicia()
             // Cada lista se pone al día si le toca (sin molestar); y, si lo elegiste, el último canal, como una tele

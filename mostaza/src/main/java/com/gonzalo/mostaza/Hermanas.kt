@@ -6,7 +6,7 @@ import android.content.Intent
 /** Las hermanas de la familia: abrirlas, y llevar a Azabache a la ficha de lo que estás viendo (para valorarlo). */
 object Hermanas {
     const val AZABACHE = "com.gonzalo.gamerate"
-    val TODAS = listOf("Jonsu" to AZABACHE, "Bastet" to "com.gonzalo.hiedra", "Seshat" to "com.gonzalo.marfil", "Thot" to "com.gonzalo.cobalto")
+    val TODAS = listOf("Polaris" to AZABACHE, "Orion" to "com.gonzalo.hiedra", "Lyra" to "com.gonzalo.marfil", "Nova" to "com.gonzalo.cobalto")
 
     /** Para abrir [paquete]: con Seshat, la que haya en el móvil (la normal o SesKobo, que hace de Seshat). */
     fun lanzador(c: Context, paquete: String): android.content.Intent? = runCatching { c.packageManager.getLaunchIntentForPackage(com.gonzalo.familia.LaFamilia.instalada(c, paquete)) }.getOrNull()

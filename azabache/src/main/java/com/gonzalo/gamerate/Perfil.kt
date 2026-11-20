@@ -72,7 +72,7 @@ fun ProfileScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(BOOKS.title, fontWeight = FontWeight.Medium)
-                Text("lo fija Seshat", color = Muted, fontSize = 12.sp)
+                Text("lo fija Lyra", color = Muted, fontSize = 12.sp)
             }
             Text(if (goalBooks > 0) "$goalBooks" else "sin reto", fontFamily = if (Skin.revista) Display else null, fontSize = 18.sp)
         }
@@ -80,14 +80,14 @@ fun ProfileScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Lectura al día", fontWeight = FontWeight.Medium)
-                Text("lo fija Seshat", color = Muted, fontSize = 12.sp)
+                Text("lo fija Lyra", color = Muted, fontSize = 12.sp)
             }
             Text(if (meta > 0) "$meta min" else "sin objetivo", fontFamily = if (Skin.revista) Display else null, fontSize = 18.sp)
         }
         if (Hermanas.instalada(ctx, Hermanas.PAQ_MARFIL)) {
-            Text("Cambiarlos en Seshat\u00A0→", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 13.sp,
+            Text("Cambiarlos en Lyra\u00A0→", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 13.sp,
                 modifier = Modifier.padding(top = 6.dp).clickable { Hermanas.abrir(ctx, Hermanas.PAQ_MARFIL, "ajustes") })
-        } else Text("Se cambian en Seshat (Ajustes → Lectura).", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+        } else Text("Se cambian en Lyra (Ajustes → Lectura).", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
         if (meta > 0) {
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -141,8 +141,8 @@ fun ProfileScreen(
         // El pie, como en sus hermanas: la versión como etiqueta y una línea en cursiva
         Box(Modifier.padding(top = 22.dp).fillMaxWidth().height(2.dp).background(Charcoal))
         val ver = remember { try { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName } catch (e: Exception) { null } ?: "" }
-        Text("JONSU $ver", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.fillMaxWidth().padding(top = 14.dp))
-        Text("Jonsu es hermana de Bastet, Seshat, Thot, Hathor y Nut: lo que juegas, lees, escribes y ves allí aparece aquí para valorarlo.",
+        Text("POLARIS $ver", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.fillMaxWidth().padding(top = 14.dp))
+        Text("Polaris es hermana de Orion, Lyra, Nova, Sirius y Pulsar: lo que juegas, lees, escribes y ves allí aparece aquí para valorarlo.",
             color = Muted, fontFamily = Display, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp))
         }
     }

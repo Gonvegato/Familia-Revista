@@ -111,7 +111,7 @@ class WidgetsTest {
         val celdas = pen.zonas.mapNotNull { it.celdas }.single().single()
         assertEquals("cada póster abre su ficha", listOf("Abrir Separación", "Abrir Dune: Parte dos", "Abrir Shōgun", "Abrir Perfect Days"), celdas.map { it.second })
         assertTrue(celdas.all { it.first != null })
-        assertTrue(pen.zonas.any { it.desc == "Abrir Pendientes en Hathor" })
+        assertTrue(pen.zonas.any { it.desc == "Abrir Pendientes en Sirius" })
     }
 
     @Test fun vacioInvitaAAbrirMostaza() = runBlocking {
@@ -170,8 +170,8 @@ class WidgetsTest {
             listOf("Abrir The Bear", "Abrir Separación", "Abrir La serie de nadie", "Abrir Shōgun"), pro.zonas.drop(1).map { it.desc })
         assertTrue(pro.zonas.all { it.toque != null })
         val sem = Widgets.componer(ctx, WTipo.SEMANA, 1, 330f, 165f)
-        assertEquals("Abrir Hathor", sem.zonas.single().desc)
-        for (t in listOf(WTipo.MARCA, WTipo.MARCA_PAPEL)) assertEquals("Abrir Hathor", Widgets.componer(ctx, t, 1, 330f, 80f).zonas.single().desc)
+        assertEquals("Abrir Sirius", sem.zonas.single().desc)
+        for (t in listOf(WTipo.MARCA, WTipo.MARCA_PAPEL)) assertEquals("Abrir Sirius", Widgets.componer(ctx, t, 1, 330f, 80f).zonas.single().desc)
         val sola = Widgets.componer(ctx, WTipo.MARCA, 1, 256f, 64f).bitmap(ctx, 256f, 64f, false, 1f)
         assertEquals("la marca sola es transparente", 0, sola.getPixel(2, 2) ushr 24)
     }

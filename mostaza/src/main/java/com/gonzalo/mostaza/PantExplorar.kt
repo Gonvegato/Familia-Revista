@@ -75,7 +75,7 @@ private fun PantExplorarAddons(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Uni
         horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column(Modifier.fillMaxWidth().statusBarsPadding()) {
-                RevistaTopBar(alVolver, "Hathor")
+                RevistaTopBar(alVolver, "Sirius")
                 Antetitulo("Tus addons", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
                 FitTitle("Explorar", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
                 Filete(3.dp)
@@ -179,7 +179,7 @@ fun PantBuscar(alVolver: () -> Unit, alAbrir: (MetaBreve) -> Unit) {
     }
     val m = margen()
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).statusBarsPadding().padding(horizontal = m)) {
-        RevistaTopBar(alVolver, "Hathor")
+        RevistaTopBar(alVolver, "Sirius")
         Antetitulo(if (Tmdb.activo) "Películas y series" else "En tus addons", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("Buscar", 52.sp, 56.sp, letterSpacing = (-1.5).sp, modifier = Modifier.padding(top = 2.dp), unaLinea = true)
         Filete(3.dp)

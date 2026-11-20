@@ -9,7 +9,7 @@ import org.junit.Test
 class EstiloWidgetTest {
     private val papel = 0xFFF8F0D4.toInt()
     private val negro = 0xFF000000.toInt()
-    private val acentos = mapOf("Seshat" to 0xFFB0791E, "Jonsu" to 0xFF8E5A78, "Bastet" to 0xFF7A8A3A, "Thot" to 0xFF5A7896, "Hathor" to 0xFFB56576, "Nut" to 0xFF5D1414)
+    private val acentos = mapOf("Lyra" to 0xFFB0791E, "Polaris" to 0xFF8E5A78, "Orion" to 0xFF7A8A3A, "Nova" to 0xFF5A7896, "Sirius" to 0xFFB56576, "Pulsar" to 0xFF5D1414)
     private fun dia(a: Long) = TonosWidget(papel, negro, 0xFF6B6352.toInt(), 0xFFCFC6AD.toInt(), 0xFFEDE3C3.toInt(), 0xFFF2E9CC.toInt(), a.toInt())
     private fun noche(a: Long) = TonosWidget(negro, papel, 0xFFA59C86.toInt(), 0xFF3A352C.toInt(), 0xFF1E1B16.toInt(), 0xFF141210.toInt(), a.toInt())
 

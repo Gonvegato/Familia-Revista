@@ -121,7 +121,7 @@ object Escritos {
     fun epub(o: Obra): ByteArray {
         class Pag(val titulo: String, val cuerpo: String)
         val pags = ArrayList<Pag>()
-        pags += Pag(o.titulo, "<div class=\"portada\"><h1>${xml(o.titulo)}</h1>${if (o.autor.isNotBlank()) "<p class=\"autor\">${xml(o.autor)}</p>" else ""}<p class=\"nota\">Lo terminado hasta ahora en Thot</p></div>")
+        pags += Pag(o.titulo, "<div class=\"portada\"><h1>${xml(o.titulo)}</h1>${if (o.autor.isNotBlank()) "<p class=\"autor\">${xml(o.autor)}</p>" else ""}<p class=\"nota\">Lo terminado hasta ahora en Nova</p></div>")
         var parte = ""
         for (c in o.capitulos) {
             if (c.parte.isNotBlank() && c.parte != parte) { parte = c.parte; pags += Pag(parte, "<h1 class=\"parte\">${xml(parte)}</h1>") }
@@ -220,10 +220,10 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
         val id = abrir ?: return@LaunchedEffect
         val o = obras.firstOrNull { it.id == id }
         if (o != null) { alAbierto(); val l = withContext(Dispatchers.IO) { runCatching { Escritos.preparar(ctx, o) }.getOrNull() }; if (l != null) alLeer(l) else mensaje = "No he podido preparar el libro." }
-        else if (!mirando && Escritos.ultimaVez(ctx) > 0L) { alAbierto(); mensaje = "Esa obra aún no tiene capítulos terminados en Thot." }
+        else if (!mirando && Escritos.ultimaVez(ctx) > 0L) { alAbierto(); mensaje = "Esa obra aún no tiene capítulos terminados en Nova." }
     }
     val actualizar: () -> Unit = {
-        if (!mirando) ambito.launch { mirando = true; val r = withContext(Dispatchers.IO) { runCatching { Escritos.refrescar(ctx) } }; mirando = false; mensaje = r.fold({ if (it) "Hay capítulos nuevos." else "Nada nuevo en Thot." }, { it.message ?: "Sin conexión." }) }
+        if (!mirando) ambito.launch { mirando = true; val r = withContext(Dispatchers.IO) { runCatching { Escritos.refrescar(ctx) } }; mirando = false; mensaje = r.fold({ if (it) "Hay capítulos nuevos." else "Nada nuevo en Nova." }, { it.message ?: "Sin conexión." }) }
     }
     // Como página de Seshat (enPagina), sin cabecera propia: la cabecera y las pestañas son las de la app
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).let { if (enPagina) it.navigationBarsPadding().padding(horizontal = 20.dp) else it.statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp) }) {
@@ -233,16 +233,16 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
                 EnlaceRevista(if (mirando) "Mirando…" else "Actualizar", acento = !mirando) { actualizar() }
             }
         } else {
-            RevistaTopBar(alVolver, "Seshat") { EnlaceRevista(if (mirando) "Mirando…" else "Actualizar", acento = !mirando) { actualizar() } }
+            RevistaTopBar(alVolver, "Lyra") { EnlaceRevista(if (mirando) "Mirando…" else "Actualizar", acento = !mirando) { actualizar() } }
             Filete(3.dp)
             Antetitulo("Sección · ${obras.size} ${if (obras.size == 1) "obra" else "obras"}", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
             NombreConPunto("Escritos", 52.sp, Charcoal, Modifier.padding(top = 2.dp))
         }
-        Text("Lo que escribes en Thot, aquí, con el lector: cada obra con los capítulos que has dado por terminados.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
+        Text("Lo que escribes en Nova, aquí, con el lector: cada obra con los capítulos que has dado por terminados.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
         if (mensaje.isNotBlank()) Text(mensaje, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(bottom = 8.dp))
         Filete(2.dp)
         if (obras.isEmpty()) Text(
-            when { !Cuenta.vinculada -> "Vincula tu cuenta de Atrio (Ajustes) para ver tus obras de Thot."; Escritos.ultimaVez(ctx) == 0L -> "Todavía no se ha leído tu cuenta."; else -> "Thot aún no ha publicado ningún capítulo terminado. Se publican al marcarlos como terminados allí." },
+            when { !Cuenta.vinculada -> "Vincula tu cuenta de Polaris (Ajustes) para ver tus obras de Nova."; Escritos.ultimaVez(ctx) == 0L -> "Todavía no se ha leído tu cuenta."; else -> "Nova aún no ha publicado ningún capítulo terminado. Se publican al marcarlos como terminados allí." },
             color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(vertical = 14.dp)
         )
         obras.forEachIndexed { i, o ->

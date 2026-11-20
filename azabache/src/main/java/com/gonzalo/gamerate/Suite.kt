@@ -360,7 +360,7 @@ object Suite {
                 val v = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, "${safe} ${java.text.SimpleDateFormat("yyyy-MM-dd HH.mm.ss", java.util.Locale.ROOT).format(java.util.Date(s.time))}.$ext")
                     put(MediaStore.Images.Media.MIME_TYPE, s.mime)
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Atrio/$safe")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Polaris/$safe")
                     put(MediaStore.Images.Media.IS_PENDING, 1)
                 }
                 val r = appCtx.contentResolver
@@ -428,7 +428,7 @@ object Suite {
     /** Igual que [send], pero con toda la respuesta del PC. */
     suspend fun sendRaw(op: String, args: JSONObject = JSONObject(), dev: String? = null, timeoutMs: Long = 45_000): JSONObject = withContext(Dispatchers.IO) {
         fun fail(m: String) = JSONObject().put("ok", false).put("msg", m)
-        val to = dev ?: target()?.dev ?: return@withContext fail("No hay ningún PC con Atrio conectado.")
+        val to = dev ?: target()?.dev ?: return@withContext fail("No hay ningún PC con Polaris conectado.")
         val body = JSONObject().put("op", op).put("a", args).put("t", JSONObject().put(".sv", "timestamp"))
             .put("by", store.myName.ifBlank { store.accUser.ifBlank { "Móvil" } })
         val r = try {
@@ -446,7 +446,7 @@ object Suite {
         // Apagar/reiniciar: el PC la recibió («ack») pero se apagó antes de contestar
         val acked = tree?.optJSONObject("cmd")?.optJSONObject(to)?.optJSONObject(id)?.optBoolean("ack") == true
         if (acked) JSONObject().put("ok", true).put("msg", "${target()?.name ?: "El PC"} ha dejado de contestar: se está apagando")
-        else fail("El PC no responde (¿Atrio está abierto y con tu cuenta?).")
+        else fail("El PC no responde (¿Polaris está abierto y con tu cuenta?).")
     }
 
     // ---------------------------------------------------------------- Fotos entre dispositivos
@@ -530,7 +530,7 @@ object Suite {
             .put("t", JSONObject().put(".sv", "timestamp")).put("by", store.myName.ifBlank { store.accUser.ifBlank { "Móvil" } })
         try {
             Account.db(store, "POST", base() + "/suite/inbox/$to", body.toString(), ok404 = false)
-            true to (if (devices.any { it.dev == to && it.online }) "Web añadida" else "Web guardada: llegará al PC cuando abras Atrio")
+            true to (if (devices.any { it.dev == to && it.online }) "Web añadida" else "Web guardada: llegará al PC cuando abras Polaris")
         } catch (e: Exception) { false to (e.message ?: "sin conexión") }
     }
 

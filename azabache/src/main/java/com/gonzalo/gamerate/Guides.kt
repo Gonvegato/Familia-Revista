@@ -216,9 +216,9 @@ fun GuidesSection(id: Long, name: String, modifier: Modifier = Modifier, inCell:
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(nm, { nm = it }, label = { Text("Nombre (opcional)") }, singleLine = true, shape = shp(14.dp), modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(8.dp))
-                    Text(if (pc != null) "Se guarda también en el PC: la verás en la página de ${pc.name} en Atrio." else "Este juego no está en la biblioteca de ningún PC: la guía se guarda en este móvil.",
+                    Text(if (pc != null) "Se guarda también en el PC: la verás en la página de ${pc.name} en Polaris." else "Este juego no está en la biblioteca de ningún PC: la guía se guarda en este móvil.",
                         color = Muted, fontSize = 13.sp)
-                    Text("Truco: desde el navegador, Compartir → Atrio también la guarda.", color = Muted, fontSize = 12.sp)
+                    Text("Truco: desde el navegador, Compartir → Polaris también la guarda.", color = Muted, fontSize = 12.sp)
                 }
             },
             confirmButton = {

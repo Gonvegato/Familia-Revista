@@ -106,7 +106,7 @@ fun FiltroRevista(texto: String, on: Boolean, modifier: Modifier = Modifier, onC
 }
 
 /** Las pestañas de Ajustes: las de las hermanas (Apariencia · Jonsu · Cuenta · Avanzado) y una más para las claves. */
-val PESTANAS_AJUSTES = listOf("Apariencia", "Jonsu", "Cuenta", "Claves", "Avanzado")
+val PESTANAS_AJUSTES = listOf("Apariencia", "Polaris", "Cuenta", "Claves", "Avanzado")
 
 /**
  * Ir a una pestaña de Ajustes. 0 Apariencia (la pantalla de estilo, que se pinta por encima); 1 Jonsu (objetivos, categorías, notas);
@@ -134,7 +134,7 @@ object AjustesNav {
 fun CabeceraAjustes(sel: Int, onBack: () -> Unit, ir: (Screen) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
-            Text("← JONSU", color = Paper.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
+            Text("← POLARIS", color = Paper.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.4.sp, maxLines = 1,
                 modifier = Modifier.padding(top = 6.dp).semantics { role = Role.Button }.press(haptic = false, onClick = onBack).padding(vertical = 10.dp))
             NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp), punto = acentoLegible(AcentoBloque, Charcoal, Paper))
         }

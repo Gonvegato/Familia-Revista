@@ -54,7 +54,7 @@ object GuiaNovela {
             "Ya tienes al menos un personaje."),
         Paso(3, "Un esquema ligero", true, "Crear los tres actos",
             "Una lista corta de lo que pasa, no un guion detallado. Lo habitual son tres actos: planteamiento, nudo y desenlace.",
-            listOf("Atrio crea una nota «Esquema de la historia», fuera del manuscrito, con tres apartados: Planteamiento, Nudo y Desenlace.",
+            listOf("Polaris crea una nota «Esquema de la historia», fuera del manuscrito, con tres apartados: Planteamiento, Nudo y Desenlace.",
                 "Escribe bajo cada uno una o dos líneas: qué pasa.",
                 "Si planificar te agobia, haz un esquema mínimo y sigue: se puede ampliar mientras escribes."),
             "Tienes el esquema (al menos tres resúmenes)."),
@@ -67,7 +67,7 @@ object GuiaNovela {
             "Ya lo tienes pensado."),
         Paso(5, "Un hábito realista", true, "Poner mi meta diaria",
             "Una meta pequeña que cumplas todos los días pesa más que una grande que abandones.",
-            listOf("Elige una cantidad que te parezca casi demasiado fácil (por ejemplo 300 palabras; es una sugerencia de Atrio, no de las guías).",
+            listOf("Elige una cantidad que te parezca casi demasiado fácil (por ejemplo 300 palabras; es una sugerencia de Polaris, no de las guías).",
                 "Si puedes, escribe a la misma hora.",
                 "Un sprint de 10 o 25 minutos ayuda a empezar."),
             "Ya has escrito en tres días distintos."),
@@ -78,8 +78,8 @@ object GuiaNovela {
                 "El objetivo es llegar al final, no que quede bonito."),
             "Has llegado a la meta de palabras."),
         Paso(7, "Dejarlo reposar", false, "Empezar el reposo",
-            "Aparta el borrador unas semanas antes de releerlo, para leerlo casi como un lector (consejo de Atrio, sin una fuente concreta).",
-            listOf("Pulsa «Empezar el reposo»: Atrio cuenta los días.",
+            "Aparta el borrador unas semanas antes de releerlo, para leerlo casi como un lector (consejo de Polaris, sin una fuente concreta).",
+            listOf("Pulsa «Empezar el reposo»: Polaris cuenta los días.",
                 "Mientras tanto no lo abras: lee, descansa o piensa en otra historia.",
                 "Cuando quieras volver, márcalo como hecho."),
             "Ya has descansado del borrador."),
@@ -201,7 +201,7 @@ fun AccionGuia(id: Int, e: Escritos, obra: Doc, abrir: (String) -> Unit, irManus
                 Text("Elige una cantidad que te parezca casi demasiado fácil. Mejor cumplirla todos los días que abandonar una grande.", color = Muted, fontSize = 14.sp, lineHeight = 20.sp)
                 Row(Modifier.horizontalScrollSafe(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("150", "300", "500", "1000").forEach { v -> SoftChip(v, dia == v) { dia = v } } }
                 CampoEscribir(dia, { dia = it.filter(Char::isDigit).take(6) }, "Palabras al día", numero = true)
-                Text("Para empezar, unas 300 (una sugerencia de Atrio). Siempre puedes subirla.", color = Muted, fontSize = 12.sp)
+                Text("Para empezar, unas 300 (una sugerencia de Polaris). Siempre puedes subirla.", color = Muted, fontSize = 12.sp)
                 BotonEscribir("Guardar") { e.edita(pid) { put("diaria", dia.toIntOrNull() ?: 0) }; onCerrar() }
             }
         }

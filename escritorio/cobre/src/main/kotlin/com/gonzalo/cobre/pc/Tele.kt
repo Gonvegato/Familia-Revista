@@ -53,7 +53,7 @@ object Tele {
     /** El último error de cada lista (sin secretos). */
     val errores = mutableStateMapOf<String, String>()
 
-    @Volatile var red: Red = RedJava("Cobre/${Actualizador.version}")
+    @Volatile var red: Red = RedJava("Pulsar/${Actualizador.version}")
     @Volatile private var almacenPropio: Almacen? = null
     /** En las pruebas: sin cifrar (para mirar lo que queda en el disco) o con otro llavero. */
     @Volatile var envoltorioPruebas: Envoltorio? = null
@@ -202,7 +202,7 @@ object Tele {
     fun tipoNombre(t: TipoLista) = when (t) { TipoLista.M3U -> "Lista M3U"; TipoLista.ARCHIVO -> "Archivo M3U"; TipoLista.XTREAM -> "Xtream Codes" }
 
     /** (Para las pruebas.) */
-    fun olvidaParaPruebas() { cargadas.clear(); cortas.clear(); almacenPropio = null; fijas = null; ocupada.clear(); errores.clear(); envoltorioPruebas = null; red = RedJava("Cobre/${Actualizador.version}") }
+    fun olvidaParaPruebas() { cargadas.clear(); cortas.clear(); almacenPropio = null; fijas = null; ocupada.clear(); errores.clear(); envoltorioPruebas = null; red = RedJava("Pulsar/${Actualizador.version}") }
 
     /** (Para las pruebas: espera a que se haya bajado lo pedido.) */
     fun esperaParaPruebas() { runCatching { hilos.submit {}.get(60, java.util.concurrent.TimeUnit.SECONDS); hilos.submit {}.get(60, java.util.concurrent.TimeUnit.SECONDS) } }

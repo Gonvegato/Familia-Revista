@@ -293,7 +293,7 @@ class HttpJava(private val espera: Int = 15_000) : Http {
         val c = try { URL(url).openConnection() as HttpURLConnection } catch (e: Exception) { throw IOException("Dirección no válida") }
         c.connectTimeout = espera; c.readTimeout = espera * 2
         c.setRequestProperty("Accept", "application/json")
-        c.setRequestProperty("User-Agent", "Mostaza/" + com.gonzalo.familia.pc.Actualizador.version + " (" + (if (com.gonzalo.familia.pc.Sitio.sistema == com.gonzalo.familia.pc.Sitio.Sistema.MAC) "Mac" else "Linux") + ")")
+        c.setRequestProperty("User-Agent", "Sirius/" + com.gonzalo.familia.pc.Actualizador.version + " (" + (if (com.gonzalo.familia.pc.Sitio.sistema == com.gonzalo.familia.pc.Sitio.Sistema.MAC) "Mac" else "Linux") + ")")
         cabeceras.forEach { (k, v) -> c.setRequestProperty(k, v) }
         try {
             val codigo = try { c.responseCode } catch (e: IOException) { throw IOException("Sin conexión con el addon") }

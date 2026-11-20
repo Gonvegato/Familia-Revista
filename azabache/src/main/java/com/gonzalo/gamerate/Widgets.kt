@@ -648,7 +648,7 @@ object Widgets {
         val ctx = d.ctx
         val libros = d.kinds.filter { it.isBook }.flatMap { d.de(it) }.filter { it.play?.status == 1 }.sortedByDescending { d.reciente(it) }
         if (libros.isEmpty()) return vacio(ctx, "Leyendo", "Nada en la mesilla",
-            if (d.marfil) "Empieza un libro en Seshat y lo tendrás aquí, a un toque de seguir leyendo." else "Los libros se leen en Seshat: empieza uno allí y lo tendrás aquí.",
+            if (d.marfil) "Empieza un libro en Lyra y lo tendrás aquí, a un toque de seguir leyendo." else "Los libros se leen en Lyra: empieza uno allí y lo tendrás aquí.",
             if (d.marfil) leer(ctx, 0L, "") else abrir(ctx, "home"), w, h)
         val i = Math.floorMod(estado(ctx, id, "i", 0), libros.size)
         val e = libros[i]
@@ -656,7 +656,7 @@ object Widgets {
         val img = imagen(ctx, e.cover, px(ctx, if (compacto) max(w, h) else h * 0.9f))
         val av = d.avance(e)
         val archivo = d.conArchivo(e) || d.conMarfil(e)
-        val accion = if (d.conMarfil(e)) "Leer en Seshat \u00A0→" else if (archivo) "Leer \u00A0→" else "Abrir ficha \u00A0→"
+        val accion = if (d.conMarfil(e)) "Leer en Lyra \u00A0→" else if (archivo) "Leer \u00A0→" else "Abrir ficha \u00A0→"
         val zonas = mutableListOf(Zona(0f, 0f, w, h, tocar(d, e), (if (archivo) "Seguir leyendo " else "Abrir ") + e.name))
         if (libros.size > 1) zonas += Zona(w - 72f, 0f, 72f, 42f, op(ctx, WTipo.LEYENDO, id, "sig"), "Otro libro")
         return Pagina(zonas) {
@@ -763,13 +763,13 @@ object Widgets {
         val ch = h - top - pad - textos
         val imgs = imagenes(ctx, items.map { it.cover }, px(ctx, ch))
         val zonas = listOf(
-            Zona(0f, 0f, w, top, abrir(ctx, "home"), "Abrir Jonsu"),
+            Zona(0f, 0f, w, top, abrir(ctx, "home"), "Abrir Polaris"),
             Zona(pad, top, w - 2 * pad, h - top, null, "", listOf(items.map { tocar(d, it) to it.name }))
         )
         return Pagina(zonas) {
             fondo()
             seccion("En curso", pad, pad, w - 2 * pad)
-            pon(capa(android.text.SpannableString("JONSU.").apply { setSpan(android.text.style.ForegroundColorSpan(acento), 5, 6, 0) }, tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa(android.text.SpannableString("POLARIS.").apply { setSpan(android.text.style.ForegroundColorSpan(acento), 5, 6, 0) }, tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             reglaCabecera(pad, pad + 14.5f, w - pad, pad + 15.2f)
             items.forEachIndexed { k, e ->
                 val gap = 5f
@@ -936,7 +936,7 @@ object Widgets {
                 velo(h * 0.18f, h, 0x00000000, 0xF2000000.toInt(), 0x99000000.toInt())
             } else { fondo(0xFF15120F.toInt()) }
             // Cabecera de la revista
-            val mast = capa(android.text.SpannableString("JONSU.").apply { setSpan(android.text.style.ForegroundColorSpan(acentoFoto), 5, 6, 0) }, tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
+            val mast = capa(android.text.SpannableString("POLARIS.").apply { setSpan(android.text.style.ForegroundColorSpan(acentoFoto), 5, 6, 0) }, tp(fTitular, if (h < 180f) 22f else 28f, blanco, -0.02f), w * 0.6f, 1)
             pon(mast, pad, pad - 4f)
             val fw = w - 2 * pad - mast.getLineWidth(0) - 8f
             ante(if (fw < anchoAnte(fecha, 8.5f)) fecha.substringBeforeLast(' ') else fecha, w - pad - fw, pad, fw, 0xDDFFFFFF.toInt(), 8.5f, Layout.Alignment.ALIGN_OPPOSITE)
@@ -1013,7 +1013,7 @@ object Widgets {
     private fun cita(d: WDatos, id: Int, w: Float, h: Float): Pagina {
         val ctx = d.ctx
         val todas = citas(ctx, d.kinds.filter { it.isBook }.flatMap { d.de(it) })
-        if (todas.isEmpty()) return vacio(ctx, "La cita", "Subraya y saldrá aquí", "Las frases que subrayes en Seshat se irán turnando aquí, una cada día.", abrir(ctx, "diario:1"), w, h)
+        if (todas.isEmpty()) return vacio(ctx, "La cita", "Subraya y saldrá aquí", "Las frases que subrayes en Lyra se irán turnando aquí, una cada día.", abrir(ctx, "diario:1"), w, h)
         // Una distinta cada día (y la que quieras tocando «Otra»)
         val i = Math.floorMod(LocalDate.now().toEpochDay() + estado(ctx, id, "i", 0), todas.size.toLong()).toInt()
         val q = todas[i]
@@ -1109,18 +1109,18 @@ object Widgets {
             val pie = if (h >= 84f) 16f else 0f
             val p = tp(fTitular, 10f, color, -0.03f)
             // El tamaño que llena el ancho (y cabe en alto)
-            val ancho = p.measureText("JONSU")
+            val ancho = p.measureText("POLARIS")
             val cuadro = 0.16f
             var s = min((w - 8f) / (ancho / 10f * (1f + cuadro)), (h - pie - 4f) / 0.95f)
             s = s.coerceAtLeast(10f)
             val tpa = tp(fTitular, s, color, -0.03f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
             val fm = tpa.fontMetrics
-            val tw = tpa.measureText("JONSU")
+            val tw = tpa.measureText("POLARIS")
             val total = tw + s * cuadro
             val x = (w - total) / 2
             val capH = s * 0.72f
             val base = (h - pie) / 2 + capH / 2
-            c.drawText("JONSU", x, base, tpa)
+            c.drawText("POLARIS", x, base, tpa)
             // El punto de «JONSU.», en el acento (como en el icono y la cabecera)
             c.drawText(".", x + tw, base, tp(fTitular, s, acentoFoto).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) })
             if (pie > 0f) {
@@ -1147,13 +1147,13 @@ object Widgets {
             val alto = h - 2 * pad - bajo
             // Dirección C: «JONSU.» en un bloque de la tinta (crema), con letra del color del papel y el punto en el acento
             val p = tp(fTitular, 10f, papel, -0.015f)
-            val s = min((w - 2 * pad) / (p.measureText("JONSU.") / 10f), alto / 0.86f).coerceAtLeast(10f)
+            val s = min((w - 2 * pad) / (p.measureText("POLARIS.") / 10f), alto / 0.86f).coerceAtLeast(10f)
             val tpa = tp(fTitular, s, papel, -0.015f)
             val capH = s * 0.72f
             val base = pad + capH + (alto - capH * 1.1f).coerceAtLeast(0f) / 2
             c.drawRect(0f, 0f, w, base + s * 0.18f + 2f, lleno(tinta))
-            val tw = tpa.measureText("JONSU")
-            c.drawText("JONSU", pad, base, tpa)
+            val tw = tpa.measureText("POLARIS")
+            c.drawText("POLARIS", pad, base, tpa)
             c.drawText(".", pad + tw, base, tp(fTitular, s, acentoLegible(androidx.compose.ui.graphics.Color(acentoBloque), androidx.compose.ui.graphics.Color(tinta), androidx.compose.ui.graphics.Color(papel)).toArgb(), -0.015f))
             var y = base + s * 0.18f + 8f
             if (conLinea) {

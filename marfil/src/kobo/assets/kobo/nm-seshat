@@ -1,6 +1,6 @@
-# Seshat: manda lo leído en este Kobo (libros, por dónde vas, terminados y tiempo leído) a Seshat y Jonsu.
-# Lo pone Seshat al preparar el Kobo. Para quitarlo, borra este archivo y la carpeta .adds/seshat.
-menu_item :main :Enviar a Seshat      :nickel_wifi :autoconnect
+# Lyra: manda lo leído en este Kobo (libros, por dónde vas, terminados y tiempo leído) a Lyra y Polaris.
+# Lo pone Lyra al preparar el Kobo. Para quitarlo, borra este archivo y la carpeta .adds/seshat.
+menu_item :main :Enviar a Lyra        :nickel_wifi :autoconnect
   chain_always                        :cmd_spawn   :quiet:/bin/sh /mnt/onboard/.adds/seshat/seshat.sh espera
-  chain_success                       :dbg_toast   :Enviando a Seshat… («Seshat · último envío» dice cómo ha ido)
-menu_item :main :Seshat · último envío :cmd_output  :2000:/usr/bin/tail -n 5 /mnt/onboard/.adds/seshat/registro.txt 2>/dev/null || echo "Aún no se ha enviado nada."
+  chain_success                       :dbg_toast   :Enviando a Lyra… («Lyra · último envío» dice cómo ha ido)
+menu_item :main :Lyra · último envío   :cmd_output  :2000:/usr/bin/tail -n 5 /mnt/onboard/.adds/seshat/registro.txt 2>/dev/null || echo "Aún no se ha enviado nada."

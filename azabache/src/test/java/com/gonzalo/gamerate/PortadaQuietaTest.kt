@@ -62,6 +62,6 @@ class PortadaQuietaTest {
         assertTrue("la cabecera nunca crece al bajar: $altos", altos.zipWithNext().all { (a, b) -> b <= a })
         assertTrue("la cabecera se recoge: $altos", altos.last() < inicial)
         // Recogida del todo, queda la fila pequeña con «JONSU.» (sin banda vacía): no menos de una línea
-        assertTrue(rule.onAllNodesWithText("JONSU.").fetchSemanticsNodes().isNotEmpty())
+        assertTrue(rule.onAllNodesWithText("POLARIS.").fetchSemanticsNodes().isNotEmpty())
     }
 }

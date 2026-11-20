@@ -271,15 +271,15 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                     }
                     // ---- 03 Dónde verlo: tus fuentes y, con TMDB, las plataformas
                     SeccionNumerada(sig(), "Dónde verlo", if (!serie) "Todas las fuentes" to { fuentesDe = null to true } else null)
-                    Text(if (serie) "Cada capítulo tiene sus fuentes («Fuentes», en su fila). Hathor pone la mejor para ti al tocar el botón."
-                        else "Hathor pregunta a tus addons y pone la mejor fuente para ti (tus idiomas, tu red, tu debrid); «Todas las fuentes» las enseña todas.",
+                    Text(if (serie) "Cada capítulo tiene sus fuentes («Fuentes», en su fila). Sirius pone la mejor para ti al tocar el botón."
+                        else "Sirius pregunta a tus addons y pone la mejor fuente para ti (tus idiomas, tu red, tu debrid); «Todas las fuentes» las enseña todas.",
                         color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
                     extras?.let { DondeVer(it.plataformas) }
                     // ---- En Jonsu (la valoración, solo se lee)
                     if (t != null) {
                         val (nota, resena) = Biblioteca.valoracion(t.ref)
                         if (nota > 0 || resena.isNotBlank() || Hermanas.azabache(ctx)) {
-                            SeccionNumerada(sig(), "En Jonsu", if (Hermanas.azabache(ctx)) "Valorar" to { Hermanas.abreEnAzabache(ctx, t.ref) } else null)
+                            SeccionNumerada(sig(), "En Polaris", if (Hermanas.azabache(ctx)) "Valorar" to { Hermanas.abreEnAzabache(ctx, t.ref) } else null)
                             if (nota > 0) Row(verticalAlignment = Alignment.Bottom) {
                                 Text("$nota", color = Acento, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = 48.sp, lineHeight = 48.sp)
                                 Text(" / 100", color = Muted, fontFamily = Body, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
@@ -331,7 +331,7 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
                 Filete(1.dp, Line)
                 MagLink("Imágenes", "La portada y el fondo") { editar = false; imagenes = true }
                 Filete(1.dp, Line)
-                MagLink("Quitar de Hathor", "En todos tus dispositivos y en Jonsu") { editar = false; quitar = true }
+                MagLink("Quitar de Sirius", "En todos tus dispositivos y en Polaris") { editar = false; quitar = true }
             }
         },
         confirmButton = { TextButton({ editar = false }) { Text("LISTO", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
@@ -339,7 +339,7 @@ private fun PantFichaDe(b: MetaBreve, alCerrar: () -> Unit, alAbrir: (MetaBreve)
     if (quitar && t != null) AlertDialog(
         onDismissRequest = { quitar = false }, containerColor = Paper, shape = esquina(0.dp),
         title = { Text("¿Quitar «${t.nombre}»?", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.ExtraBold) },
-        text = { Text("Se quita de tu biblioteca en todos tus dispositivos y en Jonsu. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).", color = Muted, fontFamily = Body) },
+        text = { Text("Se quita de tu biblioteca en todos tus dispositivos y en Polaris. Es para siempre: aunque la vuelvas a ver, no vuelve sola. Si la añades otra vez, vuelve la misma, con lo que tenía (lo visto y su nota).", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({ quitar = false; Biblioteca.quita(t.ref) }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
         dismissButton = { TextButton({ quitar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
     )
@@ -398,7 +398,7 @@ fun PantFuentes(b: MetaBreve, m: Meta?, v: Video?, alCerrar: () -> Unit) {
             if (!terminado) Nota("Preguntando a tus addons…", Modifier.padding(top = 10.dp))
             if (terminado && todas.isEmpty()) Nota("Ninguno de tus addons da fuentes para esto. Los addons de fuentes los pones tú en «Addons» (con tu debrid configurado en el suyo).", Modifier.padding(top = 10.dp))
             e.elegida?.let { c ->
-                Text("Hathor pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.porGrupo) " (la misma clase que el episodio anterior)" else "") + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
+                Text("Sirius pondría: " + c.analisis.resumen().ifBlank { c.addon } + (if (e.porGrupo) " (la misma clase que el episodio anterior)" else "") + (if (e.fueraDeIdioma) " — ninguna está en tus idiomas" else ""),
                     color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 10.dp))
             }
             val porAddon = todas.groupBy { it.ordenAddon to it.addon }.toSortedMap(compareBy { it.first })

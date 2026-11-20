@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
  * otro idioma (traductor de Google en el propio móvil, ML Kit: funciona sin conexión una vez bajado el idioma).
  */
 object Diccionario {
-    private const val UA = "Marfil/1 (lector de libros personal)"
+    private const val UA = "Lyra/1 (lector de libros personal)"
 
     private fun extract(title: String): String? {
         val u = "https://es.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&format=json&redirects=1&titles=" +

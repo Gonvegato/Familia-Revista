@@ -373,7 +373,7 @@ fun PantPrincipal(
             // desaparecían de golpe al final, con un saltito de la fila)
             val plegado = if (altoNombre > 0) ((recogido / altoNombre - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
             Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp * plegado), verticalAlignment = Alignment.CenterVertically) {
-                if (plegado > 0f) NombreConPunto("Seshat", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
+                if (plegado > 0f) NombreConPunto("Lyra", 22.sp, Paper, Modifier.apareceSegun(plegado).padding(end = 14.dp))
                 EnlaceRevista("Buscar", Modifier.onGloballyPositioned { sitioBuscar[0] = it }, color = Paper.copy(alpha = 0.75f)) {
                     if (!buscando) { com.gonzalo.familia.Vibra.clic(vista); aperturaBusca++; buscando = true }
                 }
@@ -400,7 +400,7 @@ fun PantPrincipal(
                     }
                 }
             }) {
-                NombreConPunto("Seshat", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
+                NombreConPunto("Lyra", if (ancho >= 700) 104.sp else 64.sp, Paper, Modifier.padding(top = 2.dp, bottom = 12.dp))
             }
         }
         PestanasPaginas(NOMBRES_PAGINAS, pager, cuentas) { i -> ambito.launch { pager.animateScrollToPage(i) } }

@@ -119,7 +119,7 @@ object KDrive {
 
     suspend fun test(ctx: Context): String = withContext(Dispatchers.IO) {
         com.gonzalo.familia.NubeFamilia.testKDrive(ctx)
-        "Conectado: Jonsu guardará todo en «Mi carpeta/Atrio» de tu kDrive (la misma carpeta que Atrio del PC)"
+        "Conectado: Polaris guardará todo en «Mi carpeta/Polaris» de tu kDrive (la misma carpeta que Polaris del PC)"
     }
 
     fun home(ctx: Context): Long = com.gonzalo.familia.NubeFamilia.homeKDrive(ctx)
@@ -155,17 +155,23 @@ object KDrive {
         return out.sortedWith(compareByDescending<Entry> { it.dir }.thenBy { it.name.lowercase() })
     }
 
-    /** Dónde empieza el explorador en kDrive: «Mi carpeta/Atrio» si ya existe; si no, «Mi carpeta». */
+    /** Dónde empieza el explorador en kDrive: «Mi carpeta/Polaris» (o «Atrio») si ya existe; si no, «Mi carpeta». */
     fun start(ctx: Context): Long {
         val h = home(ctx)
-        return list(ctx, h).firstOrNull { it.dir && it.name == "Atrio" }?.id ?: h
+        val dirs = list(ctx, h).filter { it.dir }
+        return dirs.firstOrNull { it.name == "Polaris" }?.id
+            ?: dirs.firstOrNull { it.name == "Atrio" }?.id
+            ?: h
     }
 
-    /** Dónde empieza el explorador en Google Drive: «Atrio» dentro de la raíz si ya existe; si no, la raíz. */
+    /** Dónde empieza el explorador en Google Drive: «Polaris» (o «Jonsu»/«Atrio» si aún existe) dentro de la raíz; si no, la raíz. */
     fun startGDrive(ctx: Context): Pair<String, String> {
         val g = com.gonzalo.familia.NubeFamilia.gdrive(ctx)
-        val atrio = g.carpeta("Atrio")
-        return if (atrio != null) atrio to "Atrio" else g.carpetaRaiz() to "Google Drive"
+        for (nombre in listOf("Polaris", "Jonsu", "Atrio")) {
+            val id = g.carpeta(nombre)
+            if (id != null) return id to nombre
+        }
+        return g.carpetaRaiz() to "Google Drive"
     }
 
     /** Busca por nombre en kDrive (o en Google Drive si está activo y [soloKDrive] es false). */
@@ -213,7 +219,7 @@ object KDrive {
         val n = NubeSync.safe(cleanTitle(nombre))
         if (nombre.isBlank()) return null
         return runCatching { busca(ctx, n, tipo = "dir", max = 60) }.getOrDefault(emptyList())
-            .firstOrNull { !it.esGoogleDrive && it.dir && it.name == n && it.path.startsWith("Mi carpeta/Atrio/") }?.let { it.id to "${it.path}/${it.name}" }
+            .firstOrNull { !it.esGoogleDrive && it.dir && it.name == n && (it.path.startsWith("Mi carpeta/Polaris/") || it.path.startsWith("Mi carpeta/Atrio/")) }?.let { it.id to "${it.path}/${it.name}" }
     }
 
     /** La carpeta de una ficha en Google Drive si ya existe, o null. */
@@ -263,7 +269,7 @@ object NubeSync {
      * Dónde va cada cosa en tu kDrive, todo bajo «Mi carpeta/Atrio»:
      * Atrio/<Categoría>/<Ficha>/Libro · Capturas · Portadas, y Atrio/<Categoría>/Sagas/<Saga>/Portadas.
      */
-    fun folder(kind: Kind, name: String, what: String) = "Atrio/${safe(kind.title)}/${safe(cleanTitle(name))}/$what"
+    fun folder(kind: Kind, name: String, what: String) = "Polaris/${safe(kind.title)}/${safe(cleanTitle(name))}/$what"
 
     /** Las fotos tuyas que usan tus fichas y tus sagas (portadas y fondos), con la carpeta de su ficha. */
     /** Tus fotos (portadas, fondos, imágenes de casillas) que usan tus fichas y faltan aquí: se bajan. Cuántas. */
@@ -332,10 +338,10 @@ object NubeSync {
         }
         store.loadSagas().forEach { sg ->
             val k = kinds.find { it.id == sg.kind } ?: BOOKS
-            Photos.nameOf(sg.cover)?.let { out.putIfAbsent(it, "Atrio/${safe(k.title)}/Sagas/${safe(sg.name)}/Portadas") }
+            Photos.nameOf(sg.cover)?.let { out.putIfAbsent(it, "Polaris/${safe(k.title)}/Sagas/${safe(sg.name)}/Portadas") }
         }
         // Las fotos de tu diario
-        store.loadDiario().forEach { n -> Photos.nameOf(n.foto)?.let { out.putIfAbsent(it, "Atrio/Diario/${java.time.LocalDate.ofEpochDay(n.dia).year}") } }
+        store.loadDiario().forEach { n -> Photos.nameOf(n.foto)?.let { out.putIfAbsent(it, "Polaris/Diario/${java.time.LocalDate.ofEpochDay(n.dia).year}") } }
         return out
     }
 
@@ -546,7 +552,7 @@ fun PartnerFileLink(itemId: Long, kind: Kind, always: Boolean = false) {
     val x = NubeHub.partner.find { it.k == "libro:$itemId" && it.l.isNotBlank() } ?: return
     val ctx = LocalContext.current
     val copy = NubeHub.copyBook
-    if (copy != null) MagLink(if (NubeHub.copying == itemId) "Copiando…" else "Copiar a mi Atrio", "${x.n} · con su archivo, para leerlo aquí", accent = true) {
+    if (copy != null) MagLink(if (NubeHub.copying == itemId) "Copiando…" else "Copiar a mi Polaris", "${x.n} · con su archivo, para leerlo aquí", accent = true) {
         if (NubeHub.copying == 0L) copy(itemId)
     }
     val donde = if (com.gonzalo.familia.nucleo.GoogleDrive.esEnlaceGoogleDrive(x.l)) "Google Drive" else "kDrive"
@@ -605,7 +611,7 @@ fun NubeSettings(say: (String) -> Unit) {
         )
         Plegado(
             "Solo tienes que pegar tu ID de cliente y tu Secreto de cliente (de Google Cloud → Aplicación de escritorio) y pulsar «Iniciar sesión con Google». " +
-                "Se abrirá el navegador, aceptas el permiso y Jonsu guarda todo solo para las 6 apps (en el móvil y en el ordenador)."
+                "Se abrirá el navegador, aceptas el permiso y Polaris guarda todo solo para las 6 apps (en el móvil y en el ordenador)."
         )
         CampoRevista("ID de cliente", gdCid, "…apps.googleusercontent.com", ascii = true) { gdCid = it }
         CampoRevista("Secreto de cliente", gdCsec, "GOCSPX-…", secreto = true, ascii = true) { gdCsec = it }

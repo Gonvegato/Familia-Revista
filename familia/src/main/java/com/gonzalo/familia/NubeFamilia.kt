@@ -177,7 +177,7 @@ object NubeFamilia {
             val kdId = uploadKDrive(ctx, path, name, size, onProgress, input)
             return Subida(kdId = kdId)
         }
-        throw Fail("No hay ninguna nube conectada (configura Google Drive en Jonsu → Ajustes)")
+        throw Fail("No hay ninguna nube conectada (configura Google Drive en Polaris → Ajustes)")
     }
 
     /** Baja de Google Drive si tiene [gdId], o de kDrive si tiene [kdId]. */
@@ -190,7 +190,7 @@ object NubeFamilia {
             downloadKDrive(ctx, kdId, dest)
             return
         }
-        throw Fail(if (gdId.isNotBlank()) "Conecta tu Google Drive en Jonsu para bajar este archivo" else "Este archivo está en tu kDrive antiguo; conéctalo o migra tus archivos a Google Drive")
+        throw Fail(if (gdId.isNotBlank()) "Conecta tu Google Drive en Polaris para bajar este archivo" else "Este archivo está en tu kDrive antiguo; conéctalo o migra tus archivos a Google Drive")
     }
 
     /** Enlace público para tu pareja (Google Drive si tiene `gdId`, kDrive si solo tiene `kdId`). */

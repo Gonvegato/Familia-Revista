@@ -42,7 +42,7 @@ fun MauTrasVer() {
         delay(MauHathor.ESPERA_MS)
         MauHathor.acabado = null
         if (!Mau.iniciado || Mau.ahora() - a.cuando > MauHathor.FRESCO_MS) return@LaunchedEffect
-        val jonsu = if (HermanasPc.esta("azabache")) AccionMau("Valorar en Jonsu") { HermanasPc.abre("azabache", listOf(MauPc.ARG_LLEGA)) } else null
+        val jonsu = if (HermanasPc.esta("azabache")) AccionMau("Valorar en Polaris") { HermanasPc.abre("azabache", listOf(MauPc.ARG_LLEGA)) } else null
         // (acabar una peli o un episodio es de lo importante, como acabar un libro: no espera a la pausa entre dos cosas que dice)
         Mau.di(Mau.cerebro.elige(Frases.pelisVista), jonsu, importante = true)
     }

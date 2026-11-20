@@ -55,11 +55,11 @@ class SeccionesTest {
         rule.setContent { MarfilTheme { Surface(Modifier.fillMaxSize(), color = Paper) { PantPrincipal(pagina = pagina, alPagina = { pagina = it }, alAbrir = {}, alLeer = {}, alAbrirSaga = {}, alAnadir = {}, alAjustes = {}) } } }
         // Se abre en la portada; la fila de pestañas tiene «PORTADA» y una sola cabecera «SESHAT.»
         assertEquals(1, rule.onAllNodesWithText("PORTADA").fetchSemanticsNodes().size)
-        assertEquals(1, rule.onAllNodesWithText("SESHAT.").fetchSemanticsNodes().size)
+        assertEquals(1, rule.onAllNodesWithText("LYRA.").fetchSemanticsNodes().size)
         toca("PENDIENTES")
         assertEquals(Destino.Pendientes.ordinal, pagina)
         // Sigue habiendo una sola cabecera y una sola fila de pestañas (no se abre otra pantalla)
-        assertEquals(1, rule.onAllNodesWithText("SESHAT.").fetchSemanticsNodes().size)
+        assertEquals(1, rule.onAllNodesWithText("LYRA.").fetchSemanticsNodes().size)
         assertEquals(1, rule.onAllNodesWithText("LEYENDO").fetchSemanticsNodes().size)
         // Lo de fuera (Atrás, un widget) mueve la página
         pagina = 0; rule.waitForIdle()

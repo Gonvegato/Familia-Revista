@@ -284,7 +284,7 @@ object Nucleos {
     /** Abre una conexión al buildbot con lo de siempre. */
     private fun conexion(u: String, metodo: String = "GET"): HttpURLConnection = (URL(u).openConnection() as HttpURLConnection).apply {
         requestMethod = metodo; connectTimeout = 20_000; readTimeout = 60_000
-        setRequestProperty("User-Agent", "Hiedra/${VERSION} (Android)")
+        setRequestProperty("User-Agent", "Orion/${VERSION} (Android)")
     }
 
     /** La fecha del núcleo que hay ahora en el buildbot (0 si no se sabe). Bloqueante (red). */

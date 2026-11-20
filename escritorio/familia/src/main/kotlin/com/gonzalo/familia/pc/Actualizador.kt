@@ -186,8 +186,8 @@ object Actualizador {
         val script = File(carpeta, "instalar.sh")
         require(script.isFile) { "la versión nueva no trae instalar.sh" }
         corre(listOf("sh", script.absolutePath, "--destino=${donde.absolutePath}", "--callada"), "instalar la versión nueva", entorno)
-        // Si estaba con el nombre de antes, instalar.sh la ha puesto al lado con el nuevo (y deja en la vieja solo un atajo)
-        val nueva = if (donde.name == NombresApp.viejo(app) && NombresApp.de(app) != donde.name) File(donde.parentFile, NombresApp.de(app)) else donde
+        // Si estaba con un nombre de antes, instalar.sh la ha puesto al lado con el nuevo (y deja en la vieja solo un atajo)
+        val nueva = if (donde.name in NombresApp.ambos(app) && NombresApp.de(app) != donde.name) File(donde.parentFile, NombresApp.de(app)) else donde
         return File(nueva, "bin/$nombre")
     }
 
@@ -197,16 +197,18 @@ object Actualizador {
      * `<Viejo>.app`, le pone el nombre nuevo. Nunca toca los datos (están en la carpeta de datos, que no cambia de nombre).
      */
     fun recogeNombreViejo(app: String, aqui: File? = instalada(), sistema: Sitio.Sistema = Sitio.sistema) {
-        val nuevo = NombresApp.de(app); val viejo = NombresApp.viejo(app)
-        if (aqui == null || nuevo == viejo) return
+        val nuevo = NombresApp.de(app); val viejos = NombresApp.ambos(app).filter { it != nuevo }
+        if (aqui == null || viejos.isEmpty()) return
         runCatching {
             if (sistema == Sitio.Sistema.MAC) {
                 val destino = File(aqui.parentFile, "$nuevo.app")
-                if (aqui.name == "$viejo.app" && !destino.exists()) aqui.renameTo(destino)
+                if (viejos.any { aqui.name == "$it.app" } && !destino.exists()) aqui.renameTo(destino)
             } else if (aqui.name == nuevo) {
-                val antes = File(aqui.parentFile, viejo)
-                // Solo si es el atajo (bin/<Viejo> y nada más) o una instalación entera de antes; nunca otra cosa
-                if (antes.isDirectory && File(antes, "bin/$viejo").exists()) antes.deleteRecursively()
+                for (viejo in viejos) {
+                    val antes = File(aqui.parentFile, viejo)
+                    // Solo si es el atajo (bin/<Viejo> y nada más) o una instalación entera de antes; nunca otra cosa
+                    if (antes.isDirectory && File(antes, "bin/$viejo").exists()) antes.deleteRecursively()
+                }
             }
         }
     }

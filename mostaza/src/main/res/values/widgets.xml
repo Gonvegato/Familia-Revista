@@ -13,8 +13,8 @@
     <string name="w_proximos_d">Los episodios que se estrenan de tus series, con su fecha. Toca uno y se abre su ficha.</string>
     <string name="w_semana">Tu semana</string>
     <string name="w_semana_d">Lo que has visto estos siete días: tus horas, día a día, y los títulos.</string>
-    <string name="w_marca">HATHOR</string>
-    <string name="w_marca_d">La cabecera de Hathor, sola sobre tu fondo. Un toque y estás en la portada.</string>
-    <string name="w_marcapapel">HATHOR en papel</string>
-    <string name="w_marcapapel_d">La cabecera de Hathor en su papel: el número del día y la fecha. Un toque y estás en la portada.</string>
+    <string name="w_marca">SIRIUS</string>
+    <string name="w_marca_d">La cabecera de Sirius, sola sobre tu fondo. Un toque y estás en la portada.</string>
+    <string name="w_marcapapel">SIRIUS en papel</string>
+    <string name="w_marcapapel_d">La cabecera de Sirius en su papel: el número del día y la fecha. Un toque y estás en la portada.</string>
 </resources>

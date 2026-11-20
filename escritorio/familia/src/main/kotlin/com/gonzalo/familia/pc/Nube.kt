@@ -34,7 +34,7 @@ object Nube {
         if (g.activo) return g.sube(ruta, nombre, tamano, progreso, entrada) to true
         val k = kdrive()
         if (k.activo) return k.sube(ruta, nombre, tamano, progreso, entrada).toString() to false
-        throw GoogleDrive.Fallo("No hay ninguna nube configurada (pon tu Google Drive en Jonsu → Ajustes → Servicios)")
+        throw GoogleDrive.Fallo("No hay ninguna nube configurada (pon tu Google Drive en Polaris → Ajustes → Servicios)")
     }
 
     /** Baja un archivo: de Google Drive si tiene [gdId], o de kDrive si solo tiene [kdId]. */
@@ -47,7 +47,7 @@ object Nube {
             val k = kdrive()
             if (k.activo) { k.baja(kdId, destino, progreso); return }
         }
-        throw GoogleDrive.Fallo("No se puede bajar el archivo: configura tu Google Drive en Jonsu")
+        throw GoogleDrive.Fallo("No se puede bajar el archivo: configura tu Google Drive en Polaris")
     }
 
     /** Lista los archivos de `versiones` (Google Drive primero; si no está o está vacío, kDrive). */

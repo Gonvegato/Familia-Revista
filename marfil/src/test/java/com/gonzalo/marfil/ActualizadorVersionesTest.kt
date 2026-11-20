@@ -13,14 +13,18 @@ class ActualizadorVersionesTest {
 
     @Test fun seshatSoloLasSuyas() {
         assertEquals(listOf(0, 22, 6), Actualizador.versionDe("Seshat-0.22.6.apk", sesKobo = false))
+        assertEquals(listOf(0, 23, 0), Actualizador.versionDe("Lyra-0.23.0.apk", sesKobo = false))
         assertNull(Actualizador.versionDe("SesKobo-0.22.6-kobo.3.apk", sesKobo = false))
+        assertNull(Actualizador.versionDe("LyraKobo-0.23.0-kobo.1.apk", sesKobo = false))
         assertEquals("Seshat-0.23.0.apk", Actualizador.ultima(carpeta, sesKobo = false)?.first)
     }
 
     @Test fun sesKoboSoloLasSuyas() {
         assertEquals(listOf(0, 22, 6, 3), Actualizador.versionDe("SesKobo-0.22.6-kobo.3.apk", sesKobo = true))
+        assertEquals(listOf(0, 23, 0, 1), Actualizador.versionDe("LyraKobo-0.23.0-kobo.1.apk", sesKobo = true))
         assertNull(Actualizador.versionDe("Seshat-0.23.0.apk", sesKobo = true))
-        assertNull(Actualizador.versionDe("SesKobo-0.24.0.apk", sesKobo = true)) // (sin «-kobo»: no es un nombre de SesKobo)
+        assertNull(Actualizador.versionDe("Lyra-0.23.0.apk", sesKobo = true))
+        assertNull(Actualizador.versionDe("SesKobo-0.24.0.apk", sesKobo = true)) // (sin «-kobo»: no es un nombre de LyraKobo)
         // 0.22.6-kobo.10 es más nueva que 0.22.6-kobo.3 (como números), y 0.23.0-kobo.1 más que las dos
         assertEquals("SesKobo-0.23.0-kobo.1.apk", Actualizador.ultima(carpeta, sesKobo = true)?.first)
         assertEquals("SesKobo-0.22.6-kobo.10.apk", Actualizador.ultima(carpeta.filter { !it.first.contains("0.23") }, sesKobo = true)?.first)

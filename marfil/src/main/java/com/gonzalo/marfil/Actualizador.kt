@@ -89,16 +89,16 @@ object Actualizador {
     fun activo(ctx: Context) = prefs(ctx).getBoolean("on", true)
     fun ponActivo(ctx: Context, v: Boolean) = prefs(ctx).edit().putBoolean("on", v).apply()
 
-    /** El nombre de la app en lo que se enseña (SesKobo es Seshat con lo del Kobo, y se actualiza aparte). */
-    val NOMBRE = if (BuildConfig.SESKOBO) "SesKobo" else "Seshat"
+    /** El nombre de la app en lo que se enseña (LyraKobo es Lyra con lo del Kobo, y se actualiza aparte). */
+    val NOMBRE = if (BuildConfig.SESKOBO) "LyraKobo" else "Lyra"
 
     /**
-     * «Seshat-0.8.0.apk» → [0, 8, 0]. SesKobo solo mira las suyas («SesKobo-0.22.6-kobo.3.apk» → [0, 22, 6, 3]) y Seshat solo las
+     * «Lyra-0.8.0.apk» → [0, 8, 0]. LyraKobo solo mira las suyas («LyraKobo-0.23.0-kobo.1.apk» → [0, 23, 0, 1]) y Lyra solo las
      * suyas: nunca se toma una por la otra (y aunque pasara, Android no instala un paquete encima de otro: [valida] lo descarta antes).
      */
     fun versionDe(nombre: String, sesKobo: Boolean = BuildConfig.SESKOBO): List<Int>? =
-        if (sesKobo) Regex("""^SesKobo-(\d+(?:\.\d+)*-kobo(?:\.\d+)?)\.apk$""").find(nombre)?.groupValues?.get(1)?.let { numeros(it) }
-        else Regex("""^(?:Seshat|Marfil)-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
+        if (sesKobo) Regex("""^(?:LyraKobo|SesKobo)-(\d+(?:\.\d+)*-kobo(?:\.\d+)?)\.apk$""").find(nombre)?.groupValues?.get(1)?.let { numeros(it) }
+        else Regex("""^(?:Lyra|Seshat|Marfil)-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
 
     /** Los números de una versión («0.22.6-kobo.3» → [0, 22, 6, 3]). */
     fun numeros(v: String): List<Int> = Regex("""\d+""").findAll(v).mapNotNull { it.value.toIntOrNull() }.toList()

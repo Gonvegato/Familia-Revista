@@ -147,7 +147,7 @@ object TitleEn {
 
     private fun get(url: String): JSONObject {
         val c = URL(url).openConnection() as HttpURLConnection
-        c.setRequestProperty("User-Agent", "Atrio/4.4 (app personal; Android)")
+        c.setRequestProperty("User-Agent", "Polaris/4.4 (app personal; Android)")
         c.connectTimeout = 15000
         c.readTimeout = 15000
         try {

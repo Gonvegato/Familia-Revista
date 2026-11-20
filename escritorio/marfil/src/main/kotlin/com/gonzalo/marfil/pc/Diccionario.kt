@@ -14,7 +14,7 @@ import java.util.Locale
  * traducción del móvil (ML Kit) no está en el ordenador.
  */
 object Diccionario {
-    private const val UA = "Marfil/1 (lector de libros personal)"
+    private const val UA = "Lyra/1 (lector de libros personal)"
 
     private fun extract(title: String): String? {
         val u = "https://es.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&format=json&redirects=1&titles=" + URLEncoder.encode(title, "UTF-8")

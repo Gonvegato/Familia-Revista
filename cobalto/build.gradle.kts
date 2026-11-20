@@ -17,8 +17,8 @@ android {
         applicationId = "com.gonzalo.cobalto"
         minSdk = 29
         targetSdk = 35
-        versionCode = 40
-        versionName = "0.8.1"
+        versionCode = 41
+        versionName = "0.9.0"
     }
     // Firma fija: cada versión nueva se instala encima de la anterior sin borrar tus obras.
     signingConfigs {

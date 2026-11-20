@@ -357,17 +357,17 @@ object Widgets {
         val d = porDefecto(ctx)
         val dis = Skin.display; val cue = Skin.body
         val titular = tipografia(ctx, dis, 600, false, DISPLAY_FONTS)
-        val cursiva = if (dis == "Atrio") null else tipografia(ctx, dis, 500, true, DISPLAY_FONTS) ?: tipografia(ctx, dis, 400, false, DISPLAY_FONTS)
+        val cursiva = if (dis == "Polaris") null else tipografia(ctx, dis, 500, true, DISPLAY_FONTS) ?: tipografia(ctx, dis, 400, false, DISPLAY_FONTS)
         letras = Letras(
             titular = titular ?: d.titular,
-            cursiva = cursiva ?: if (dis == "Atrio" || titular == null) d.cursiva else titular,
+            cursiva = cursiva ?: if (dis == "Polaris" || titular == null) d.cursiva else titular,
             negrita = d.negrita,
             texto = tipografia(ctx, cue, 500, false, BODY_FONTS) ?: d.texto
         )
     }
 
     private suspend fun tipografia(ctx: Context, nombre: String, peso: Int, cursiva: Boolean, lista: List<FontChoice>): Typeface? {
-        if (nombre.isBlank() || nombre == "Atrio") return null
+        if (nombre.isBlank() || nombre == "Polaris") return null
         if (nombre == "Vitrina") return vitrina(ctx, if (peso >= 600) 700 else 500)
         val pesos = lista.firstOrNull { it.name == nombre }?.weights?.takeIf { it.isNotEmpty() } ?: intArrayOf(400, 700)
         val w = pesos.minByOrNull { kotlin.math.abs(it - peso) } ?: 400
@@ -588,11 +588,11 @@ object Widgets {
         val r = ResumenEscritura(r0.hoy, r0.racha, MetaDiaria.de(ctx), r0.dias, r0.total)
         val sem = r.dias.takeLast(14)
         val hoyDia = LocalDate.now()
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Thot"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Nova"))) {
             fondo()
             val pad = if (h < 90f) 12f else 16f
             seccion("Escritura", pad, pad, w - 2 * pad, tinta, acento)
-            pon(capa("Thot", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
+            pon(capa("Nova", tp(fTitular, 13f, tinta), 80f, 1, 1f, Layout.Alignment.ALIGN_OPPOSITE), w - pad - 80f, pad - 3f)
             reglaCabecera(pad, pad + 14.5f, w - pad, pad + 15.2f)
             val top = pad + 26f
             val ancho = w - 2 * pad
@@ -632,7 +632,7 @@ object Widgets {
     private fun obra(d: WDatos, id: Int, w: Float, h: Float, fijo: Doc? = null): Pagina {
         val ctx = d.ctx
         val lista = if (fijo != null) listOf(fijo) else listOfNotNull(d.actual) + d.enMarcha.filter { it.id != d.actual?.id }
-        if (lista.isEmpty()) return vacio(ctx, "Sigue escribiendo", "Nada entre manos", "Crea una obra en Thot y la tendrás aquí, a un toque de seguir.", w, h)
+        if (lista.isEmpty()) return vacio(ctx, "Sigue escribiendo", "Nada entre manos", "Crea una obra en Nova y la tendrás aquí, a un toque de seguir.", w, h)
         val i = Math.floorMod(estado(ctx, id, "i", 0), lista.size)
         val o = lista[i]
         val e = d.e
@@ -712,23 +712,23 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Thot"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Nova"))) {
             // Solo la palabra, sobre el fondo de pantalla (con una sombra suave para que se lea en cualquiera)
             val color = if (nombreEnColor) acentoNombre else if (noche) 0xFFF6F1E7.toInt() else tinta
             val sombra = if (noche) 0x99000000.toInt() else 0x55FFFFFF
             val pie = if (h >= 84f) 16f else 0f
             val p = tp(fTitular, 10f, color, -0.04f)
-            val ancho = p.measureText("THOT.")
+            val ancho = p.measureText("NOVA.")
             var s = min((w - 8f) / (ancho / 10f), (h - pie - 4f) / 0.95f)
             s = s.coerceAtLeast(10f)
             val tpa = tp(fTitular, s, color, -0.04f).apply { setShadowLayer(s * 0.06f, 0f, s * 0.02f, sombra) }
             val fm = tpa.fontMetrics
-            val tw = tpa.measureText("THOT")
-            val total = tpa.measureText("THOT.")
+            val tw = tpa.measureText("NOVA")
+            val total = tpa.measureText("NOVA.")
             val x = (w - total) / 2
             val capH = s * 0.72f
             val base = (h - pie) / 2 + capH / 2
-            c.drawText("THOT", x, base, tpa)
+            c.drawText("NOVA", x, base, tpa)
             // «THOT.»: el punto, en el acento (la cabecera de la dirección C)
             c.drawText(".", x + tw, base, tp(fTitular, s, if (noche) acentoClaro else acento, -0.04f).apply { setShadowLayer(s * 0.04f, 0f, s * 0.015f, sombra) })
             if (pie > 0f) {
@@ -743,7 +743,7 @@ object Widgets {
         val ctx = d.ctx
         val hoy = LocalDate.now()
         val fecha = "${hoy.dayOfWeek.getDisplayName(TextStyle.FULL, ES)} ${hoy.dayOfMonth} de ${hoy.month.getDisplayName(TextStyle.FULL, ES)}"
-        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Thot"))) {
+        return Pagina(listOf(Zona(0f, 0f, w, h, abrirApp(ctx), "Abrir Nova"))) {
             // Dirección C: la cabecera de la portada, en un bloque de tinta (crema en Thot) con el nombre del color del papel
             // Con «papel teñido» o «todo acento», el bloque de tinta también lo lleva
             val (tinta, papel) = bloqueMarca()
@@ -754,13 +754,13 @@ object Widgets {
             val bajo = (if (conLinea) 22f else 0f) + (if (conEntradilla) 24f else 0f)
             val alto = h - 2 * pad - bajo
             val p = tp(fTitular, 10f, papel, -0.04f)
-            val s = min((w - 2 * pad) / (p.measureText("THOT.") / 10f), alto / 0.78f).coerceAtLeast(10f)
+            val s = min((w - 2 * pad) / (p.measureText("NOVA.") / 10f), alto / 0.78f).coerceAtLeast(10f)
             val tpa = tp(fTitular, s, papel, -0.04f)
             val capH = s * 0.72f
             val bloque = capH + s * 0.08f + 4f + bajo
             val base = max(pad, (h - bloque) / 2) + capH
-            c.drawText("THOT", pad, base, tpa)
-            c.drawText(".", pad + tpa.measureText("THOT"), base, tp(fTitular, s, acentoSobreTinta, -0.04f))
+            c.drawText("NOVA", pad, base, tpa)
+            c.drawText(".", pad + tpa.measureText("NOVA"), base, tp(fTitular, s, acentoSobreTinta, -0.04f))
             var y = base + s * 0.08f + 4f
             if (conLinea) {
                 c.drawRect(pad, y, w - pad, y + 2f, lleno(papel))

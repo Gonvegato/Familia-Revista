@@ -97,7 +97,7 @@ fun AppMarfil(inicial: Pantalla = Pantalla.Portada) {
     val libros = Libros.todos()
     val cuentas = listOf<Int?>(null) + ESTADOS.map { e -> libros.count { it.estado == e } } + listOf(null)
     Box(Modifier.fillMaxSize().background(Paper)) {
-        PaginasC("Seshat", NOMBRES, cuentas, pager, alAjustes = { ajustes = true }, enlaces = {
+        PaginasC("Lyra", NOMBRES, cuentas, pager, alAjustes = { ajustes = true }, enlaces = {
             EnlaceCabecera("Buscar", Paper.copy(alpha = 0.75f), atajo = TeclaMando + "F", modifier = Modifier.onGloballyPositioned { sitioBuscar[0] = it }) { abreBusca() }
             EnlaceCabecera("+ Añadir libro", Acento) { anadir = true }
         }) { i ->

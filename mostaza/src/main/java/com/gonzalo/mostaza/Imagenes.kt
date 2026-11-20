@@ -42,7 +42,7 @@ import java.io.File
  * dispositivo. Sin fondo elegido, se usa el de TMDB (o el del addon), si lo hay.
  */
 
-private const val NAVEGADOR = "Mozilla/5.0 (Linux; Android 14) Hathor"
+private const val NAVEGADOR = "Mozilla/5.0 (Linux; Android 14) Sirius"
 
 /** Poner y quitar la portada y el fondo de un título: lo que hace la hoja «IMÁGENES.». */
 object ImagenesTitulo {
@@ -184,7 +184,7 @@ fun ContenidoImagenes(ref: String, fondoInicial: Boolean, alCerrar: () -> Unit, 
             }
             if (guardando) Text(if (esFondo) "Guardando el fondo…" else "Guardando la portada…", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
             Text(if (esFondo) "Se recorta a lo ancho: con «Encuadrar» eliges qué parte se ve (en este dispositivo). Sin fondo elegido, va el de TMDB; si lo quitas, el color de la portada. Sale en «Ahora ves» de la portada y arriba en la ficha."
-                else "«La automática» vuelve al póster de TMDB (o el de tu addon). Con «Encuadrar» eliges qué parte se ve (en este dispositivo). La portada sale igual en tus otros dispositivos y en Jonsu.",
+                else "«La automática» vuelve al póster de TMDB (o el de tu addon). Con «Encuadrar» eliges qué parte se ve (en este dispositivo). La portada sale igual en tus otros dispositivos y en Polaris.",
                 color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 14.dp))
             Text("PROPUESTAS · TMDB", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
             val lista = hallados

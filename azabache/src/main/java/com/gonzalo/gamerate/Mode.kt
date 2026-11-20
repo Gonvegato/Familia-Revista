@@ -59,7 +59,7 @@ val Swatches: List<Pair<String, Int>> = listOf(
     "Melocotón" to 0xFFF4A259.toInt(),
     "Chicle" to 0xFFEE8FB4.toInt(),
     "Turquesa" to 0xFF4FB3A9.toInt(),
-    "Mostaza" to 0xFFD9B44A.toInt(),
+    "Ámbar" to 0xFFD9B44A.toInt(),
     "Teja" to 0xFFC8553D.toInt(),
     "Marino" to 0xFF2F4B7C.toInt(),
     "Grafito" to 0xFF5B5A63.toInt(),

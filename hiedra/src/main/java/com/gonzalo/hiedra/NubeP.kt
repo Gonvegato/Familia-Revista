@@ -157,7 +157,7 @@ object NubeP {
             if (h == ultimo(c, kid, k)) continue
             if (idx[k]?.h == h) { anota(c, kid, k, h); continue }
             try {
-                val sub = KDrive.subeDual(c, "Hiedra/Guardados/${j.sistema}/$kid", loc.nombre, loc.tamano) { loc.leer() }
+                val sub = KDrive.subeDual(c, "Orion/Guardados/${j.sistema}/$kid", loc.nombre, loc.tamano) { loc.leer() }
                 escribe("saves", kid, k, loc.nombre, sub.kdId, h, loc.tamano, sub.gdId)
                 anota(c, kid, k, h); n++
             } catch (e: Exception) { return n }
@@ -171,7 +171,7 @@ object NubeP {
 
     fun subirRom(c: Context, j: Juego, a: Arch, progreso: (Long) -> Unit = {}) {
         val h = hash(a)
-        val sub = KDrive.subeDual(c, "Hiedra/ROMs/${j.sistema}", a.nombre, a.tamano, progreso) { a.leer() }
+        val sub = KDrive.subeDual(c, "Orion/ROMs/${j.sistema}", a.nombre, a.tamano, progreso) { a.leer() }
         escribe("roms", kid(j), "rom", a.nombre, sub.kdId, h, a.tamano, sub.gdId)
     }
 

@@ -50,13 +50,13 @@ fun PantEstilo(alVolver: () -> Unit) {
         if (u != null) mensaje = runCatching { ctx.contentResolver.openOutputStream(u)!!.use { it.write(Biblioteca.aTexto().toByteArray()) }; "Copia guardada" }.getOrElse { "No se pudo guardar la copia" }
     }
     val importar = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { u ->
-        if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Seshat" }
+        if (u != null) mensaje = runCatching { Biblioteca.leer(ctx.contentResolver.openInputStream(u)!!.use { it.readBytes().decodeToString() }, reemplazar = false); Biblioteca.guardar(); "Copia importada" }.getOrElse { "Ese archivo no es una copia de Lyra" }
     }
     var pestana by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().background(Paper).verticalScroll(rememberScrollState()).navigationBarsPadding()) {
         // Dirección C: la cabecera en un bloque de tinta con «AJUSTES.» en grotesca y las pestañas en bloques
         Column(Modifier.fillMaxWidth().background(Charcoal).statusBarsPadding().padding(horizontal = 20.dp).padding(bottom = 14.dp)) {
-            EnlaceRevista("← Seshat", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
+            EnlaceRevista("← Lyra", Modifier.padding(top = 6.dp), color = Paper.copy(alpha = 0.75f)) { alVolver() }
             NombreConPunto("Ajustes", 52.sp, Paper, Modifier.padding(top = 2.dp))
         }
         PestanasRevista(listOf("Apariencia", "Lectura", "Cuenta", "Avanzado"), pestana) { pestana = it }
@@ -75,7 +75,7 @@ fun PantEstilo(alVolver: () -> Unit) {
                 var reto by remember { mutableIntStateOf(Ajustes.metaAnual(ctx)) }
                 val retos = remember { (listOf(0, 6, 12, 20, 24, 30, 40, 52) + Ajustes.metaAnual(ctx)).distinct().sorted() }
                 MagChoice(retos.map { if (it == 0) "Sin reto" else "$it" }, retos.indexOf(reto).coerceAtLeast(0), "Libros al año") { i -> reto = retos[i]; Ajustes.ponMetaAnual(ctx, reto) }
-                Text("Tu reto del año sale en la portada y en el widget de la semana. Los dos objetivos viajan con tu cuenta a tus otros Seshat y a Jonsu, que los enseña tal cual.", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+                Text("Tu reto del año sale en la portada y en el widget de la semana. Los dos objetivos viajan con tu cuenta a tus otros Lyra y a Polaris, que los enseña tal cual.", color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
                 if (BuildConfig.SESKOBO) {
                     Spacer(Modifier.height(14.dp))
                     Filete(2.dp)
@@ -90,7 +90,7 @@ fun PantEstilo(alVolver: () -> Unit) {
                 Text("La letra, el fondo y el paso de página se cambian desde el propio lector (toca el centro de la página y pulsa «Letra»). Lo que elijas vale para todos los libros.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 6.dp))
             }
             2 -> {
-                Antetitulo("Cuenta de Atrio", Modifier.padding(bottom = 4.dp))
+                Antetitulo("Cuenta de Polaris", Modifier.padding(bottom = 4.dp))
                 SeccionCuenta()
                 Spacer(Modifier.height(14.dp))
                 Filete(2.dp)
@@ -99,7 +99,7 @@ fun PantEstilo(alVolver: () -> Unit) {
                 SeccionLibros()
             }
             else -> {
-                com.gonzalo.familia.UltimoFallo("Seshat", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
+                com.gonzalo.familia.UltimoFallo("Lyra", Charcoal, Muted, Body) { Antetitulo("Último fallo", Modifier.padding(bottom = 4.dp)) }
                 Antetitulo("kDrive y actualizaciones", Modifier.padding(bottom = 4.dp))
                 SeccionActualizaciones()
                 Spacer(Modifier.height(14.dp))
@@ -116,8 +116,8 @@ fun PantEstilo(alVolver: () -> Unit) {
         Spacer(Modifier.height(26.dp))
         Filete(2.dp)
         Spacer(Modifier.height(10.dp))
-        Etiqueta(if (BuildConfig.SESKOBO) "SesKobo $VERSION" else "Seshat $VERSION")
-        Text("Seshat es hermana de Jonsu, Bastet y Thot. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
+        Etiqueta(if (BuildConfig.SESKOBO) "LyraKobo $VERSION" else "Lyra $VERSION")
+        Text("Lyra es hermana de Polaris, Orion y Nova. El lector usa foliate-js (MIT) y pdf.js (Apache 2.0); sus licencias van en la app.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
         }
     }
@@ -151,9 +151,9 @@ private fun SeccionCuenta() {
     var ocupado by remember { mutableStateOf(false) }
     var aviso by remember { mutableStateOf<String?>(null) }
     if (!Cuenta.vinculada) {
-        Text("Entra con la misma cuenta que usas en Atrio y tus libros, lo que llevas leído, tus subrayados, tus portadas y tus ajustes se sincronizan entre tus dispositivos. Los archivos de los libros viajan por tu kDrive (se conecta en «Avanzado»).",
+        Text("Entra con la misma cuenta que usas en Polaris y tus libros, lo que llevas leído, tus subrayados, tus portadas y tus ajustes se sincronizan entre tus dispositivos. Los archivos de los libros viajan por tu kDrive (se conecta en «Avanzado»).",
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
-        CampoRevista("Usuario", usuario, "tu usuario de Atrio") { usuario = it }
+        CampoRevista("Usuario", usuario, "tu usuario de Polaris") { usuario = it }
         CampoRevista("Contraseña", clave, "••••••••", secreto = true) { clave = it }
         MagLink(if (ocupado) "Entrando…" else "Vincular cuenta", "Se guarda un pase de acceso, no tu contraseña") {
             if (!ocupado) {
@@ -200,8 +200,8 @@ private fun SeccionActualizaciones() {
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) sobre = Actualizador.puedeReabrirSola(ctx) }
         owner.lifecycle.addObserver(ob); onDispose { owner.lifecycle.removeObserver(ob) }
     }
-    Fila("Actualizar sola", if (BuildConfig.SESKOBO) "Mira la carpeta «versiones» de tu nube (solo las de SesKobo: SesKobo-<versión>.apk) y se instala sin preguntar cuando no la usas."
-        else "Mira la carpeta «versiones» de tu nube (Seshat-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
+    Fila("Actualizar sola", if (BuildConfig.SESKOBO) "Mira la carpeta «versiones» de tu nube (solo las de LyraKobo: LyraKobo-<versión>.apk) y se instala sin preguntar cuando no la usas."
+        else "Mira la carpeta «versiones» de tu nube (Lyra-<versión>.apk) y se instala sin preguntar cuando no la usas.") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     // Android 13 o más: sin el permiso de avisos, «tienes una versión nueva» y «se ha actualizado, toca para abrirla» no se ven nunca
@@ -211,7 +211,7 @@ private fun SeccionActualizaciones() {
         if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte cuando hay una versión nueva que Android no deja instalar sola, y para volver a abrir $NOMBRE_APP al terminar de actualizarla.") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (!conectado) {
-        Text("Tu nube (Google Drive o kDrive) es de tu cuenta: se configura una vez en Jonsu (Ajustes → Avanzado → Tu nube) y la tienen todas las apps. Si aún usas kDrive, puedes pegar el token aquí.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Tu nube (Google Drive o kDrive) es de tu cuenta: se configura una vez en Polaris (Ajustes → Avanzado → Tu nube) y la tienen todas las apps. Si aún usas kDrive, puedes pegar el token aquí.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
         CampoRevista("Token", token, "token de kDrive", secreto = true) { token = it }
         CampoRevista("kDrive", unidad, "número o dirección") { unidad = it }
         MagLink(if (ocupado) "Comprobando…" else "Conectar", "Comprueba el token y busca tu «Mi carpeta»") {
@@ -240,13 +240,13 @@ private fun SeccionActualizaciones() {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
         Filete(1.dp, Line)
-        Text("Para cambiar o quitar la nube: Jonsu → Ajustes → Avanzado → Tu nube (vale para todas las apps de la familia).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Para cambiar o quitar la nube: Polaris → Ajustes → Avanzado → Tu nube (vale para todas las apps de la familia).", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
     }
     aviso?.let { Text(it, color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** El nombre de esta app (SesKobo es Seshat con lo del Kobo). */
-private val NOMBRE_APP = if (BuildConfig.SESKOBO) "SesKobo" else "Seshat"
+private val NOMBRE_APP = if (BuildConfig.SESKOBO) "LyraKobo" else "Lyra"
 
 /** Si hay una versión nueva ya bajada que Android no deja instalar en silencio, se pregunta (o se lleva al ajuste de «instalar apps»). */
 @Composable
@@ -279,28 +279,28 @@ fun SeccionLibros() {
     val enNube = NubeLibros.indice(ctx).size
     val sinArchivo = Biblioteca.libros.count { it.enOtroDispositivo }
     Text(
-        if (!KDrive.on(ctx)) "Nube sin conectar (Jonsu → Ajustes → Avanzado → Tu nube): los libros no se suben ni se bajan."
+        if (!KDrive.on(ctx)) "Nube sin conectar (Polaris → Ajustes → Avanzado → Tu nube): los libros no se suben ni se bajan."
         else "$enNube libros en tu nube (${KDrive.nombreNube(ctx)})" + if (sinArchivo > 0) " · $sinArchivo sin archivo en este dispositivo (se bajan al abrirlos)" else "",
         color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(bottom = 4.dp)
     )
     var auto by remember { mutableStateOf(NubeLibros.autoBajar(ctx)) }
-    Fila("Tener todos mis libros aquí", "Con Wi-Fi, Seshat baja en segundo plano los libros de tu nube que falten en este dispositivo. Si prefieres bajarlos uno a uno al abrirlos, apágalo.", final = { Interruptor(auto) { auto = it; NubeLibros.ponAutoBajar(ctx, it) } })
+    Fila("Tener todos mis libros aquí", "Con Wi-Fi, Lyra baja en segundo plano los libros de tu nube que falten en este dispositivo. Si prefieres bajarlos uno a uno al abrirlos, apágalo.", final = { Interruptor(auto) { auto = it; NubeLibros.ponAutoBajar(ctx, it) } })
     Filete(1.dp, Line)
-    MagLink(if (ocupado) "Un momento…" else "Traer mis libros de Atrio", "Solo lee tu cuenta: no cambia nada en Atrio. Trae fichas, lo leído, subrayados y dónde están los archivos") {
+    MagLink(if (ocupado) "Un momento…" else "Traer mis libros de Polaris", "Solo lee tu cuenta: no cambia nada en Polaris. Trae fichas, lo leído, subrayados y dónde están los archivos") {
         if (ocupado) return@MagLink
-        if (!Cuenta.vinculada) { estado = "Primero vincula tu cuenta (Cuenta de Atrio)."; return@MagLink }
-        ocupado = true; estado = "Leyendo lo que Atrio tiene en tu cuenta…"
+        if (!Cuenta.vinculada) { estado = "Primero vincula tu cuenta (Cuenta de Polaris)."; return@MagLink }
+        ocupado = true; estado = "Leyendo lo que Polaris tiene en tu cuenta…"
         ambito.launch {
             val r = withContext(Dispatchers.IO) { runCatching { ImportarAtrio.leer() } }
             ocupado = false
-            r.onSuccess { l -> if (l == null || l.candidatos.isEmpty()) estado = "No he encontrado libros de Atrio en tu cuenta." else { hallados = l; estado = "" } }
+            r.onSuccess { l -> if (l == null || l.candidatos.isEmpty()) estado = "No he encontrado libros de Polaris en tu cuenta." else { hallados = l; estado = "" } }
                 .onFailure { estado = it.message ?: "No he podido leer tu cuenta." }
         }
     }
     Filete(1.dp, Line)
     MagLink(if (ocupado) "Un momento…" else "Subir mis libros a tu nube ahora", "Normalmente se suben solos en cuanto los añades") {
         if (ocupado) return@MagLink
-        if (!KDrive.on(ctx)) { estado = "Conecta antes tu nube en Jonsu (Ajustes → Avanzado → Tu nube)."; return@MagLink }
+        if (!KDrive.on(ctx)) { estado = "Conecta antes tu nube en Polaris (Ajustes → Avanzado → Tu nube)."; return@MagLink }
         ocupado = true; estado = "Subiendo…"
         ambito.launch {
             val n = withContext(Dispatchers.IO) { runCatching { NubeLibros.subirPendientes(ctx, aMano = true) { m -> estado = m } } }
@@ -314,7 +314,7 @@ fun SeccionLibros() {
         val n = { e: Estado -> l.count { it.libro.estado == e } }
         AlertDialog(
             onDismissRequest = { hallados = null },
-            title = { Text("${l.size} libros en Atrio", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            title = { Text("${l.size} libros en Polaris", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     "${n(Estado.LEIDO)} leídos, ${n(Estado.LEYENDO)} leyendo, ${n(Estado.PENDIENTE)} pendientes, ${n(Estado.ABANDONADO)} abandonados. ${l.count { it.nube != null }} tienen su archivo en tu kDrive." +

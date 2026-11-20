@@ -251,7 +251,7 @@ fun PantallaEntrar(titulo: String) {
             Antetitulo("La cuenta de la familia")
             Spacer(Modifier.height(10.dp))
             Cuerpo("La misma que en el móvil. Todo lo tuyo está en la cuenta: lo que hagas aquí lo verás en tus otros dispositivos y en tus otras apps. " +
-                "Entra una vez: Jonsu, Thot, Bastet, Seshat, Hathor y Nut de este ordenador entran solas.", tam = 15)
+                "Entra una vez: Polaris, Nova, Orion, Lyra, Sirius y Pulsar de este ordenador entran solas.", tam = 15)
             Spacer(Modifier.height(22.dp))
             OutlinedTextField(usuario, { usuario = it }, label = { Text("Usuario") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next))
@@ -321,7 +321,7 @@ fun AjustesVersion(app: String, nombre: String) {
                     trabajando = false
                     aviso = r.fold({ when {
                         it != null -> "La ${it.version} está lista: se pone sola al cerrar."
-                        !Nube.activo -> "Pon tu Google Drive en Jonsu (Ajustes → Servicios) para que se actualice sola."
+                        !Nube.activo -> "Pon tu Google Drive en Polaris (Ajustes → Servicios) para que se actualice sola."
                         else -> Actualizador.estado.ifBlank { "Tienes la última." }
                     } }, { it.message ?: "No se ha podido mirar." })
                 } }
@@ -344,7 +344,7 @@ fun AjustesVersion(app: String, nombre: String) {
                         val r = withContext(Dispatchers.IO) { runCatching { Actualizador.busca(app) } }
                         trabajando = false
                         nueva = r.getOrNull()
-                        aviso = r.fold({ if (it == null) (if (Nube.activo) "Tienes la última." else "Pon tu Google Drive en Jonsu (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
+                        aviso = r.fold({ if (it == null) (if (Nube.activo) "Tienes la última." else "Pon tu Google Drive en Polaris (Ajustes → Servicios) para que se actualice sola.") else "" }, { it.message ?: "No se ha podido mirar." })
                     } }
                 }
             }

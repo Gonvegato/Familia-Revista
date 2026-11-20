@@ -83,7 +83,7 @@ object NubeLibros {
                 val nombre = "${seguro(l.titulo)}.$ext"
                 try {
                     aviso("Subiendo $nombre…")
-                    val sub = KDrive.subeDual(c, "Marfil/Libros/${seguro(l.titulo)}", nombre, f.length()) { f.inputStream() }
+                    val sub = KDrive.subeDual(c, "Lyra/Libros/${seguro(l.titulo)}", nombre, f.length()) { f.inputStream() }
                     registrar(c, l, NubeLibro(sub.kdId, nombre, f.length(), sub.gdId))
                     quitaFallo(c, "s", l.id)
                     n++
@@ -158,7 +158,7 @@ object NubeLibros {
     fun abrirBajando(c: Context, l: Libro, goto: String?) {
         val hilo = Handler(Looper.getMainLooper())
         fun dice(t: String) = hilo.post { Toast.makeText(c, t, Toast.LENGTH_LONG).show() }
-        if (!KDrive.on(c)) { dice("Este libro está en otro dispositivo. Conecta tu Google Drive (en Jonsu → Ajustes) para bajarlo."); return }
+        if (!KDrive.on(c)) { dice("Este libro está en otro dispositivo. Conecta tu Google Drive (en Polaris → Ajustes) para bajarlo."); return }
         scope.launch {
             runCatching { leerIndice(c) }
             if (de(c, l) == null) { dice("Este libro aún no está en tu nube: se sube solo desde el dispositivo donde lo añadiste, en cuanto tiene conexión."); return@launch }

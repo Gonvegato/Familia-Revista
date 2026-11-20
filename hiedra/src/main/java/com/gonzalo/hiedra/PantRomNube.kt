@@ -77,9 +77,9 @@ fun DialogoBajarRom(j: Juego, jugar: Boolean, alCerrar: () -> Unit) {
         title = { Text(j.titulo, color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                val texto = if (!listo) "Esta ROM está en otro de tus móviles. Para bajarla aquí, vincula tu cuenta de Atrio y conecta tu kDrive (Ajustes)." else when (val p = paso) {
+                val texto = if (!listo) "Esta ROM está en otro de tus móviles. Para bajarla aquí, vincula tu cuenta de Polaris y conecta tu kDrive (Ajustes)." else when (val p = paso) {
                     PasoRom.Mirando -> "Mirando en tu kDrive…"
-                    PasoRom.NoSubida -> "Esta ROM está en otro de tus móviles y todavía no ha llegado a tu kDrive. Se sube sola, con wifi, al abrir Bastet en ese móvil (Ajustes → Avanzado → Subir mis ROMs)."
+                    PasoRom.NoSubida -> "Esta ROM está en otro de tus móviles y todavía no ha llegado a tu kDrive. Se sube sola, con wifi, al abrir Orion en ese móvil (Ajustes → Avanzado → Subir mis ROMs)."
                     is PasoRom.Lista -> "«${p.f.n}» (${Nucleos.megas(p.f.s)}) está en tu kDrive. " +
                         (carpeta?.let { "Se baja a ${it.name ?: "tu carpeta de ROMs"}/${j.sistema}, donde la encuentran tus emuladores." } ?: "Elige dónde dejar las ROMs que bajes (la carpeta de ROMs de este móvil): se guarda para la próxima vez.")
                     is PasoRom.Bajando -> "Bajando «${p.f.n}»… ${(hecho * 100).toInt()} %"

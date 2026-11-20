@@ -164,7 +164,7 @@
         <package android:name="xyz.aethersx2.tturnip" />
     </queries>
     <application
-        android:label="Bastet"
+        android:label="Orion"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Hiedra"

@@ -139,11 +139,11 @@ class Capturas18Test {
         abrir(store)
         shoot("${pre}01_portada_juego")
         assertTrue("el cartel es Deadlock (lo de más tiempo hoy)", texto("DEADLOCK").fetchSemanticsNodes().isNotEmpty())
-        assertTrue("el botón abre Bastet", texto("ABRIR EN BASTET").fetchSemanticsNodes().isNotEmpty())
+        assertTrue("el botón abre Bastet", texto("ABRIR EN ORION").fetchSemanticsNodes().isNotEmpty())
         dia(0, 80, 20, 0); shoot("${pre}02_portada_libro")
-        assertTrue(texto("ABRIR EN SESHAT").fetchSemanticsNodes().isNotEmpty())
+        assertTrue(texto("ABRIR EN LYRA").fetchSemanticsNodes().isNotEmpty())
         dia(10, 20, 120, 300); shoot("${pre}03_portada_serie")
-        assertTrue(texto("ABRIR EN HATHOR").fetchSemanticsNodes().isNotEmpty())
+        assertTrue(texto("ABRIR EN SIRIUS").fetchSemanticsNodes().isNotEmpty())
         dia(0, 0, 0, 900); shoot("${pre}04_portada_escrito")
         dia(0, 0, 0, 0, semana = false); shoot("${pre}05_portada_nada")
         dia(95, 35, 0, 812)
@@ -200,7 +200,7 @@ class Capturas18Test {
         val store = seed(); dia(95, 35, 0, 812); abrir(store)
         fun bajando(n: String) { shoot("aj_${n}_0"); repeat(5) { i -> rule.onRoot().performTouchInput { swipe(androidx.compose.ui.geometry.Offset(centerX, height * 0.85f), androidx.compose.ui.geometry.Offset(centerX, height * 0.2f), 500) }; shoot("aj_${n}_${i + 1}") } }
         rule.runOnUiThread { Skin.open = true }; rule.waitForIdle(); bajando("0apariencia")
-        listOf("JONSU" to "1jonsu", "CUENTA" to "2cuenta", "CLAVES" to "3claves", "AVANZADO" to "4avanzado").forEach { (t, n) ->
+        listOf("POLARIS" to "1jonsu", "CUENTA" to "2cuenta", "CLAVES" to "3claves", "AVANZADO" to "4avanzado").forEach { (t, n) ->
             repeat(6) { rule.onRoot().performTouchInput { swipeDown() } }
             texto(t)[0].performClick(); rule.waitForIdle(); repeat(6) { rule.onRoot().performTouchInput { swipeDown() } }; bajando(n)
         }

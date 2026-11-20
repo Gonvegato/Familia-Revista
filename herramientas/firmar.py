@@ -15,7 +15,7 @@ import os, re, subprocess, sys
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # La clave de antes de cada app (None: nació ya con la de la familia, no hay linaje)
 VIEJA = {"hiedra": "hiedra", "marfil": "marfil", "cobalto": "cobalto", "azabache": "valorin", "mostaza": None, "cobre": None, "ptah": None, "shai": None, "ammit": None}
-NOMBRE = {"hiedra": "Bastet", "marfil": "Seshat", "cobalto": "Thot", "azabache": "Jonsu", "mostaza": "Hathor", "cobre": "Nut", "ptah": "Widgets", "shai": "FcFeed", "ammit": "Ammit"}
+NOMBRE = {"hiedra": "Orion", "marfil": "Lyra", "cobalto": "Nova", "azabache": "Polaris", "mostaza": "Sirius", "cobre": "Pulsar", "ptah": "Widgets", "shai": "FcFeed", "ammit": "Ammit"}
 def _build_tools():
     for base in (os.environ.get("ANDROID_HOME"), os.environ.get("ANDROID_SDK_ROOT"), "/opt/android-sdk", "/usr/local/lib/android/sdk"):
         if not base:
@@ -54,15 +54,15 @@ def main(app):
     alineado = os.path.join(dir_, f"{app}-alineado.apk")
     subprocess.run([f"{BT}/zipalign", "-f", "-p", "4", sin, alineado], check=True)
     salida = os.path.join(dir_, f"{NOMBRE[app]}-{version(app)}.apk")
-    # SesKobo (marfil con -Pseskobo) sale por el mismo sitio: con su nombre, para que no se tome por Seshat (si se subiera a
-    # «versiones», la Seshat normal lo rechazaría por ser otro paquete y se quedaría sin actualizar)
+    # LyraKobo (marfil con -Pseskobo) sale por el mismo sitio: con su nombre, para que no se tome por Lyra (si se subiera a
+    # «versiones», la Lyra normal lo rechazaría por ser otro paquete y se quedaría sin actualizar)
     if app == "marfil":
         badging = subprocess.run([f"{BT}/aapt2", "dump", "badging", sin], capture_output=True, text=True).stdout
         if "name='com.gonzalo.marfil.seskobo'" in badging:
-            # (con su versión entera, la revisión de SesKobo incluida: «0.22.6-kobo.2»)
+            # (con su versión entera, la revisión de LyraKobo incluida: «0.23.0-kobo.1»)
             import re
             m = re.search(r"versionName='([^']+)'", badging)
-            salida = os.path.join(dir_, f"SesKobo-{m.group(1) if m else version(app) + '-kobo'}.apk")
+            salida = os.path.join(dir_, f"LyraKobo-{m.group(1) if m else version(app) + '-kobo'}.apk")
     f = lambda n: os.path.join(RAIZ, "firma", n)
     # Las contraseñas van por el entorno (env:), nunca en la línea de órdenes (se verían en la lista de procesos)
     entorno = dict(os.environ, PASE_FAMILIA=p["familia"])

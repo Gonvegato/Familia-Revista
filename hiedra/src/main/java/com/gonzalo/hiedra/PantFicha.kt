@@ -266,7 +266,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                             val aqui = Archivos.tiene(l.clave)
                             Text((Catalogo.sistema(l.sistema)?.nombre ?: l.sistema) + " · " + (e?.etiqueta ?: "sin emulador"), color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                             val r = e?.resultado
-                            Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Bastet · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }).uppercase(),
+                            Text((if (!aqui) "La ROM está en otro de tus móviles" else if (Lanzar.esInterno(e)) "Se juega en Orion · " + Nucleos.describir(Nucleos.para(l.sistema)!!, Nucleos.instalado(ctx, Nucleos.para(l.sistema)!!.id)) + " · guarda al salir" else when (r) { is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo descargado en RetroArch" else "Instalado y listo"; is Resultado.Falta -> r.motivo; null -> "" }).uppercase(),
                                 color = if (aqui && r is Resultado.Ok) Muted else Acento, fontFamily = Body, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp, lineHeight = 14.sp)
                         }
                         TipoLanzador.APP -> { Text("App de Android", color = Charcoal, fontFamily = Grotesca, fontWeight = FontWeight.Bold, fontSize = 18.sp); Text(l.paquete, color = Muted, fontFamily = Body, fontSize = 12.sp) }
@@ -284,7 +284,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
                 }
             }
             // ---- Tus partidas en Bastet: el estado automático y tus huecos, con su foto (solo si el jugador de Bastet ya ha guardado alguno)
-            if (j.rom != null && Nucleos.para(j.sistema) != null && hayEstados(ctx, j)) { SeccionNumerada(sig(), "Tus partidas en Bastet"); EstadosDeFicha(j) }
+            if (j.rom != null && Nucleos.para(j.sistema) != null && hayEstados(ctx, j)) { SeccionNumerada(sig(), "Tus partidas en Orion"); EstadosDeFicha(j) }
 
             // ---- Tiempo y duración
             SeccionNumerada(sig(), "Tiempo y duración")
@@ -307,12 +307,12 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
 
             // ---- En Jonsu (solo se ve; se valora allí)
             val nota = NotaAzabache.de(notas, j)
-            SeccionNumerada(sig(), "En Jonsu", if (NotaAzabache.instalado(ctx)) "Abrir" to { NotaAzabache.abrir(ctx, nota) } else null)
+            SeccionNumerada(sig(), "En Polaris", if (NotaAzabache.instalado(ctx)) "Abrir" to { NotaAzabache.abrir(ctx, nota) } else null)
             if (nota == null) {
                 // Una línea: lo que hay y qué hacer
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(if (NotaAzabache.instalado(ctx)) "Sin valorar aún · " else "Sin valorar aún", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp)
-                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Jonsu →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(j.id, 0, "")) }
+                    if (NotaAzabache.instalado(ctx)) EnlaceRevista("Valorar en Polaris →", acento = true) { NotaAzabache.abrir(ctx, NotaAzabache.Nota(j.id, 0, "")) }
                 }
             } else {
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -348,7 +348,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
             val pie = when {
                 buscandoDatos -> "Buscando los datos del juego…"
                 datos == null -> if (Datos.activo) "" else "Sin datos de fuera."
-                datos.nada -> if (Servicios.claves(ctx).rawg.isBlank()) "No está en la tienda de Steam. Con una clave de RAWG (Ajustes → Cuenta → Servicios, o en Atrio) se buscan también los juegos de consola." else "No he encontrado este juego en Steam ni en RAWG. Si su nombre aquí no es el oficial, cámbialo en «Editar» y busca de nuevo."
+                datos.nada -> if (Servicios.claves(ctx).rawg.isBlank()) "No está en la tienda de Steam. Con una clave de RAWG (Ajustes → Cuenta → Servicios, o en Polaris) se buscan también los juegos de consola." else "No he encontrado este juego en Steam ni en RAWG. Si su nombre aquí no es el oficial, cámbialo en «Editar» y busca de nuevo."
                 else -> ""
             }
             if (pie.isNotBlank()) Text(pie, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 6.dp))
@@ -367,7 +367,7 @@ fun Ficha(id: String, alCerrar: () -> Unit, alJugar: (Juego) -> Unit, abrirPorta
     if (borrar) AlertDialog(
         onDismissRequest = { borrar = false }, containerColor = Paper, shape = esquina(4.dp),
         title = { Text("¿Quitar «${j.titulo}»?", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (j.rom != null) "Solo se quita de Bastet: el archivo de la ROM no se toca." else "Solo se quita de Bastet.", color = Muted, fontFamily = Body) },
+        text = { Text(if (j.rom != null) "Solo se quita de Orion: el archivo de la ROM no se toca." else "Solo se quita de Orion.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({ Biblioteca.quitar(j.id); borrar = false; alCerrar() }) { Text("QUITAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
         dismissButton = { TextButton({ borrar = false }) { Text("CANCELAR", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } }
     )
@@ -416,8 +416,8 @@ fun SelectorEmulador(sistemaId: String, juego: Juego?, alCerrar: () -> Unit) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState())) {
             Antetitulo(if (juego != null) "Emulador de este juego" else "Emulador", Modifier.padding(bottom = 4.dp), color = Acento, conCuadro = false)
             FitTitle(sistema?.nombre ?: sistemaId, 34.sp, 36.sp, letterSpacing = (-1).sp, maxLines = 2)
-            Cuerpo(if (Nucleos.para(sistemaId)?.alFrente == true) "«Automático» usa Bastet: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. Los demás emuladores siguen aquí; los que tienes instalados salen marcados."
-                else if (Nucleos.para(sistemaId) != null) "Bastet juega a esta consola ella misma: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. «Automático» la usa si no tienes otro emulador instalado para ella; si lo tienes, sigue siendo ese hasta que elijas «Bastet» aquí."
+            Cuerpo(if (Nucleos.para(sistemaId)?.alFrente == true) "«Automático» usa Orion: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. Los demás emuladores siguen aquí; los que tienes instalados salen marcados."
+                else if (Nucleos.para(sistemaId) != null) "Orion juega a esta consola ella misma: el núcleo se baja la primera vez, al salir se guarda donde lo dejaste y sigues en tu otro móvil. «Automático» la usa si no tienes otro emulador instalado para ella; si lo tienes, sigue siendo ese hasta que elijas «Orion» aquí."
                 else "Los que ya tienes instalados salen marcados. «Automático» usa uno propio (sin núcleos que descargar) y, si no hay, RetroArch.", tam = 12, modifier = Modifier.padding(vertical = 8.dp))
             Nucleos.para(sistemaId)?.let { n -> BloqueNucleo(n) }
             Filete(2.dp)
@@ -427,11 +427,11 @@ fun SelectorEmulador(sistemaId: String, juego: Juego?, alCerrar: () -> Unit) {
                 else { if (l.isEmpty()) Ajustes.emuladorPorSistema.remove(sistemaId) else Ajustes.emuladorPorSistema[sistemaId] = l; Ajustes.guardar(ctx) }
             }
             Opcion("Automático", "Recomendado", actual.isEmpty(), true, null) { elegir("") }
-            if (evaluados.isEmpty()) Cuerpo("Bastet todavía no sabe lanzar este sistema.", modifier = Modifier.padding(top = 12.dp))
+            if (evaluados.isEmpty()) Cuerpo("Orion todavía no sabe lanzar este sistema.", modifier = Modifier.padding(top = 12.dp))
             evaluados.forEach { e ->
                 val r = e.resultado
                 val sub = when {
-                    Lanzar.esInterno(e) -> "El de Bastet · " + (if (Nucleos.para(sistemaId)!!.pruebas) "en pruebas · " else "") + Nucleos.describir(Nucleos.para(sistemaId)!!, remember(Nucleos.version) { Nucleos.instalado(ctx, Nucleos.para(sistemaId)!!.id) })
+                    Lanzar.esInterno(e) -> "El de Orion · " + (if (Nucleos.para(sistemaId)!!.pruebas) "en pruebas · " else "") + Nucleos.describir(Nucleos.para(sistemaId)!!, remember(Nucleos.version) { Nucleos.instalado(ctx, Nucleos.para(sistemaId)!!.id) })
                     r is Resultado.Ok -> if (Comando.esRetroArch(e.plantilla)) "Instalado · necesita el núcleo en RetroArch" else "Instalado"
                     r is Resultado.Falta -> r.motivo
                     else -> ""
@@ -494,7 +494,7 @@ private fun BloqueNucleo(n: Nucleos.Nucleo) {
         }
     }
     Row(Modifier.padding(top = 6.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        Antetitulo("Núcleo de Bastet")
+        Antetitulo("Núcleo de Orion")
         if (n.pruebas) Text("EN PRUEBAS", color = Acento, fontFamily = Body, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp,
             modifier = Modifier.padding(start = 10.dp).border(1.dp, Acento, esquina(2.dp)).padding(horizontal = 5.dp, vertical = 1.dp))
     }
@@ -592,7 +592,7 @@ fun DialogoHoras(ms: Long, alAceptar: (Long) -> Unit, alCerrar: () -> Unit) {
                     Column(Modifier.weight(1f)) { Etiqueta("Horas"); Campo(h, "0", { h = it.filter(Char::isDigit).take(5) }) }
                     Column(Modifier.weight(1f)) { Etiqueta("Minutos"); Campo(m, "0", { m = it.filter(Char::isDigit).take(2) }) }
                 }
-                Cuerpo("Bastet suma solo el tiempo que pasas fuera cuando abres un juego (aproximado). Aquí lo corriges.", tam = 12)
+                Cuerpo("Orion suma solo el tiempo que pasas fuera cuando abres un juego (aproximado). Aquí lo corriges.", tam = 12)
             }
         },
         confirmButton = { TextButton({ alAceptar((h.toLongOrNull() ?: 0L) * 3_600_000L + (m.toLongOrNull() ?: 0L).coerceAtMost(59L) * 60_000L) }) { Text("GUARDAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
@@ -656,9 +656,9 @@ fun DialogoEditarJuego(j: Juego, alCerrar: () -> Unit, alHoras: () -> Unit, alQu
                 CampoRevista("Nombre", nombre, "nombre del juego") { nombre = it }
                 if (j.sinLanzador) CampoRevista("Plataforma", plataforma, "PC, Switch, PS5…") { plataforma = it }
                 Spacer(Modifier.height(12.dp))
-                MagLink("Corregir las horas", "Bastet las apunta al volver de jugar; aquí las ajustas", onClick = alHoras)
+                MagLink("Corregir las horas", "Orion las apunta al volver de jugar; aquí las ajustas", onClick = alHoras)
                 Filete(1.dp, Line)
-                MagLink("Quitar de Bastet", if (j.rom != null) "La ROM no se toca" else null, onClick = alQuitar)
+                MagLink("Quitar de Orion", if (j.rom != null) "La ROM no se toca" else null, onClick = alQuitar)
             }
         },
         confirmButton = { TextButton({ if (nombre.isNotBlank()) Biblioteca.cambiar(j.id) { it.copy(titulo = nombre.trim(), plataforma = plataforma.trim()) }; alCerrar() }) { Text("GUARDAR", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp) } },
@@ -681,7 +681,7 @@ private fun SeccionNube(j: Juego) {
     var bajar by remember(j.id) { mutableStateOf(false) }
     if (bajar) DialogoBajarRom(j, jugar = false) { bajar = false; nube = null }
     if (!listo) {
-        Cuerpo("Para llevarte la partida a otro móvil: vincula tu cuenta de Atrio y conecta tu kDrive (Ajustes). Bastet sube el guardado al volver de jugar y baja el último antes de jugar.", tam = 12)
+        Cuerpo("Para llevarte la partida a otro móvil: vincula tu cuenta de Polaris y conecta tu kDrive (Ajustes). Orion sube el guardado al volver de jugar y baja el último antes de jugar.", tam = 12)
     } else {
         val car = NubeP.carpetas[j.sistema]
         MagLink(if (car == null) "Elegir la carpeta de guardados de ${sistema?.corto ?: j.sistema}" else "Carpeta de guardados elegida · cambiar",
@@ -689,7 +689,7 @@ private fun SeccionNube(j: Juego) {
         Filete(1.dp, Line)
         when {
             j.enOtroDispositivo && nube != null -> MagLink("Descargar la ROM de mi kDrive", "A la carpeta de ROMs de este móvil, en la de ${sistema?.corto ?: j.sistema} («Jugar» también la baja)") { bajar = true }
-            j.enOtroDispositivo -> Cuerpo("Esta ROM está en otro de tus móviles y todavía no ha llegado a tu kDrive: se sube sola, con wifi, al abrir Bastet en ese móvil.", tam = 12)
+            j.enOtroDispositivo -> Cuerpo("Esta ROM está en otro de tus móviles y todavía no ha llegado a tu kDrive: se sube sola, con wifi, al abrir Orion en ese móvil.", tam = 12)
             nube != null -> Cuerpo("La ROM ya está en tu kDrive: en tus otros móviles, «Jugar» la baja.", tam = 12)
             else -> MagLink(if (ocupado) "Subiendo…" else "Subir la ROM a mi kDrive ahora", if (NubeP.romsSolas(ctx)) "Se sube sola con wifi; esto la sube ya, también con datos" else "Solo a tu kDrive, para tenerla en tus otros móviles") {
                 if (!ocupado && j.uri.isNotBlank()) {

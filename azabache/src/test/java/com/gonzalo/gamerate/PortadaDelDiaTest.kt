@@ -33,7 +33,7 @@ class PortadaDelDiaTest {
         val p = portadaDelDia(d, hoy)!!
         assertEquals(Hermana.BASTET, p.principal.hermana)
         assertEquals(201L, p.principal.id)
-        assertEquals("HOY · 1 H 35 EN BASTET", antetituloPortada(p, hoy))
+        assertEquals("HOY · 1 H 35 EN ORION", antetituloPortada(p, hoy))
         assertEquals("y 35′ leyendo, 812 palabras", restoDelDia(p))
     }
 
@@ -43,14 +43,14 @@ class PortadaDelDiaTest {
         assertEquals(Hermana.HATHOR, s.principal.hermana)
         assertEquals("tv_sev", s.principal.ref)
         assertEquals("Severance", s.principal.titulo)
-        assertEquals("HOY · 2 H EN HATHOR", antetituloPortada(s, hoy))
+        assertEquals("HOY · 2 H EN SIRIUS", antetituloPortada(s, hoy))
     }
 
     @Test fun loEscritoSoloSiNoHayNadaConTiempo() {
         val p = portadaDelDia(dias(palabras = mapOf(hoy to 900)), hoy)!!
         assertEquals(Hermana.THOT, p.principal.hermana)
         assertEquals("obra1", p.principal.ref)
-        assertEquals("HOY · 900 PALABRAS EN THOT", antetituloPortada(p, hoy))
+        assertEquals("HOY · 900 PALABRAS EN NOVA", antetituloPortada(p, hoy))
         assertEquals(Hermana.SESHAT, portadaDelDia(dias(libro = mapOf(hoy to 5 * min), palabras = mapOf(hoy to 5000)), hoy)!!.principal.hermana)
     }
 

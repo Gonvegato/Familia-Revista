@@ -194,7 +194,7 @@ object ImportarAtrio {
             return try { KDrive.download(ctx, foto.first, dest); if (dest.length() > 200) dest.absolutePath else { dest.delete(); null } } catch (e: Exception) { dest.delete(); null }
         }
         if (c.portadaUrl.isNotBlank()) {
-            val (bytes, _) = Internet.descargar(c.portadaUrl, "Mozilla/5.0 (Linux; Android 14) Bastet")
+            val (bytes, _) = Internet.descargar(c.portadaUrl, "Mozilla/5.0 (Linux; Android 14) Orion")
             val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
             android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
             if (o.outWidth <= 0) return null
@@ -214,14 +214,14 @@ fun SeccionImportarAtrio() {
     var estado by remember { mutableStateOf("") }
     var ocupado by remember { mutableStateOf(false) }
     var hallados by remember { mutableStateOf<ImportarAtrio.Hallazgo?>(null) }
-    MagLink(if (ocupado) "Un momento…" else "Traer mis juegos de Atrio", "Solo lee tu cuenta: no cambia nada en Atrio. Trae fichas, estado, horas, portadas y sagas de juegos") {
+    MagLink(if (ocupado) "Un momento…" else "Traer mis juegos de Polaris", "Solo lee tu cuenta: no cambia nada en Polaris. Trae fichas, estado, horas, portadas y sagas de juegos") {
         if (ocupado) return@MagLink
         if (!Cuenta.vinculada) { estado = "Primero vincula tu cuenta (arriba)."; return@MagLink }
-        ocupado = true; estado = "Leyendo lo que Atrio tiene en tu cuenta…"
+        ocupado = true; estado = "Leyendo lo que Polaris tiene en tu cuenta…"
         ambito.launch {
             val r = withContext(Dispatchers.IO) { runCatching { ImportarAtrio.leer() } }
             ocupado = false
-            r.onSuccess { l -> if (l == null || l.candidatos.isEmpty()) estado = "No he encontrado juegos de Atrio en tu cuenta." else { hallados = l; estado = "" } }
+            r.onSuccess { l -> if (l == null || l.candidatos.isEmpty()) estado = "No he encontrado juegos de Polaris en tu cuenta." else { hallados = l; estado = "" } }
                 .onFailure { estado = it.message ?: "No he podido leer tu cuenta." }
         }
     }
@@ -232,7 +232,7 @@ fun SeccionImportarAtrio() {
         val yaEstan = l.count { ImportarAtrio.existente(it) != null }
         AlertDialog(
             onDismissRequest = { hallados = null }, containerColor = Paper, shape = esquina(4.dp),
-            title = { Text("${l.size} juegos en Atrio", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+            title = { Text("${l.size} juegos en Polaris", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     "${n(Estado.PASADO)} pasados, ${n(Estado.JUGANDO)} jugando, ${n(Estado.PENDIENTE)} pendientes, ${n(Estado.ABANDONADO)} abandonados" +

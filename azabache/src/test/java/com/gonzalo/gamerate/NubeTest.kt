@@ -207,11 +207,11 @@ class NubeTest {
         val msg = NubeSync.run(ctx)
         assertTrue(msg, msg.startsWith("2 subidos"))
         // Todo ordenado en «Mi carpeta»: Atrio/<Categoría>/<Ficha>/<Libro|Portadas>
-        val libro = k.byPath("Atrio/Libros/El nombre del viento/Libro/El nombre del viento.epub")
+        val libro = k.byPath("Polaris/Libros/El nombre del viento/Libro/El nombre del viento.epub")
         assertTrue("libro en su carpeta: ${k.files.values.filter { !it.dir }.map { k.pathOf(it) }}", libro != null && libro.bytes.contentEquals(epub.readBytes()))
         assertEquals("subido a trozos", 1, k.finished)
-        assertTrue("foto en la carpeta de su ficha", k.byPath("Atrio/Libros/El nombre del viento/Portadas/foto_1700000000000.jpg") != null)
-        assertTrue("nada en la raíz", k.files.values.none { it.parent == 1L && it.name == "Atrio" })
+        assertTrue("foto en la carpeta de su ficha", k.byPath("Polaris/Libros/El nombre del viento/Portadas/foto_1700000000000.jpg") != null)
+        assertTrue("nada en la raíz", k.files.values.none { it.parent == 1L && it.name == "Polaris" })
         val reg = s.loadNube().associateBy { it.k }
         assertTrue(reg["libro:501"]!!.l.contains("share"))
         // La lista de lo subido y lo leído viajan con la cuenta
@@ -320,9 +320,9 @@ class NubeTest {
             org.json.JSONArray().put(JSONObject().put("c", org.json.JSONArray().put(JSONObject().put("t", "imagen").put("i", Uri.fromFile(casilla).toString())))).toString()).commit()
         val msg = NubeSync.run(ctx)
         assertTrue(msg, msg.startsWith("3 subidos"))
-        assertTrue(k.byPath("Atrio/Videojuegos/Hades II/Portadas/foto_1.jpg") != null)
-        assertTrue(k.byPath("Atrio/Videojuegos/Hades II/Portadas/foto_2.jpg") != null)
-        assertTrue(k.byPath("Atrio/Videojuegos/Hades II/Imágenes/foto_3.jpg") != null)
+        assertTrue(k.byPath("Polaris/Videojuegos/Hades II/Portadas/foto_1.jpg") != null)
+        assertTrue(k.byPath("Polaris/Videojuegos/Hades II/Portadas/foto_2.jpg") != null)
+        assertTrue(k.byPath("Polaris/Videojuegos/Hades II/Imágenes/foto_3.jpg") != null)
     }
 
     /** El explorador de tu kDrive y una foto puesta desde el PC (dirección de foto del móvil, archivo en tu nube). */

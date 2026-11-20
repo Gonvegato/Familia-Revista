@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFilter
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 spec = importlib.util.spec_from_file_location("icono_c", os.path.join(RAIZ, "herramientas/familia-c/icono-c.py"))
 c = importlib.util.module_from_spec(spec); spec.loader.exec_module(c)
-MODULOS = {"marfil": "seshat", "cobre": "nut", "cobalto": "thot", "hiedra": "bastet", "mostaza": "hathor", "azabache": "jonsu"}
+MODULOS = {"marfil": "lyra", "cobre": "pulsar", "cobalto": "nova", "hiedra": "orion", "mostaza": "sirius", "azabache": "polaris"}
 
 def mac(app):
     c.S = 1536                                   # el lienzo del adaptable, a más tamaño (lo visible sale de 1024)

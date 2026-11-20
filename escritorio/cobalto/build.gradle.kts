@@ -10,7 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val version = "1.4.1"
+val version = "1.5.0"
 val android = rootProject.file("cobalto/src")
 
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -60,7 +60,7 @@ compose.desktop {
         jvmArgs += listOf("-Dfamilia.version=$version")
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Deb)
-            packageName = "Thot"
+            packageName = "Nova"
             packageVersion = version
             description = "Lo que escribes, en la cuenta de la familia"
             vendor = "Gonzalo"
