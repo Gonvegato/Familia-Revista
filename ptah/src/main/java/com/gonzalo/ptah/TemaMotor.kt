@@ -105,7 +105,7 @@ object Modo {
 object Skin {
     /** Los tamaños del texto: por ciento → nombre. */
     val ESCALAS_NOMBRES = mapOf(90 to "Pequeño", 100 to "Normal", 112 to "Grande", 125 to "Muy grande")
-    var palette by mutableStateOf(PALETTES.first { it.id == "revista" })
+    var palette by mutableStateOf(PALETTES.first { it.id == "familia" })
     var display by mutableStateOf("Atrio")
     var body by mutableStateOf("Atrio")
     var forma by mutableStateOf(FORMAS.first { it.id == "revista" })
@@ -217,8 +217,8 @@ object Skin {
 
     fun cargar(c: Context) {
         val p = p(c)
-        if (!p.getBoolean("revista_v1", false)) { p.edit().clear().putBoolean("revista_v1", true).apply() }
-        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "revista") } ?: palette
+        if (!p.getBoolean("vega_v1", false)) { p.edit().putString("paleta", "familia").putBoolean("vega_v1", true).apply() }
+        palette = PALETTES.firstOrNull { it.id == p.getString("paleta", "familia") } ?: palette
         display = p.getString("display", "Atrio") ?: "Atrio"
         body = p.getString("body", "Atrio") ?: "Atrio"
         forma = FORMAS.firstOrNull { it.id == p.getString("forma", "revista") } ?: forma
@@ -276,28 +276,27 @@ object Skin {
     }
 }
 
-// ───── los colores de la app (minimal oscuro, fijos) ─────
-// (Los de los widgets son otra cosa: el estilo de serie de [Skin], que se elige en Estilo y que pinta Lienzo.)
-val Paper: Color get() = Color(0xFF0B0B0D)
-val Crudo: Color get() = Color(0xFF151518)
-val Sand: Color get() = Color(0xFF1E1E22)
-val Line: Color get() = Color(0xFF26262B)
-val Charcoal: Color get() = Color(0xFFEDEDF0)
-val Edge: Color get() = Color(0xFF3A3A41)
-val Muted: Color get() = Color(0xFF8E8E96)
-/** El acento de la app (lavanda). */
-val Acento: Color get() = Color(0xFF8B9CFF)
-val Dorado: Color get() = Color(0xFFE6C36A)
-val SobreAcento: Color get() = Color(0xFF0B0B0D)
+// ───── los colores de la app (estética editorial de la familia: papel #F8F0D4 de día, negro #000000 de noche, acento Vega) ─────
+val Paper: Color get() = if (Modo.oscuro) Color(0xFF000000) else Color(0xFFF8F0D4)
+val Crudo: Color get() = if (Modo.oscuro) Color(0xFF121210) else Color(0xFFEFE5C5)
+val Sand: Color get() = if (Modo.oscuro) Color(0xFF1B1A16) else Color(0xFFEBE0BC)
+val Line: Color get() = if (Modo.oscuro) Color(0xFF2C2A24) else Color(0xFFD5CAA8)
+val Charcoal: Color get() = if (Modo.oscuro) Color(0xFFF8F0D4) else Color(0xFF000000)
+val Edge: Color get() = if (Modo.oscuro) Color(0xFF4A463B) else Color(0xFFB5A884)
+val Muted: Color get() = if (Modo.oscuro) Color(0xFF9E9684) else Color(0xFF5C5646)
+/** El acento de Vega: ámbar cálido (#B0661F de día, #D98A3D de noche). */
+val Acento: Color get() = if (Modo.oscuro) Color(0xFFD98A3D) else Color(0xFFB0661F)
+val Dorado: Color get() = Color(0xFFD98A3D)
+val SobreAcento: Color get() = if (Modo.oscuro) Color(0xFF000000) else Color(0xFFF8F0D4)
 fun Color.luminance2(): Float = 0.299f * red + 0.587f * green + 0.114f * blue
 
-fun appColors() = if (true) darkColorScheme(
-    primary = Charcoal, onPrimary = Crudo, secondary = Acento, onSecondary = SobreAcento,
+fun appColors() = if (Modo.oscuro) darkColorScheme(
+    primary = Charcoal, onPrimary = Paper, secondary = Acento, onSecondary = SobreAcento,
     background = Paper, onBackground = Charcoal, surface = Crudo, onSurface = Charcoal,
     surfaceVariant = Sand, onSurfaceVariant = Charcoal, surfaceContainer = Crudo, surfaceContainerHigh = Crudo,
     surfaceContainerHighest = Sand, surfaceContainerLow = Crudo, outline = Edge, outlineVariant = Line, error = Acento
 ) else lightColorScheme(
-    primary = Charcoal, onPrimary = Crudo, secondary = Acento, onSecondary = SobreAcento,
+    primary = Charcoal, onPrimary = Paper, secondary = Acento, onSecondary = SobreAcento,
     background = Paper, onBackground = Charcoal, surface = Crudo, onSurface = Charcoal,
     surfaceVariant = Sand, onSurfaceVariant = Charcoal, surfaceContainer = Crudo, surfaceContainerHigh = Crudo,
     surfaceContainerHighest = Sand, surfaceContainerLow = Crudo, outline = Edge, outlineVariant = Line, error = Acento
@@ -323,8 +322,8 @@ val AtrioBody = FontFamily(
     Font(R.font.body_bold, FontWeight.Bold), Font(R.font.body_bold, FontWeight.ExtraBold), Font(R.font.body_bold, FontWeight.Black)
 )
 
-/** La letra de la app: Inter, siempre (las de los widgets las elige cada diseño y [Letras]). */
-val Display: FontFamily get() = AtrioBody
+/** Las letras de la app: Bricolage Grotesque para titulares y cuerpo limpio (como el resto de la familia). */
+val Display: FontFamily get() = VitrinaDisplay
 val Body: FontFamily get() = AtrioBody
 
 private val base = Typography()

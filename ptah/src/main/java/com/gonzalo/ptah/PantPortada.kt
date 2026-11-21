@@ -61,7 +61,7 @@ fun PantPortada(eligiendo: Boolean, guardado: String? = null, alCerrarGuardado: 
             Text("Un toque en uno de tus diseños y se pone. O empieza con una plantilla, o crea uno nuevo: al guardarlo, va a este widget.",
                 color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
         } else {
-            Text("Tus widgets, a tu manera. Un toque y lo cambias.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 2.dp))
+            Text("Tus widgets editoriales, con las cinco variaciones de las estrellas.", color = Muted, fontFamily = Body, fontSize = 15.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 2.dp))
             if (!Intro.vista(ctx)) Explicacion { Intro.cierra(ctx) }
         }
 
@@ -77,13 +77,13 @@ fun PantPortada(eligiendo: Boolean, guardado: String? = null, alCerrarGuardado: 
             Antetitulo("Tus diseños", Modifier.weight(1f))
             if (disenos.isNotEmpty()) Text("${disenos.size}", color = Acento, fontFamily = Display, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
         }
-        Text(if (eligiendo) "Los que has hecho." else "Los que has hecho. Un toque en uno: ponerlo en la pantalla de inicio, editarlo, copiarlo o borrarlo.",
+        Text(if (eligiendo) "Los que has hecho." else "Los que has hecho. Un toque en uno: cambiar su variación, ponerlo en la pantalla de inicio, editarlo, copiarlo o borrarlo.",
             color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
         if (disenos.isEmpty()) Nota("Aún no tienes ninguno: crea uno o empieza con una plantilla de las de abajo.", Modifier.padding(top = 8.dp))
         Rejilla(disenos, cols) { d ->
             val t = Tipos.de(d.tipo)
             val n = usos[d.id] ?: 0
-            Tarjeta(d, Plantillas.celdasDe(d), t?.nombre ?: "De otra versión", if (n > 0) "En tu pantalla de inicio: $n" else "Aún no está en tu pantalla",
+            Tarjeta(d, Plantillas.celdasDe(d), t?.nombre ?: "De otra versión", if (n > 0) "En tu pantalla de inicio: $n" else d.estilo.variacion.nombre,
                 enPantalla = n > 0, resaltada = d.id == guardado) { alAbrir(d) }
         }
         Spacer(Modifier.height(16.dp))
@@ -93,13 +93,13 @@ fun PantPortada(eligiendo: Boolean, guardado: String? = null, alCerrarGuardado: 
         Spacer(Modifier.height(26.dp))
         Column(Modifier.fillMaxWidth().background(Sand).padding(horizontal = 14.dp, vertical = 16.dp)) {
             Antetitulo("Plantillas para empezar")
-            Text("Ya hechas. Un toque en una y se hace una copia tuya que puedes cambiar; al guardarla, va a «Tus diseños».",
+            Text("Ya hechas con las variaciones estéticas. Un toque en una y se hace una copia tuya que puedes cambiar; al guardarla, va a «Tus diseños».",
                 color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
-            Rejilla(Plantillas.TODAS, cols) { (p, c) -> Tarjeta(p, c, Tipos.de(p.tipo)?.nombre.orEmpty(), "Usar esta →", enPantalla = false, resaltada = false, deSerie = true) { alPlantilla(p) } }
+            Rejilla(Plantillas.TODAS, cols) { (p, c) -> Tarjeta(p, c, Tipos.de(p.tipo)?.nombre.orEmpty(), p.estilo.variacion.nombre + " →", enPantalla = false, resaltada = false, deSerie = true) { alPlantilla(p) } }
         }
 
         Spacer(Modifier.height(26.dp)); Filete(1.dp); Spacer(Modifier.height(10.dp))
-        Etiqueta("Widgets $VERSION")
+        Etiqueta("Vega $VERSION")
         Text(OpenMeteo.LICENCIA, color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(30.dp))
     }
@@ -111,9 +111,9 @@ private fun Explicacion(alCerrar: () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 12.dp).border(1.5.dp, Charcoal).padding(16.dp)) {
         Antetitulo("Cómo va")
         listOf(
-            "Crea un diseño o empieza con una plantilla" to "Un reloj, el tiempo, tus apps, una foto… con tus colores y tus letras.",
+            "Crea un diseño o empieza con una plantilla" to "Un reloj, el tiempo, tus apps, una foto… con las cinco variaciones estéticas y el acento que quieras.",
             "Guárdalo" to "Va a «Tus diseños», en este móvil.",
-            "Ponlo en tu pantalla de inicio" to "Con «Ponerlo en la pantalla de inicio» o, desde el lanzador, en Widgets → Widgets.",
+            "Ponlo en tu pantalla de inicio" to "Con «Ponerlo en la pantalla de inicio» o, desde el lanzador, en Widgets → Vega.",
         ).forEachIndexed { i, (t, x) ->
             Row(Modifier.fillMaxWidth().padding(top = 10.dp)) {
                 Text("${i + 1}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 30.sp, modifier = Modifier.width(34.dp))
@@ -182,7 +182,7 @@ fun PonerEnPantalla(d: Diseno, modifier: Modifier = Modifier) {
         title = { Text("Ponerlo a mano", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                listOf("Mantén pulsado un hueco del fondo de tu pantalla de inicio.", "Toca «Widgets».", "Busca «Widgets» y arrastra su widget a la pantalla.",
+                listOf("Mantén pulsado un hueco del fondo de tu pantalla de inicio.", "Toca «Widgets».", "Busca «Vega» y arrastra su widget a la pantalla.",
                     "Elige «${d.nombre.ifBlank { "este diseño" }}» en la lista de tus diseños.").forEachIndexed { i, t ->
                     Row(Modifier.padding(vertical = 4.dp)) {
                         Text("${i + 1}", color = Acento, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.width(26.dp))
@@ -194,7 +194,7 @@ fun PonerEnPantalla(d: Diseno, modifier: Modifier = Modifier) {
         confirmButton = { androidx.compose.material3.TextButton({ pasos = false }) { Text("Entendido", color = Acento, fontFamily = Body, fontWeight = FontWeight.Bold) } })
 }
 
-/** La ficha de un diseño: cómo se ve, dónde está, y ponerlo en la pantalla de inicio, editarlo, copiarlo o borrarlo. */
+/** La ficha de un diseño: cómo se ve, sus 5 variaciones estéticas a un toque, dónde está, y ponerlo en la pantalla de inicio, editarlo, copiarlo o borrarlo. */
 @Composable
 fun PantFicha(id: String, alVolver: () -> Unit, alEditar: (Diseno) -> Unit, alCopiar: (Diseno) -> Unit) {
     val ctx = LocalContext.current
@@ -211,6 +211,10 @@ fun PantFicha(id: String, alVolver: () -> Unit, alEditar: (Diseno) -> Unit, alCo
         Filete(3.dp)
         Spacer(Modifier.height(12.dp))
         Miniatura(d, Plantillas.celdasDe(d), Modo.oscuro, alto = 240f)
+        // Cambiar entre las 5 variaciones estéticas al vuelo (y se repinta el widget al instante)
+        SelectorVariacion(d, Modo.oscuro) { v ->
+            Disenos.guarda(ctx, d.conEstilo(d.estilo.copy(variacion = v)))
+        }
         Text(if (n > 0) "En tu pantalla de inicio: $n widget${if (n > 1) "s" else ""}. Si lo cambias, se cambian solos." else "Aún no está en tu pantalla de inicio.",
             color = if (n > 0) Acento else Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 16.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 10.dp))
         Spacer(Modifier.height(12.dp))
@@ -236,7 +240,7 @@ fun PantFicha(id: String, alVolver: () -> Unit, alEditar: (Diseno) -> Unit, alCo
 fun PantNuevo(alVolver: () -> Unit, alElegir: (TipoWidget) -> Unit) {
     val mg = margen()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(horizontal = mg)) {
-        RevistaTopBar(alVolver, "Widgets")
+        RevistaTopBar(alVolver, "Vega")
         Antetitulo("Nuevo", Modifier.padding(top = 10.dp), color = Acento, conCuadro = false)
         FitTitle("¿Qué widget?", 48.sp, 52.sp, letterSpacing = (-1.2).sp)
         Filete(3.dp)
@@ -262,13 +266,13 @@ fun PantNuevo(alVolver: () -> Unit, alElegir: (TipoWidget) -> Unit) {
 
 /**
  * El aviso de la portada para los relojes: si van con la letra del móvil porque falta un permiso, si se han quedado atrás o si Android
- * frena a Widgets en segundo plano. Con los botones que llevan a cada sitio (los de ColorOS incluidos).
+ * frena a Vega en segundo plano. Con los botones que llevan a cada sitio (los de ColorOS incluidos).
  */
 @Composable
 fun AvisoReloj() {
     val ctx = LocalContext.current
     var vez by remember { mutableIntStateOf(0) }
-    // (se vuelve a mirar al volver a Widgets: el permiso se da fuera)
+    // (se vuelve a mirar al volver a Vega: el permiso se da fuera)
     DisposableEffect(Unit) {
         val owner = androidx.lifecycle.ProcessLifecycleOwner.get()
         val ob = androidx.lifecycle.LifecycleEventObserver { _, ev -> if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME) vez++ }
@@ -283,14 +287,14 @@ fun AvisoReloj() {
     Column(Modifier.fillMaxWidth().padding(top = 14.dp).background(Acento.copy(alpha = 0.12f)).border(2.dp, Acento).padding(16.dp)) {
         Text("Tus relojes", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black, fontSize = 13.sp, letterSpacing = 1.sp)
         Text(when {
-            sinPermiso -> "Van con la letra del móvil: para dibujar la hora con la tuya, Widgets tiene que poder despertarse cada minuto, y Android no le deja poner alarmas exactas."
-            restringida -> "Android frena a Widgets en segundo plano: tus relojes pueden quedarse atrás."
-            else -> "Se han quedado atrás: el ahorro de batería no deja a Widgets ponerlos en hora cada minuto."
+            sinPermiso -> "Van con la letra del móvil: para dibujar la hora con la tuya, Vega tiene que poder despertarse cada minuto, y Android no le deja poner alarmas exactas."
+            restringida -> "Android frena a Vega en segundo plano: tus relojes pueden quedarse atrás."
+            else -> "Se han quedado atrás: el ahorro de batería no deja a Vega ponerlos en hora cada minuto."
         }, color = Charcoal, fontFamily = Display, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 4.dp))
         Spacer(Modifier.height(10.dp))
         if (sinPermiso && android.os.Build.VERSION.SDK_INT >= 31) AccionGrande(null, "Permitir las alarmas", Modifier.fillMaxWidth()) { Minutero.abreAlarmas(ctx) }
-        MagLink("Que la batería no frene a Widgets", "Sin restricciones de batería") { Minutero.abreBateria(ctx) }
-        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus; si no, los ajustes de Widgets") { Minutero.abreInicioAutomatico(ctx) }
+        MagLink("Que la batería no frene a Vega", "Sin restricciones de batería") { Minutero.abreBateria(ctx) }
+        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus; si no, los ajustes de Vega") { Minutero.abreInicioAutomatico(ctx) }
         if (sinPermiso) MagLink("Dejarlos con la letra del móvil", "Se ponen en hora solos y no gastan; este aviso no vuelve") { Minutero.ponLetraDelMovil(ctx, true); vez++ }
     }
 }

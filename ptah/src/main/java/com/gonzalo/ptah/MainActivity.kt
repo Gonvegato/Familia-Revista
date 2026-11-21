@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
 fun BarrasDelSistema(a: ComponentActivity) {
     SideEffect {
         val t = android.graphics.Color.TRANSPARENT
-        val oscuro = Skin.tones.darkBg
+        val oscuro = Modo.oscuro
         a.enableEdgeToEdge(
             statusBarStyle = if (oscuro) SystemBarStyle.dark(t) else SystemBarStyle.light(t, t),
             navigationBarStyle = if (oscuro) SystemBarStyle.dark(t) else SystemBarStyle.light(t, t)

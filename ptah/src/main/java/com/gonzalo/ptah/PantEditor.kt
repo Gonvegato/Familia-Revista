@@ -3,9 +3,12 @@ package com.gonzalo.ptah
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -50,7 +53,7 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
 
     Column(Modifier.fillMaxSize().background(Paper).statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = mg, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            VolverRevista({ if (cambiado) salir = true else alVolver() }, "Widgets")
+            VolverRevista({ if (cambiado) salir = true else alVolver() }, "Vega")
             Spacer(Modifier.weight(1f))
             EnlaceRevista(if (eligiendo) "Guardar y ponerlo aquí" else "Guardar diseño", acento = true) { guarda() }
         }
@@ -76,14 +79,17 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
             }
             if (d.estilo.delTema) MagChoice(listOf("Claro", "Oscuro"), if (noche) 1 else 0, "Con tu estilo en") { noche = it == 1 }
 
+            // ---- Variación estética (las 5 variaciones de las apps de la familia, siempre a mano)
+            SelectorVariacion(d, noche) { v -> d = d.conEstilo(d.estilo.copy(variacion = v)) }
+
             // ---- El nombre
             Campo("El nombre", d.nombre, tipo?.nombre ?: "Sin nombre") { d = d.copy(nombre = it) }
-            Antetitulo(tipo?.nombre ?: "De otra versión de Widgets", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
+            Antetitulo(tipo?.nombre ?: "De otra versión de Vega", Modifier.padding(top = 12.dp), color = Acento, conCuadro = false)
             if (tipo != null) Text(tipo.descripcion, color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, lineHeight = 19.sp)
             Spacer(Modifier.height(8.dp))
             PestanasRevista(listOf("Contenido", "Colores", "Forma", "Letras", "Partes"), pestana) { pestana = it }
             Spacer(Modifier.height(6.dp))
-            if (tipo == null) Nota("Este diseño es de una versión más nueva de Widgets: actualízala para cambiarlo.")
+            if (tipo == null) Nota("Este diseño es de una versión más nueva de Vega: actualízala para cambiarlo.")
             else when (pestana) {
                 0 -> tipo.Editor(d) { d = it }
                 1 -> EditorColores(d, tipo, noche) { d = it }
@@ -108,6 +114,41 @@ fun PantEditor(inicial: Diseno, nuevo: Boolean, eligiendo: Boolean = false, alVo
         dismissButton = { TextButton({ salir = false; alVolver() }) { Text("Salir sin guardar", color = Charcoal, fontFamily = Body, fontWeight = FontWeight.Bold) } })
 }
 
+/** Las cinco variaciones estéticas de los widgets de las apps (con vista previa en vivo). */
+@Composable
+fun SelectorVariacion(d: Diseno, noche: Boolean, alElegir: (VariacionWidget) -> Unit) {
+    val actual = d.estilo.variacion
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp)) {
+        Etiqueta("Variación estética")
+        Text(actual.explica, color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            VariacionWidget.entries.forEach { v ->
+                val sel = v == actual
+                val muestra = remember(d, v) { d.conEstilo(d.estilo.copy(variacion = v)) }
+                Column(
+                    Modifier.width(122.dp)
+                        .background(if (sel) Acento.copy(alpha = 0.14f) else Crudo, RoundedCornerShape(12.dp))
+                        .border(if (sel) 2.dp else 1.dp, if (sel) Acento else Line, RoundedCornerShape(12.dp))
+                        .tocable { alElegir(v) }
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Miniatura(muestra, Tamanos.Celdas(2, 2), noche, alto = 76f)
+                    Text(
+                        v.nombre,
+                        color = if (sel) Acento else Charcoal,
+                        fontFamily = Body,
+                        fontSize = 12.sp,
+                        fontWeight = if (sel) FontWeight.Bold else FontWeight.SemiBold,
+                        maxLines = 1,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
 /** Los colores con los que se dibuja ahora (para enseñar el efectivo de cada pieza). */
 @Composable
 private fun lienzoDe(d: Diseno, noche: Boolean): Lienzo {
@@ -116,11 +157,31 @@ private fun lienzoDe(d: Diseno, noche: Boolean): Lienzo {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun EditorColores(d: Diseno, tipo: TipoWidget, noche: Boolean, cambia: (Diseno) -> Unit) {
     val e = d.estilo
     val l = lienzoDe(d, noche)
     fun pon(x: Estilo) = cambia(d.conEstilo(x))
-    BloqueEditor("El fondo", primero = true)
+    BloqueEditor("Acento de las estrellas", primero = true)
+    Text("Combina este widget con el color de cualquiera de las apps.", color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(bottom = 8.dp))
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ACENTOS_ESTRELLAS.forEach { est ->
+            val sel = e.acento.equals(est.hex, ignoreCase = true)
+            Row(
+                Modifier
+                    .background(if (sel) Acento.copy(alpha = 0.16f) else Crudo, RoundedCornerShape(50))
+                    .border(if (sel) 1.5.dp else 1.dp, if (sel) Acento else Line, RoundedCornerShape(50))
+                    .tocable { pon(e.copy(acento = est.hex)) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(12.dp).background(androidx.compose.ui.graphics.Color(Col.argb(est.hex) ?: 0xFFB0661F.toInt()), CircleShape))
+                Spacer(Modifier.width(6.dp))
+                Text(est.nombre, color = if (sel) Acento else Charcoal, fontFamily = Body, fontSize = 12.sp, fontWeight = if (sel) FontWeight.Bold else FontWeight.Medium)
+            }
+        }
+    }
+    BloqueEditor("El fondo")
     Elige("Qué lleva", TipoFondo.entries.map { it.name to it.nombre }, e.fondo.name) { n -> pon(e.copy(fondo = TipoFondo.valueOf(n))) }
     when (e.fondo) {
         TipoFondo.COLOR -> FilaColor("El color del fondo", e.colorFondo, l.papelDeVerdad(), conSerie = false) { pon(e.copy(colorFondo = it)) }

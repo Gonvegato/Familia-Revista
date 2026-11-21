@@ -109,7 +109,7 @@ class AjustesActivity : ComponentActivity() {
     fun anadirBoton() {
         if (Build.VERSION.SDK_INT < 33) return
         val sb = getSystemService(StatusBarManager::class.java) ?: return
-        sb.requestAddTileService(ComponentName(this, BotonAmmit::class.java), "Ammit", Icon.createWithResource(this, R.drawable.ic_balanza), mainExecutor) { vuelta++ }
+        sb.requestAddTileService(ComponentName(this, BotonAmmit::class.java), "Eclipse", Icon.createWithResource(this, R.drawable.ic_balanza), mainExecutor) { vuelta++ }
     }
 
     fun encender(on: Boolean) {
@@ -127,37 +127,37 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
     val esInicio = Ammit.esInicio(a)
     val casa = Ammit.casaActiva(a) || esInicio
     val vigia = Ammit.vigiaActivo(a)
-    // (Ammit ya no necesita ser la pantalla de inicio: encendida, el vigilante te lleva a la suya)
+    // (Eclipse ya no necesita ser la pantalla de inicio: encendido, el vigilante controla qué pasa)
     val listo = vigia
     val otros = Ammit.otrosInicios(a)
     val normal = Ammit.inicioNormal(a)
     Column(Modifier.fillMaxSize().background(t.fondo).verticalScroll(rememberScrollState())) {
         // La cabecera de la familia: un bloque de tinta con el nombre
         Column(Modifier.fillMaxWidth().background(t.tinta).statusBarsPadding().padding(horizontal = 24.dp, vertical = 18.dp)) {
-            BasicText("EL JUICIO DE OSIRIS", style = TextStyle(t.fondo.copy(alpha = 0.7f), 11.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 2.sp))
-            BasicText(buildAnnotatedString { append("AMMIT"); withStyle(SpanStyle(color = if (t.fondo == Diseno.NEGRO) Diseno.ACENTO else Diseno.ACENTO_NOCHE)) { append(".") } },
+            BasicText("MODO ENFOQUE", style = TextStyle(t.fondo.copy(alpha = 0.7f), 11.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 2.sp))
+            BasicText(buildAnnotatedString { append("ECLIPSE"); withStyle(SpanStyle(color = if (t.fondo == Diseno.NEGRO) Diseno.ACENTO else Diseno.ACENTO_NOCHE)) { append(".") } },
                 style = TextStyle(t.fondo, 58.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca, letterSpacing = (-1.5).sp))
         }
         Column(Modifier.widthIn(max = 720.dp).padding(horizontal = 24.dp, vertical = 18.dp).navigationBarsPadding()) {
-            BasicText("Encendida, en la tablet solo pasan Jonsu, Bastet, Seshat, Thot, Hathor y Nut: el resto de apps salen encadenadas en su pantalla de inicio y, si se abren por otro lado, Ammit se las come. Se enciende y se apaga con su botón de la barra de arriba.",
+            BasicText("Encendido, solo pasan Polaris, Orion, Lyra, Nova, Sirius y Pulsar: el resto de apps quedan eclipsadas hasta que cumplas tu objetivo. Se enciende y se apaga desde su widget o su botón en la barra de arriba.",
                 style = TextStyle(t.gris, 15.sp, fontFamily = Diseno.Texto, lineHeight = 22.sp))
-            if (falta && !listo) BasicText("Para encenderla falta algún paso de abajo.", style = TextStyle(t.acento, 15.sp, FontWeight.Bold, fontFamily = Diseno.Texto), modifier = Modifier.padding(top = 10.dp))
+            if (falta && !listo) BasicText("Para encenderlo falta algún paso de abajo.", style = TextStyle(t.acento, 15.sp, FontWeight.Bold, fontFamily = Diseno.Texto), modifier = Modifier.padding(top = 10.dp))
 
-            Titulo("Encendida", t)
+            Titulo("Estado", t)
             Row(Modifier.fillMaxWidth().clickable(enabled = listo || Ammit.encendida) { a.encender(!Ammit.encendida) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    BasicText(if (Ammit.encendida) "Encendida" else "Apagada", style = TextStyle(t.tinta, 24.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
-                    BasicText(if (listo) "Toca para ${if (Ammit.encendida) "apagarla" else "encenderla"} (o usa el botón de la barra de arriba)" else "Primero, los pasos de abajo",
+                    BasicText(if (Ammit.encendida) "Encendido" else "Apagado", style = TextStyle(t.tinta, 24.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
+                    BasicText(if (listo) "Toca para ${if (Ammit.encendida) "apagarlo" else "encenderlo"} (o usa el botón de la barra de arriba)" else "Primero, los pasos de abajo",
                         style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto))
                 }
                 Interruptor(Ammit.encendida, t)
             }
 
-            Titulo("Para dejarla lista", t)
-            Paso(1, "Tu pantalla de inicio, la de siempre", "Ammit no es pantalla de inicio: encendida, al ir al inicio te lleva a la suya, y así los gestos y el cambio entre apps van como siempre (en los Oppo, con otra pantalla de inicio iban peor aunque Ammit estuviera apagada).", !casa, t, if (casa) "QUITAR" else "") { a.quitarCasa() }
+            Titulo("Para dejarlo listo", t)
+            Paso(1, "Tu pantalla de inicio, la de siempre", "Eclipse no sustituye tu pantalla de inicio: así los gestos y el cambio entre apps van como siempre.", !casa, t, if (casa) "QUITAR" else "") { a.quitarCasa() }
             Paso(2, "Permitir los ajustes restringidos", "Android no deja activar el vigilante de una app que no viene de la Play Store hasta que lo permites: en la pantalla que se abre, menú ⋮ (arriba a la derecha) → «Permitir ajustes restringidos». Si no sale el menú, haz antes el paso 3 una vez: Android lo enseña después de avisarte.", vigia, t, "ABRIR") { a.abrirInfoApp() }
-            Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Ammit → activar. Solo mira qué app se abre, nunca lo que hay dentro. Si ahí sale «No funcionando», desactívalo y vuelve a activarlo (y mira el paso 4).", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
-            Paso(4, "Que Android no la cierre", "Para ahorrar batería, algunos móviles (los Oppo y los Samsung sobre todo) cierran las apps en segundo plano, también el vigilante, y entonces sale «No funcionando». Permite que Ammit funcione sin restricciones de batería. En los Oppo, además: Ajustes → Batería → Ammit → «Permitir actividad en segundo plano» (y «Inicio automático» si sale).", a.sinRestricciones(), t, "PERMITIR") { a.pedirSinRestricciones() }
+            Paso(3, "Activar el vigilante", "Accesibilidad → Apps instaladas (o Servicios) → Eclipse → activar. Solo mira qué app se abre, nunca lo que hay dentro. Si ahí sale «No funcionando», desactívalo y vuelve a activarlo (y mira el paso 4).", vigia, t, "ABRIR") { a.abrirAccesibilidad() }
+            Paso(4, "Que Android no lo cierre", "Para ahorrar batería, algunos móviles (los Oppo y los Samsung sobre todo) cierran las apps en segundo plano, también el vigilante, y entonces sale «No funcionando». Permite que Eclipse funcione sin restricciones de batería. En los Oppo, además: Ajustes → Batería → Eclipse → «Permitir actividad en segundo plano» (y «Inicio automático» si sale).", a.sinRestricciones(), t, "PERMITIR") { a.pedirSinRestricciones() }
             if (Build.VERSION.SDK_INT >= 33) Paso(5, "El botón en la barra de arriba", "Lo pone con un toque; también se puede poner a mano desde el lápiz de la barra.", null, t, "PONER") { a.anadirBoton() }
 
             TuCuenta(a, t)
@@ -165,23 +165,23 @@ fun PantAjustes(a: AjustesActivity, vuelta: Int, falta: Boolean) {
             ActualizarseSola(a, t)
 
             Titulo("Tu pantalla de inicio de siempre", t)
-            BasicText("La que se abre con Ammit apagada.", style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto), modifier = Modifier.padding(bottom = 6.dp))
-            if (otros.isEmpty()) BasicText("No hay otra en la tablet.", style = TextStyle(t.gris, 15.sp, fontFamily = Diseno.Texto))
+            BasicText("A la que vuelve Eclipse al cerrar una app bloqueada.", style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto), modifier = Modifier.padding(bottom = 6.dp))
+            if (otros.isEmpty()) BasicText("No hay otra en el dispositivo.", style = TextStyle(t.gris, 15.sp, fontFamily = Diseno.Texto))
             otros.forEach { (cn, nombre) ->
                 Row(Modifier.fillMaxWidth().clickable { Ammit.ponInicioNormal(a, cn); a.refrescar() }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     BasicText(nombre, style = TextStyle(t.tinta, 20.sp, FontWeight.SemiBold, fontFamily = Diseno.Grotesca), modifier = Modifier.weight(1f))
                     if (cn == normal) BasicText("✓", style = TextStyle(t.acento, 20.sp, FontWeight.Bold))
                 }
             }
-            Titulo("Qué pasa con Ammit encendida", t)
+            Titulo("Qué pasa con Eclipse encendido", t)
             listOf(
-                "Pasan las seis apps de la familia, la barra de arriba (para poder apagarla), el teclado, y las pantallas de Android que las apps de la familia necesitan (los permisos y la instalación de sus versiones nuevas).",
-                "Todo lo demás, no: tampoco Ajustes, la cámara o el teléfono. Si algo se cuela, reiniciar la tablet no la apaga, pero el botón de la barra siempre funciona.",
-                "En la pantalla de inicio, mantener pulsado el fondo o un icono deja colocar las apps y poner widgets de la familia.",
+                "Pasan las seis estrellas de la familia (Polaris, Orion, Lyra, Nova, Sirius y Pulsar), tu pantalla de inicio, la barra de arriba, el teclado y las pantallas de Android que necesitan (permisos y actualizaciones).",
+                "Todo lo demás, no: tampoco Ajustes, la cámara o el teléfono. Reiniciar el dispositivo no lo apaga, pero el botón de la barra siempre funciona.",
+                "Para soltarlo antes de tiempo tendrás que escribir 300 palabras en Nova o leer un capítulo en Lyra.",
             ).forEach { BasicText("·  $it", style = TextStyle(t.tinta, 15.sp, fontFamily = Diseno.Texto, lineHeight = 22.sp), modifier = Modifier.padding(vertical = 4.dp)) }
             val ver = runCatching { a.packageManager.getPackageInfo(a.packageName, 0).versionName }.getOrNull().orEmpty()
-            BasicText("AMMIT $ver", style = TextStyle(t.gris, 10.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp), modifier = Modifier.padding(top = 24.dp))
-            BasicText("Hermana de Jonsu, Bastet, Seshat, Thot, Hathor y Nut: la que guarda la puerta.", style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Cursiva), modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
+            BasicText("ECLIPSE $ver", style = TextStyle(t.gris, 10.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp), modifier = Modifier.padding(top = 24.dp))
+            BasicText("Hermano de Polaris, Orion, Lyra, Nova, Sirius y Pulsar: el guardián del enfoque.", style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Cursiva), modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
         }
     }
 }
@@ -223,14 +223,14 @@ private fun Interruptor(on: Boolean, t: Tonos) {
 @Composable
 private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
     val alcance = androidx.compose.runtime.rememberCoroutineScope()
-    var hay by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(KDrive.on(a)) }
+    var hay by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(KDrive.nubeOn(a)) }
     var porQue by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
-    // Al abrir: si no hay token, se coge la cuenta de una hermana y se mira la cuenta (ahí está el que pusiste en Jonsu)
+    // Al abrir: si no hay nube conectada, se coge la cuenta de una hermana y se mira la cuenta (ahí están Google Drive o kDrive)
     androidx.compose.runtime.LaunchedEffect(Unit) {
         if (!hay) {
             porQue = "Mirando tu cuenta…"
             porQue = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { KDrive.asegura(a) }.getOrDefault("") }
-            hay = KDrive.on(a)
+            hay = KDrive.nubeOn(a)
         }
     }
     var auto by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(Actualizador.activo(a)) }
@@ -238,12 +238,12 @@ private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
     var drive by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
     var aviso by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
     var ocupado by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    Titulo("Actualizarse sola", t)
+    Titulo("Actualizarse solo", t)
     if (!hay) {
         if (porQue.isNotBlank()) BasicText(porQue, style = TextStyle(t.acento, 14.sp, FontWeight.Bold, fontFamily = Diseno.Texto, lineHeight = 20.sp), modifier = Modifier.padding(bottom = 6.dp))
-        BasicText("Ammit busca sus versiones nuevas en «versiones» de tu kDrive. Con la cuenta, usa el token que pusiste en Jonsu (Ajustes → Cuenta → Tu nube); si aún no lo has puesto, puedes pegarlo aquí (pasa a la cuenta y lo tienen todas).",
+        BasicText("Eclipse busca sus versiones nuevas en «Familia/versiones» de tu Google Drive (o en kDrive). Con la cuenta, usa la nube que configuraste en Polaris (Ajustes → Cuenta → Tu nube).",
             style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
-        Campo("TOKEN", token, "token de API de kDrive", t, secreto = true) { token = it }
+        Campo("TOKEN", token, "token de API de kDrive (opcional)", t, secreto = true) { token = it }
         Campo("KDRIVE", drive, "número o dirección", t) { drive = it }
         BasicText("CONECTAR  →", style = TextStyle(t.fondo, 12.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp),
             modifier = Modifier.padding(top = 10.dp).background(t.acento).clickable(enabled = !ocupado) {
@@ -257,10 +257,11 @@ private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
                 }
             }.padding(horizontal = 14.dp, vertical = 9.dp))
     } else {
+        val origen = if (KDrive.gdriveOn(a)) "Google Drive (Familia/versiones)" else "kDrive ${KDrive.drive(a)}"
         Row(Modifier.fillMaxWidth().clickable { auto = !auto; Actualizador.ponActivo(a, auto) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                BasicText("Actualizarse sola", style = TextStyle(t.tinta, 20.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
-                BasicText("Mira «versiones» de tu kDrive (kDrive ${KDrive.drive(a)}) y se instala cuando no la estás viendo", style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto))
+                BasicText("Actualizarse solo", style = TextStyle(t.tinta, 20.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
+                BasicText("Mira «versiones» en $origen y se instala cuando no lo estás viendo", style = TextStyle(t.gris, 13.sp, fontFamily = Diseno.Texto))
             }
             Interruptor(auto, t)
         }
@@ -272,12 +273,12 @@ private fun ActualizarseSola(a: AjustesActivity, t: Tonos) {
                 ocupado = true; aviso = null
                 alcance.launch { aviso = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Actualizador.actualizarAhora(a) }; ocupado = false }
             }.padding(horizontal = 14.dp, vertical = 9.dp))
-        BasicText("Quitar el token", style = TextStyle(t.gris, 13.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
-            modifier = Modifier.padding(top = 10.dp).clickable { KDrive.forget(a); hay = false })
+        if (!KDrive.gdriveOn(a)) BasicText("Quitar el token", style = TextStyle(t.gris, 13.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
+            modifier = Modifier.padding(top = 10.dp).clickable { KDrive.forget(a); hay = KDrive.nubeOn(a) })
     }
     // Una versión nueva que Android pide confirmar (la primera vez, o sin el permiso de instalar sola)
     Actualizador.nueva?.takeIf { !it.silenciosa }?.let { n ->
-        BasicText(if (Actualizador.faltaPermiso) "Hay una versión nueva: deja a Ammit instalar apps  →" else "Hay una versión nueva descargada: instalar  →",
+        BasicText(if (Actualizador.faltaPermiso) "Hay una versión nueva: deja a Eclipse instalar apps  →" else "Hay una versión nueva descargada: instalar  →",
             style = TextStyle(t.acento, 15.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
             modifier = Modifier.padding(top = 10.dp).clickable {
                 if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; runCatching { a.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${a.packageName}"))) } }
@@ -305,8 +306,8 @@ private fun Campo(etiqueta: String, valor: String, pista: String, t: Tonos, secr
 }
 
 /**
- * Tu cuenta de la familia (la misma que Jonsu, Bastet, Seshat, Thot, Hathor y Nut). Entra sola si alguna hermana instalada la tiene;
- * si no, aquí con tu usuario y tu contraseña de Atrio. De ella saca el token de tu kDrive para actualizarse sola.
+ * Tu cuenta de la familia (la misma que Polaris, Orion, Lyra, Nova, Sirius y Pulsar). Entra sola si alguna hermana instalada la tiene;
+ * si no, aquí con tu usuario y tu contraseña. De ella saca la nube para actualizarse solo y comprobar tu progreso de lectura/escritura.
  */
 @Composable
 private fun TuCuenta(a: AjustesActivity, t: Tonos) {
@@ -326,14 +327,14 @@ private fun TuCuenta(a: AjustesActivity, t: Tonos) {
     if (fam == null) { BasicText("La cuenta no está disponible en este dispositivo.", style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto)); return }
     if (dentro) {
         BasicText("Dentro, como ${fam.sesion.usuario}", style = TextStyle(t.tinta, 20.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca))
-        BasicText("La misma cuenta que las hermanas. De ella salen el token de tu kDrive (para actualizarse sola) y lo que pongas en Jonsu.",
+        BasicText("La misma cuenta que las hermanas. De ella salen tu nube (para actualizarse solo) y tu progreso en Nova y Lyra.",
             style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
-        BasicText("Salir de la cuenta en Ammit", style = TextStyle(t.gris, 13.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
+        BasicText("Salir de la cuenta en Eclipse", style = TextStyle(t.gris, 13.sp, FontWeight.Bold, fontFamily = Diseno.Texto),
             modifier = Modifier.padding(top = 8.dp).clickable { runCatching { com.gonzalo.familia.LaFamilia.salir() }; dentro = false })
     } else {
-        BasicText("Entra sola si tienes Jonsu u otra hermana con la cuenta (actualizadas). Si no, con tu usuario y tu contraseña de Atrio:",
+        BasicText("Entra sola si tienes Polaris u otra hermana con la cuenta (actualizadas). Si no, con tu usuario y tu contraseña:",
             style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
-        Campo("USUARIO", usuario, "tu usuario de Atrio", t) { usuario = it }
+        Campo("USUARIO", usuario, "tu usuario", t) { usuario = it }
         Campo("CONTRASEÑA", clave, "••••••", t, secreto = true) { clave = it }
         BasicText(if (ocupado) "ENTRANDO…" else "ENTRAR  →", style = TextStyle(t.fondo, 12.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 1.4.sp),
             modifier = Modifier.padding(top = 10.dp).background(t.acento).clickable(enabled = !ocupado) {
@@ -350,13 +351,13 @@ private fun TuCuenta(a: AjustesActivity, t: Tonos) {
 }
 
 
-/** Si Ammit se ha cerrado por un fallo: qué fue (para poder arreglarlo). Se puede copiar (mantener pulsado) y olvidar. */
+/** Si Eclipse se ha cerrado por un fallo: qué fue (para poder arreglarlo). Se puede copiar (mantener pulsado) y olvidar. */
 @Composable
 private fun UltimoFallo(a: AjustesActivity, t: Tonos) {
     var f by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(Fallos.ultimo(a)) }
     if (f.isBlank()) return
     Titulo("Último fallo", t)
-    BasicText("Ammit tuvo un fallo. Si el vigilante sale «No funcionando», esto ayuda a saber por qué: mantén pulsado para copiarlo y pásamelo.",
+    BasicText("Eclipse tuvo un fallo. Si el vigilante sale «No funcionando», esto ayuda a saber por qué: mantén pulsado para copiarlo y pásamelo.",
         style = TextStyle(t.gris, 14.sp, fontFamily = Diseno.Texto, lineHeight = 20.sp))
     androidx.compose.foundation.text.selection.SelectionContainer {
         BasicText(f, style = TextStyle(t.tinta, 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, lineHeight = 15.sp),

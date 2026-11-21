@@ -145,8 +145,8 @@ object Tiempo : TipoWidget {
         if (d.texto("lugar") == "aqui") {
             var permitida by remember { mutableStateOf(Ubicacion.permitida(ctx)) }
             val pide = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> permitida = ok; if (ok) kotlin.concurrent.thread { Ubicacion.actualiza(ctx.applicationContext); Widgets.pedir(ctx) } }
-            if (!permitida) MagLink("Dejar a Widgets saber dónde estás", "Solo la ubicación aproximada; no sale de este móvil", accent = true) { pide.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
-            else Nota("Se usa la ubicación aproximada de este móvil (no sale de él). Se mira cada vez que abres Widgets.", Modifier.padding(top = 4.dp))
+            if (!permitida) MagLink("Dejar a Vega saber dónde estás", "Solo la ubicación aproximada; no sale de este móvil", accent = true) { pide.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
+            else Nota("Se usa la ubicación aproximada de este móvil (no sale de él). Se mira cada vez que abres Vega.", Modifier.padding(top = 4.dp))
         } else {
             var busca by remember { mutableStateOf("") }
             var res by remember { mutableStateOf<List<Lugar>?>(null) }
@@ -253,7 +253,7 @@ object TipoBateria : TipoWidget {
 
     @Composable override fun Editor(d: Diseno, cambia: (Diseno) -> Unit) {
         Campo("Antetítulo", d.texto("ante"), "Batería") { cambia(d.con("ante", it)) }
-        Nota("En la pantalla de inicio se pone al día cada 15 minutos y cada vez que abres Widgets (Android no deja a los widgets saberlo al momento).", Modifier.padding(top = 6.dp))
+        Nota("En la pantalla de inicio se pone al día cada 15 minutos y cada vez que abres Vega (Android no deja a los widgets saberlo al momento).", Modifier.padding(top = 6.dp))
     }
 }
 

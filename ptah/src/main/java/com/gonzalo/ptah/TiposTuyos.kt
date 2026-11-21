@@ -43,7 +43,7 @@ object TipoNota : TipoWidget {
     override val piezas = listOf("titulo" to "El titular", "texto" to "El texto")
     override val partes = listOf("ante" to "El antetítulo", "titulo" to "El titular", "rayas" to "La raya")
     override fun opcionesDeSerie() = mapOf("ante" to "Nota", "titulo" to "Lo de hoy", "texto" to "Comprar pan, llamar a mamá y regar las plantas.")
-    override fun descripcionToque(d: Diseno) = if (d.id.startsWith("sin")) "Elige un diseño para este widget" else "Cambiar la nota en Widgets"
+    override fun descripcionToque(d: Diseno) = if (d.id.startsWith("sin")) "Elige un diseño para este widget" else "Cambiar la nota en Vega"
 
     override fun pinta(l: Lienzo) {
         val a = l.area; val e = l.e; val d = l.d
@@ -82,7 +82,7 @@ object CuentaAtras : TipoWidget {
     override val piezas = listOf("cifra" to "La cifra", "titulo" to "Para qué", "fecha" to "La fecha")
     override val partes = listOf("ante" to "Faltan / Hace", "titulo" to "Para qué", "fecha" to "La fecha")
     override fun necesita(d: Diseno) = setOf(Necesidad.MEDIANOCHE)
-    override fun descripcionToque(d: Diseno) = "Cambiar la cuenta atrás en Widgets"
+    override fun descripcionToque(d: Diseno) = "Cambiar la cuenta atrás en Vega"
 
     override fun opcionesDeSerie(): Map<String, Any?> {
         val hoy = LocalDate.now()
@@ -222,7 +222,7 @@ object Foto : TipoWidget {
     override val piezas = listOf("pie" to "El pie de foto", "filo" to "El filo de la foto")
     override val partes = listOf("pie" to "El pie de foto")
     override fun opcionesDeSerie() = mapOf("pie" to "", "sangre" to false)
-    override fun descripcionToque(d: Diseno) = "Cambiar la foto en Widgets"
+    override fun descripcionToque(d: Diseno) = "Cambiar la foto en Vega"
 
     override fun pinta(l: Lienzo) {
         val a = l.area; val e = l.e; val d = l.d

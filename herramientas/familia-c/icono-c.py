@@ -9,8 +9,7 @@ PAPEL, NEGRO = "#F8F0D4", "#000000"
 # La familia (noviembre de 2026): papel y negro para todas; a cada una la distingue su acento. De noche, papel y negro al revés.
 ACENTOS = {"lyra": ("#B0791E", "LIBROS"), "orion": ("#7A8A3A", "JUEGOS"), "nova": ("#5A7896", "ESCRITOS"),
            "polaris": ("#8E5A78", "DIARIO"), "sirius": ("#B56576", "CINE"), "pulsar": ("#5D1414", "FÚTBOL"),
-           # Ammit, la devoradora del juicio de Osiris: la que deja pasar solo a la familia (verde fayenza, el de los amuletos)
-           "ammit": ("#2F6B63", "JUICIO")}
+           "eclipse": ("#2F6B63", "ENFOQUE"), "vega": ("#B0661F", "WIDGETS")}
 NOCHE = "--noche" in sys.argv
 if NOCHE: sys.argv.remove("--noche")
 APPS = {a: ((NEGRO, PAPEL) if NOCHE else (PAPEL, NEGRO)) + (ac, que) for a, (ac, que) in ACENTOS.items()}  # nombre: (fondo, texto, acento, lo que hace)

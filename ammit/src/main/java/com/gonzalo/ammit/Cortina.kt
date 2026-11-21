@@ -290,14 +290,14 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
     }
     private val pPlaca = Paint().apply { color = 0xE6000000.toInt() }
     private val pBorde = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = 0xFFF8F0D4.toInt() }
-    private val titulo by lazy { "${app.uppercase()} NO PASA EL JUICIO" }
-    private val frase = "Su corazón pesa más que la pluma. Ammit se lo come."
+    private val titulo by lazy { "${app.uppercase()} EN ECLIPSE" }
+    private val frase = "Ahora solo brillan tus estrellas. Vuelve al enfoque."
 
-    /** «X NO PASA EL JUICIO», «AMMIT.» y la frase, sobre su placa negra con borde, en el centro; [t]: 0 sin ver, 1 puesto. */
+    /** «X EN ECLIPSE», «ECLIPSE.» y la frase, sobre su placa negra con borde, en el centro; [t]: 0 sin ver, 1 puesto. */
     private fun rotulo(cv: Canvas, campo: Campo, t: Float) {
         if (t <= 0f) return
         val pad = 32 * dp; val padV = 24 * dp
-        val wT = pTitulo.measureText(titulo); val wA = pGrande.measureText("AMMIT"); val wP = pPunto.measureText(".")
+        val wT = pTitulo.measureText(titulo); val wA = pGrande.measureText("ECLIPSE"); val wP = pPunto.measureText(".")
         val wF = pFrase.measureText(frase)
         val anchoMax = campo.ancho - 48 * dp
         // (si la frase o el título no caben, se encogen)
@@ -321,7 +321,7 @@ internal class VistaCortina(private val c: Context, private val modo: String, pr
         y += altoT + 6 * dp
         pGrande.alpha = alfa; pPunto.alpha = alfa
         val x0 = -(wA + wP) / 2
-        cv.drawText("AMMIT", x0, y - fmG.ascent * 0.92f, pGrande)
+        cv.drawText("ECLIPSE", x0, y - fmG.ascent * 0.92f, pGrande)
         cv.drawText(".", x0 + wA, y - fmG.ascent * 0.92f, pPunto)
         y += altoG + 10 * dp
         pFrase.alpha = alfa; cv.drawText(frase, 0f, y + pFrase.textSize, pFrase)

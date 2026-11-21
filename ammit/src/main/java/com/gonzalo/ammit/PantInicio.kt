@@ -374,7 +374,7 @@ private fun BarraColocar(a: InicioActivity, m: Modifier) {
     Row(m.navigationBarsPadding().padding(bottom = 18.dp).shadow(12.dp, RoundedCornerShape(50)).clip(RoundedCornerShape(50)).background(Diseno.NEGRO)
         .padding(horizontal = 8.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
         Boton("+ WIDGET") { a.eligiendoWidget = true }
-        Boton("AJUSTES DE AMMIT") { ctx.startActivity(Intent(ctx, AjustesActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        Boton("AJUSTES DE ECLIPSE") { ctx.startActivity(Intent(ctx, AjustesActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         Boton("HECHO", acento = true) { a.colocando = false }
     }
 }

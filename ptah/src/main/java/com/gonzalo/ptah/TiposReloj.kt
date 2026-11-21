@@ -215,7 +215,7 @@ object RelojDigital : TipoWidget {
         Elige("La cabecera", CABECERAS, d.texto("cabecera", "portada")) { cambia(d.con("cabecera", it)) }
         Elige("Las horas", OPCIONES_FORMATO, d.texto("formato", "24")) { cambia(d.con("formato", it)) }
         Elige("La letra de la hora", OPCIONES_LETRA_HORA, d.texto("letraHora")) { cambia(d.con("letraHora", it)) }
-        Nota("En tu pantalla de inicio, Widgets vuelve a pintar el reloj al empezar cada minuto, con la pantalla encendida (Ajustes → General: «La hora de tus relojes»).",
+        Nota("En tu pantalla de inicio, Vega vuelve a pintar el reloj al empezar cada minuto, con la pantalla encendida (Ajustes → General: «La hora de tus relojes»).",
             Modifier.padding(top = 4.dp))
         Campo("Antetítulo", d.texto("ante"), "La hora") { cambia(d.con("ante", it)) }
     }
@@ -233,7 +233,7 @@ object RelojAgujas : TipoWidget {
     val NUMEROS = listOf("romanos" to "Romanos", "arabes" to "Números", "cuatro" to "Solo 12, 3, 6 y 9", "rayas" to "Solo rayas")
     private val ROMANOS = listOf("XII", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI")
 
-    override fun opcionesDeSerie() = mapOf("numeros" to "romanos", "forma" to FormaAgujas.HOJA.name, "segundero" to false, "texto" to "Widgets")
+    override fun opcionesDeSerie() = mapOf("numeros" to "romanos", "forma" to FormaAgujas.HOJA.name, "segundero" to false, "texto" to "Vega")
     override fun necesita(d: Diseno) = setOf(Necesidad.MEDIANOCHE)
     override fun accion(d: Diseno) = Accion.Alarmas
     override fun descripcionToque(d: Diseno) = "Abrir las alarmas"

@@ -20,14 +20,21 @@ class ModeloTest {
     @Test fun unDisenoSeEscribeYSeLeeIgual() {
         val e = Estilo(fondo = TipoFondo.DEGRADADO, colorFondo = "#12393A", colorFondo2 = Col.ACENTO, angulo = 45, opacidad = 80, tinta = "#F2E6CF", acento = "#D98A3D",
             secundario = Col.GRIS, piezas = mapOf("horaria" to "#FF0000", "segundero" to Col.ACENTO), borde = false, grosorBorde = 2.5f, colorBorde = "#80FFFFFF",
-            radio = 30f, marco = true, letraTitulos = "Playfair Display", letraTexto = "Vitrina", escala = 1.3f, alineacion = Alineacion.CENTRO, ocultas = setOf("fecha", "rayas"))
+            radio = 30f, marco = true, letraTitulos = "Playfair Display", letraTexto = "Vitrina", escala = 1.3f, alineacion = Alineacion.CENTRO, ocultas = setOf("fecha", "rayas"),
+            variacion = VariacionWidget.CABECERA)
         val d = Diseno("d0123456789", "Mi reloj «bonito»", "agujas", e, mapOf("numeros" to "romanos", "segundero" to true, "dias" to 4, "lat" to 42.6, "items" to listOf("app:a.b", "web:x.com|X")), 123L, 100L)
         val leido = Diseno.deJson(d.aJson())!!
         assertEquals(d.id, leido.id); assertEquals(d.nombre, leido.nombre); assertEquals(d.tipo, leido.tipo)
         assertEquals(e, leido.estilo)
+        assertEquals(VariacionWidget.CABECERA, leido.estilo.variacion)
         assertEquals("romanos", leido.texto("numeros")); assertTrue(leido.si("segundero")); assertEquals(4, leido.entero("dias"))
         assertEquals(42.6, leido.decimal("lat"), 1e-9); assertEquals(listOf("app:a.b", "web:x.com|X"), leido.lista("items"))
         assertEquals(123L, leido.cambiado); assertEquals(100L, leido.creado)
+        // Todas las 5 variaciones estéticas sobreviven a JSON
+        for (v in VariacionWidget.entries) {
+            val dv = d.conEstilo(e.copy(variacion = v))
+            assertEquals(v, Diseno.deJson(dv.aJson())!!.estilo.variacion)
+        }
         // Y otra vuelta: el mismo texto
         assertEquals(leido.aJson(), Diseno.deJson(leido.aJson())!!.aJson())
     }

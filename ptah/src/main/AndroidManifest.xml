@@ -40,7 +40,7 @@
         <package android:name="com.coloros.oppoguardelf" />
     </queries>
     <application
-        android:label="Widgets"
+        android:label="Vega"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Widgets"

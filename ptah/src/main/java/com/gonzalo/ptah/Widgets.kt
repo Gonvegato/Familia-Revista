@@ -256,7 +256,7 @@ object Widgets {
     }
 
     /** Lo que sale en un widget sin diseño (recién puesto sin elegir, o con el suyo borrado): un toque y eliges otro. */
-    private fun sinDiseno(id: Int) = Diseno("sin$id", "Elige un diseño", TipoNota.id, Estilo(radio = 22f), mapOf("ante" to "Widgets", "titulo" to "Elige un diseño", "texto" to "Un toque y eliges cuál de tus widgets va aquí."))
+    private fun sinDiseno(id: Int) = Diseno("sin$id", "Elige un diseño", TipoNota.id, Estilo(radio = 22f), mapOf("ante" to "Vega", "titulo" to "Elige un diseño", "texto" to "Un toque y eliges cuál de tus widgets va aquí."))
 
     private fun huecos(r: android.graphics.RectF, w: Float, h: Float, d: Float): IntArray {
         fun px(v: Float) = (max(0f, v) * d).roundToInt()

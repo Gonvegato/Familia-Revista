@@ -62,9 +62,41 @@ enum class TipoFondo(val nombre: String) { PAPEL("Papel"), COLOR("Color"), DEGRA
 enum class Alineacion(val nombre: String) { IZQUIERDA("Izquierda"), CENTRO("Centro"), DERECHA("Derecha") }
 
 /**
- * El estilo de un diseño. Los colores son textos de [Col]. [piezas]: el color de cada pieza por separado (las agujas, los números, las
- * rayas, el segundero…; las que tiene cada tipo las dice [TipoWidget.piezas]); la que no está, la de por defecto. [ocultas]: las partes
- * que no se ven ([TipoWidget.partes]).
+ * Las cinco variaciones estéticas de los widgets de la familia (idénticas a EstiloWidget):
+ *  - Como ahora: papel o negro; el acento solo en etiquetas.
+ *  - Cabecera de color: franja superior del acento con el nombre del widget.
+ *  - Papel teñido: todo el fondo lleva un tinte del acento.
+ *  - Marco de color: borde grueso del acento alrededor.
+ *  - Todo acento: el fondo es el acento y el texto va en papel o negro con contraste óptimo.
+ */
+enum class VariacionWidget(val clave: String, val nombre: String, val explica: String) {
+    COMO_AHORA("", "Como ahora", "Papel o negro; el acento, solo en las etiquetas."),
+    CABECERA("cabecera", "Cabecera de color", "Una franja del acento arriba, con el nombre del widget."),
+    TENIDO("tenido", "Papel teñido", "Todo el fondo lleva un poco del acento."),
+    MARCO("marco", "Marco de color", "Un borde grueso del acento alrededor."),
+    ACENTO("acento", "Todo acento", "El fondo es el acento; el texto, en papel o en negro.");
+
+    companion object {
+        fun de(clave: String?): VariacionWidget = entries.firstOrNull { it.clave == clave || it.name == clave } ?: COMO_AHORA
+    }
+}
+
+/** Los acentos de las estrellas de la familia (para elegirlos con un toque en Vega). */
+data class AcentoEstrella(val nombre: String, val hex: String)
+val ACENTOS_ESTRELLAS = listOf(
+    AcentoEstrella("Vega", "#B0661F"),
+    AcentoEstrella("Polaris", "#8E5A78"),
+    AcentoEstrella("Lyra", "#B0791E"),
+    AcentoEstrella("Orion", "#7A8A3A"),
+    AcentoEstrella("Nova", "#5A7896"),
+    AcentoEstrella("Sirius", "#B56576"),
+    AcentoEstrella("Pulsar", "#5D1414"),
+    AcentoEstrella("Eclipse", "#2F6B63"),
+)
+
+/**
+ * El estilo de un diseño. Los colores son textos de [Col]. [variacion]: una de las cinco variaciones estéticas de la familia.
+ * [piezas]: el color de cada pieza por separado; [ocultas]: las partes que no se ven ([TipoWidget.partes]).
  */
 data class Estilo(
     val fondo: TipoFondo = TipoFondo.PAPEL,
@@ -78,7 +110,7 @@ data class Estilo(
     val acento: String = Col.ACENTO,
     val secundario: String = Col.GRIS,
     val piezas: Map<String, String> = emptyMap(),
-    val borde: Boolean = true,
+    val borde: Boolean = false,
     val grosorBorde: Float = 1.1f,
     val colorBorde: String = "",
     /** El radio de las esquinas, en dp. */
@@ -92,6 +124,8 @@ data class Estilo(
     val escala: Float = 1f,
     val alineacion: Alineacion = Alineacion.IZQUIERDA,
     val ocultas: Set<String> = emptySet(),
+    /** Variación estética de la familia (Como ahora, Cabecera de color, Papel teñido, Marco de color, Todo acento). */
+    val variacion: VariacionWidget = VariacionWidget.COMO_AHORA,
 ) {
     fun pieza(id: String): String = piezas[id].orEmpty()
     fun ve(parte: String) = parte !in ocultas
@@ -110,6 +144,7 @@ data class Estilo(
         .put("borde", borde).put("gb", grosorBorde.toDouble()).put("cb", colorBorde).put("radio", radio.toDouble()).put("marco", marco)
         .put("lt", letraTitulos).put("lx", letraTexto).put("esc", escala.toDouble()).put("al", alineacion.name)
         .put("ocultas", JSONArray(ocultas.sorted()))
+        .apply { if (variacion != VariacionWidget.COMO_AHORA) put("var", variacion.clave) }
 
     companion object {
         fun deJson(o: JSONObject?): Estilo {
@@ -128,6 +163,7 @@ data class Estilo(
                 escala = o.optDouble("esc", 1.0).toFloat().coerceIn(0.5f, 2f),
                 alineacion = Alineacion.entries.firstOrNull { it.name == o.optString("al") } ?: d.alineacion,
                 ocultas = o.optJSONArray("ocultas")?.let { a -> (0 until a.length()).map { a.optString(it) }.toSet() }.orEmpty(),
+                variacion = VariacionWidget.de(o.optString("var", "")),
             )
         }
     }

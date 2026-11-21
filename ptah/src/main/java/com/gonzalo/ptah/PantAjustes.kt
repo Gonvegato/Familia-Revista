@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-const val VERSION = "0.6.0"
+const val VERSION = "1.0.0"
 
 /** «Ajustes»: Estilo (el de serie de tus widgets) · General · Actualizar. Todo se guarda en este móvil. */
 @Composable
@@ -45,8 +45,8 @@ fun PantAjustes(alVolver: () -> Unit, inicial: Int = 0, alDiagnostico: () -> Uni
             Spacer(Modifier.height(26.dp))
             Filete(1.dp)
             Spacer(Modifier.height(10.dp))
-            Etiqueta("Widgets $VERSION")
-            Text("Tus widgets de la pantalla de inicio, del tamaño que quieras. Todo se guarda solo en este móvil. ${OpenMeteo.LICENCIA}",
+            Etiqueta("Vega $VERSION")
+            Text("Tus widgets editoriales, con las cinco variaciones estéticas. Todo se guarda solo en este móvil. ${OpenMeteo.LICENCIA}",
                 color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp)
             Spacer(Modifier.height(30.dp))
         }
@@ -124,13 +124,13 @@ private fun SeccionActualizaciones() {
     Antetitulo("Tu kDrive", Modifier.padding(bottom = 4.dp))
     TokenKDrive()
     Spacer(Modifier.height(14.dp)); Filete(1.dp); Spacer(Modifier.height(6.dp))
-    Fila("Actualizar sola", "Mira la carpeta «widgets» de tu kDrive (Widgets-<versión>.apk) y se instala sin preguntar cuando no la usas (nunca con algo en marcha ni con la pantalla apagada).") {
+    Fila("Actualizar sola", "Mira la carpeta «widgets» de tu kDrive (Vega-<versión>.apk) y se instala sin preguntar cuando no la usas (nunca con algo en marcha ni con la pantalla apagada).") {
         Interruptor(auto) { auto = it; Actualizador.ponActivo(ctx, it) }
     }
     if (android.os.Build.VERSION.SDK_INT >= 33) {
         var avisos by remember { mutableStateOf(ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
         val pedirAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { avisos = it }
-        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte de una versión nueva que Android no deja instalar sola, y para volver a abrir Widgets al terminar") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+        if (!avisos) MagLink("Avisos de actualización: dar permiso", "Para avisarte de una versión nueva que Android no deja instalar sola, y para volver a abrir Vega al terminar") { pedirAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
     }
     if (KDrive.on(ctx)) {
         val vers = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty()
@@ -141,7 +141,7 @@ private fun SeccionActualizaciones() {
         Filete(1.dp, Line)
         MagLink("Solo comprobar") { if (!ocupado) { ocupado = true; ambito.launch { withContext(Dispatchers.IO) { Actualizador.comprueba(ctx, manual = true) }; ocupado = false } } }
         Filete(1.dp, Line)
-        MagLink(if (sobre) "Tras actualizar, Widgets se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
+        MagLink(if (sobre) "Tras actualizar, Vega se vuelve a abrir sola" else "Permitir que se reabra sola tras actualizar", if (sobre) null else "Hace falta el permiso «Mostrar sobre otras apps»; si no, te avisa para abrirla") {
             if (!sobre) runCatching { ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:${ctx.packageName}"))) }
         }
     }
@@ -160,7 +160,7 @@ private fun TokenKDrive() {
     var hay by remember { mutableStateOf(KDrive.on(ctx)) }
     if (hay) {
         Text("Puesto: kDrive ${KDrive.drive(ctx)} (el token, cifrado en este móvil).", color = Charcoal, fontFamily = Body, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp))
-        MagLink("Quitar el token", "Widgets deja de mirar tu kDrive") { KDrive.forget(ctx); hay = false }
+        MagLink("Quitar el token", "Vega deja de mirar tu kDrive") { KDrive.forget(ctx); hay = false }
     } else {
         Text("Un token de la API de Infomaniak (con permiso de kDrive) y el número de tu kDrive (o su dirección: «…/app/drive/123456/…»). Se guarda cifrado en este móvil.",
             color = Muted, fontFamily = Body, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 4.dp))
@@ -190,8 +190,8 @@ fun AvisoActualizacion() {
     if (luego) return
     AlertDialog(
         onDismissRequest = { luego = true }, containerColor = Paper, shape = esquina(16.dp),
-        title = { Text("Widgets tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
-        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Widgets instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
+        title = { Text("Vega tiene una versión nueva", color = Charcoal, fontFamily = Display, fontWeight = FontWeight.Bold) },
+        text = { Text(if (Actualizador.faltaPermiso) "Hay una versión nueva en tu kDrive. Para instalarla, Android tiene que dejar a Vega instalar apps: te llevo a ese ajuste." else "Hay una versión nueva en tu kDrive, ya descargada. Android te pedirá confirmar la instalación.", color = Muted, fontFamily = Body) },
         confirmButton = { TextButton({
             if (Actualizador.faltaPermiso) { Actualizador.faltaPermiso = false; ctx.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}"))) }
             else runCatching { Actualizador.instala(ctx, n) }.onFailure { android.widget.Toast.makeText(ctx, "No se pudo instalar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
@@ -208,7 +208,7 @@ fun SeccionRelojes() {
     var delMovil by remember { mutableStateOf(Minutero.letraDelMovil(ctx)) }
     val exactas = remember { Minutero.puedeExactas(ctx) }
     Antetitulo("La hora de tus relojes", Modifier.padding(bottom = 4.dp))
-    Text("Para que la hora salga con la letra de tu diseño, Widgets la dibuja y vuelve a pintar tus relojes al empezar cada minuto, solo con la pantalla encendida (apagada no gasta nada). Si lo prefieres, con la letra del móvil: se pone en hora sola y no gasta, pero con la letra del sistema.",
+    Text("Para que la hora salga con la letra de tu diseño, Vega la dibuja y vuelve a pintar tus relojes al empezar cada minuto, solo con la pantalla encendida (apagada no gasta nada). Si lo prefieres, con la letra del móvil: se pone en hora sola y no gasta, pero con la letra del sistema.",
         color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp)
     MagChoice(listOf("Con la letra del diseño", "Con la letra del móvil"), if (delMovil) 1 else 0, "La hora y la fecha") { i -> delMovil = i == 1; Minutero.ponLetraDelMovil(ctx, delMovil) }
     Minutero.motivo(ctx)?.let { Text("Ahora tus relojes van con la letra del móvil, porque $it.", color = Acento, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp)) }
@@ -216,9 +216,9 @@ fun SeccionRelojes() {
     if (!delMovil && exactas) {
         val u = Minutero.ultimo(ctx)
         if (u > 0) Text("Última vez que se pusieron en hora: " + java.text.SimpleDateFormat("HH:mm", java.util.Locale("es", "ES")).format(java.util.Date(u)), color = Muted, fontFamily = Body, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-        Text("Si un reloj se queda atrás (en algunos móviles, como los OPPO, Realme o Xiaomi, el ahorro de batería no deja a las apps despertarse), permite a Widgets «actividad en segundo plano» o «inicio automático» y quítale la optimización de batería.",
+        Text("Si un reloj se queda atrás (en algunos móviles, como los OPPO, Realme o Xiaomi, el ahorro de batería no deja a las apps despertarse), permite a Vega «actividad en segundo plano» o «inicio automático» y quítale la optimización de batería.",
             color = Muted, fontFamily = Body, fontSize = 12.sp, lineHeight = 17.sp, modifier = Modifier.padding(top = 4.dp))
-        MagLink("Que la batería no frene a Widgets", "El cuadro de Android para quitarle la optimización") { Minutero.abreBateria(ctx) }
-        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus (ColorOS); si no, los ajustes de Widgets") { Minutero.abreInicioAutomatico(ctx) }
+        MagLink("Que la batería no frene a Vega", "El cuadro de Android para quitarle la optimización") { Minutero.abreBateria(ctx) }
+        MagLink("Inicio automático y segundo plano", "En OPPO, Realme y OnePlus (ColorOS); si no, los ajustes de Vega") { Minutero.abreInicioAutomatico(ctx) }
     }
 }

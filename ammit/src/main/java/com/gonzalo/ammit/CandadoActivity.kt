@@ -93,31 +93,31 @@ fun PantCandado(a: CandadoActivity?, fijo: Candado.Progreso? = null) {
 
     Box(Modifier.fillMaxSize().background(Color.Black).padding(24.dp), contentAlignment = Alignment.Center) {
         Column(Modifier.widthIn(max = 640.dp).border(2.dp, PAPEL).padding(horizontal = 32.dp, vertical = 28.dp)) {
-            BasicText("AMMIT NO TE SUELTA", style = TextStyle(ACENTO, 15.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 3.sp))
+            BasicText("ECLIPSE NO TE SUELTA", style = TextStyle(ACENTO, 15.sp, FontWeight.Bold, fontFamily = Diseno.Texto, letterSpacing = 3.sp))
             BasicText(buildAnnotatedString { append("Todavía no"); withStyle(SpanStyle(color = ACENTO)) { append(".") } },
                 style = TextStyle(PAPEL, 64.sp, FontWeight.ExtraBold, fontFamily = Diseno.Grotesca, lineHeight = 66.sp),
                 modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
-            BasicText("Para soltarla, desde que la encendiste: escribe ${Candado.PALABRAS} palabras en Thot o lee un capítulo en Seshat, en cualquier dispositivo.",
+            BasicText("Para soltarlo, desde que lo encendiste: escribe ${Candado.PALABRAS} palabras en Nova o lee un capítulo en Lyra, en cualquier dispositivo.",
                 style = TextStyle(PAPEL, 21.sp, fontFamily = Diseno.Cursiva, lineHeight = 29.sp))
             androidx.compose.foundation.layout.Spacer(Modifier.height(22.dp))
             when {
-                !p.conCuenta -> Linea("Ammit no ve la cuenta de la familia: entra en los ajustes de Ammit (o en una hermana) para que pueda comprobarlo.")
+                !p.conCuenta -> Linea("Eclipse no ve la cuenta de la familia: entra en los ajustes de Eclipse (o en una hermana) para que pueda comprobarlo.")
                 comprobando || !p.listo -> Linea("Mirando la cuenta…")
                 else -> {
-                    Barra("PALABRAS EN THOT", "${minOf(p.palabras, Candado.PALABRAS)} / ${Candado.PALABRAS}", p.palabras / Candado.PALABRAS.toFloat())
+                    Barra("PALABRAS EN NOVA", "${minOf(p.palabras, Candado.PALABRAS)} / ${Candado.PALABRAS}", p.palabras / Candado.PALABRAS.toFloat())
                     androidx.compose.foundation.layout.Spacer(Modifier.height(14.dp))
                     val lect = when {
                         p.capitulo -> "Capítulo leído."
                         p.minutos > 0 && p.libro.isNotBlank() -> "Llevas ${p.minutos} min con «${p.libro}»: termina el capítulo (y al menos ${Candado.MINUTOS} min leyendo)."
                         else -> "Aún ninguno (cuenta pasar a otro capítulo habiendo leído al menos ${Candado.MINUTOS} min)."
                     }
-                    Barra("UN CAPÍTULO EN SESHAT", lect, if (p.capitulo) 1f else (p.minutos / Candado.MINUTOS.toFloat()).coerceAtMost(0.95f))
+                    Barra("UN CAPÍTULO EN LYRA", lect, if (p.capitulo) 1f else (p.minutos / Candado.MINUTOS.toFloat()).coerceAtMost(0.95f))
                 }
             }
             androidx.compose.foundation.layout.Spacer(Modifier.height(26.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Boton("ESCRIBIR EN THOT", acento = true) { abrirApp(ctx, "com.gonzalo.cobalto"); a?.finish() }
-                Boton("LEER EN SESHAT", acento = true) { abrirApp(ctx, com.gonzalo.familia.LaFamilia.instalada(ctx, "com.gonzalo.marfil")); a?.finish() }
+                Boton("ESCRIBIR EN NOVA", acento = true) { abrirApp(ctx, "com.gonzalo.cobalto"); a?.finish() }
+                Boton("LEER EN LYRA", acento = true) { abrirApp(ctx, com.gonzalo.familia.LaFamilia.instalada(ctx, "com.gonzalo.marfil")); a?.finish() }
                 Boton("AHORA NO") { a?.finish() }
             }
         }

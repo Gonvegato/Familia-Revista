@@ -9,12 +9,12 @@ android {
     namespace = "com.gonzalo.ammit"
     compileSdk = 35
     defaultConfig {
-        // Ammit, la devoradora del juicio de Osiris: la pantalla de inicio que, encendida, solo deja pasar a la familia
+        // Eclipse: el modo enfoque que, encendido, solo deja pasar a las estrellas de la familia
         applicationId = "com.gonzalo.ammit"
         minSdk = 29
         targetSdk = 35
-        versionCode = 17
-        versionName = "0.9.2"
+        versionCode = 18
+        versionName = "1.0.0"
     }
     buildTypes {
         getByName("release") {

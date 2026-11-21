@@ -9,12 +9,12 @@ android {
     namespace = "com.gonzalo.ptah"
     compileSdk = 35
     defaultConfig {
-        // Widgets: tus widgets, del tamaño que quieras (el paquete de siempre, para instalarse encima)
+        // Vega: tus widgets editoriales, con las cinco variaciones estéticas (el paquete de siempre, para instalarse encima)
         applicationId = "com.gonzalo.ptah"
         minSdk = 29
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.6.0"
+        versionCode = 8
+        versionName = "1.0.0"
     }
     buildTypes {
         getByName("release") {

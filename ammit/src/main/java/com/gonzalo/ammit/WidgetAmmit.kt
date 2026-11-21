@@ -65,65 +65,70 @@ class WidgetAmmit : AppWidgetProvider() {
             val hDp = (if (horizontal) o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) else o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)).takeIf { it > 0 } ?: 130
             val v = RemoteViews(c.packageName, R.layout.widget_ammit)
             v.setImageViewBitmap(R.id.imagen, dibujo(c, wDp, hDp))
-            v.setContentDescription(R.id.imagen, if (Ammit.encendida) "Ammit encendida. Toca para soltarla" else "Ammit apagada. Toca para encenderla")
-            // (un aviso a este mismo receptor, no una pantalla: abrir una pantalla de Ammit, aunque sea invisible, enseñaba un momento la
+            v.setContentDescription(R.id.imagen, if (Ammit.encendida) "Eclipse encendido. Toca para soltarlo" else "Eclipse apagado. Toca para encenderlo")
+            // (un aviso a este mismo receptor, no una pantalla: abrir una pantalla de Eclipse, aunque sea invisible, enseñaba un momento la
             // pantalla negra de arranque de Android)
             v.setOnClickPendingIntent(R.id.imagen, PendingIntent.getBroadcast(c, 0, Intent(c, WidgetAmmit::class.java).setAction(TOCAR),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             m.updateAppWidget(id, v)
         }
 
-        /** El dibujo del widget ([wDp]×[hDp] dp): negro, con cadenas, «AMMIT.» y cómo está. */
+        /** El dibujo del widget ([wDp]×[hDp] dp): papel de día / negro de noche (y negro con cadenas al encender), «ECLIPSE.» y cómo está. */
         fun dibujo(c: Context, wDp: Int, hDp: Int): Bitmap {
             Ammit.cargar(c)
             val d = c.resources.displayMetrics.density.coerceAtMost(2.5f)
             val w = (wDp * d).roundToInt().coerceIn(120, 1600); val h = (hDp * d).roundToInt().coerceIn(80, 1000)
             val bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val cv = Canvas(bm)
-            val radio = 24 * d
+            val radio = 22 * d
             cv.clipPath(Path().apply { addRoundRect(RectF(0f, 0f, w.toFloat(), h.toFloat()), radio, radio, Path.Direction.CW) })
-            cv.drawColor(0xFF0A0908.toInt())
             val on = Ammit.encendida
+            val noche = (c.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+            val oscuro = on || noche
+            val fondoCol = if (oscuro) 0xFF000000.toInt() else 0xFFF8F0D4.toInt()
+            val tintaCol = if (oscuro) 0xFFF8F0D4.toInt() else 0xFF000000.toInt()
+            val acento = if (oscuro) Ammit.ACENTO_NOCHE.toInt() else Ammit.ACENTO.toInt()
+            cv.drawColor(fondoCol)
             // (eslabones del mismo tamaño que en la pantalla de la tablet, no encogidos al tamaño del widget)
             val campo = Campo.suelto(w, h, unidad = 0.38f * d)
-            if (on) campo.pinta(cv, 0.55f, 1f) { 1f }
-            else {
-                // Apagada: solo unas cadenas sueltas, tenues
-                val p = Paint().apply { alpha = 90 }
+            if (on) {
+                campo.pinta(cv, 0.55f, 1f) { 1f }
+                // (un velo abajo a la izquierda, para leer encima de las cadenas)
+                cv.drawRect(0f, 0f, w.toFloat(), h.toFloat(), Paint().apply {
+                    shader = android.graphics.LinearGradient(0f, 0f, w * 0.8f, 0f, 0xCC000000.toInt(), 0x00000000, android.graphics.Shader.TileMode.CLAMP)
+                })
+            } else {
+                // Apagado: solo unas cadenas muy tenues en el rincón derecho, dejando respirar el papel de la familia
+                val p = Paint().apply { alpha = if (oscuro) 65 else 28 }
                 cv.saveLayer(null, p)
-                listOf(floatArrayOf(-0.05f, 0.85f, 1.05f, 0.15f), floatArrayOf(0.25f, -0.1f, 0.75f, 1.1f)).forEach { l ->
-                    campo.cadena(cv, l[0] * w, l[1] * h, l[2] * w, l[3] * h, 1f, 2.5f)
+                listOf(floatArrayOf(0.45f, -0.1f, 1.05f, 0.75f), floatArrayOf(0.65f, 1.1f, 1.05f, 0.15f)).forEach { l ->
+                    campo.cadena(cv, l[0] * w, l[1] * h, l[2] * w, l[3] * h, 1f, 2.2f)
                 }
                 cv.restore()
             }
-            // (un velo abajo a la izquierda, para leer encima de las cadenas)
-            cv.drawRect(0f, 0f, w.toFloat(), h.toFloat(), Paint().apply {
-                shader = android.graphics.LinearGradient(0f, 0f, w * 0.8f, 0f, 0xCC000000.toInt(), 0x00000000, android.graphics.Shader.TileMode.CLAMP)
-            })
             fun fuente(id: Int, def: Typeface) = runCatching { ResourcesCompat.getFont(c, id) }.getOrNull() ?: def
             val pad = 18 * d
-            val papel = 0xFFF8F0D4.toInt(); val acento = Ammit.ACENTO_NOCHE.toInt()
-            val pTit = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = fuente(R.font.body_bold, Typeface.DEFAULT_BOLD); textSize = 11 * d; letterSpacing = 0.2f; color = acento }
-            val tam = (h * 0.36f).coerceAtMost(w * 0.2f)
+            val pTit = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = fuente(R.font.body_bold, Typeface.DEFAULT_BOLD); textSize = 10.5f * d; letterSpacing = 0.2f; color = acento }
+            val tam = (h * 0.34f).coerceAtMost(w * 0.17f)
             val pGrande = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 typeface = fuente(R.font.bricolage, Typeface.DEFAULT_BOLD); runCatching { fontVariationSettings = "'wght' 800, 'wdth' 92" }
-                textSize = tam; letterSpacing = -0.03f; color = papel
+                textSize = tam; letterSpacing = -0.03f; color = tintaCol
             }
             val pPunto = Paint(pGrande).apply { color = acento }
-            val pPie = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = fuente(R.font.body_bold, Typeface.DEFAULT_BOLD); textSize = 10 * d; letterSpacing = 0.14f; color = papel }
+            val pPie = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = fuente(R.font.body_bold, Typeface.DEFAULT_BOLD); textSize = 10 * d; letterSpacing = 0.14f; color = tintaCol }
             val listo = Ammit.vigiaActivo(c)
-            val arriba = when { on -> "ENCENDIDA"; listo -> "APAGADA"; else -> "SIN PREPARAR" }
+            val arriba = when { on -> "ENFOQUE ACTIVO"; listo -> "APAGADO"; else -> "SIN PREPARAR" }
             cv.drawText(arriba, pad, pad + pTit.textSize, pTit)
             val base = pad + pTit.textSize + 6 * d - pGrande.ascent() * 0.92f
-            cv.drawText("AMMIT", pad, base, pGrande)
-            cv.drawText(".", pad + pGrande.measureText("AMMIT"), base, pPunto)
+            cv.drawText("ECLIPSE", pad, base, pGrande)
+            cv.drawText(".", pad + pGrande.measureText("ECLIPSE"), base, pPunto)
             val pie = when {
                 on -> runCatching { Candado.progreso(c) }.getOrNull()?.let { p ->
-                    when { !p.conCuenta -> "TOCA PARA SOLTARLA"; !p.listo -> "SE SUELTA CON ${Candado.PALABRAS} PALABRAS O UN CAPÍTULO"
-                        p.puede -> "YA PUEDES SOLTARLA · TOCA"; else -> "${p.palabras}/${Candado.PALABRAS} PALABRAS O UN CAPÍTULO PARA SOLTARLA" }
-                } ?: "TOCA PARA SOLTARLA"
-                listo -> "TOCA PARA ENCENDERLA"
-                else -> "TOCA PARA DEJARLA LISTA"
+                    when { !p.conCuenta -> "TOCA PARA SOLTARLO"; !p.listo -> "SE SUELTA CON ${Candado.PALABRAS} PALABRAS O UN CAPÍTULO"
+                        p.puede -> "YA PUEDES SOLTARLO · TOCA"; else -> "${p.palabras}/${Candado.PALABRAS} PALABRAS O UN CAPÍTULO PARA SOLTARLO" }
+                } ?: "TOCA PARA SOLTARLO"
+                listo -> "TOCA PARA ENCENDERLO"
+                else -> "TOCA PARA DEJARLO LISTO"
             }
             // (si no cabe, se encoge)
             val anchoPie = w - 2 * pad

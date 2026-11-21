@@ -88,9 +88,9 @@ object Actualizador {
     fun activo(ctx: Context) = prefs(ctx).getBoolean("on", true)
     fun ponActivo(ctx: Context, v: Boolean) = prefs(ctx).edit().putBoolean("on", v).apply()
 
-    /** «Ammit-0.8.0.apk» → [0, 8, 0]. */
+    /** «Eclipse-1.0.0.apk» o «Ammit-0.9.2.apk» → [1, 0, 0]. */
     fun versionDe(nombre: String): List<Int>? =
-        Regex("""^Ammit-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
+        Regex("""^(?:Eclipse|Ammit)-(\d+(?:\.\d+)*)\.apk$""").find(nombre)?.groupValues?.get(1)?.split('.')?.map { it.toInt() }
 
     /** ¿[a] es más nueva que [b]? («6.67» > «6.9» > «6.10» como números, no como texto). */
     fun mayor(a: List<Int>, b: List<Int>): Boolean {
@@ -101,6 +101,9 @@ object Actualizador {
     /** La más nueva de los archivos de la carpeta. */
     fun ultima(archivos: List<Pair<String, Long>>): Triple<String, Long, List<Int>>? =
         archivos.mapNotNull { (n, id) -> versionDe(n)?.let { Triple(n, id, it) } }.fold(null as Triple<String, Long, List<Int>>?) { m, x -> if (m == null || mayor(x.third, m.third)) x else m }
+
+    fun ultimaDual(archivos: List<com.gonzalo.familia.NubeFamilia.VersionRemota>): Pair<com.gonzalo.familia.NubeFamilia.VersionRemota, List<Int>>? =
+        archivos.mapNotNull { v -> versionDe(v.nombre)?.let { v to it } }.fold(null as Pair<com.gonzalo.familia.NubeFamilia.VersionRemota, List<Int>>?) { m, x -> if (m == null || mayor(x.second, m.second)) x else m }
 
     /** Hay internet de verdad (wifi o datos móviles). */
     private fun hayInternet(ctx: Context): Boolean {
@@ -202,7 +205,7 @@ object Actualizador {
     fun comprueba(ctx: Context, manual: Boolean = false, forzar: Boolean = false) {
         if (!activo(ctx) && !forzar) { if (manual) anota(ctx, "apagada (interruptor de arriba)"); return }
         runCatching { KDrive.asegura(ctx) }
-        if (!KDrive.on(ctx)) { anota(ctx, "kDrive sin conectar (Ajustes → Actualizar)"); return }
+        if (!KDrive.nubeOn(ctx)) { anota(ctx, "nube sin conectar (Ajustes → Actualizarse solo)"); return }
         if (!hayInternet(ctx)) { anota(ctx, "sin internet"); return }
         if (!ocupado.compareAndSet(false, true)) return
         try { compruebaYa(ctx) } catch (e: Throwable) { anota(ctx, "error: ${e.message ?: e.javaClass.simpleName}") } finally { ocupado.set(false) }
@@ -224,34 +227,34 @@ object Actualizador {
         if (!ctx.packageManager.canRequestPackageInstalls()) {
             faltaPermiso = true
             runCatching { ctx.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            return "Permite a Ammit instalar apps y vuelve a pulsar «Actualizar ahora»"
+            return "Permite a Eclipse instalar apps y vuelve a pulsar «Actualizar ahora»"
         }
         return try { instala(ctx, n); "Instalando la ${n.nombre.removeSuffix(".apk")}…" } catch (e: Throwable) { "No se pudo instalar: ${e.message ?: e.javaClass.simpleName}" }
     }
 
     private fun compruebaYa(ctx: Context) {
-        val lista = KDrive.versiones(ctx)
-        val ult = ultima(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu kDrive" else "en «versiones» no hay ningún Ammit-<versión>.apk"); return }
+        val lista = KDrive.versionesDual(ctx)
+        val ult = ultimaDual(lista) ?: run { anota(ctx, if (lista.isEmpty()) "no encuentro la carpeta «versiones» (o está vacía) en tu nube" else "en «versiones» no hay ningún Eclipse-<versión>.apk"); return }
         val actual = instalada(ctx).versionName?.split('.')?.mapNotNull { it.toIntOrNull() } ?: return
         val dir = File(ctx.cacheDir, "actualizaciones").apply { mkdirs() }
-        dir.listFiles()?.filter { it.name != ult.first }?.forEach { it.delete() }
-        if (!mayor(ult.third, actual)) { dir.listFiles()?.forEach { it.delete() }; anota(ctx, "al día (la última de tu kDrive es la ${ult.third.joinToString(".")})"); return }
-        if (nueva?.nombre == ult.first) return      // ya está descargada y lista
-        val f = File(dir, ult.first)
+        dir.listFiles()?.filter { it.name != ult.first.nombre }?.forEach { it.delete() }
+        if (!mayor(ult.second, actual)) { dir.listFiles()?.forEach { it.delete() }; anota(ctx, "al día (la última en tu nube es la ${ult.second.joinToString(".")})"); return }
+        if (nueva?.nombre == ult.first.nombre) return      // ya está descargada y lista
+        val f = File(dir, ult.first.nombre)
         var code = if (f.exists()) valida(ctx, f) else null
         if (code == null) {
             f.delete()
-            KDrive.download(ctx, ult.second, f)
+            KDrive.bajaVersion(ctx, ult.first, f)
             code = valida(ctx, f)
-            if (code == null) { f.delete(); anota(ctx, "bajada la ${ult.first}, pero Android no la da por válida (otra firma o archivo roto)"); return }
+            if (code == null) { f.delete(); anota(ctx, "bajada la ${ult.first.nombre}, pero Android no la da por válida (otra firma o archivo roto)"); return }
         }
-        if (nueva?.nombre == ult.first) return
+        if (nueva?.nombre == ult.first.nombre) return
         if (!ctx.packageManager.canRequestPackageInstalls()) faltaPermiso = true
         val silenciosa = puedeSilenciosa(ctx)
-        nueva = Nueva(ult.first, code, f, silenciosa)
+        nueva = Nueva(ult.first.nombre, code, f, silenciosa)
         // Si mientras se bajaba dejaste la app, se instala en cuanto pase un momento
         if (silenciosa && !seVe()) programaAlSalir(ctx)
-        anota(ctx, "lista la ${ult.third.joinToString(".")}" + if (silenciosa) " (se instala al salir de la app)" else " (te pregunto para instalarla)")
+        anota(ctx, "lista la ${ult.second.joinToString(".")}" + if (silenciosa) " (se instala al salir de la app)" else " (te pregunto para instalarla)")
     }
 
     /** La instalación no salió bien (la silenciosa, sobre todo): se anota y se pasa a preguntar con el aviso de siempre. */
@@ -274,7 +277,7 @@ object Actualizador {
         ctx.getSharedPreferences("ammit_act", Context.MODE_PRIVATE).edit().putLong("act_reabrir", if (si) System.currentTimeMillis() else 0L).apply()
     }
 
-    /** Lo llama el receptor de «app actualizada»: reabre Ammit si la actualización se hizo con ella delante. */
+    /** Lo llama el receptor de «app actualizada»: reabre Eclipse si la actualización se hizo con ella delante. */
     fun reabre(ctx: Context) {
         val sp = ctx.getSharedPreferences("ammit_act", Context.MODE_PRIVATE)
         val t = sp.getLong("act_reabrir", 0L)
@@ -284,10 +287,10 @@ object Actualizador {
         // Con el permiso «Mostrar sobre otras apps», Android deja abrirla directamente; sin él (o si el móvil lo bloquea), queda el aviso
         if (puedeReabrirSola(ctx)) runCatching { ctx.startActivity(abrir) }
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel("reabrir", "Ammit actualizada", NotificationManager.IMPORTANCE_HIGH))
+        nm.createNotificationChannel(NotificationChannel("reabrir", "Eclipse actualizado", NotificationManager.IMPORTANCE_HIGH))
         val pi = PendingIntent.getActivity(ctx, 2006, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         nm.notify(AVISO_REABRIR, Notification.Builder(ctx, "reabrir").setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Ammit se ha actualizado").setContentText("Toca para abrirla").setContentIntent(pi).setAutoCancel(true).build())
+            .setContentTitle("Eclipse se ha actualizado").setContentText("Toca para abrirlo").setContentIntent(pi).setAutoCancel(true).build())
     }
 
     const val AVISO_REABRIR = 2006
@@ -304,7 +307,7 @@ object Actualizador {
         }
         val id = pi.createSession(p)
         pi.openSession(id).use { s ->
-            n.archivo.inputStream().use { inp -> s.openWrite("ammit.apk", 0, n.archivo.length()).use { out -> inp.copyTo(out); s.fsync(out) } }
+            n.archivo.inputStream().use { inp -> s.openWrite("eclipse.apk", 0, n.archivo.length()).use { out -> inp.copyTo(out); s.fsync(out) } }
             val i = Intent(ctx, ActualizadorReceiver::class.java).setPackage(ctx.packageName)
             s.commit(PendingIntent.getBroadcast(ctx, id, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE).intentSender)
         }
@@ -325,10 +328,10 @@ class ActualizadorReceiver : BroadcastReceiver() {
         conf.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (Actualizador.seVe()) { runCatching { ctx.startActivity(conf) }; return }
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel("actualizar", "Actualizaciones de Ammit", NotificationManager.IMPORTANCE_DEFAULT))
+        nm.createNotificationChannel(NotificationChannel("actualizar", "Actualizaciones de Eclipse", NotificationManager.IMPORTANCE_DEFAULT))
         val pi = PendingIntent.getActivity(ctx, 2005, conf, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         nm.notify(2005, Notification.Builder(ctx, "actualizar").setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Ammit tiene una versión nueva").setContentText("Toca para actualizar").setContentIntent(pi).setAutoCancel(true).build())
+            .setContentTitle("Eclipse tiene una versión nueva").setContentText("Toca para actualizar").setContentIntent(pi).setAutoCancel(true).build())
     }
 }
 
@@ -339,13 +342,13 @@ class ActualizadorReabrir : BroadcastReceiver() {
     }
 }
 
-/** Con la app cerrada: mira si hay una versión nueva en tu kDrive y, si puede, la instala sola (sin pantallas ni avisos). */
+/** Con la app cerrada: mira si hay una versión nueva en tu nube y, si puede, la instala sola (sin pantallas ni avisos). */
 class ActualizadorWorker(ctx: Context, p: androidx.work.WorkerParameters) : androidx.work.CoroutineWorker(ctx, p) {
     override suspend fun doWork(): Result {
         val c = applicationContext
         if (!Actualizador.activo(c)) return Result.success()
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { KDrive.asegura(c) } }
-        if (!KDrive.on(c)) return Result.success()
+        if (!KDrive.nubeOn(c)) return Result.success()
         // (si ya está bajada y lista, no hace falta volver a mirar)
         if (Actualizador.nueva == null) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { Actualizador.comprueba(c) } }
         // (si justo la estás usando, espera a que salgas)

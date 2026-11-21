@@ -123,13 +123,13 @@ fun PantJuicio(app: String, tFijo: Float? = null, alAcabar: () -> Unit = {}) {
         }, contentAlignment = Alignment.Center) {
             Column(Modifier.widthIn(max = 760.dp).padding(horizontal = 24.dp).background(Color.Black.copy(alpha = 0.9f)).border(2.dp, papel)
                 .padding(horizontal = 32.dp, vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                BasicText("${app.uppercase()} NO PASA EL JUICIO",
+                BasicText("${app.uppercase()} EN ECLIPSE",
                     style = TextStyle(color = acento, fontFamily = Diseno.Texto, fontWeight = FontWeight.Bold, fontSize = 15.sp, letterSpacing = 3.sp, textAlign = TextAlign.Center))
-                BasicText(buildAnnotatedString { append("AMMIT"); withStyle(SpanStyle(color = acento)) { append(".") } },
+                BasicText(buildAnnotatedString { append("ECLIPSE"); withStyle(SpanStyle(color = acento)) { append(".") } },
                     style = TextStyle(color = papel, fontFamily = Diseno.Grotesca, fontWeight = FontWeight.ExtraBold, fontSize = grande.sp,
                         lineHeight = (grande * 1.0f).sp, letterSpacing = (-grande * 0.03f).sp),
                     modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
-                BasicText(AnnotatedString("Su corazón pesa más que la pluma. Ammit se lo come."),
+                BasicText(AnnotatedString("Ahora solo brillan tus estrellas. Vuelve al enfoque."),
                     style = TextStyle(color = papel, fontFamily = Diseno.Cursiva, fontSize = 22.sp, lineHeight = 30.sp, textAlign = TextAlign.Center))
             }
         }

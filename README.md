@@ -10,6 +10,8 @@ Las apps de la familia en un solo sitio, alrededor de **una sola cuenta**:
 | `azabache/` | Polaris | `com.gonzalo.gamerate` | La revista: valoraciones, diario, cifras, y donde se ponen las claves |
 | `mostaza/` | Sirius | `com.gonzalo.mostaza` | Tus películas y series: biblioteca y reproductor (con los addons de Stremio) |
 | `cobre/` | Pulsar | `com.gonzalo.cobre` | La tele (IPTV): tus listas M3U y tus logins de Xtream, con su guía y su videoclub; en el móvil, la tablet y Android TV |
+| `ammit/` | Eclipse | `com.gonzalo.ammit` | Modo enfoque: cuando está encendido, solo pasan las seis estrellas de la familia |
+| `ptah/` | Vega | `com.gonzalo.ptah` | Creador de widgets editoriales con las cinco variaciones estéticas de la familia |
 
 Cada app conserva su paquete de siempre, así que cada versión nueva se instala encima de la que ya tienes.
 
@@ -84,7 +86,7 @@ Se actualizan solas desde tu kDrive, cada una desde su carpeta. Conservan su paq
 
 | Módulo | App | Paquete | Para qué | Carpeta en kDrive |
 |---|---|---|---|---|
-| `ptah/` | Widgets | `com.gonzalo.ptah` | Tus widgets de la pantalla de inicio, del tamaño que quieras (relojes, el tiempo, accesos, fotos…). Minimal oscuro | `Mi carpeta/widgets` (`Widgets-x.y.z.apk`) |
+| `ptah/` | Vega | `com.gonzalo.ptah` | Tus widgets editoriales, con las cinco variaciones estéticas de la familia (relojes, tiempo, accesos, fotos…) | `Familia/versiones` (`Vega-x.y.z.apk`) |
 | `shai/` | FcFeed | `com.gonzalo.shai` | Tus carreras de EA Sports FC como una red social: la red, los mensajes, la prensa, las ofertas y la vida de fuera del campo, escritas por Claude | `Mi carpeta/fcfeed` (`FcFeed-x.y.z.apk`) |
 
 Hasta la 0.5.x se llamaban Ptah y Shai y eran de la familia; desde la 0.6.0, la primera vez que se abren traen al móvil lo que tenían en la

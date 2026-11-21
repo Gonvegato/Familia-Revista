@@ -45,11 +45,12 @@ class AmmitTest {
     }
 
     @Test fun reconoceSusVersionesEnElKDrive() {
+        assertEquals(listOf(1, 0, 0), Actualizador.versionDe("Eclipse-1.0.0.apk"))
         assertEquals(listOf(0, 3, 0), Actualizador.versionDe("Ammit-0.3.0.apk"))
-        assertEquals(null, Actualizador.versionDe("Jonsu-1.8.6.apk"))
+        assertEquals(null, Actualizador.versionDe("Polaris-1.11.0.apk"))
         assertEquals("versiones", KDrive.CARPETA)
-        val u = Actualizador.ultima(listOf("Ammit-0.2.0.apk" to 1L, "Ammit-0.10.0.apk" to 2L, "Nut-0.9.0.apk" to 3L))
-        assertEquals("Ammit-0.10.0.apk", u?.first)
+        val u = Actualizador.ultima(listOf("Ammit-0.2.0.apk" to 1L, "Eclipse-1.0.0.apk" to 2L, "Pulsar-0.10.0.apk" to 3L))
+        assertEquals("Eclipse-1.0.0.apk", u?.first)
     }
 
     @Test fun lasAppsSeColocanComoLasDejaste() {

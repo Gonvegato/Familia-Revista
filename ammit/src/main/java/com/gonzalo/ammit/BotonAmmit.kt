@@ -70,9 +70,9 @@ class BotonAmmit : TileService() {
     private fun pinta() {
         val t = qsTile ?: return
         t.state = if (Ammit.encendida) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        t.label = "Ammit"
-        if (Build.VERSION.SDK_INT >= 29) t.subtitle = if (Ammit.encendida) "Encendida" else "Apagada"
-        t.contentDescription = if (Ammit.encendida) "Ammit: encendida" else "Ammit: apagada"
+        t.label = "Eclipse"
+        if (Build.VERSION.SDK_INT >= 29) t.subtitle = if (Ammit.encendida) "Encendido" else "Apagado"
+        t.contentDescription = if (Ammit.encendida) "Eclipse: encendido" else "Eclipse: apagado"
         t.updateTile()
     }
 

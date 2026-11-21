@@ -23,11 +23,13 @@ on:
       - 'cobalto/build.gradle.kts'
       - 'mostaza/build.gradle.kts'
       - 'cobre/build.gradle.kts'
+      - 'ammit/build.gradle.kts'
+      - 'ptah/build.gradle.kts'
       - 'escritorio/*/build.gradle.kts'
   workflow_dispatch:
     inputs:
       objetivo:
-        description: 'Qué publicar (todo, android, escritorio, o una app: azabache, hiedra, marfil, seskobo, cobalto, mostaza, cobre)'
+        description: 'Qué publicar (todo, android, escritorio, o una app: azabache, hiedra, marfil, seskobo, cobalto, mostaza, cobre, ammit, ptah)'
         required: true
         default: 'todo'
         type: choice
@@ -42,6 +44,8 @@ on:
           - cobalto
           - mostaza
           - cobre
+          - ammit
+          - ptah
 
 permissions:
   contents: read
@@ -67,14 +71,14 @@ jobs:
           ESCRITORIO=""
           if [ -n "$OBJ" ]; then
             case "$OBJ" in
-              todo)       ANDROID="azabache hiedra marfil seskobo cobalto mostaza cobre"; ESCRITORIO="si" ;;
-              android)    ANDROID="azabache hiedra marfil seskobo cobalto mostaza cobre" ;;
+              todo)       ANDROID="azabache hiedra marfil seskobo cobalto mostaza cobre ammit ptah"; ESCRITORIO="si" ;;
+              android)    ANDROID="azabache hiedra marfil seskobo cobalto mostaza cobre ammit ptah" ;;
               escritorio) ESCRITORIO="si" ;;
               *)          ANDROID="$OBJ" ;;
             esac
           else
             CAMBIOS=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)
-            for app in azabache hiedra marfil cobalto mostaza cobre; do
+            for app in azabache hiedra marfil cobalto mostaza cobre ammit ptah; do
               if echo "$CAMBIOS" | grep -qx "$app/build.gradle.kts"; then
                 ANDROID="$ANDROID $app"
                 [ "$app" = "marfil" ] && ANDROID="$ANDROID seskobo"

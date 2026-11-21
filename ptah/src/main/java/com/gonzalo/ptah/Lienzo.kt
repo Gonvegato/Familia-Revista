@@ -108,21 +108,46 @@ class Lienzo(
     val zonas = ArrayList<Zona>()
     val vivos = ArrayList<Vivo>()
 
-    // ---- colores
+    // ---- colores (aplicando las 5 variaciones estéticas de la familia)
     val tonos: Tones = Skin.tonosPara(noche)
     private fun col(spec: String, def: Int) = Col.resuelve(spec, tonos, def)
-    val papel: Int = tonos.paper.toInt()
-    val tinta: Int = col(e.tinta, tonos.ink.toInt())
-    val acento: Int = col(e.acento, tonos.general.toInt())
-    val gris: Int = col(e.secundario, mezcla(papelDeVerdad(), tinta, 0.55f))
-    /** El color de una pieza (si el diseño le da uno; si no, [def]). */
+    private val papelBase: Int = tonos.paper.toInt()
+    private val tintaBase: Int = col(e.tinta, tonos.ink.toInt())
+    private val acentoBase: Int = col(e.acento, tonos.general.toInt())
+    private val variacionActiva: VariacionWidget = if (e.fondo == TipoFondo.TRANSPARENTE && e.variacion != VariacionWidget.MARCO) VariacionWidget.COMO_AHORA else e.variacion
+    private val fondoBase: Int = when (e.fondo) {
+        TipoFondo.PAPEL -> papelBase
+        TipoFondo.COLOR -> col(e.colorFondo, papelBase)
+        TipoFondo.DEGRADADO -> mezcla(col(e.colorFondo, papelBase), col(e.colorFondo2, acentoBase), 0.5f)
+        TipoFondo.TRANSPARENTE -> if (noche) 0xFF000000.toInt() else 0xFF888888.toInt()
+    }
+    private val tinteK: Float = if (noche) 0.30f else 0.17f
+    val colorBanda: Int = bloqueVisible(acentoBase, fondoBase, tintaBase)
+    val textoBanda: Int = sobre(colorBanda, papelBase, tintaBase)
+    val papel: Int = when (variacionActiva) {
+        VariacionWidget.TENIDO -> mezcla(papelBase, acentoBase, tinteK)
+        VariacionWidget.ACENTO -> acentoBase
+        else -> papelBase
+    }
+    val tinta: Int = when (variacionActiva) {
+        VariacionWidget.ACENTO -> sobre(acentoBase, papelBase, tintaBase)
+        else -> tintaBase
+    }
+    val acento: Int = when (variacionActiva) {
+        VariacionWidget.ACENTO -> tinta
+        else -> acentoBase
+    }
+    val gris: Int = when (variacionActiva) {
+        VariacionWidget.ACENTO -> mezcla(acentoBase, tinta, 0.72f)
+        else -> col(e.secundario, mezcla(papelDeVerdad(), tinta, 0.55f))
+    }
+    /** El color de una pieza (si el diseño le da uno; si no, [def]). En «Todo acento», si no tiene color propio, sigue el contraste del acento. */
     fun pieza(id: String, def: Int): Int = col(e.pieza(id), def)
     /** Lo que hay debajo del texto (para elegir un color que se lea encima de un fondo transparente). */
-    fun papelDeVerdad(): Int = when (e.fondo) {
-        TipoFondo.PAPEL -> papel
-        TipoFondo.COLOR -> col(e.colorFondo, papel)
-        TipoFondo.DEGRADADO -> mezcla(col(e.colorFondo, papel), col(e.colorFondo2, acento), 0.5f)
-        TipoFondo.TRANSPARENTE -> if (noche) 0xFF000000.toInt() else 0xFF888888.toInt()
+    fun papelDeVerdad(): Int = when {
+        variacionActiva == VariacionWidget.ACENTO -> acentoBase
+        variacionActiva == VariacionWidget.TENIDO -> mezcla(fondoBase, acentoBase, tinteK)
+        else -> fondoBase
     }
 
     // ---- letras
@@ -151,52 +176,67 @@ class Lienzo(
     }
     /** ¿Una de las composiciones pequeñas? */
     val chico: Boolean get() = proporcion != Proporcion.NORMAL
-    /** El marco interior de las pequeñas (como el de las cabeceras en papel de las hermanas): siempre; con el color del borde o del marco
-     *  del diseño, y si no tiene ninguno, de la tinta un poco apagada. */
-    private val marcoChico: Boolean get() = chico
+    /** El marco interior de las pequeñas: solo si el diseño pide borde o marco (no se fuerza si usa Marco de color). */
+    private val marcoChico: Boolean get() = chico && variacionActiva != VariacionWidget.MARCO && (e.borde || e.marco)
     private val dentroMarco = 3.5f
+    /** Alto de la franja de color superior cuando la variación es «Cabecera de color». */
+    val altoCabecera: Float = if (variacionActiva == VariacionWidget.CABECERA) (if (chico) 18f else 24f).coerceAtMost(h * 0.28f) else 0f
 
-    val pad: Float = if (proporcion != Proporcion.NORMAL) dentroMarco + 4.5f + (if (e.borde) e.grosorBorde * 0.5f else 0f)
-        else (if (min(w, h) < 100f) 9f else 14f) + (if (e.marco) 4f else 0f) + (if (e.borde) e.grosorBorde * 0.5f else 0f)
-    /** El sitio para lo de dentro. */
-    val area = RectF(pad, pad, w - pad, h - pad)
+    private val extraMarco: Float = if (variacionActiva == VariacionWidget.MARCO) 5f else 0f
+    val pad: Float = if (proporcion != Proporcion.NORMAL) dentroMarco + 4.5f + extraMarco + (if (e.borde) e.grosorBorde * 0.5f else 0f)
+        else (if (min(w, h) < 100f) 9f else 14f) + extraMarco + (if (e.marco) 4f else 0f) + (if (e.borde) e.grosorBorde * 0.5f else 0f)
+    /** El sitio para lo de dentro (bajo la franja de color si la variación es «Cabecera de color»). */
+    val area = RectF(pad, max(pad, if (altoCabecera > 0f) altoCabecera + 5f else 0f), w - pad, h - pad)
     val alineacion: Layout.Alignment get() = when (e.alineacion) { Alineacion.IZQUIERDA -> Layout.Alignment.ALIGN_NORMAL; Alineacion.CENTRO -> Layout.Alignment.ALIGN_CENTER; Alineacion.DERECHA -> Layout.Alignment.ALIGN_OPPOSITE }
 
     private val forma: Path get() = Path().apply { addRoundRect(RectF(0f, 0f, w, h), radio, radio, Path.Direction.CW) }
 
-    /** El fondo del diseño (papel, color, degradado o nada), con su opacidad. */
+    /** El fondo del diseño (papel, color, degradado o nada), con su opacidad y su variación estética. */
     fun fondo() {
         if (e.fondo == TipoFondo.TRANSPARENTE || e.opacidad <= 0) return
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
         val a = (e.opacidad.coerceIn(0, 100) * 255 / 100)
-        when (e.fondo) {
-            TipoFondo.PAPEL -> p.color = conAlfa(papel, a)
-            TipoFondo.COLOR -> p.color = conAlfa(col(e.colorFondo, papel), a)
-            TipoFondo.DEGRADADO -> {
+        when {
+            variacionActiva == VariacionWidget.ACENTO -> p.color = conAlfa(acentoBase, a)
+            variacionActiva == VariacionWidget.TENIDO -> p.color = conAlfa(mezcla(fondoBase, acentoBase, tinteK), a)
+            e.fondo == TipoFondo.PAPEL -> p.color = conAlfa(papelBase, a)
+            e.fondo == TipoFondo.COLOR -> p.color = conAlfa(col(e.colorFondo, papelBase), a)
+            e.fondo == TipoFondo.DEGRADADO -> {
                 val ang = Math.toRadians(e.angulo.toDouble())
                 val dx = sin(ang).toFloat(); val dy = cos(ang).toFloat()
                 val cx = w / 2; val cy = h / 2; val r = (kotlin.math.abs(dx) * w + kotlin.math.abs(dy) * h) / 2
-                p.shader = LinearGradient(cx - dx * r, cy - dy * r, cx + dx * r, cy + dy * r, conAlfa(col(e.colorFondo, papel), a), conAlfa(col(e.colorFondo2, acento), a), Shader.TileMode.CLAMP)
+                p.shader = LinearGradient(cx - dx * r, cy - dy * r, cx + dx * r, cy + dy * r, conAlfa(col(e.colorFondo, papelBase), a), conAlfa(col(e.colorFondo2, acentoBase), a), Shader.TileMode.CLAMP)
             }
-            TipoFondo.TRANSPARENTE -> return
+            else -> return
         }
         c.drawPath(forma, p)
+        if (variacionActiva == VariacionWidget.CABECERA && altoCabecera > 0f) {
+            c.drawRect(0f, 0f, w, altoCabecera, lleno(colorBanda))
+            val etiqueta = d.texto("ante").ifBlank { d.nombre }.ifBlank { Tipos.de(d.tipo)?.nombre ?: "Vega" }.uppercase(ES)
+            val tam = (if (chico) 7.5f else 9f).coerceAtMost(altoCabecera * 0.56f)
+            val tpCab = tp(fNegrita, tam, textoBanda, 0.16f)
+            val lay = capa(etiqueta, tpCab, max(1f, w - 2 * pad), 1, 1f, alineacion)
+            pon(lay, pad, (altoCabecera - lay.height) / 2f)
+        }
     }
 
-    /** El borde, el marco de revista y las esquinas (recortadas suaves). Se llama al acabar. */
+    /** El borde, el marco de color / de revista y las esquinas (recortadas suaves). Se llama al acabar. */
     fun terminar() {
-        if (marcoChico) {
-            // Las pequeñas: un solo marco, fino y redondeado, un poco por dentro (el del borde o el del marco del diseño)
+        if (variacionActiva == VariacionWidget.MARCO) {
+            // Variación «Marco de color»: borde grueso del acento (igual que los widgets de la familia)
+            val m = 3f
+            c.drawRoundRect(RectF(m, m, w - m, h - m), max(0f, radio - m), max(0f, radio - m), trazo(colorBanda, 6f))
+        } else if (marcoChico) {
             val m = dentroMarco
             val rr = max(2f, radio - m)
-            val col = if (e.borde) col(e.colorBorde, tinta) else if (e.marco) pieza("marco", tinta) else pieza("marco", conAlfa(tinta, 150))
+            val col = if (e.borde) col(e.colorBorde, tinta) else pieza("marco", tinta)
             c.drawRoundRect(RectF(m, m, w - m, h - m), rr, rr, trazo(col, if (e.borde) e.grosorBorde.coerceAtMost(1.4f) else 0.8f))
         } else if (e.marco) {
             val m = (if (e.borde) e.grosorBorde else 0f) + 4.5f
             val rr = max(0f, radio - m)
             c.drawRoundRect(RectF(m, m, w - m, h - m), rr, rr, trazo(pieza("marco", tinta), 0.6f))
         }
-        if (e.borde && !marcoChico) {
+        if (e.borde && !marcoChico && variacionActiva != VariacionWidget.MARCO) {
             val g = e.grosorBorde
             val m = g / 2f + 0.4f
             c.drawRoundRect(RectF(m, m, w - m, h - m), max(0f, radio - m), max(0f, radio - m), trazo(col(e.colorBorde, tinta), g))
@@ -423,6 +463,14 @@ class Lienzo(
             return ((maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)).toFloat()
         }
         fun luz(c: Int): Float = (0.299f * ((c shr 16) and 0xFF) + 0.587f * ((c shr 8) and 0xFF) + 0.114f * (c and 0xFF)) / 255f
+        /** El de los dos ([papel] o [tinta]) que mejor se lee sobre [fondo] (igual que EstiloWidget.sobre). */
+        fun sobre(fondo: Int, papel: Int, tinta: Int): Int = if (contraste(papel, fondo) >= contraste(tinta, fondo)) papel else tinta
+        /** El acento, aclarado u oscurecido lo justo para que se vea como bloque sobre [fondo]. */
+        fun bloqueVisible(bloque: Int, fondo: Int, hacia: Int, minimo: Float = 2.0f): Int {
+            var t = 0f; var c = bloque
+            while (contraste(c, fondo) < minimo && t < 1f) { t += 0.05f; c = mezcla(bloque, hacia, t) }
+            return c
+        }
     }
 }
 

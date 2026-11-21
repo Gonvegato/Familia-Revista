@@ -189,6 +189,28 @@ class WidgetsTest {
         assertEquals(0, Pintor.pinta(ctx, TipoNota.nuevo(), 100f, 100f, false, 1f, DatosDeMentira(ctx)).bm.getPixel(0, 0) ushr 24)
     }
 
+    @Test fun lasCincoVariacionesEsteticasSeDibujan() {
+        val base = TipoNota.nuevo().conEstilo(Estilo(acento = "#8E5A78"))
+        for (noche in listOf(false, true)) {
+            val dibujos = VariacionWidget.entries.associateWith { v ->
+                Pintor.pinta(ctx, base.conEstilo(base.estilo.copy(variacion = v)), 220f, 140f, noche, 1f, DatosDeMentira(ctx))
+            }
+            // Las 5 variaciones producen resultados visualmente distintos
+            val lista = VariacionWidget.entries.map { dibujos.getValue(it).bm }
+            for (i in lista.indices) for (j in i + 1 until lista.size) {
+                assertFalse("variaciones $i y $j distintas (${if (noche) "noche" else "día"})", lista[i].sameAs(lista[j]))
+            }
+            // En «Todo acento» el papel es el acento y el texto tiene buen contraste
+            val ac = dibujos.getValue(VariacionWidget.ACENTO)
+            assertEquals(0xFF8E5A78.toInt(), ac.papel)
+            assertTrue(Lienzo.contraste(ac.tinta, ac.papel) >= 4.5f)
+            // En «Cabecera de color» reserva la franja superior
+            val cab = dibujos.getValue(VariacionWidget.CABECERA)
+            assertTrue(cab.altoCabecera > 0f)
+            assertTrue(cab.area.top >= cab.altoCabecera)
+        }
+    }
+
     // ---------------------------------------------------------------- la hora dibujada cada minuto (el fallo del OPPO)
 
     /** Lo que ve el lanzador: las vistas que no están ocultas. */

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Fondo del arranque oscuro (el de la app): sin destello blanco al abrir -->
-    <style name="Widgets" parent="android:Theme.Material.NoActionBar">
+    <!-- Fondo del arranque claro (papel #F8F0D4 de la familia); de noche, negro #000000 -->
+    <style name="Widgets" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
-    <color name="paper">#0B0B0D</color>
+    <color name="paper">#F8F0D4</color>
 </resources>

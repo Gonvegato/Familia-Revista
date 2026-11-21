@@ -31,7 +31,7 @@ CONFIG_PATH = os.path.expanduser("~/.config/familia-gdrive.json")
 CHUNK = 4 * 1024 * 1024  # 4 MB (múltiplo de 256 KB requerido por Google Drive)
 
 NOMBRE_VALIDO = re.compile(
-    r"^(?:Polaris|Lyra|LyraKobo|Orion|Nova|Sirius|Pulsar|Azabache|Cobalto|Hiedra|Marfil|Mostaza|Cobre|Jonsu|Thot|Bastet|Seshat|SesKobo|Hathor|Nut)"
+    r"^(?:Polaris|Lyra|LyraKobo|Orion|Nova|Sirius|Pulsar|Eclipse|Vega|Ammit|Widgets|Azabache|Cobalto|Hiedra|Marfil|Mostaza|Cobre|Jonsu|Thot|Bastet|Seshat|SesKobo|Hathor|Nut)"
     r"-\d+(?:\.\d+)*(?:-kobo(?:\.\d+)?)?(?:\.apk|-(?:mac\.dmg|linux\.deb|linux\.tar\.gz))$"
 )
 

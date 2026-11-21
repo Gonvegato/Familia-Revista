@@ -157,10 +157,16 @@ fun RevistaHeadline(title: String, overline: String?) {
     }
 }
 
-/** El nombre de la app, como logotipo. */
+/** El nombre de la app, como logotipo editorial (VEGA. con el punto en acento). */
 @Composable
-fun Cabecera(tam: TextUnit, modifier: Modifier = Modifier, color: Color = Charcoal, texto: String = "Widgets") {
-    Text(texto, color = color, fontFamily = Body, fontWeight = FontWeight.ExtraBold, fontSize = minOf(tam.value, 30f).sp, letterSpacing = (-0.5).sp, maxLines = 1, modifier = modifier)
+fun Cabecera(tam: TextUnit, modifier: Modifier = Modifier, color: Color = Charcoal, texto: String = "VEGA") {
+    val t = androidx.compose.ui.text.buildAnnotatedString {
+        append(texto.uppercase())
+        pushStyle(androidx.compose.ui.text.SpanStyle(color = Acento))
+        append(".")
+        pop()
+    }
+    Text(t, color = color, fontFamily = Display, fontWeight = FontWeight.ExtraBold, fontSize = maxOf(tam.value, 36f).sp, letterSpacing = (-1.2).sp, maxLines = 1, modifier = modifier)
 }
 
 /** Una fila de ajuste o de acción: el texto, lo de debajo en gris y la flecha. */

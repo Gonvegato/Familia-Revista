@@ -35,19 +35,33 @@ object KDrive {
     /** ¿Vienen de la cuenta? */
     fun deLaCuenta(): Boolean = clave("kdrive_token").isNotBlank() && clave("kdrive_id").isNotBlank()
     fun on(ctx: Context) = token(ctx).isNotBlank() && drive(ctx).isNotBlank()
+    fun gdriveOn(ctx: Context) = runCatching { com.gonzalo.familia.NubeFamilia.gdriveOn(ctx) }.getOrDefault(false)
+    fun nubeOn(ctx: Context) = gdriveOn(ctx) || on(ctx)
+
+    fun versionesDual(ctx: Context): List<com.gonzalo.familia.NubeFamilia.VersionRemota> {
+        val nf = runCatching { com.gonzalo.familia.NubeFamilia.versionesDual(ctx) }.getOrDefault(emptyList())
+        if (nf.isNotEmpty()) return nf
+        if (on(ctx)) return versiones(ctx).map { (n, id) -> com.gonzalo.familia.NubeFamilia.VersionRemota(n, id.toString(), false) }
+        return emptyList()
+    }
+
+    fun bajaVersion(ctx: Context, v: com.gonzalo.familia.NubeFamilia.VersionRemota, dest: File) {
+        if (v.deGoogleDrive) com.gonzalo.familia.NubeFamilia.bajaVersion(ctx, v, dest)
+        else download(ctx, v.id.toLong(), dest)
+    }
 
     /**
-     * Si aún no hay token: coge la cuenta de una hermana (si Ammit no la tiene) y baja lo último de la cuenta, que es donde está el token
-     * que pusiste en Jonsu. Bloquea (red): fuera del hilo principal. Devuelve por qué no hay, si sigue sin haber ("" si ya hay).
+     * Si aún no hay nube conectada: coge la cuenta de una hermana (si Eclipse no la tiene) y baja lo último de la cuenta, que es donde están
+     * las claves de Google Drive o kDrive que pusiste en Polaris. Bloquea (red): fuera del hilo principal. Devuelve por qué no hay, si sigue sin haber ("" si ya hay).
      */
     fun asegura(ctx: Context): String {
-        if (on(ctx)) return ""
+        if (nubeOn(ctx)) return ""
         val fam = runCatching { com.gonzalo.familia.LaFamilia.familia }.getOrNull() ?: return "La cuenta no está disponible."
         if (!fam.sesion.dentro) runCatching { com.gonzalo.familia.Acceso.pideAHermanas(ctx) }
-        if (!fam.sesion.dentro) return "Ammit no tiene la cuenta: ninguna hermana se la ha pasado (¿Jonsu está actualizado?). Entra en «Tu cuenta», abajo."
+        if (!fam.sesion.dentro) return "Eclipse no tiene la cuenta: ninguna hermana se la ha pasado (¿Polaris está actualizado?). Entra en «Tu cuenta», abajo."
         runCatching { com.gonzalo.familia.LaFamilia.sincronizaYa() }
-        if (on(ctx)) return ""
-        return "En tu cuenta no está el token de kDrive: ponlo en Jonsu (Ajustes → Cuenta → Tu nube) o pégalo aquí."
+        if (nubeOn(ctx)) return ""
+        return "En tu cuenta no hay nube conectada: configura Google Drive en Polaris (Ajustes → Cuenta → Tu nube) o pega tu kDrive aquí."
     }
 
     fun save(ctx: Context, token: String, drive: String) {

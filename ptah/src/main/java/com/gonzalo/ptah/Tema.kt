@@ -71,6 +71,10 @@ internal fun t(
 
 /** Las paletas. Las de editores conocidos usan sus colores oficiales; las de Atrio son propias. */
 val PALETTES: List<Palette> = listOf(
+    // Editorial moderna (la estética general de las estrellas): papel crema #F8F0D4 y negro #000000 (de noche, al revés).
+    Palette("familia", "Editorial", "Vega",
+        t(0xF8F0D4, 0xEFE5C5, 0x000000, 0xB0661F, 0x000000, 0x4A4336, 0x7A7262, 0x8E4A14, 0xB0791E, 0xEBE0BC, 0xD5CAA8, 0xB5A884, 0x5C5646),
+        t(0x000000, 0x121210, 0xF8F0D4, 0xD98A3D, 0xF8F0D4, 0xB5A884, 0x7A7262, 0xF0A960, 0xE0B456, 0x1B1A16, 0x2C2A24, 0x4A463B, 0x9E9684)),
     // Interfaz Revista: papel y tinta, con rojo de imprenta (de noche, papel oscuro y tinta clara).
     Palette("revista", "Revista", "Atrio",
         // Los criterios, en tinta, grises y granate (nada de azules ni verdes: es papel impreso)
