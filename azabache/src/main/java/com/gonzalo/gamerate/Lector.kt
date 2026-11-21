@@ -336,7 +336,7 @@ class ReaderActivity : ComponentActivity() {
                 return true
             }
         }
-        web.addJavascriptInterface(Bridge(), "Polaris")
+        web.addJavascriptInterface(Bridge(), "Atrio")
         setContentView(web)
         // El lector necesita un WebView reciente (se actualiza solo desde Google Play)
         val wv = androidx.webkit.WebViewCompat.getCurrentWebViewPackage(this)

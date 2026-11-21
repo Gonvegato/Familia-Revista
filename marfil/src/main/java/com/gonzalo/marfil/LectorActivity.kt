@@ -287,7 +287,7 @@ class LectorActivity : ComponentActivity() {
                 return true
             }
         }
-        web.addJavascriptInterface(Bridge(), "Polaris")
+        web.addJavascriptInterface(Bridge(), "Atrio")
         marco.addView(web, android.widget.FrameLayout.LayoutParams(-1, -1))
         // El lector necesita un WebView reciente (se actualiza solo desde Google Play)
         val wv = androidx.webkit.WebViewCompat.getCurrentWebViewPackage(this)
