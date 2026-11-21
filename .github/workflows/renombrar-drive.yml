@@ -1,0 +1,21 @@
+name: Renombrar carpetas en Google Drive
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  renombrar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Renombrar carpetas a Polaris, Lyra, Orion, Nova, Sirius y Pulsar
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+          GDRIVE_CARPETA: ${{ secrets.GDRIVE_CARPETA }}
+        run: python3 herramientas/gdrive/renombrar-carpetas.py
