@@ -100,7 +100,7 @@ class ThotCTest {
         e.nuevo(Escritos.T_ESCENA, a.id) { put("cid", c2.id) }
         assertEquals("ESCRIBIENDO · CAP. 2", etiquetaEstado(e, e.get(a.id)!!))
         e.ponEstado(a.id, EstadoObra.PAUSA); assertEquals("EN PAUSA", etiquetaEstado(e, e.get(a.id)!!))
-        e.ponEstado(a.id, EstadoObra.TERMINADA); assertEquals("TERMINADA", etiquetaEstado(e, e.get(a.id)!!)); assertEquals("Leer en Seshat", textoPrincipal(e, e.get(a.id)!!))
+        e.ponEstado(a.id, EstadoObra.TERMINADA); assertEquals("TERMINADA", etiquetaEstado(e, e.get(a.id)!!)); assertEquals("Leer en Lyra", textoPrincipal(e, e.get(a.id)!!))
         e.ponEstado(a.id, EstadoObra.ESCRIBIENDO); assertEquals("Empezar a escribir", textoPrincipal(e, e.get(a.id)!!))
     }
 

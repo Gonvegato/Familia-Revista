@@ -123,11 +123,15 @@ jobs:
           set -e
           mkdir -p firma
           printf '%s' "$FIRMA_B64" | tr -d '\r\n ' | base64 -d > /tmp/firma.bin
-          if file /tmp/firma.bin | grep -qi zip; then
+          TIPO=$(file -b /tmp/firma.bin)
+          mkdir -p /tmp/firma_ext
+          if echo "$TIPO" | grep -qi "Zip archive"; then
             unzip -qo /tmp/firma.bin -d /tmp/firma_ext
+          elif echo "$TIPO" | grep -qiE "gzip|tar|bzip2|xz|compressed"; then
+            tar -xf /tmp/firma.bin -C /tmp/firma_ext
           else
-            mkdir -p /tmp/firma_ext
-            tar -xzf /tmp/firma.bin -C /tmp/firma_ext
+            echo "Formato de FIRMA_B64 no reconocido ($TIPO). Debe ser un .zip o .tar.gz en base64."
+            exit 1
           fi
           find /tmp/firma_ext -maxdepth 3 -type f \( -name '*.keystore' -o -name '*.lineage' -o -name 'claves.properties' \) -exec cp {} firma/ \;
           rm -rf /tmp/firma.bin /tmp/firma_ext

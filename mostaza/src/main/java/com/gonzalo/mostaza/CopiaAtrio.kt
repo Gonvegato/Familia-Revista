@@ -71,7 +71,7 @@ object CopiaAtrio {
         if ("c_fondo" in ids) Skin.fondoPropio = colorEfectivo(a, "fondo")
         if ("c_texto" in ids) Skin.tintaPropia = colorEfectivo(a, "texto")
         if ("c_acento" in ids) Skin.acentoPropio = colorEfectivo(a, "acento")
-        if ("letras" in ids) { Skin.display = s.optString("skin_letra_titulos").ifBlank { "Polaris" }; Skin.body = s.optString("skin_letra_texto").ifBlank { "Polaris" } }
+        if ("letras" in ids) { Skin.display = s.optString("skin_letra_titulos").ifBlank { "Atrio" }; Skin.body = s.optString("skin_letra_texto").ifBlank { "Atrio" } }
         if ("tamano" in ids && s.has("skin_escala")) Skin.escala = s.optInt("skin_escala", 100).coerceIn(80, 140)
         if (ids.any { it in setOf("fondo", "acento", "tema") }) { Skin.origenAtrio = false; Skin.invertido = false }
         Skin.guardar(ctx)

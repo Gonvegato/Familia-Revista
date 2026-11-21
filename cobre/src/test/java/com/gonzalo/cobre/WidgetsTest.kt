@@ -37,7 +37,7 @@ class WidgetsTest {
         siembra()
         for (t in listOf(WTipo.MARCA, WTipo.MARCA_PAPEL)) {
             val z = Widgets.componer(ctx, t, 1, 330f, 80f).zonas.single()
-            assertEquals("Abrir Nut", z.desc); assertNotNull(z.toque)
+            assertEquals("Abrir Pulsar", z.desc); assertNotNull(z.toque)
         }
         val sola = Widgets.componer(ctx, WTipo.MARCA, 1, 256f, 64f).bitmap(ctx, 256f, 64f, false, 1f)
         assertEquals("la marca sola es transparente", 0, sola.getPixel(2, 2) ushr 24)
@@ -55,7 +55,7 @@ class WidgetsTest {
         assertTrue(pag.bitmap(ctx, 330f, 170f, false, 1f).width > 0)
         // Sin equipos: lo dice, y un toque lleva a elegirlos
         Futbol.fijo = Futbol.Fijo()
-        assertEquals("Abrir el fútbol de Nut", Widgets.componer(ctx, WTipo.PROXIMO, 7, 330f, 170f).zonas.single().desc)
+        assertEquals("Abrir el fútbol de Pulsar", Widgets.componer(ctx, WTipo.PROXIMO, 7, 330f, 170f).zonas.single().desc)
     }
 
     @Test fun cadaTipoTieneSuReceiver() {
