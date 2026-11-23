@@ -112,7 +112,7 @@ jobs:
         id: firmar
         if: steps.ya.outputs.subir == 'si'
         run: |
-          set -e
+          set -eo pipefail
           APK=$(python3 herramientas/atlas/firmar_atlas.py atlas-dl/ATLAS.apk atlas-dl/ATLAS.json dist-atlas | head -n 1)
           echo "apk=$APK" >> "$GITHUB_OUTPUT"
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)

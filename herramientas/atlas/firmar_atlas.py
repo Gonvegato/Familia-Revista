@@ -60,11 +60,17 @@ def pase_familia():
 
 
 def firmantes(bt, apk):
-    """[(n, sha256)] de los firmantes de [apk] (apksigner verify --print-certs); sale si no verifica."""
+    """Las huellas SHA-256 distintas de los firmantes de [apk] (apksigner verify --print-certs); sale si no verifica.
+
+    Según la versión, apksigner las escribe «Signer #1 certificate SHA-256 digest: …» o, por esquema, «V3.0 Signer: certificate
+    SHA-256 digest: …» (y «V2 Signer», «V3.1 Signer #2»…): se cuentan las huellas distintas, sea cual sea el formato."""
     r = subprocess.run([f"{bt}/apksigner", "verify", "--print-certs", apk], capture_output=True, text=True)
     if r.returncode != 0:
         sys.exit(f"apksigner verify falla:\n{r.stdout}\n{r.stderr}")
-    return re.findall(r"Signer #(\d+) certificate SHA-256 digest: ([0-9a-f]{64})", r.stdout), r.stdout
+    huellas = re.findall(r"Signer(?: #\d+)?:? certificate SHA-256 digest: ([0-9a-f]{64})", r.stdout)
+    if not huellas:
+        sys.exit(f"No encuentro ningún firmante en la salida de apksigner:\n{r.stdout}")
+    return sorted(set(huellas)), r.stdout
 
 
 def main():
@@ -87,7 +93,7 @@ def main():
     if (m.group(1), int(m.group(2)), m.group(3)) != (PAQUETE, codigo, version):
         sys.exit(f"El APK no coincide con ATLAS.json: APK {m.group(1)} {m.group(3)} ({m.group(2)}), JSON {PAQUETE} {version} ({codigo})")
     antes, _ = firmantes(bt, apk)
-    print(f"ATLAS {version} ({codigo}); firma de antes: {len(antes)} firmante(s): " + ", ".join(h[:16] + "…" for _, h in antes), file=sys.stderr)
+    print(f"ATLAS {version} ({codigo}); firma de antes: {len(antes)} firmante(s): " + ", ".join(h[:16] + "…" for h in antes), file=sys.stderr)
 
     # 2. Alinear (si hace falta) y firmar con la familia, sin linaje
     os.makedirs(salida_dir, exist_ok=True)
@@ -112,11 +118,11 @@ def main():
     if len(despues) != 1:
         os.remove(salida)
         sys.exit(f"Tras firmar quedan {len(despues)} firmantes (debe quedar uno):\n{texto}")
-    if despues[0][1] != esperado:
+    if despues[0] != esperado:
         os.remove(salida)
-        sys.exit(f"La huella no es la de la familia: {despues[0][1]} (esperada {esperado})")
+        sys.exit(f"La huella no es la de la familia: {despues[0]} (esperada {esperado})")
     print(salida)
-    print(f"Firmado: un único firmante, SHA-256 {despues[0][1]} (Acceso.CERTIFICADO)", file=sys.stderr)
+    print(f"Firmado: un único firmante, SHA-256 {despues[0]} (Acceso.CERTIFICADO)", file=sys.stderr)
 
 
 if __name__ == "__main__":
