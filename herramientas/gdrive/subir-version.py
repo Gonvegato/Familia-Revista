@@ -3,6 +3,7 @@
 
 Uso:
   python3 herramientas/gdrive/subir-version.py Jonsu-1.3.0.apk Bastet-0.5.0-mac.dmg …
+  python3 herramientas/gdrive/subir-version.py --existe Atlas-0.12.1.apk   (sale con 0 si ya está en Drive con su .sha256; 1 si no)
 
 Cada archivo se sube a «<carpeta>/versiones» (por defecto «Familia/versiones») mediante subida
 reanuable (resumable upload) y actualiza el archivo existente si ya hay uno con el mismo nombre.
@@ -31,7 +32,7 @@ CONFIG_PATH = os.path.expanduser("~/.config/familia-gdrive.json")
 CHUNK = 4 * 1024 * 1024  # 4 MB (múltiplo de 256 KB requerido por Google Drive)
 
 NOMBRE_VALIDO = re.compile(
-    r"^(?:Polaris|Lyra|LyraKobo|Orion|Nova|Sirius|Pulsar|Eclipse|Vega|Ammit|Widgets|Azabache|Cobalto|Hiedra|Marfil|Mostaza|Cobre|Jonsu|Thot|Bastet|Seshat|SesKobo|Hathor|Nut)"
+    r"^(?:Polaris|Lyra|LyraKobo|Orion|Nova|Sirius|Pulsar|Eclipse|Vega|Atlas|Ammit|Widgets|Azabache|Cobalto|Hiedra|Marfil|Mostaza|Cobre|Jonsu|Thot|Bastet|Seshat|SesKobo|Hathor|Nut)"
     r"-\d+(?:\.\d+)*(?:-kobo(?:\.\d+)?)?(?:\.apk|-(?:mac\.dmg|linux\.deb|linux\.tar\.gz))$"
 )
 
@@ -230,6 +231,15 @@ def main():
     cid, csec, rtok, carpeta, subcarpeta = cargar_credenciales()
     gd = GDrive(cid, csec, rtok)
     dir_id = gd.asegura_carpeta("root", f"{carpeta}/{subcarpeta}")
+
+    # ¿Ya está esa versión? (para no volver a subirla: ATLAS se mira cada pocas horas)
+    if sys.argv[1] == "--existe":
+        if len(sys.argv) != 3:
+            raise SystemExit("Uso: subir-version.py --existe <App>-<versión>.apk")
+        nombre = sys.argv[2]
+        esta = gd.busca_hijo(dir_id, nombre) is not None and gd.busca_hijo(dir_id, f"{nombre}.sha256") is not None
+        print(f"{nombre}: {'ya está' if esta else 'no está'} en «{carpeta}/{subcarpeta}»")
+        sys.exit(0 if esta else 1)
 
     for ruta in sys.argv[1:]:
         if not os.path.isfile(ruta):

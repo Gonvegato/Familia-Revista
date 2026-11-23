@@ -1,0 +1,137 @@
+# ATLAS (los mapas de las novelas, Godot: repositorio Gonvegato/Atlas, paquete com.gonzalo.atlas) no se compila aquí.
+# Cada versión se publica en https://github.com/Gonvegato/Atlas/releases/latest/download/ATLAS.apk (con ATLAS.json al lado),
+# firmada con una clave provisional. Este workflow la baja, la vuelve a firmar con la clave de la familia (familia.keystore,
+# alias familia, sin linaje: como las apps que nacen en la familia), comprueba que queda un único firmante con la huella de
+# Acceso.CERTIFICADO y la sube a Google Drive («Familia/versiones») como Atlas-<versión>.apk, como las demás.
+#
+# Se dispara:
+#  - Cada 6 horas: si esa versión ya está en Drive, no hace nada.
+#  - A mano desde Actions → «ATLAS: firmar y publicar» → Run workflow («forzar» la sube aunque ya esté).
+#
+# Secretos: los de publicar.yml (FIRMA_B64, GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, GDRIVE_REFRESH_TOKEN; GDRIVE_CARPETA opcional).
+name: 'ATLAS: firmar y publicar'
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      forzar:
+        description: 'Subirla aunque esa versión ya esté en Drive'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# (su propio grupo: compartir el de publicar.yml haría que una ejecución periódica de ATLAS desplazara una publicación en cola)
+concurrency:
+  group: atlas
+  cancel-in-progress: false
+
+jobs:
+  atlas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      ORIGEN: https://github.com/Gonvegato/Atlas/releases/latest/download
+    steps:
+      - uses: actions/checkout@v4
+      - name: Comprobar secretos
+        id: check
+        env:
+          FIRMA_B64: ${{ secrets.FIRMA_B64 }}
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$FIRMA_B64" ] || [ -z "$GDRIVE_CLIENT_ID" ] || [ -z "$GDRIVE_CLIENT_SECRET" ] || [ -z "$GDRIVE_REFRESH_TOKEN" ]; then
+            echo "Faltan secretos en Settings → Secrets → Actions (FIRMA_B64, GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, GDRIVE_REFRESH_TOKEN). Se omite."
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Qué versión hay publicada
+        id: version
+        if: steps.check.outputs.listo == 'si'
+        run: |
+          set -e
+          mkdir -p atlas-dl
+          curl -fsSL --retry 3 -o atlas-dl/ATLAS.json "$ORIGEN/ATLAS.json"
+          cat atlas-dl/ATLAS.json; echo
+          V=$(python3 -c "import json,re,sys; v=str(json.load(open('atlas-dl/ATLAS.json'))['version']).strip(); sys.exit('versión no válida: '+v) if not re.fullmatch(r'\d+(\.\d+)*', v) else print(v)")
+          echo "nombre=Atlas-$V.apk" >> "$GITHUB_OUTPUT"
+      - name: ¿Ya está en Drive?
+        id: ya
+        if: steps.check.outputs.listo == 'si'
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+          GDRIVE_CARPETA: ${{ secrets.GDRIVE_CARPETA }}
+          NOMBRE: ${{ steps.version.outputs.nombre }}
+          FORZAR: ${{ github.event.inputs.forzar }}
+        run: |
+          if [ "$FORZAR" = "true" ]; then
+            echo "Forzado: se sube aunque ya esté."
+            echo "subir=si" >> "$GITHUB_OUTPUT"
+          elif python3 herramientas/gdrive/subir-version.py --existe "$NOMBRE"; then
+            echo "subir=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "subir=si" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Bajar el APK
+        if: steps.ya.outputs.subir == 'si'
+        run: |
+          set -e
+          curl -fsSL --retry 3 -o atlas-dl/ATLAS.apk "$ORIGEN/ATLAS.apk"
+          ls -la atlas-dl
+      - name: Preparar claves de firma (en memoria temporal del runner)
+        if: steps.ya.outputs.subir == 'si'
+        env:
+          FIRMA_B64: ${{ secrets.FIRMA_B64 }}
+        run: |
+          set -e
+          mkdir -p firma
+          printf '%s' "$FIRMA_B64" | tr -d '\r\n ' | base64 -d > /tmp/firma.bin
+          TIPO=$(file -b /tmp/firma.bin)
+          mkdir -p /tmp/firma_ext
+          if echo "$TIPO" | grep -qi "Zip archive"; then
+            unzip -qo /tmp/firma.bin -d /tmp/firma_ext
+          elif echo "$TIPO" | grep -qiE "gzip|tar|bzip2|xz|compressed"; then
+            tar -xf /tmp/firma.bin -C /tmp/firma_ext
+          else
+            echo "Formato de FIRMA_B64 no reconocido ($TIPO). Debe ser un .zip o .tar.gz en base64."
+            exit 1
+          fi
+          find /tmp/firma_ext -maxdepth 3 -type f \( -name '*.keystore' -o -name '*.lineage' -o -name 'claves.properties' \) -exec cp {} firma/ \;
+          rm -rf /tmp/firma.bin /tmp/firma_ext
+          test -f firma/familia.keystore && test -f firma/claves.properties || { echo "Faltan familia.keystore o claves.properties dentro de FIRMA_B64"; exit 1; }
+      - name: Firmar con la clave de la familia y comprobar la huella
+        id: firmar
+        if: steps.ya.outputs.subir == 'si'
+        run: |
+          set -e
+          APK=$(python3 herramientas/atlas/firmar_atlas.py atlas-dl/ATLAS.apk atlas-dl/ATLAS.json dist-atlas | head -n 1)
+          echo "apk=$APK" >> "$GITHUB_OUTPUT"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
+          "$BT/apksigner" verify -v --print-certs "$APK" | grep -E "Verified using|Number of signers|Signer #[0-9]+ certificate (DN|SHA-256)"
+      - name: Limpiar claves de firma
+        if: always()
+        run: rm -f firma/*.keystore firma/*.lineage firma/claves.properties
+      - name: Subir a Google Drive
+        if: steps.ya.outputs.subir == 'si'
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+          GDRIVE_CARPETA: ${{ secrets.GDRIVE_CARPETA }}
+          APK: ${{ steps.firmar.outputs.apk }}
+        run: python3 herramientas/gdrive/subir-version.py "$APK"
+      - if: steps.ya.outputs.subir == 'si'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-firmado
+          path: dist-atlas/*.apk
+          retention-days: 14
