@@ -35,7 +35,7 @@ object LaFamilia {
     val SESHATS = listOf(SESHAT, SESKOBO)
 
     /** Las apps de la familia (sus paquetes). */
-    val APPS = listOf("com.gonzalo.hiedra", SESHAT, SESKOBO, "com.gonzalo.cobalto", "com.gonzalo.gamerate", "com.gonzalo.mostaza", "com.gonzalo.cobre", "com.gonzalo.ammit")
+    val APPS = listOf("com.gonzalo.hiedra", SESHAT, SESKOBO, "com.gonzalo.cobalto", "com.gonzalo.gamerate", "com.gonzalo.mostaza", "com.gonzalo.cobre", "com.gonzalo.ammit", "com.gonzalo.atlas")
 
     /**
      * El paquete de la app que hace de [paquete] en este móvil: para Seshat, la que esté instalada (la normal o SesKobo; si estuvieran
