@@ -42,6 +42,19 @@ de tu cuenta (`/claves`: llevan tus contraseñas); tus favoritos, los grupos que
 cuenta como todo lo demás. Los canales y la guía son caché de cada dispositivo (se bajan a trozos: listas y guías enormes no se tienen
 enteras en memoria). Lo que no es pantalla está en `iptv/`, en Kotlin puro, y lo usa también Pulsar del ordenador (1.0.0, en `escritorio/cobre`). Todo en `docs/cobre/HISTORIA.md`.
 
+## ATLAS (los mapas de las novelas)
+
+ATLAS (`com.gonzalo.atlas`) hace mapas de fantasía en Godot y vive en su propio repositorio, [Gonvegato/Atlas](https://github.com/Gonvegato/Atlas):
+no se compila aquí. Guarda los mapas en la cuenta (`familia/atlas`, y sus archivos en la carpeta «Familia» de Drive), cada uno ligado a una
+novela de `familia/obras`. Es de la familia (`LaFamilia.APPS` y las `<queries>` del módulo `familia`): con la firma de la familia, las hermanas le
+pasan la sesión y ella a ellas.
+
+La clave de la familia solo está aquí, así que la firma se pone aquí: `.github/workflows/atlas.yml` (a mano y cada 6 horas) baja la última
+`ATLAS.apk` de sus releases, comprueba que es la de su `ATLAS.json` (paquete, versión y código), la vuelve a firmar con `familia.keystore`
+(alias `familia`, sin linaje), comprueba que queda un único firmante con la huella de `Acceso.CERTIFICADO` y la sube a «Familia/versiones» como
+`Atlas-<versión>.apk` (con su `.sha256`). Una versión que ya está en Drive no se vuelve a subir (salvo con «forzar»). Todo en
+`herramientas/atlas/firmar_atlas.py`.
+
 ## En el ordenador (Linux y Mac)
 
 Polaris, Nova, Orion, Lyra, Sirius y Pulsar también son apps de escritorio, en tu nube (Google Drive `Familia/versiones`, con respaldo en kDrive `Mi carpeta/versiones`): `.dmg` para el Mac (Apple
