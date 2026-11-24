@@ -220,6 +220,29 @@ escribe con `m` = `hasta` + 1: gana siempre a eso, llegue cuando llegue. Si la h
 `desde`, `min`, `pal` y `meta`); cada uno los pasa aquí una vez por cuenta y, si el nodo ya existe, no lo toca: se juntan los de todos
 sin perder ni repetir ninguno. Lo de antes se queda donde estaba, como copia.
 
+### `atlas/<mapa>` (ATLAS)
+
+Los mapas de ATLAS (`com.gonzalo.atlas`, repositorio Gonvegato/Atlas), desde su 0.14.0. **Solo los escribe ATLAS**: las demás apps
+(el visor de mapas de Nova, Lyra y Polaris, en el módulo `familia`: `MapasAtlas`) solo los leen. Campo a campo como las demás colecciones
+(`m/<campo>`, `u`, `familia_sello/atlas`); borrado = `b`. Las reglas de siempre (`familia/$col/$ref`) ya lo cubren.
+
+| Campo | Qué es |
+|---|---|
+| `t` | El nombre del mapa |
+| `obra` | El id de la obra principal (el mismo de `obras/<obra>` y de los escritos de Cobalto) |
+| `obras` | Todas las obras en las que sale el mapa, ids separados por comas (`"o_ithria,o_cosmos"`). Si falta, vale `obra` |
+| `mundo` | El mundo de ATLAS al que pertenece (agrupa mapas) |
+| `k` | De qué es el mapa: `mundo`, `continente`, `region`, `ciudad`, `lugar` u `otro` (desde ATLAS 2.4.0; antes no está) |
+| `w`, `h` | El tamaño del mapa en píxeles |
+| `portada` | El hash de la miniatura en `familia_img/<hash>` (PNG de 256 px de lado mayor) |
+| `lam` | La **lámina**: `{gd, n, s, w, h}`. El mapa 2D entero con sus rótulos, una WebP de 3.072 px de lado mayor en el Drive de la familia (carpeta `atlas`). ATLAS la rehace como mucho cada 10 minutos y la sube encima del mismo archivo, así que `gd` no cambia: lo que cambia es `m/lam`. Quien la guarde en el dispositivo la vuelve a bajar solo si cambia `gd` o `m/lam` (si falta `m/lam`, `ul`) |
+| `lug` | Texto JSON con los lugares: `[{"n": nombre, "k": tipo, "x": 0-1, "y": 0-1}]`; `x` e `y` sobre la lámina (0,0 arriba a la izquierda) |
+| `nube` | El archivo del mapa (`.atlas`, `{gd, n, s}`): solo para ATLAS |
+| `ul` | Hora de la última subida (ms) |
+
+Sin `lam` (un mapa subido antes de que ATLAS hiciera la lámina) el visor enseña la miniatura de `portada` con el aviso «Abre el mapa en
+ATLAS y súbelo para ver la lámina».
+
 ### La valoración (Azabache)
 
 En el nodo de la cosa (`juegos/<id>`, `libros/<kid>`, `obras/<obra>`, `titulos/<ref>`): `nota` (0–100; sin el campo = **sin valorar**), `crit` (los

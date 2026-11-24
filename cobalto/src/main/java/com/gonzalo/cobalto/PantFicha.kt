@@ -243,7 +243,20 @@ fun PantFicha(id: String, alCerrar: () -> Unit, alEstudio: (escena: String?, cap
             }
             if (hitos.size > 4) Text("y ${hitos.size - 4} más", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
 
-            // ---- 05 El estudio: el resto de pestañas y el sprint
+            // ---- Mapas: los de ATLAS ligados a esta obra (se miran en el visor de la familia; se dibujan en ATLAS)
+            val mapas = com.gonzalo.familia.mapasDeLaObra(id)
+            val conAtlas = remember { ctx.packageManager.getLaunchIntentForPackage("com.gonzalo.atlas") }
+            if (mapas.isNotEmpty() || conAtlas != null) {
+                SeccionNumerada(sig(), "Mapas", conAtlas?.let { "Abrir en ATLAS →" to { runCatching { ctx.startActivity(it) }; Unit } })
+                if (mapas.isEmpty()) Text("Sin mapas todavía: se dibujan en ATLAS y se ligan a esta obra desde allí.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic, fontSize = 15.sp, lineHeight = 20.sp)
+                else {
+                    com.gonzalo.familia.FichasDeMapas(mapas, estiloVisor()) { m -> com.gonzalo.familia.VisorMapas.abre(ctx, id, titulo, m.id) }
+                    Text("Los mapas de ATLAS ligados a esta obra. Solo se miran: se dibujan en ATLAS.", color = Muted, fontFamily = Display, fontStyle = FontStyle.Italic,
+                        fontSize = 14.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 10.dp))
+                }
+            }
+
+            // ---- El estudio: el resto de pestañas y el sprint
             SeccionNumerada(sig(), "El estudio")
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BotonMarco("Árbol") { alEstudio(null, null, TAB_ARBOL) }

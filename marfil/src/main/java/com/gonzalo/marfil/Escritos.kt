@@ -3,6 +3,7 @@ package com.gonzalo.marfil
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -269,6 +270,10 @@ fun PantEscritos(alVolver: () -> Unit, alLeer: (Libro) -> Unit, abrir: String? =
                     }
                     if (Escritos.instaladoCobalto(ctx)) BotonC("Escribir", Modifier.weight(1f).border(2.dp, Charcoal), fondo = Paper, letra = Charcoal) { Escritos.abrirCobalto(ctx, o.id) }
                 }
+                // Sus mapas de ATLAS (solo para mirar, en el visor de la familia)
+                val mapas = com.gonzalo.familia.mapasDeLaObra(o.id)
+                if (mapas.isNotEmpty()) Text(if (mapas.size == 1) "VER SU MAPA →" else "VER SUS ${mapas.size} MAPAS →", color = Acento, fontFamily = Body, fontWeight = FontWeight.Black,
+                    fontSize = 11.sp, letterSpacing = 1.3.sp, modifier = Modifier.padding(top = 12.dp).clickable { com.gonzalo.familia.VisorMapas.abre(ctx, o.id, o.titulo) }.padding(vertical = 6.dp))
             }
             }
             Filete(2.dp)

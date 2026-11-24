@@ -121,6 +121,9 @@ fun LecturaCobaltoScreen(onBack: () -> Unit) {
                         Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                             if (marfil) Text("Leer en Lyra →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { Hermanas.leerEnMarfil(ctx, id) })
                             if (cobalto) Text("Escribir en Nova →", fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { Hermanas.escribirEnCobalto(ctx, id) })
+                            val mapas = com.gonzalo.familia.mapasDeLaObra(id)
+                            if (mapas.isNotEmpty()) Text(if (mapas.size == 1) "Su mapa →" else "Sus ${mapas.size} mapas →", color = ColGeneral, fontWeight = FontWeight.Bold, fontSize = 14.sp,
+                                modifier = Modifier.clickable { com.gonzalo.familia.VisorMapas.abre(ctx, id, t.titulo) })
                         }
                     }
                     Filete()
@@ -131,6 +134,13 @@ fun LecturaCobaltoScreen(onBack: () -> Unit) {
                 if (t != null) {
                     Text(t.autor.uppercase(), color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
                     FitTitle(t.titulo.ifBlank { "Sin título" }, 40.sp, 42.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp))
+                    // Sus mapas de ATLAS (solo para mirar, en el visor de la familia)
+                    val mapas = com.gonzalo.familia.mapasDeLaObra(o)
+                    if (mapas.isNotEmpty()) {
+                        Text("MAPAS", color = ColGeneral, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        com.gonzalo.familia.FichasDeMapas(mapas, estiloVisor()) { m -> com.gonzalo.familia.VisorMapas.abre(ctx, o, t.titulo, m.id) }
+                        Spacer(Modifier.height(18.dp))
+                    }
                 }
                 var parte = ""
                 cs.forEach { c ->

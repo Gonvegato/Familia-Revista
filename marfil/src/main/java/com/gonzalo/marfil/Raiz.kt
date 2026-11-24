@@ -28,6 +28,7 @@ import com.gonzalo.familia.CapaAvisos
 
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
+    com.gonzalo.familia.VisorMapas.estilo = { estiloVisor() }
     Cuenta.cargar(c)
     Skin.cargar(c); Biblioteca.cargar(c); Sagas.cargar(c)
     TemaAtrio.cargarGuardado(c)
@@ -190,3 +191,9 @@ private fun CapaFicha(fichaId: String?, alCerrar: () -> Unit, alLeer: (Libro) ->
         }
     }
 }
+
+/** El aspecto del visor de mapas de la familia con la Apariencia de Lyra (sus colores y sus letras). */
+fun estiloVisor() = com.gonzalo.familia.EstiloVisor(
+    fondo = Paper, tinta = Charcoal, gris = Muted, acento = Acento, sobreAcento = SobreAcento,
+    panel = androidx.compose.ui.graphics.lerp(Paper, Charcoal, 0.08f), titulo = Grotesca, cuerpo = Body,
+)

@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -268,6 +269,49 @@ fun PreviaFicha(e: Escritos, f: Doc?, onLeer: (Doc) -> Unit, onCerrar: (Doc) -> 
                     Text("LEER →", color = Acento, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp, modifier = Modifier.padding(end = 10.dp, top = 6.dp))
                 }
             }
+        }
+    }
+}
+
+/**
+ * El lugar de un mapa de ATLAS cuyo nombre toca el cursor: un recorte del mapa alrededor (con el lugar marcado), su tipo y su mapa, y
+ * «Ver en el mapa» (abre el visor de la familia centrado en él).
+ */
+@Composable
+fun PreviaLugar(m: com.gonzalo.familia.MapasAtlas.Mencion?, onVer: (com.gonzalo.familia.MapasAtlas.Mencion) -> Unit, onCerrar: (com.gonzalo.familia.MapasAtlas.Mencion) -> Unit) {
+    var ultima by remember { mutableStateOf(m) }
+    if (m != null) ultima = m
+    AnimatedVisibility(m != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+        val x = ultima ?: return@AnimatedVisibility
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        val dens = androidx.compose.ui.platform.LocalDensity.current
+        var recorte by remember(x.mapa.id, x.lugar) { mutableStateOf<Pair<androidx.compose.ui.graphics.ImageBitmap, Offset>?>(null) }
+        LaunchedEffect(x.mapa.id, x.mapa.versionLamina, x.lugar) {
+            val (w, h) = with(dens) { 112.dp.roundToPx() to 84.dp.roundToPx() }
+            recorte = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.gonzalo.familia.VisorMapas.recorte(ctx, x.mapa, x.lugar, w, h)?.let { (b, o) -> b.asImageBitmap() to o }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(shp(12.dp)).background(Crudo).border(1.dp, Line, shp(12.dp)).press(haptic = false) { onVer(x) }
+            .padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(112.dp, 84.dp).clip(shp(6.dp)).background(Color(0xFFEFE4C4))) {
+                recorte?.let { (img, o) ->
+                    androidx.compose.foundation.Image(img, null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                        val c = Offset(o.x * size.width, o.y * size.height)
+                        drawCircle(Acento, 14.dp.toPx(), c, style = androidx.compose.ui.graphics.drawscope.Stroke(2.5.dp.toPx()))
+                        drawCircle(Color(0xFFF2EEDC), 6.dp.toPx(), c)
+                        drawCircle(Color(0xFF8E2C1F), 4.5.dp.toPx(), c)
+                    }
+                }
+            }
+            Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(listOf(x.lugar.tipo.uppercase(), "MAPA ${x.mapa.nombre.uppercase()}").filter { it.isNotBlank() }.joinToString(" · "), color = Acento, fontSize = 10.sp,
+                    fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(x.lugar.nombre, fontFamily = Display, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Charcoal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("VER EN EL MAPA →", color = Acento, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.3.sp, modifier = Modifier.padding(top = 4.dp))
+            }
+            Text("✕", color = Muted, fontSize = 14.sp, modifier = Modifier.align(Alignment.Top).press(haptic = false) { onCerrar(x) }.padding(10.dp))
         }
     }
 }

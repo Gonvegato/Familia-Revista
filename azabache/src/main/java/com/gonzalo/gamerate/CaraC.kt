@@ -240,3 +240,9 @@ fun PestanasC(nombres: List<String>, sel: Int, cuentas: List<Int?>, onSel: (Int)
         Box(Modifier.fillMaxWidth().height(2.dp).background(Charcoal))
     }
 }
+
+/** El aspecto del visor de mapas de la familia con la Apariencia de Polaris (sus colores y sus letras). */
+fun estiloVisor() = com.gonzalo.familia.EstiloVisor(
+    fondo = Paper, tinta = Charcoal, gris = Muted, acento = Acento, sobreAcento = SobreAcento,
+    panel = androidx.compose.ui.graphics.lerp(Paper, Charcoal, 0.08f), titulo = Grotesca, cuerpo = Body,
+)

@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 
 /** Arranca los datos de la app (una vez). */
 fun iniciar(c: Context) {
+    com.gonzalo.familia.VisorMapas.estilo = { estiloVisor() }
     Skin.cargar(c)
     TemaAtrio.cargarGuardado(c)
     Cuenta.cargar(c); SincroP.iniciar(c)
@@ -141,3 +142,9 @@ fun Estudio(obraId: String, escenaInicial: String?, sprintInicial: Boolean, capI
     }
     if (sprint && escenaId == null) SprintDialogo(e, obraId, onCerrar = { sprint = false })
 }
+
+/** El aspecto del visor de mapas de la familia con la Apariencia de Nova (sus colores y sus letras). */
+fun estiloVisor() = com.gonzalo.familia.EstiloVisor(
+    fondo = Paper, tinta = Charcoal, gris = Muted, acento = Acento, sobreAcento = SobreAcento,
+    panel = androidx.compose.ui.graphics.lerp(Paper, Charcoal, 0.08f), titulo = Grotesca, cuerpo = Body,
+)

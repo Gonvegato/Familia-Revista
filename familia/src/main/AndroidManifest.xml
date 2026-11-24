@@ -16,6 +16,12 @@
         <package android:name="com.gonzalo.atlas" />
     </queries>
     <application>
+        <!-- El visor de los mapas de ATLAS (solo lectura), el mismo en todas las apps que enseñan escritos -->
+        <activity
+            android:name="com.gonzalo.familia.VisorMapasActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden" />
         <!-- Entrar una vez: la app que ya tiene la cuenta se la da a sus hermanas (solo a las que llevan la firma de la familia) -->
         <provider
             android:name="com.gonzalo.familia.AccesoProvider"

@@ -28,7 +28,9 @@ class AspectoTexto(
  * `*cursiva*` con su formato, y los signos del formato apagados (siguen ahí, para poder cambiarlos). Las fichas de la obra
  * que nombras quedan subrayadas, y lo que buscas, resaltado. No cambia el texto (los desplazamientos son los mismos).
  */
-class FormatoMarkdown(private val a: AspectoTexto, private val fichas: Regex? = null, private val busca: Regex? = null) : VisualTransformation {
+class FormatoMarkdown(private val a: AspectoTexto, private val fichas: Regex? = null, private val busca: Regex? = null,
+    /** Los mapas de ATLAS de la obra: sus lugares quedan marcados (con un fondo suave y subrayados) donde se nombran. */
+    private val mapas: List<com.gonzalo.familia.MapaAtlas> = emptyList()) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText = TransformedText(estilo(text.text), OffsetMapping.Identity)
 
     fun estilo(t: String): AnnotatedString = AnnotatedString.Builder(t).also { b ->
@@ -50,6 +52,9 @@ class FormatoMarkdown(private val a: AspectoTexto, private val fichas: Regex? = 
             }
             if (!(s == "***" || s == "* * *")) inline(b, l, i)
             i = fin + 1
+        }
+        if (mapas.isNotEmpty()) com.gonzalo.familia.MapasAtlas.menciones(t, mapas).forEach { m ->
+            b.addStyle(SpanStyle(background = a.acento.copy(alpha = 0.14f), textDecoration = TextDecoration.Underline), m.inicio, m.fin)
         }
         fichas?.findAll(t)?.forEach { m -> b.addStyle(SpanStyle(textDecoration = TextDecoration.Underline, color = a.acento), m.range.first, m.range.last + 1) }
         busca?.findAll(t)?.forEach { m -> b.addStyle(SpanStyle(background = a.acento.copy(alpha = 0.32f)), m.range.first, m.range.last + 1) }

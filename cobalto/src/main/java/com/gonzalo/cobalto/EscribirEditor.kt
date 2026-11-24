@@ -288,13 +288,24 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
         val m = rxN.findAll(trozo).firstOrNull { k - desde >= it.range.first && k - desde <= it.range.last + 1 } ?: return@remember null
         fichasObra.firstOrNull { f -> (listOf(f.s("nombre")) + f.s("alias").split(',')).any { it.trim().equals(m.value, true) } }
     }
+    // Los lugares de los mapas de ATLAS de la obra: marcados en el texto y, el que toca el cursor, con su vista previa
+    val mapasObra = com.gonzalo.familia.mapasDeLaObra(pid)
+    val lugarAqui = remember(tf.selection, tf.text, mapasObra) {
+        if (mapasObra.isEmpty()) return@remember null
+        val k = tf.selection.start.coerceIn(0, tf.text.length)
+        val desde = (k - 80).coerceAtLeast(0)
+        val trozo = tf.text.substring(desde, (k + 80).coerceAtMost(tf.text.length))
+        com.gonzalo.familia.MapasAtlas.menciones(trozo, mapasObra).firstOrNull { k - desde >= it.inicio && k - desde <= it.fin }
+    }
+    var lugarCerrado by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(lugarAqui?.lugar?.nombre) { if (lugarAqui == null) lugarCerrado = null }
     var previaCerrada by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(fichaAqui?.id) { if (fichaAqui == null) previaCerrada = null }
     val lectura = remember { AbreEscribir() }
     val familia = pagina.letra.familia
     val tam = pagina.tam
     val aspecto = AspectoTexto(Charcoal, Muted.copy(alpha = 0.6f), ColGeneral, Display, tam)
-    val formato = remember(aspecto.tinta, aspecto.tenue, aspecto.acento, tam, nombres, rx) { FormatoMarkdown(aspecto, nombres, rx) }
+    val formato = remember(aspecto.tinta, aspecto.tenue, aspecto.acento, tam, nombres, rx, mapasObra) { FormatoMarkdown(aspecto, nombres, rx, mapasObra) }
     val vivo = if (foco && pagina.atenuar) EdicionTexto.parrafo(tf.text, tf.selection.start) else null
     val apagado = Charcoal.copy(alpha = 0.26f)
     val transformacion = remember(formato, pagina.sangria, tam, vivo, apagado) {
@@ -477,6 +488,10 @@ fun EscribirEditor(eid: String, onBack: () -> Unit, abrirEscena: (String) -> Uni
                 }
                 // La ficha del nombre donde está el cursor: su vista previa, y «Leer» la ficha
                 if (!foco) PreviaFicha(e, fichaAqui?.takeIf { it.id != previaCerrada }, onLeer = { lectura.ver = it.id }, onCerrar = { previaCerrada = it.id })
+                // El lugar de un mapa donde está el cursor: «Ver en el mapa» abre el visor centrado en él
+                if (!foco) PreviaLugar(lugarAqui?.takeIf { it.lugar.nombre != lugarCerrado },
+                    onVer = { m -> com.gonzalo.familia.VisorMapas.abre(ctx, pid, e.get(pid)?.s("titulo").orEmpty(), m.mapa.id, m.lugar.nombre) },
+                    onCerrar = { lugarCerrado = it.lugar.nombre })
                 if (!foco) {
                     CuentasEditor(cuentas, discreto = false, Modifier.padding(hueco).padding(horizontal = 20.dp, vertical = 4.dp))
                     if (SprintEscribir.activo(pid)) Row(Modifier.fillMaxWidth().padding(hueco).padding(horizontal = 20.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
