@@ -22,11 +22,11 @@ android {
         buildConfigField("boolean", "SESKOBO", sesKobo.toString())
         minSdk = 29
         targetSdk = 35
-        versionCode = 78
-        versionName = "0.23.2"
+        versionCode = 79
+        versionName = "0.24.0"
         // (LyraKobo lleva su propia revisión: código = el de Lyra × 100 + la revisión, para poder actualizarla sin tocar la normal)
         val revisionKobo = 2
-        if (sesKobo) { versionNameSuffix = "-kobo.$revisionKobo"; versionCode = 78 * 100 + revisionKobo }
+        if (sesKobo) { versionNameSuffix = "-kobo.$revisionKobo"; versionCode = 79 * 100 + revisionKobo }
         // Solo los procesadores que se usan (el traductor del diccionario pesa ~16 MB por cada uno): móviles y tablets (arm64) y Waydroid en el PC (x86_64)
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }

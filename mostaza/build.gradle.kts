@@ -17,8 +17,8 @@ android {
         applicationId = "com.gonzalo.mostaza"
         minSdk = if (tele) 26 else 29
         targetSdk = 35
-        versionCode = 40
-        versionName = "0.10.1"
+        versionCode = 41
+        versionName = "0.10.2"
         // Solo móviles y tabletas de 64 bits (como Hiedra): el motor de torrents lleva una biblioteca nativa por arquitectura.
         // La de la tele lleva también la de 32 bits (el motor de torrents, FFmpeg y VLC traen las dos)
         ndk { abiFilters += if (tele) listOf("arm64-v8a", "armeabi-v7a") else listOf("arm64-v8a") }

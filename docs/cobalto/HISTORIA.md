@@ -10,6 +10,14 @@ versiones, comparar y mezclar, exportar (texto, Markdown, Word, PDF) e importar,
 Sin migración: usa los mismos documentos que Atrio y Atrio del PC (`/users/<uid>/escritos`), con el formato de `docs/escribir.md` de Atrio.
 Lo que escribas en el PC aparece aquí al momento, y al revés.
 
+## 0.10.0 (Nova) — los mapas de la novela
+
+- **Mapas** en la ficha de la obra: los mapas de ATLAS ligados a ella (miniatura, de qué son y cuántos lugares tienen) y «Abrir en
+  ATLAS». Al tocar uno se abre el visor de la familia: solo para mirar, pellizcar hasta ×6, dos toques para acercar o volver, una
+  pestaña por mapa y BUSCAR, que centra el mapa en un lugar y lo marca. Se ve sin conexión (se guarda la última lámina).
+- **Del manuscrito al mapa**: los lugares de los mapas de la obra salen marcados en el texto (fondo suave y subrayado). Con el cursor
+  en uno, su tarjeta (un recorte del mapa con el lugar marcado, de qué tipo es y de qué mapa) y «Ver en el mapa».
+
 ## 0.7.0 — Thot en movimiento
 
 Lo mismo que Seshat: todo sigue al dedo, se puede interrumpir y nada acaba de golpe.

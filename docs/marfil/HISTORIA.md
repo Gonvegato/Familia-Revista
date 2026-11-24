@@ -5,6 +5,11 @@ La app de leer del móvil. Hermana de [Jonsu](https://github.com/Gonvegato/azaba
 (`com.gonzalo.marfil`), así que conviven en el mismo móvil. Aquí se **añaden y se leen** los libros (EPUB, PDF y cómics); Jonsu los
 refleja para valorarlos, y los escritos de Thot se leen aquí.
 
+## 0.24.0 (Lyra) — los mapas de las obras
+
+- En Escritos, cada obra con mapas de ATLAS tiene «Ver su mapa» (o «sus mapas»): se abre el visor de la familia, solo para mirar, con
+  BUSCAR por lugares y sin conexión.
+
 ## 0.22.4 — del widget al libro, sin pasar por otra pantalla
 
 - «Seguir leyendo» desde el widget: el lector se abre al momento con el color de tu tema de lectura (antes se quedaba un segundo la pantalla

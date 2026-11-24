@@ -9,6 +9,11 @@ Hermana de [Bastet](https://github.com/Gonvegato/hiedra) (juegos), [Seshat](http
 y aquí aparecen solos, con su estado, sus horas y sus portadas, para valorarlos. Las películas, las series y tus categorías propias siguen
 aquí tal cual (con su «Añadir»).
 
+## 1.12.0 (Polaris) — los mapas de las obras
+
+- En Escritos, las obras con mapas de ATLAS tienen «Su mapa» (o «Sus mapas») y, dentro de cada obra, sus fichas de mapa: se abren en el
+  visor de la familia, solo para mirar, con BUSCAR por lugares y sin conexión.
+
 ## 1.9.1 — la ficha nace de lo que tocas
 
 - La ficha (y lo que se abre como ella) nace de la franja de la pantalla que tocaste: el papel crece desde ahí hasta la pantalla entera,
