@@ -12,7 +12,7 @@
         <package android:name="com.gonzalo.gamerate" />
         <package android:name="com.gonzalo.mostaza" />
         <package android:name="com.gonzalo.cobre" />
-        <!-- ATLAS: los mapas de las novelas (repositorio Gonvegato/Atlas, en Godot) -->
+        <!-- ATLAS: los mapas de las novelas (repositorio Gonvegato/Atlas) -->
         <package android:name="com.gonzalo.atlas" />
     </queries>
     <application>

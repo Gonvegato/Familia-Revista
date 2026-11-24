@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Vuelve a firmar ATLAS con la clave de la familia (la usa .github/workflows/atlas.yml).
 
-ATLAS (los mapas de las novelas, Godot, repositorio Gonvegato/Atlas, paquete com.gonzalo.atlas) no se compila aquí: publica
+ATLAS (los mapas de las novelas, app nativa de Kotlin, repositorio Gonvegato/Atlas, paquete com.gonzalo.atlas) no se compila aquí: publica
 cada versión en https://github.com/Gonvegato/Atlas/releases/latest/download/ATLAS.apk, con su ATLAS.json al lado
-({"version": "0.12.1", "code": 17, "sha": <el commit>}), firmada con una clave provisional. La clave de la familia solo está
+({"version": "2.3.0", "code": 41, "sha": <el commit>, "apk_sha256": <la huella del APK>}), firmada con una clave provisional. La clave de la familia solo está
 en este repositorio (secreto FIRMA_B64), así que la firma de verdad se pone aquí:
 
   python3 herramientas/atlas/firmar_atlas.py ATLAS.apk ATLAS.json [carpeta_de_salida]
 
-1. Comprueba que el APK es el que dice ATLAS.json: paquete com.gonzalo.atlas, mismo versionName y versionCode.
+1. Comprueba que el APK es el que dice ATLAS.json: su SHA-256 es apk_sha256 (si lo trae; desde la 2.3.0 siempre),
+   paquete com.gonzalo.atlas, mismo versionName y versionCode.
 2. Lo alinea (si no lo estaba) y lo firma con firma/familia.keystore (alias familia, sin linaje: como las apps que nacen en
    la familia). apksigner sign sustituye la firma provisional.
 3. Comprueba con apksigner verify --print-certs que queda un único firmante y que su huella SHA-256 es la de la familia
@@ -17,6 +18,7 @@ en este repositorio (secreto FIRMA_B64), así que la firma de verdad se pone aqu
 
 Las contraseñas van por el entorno (env:), nunca en la línea de órdenes.
 """
+import hashlib
 import json
 import os
 import re
@@ -85,7 +87,17 @@ def main():
         sys.exit(f"ATLAS.json no trae una versión válida: {meta}")
     bt = build_tools()
 
-    # 1. Es el APK que dice ATLAS.json
+    # 1. Es el APK que dice ATLAS.json: la misma huella (la descarga llegó entera y es la publicada)…
+    esperada = str(meta.get("apk_sha256", "")).strip().lower()
+    if esperada:
+        h = hashlib.sha256()
+        with open(apk, "rb") as f:
+            for trozo in iter(lambda: f.read(1 << 20), b""):
+                h.update(trozo)
+        if h.hexdigest() != esperada:
+            sys.exit(f"El APK descargado no es el de ATLAS.json: SHA-256 {h.hexdigest()} (esperado {esperada})")
+        print(f"Huella del APK comprobada: {esperada[:16]}…", file=sys.stderr)
+    # … y el paquete, la versión y el código
     badging = subprocess.run([f"{bt}/aapt2", "dump", "badging", apk], capture_output=True, text=True).stdout
     m = re.search(r"package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'", badging)
     if not m:

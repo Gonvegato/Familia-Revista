@@ -1,11 +1,11 @@
-# ATLAS (los mapas de las novelas, Godot: repositorio Gonvegato/Atlas, paquete com.gonzalo.atlas) no se compila aquí.
+# ATLAS (los mapas de las novelas, app nativa de Kotlin: repositorio Gonvegato/Atlas, paquete com.gonzalo.atlas) no se compila aquí.
 # Cada versión se publica en https://github.com/Gonvegato/Atlas/releases/latest/download/ATLAS.apk (con ATLAS.json al lado),
 # firmada con una clave provisional. Este workflow la baja, la vuelve a firmar con la clave de la familia (familia.keystore,
 # alias familia, sin linaje: como las apps que nacen en la familia), comprueba que queda un único firmante con la huella de
 # Acceso.CERTIFICADO y la sube a Google Drive («Familia/versiones») como Atlas-<versión>.apk, como las demás.
 #
 # Se dispara:
-#  - Cada 6 horas: si esa versión ya está en Drive, no hace nada.
+#  - Cada hora (GitHub retrasa o se salta a veces las programadas): si esa versión ya está en Drive, no hace nada.
 #  - A mano desde Actions → «ATLAS: firmar y publicar» → Run workflow («forzar» la sube aunque ya esté).
 #
 # Secretos: los de publicar.yml (FIRMA_B64, GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET, GDRIVE_REFRESH_TOKEN; GDRIVE_CARPETA opcional).
@@ -13,7 +13,7 @@ name: 'ATLAS: firmar y publicar'
 
 on:
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       forzar:
